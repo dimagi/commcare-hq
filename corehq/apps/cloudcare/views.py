@@ -4,7 +4,8 @@ from xml.etree import ElementTree
 
 from django.conf import settings
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
+    JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -132,6 +133,18 @@ class FormplayerMain(View):
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
+        option = request.GET.get('option')
+        if option == 'apps':
+            return self.get_option_apps(request, domain)
+        else:
+            return self.get_main(request, domain)
+
+    def get_option_apps(self, request, domain):
+        restore_as, set_cookie = self.get_restore_as_user(request, domain)
+        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        return JsonResponse(apps, safe=False)
+
+    def get_main(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
         apps = self.get_web_apps_available_to_user(domain, restore_as)
 

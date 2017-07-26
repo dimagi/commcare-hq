@@ -172,15 +172,17 @@ FormplayerFrontend.on('startForm', function (data) {
 
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
-        savedDisplayOptions;
+        savedDisplayOptions,
+        self = this;
     user.username = options.username;
-    user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
     user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
+
+    FormplayerFrontend.Apps.API.primeApps(user.restoreAs, options.apps);
 
     savedDisplayOptions = _.pick(
         Util.getSavedDisplayOptions(),
@@ -195,9 +197,9 @@ FormplayerFrontend.on("start", function (options) {
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
-    $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+    $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
         var appId;
-
+        var apps = appCollection.toJSON();
         if (Backbone.history) {
             Backbone.history.start();
             FormplayerFrontend.regions.restoreAsBanner.show(
@@ -210,7 +212,7 @@ FormplayerFrontend.on("start", function (options) {
             }
 
             // will be the same for every domain. TODO: get domain/username/pass from django
-            if (this.getCurrentRoute() === "") {
+            if (self.getCurrentRoute() === "") {
                 if (user.displayOptions.singleAppMode) {
                     FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
                     FormplayerFrontend.trigger("app:singleApp", appId);
@@ -514,7 +516,7 @@ FormplayerFrontend.on('navigateHome', function() {
         appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {
-        FormplayerFrontend.navigate("/apps", { trigger: true });
+        FormplayerFrontend.trigger("apps:list");
     }
 });
 

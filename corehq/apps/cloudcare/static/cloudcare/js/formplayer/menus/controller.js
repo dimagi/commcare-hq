@@ -31,7 +31,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     if (menuResponse.appId === null || menuResponse.appId === undefined) {
                         FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
                             "required. If this persists, please report an issue to CommCareHQ");
-                        FormplayerFrontend.trigger("apps:list", options.apps);
+                        FormplayerFrontend.trigger("apps:list");
                         return;
                     }
                     urlObject.appId = menuResponse.appId;

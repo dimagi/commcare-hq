@@ -6,10 +6,21 @@
 
 FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) {
 
+    var appsPromiseByRestoreAs = {};
+
     Apps.API = {
+        primeApps: function (restoreAs, apps) {
+            appsPromiseByRestoreAs[restoreAs] = $.Deferred().resolve(apps);
+        },
         getAppEntities: function () {
-            var appsJson = FormplayerFrontend.request('currentUser').apps;
-            return new FormplayerFrontend.Apps.Collections.App(appsJson);
+            var restoreAs = FormplayerFrontend.request('currentUser').restoreAs;
+            var appsPromise = appsPromiseByRestoreAs[FormplayerFrontend.request('currentUser').restoreAs];
+            if (!appsPromise || appsPromise.state() == 'rejected') {
+                appsPromise = appsPromiseByRestoreAs[restoreAs] = $.getJSON('?option=apps');
+            }
+            return appsPromise.pipe(function (apps) {
+                return new FormplayerFrontend.Apps.Collections.App(apps);
+            });
         },
         getAppEntity: function (app_id) {
             var apps = Apps.API.getAppEntities();
