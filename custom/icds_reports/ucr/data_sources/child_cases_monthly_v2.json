@@ -3208,6 +3208,15 @@
       },
       {
         "column_ids": ["supervisor_id", "month"]
+      },
+      {
+        "column_ids": ["block_id", "age_in_months"]
+      },
+      {
+        "column_ids": ["supervisor_id", "age_in_months"]
+      },
+      {
+        "column_ids": ["awc_id", "age_in_months"]
       }
     ]
   }
