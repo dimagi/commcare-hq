@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -8,11 +8,14 @@
+@@ -8,10 +8,14 @@
  
  {% block js %}
      {{ block.super }}
@@ -16,12 +16,12 @@
      <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
      <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
++    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 +    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -26,291 +29,172 @@
+@@ -25,281 +29,172 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -107,16 +107,10 @@
 -            {% endif %}
 -        </li>
 -        {% endif %}
--        <li class="rollout-toggle-label">
+-        <li>
 -            <a href="{% url "app_summary" domain app.id %}">
 -                <i class="fa fa-list"></i>
 -                {% trans "App Summary" %}
--            </a>
--        </li>
--        <li>
--            <a href="#" data-toggle="modal" data-target="#rollout-modal">
--                <i class="fa fa-bell-o"></i>
--                {% trans "New App Builder" %}
 -            </a>
 -        </li>
 -        <li class="divider"></li>
@@ -360,6 +354,7 @@
 +    {% registerurl "toggle_app_manager_v2" %}
 +    {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
+-{% endblock %}
 +    <script type="text/html" id="js-popover-template-add-item">
 +      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
 +    </script>
@@ -461,10 +456,8 @@
 +          </form>
 +      </div>
 +    </script>
- {% endblock %}
- 
- {% block modals %}{{ block.super }}
--    {% include "hqwebapp/rollout_modal.html" %}
--{% endblock %}
++{% endblock %}
++
++{% block modals %}{{ block.super }}
 +    {% include "hqwebapp/rollout_revert_modal.html" %}
 +{% endblock %}
