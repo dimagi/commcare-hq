@@ -7,7 +7,6 @@ import logging
 import phonenumbers
 import sys
 import uuid
-from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 from django.core.management import BaseCommand
@@ -239,8 +238,7 @@ class ENikshay2BMigrator(object):
         if occurrence:
             episodes = [case for case in episodes
                         if not case.closed and case.type == CASE_TYPE_EPISODE
-                        and any([index.referenced_id == occurrence.case_id for index in case.indices])
-                        and case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+                        and any([index.referenced_id == occurrence.case_id for index in case.indices])]
             episode = episodes[0] if episodes else None
         else:
             episode = None
@@ -297,8 +295,7 @@ class ENikshay2BMigrator(object):
         self.total_occurrences += 1
         episodes = [(case.opened_on, case) for case in episodes
                     if case.type == CASE_TYPE_EPISODE
-                    and any([index.referenced_id == occurrence.case_id for index in case.indices])
-                    and case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+                    and any([index.referenced_id == occurrence.case_id for index in case.indices])]
         if not episodes:
             return None
 
