@@ -173,3 +173,19 @@
   values: ['none', '0', '1', '2', '4', '6', '8', '12', '24']
   value_names: ['Use project level setting', 'Update on every sync', '1 hour', '2 hours', '4 hours', '6 hours', '8 hours', '12 hours', '24 hours']
   default: 'none'
+
+- id: latest_app_prompt
+  name: Prompt Updates to Latest Released App Version
+  description: If enabled, users will receive in-app prompts to update to the latest released version of the app, if they are not already on it. (Selecting "Forced" will make it so that users cannot continue to use CommCare until they update).
+  values: ["off", "on", "forced"]
+  value_names: ["Off", "On", "Forced"]
+  default: "off"
+  since: "2.36"
+
+- id: latest_apk_prompt
+  name: Prompt Updates to Latest CommCare Version
+  description: If enabled, users will receive in-app prompts to update to the latest version of CommCare, if they are not already on it. Selecting "Forced" will make it so that users cannot continue to use CommCare until they upgrade.
+  values: ["off", "on", "forced"]
+  value_names: ["Off", "On", "Forced"]
+  default: "off"
+  since: "2.36"

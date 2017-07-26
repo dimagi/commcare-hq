@@ -4786,6 +4786,16 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         default="roman"
     )
 
+    # these let mobile prompt updates for application and APK
+    latest_app_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+    latest_apk_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
     built_with = SchemaProperty(BuildRecord)
