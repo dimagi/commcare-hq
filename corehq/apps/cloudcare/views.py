@@ -88,7 +88,7 @@ class FormplayerMain(View):
         else:
             return get_latest_released_app_doc(domain, app_id)
 
-    def get(self, request, domain):
+    def get_web_apps_available_to_user(self, domain, user):
         app_access = ApplicationAccess.get_by_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -98,11 +98,15 @@ class FormplayerMain(View):
         )
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-        role = request.couch_user.get_role(domain)
+        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        role = user.get_role(domain)
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
+        return apps
+
+    def get(self, request, domain):
+        apps = self.get_web_apps_available_to_user(domain, request.couch_user)
 
         def _default_lang():
             try:
