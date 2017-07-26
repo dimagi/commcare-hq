@@ -925,7 +925,7 @@ def generate_unknown_cases(known_drugs):
     return [
         {
             "name": drug_id,
-            "owner": "-",
+            "owner_id": "-",
             "drug_id": drug_id,
             "sort_order": ALL_DRUGS[drug_id],
             "sensitivity": "unknown",
