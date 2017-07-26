@@ -696,8 +696,8 @@ def get_cbnaat_test_resistance_properties(column_mapping, row):
 
 def get_lpa_test_resistance_properties(column_mapping, row):
     drug_resistances = [
-        ("r", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
-        ("h_inha", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
+        ("r", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
+        ("h_inha", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
     ]
     return {
         "drug_sensitive_list": " ".join(
@@ -707,8 +707,8 @@ def get_lpa_test_resistance_properties(column_mapping, row):
 
 
 def lpa_detected_tb(column_mapping, row):
-    rif = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))
-    inha = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))
+    rif = clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))
+    inha = clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))
     return (rif is not None) or (inha is not None)
 
 
@@ -722,11 +722,10 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
 
 
 def get_cbnaat_resistance(column_mapping, row):
-    result = column_mapping.get_value("cbnaat_result", row)
-    return clean_mumbai_test_resistance_value(result)
+    # TODO: This needs a remapping
+    return None
 
-
-def clean_mumbai_test_resistance_value(value):
+    value = column_mapping.get_value("cbnaat_result", row)
     if value is None:
         return None
     if value.startswith("R ") or value in ("R", "R\n R", "RR"):
@@ -736,6 +735,16 @@ def clean_mumbai_test_resistance_value(value):
     else:
         raise Exception("Unrecognized result: {}".format(value))
     return resistant
+
+
+def clean_mumbai_lpa_resistance_value(value):
+    return {
+        None: None,
+        "Not tested": None,
+        "R": True,
+        "Resistant": True,
+        "Sensitive": False,
+    }[value]
 
 
 def get_mehsana_resistance_properties(column_mapping, row):
@@ -1021,8 +1030,8 @@ def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
 
 def get_drug_resistances_from_lpa(column_mapping, row):
     drugs = [
-        ("r", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
-        ("h_inha", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
+        ("r", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
+        ("h_inha", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
     ]
     case_props = []
     for drug, resistant in drugs:
