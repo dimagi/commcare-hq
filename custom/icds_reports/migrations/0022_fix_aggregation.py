@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('icds_reports',
-         '0020_combine_person_query'),
+         '0021_remove_categories'),
     ]
 
     operations = [
