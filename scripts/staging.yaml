@@ -71,5 +71,6 @@ submodules:
       - je/git-gc-background
       - je/better-supervisor
       - je/fix-migrations-check
+      - je/add-gossip-for-staging
   submodules/commcare-translations:
     branches: []
