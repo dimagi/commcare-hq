@@ -179,7 +179,9 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
-                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
+                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
+                    test_case_properties.get('rft_general') == 'diagnostic' or
+                    test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case)
@@ -217,6 +219,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
+            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
