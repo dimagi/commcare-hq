@@ -19,9 +19,6 @@ hqDefine('cloudcare/js/util.js', function () {
         return url;
     };
 
-    var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
-        return urlRoot + getFormEntryPath(appId, moduleId, formId, caseId);
-    };
     var getChildSelectUrl = function(urlRoot, appId, moduleId, formId, parentId){
         return urlRoot + getChildSelectPath(appId, moduleId, formId, parentId);
     };
@@ -155,7 +152,6 @@ hqDefine('cloudcare/js/util.js', function () {
     };
     return {
         getFormUrl: getFormUrl,
-        getFormEntryUrl: getFormEntryUrl,
         getChildSelectUrl: getChildSelectUrl,
         getFormEntryPath: getFormEntryPath,
         getSubmitUrl: getSubmitUrl,
