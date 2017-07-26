@@ -17,7 +17,7 @@ from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean
-from dimagi.utils.web import json_response, get_url_base, json_handler
+from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
@@ -39,12 +39,10 @@ from corehq.apps.cloudcare.api import (
     CaseAPIResult,
     get_filtered_cases,
     get_filters_from_request_params,
-    look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
-from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
@@ -59,23 +57,13 @@ from corehq.apps.style.decorators import (
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.util.quickcache import quickcache
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.exceptions import XFormNotFound
 
 
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
-
-
-@use_legacy_jquery
-def insufficient_privilege(request, domain, *args, **kwargs):
-    context = {
-        'domain': domain,
-    }
-
-    return render(request, "cloudcare/insufficient_privilege.html", context)
 
 
 @location_safe
@@ -414,19 +402,6 @@ def get_cases(request, domain):
 
 
 @cloudcare_api
-def get_apps_api(request, domain):
-    return json_response(get_cloudcare_apps(domain))
-
-
-@cloudcare_api
-def get_app_api(request, domain, app_id):
-    try:
-        return json_response(look_up_app_json(domain, app_id))
-    except RemoteAppError:
-        raise Http404()
-
-
-@cloudcare_api
 @cache_page(60 * 30)
 def get_fixtures(request, domain, user_id, fixture_id=None):
     try:
@@ -454,47 +429,6 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             fixture_id, len(fixture.getchildren())
         )
         return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-
-
-@cloudcare_api
-def get_ledgers(request, domain):
-    """
-    Returns ledgers associated with a case in the format:
-    {
-        "section_id": {
-            "product_id": amount,
-            "product_id": amount,
-            ...
-        },
-        ...
-    }
-
-    Note: this only works for the Couch backend
-    """
-    request_params = request.GET
-    case_id = request_params.get('case_id')
-    if not case_id:
-        return json_response(
-            {'message': 'You must specify a case id to make this query.'},
-            status_code=400
-        )
-    try:
-        case = CaseAccessors(domain).get_case(case_id)
-    except CaseNotFound:
-        raise Http404()
-    ledger_map = LedgerAccessors(domain).get_case_ledger_state(case.case_id)
-    def custom_json_handler(obj):
-        if hasattr(obj, 'stock_on_hand'):
-            return obj.stock_on_hand
-        return json_handler(obj)
-
-    return json_response(
-        {
-            'entity_id': case_id,
-            'ledger': ledger_map,
-        },
-        default=custom_json_handler,
-    )
 
 
 class ReadableQuestions(View):
