@@ -1446,7 +1446,8 @@ class Command(BaseCommand):
                         elif "phi_name is required" in e.message:
                             missing_phi += 1
                         else:
-                            raise
+                            pass
+                            #raise
 
 
 
