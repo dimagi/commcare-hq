@@ -50,8 +50,8 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.all : 0);
-        var children = $filter('indiaNumbers')(row ? row.children : 0);
+        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div><div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div></ul>';
     };
 

@@ -10,5 +10,13 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                 params: params,
             });
         },
+        getAwcsCoveredData: function(step, params) {
+            var get_url = url('awcs_covered', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

@@ -3919,3 +3919,128 @@ def get_awc_daily_status_sector_data(config, loc_level):
             }
         ]
     }
+
+
+def get_awcs_covered_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        del filters['month']
+        return AggAwcMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            districts=Sum('num_launched_districts'),
+            blocks=Sum('num_launched_blocks'),
+            supervisors=Sum('num_launched_supervisors'),
+            awcs=Sum('num_launched_awcs'),
+        )
+
+    map_data = {}
+    for row in get_data_for(config):
+        name = row['%s_name' % loc_level]
+        districts = row['districts']
+        blocks = row['blocks']
+        supervisors = row['supervisors']
+        awcs = row['awcs']
+        row_values = {
+            'districts': districts,
+            'blocks': blocks,
+            'supervisors': supervisors,
+            'awcs': awcs,
+            'fillKey': 'Launched',
+        }
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'Launched': GREEN})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "awc_daily_statuses",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "info": _((
+                    "Total AWCs that have launched ICDS CAS"
+                )),
+                'period': 'Daily',
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_awcs_covered_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    del config['month']
+
+    data = AggAwcMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        districts=Sum('num_launched_districts'),
+        blocks=Sum('num_launched_blocks'),
+        supervisors=Sum('num_launched_supervisors'),
+        awcs=Sum('num_launched_awcs'),
+    ).order_by('%s_name' % loc_level)
+
+    chart_data = {
+        'blue': [],
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        districts = row['districts']
+        blocks = row['blocks']
+        supervisors = row['supervisors']
+        awcs = row['awcs']
+        chart_data['blue'].append(districts or 0)
+        chart_data['green'].append(blocks or 0)
+        chart_data['orange'].append(supervisors or 0)
+        chart_data['red'].append(awcs or 0)
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['blue'],
+                "key": "Districts",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            },
+            {
+                "values": chart_data['green'],
+                "key": "Blocks",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "Supervisors",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "AWCs",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ]
+    }

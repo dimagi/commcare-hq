@@ -50,8 +50,8 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.all : 0);
-        var children = $filter('indiaNumbers')(row ? row.children : 0);
+        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var children =row ? $filter('indiaNumbers')(row.children) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of pregnant women who delivered in the last month: <strong>' + total + '</strong></div><div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>' + children + '</strong></div></ul>';
     };
 

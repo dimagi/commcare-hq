@@ -82,6 +82,7 @@
         <script type="text/javascript" src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/awcs-covered/awcs-covered.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -108,8 +109,8 @@
                                                class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                data-toggle="dropdown">
                                                 <i class="fa fa-cog nav-main-icon fa-2x" uib-popover-html="'Settings'"
-                     popover-placement="left"
-                     popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
+                                                   popover-placement="left"
+                                                   popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
                                             </span>
                                             <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                                 <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
@@ -172,6 +173,7 @@
                     {% registerurl 'institutional_deliveries' domain '---' %}
                     {% registerurl 'immunization_coverage' domain '---' %}
                     {% registerurl 'awc_daily_status' domain '---' %}
+                    {% registerurl 'awcs_covered' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>

@@ -113,6 +113,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/awc_daily_status/:step", {
                 template : "<awc-daily-status></awc-daily-status>",
+            })
+            .when("/awcs_covered", {
+                redirectTo : "/awcs_covered/map",
+            })
+            .when("/awcs_covered/:step", {
+                template : "<awcs-covered></awcs-covered>",
             });
     }]);
 

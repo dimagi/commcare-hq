@@ -61,6 +61,10 @@
                         <a href="{$ goToStep('awc_daily_status', $location.search()) $}" class="fa">{% trans "AWC Daily Status" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/awcs_covered') !== -1}">
+                        <a href="{$ goToStep('awcs_covered', $location.search()) $}" class="fa">{% trans "AWCs Covered" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
