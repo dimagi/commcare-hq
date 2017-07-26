@@ -27,10 +27,6 @@ hqDefine('cloudcare/js/util.js', function () {
         return urlRoot + "/" + appId + "/";
     };
 
-    var isParentField = function(field) {
-        return field ? field.startsWith('parent/') : false;
-    };
-
     var showError = function (message, $el) {
         if (message === undefined) {
             message = gettext("Sorry, an error occurred while processing that request.");
@@ -124,7 +120,6 @@ hqDefine('cloudcare/js/util.js', function () {
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
-        isParentField: isParentField,
         showError: showError,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
