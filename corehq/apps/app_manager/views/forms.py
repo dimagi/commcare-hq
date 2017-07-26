@@ -564,6 +564,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'case_type': case_type,
                 'module_type': module.doc_type
             })
+    module = form.get_module()
 
     if not form.unique_id:
         form.get_unique_id()
@@ -574,7 +575,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
-    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
+    form_has_schedule = isinstance(form, AdvancedForm) and module.has_schedule
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
@@ -617,10 +618,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        module = form.get_module()
-
         def qualified_form_name(form, auto_link):
-            module_name = trans(form.get_module().name, langs)
+            module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
