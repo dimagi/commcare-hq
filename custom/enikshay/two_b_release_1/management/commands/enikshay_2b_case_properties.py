@@ -44,7 +44,17 @@ TEST_TO_LABEL = {
     'other_dst': "Other DST",
 }
 
-PersonCaseSet = namedtuple('PersonCaseSet', 'person occurrences episodes tests referrals trails drtb_hiv')
+
+class PersonCaseSet(object):
+    def __init__(self, person):
+        self.person = person
+        self.latest_occurrence = None
+        self.occurrences = []
+        self.episodes = []
+        self.tests = []
+        self.referrals = []
+        self.trails = []
+        self.drtb_hiv = []
 
 
 def confirm(msg):
@@ -155,15 +165,7 @@ class ENikshay2BMigrator(object):
                 # AND owner_id is within the location set being migrated
                 if (person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
                         and not person.get_case_property(CASE_VERSION)):
-                    all_persons[person.case_id] = PersonCaseSet(
-                        person=person,
-                        occurrences=[],
-                        episodes=[],
-                        tests=[],
-                        referrals=[],
-                        trails=[],
-                        drtb_hiv=[],
-                    )
+                    all_persons[person.case_id] = PersonCaseSet(person)
 
             referrals_and_occurrences_to_person = {}
             type_to_bucket = {CASE_TYPE_OCCURRENCE: 'occurrences',
@@ -201,8 +203,11 @@ class ENikshay2BMigrator(object):
                             all_persons[person_id].drtb_hiv.append(case)
                             break
 
-            for person_case_set in all_persons.values():
-                yield person_case_set
+            for person in all_persons.values():
+                if person.occurrences:
+                    person.latest_occurrence = max((case.opened_on, case)
+                                                   for case in person.occurrences)[1]
+                yield person
 
     def migrate_person_case_set(self, person):
         changes = filter(None,
@@ -210,8 +215,8 @@ class ENikshay2BMigrator(object):
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
             + [self.migrate_test(test, person.person) for test in person.tests]
-            + [self.migrate_referral(referral, person.occurrences) for referral in person.referrals]
-            + [self.migrate_trail(trail, person.occurrences) for trail in person.trails]
+            + [self.migrate_referral(referral, person.latest_occurrence) for referral in person.referrals]
+            + [self.migrate_trail(trail, person.latest_occurrence) for trail in person.trails]
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
                for drtb_hiv in person.drtb_hiv]
             + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
@@ -393,7 +398,7 @@ class ENikshay2BMigrator(object):
             },
         )
 
-    def migrate_referral(self, referral, occurrences):
+    def migrate_referral(self, referral, occurrence):
         self.total_referrals += 1
         prop = referral.get_case_property
         props = {
@@ -406,8 +411,7 @@ class ENikshay2BMigrator(object):
             'accepted_by_name': prop('phi'),
         }
 
-        if occurrences:
-            occurrence = max((case.opened_on, case) for case in occurrences)[1]
+        if occurrence:
             index_kwargs = {'indices': [CaseIndex(
                 occurrence,
                 identifier='host',
@@ -427,10 +431,9 @@ class ENikshay2BMigrator(object):
             **index_kwargs
         )
 
-    def migrate_trail(self, trail, occurrences):
+    def migrate_trail(self, trail, occurrence):
         self.total_trails += 1
-        if occurrences:
-            occurrence = max((case.opened_on, case) for case in occurrences)[1]
+        if occurrence:
             index_kwargs = {'indices': [CaseIndex(
                 occurrence,
                 identifier='parent',
