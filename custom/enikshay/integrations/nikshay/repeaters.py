@@ -6,7 +6,6 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
@@ -22,7 +21,6 @@ from custom.enikshay.const import (
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
     DSTB_EPISODE_TYPE,
 )
-from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.nikshay.repeater_generator import \
     NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
     NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
