@@ -4,8 +4,9 @@ https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8
 """
 import datetime
 import logging
-import uuid
+import phonenumbers
 import sys
+import uuid
 from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
@@ -263,8 +264,8 @@ class ENikshay2BMigrator(object):
 
         phone_number = person.get_case_property('phone_number')
         if phone_number:
-            # TODO check if it already begins with 91 or has a certain length?
-            props['contact_phone_number'] = '91' + phone_number
+            phone_number_object = phonenumbers.parse(phone_number, "IN")
+            props['contact_phone_number'] = phonenumbers.format_number(phone_number_object, phonenumbers.PhoneNumberFormat.E164)
 
         location = self.locations.get(person.owner_id)
         if location:
