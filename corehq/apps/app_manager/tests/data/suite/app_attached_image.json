@@ -268,9 +268,8 @@
       "user_reg_server": "required", 
       "purge-freq": "0"
     }
-  }, 
-  "commtrack_requisition_mode": null, 
-  "attribution_notes": null, 
+  },
+  "attribution_notes": null,
   "user_registration": {
     "doc_type": "UserRegistrationForm", 
     "unique_id": "1fbe395a41a7003802c435b9030084d50f764abc", 

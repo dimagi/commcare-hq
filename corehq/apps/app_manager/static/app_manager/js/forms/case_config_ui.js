@@ -52,12 +52,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
-                var subcases;
-                if (self.caseConfigViewModel.actionType() === 'none') {
-                    subcases = [];
-                } else {
-                    subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
-                }
+                var subcases = _(self.caseConfigViewModel.subcases()).map(HQOpenSubCaseAction.from_case_transaction);
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_case_transaction(self.caseConfigViewModel.case_transaction),
                     {subcases: subcases}
@@ -248,11 +243,8 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                     return 'update';
                 } else if (opens_case) {
                     return 'open';
-                } else if (has_subcases) {
-                    return 'open-other';
-                } else {
-                    return 'none';
                 }
+                return 'update';
             }()));
 
         self.actionType.subscribe(function (value) {
@@ -779,7 +771,9 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
         },
         to_case_transaction: function (o, caseConfig) {
             var self = HQFormActions.normalize(o);
-            var required_properties = caseConfig.requires() === 'none' && !o.update_case.update.name ? [{
+            var required_properties = caseConfig.requires() === 'none' &&
+                caseConfig.actions.open_case.condition.type !== "never" &&
+                !o.update_case.update.name ? [{
                 key: 'name',
                 path: self.open_case.name_path,
                 required: true
@@ -844,11 +838,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
 
             }
 
-            if (actionType === 'open' || actionType === 'update') {
-                update_condition.type = 'always';
-            } else {
-                update_condition.type = 'never';
-            }
+            update_condition.type = 'always';
 
             return {
                 open_case: {

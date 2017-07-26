@@ -34,7 +34,6 @@
   "cloudcare_enabled": true,
   "comment_from": null,
   "commtrack_enabled": false,
-  "commtrack_requisition_mode": null,
   "copy_history": [],
   "deployment_date": null,
   "description": null,

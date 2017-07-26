@@ -24,12 +24,6 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
-    CT_REQUISITION_MODE_3,
-    CT_LEDGER_STOCK,
-    CT_LEDGER_REQUESTED,
-    CT_REQUISITION_MODE_4,
-    CT_LEDGER_APPROVED,
-    CT_LEDGER_PREFIX,
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
@@ -316,16 +310,6 @@ def languages_mapping():
         mapping["default"] = ["Default Language"]
         cache.set('__languages_mapping', mapping, 12*60*60)
     return mapping
-
-
-def commtrack_ledger_sections(mode):
-    sections = [CT_LEDGER_STOCK]
-    if mode == CT_REQUISITION_MODE_3:
-        sections += [CT_LEDGER_REQUESTED]
-    elif mode == CT_REQUISITION_MODE_4:
-        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
-
-    return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
 
 
 def version_key(ver):
