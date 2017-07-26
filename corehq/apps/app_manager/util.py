@@ -280,27 +280,6 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
-def new_careplan_module(app, name, lang, target_module):
-    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
-    module = app.add_module(CareplanModule.new_module(
-        name,
-        lang,
-        target_module.unique_id,
-        target_module.case_type
-    ))
-
-    forms = [form_class.new_form(lang, name, mode)
-                for form_class in [CareplanGoalForm, CareplanTaskForm]
-                for mode in ['create', 'update']]
-
-    for form, source in forms:
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = source
-
-    return module
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:

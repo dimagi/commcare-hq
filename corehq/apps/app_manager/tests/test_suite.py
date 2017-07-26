@@ -168,14 +168,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
 
-    def test_careplan_suite(self):
-        self._test_generic_suite('careplan')
-
-    def test_careplan_suite_own_module(self):
-        app = Application.wrap(self.get_json('careplan'))
-        app.get_module(1).display_separately = True
-        self.assertXmlEqual(self.get_xml('careplan-own-module'), app.create_suite())
-
     @commtrack_enabled(True)
     def test_product_list_custom_data(self):
         # product data shouldn't be interpreted as a case index relationship

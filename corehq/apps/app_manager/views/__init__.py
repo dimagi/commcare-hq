@@ -63,7 +63,6 @@ from corehq.apps.app_manager.views.forms import (
     copy_form,
     delete_form,
     edit_advanced_form_actions,
-    edit_careplan_form_actions,
     edit_form_actions,
     edit_form_attr,
     edit_form_attr_api,

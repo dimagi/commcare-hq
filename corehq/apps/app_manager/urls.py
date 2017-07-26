@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views import (
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
     edit_form_attr_api, patch_xform, validate_form_for_build, rename_language, validate_language,
-    edit_form_actions, edit_careplan_form_actions, edit_advanced_form_actions, edit_visit_schedule,
+    edit_form_actions, edit_advanced_form_actions, edit_visit_schedule,
     edit_schedule_phases, multimedia_list_download, edit_module_detail_screens, edit_module_attr,
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
@@ -118,8 +118,6 @@ urlpatterns = [
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
-    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
-        edit_careplan_form_actions, name='edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_advanced_form_actions, name='edit_advanced_form_actions'),
 

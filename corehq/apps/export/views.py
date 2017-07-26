@@ -1,4 +1,6 @@
 from datetime import datetime, date, timedelta
+from wsgiref.util import FileWrapper
+
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -1572,7 +1574,10 @@ class DataFileDownloadDetail(BaseProjectDataView):
         try:
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
-            response = StreamingHttpResponse(blob, content_type=data_file.content_type)
+            response = StreamingHttpResponse(
+                blob if hasattr(blob, '__iter__') else FileWrapper(blob),
+                content_type=data_file.content_type
+            )
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
         response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
