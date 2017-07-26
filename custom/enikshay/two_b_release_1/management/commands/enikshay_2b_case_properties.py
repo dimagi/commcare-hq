@@ -328,7 +328,7 @@ class ENikshay2BMigrator(object):
                           if index.referenced_type == CASE_TYPE_OCCURRENCE]
         occurrence_id = occurrence_ids[0] if occurrence_ids else None
         return max((case.opened_on, case.case_id) for case in episodes
-                   if is_episode_of_occurrence(case, occurrence_id) and not case.closed)[1]
+                   if is_episode_of_occurrence(case, occurrence_id))[1]
 
     def migrate_episode(self, episode, episodes):
         self.total_episodes += 0
@@ -336,7 +336,7 @@ class ENikshay2BMigrator(object):
         latest_episode_id = self._get_last_episode_id(episode.indices, episodes)
         test_type = episode.get_case_property('test_confirming_diagnosis')
         props = {
-            'is_active': 'yes' if episode.case_id == latest_episode_id else 'no',
+            'is_active': 'yes' if episode.case_id == latest_episode_id and not episode.closed else 'no',
             'dosage_display': episode.get_case_property('full_dosage'),
             'dosage_summary': episode.get_case_property('full_dosage'),
             'rft_general': 'diagnosis_dstb',
