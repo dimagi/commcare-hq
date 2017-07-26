@@ -448,7 +448,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None):
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
             related_type=host.attrs['case_type'],
-        )],
+        )]
     return CaseStructure(**kwargs)
 
 
