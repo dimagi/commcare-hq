@@ -138,10 +138,10 @@ class TestZapierIntegration(TestCase):
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
-
         subscription = ZapierSubscription.objects.get(
             url=ZAPIER_URL
         )
+        self.assertEqual(subscription.id, response.json()['id'])
         self.assertListEqual(
             [subscription.url, subscription.user_id, subscription.domain, subscription.form_xmlns],
             [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, FORM_XMLNS]
@@ -194,8 +194,8 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             form_xmlns=FORM_XMLNS
         )
+        self.assertNotEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
         data = {
-            "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL
         }
         response = self.client.post(reverse(UnsubscribeView.urlname, kwargs={'domain': self.domain}),
@@ -215,8 +215,8 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             case_type=CASE_TYPE,
         )
+        self.assertNotEqual(len(CaseRepeater.by_domain(TEST_DOMAIN)), 0)
         data = {
-            "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL
         }
         response = self.client.post(reverse(UnsubscribeView.urlname, kwargs={'domain': self.domain}),
