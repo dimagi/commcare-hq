@@ -10,7 +10,7 @@ from corehq.sql_db.operations import HqRunSQL
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0050_remove_get_extension_case_ids'),
+        ('sql_accessors', '0051_merge_20170724_1255'),
     ]
 
     operations = [
