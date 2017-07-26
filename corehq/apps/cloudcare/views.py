@@ -109,7 +109,14 @@ class FormplayerMain(View):
 
     @staticmethod
     def get_restore_as_user(request, domain):
-        set_cookie = lambda response: response
+        """
+        returns (user, set_cookie), where set_cookie is a function to be called on
+        the eventual response
+        """
+
+        def set_cookie(response):  # set_coookie is a noop by default
+            return response
+
         cookie_name = urllib.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
@@ -118,7 +125,7 @@ class FormplayerMain(View):
             if user:
                 return user, set_cookie
             else:
-                def set_cookie(response):
+                def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
 
