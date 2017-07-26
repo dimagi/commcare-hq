@@ -11,7 +11,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Stunning (Height for age)";
+    vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/stunning/map', label: 'Map'},
@@ -54,9 +54,9 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
-        var sever = row ? $filter('indiaNumbers')(row.severe) : 'N/A';
-        var moderate = row ? $filter('indiaNumbers')(row.moderate) : 'N/A';
-        var normal = row ? $filter('indiaNumbers')(row.normal) : 'N/A';
+        var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
+        var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 

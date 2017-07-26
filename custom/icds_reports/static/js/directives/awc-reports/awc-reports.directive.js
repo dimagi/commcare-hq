@@ -1097,7 +1097,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.steps ={
         // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
         pse: { route: "/awc_reports/pse", label: "Pre School Education"},
-        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal & Child Health"},
+        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
     };
