@@ -219,7 +219,6 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
-            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
