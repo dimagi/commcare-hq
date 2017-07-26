@@ -18,16 +18,20 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
          * Renders a SingleAppView.
          */
         singleApp: function(appId) {
-            var singleAppView = new Apps.Views.SingleAppView({
-                appId: appId,
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+                var singleAppView = new Apps.Views.SingleAppView({
+                    appId: appId,
+                });
+                FormplayerFrontend.regions.main.show(singleAppView);
             });
-            FormplayerFrontend.regions.main.show(singleAppView);
         },
         landingPageApp: function(appId) {
-            var landingPageAppView = new Apps.Views.LandingPageAppView({
-                appId: appId,
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+                var landingPageAppView = new Apps.Views.LandingPageAppView({
+                    appId: appId,
+                });
+                FormplayerFrontend.regions.main.show(landingPageAppView);
             });
-            FormplayerFrontend.regions.main.show(landingPageAppView);
         },
         listSettings: function() {
             var currentUser = FormplayerFrontend.request('currentUser'),

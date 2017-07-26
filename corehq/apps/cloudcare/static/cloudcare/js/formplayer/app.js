@@ -508,7 +508,7 @@ FormplayerFrontend.on('navigateHome', function() {
     FormplayerFrontend.regions.breadcrumb.empty();
     if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
-        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+        FormplayerFrontend.trigger("app:singleApp", appId);
     } else {
         FormplayerFrontend.trigger("apps:list");
     }
