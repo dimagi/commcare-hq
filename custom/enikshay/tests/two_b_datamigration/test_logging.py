@@ -26,6 +26,7 @@ IMPORT_ROWS = [
      "123 fake st", "91-123-456-7890"] + ([None] * 9) + ["some district", None, None, "some phi"],
 ]
 
+
 class ImportDRTBTestMixin(object):
 
     @contextmanager
@@ -78,7 +79,8 @@ class TestLogCreation(SimpleTestCase, ImportDRTBTestMixin):
             # Confirm that the valid row in our input sheet results in all case_ids being logged
             self.assertEqual(
                 len(result_rows[0].get("case_ids", "").split(",")),
-                # A person, occurrence, episode, and secondary_owner case, plus one drug_resistance case for each drug
+                # A person, occurrence, episode, and secondary_owner case, plus one drug_resistance case for
+                # each drug
                 4 + len(ALL_DRUGS)
             )
             self.assertIsNone(result_rows[0]['exception'])

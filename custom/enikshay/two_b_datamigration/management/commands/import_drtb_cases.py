@@ -1374,7 +1374,7 @@ class Command(BaseCommand):
 
                         if options['commit']:
                             case_factory.create_or_update_cases(case_structures)
-                    except Exception as e:
+                    except Exception:
                         logger.info("Creating case structures for row {} failed".format(i))
                         exception_as_string = traceback.format_exc()
                         import_log_writer.writerow([i, "", exception_as_string])
