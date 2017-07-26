@@ -392,9 +392,9 @@ class AwcReportsView(View):
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 locations = sql_location.get_ancestors(include_self=True)
                 for loc in locations:
-                    location_key = '%s_id' % loc.location_type.code
+                    location_key = '%s_site_code' % loc.location_type.code
                     config.update({
-                        location_key: loc.location_id,
+                        location_key: loc.site_code,
                     })
             except SQLLocation.DoesNotExist:
                 pass
@@ -428,7 +428,7 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             data = get_awc_report_beneficiary(
-                config['awc_id'],
+                config['awc_site_code'],
                 tuple(month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
             )
@@ -466,9 +466,10 @@ class ExportIndicatorView(View):
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 locations = sql_location.get_ancestors(include_self=True)
                 for loc in locations:
-                    location_key = '%s_id' % loc.location_type.code
+                    location_code = loc.site_code
+                    location_key = '%s_site_code' % loc.location_type.code
                     config.update({
-                        location_key: loc.location_id,
+                        location_key: location_code,
                     })
             except SQLLocation.DoesNotExist:
                 pass
