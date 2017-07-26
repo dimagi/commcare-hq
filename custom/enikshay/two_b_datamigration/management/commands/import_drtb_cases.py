@@ -1366,7 +1366,7 @@ def match_phi(domain, xlsx_phi_name):
 def get_tu(domain, phi_id):
     if not phi_id:
         return None, None
-    phi = SQLLocation.get(domain=domain, location_id=phi_id)
+    phi = SQLLocation.active_objects.get(domain=domain, location_id=phi_id)
     return phi.parent.name, phi.parent.location_id
 
 
