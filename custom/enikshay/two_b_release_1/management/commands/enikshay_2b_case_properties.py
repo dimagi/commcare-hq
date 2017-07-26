@@ -271,6 +271,9 @@ class ENikshay2BMigrator(object):
 
         location = self.locations.get(person.owner_id)
         if location:
+            dataset = 'real' if location.metadata.get('is_test') == 'no' else 'test'
+            props['dataset'] = person.get_case_property('dataset') or dataset
+
             if location.location_type.code == 'phi':
                 props['phi_name'] = location.name
             ancestors_by_type = self.get_ancestors_by_type(location)
@@ -379,6 +382,11 @@ class ENikshay2BMigrator(object):
             'dataset': person.get_case_property('dataset'),
             'episode_case_id': self._get_last_episode_id(test.indices, episodes),
         }
+
+        if not props['dataset']:
+            location = self.locations.get(person.owner_id)
+            if location:
+                props['dataset'] = 'real' if location.metadata.get('is_test') == 'no' else 'test'
 
         if test.get_case_property('follow_up_test_reason') == 'private_ntm':
             props['rft_general'] = 'diagnosis_dstb'

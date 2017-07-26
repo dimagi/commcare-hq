@@ -57,7 +57,6 @@ class TestCreateEnikshayCases(TestCase):
             'date_referred_out': 'date_referred_out',
             'date_by_id': 'date_by_id',
             'phone_number': '1234567890',
-            'dataset': 'dataset',
         })
         return person
 
@@ -180,6 +179,7 @@ class TestCreateEnikshayCases(TestCase):
             'tu_id': self.locations['TU'].location_id,
             'dto_name': 'DTO',
             'dto_id': self.locations['DTO'].location_id,
+            'dataset': 'real',
         }, new_person.dynamic_case_properties())
 
         new_occurrence = accessor.get_case(person.occurrences[0].case_id)
@@ -208,7 +208,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertDictContainsSubset({
             'is_direct_test_entry': 'no',
             'rft_drtb_diagnosis': 'diagnostic_drtb_test_reason',
-            'dataset': 'dataset',
+            'dataset': 'real',
             'rft_general': 'diagnosis_dstb',
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
