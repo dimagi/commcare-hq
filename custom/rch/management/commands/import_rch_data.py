@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
                 if results:
                     rch_beneficiary = results[0]
-                    rch_beneficiary.prop_doc['properties'] = record
+                    rch_beneficiary.details = record
                 else:
                     rch_beneficiary = RCHRecord(doc_type=RCH_RECORD_TYPE_MAPPING[beneficiary_type])
 

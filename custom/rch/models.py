@@ -117,7 +117,7 @@ class RCHRecord(models.Model):
 
                     if results:
                         rch_beneficiary = results[0]
-                        rch_beneficiary.prop_doc['properties'] = dict_of_props
+                        rch_beneficiary.details = dict_of_props
                     else:
                         rch_beneficiary = cls(doc_type=RCH_RECORD_TYPE_MAPPING[beneficiary_type])
 
