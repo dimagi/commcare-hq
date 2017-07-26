@@ -11,7 +11,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Stunning (Height for age)";
+    vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/stunning/map', label: 'Map'},

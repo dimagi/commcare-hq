@@ -52,7 +52,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div><div>Total Number of Children who were put to the breast within one hour of birth: <strong>' + birth + '</strong></div></ul>';
     };

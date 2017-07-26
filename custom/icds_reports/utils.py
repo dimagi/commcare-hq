@@ -2280,18 +2280,18 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             'low_birth': low_birth,
             'in_month': in_month,
         }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+        if value < 20:
+            row_values.update({'fillKey': '0%-19%'})
+        elif 20 <= value < 60:
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': GREEN})
-    fills.update({'20%-60%': YELLOW})
+    fills.update({'0%-19%': GREEN})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2523,18 +2523,18 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             'in_month': in_month,
         }
         if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
+            row_values.update({'fillKey': '0%-19%'})
         elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
+    fills.update({'0%-19%': RED})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': GREEN})
-    fills.update({'20%-60%': YELLOW})
-    fills.update({'0%-20%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2765,17 +2765,17 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
+            row_values.update({'fillKey': '0%-19%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': YELLOW})
+    fills.update({'0%-19%': RED})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': GREEN})
     fills.update({'defaultFill': GREY})
 
