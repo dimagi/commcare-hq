@@ -15,7 +15,7 @@ class Command(BaseCommand):
         ):
             location_id = loc.location_id
             print 'processing location %s' % location_id
-            uatbc_tu_id = loc.metadata['uatbc_tu_id']
+            uatbc_tu_id = loc.metadata.get('uatbc_tu_id')
             loc.metadata['nikshay_tu_id'] = UATBC_TO_NIKSHAY_TUS.get(uatbc_tu_id, '')
             loc.save()
 
