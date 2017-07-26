@@ -44,6 +44,11 @@ CREATE VIEW agg_awc_monthly AS
         "awc_location_months"."month" AS "month",
         "agg_awc"."is_launched" AS "is_launched",
         "agg_awc"."num_awcs" AS "num_awcs",
+        "agg_awc"."num_launched_states" AS "num_launched_states",
+        "agg_awc"."num_launched_districts" AS "num_launched_districts",
+        "agg_awc"."num_launched_blocks" AS "num_launched_blocks",
+        "agg_awc"."num_launched_supervisors" AS "num_launched_supervisors",
+        "agg_awc"."num_launched_awcs" AS "num_launched_awcs",
         "agg_awc"."awc_days_open" AS "awc_days_open",
         "agg_awc"."total_eligible_children" AS "total_eligible_children",
         "agg_awc"."total_attended_children" AS "total_attended_children",
@@ -75,9 +80,20 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."num_awc_rank_functional" AS "num_awc_rank_functional",
         "agg_awc"."num_awc_rank_semi" AS "num_awc_rank_semi",
         "agg_awc"."num_awc_rank_non" AS "num_awc_rank_non",
+        COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
+        COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
+        COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
+        COALESCE("agg_awc"."cases_person_has_aadhaar", 0) AS "cases_person_has_aadhaar",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) AS "cases_person_adolescent_girls_11_14",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_15_18_all",
         COALESCE("agg_awc"."cases_ccs_pregnant", 0) AS "cases_ccs_pregnant",
         COALESCE("agg_awc"."cases_ccs_lactating", 0) AS "cases_ccs_lactating",
         COALESCE("agg_awc"."cases_child_health", 0) AS "cases_child_health",
+        COALESCE("agg_awc"."cases_ccs_pregnant_all", 0) AS "cases_ccs_pregnant_all",
+        COALESCE("agg_awc"."cases_ccs_lactating_all", 0) AS "cases_ccs_lactating_all",
+        COALESCE("agg_awc"."cases_child_health_all", 0) AS "cases_child_health_all",
         COALESCE("agg_awc"."usage_num_pse", 0) AS "usage_num_pse",
         COALESCE("agg_awc"."usage_num_gmp", 0) AS "usage_num_gmp",
         COALESCE("agg_awc"."usage_num_thr", 0) AS "usage_num_thr",
@@ -130,6 +146,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."infra_baby_weighing_scale" AS "infra_baby_weighing_scale",
         "agg_awc"."infra_flat_weighing_scale" AS "infra_flat_weighing_scale",
         "agg_awc"."infra_adult_weighing_scale" AS "infra_adult_weighing_scale",
+        "agg_awc"."infra_infant_weighing_scale" AS "infra_infant_weighing_scale",
         "agg_awc"."infra_cooking_utensils" AS "infra_cooking_utensils",
         "agg_awc"."infra_medicine_kits" AS "infra_medicine_kits",
         "agg_awc"."infra_adequate_space_pse" AS "infra_adequate_space_pse",
@@ -172,15 +189,18 @@ CREATE VIEW agg_ccs_record_monthly AS
         "awc_location_months"."state_site_code" AS "state_site_code",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
-        "ccs_record_categories"."ccs_status" AS "ccs_status",
-        "ccs_record_categories"."trimester" AS "trimester",
-        "ccs_record_categories"."caste" AS "caste",
-        "ccs_record_categories"."disabled" AS "disabled",
-        "ccs_record_categories"."minority" AS "minority",
-        "ccs_record_categories"."resident" AS "resident",
+        "agg_ccs_record"."ccs_status" AS "ccs_status",
+        "agg_ccs_record"."trimester" AS "trimester",
+        "agg_ccs_record"."caste" AS "caste",
+        "agg_ccs_record"."disabled" AS "disabled",
+        "agg_ccs_record"."minority" AS "minority",
+        "agg_ccs_record"."resident" AS "resident",
         COALESCE("agg_ccs_record"."valid_in_month", 0) AS "valid_in_month",
+        COALESCE("agg_ccs_record"."valid_all_registered_in_month", 0) AS "valid_all_registered_in_month",
         COALESCE("agg_ccs_record"."lactating", 0) AS "lactating",
         COALESCE("agg_ccs_record"."pregnant", 0) AS "pregnant",
+        COALESCE("agg_ccs_record"."lactating_all", 0) AS "lactating_all",
+        COALESCE("agg_ccs_record"."pregnant_all", 0) AS "pregnant_all",
         COALESCE("agg_ccs_record"."thr_eligible", 0) AS "thr_eligible",
         COALESCE("agg_ccs_record"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed",
         COALESCE("agg_ccs_record"."tetanus_complete", 0) AS "tetanus_complete",
@@ -190,6 +210,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         COALESCE("agg_ccs_record"."anc3_received_at_delivery", 0) AS "anc3_received_at_delivery",
         COALESCE("agg_ccs_record"."anc4_received_at_delivery", 0) AS "anc4_received_at_delivery",
         COALESCE("agg_ccs_record"."registration_trimester_at_delivery", 0) AS "registration_trimester_at_delivery",
+        COALESCE("agg_ccs_record"."institutional_delivery_in_month", 0) AS "institutional_delivery_in_month",
         COALESCE("agg_ccs_record"."using_ifa", 0) AS "using_ifa",
         COALESCE("agg_ccs_record"."ifa_consumed_last_seven_days", 0) AS "ifa_consumed_last_seven_days",
         COALESCE("agg_ccs_record"."anemic_normal", 0) AS "anemic_normal",
@@ -212,7 +233,6 @@ CREATE VIEW agg_ccs_record_monthly AS
         COALESCE("agg_ccs_record"."counsel_immediate_conception", 0) AS "counsel_immediate_conception",
         COALESCE("agg_ccs_record"."counsel_accessible_postpartum_fp", 0) AS "counsel_accessible_postpartum_fp"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."ccs_record_categories" "ccs_record_categories"
     LEFT JOIN "public"."agg_ccs_record" "agg_ccs_record" ON (
         ("awc_location_months"."month" = "agg_ccs_record"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_ccs_record"."aggregation_level") AND
@@ -220,13 +240,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         ("awc_location_months"."district_id" = "agg_ccs_record"."district_id") AND
         ("awc_location_months"."block_id" = "agg_ccs_record"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_ccs_record"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_ccs_record"."awc_id") AND
-        ("ccs_record_categories"."ccs_status" = "agg_ccs_record"."ccs_status") AND
-        ("ccs_record_categories"."trimester" = "agg_ccs_record"."trimester") AND
-        ("ccs_record_categories"."caste" = "agg_ccs_record"."caste") AND
-        ("ccs_record_categories"."disabled" = "agg_ccs_record"."disabled") AND
-        ("ccs_record_categories"."minority" = "agg_ccs_record"."minority") AND
-        ("ccs_record_categories"."resident" = "agg_ccs_record"."resident")
+        ("awc_location_months"."awc_id" = "agg_ccs_record"."awc_id")
     );
 
 DROP VIEW IF EXISTS agg_child_health_monthly CASCADE;
@@ -250,19 +264,29 @@ CREATE VIEW agg_child_health_monthly AS
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."month_display" AS "month_display",
-        "child_health_categories"."gender" AS "gender",
-        "child_health_categories"."age_tranche" AS "age_tranche",
-        "child_health_categories"."caste" AS "caste",
-        "child_health_categories"."disabled" AS "disabled",
-        "child_health_categories"."minority" AS "minority",
-        "child_health_categories"."resident" AS "resident",
+        "agg_child_health"."gender" AS "gender",
+        "agg_child_health"."age_tranche" AS "age_tranche",
+        "agg_child_health"."caste" AS "caste",
+        "agg_child_health"."disabled" AS "disabled",
+        "agg_child_health"."minority" AS "minority",
+        "agg_child_health"."resident" AS "resident",
         COALESCE("agg_child_health"."valid_in_month", 0) AS "valid_in_month",
+        COALESCE("agg_child_health"."valid_all_registered_in_month", 0) AS "valid_all_registered_in_month",
         COALESCE("agg_child_health"."nutrition_status_weighed", 0) AS "nutrition_status_weighed",
         COALESCE("agg_child_health"."nutrition_status_unweighed", 0) AS "nutrition_status_unweighed",
         COALESCE("agg_child_health"."nutrition_status_normal", 0) AS "nutrition_status_normal",
         COALESCE("agg_child_health"."nutrition_status_moderately_underweight", 0) AS "nutrition_status_moderately_underweight",
         COALESCE("agg_child_health"."nutrition_status_severely_underweight", 0) AS "nutrition_status_severely_underweight",
         COALESCE("agg_child_health"."wer_eligible", 0) AS "wer_eligible",
+        COALESCE("agg_child_health"."height_measured_in_month", 0) AS "height_measured_in_month",
+        COALESCE("agg_child_health"."height_eligible", 0) AS "height_eligible",
+        COALESCE("agg_child_health"."wasting_moderate", 0) AS "wasting_moderate",
+        COALESCE("agg_child_health"."wasting_severe", 0) AS "wasting_severe",
+        COALESCE("agg_child_health"."wasting_normal", 0) AS "wasting_normal",
+        COALESCE("agg_child_health"."wasting_moderate", 0) AS "stunting_moderate",
+        COALESCE("agg_child_health"."wasting_severe", 0) AS "stunting_severe",
+        COALESCE("agg_child_health"."stunting_normal", 0) AS "stunting_normal",
+        COALESCE("agg_child_health"."pnc_eligible", 0) AS "pnc_eligible",
         COALESCE("agg_child_health"."thr_eligible", 0) AS "thr_eligible",
         COALESCE("agg_child_health"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed",
         COALESCE("agg_child_health"."pse_eligible", 0) AS "pse_eligible",
@@ -272,6 +296,9 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."bf_at_birth", 0) AS "bf_at_birth",
         COALESCE("agg_child_health"."ebf_eligible", 0) AS "ebf_eligible",
         COALESCE("agg_child_health"."ebf_in_month", 0) AS "ebf_in_month",
+        COALESCE("agg_child_health"."ebf_no_info_recorded", 0) AS "ebf_no_info_recorded",
+        COALESCE("agg_child_health"."cf_initiation_in_month", 0) AS "cf_initiation_in_month",
+        COALESCE("agg_child_health"."cf_initiation_eligible", 0) AS "cf_initiation_eligible",
         COALESCE("agg_child_health"."cf_eligible", 0) AS "cf_eligible",
         COALESCE("agg_child_health"."cf_in_month", 0) AS "cf_in_month",
         COALESCE("agg_child_health"."cf_diet_diversity", 0) AS "cf_diet_diversity",
@@ -288,7 +315,6 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."fully_immunized_on_time", 0) AS "fully_immunized_on_time",
         COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."child_health_categories" "child_health_categories"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND
@@ -296,13 +322,7 @@ CREATE VIEW agg_child_health_monthly AS
         ("awc_location_months"."district_id" = "agg_child_health"."district_id") AND
         ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_child_health"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_child_health"."awc_id") AND
-        ("child_health_categories"."gender" = "agg_child_health"."gender") AND
-        ("child_health_categories"."age_tranche" = "agg_child_health"."age_tranche") AND
-        ("child_health_categories"."caste" = "agg_child_health"."caste") AND
-        ("child_health_categories"."disabled" = "agg_child_health"."disabled") AND
-        ("child_health_categories"."minority" = "agg_child_health"."minority") AND
-        ("child_health_categories"."resident" = "agg_child_health"."resident")
+        ("awc_location_months"."awc_id" = "agg_child_health"."awc_id")
     );
 
 DROP VIEW IF EXISTS agg_thr_monthly CASCADE;
@@ -325,15 +345,14 @@ CREATE VIEW agg_thr_monthly AS
         "awc_location_months"."state_site_code" AS "state_site_code",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
-        "thr_categories"."beneficiary_type" AS "beneficiary_type",
-        "thr_categories"."caste" AS "caste",
-        "thr_categories"."disabled" AS "disabled",
-        "thr_categories"."minority" AS "minority",
-        "thr_categories"."resident" AS "resident",
+        "agg_thr_data"."beneficiary_type" AS "beneficiary_type",
+        "agg_thr_data"."caste" AS "caste",
+        "agg_thr_data"."disabled" AS "disabled",
+        "agg_thr_data"."minority" AS "minority",
+        "agg_thr_data"."resident" AS "resident",
         COALESCE("agg_thr_data"."thr_eligible", 0) AS "thr_eligible",
         COALESCE("agg_thr_data"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."thr_categories" "thr_categories"
     LEFT JOIN "public"."agg_thr_data" "agg_thr_data" ON (
         ("awc_location_months"."month" = "agg_thr_data"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_thr_data"."aggregation_level") AND
@@ -341,12 +360,7 @@ CREATE VIEW agg_thr_monthly AS
         ("awc_location_months"."district_id" = "agg_thr_data"."district_id") AND
         ("awc_location_months"."block_id" = "agg_thr_data"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_thr_data"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id") AND
-        ("thr_categories"."beneficiary_type" = "agg_thr_data"."beneficiary_type") AND
-        ("thr_categories"."caste" = "agg_thr_data"."caste") AND
-        ("thr_categories"."disabled" = "agg_thr_data"."disabled") AND
-        ("thr_categories"."minority" = "agg_thr_data"."minority") AND
-        ("thr_categories"."resident" = "agg_thr_data"."resident")
+        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id")
     );
 
 DROP VIEW IF EXISTS daily_attendance_view CASCADE;
@@ -384,3 +398,94 @@ CREATE VIEW daily_attendance_view AS
         ("awc_location_months"."awc_id" = "daily_attendance"."awc_id") AND
         ("awc_location_months"."month" = "daily_attendance"."month")
     );
+
+DROP VIEW IF EXISTS agg_awc_daily_view CASCADE;
+CREATE VIEW agg_awc_daily_view AS
+    SELECT
+        "awc_location"."doc_id" AS "awc_id",
+        "awc_location"."awc_name" AS "awc_name",
+        "awc_location"."awc_site_code" AS "awc_site_code",
+        "awc_location"."supervisor_id" AS "supervisor_id",
+        "awc_location"."supervisor_name" AS "supervisor_name",
+        "awc_location"."supervisor_site_code" AS "supervisor_site_code",
+        "awc_location"."block_id" AS "block_id",
+        "awc_location"."block_name" AS "block_name",
+        "awc_location"."block_site_code" AS "block_site_code",
+        "awc_location"."district_id" AS "district_id",
+        "awc_location"."district_name" AS "district_name",
+        "awc_location"."district_site_code" AS "district_site_code",
+        "awc_location"."state_id" AS "state_id",
+        "awc_location"."state_name" AS "state_name",
+        "awc_location"."state_site_code" AS "state_site_code",
+        "awc_location"."aggregation_level" AS "aggregation_level",
+        "agg_awc"."date" AS "date",
+        COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
+        COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
+        COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
+        COALESCE("agg_awc"."cases_person_has_aadhaar", 0) AS "cases_person_has_aadhaar",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) AS "cases_person_adolescent_girls_11_14",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_15_18_all",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) + COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_11_18",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) + COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_11_18_all",
+        COALESCE("agg_awc"."cases_ccs_pregnant", 0) AS "cases_ccs_pregnant",
+        COALESCE("agg_awc"."cases_ccs_lactating", 0) AS "cases_ccs_lactating",
+        COALESCE("agg_awc"."cases_child_health", 0) AS "cases_child_health",
+        COALESCE("agg_awc"."cases_ccs_pregnant_all", 0) AS "cases_ccs_pregnant_all",
+        COALESCE("agg_awc"."cases_ccs_lactating_all", 0) AS "cases_ccs_lactating_all",
+        COALESCE("agg_awc"."cases_child_health_all", 0) AS "cases_child_health_all",
+        COALESCE("agg_awc"."daily_attendance_open", 0) AS "daily_attendance_open",
+        "agg_awc"."num_awcs" AS "num_awcs",
+        "agg_awc"."num_launched_states" AS "num_launched_states",
+        "agg_awc"."num_launched_districts" AS "num_launched_districts",
+        "agg_awc"."num_launched_blocks" AS "num_launched_blocks",
+        "agg_awc"."num_launched_supervisors" AS "num_launched_supervisors",
+        "agg_awc"."num_launched_awcs" AS "num_launched_awcs"
+    FROM "public"."awc_location" "awc_location"
+    LEFT JOIN "public"."agg_awc_daily" "agg_awc" ON (
+        ("awc_location"."aggregation_level" = "agg_awc"."aggregation_level") AND
+        ("awc_location"."state_id" = "agg_awc"."state_id") AND
+        ("awc_location"."district_id" = "agg_awc"."district_id") AND
+        ("awc_location"."block_id" = "agg_awc"."block_id") AND
+        ("awc_location"."supervisor_id" = "agg_awc"."supervisor_id") AND
+        ("awc_location"."doc_id" = "agg_awc"."awc_id")
+    );
+
+DROP VIEW IF EXISTS child_health_monthly_view CASCADE;
+CREATE VIEW child_health_monthly_view AS
+    SELECT
+        "child_list".case_id,
+        "child_list".awc_id,
+        "awc_location".awc_site_code,
+        "child_list".name AS person_name,
+        "child_list".mother_name,
+        "child_list".opened_on,
+        "child_list".closed_on,
+        "child_list".closed,
+        "child_list".dob,
+        "child_list".sex,
+        "child_list".fully_immunized_date,
+        child_health_monthly.month,
+        child_health_monthly.age_in_months,
+        child_health_monthly.open_in_month,
+        child_health_monthly.valid_in_month,
+        child_health_monthly.wer_eligible,
+        child_health_monthly.valid_all_registered_in_month,
+        child_health_monthly.nutrition_status_last_recorded,
+        child_health_monthly.current_month_nutrition_status,
+        child_health_monthly.nutrition_status_weighed,
+        child_health_monthly.num_rations_distributed,
+        child_health_monthly.pse_eligible,
+        child_health_monthly.pse_days_attended,
+        child_health_monthly.born_in_month,
+        child_health_monthly.recorded_weight,
+        child_health_monthly.recorded_height,
+        child_health_monthly.thr_eligible,
+        child_health_monthly.stunting_last_recorded,
+        child_health_monthly.current_month_stunting,
+        child_health_monthly.wasting_last_recorded,
+        child_health_monthly.current_month_wasting
+   FROM "config_report_icds-cas_static-child_health_cases_a46c129f" "child_list"
+     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id
+     LEFT JOIN awc_location awc_location ON "child_list".awc_id = awc_location.doc_id;

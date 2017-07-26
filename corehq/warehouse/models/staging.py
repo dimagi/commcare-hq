@@ -1,21 +1,25 @@
 from contextlib import closing
 
 from django.db import models, transaction, connections
+from django.contrib.postgres.fields import ArrayField
 
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.sql_db.routers import db_for_read_write
+from corehq.apps.app_manager.models import Application
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.models import XFormInstanceSQL
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
     get_domain_ids_by_last_modified,
     get_synclog_ids_by_date,
     get_forms_by_last_modified,
+    get_application_ids_by_last_modified
 )
 from corehq.warehouse.const import (
     GROUP_STAGING_SLUG,
@@ -23,26 +27,99 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
+    LOCATION_STAGING_SLUG,
+    LOCATION_TYPE_STAGING_SLUG,
+    APPLICATION_STAGING_SLUG
 )
 
 from corehq.warehouse.utils import truncate_records_for_cls
 from corehq.warehouse.models.shared import WarehouseTable
-from corehq.warehouse.etl import CouchToDjangoETLMixin
+from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 
 
 class StagingTable(models.Model, WarehouseTable):
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.PROTECT,
+    )
 
     class Meta:
         abstract = True
 
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch):
         cls.clear_records()
-        cls.load(start_datetime, end_datetime)
+        cls.load(batch)
+        return True
 
     @classmethod
     def clear_records(cls):
         truncate_records_for_cls(cls, cascade=False)
+
+
+class LocationStagingTable(StagingTable, CustomSQLETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the LocationDim
+
+    Grain: location_id
+    '''
+    slug = LOCATION_STAGING_SLUG
+
+    domain = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    site_code = models.CharField(max_length=100)
+    location_id = models.CharField(max_length=255)
+    location_type_id = models.IntegerField()
+    external_id = models.CharField(max_length=255, null=True)
+    supply_point_id = models.CharField(max_length=255, null=True)
+    user_id = models.CharField(max_length=255)
+
+    sql_location_id = models.IntegerField()
+    sql_parent_location_id = models.IntegerField(null=True)
+
+    location_last_modified = models.DateTimeField(null=True)
+    location_created_on = models.DateTimeField(null=True)
+
+    is_archived = models.NullBooleanField()
+
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def additional_sql_context(cls):
+        return {
+            'sqllocation_table': SQLLocation._meta.db_table
+        }
+
+
+class LocationTypeStagingTable(StagingTable, CustomSQLETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the LocationDim
+
+    Grain: location_type_id
+    '''
+    slug = LOCATION_TYPE_STAGING_SLUG
+
+    domain = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    code = models.SlugField(db_index=False, null=True)
+    location_type_id = models.IntegerField()
+
+    location_type_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def additional_sql_context(cls):
+        return {
+            'locationtype_table': LocationType._meta.db_table
+        }
 
 
 class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
@@ -56,6 +133,9 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     doc_type = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100)
+    user_ids = ArrayField(models.CharField(max_length=255), null=True)
+    removed_user_ids = ArrayField(models.CharField(max_length=255), null=True)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -66,11 +146,14 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     def field_mapping(cls):
         return [
             ('_id', 'group_id'),
+            ('domain', 'domain'),
             ('name', 'name'),
             ('case_sharing', 'case_sharing'),
             ('reporting', 'reporting'),
             ('last_modified', 'group_last_modified'),
             ('doc_type', 'doc_type'),
+            ('users', 'user_ids'),
+            ('removed_users', 'removed_user_ids'),
         ]
 
     @classmethod
@@ -291,3 +374,38 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
     def record_iter(cls, start_datetime, end_datetime):
         synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
         return iter_docs(SyncLog.get_db(), synclog_ids)
+
+
+class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the ApplicationDim
+
+    Grain: application_id
+    '''
+    slug = APPLICATION_STAGING_SLUG
+
+    application_id = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=100)
+    application_last_modified = models.DateTimeField(null=True)
+    doc_type = models.CharField(max_length=100)
+
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('_id', 'application_id'),
+            ('domain', 'domain'),
+            ('name', 'name'),
+            ('last_modified', 'application_last_modified'),
+            ('doc_type', 'doc_type')
+        ]
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def record_iter(cls, start_datetime, end_datetime):
+        application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
+
+        return iter_docs(Application.get_db(), application_ids)

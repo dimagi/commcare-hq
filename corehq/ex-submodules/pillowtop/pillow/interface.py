@@ -292,7 +292,7 @@ def handle_pillow_error(pillow, change, exception):
         error_id = error.id
 
     pillow_logging.exception(
-        "[%s] Error on change: %s, %s. Logged as: %s" % (
+        u"[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,

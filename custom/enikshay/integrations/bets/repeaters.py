@@ -4,8 +4,8 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
-from corehq.apps.repeaters.signals import create_repeat_records
+from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
+from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
@@ -425,8 +425,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
 
     def allowed_to_forward(self, person_case):
         return (person_case.type == CASE_TYPE_PERSON
-                and is_valid_person_submission(person_case)
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and is_valid_person_submission(person_case)
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 

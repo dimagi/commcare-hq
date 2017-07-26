@@ -9,9 +9,10 @@ var FormplayerFrontend = new Marionette.Application();
 var showError = hqImport('cloudcare/js/util.js').showError;
 var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
-var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
-var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
-var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var formplayerLoading = hqImport('cloudcare/js/util.js').formplayerLoading;
+var formplayerLoadingComplete = hqImport('cloudcare/js/util.js').formplayerLoadingComplete;
+var formplayerSyncComplete = hqImport('cloudcare/js/util.js').formplayerSyncComplete;
+var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -96,10 +97,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 
 $(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
-    tfLoading();
+    formplayerLoading();
 }).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
-    tfLoadingComplete();
+    formplayerLoadingComplete();
 });
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
@@ -126,8 +127,8 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
 
-    data.onLoading = tfLoading;
-    data.onLoadingComplete = tfLoadingComplete;
+    data.onLoading = formplayerLoading;
+    data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
@@ -179,6 +180,7 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
+    user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -342,6 +344,7 @@ FormplayerFrontend.on("sync", function () {
             "username": username,
             "domain": domain,
             "restoreAs": user.restoreAs,
+            "useLiveQuery": user.useLiveQuery,
         },
         options;
 
@@ -354,7 +357,7 @@ FormplayerFrontend.on("sync", function () {
             }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
-            tfSyncComplete(response.responseJSON.status === 'error');
+            formplayerSyncComplete(response.responseJSON.status === 'error');
         }
     };
     options = {
@@ -454,20 +457,49 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
-    tfLoading();
+    formplayerLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-        tfLoadingComplete(true);
+        formplayerLoadingComplete(true);
     }).done(function(response) {
         if (response.hasOwnProperty('exception')) {
-            tfLoadingComplete(true);
+            formplayerLoadingComplete(true);
             return;
         }
 
-        tfLoadingComplete();
+        formplayerLoadingComplete();
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
+});
+
+/**
+ * clearUserData
+ *
+ * Sends a request to formplayer to wipe out all application and user db for the
+ * current user. Returns the ajax promise.
+ */
+FormplayerFrontend.reqres.setHandler('clearUserData', function() {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/clear_user_data",
+            data: JSON.stringify({
+                domain: user.domain,
+                username: user.username,
+                restoreAs: user.restoreAs,
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    formplayerLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        formplayerLoadingComplete(true);
+    }).done(function(response) {
+        clearUserDataComplete(response.hasOwnProperty('exception'));
+    });
+    return resp;
 });
 
 FormplayerFrontend.on('navigateHome', function() {

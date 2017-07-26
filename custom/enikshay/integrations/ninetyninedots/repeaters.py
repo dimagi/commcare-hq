@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
 
-from corehq.apps.repeaters.models import CaseRepeater
-from corehq.apps.repeaters.signals import create_repeat_records
+from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import \
     RegisterPatientPayloadGenerator, UpdatePatientPayloadGenerator, AdherencePayloadGenerator, \

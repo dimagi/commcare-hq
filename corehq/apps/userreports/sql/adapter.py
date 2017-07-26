@@ -1,17 +1,20 @@
+import hashlib
+
 from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.schema import Index
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
-)
+    MissingColumnWarning)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
+from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.logging import notify_exception
 
 
 metadata = sqlalchemy.MetaData()
@@ -136,8 +139,11 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
             orig = getattr(exception, 'orig')
             if orig:
                 error_code = getattr(orig, 'pgcode')
-                if error_code == '42P01':  # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+                # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+                if error_code == '42P01':
                     raise TableNotFoundWarning
+                elif error_code == '42703':
+                    raise MissingColumnWarning
 
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
@@ -145,14 +151,33 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
+    columns_by_col_id = {col.database_column_name for col in indicator_config.get_columns()}
+    extra_indices = []
+    for index in indicator_config.sql_column_indexes:
+        if set(index.column_ids).issubset(columns_by_col_id):
+            extra_indices.append(Index(
+                _custom_index_name(table_name, index.column_ids),
+                *index.column_ids
+            ))
+        else:
+            _assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
+            _assert(False, "Invalid index specified on {}".format(table_name))
+            break
+    columns_and_indices = sql_columns + extra_indices
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
     # is that valid?
     return sqlalchemy.Table(
         table_name,
         custom_metadata or metadata,
         extend_existing=True,
-        *sql_columns
+        *columns_and_indices
     )
+
+
+def _custom_index_name(table_name, column_ids):
+    base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
+    base_hash = hashlib.md5(base_name).hexdigest()
+    return "{}_{}".format(base_name[:50], base_hash[:5])
 
 
 def rebuild_table(engine, table):

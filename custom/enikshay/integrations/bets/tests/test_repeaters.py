@@ -6,8 +6,8 @@ from django.test import override_settings, TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
-from corehq.apps.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -325,8 +325,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             )
 
     def test_ayush_referral_payload(self):
-        self.episode.attrs['update']['created_by_user_location_id'] = self.pac.location_id
-        self.episode.attrs['update']['created_by_user_id'] = self.user.user_id
+        self.pac.user_id = self.user.user_id
+        self.pac.save()
+        self.episode.attrs['update']['registered_by'] = self.pac.location_id
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]

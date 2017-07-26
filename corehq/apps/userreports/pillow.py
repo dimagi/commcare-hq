@@ -1,19 +1,19 @@
 from __future__ import absolute_import
 
+import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
-import hashlib
 
+import six
 from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
-import six
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError, UserReportsWarning
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
@@ -38,8 +38,6 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
-_slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
 class PillowConfigError(Exception):
@@ -59,11 +57,6 @@ def time_ucr_process_change(method):
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)
-            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
-                email_message = u"UCR data source {} is taking too long to process".format(
-                    table.config._id
-                )
-                _slow_ucr_assert(False, email_message)
         return result
     return timed
 
@@ -137,7 +130,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True)
+                get_indicator_adapter(config, can_handle_laboratory=True, raise_errors=True)
             )
 
         self.rebuild_tables_if_necessary()
@@ -212,9 +205,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
     domain_timing_context = Counter()
 
     @time_ucr_process_change
-    def _save_doc_to_table(self, table, doc, eval_context):
+    def _save_doc_to_table(self, domain, table, doc, eval_context):
         # best effort will swallow errors in the table
-        table.best_effort_save(doc, eval_context)
+        try:
+            table.best_effort_save(doc, eval_context)
+        except UserReportsWarning:
+            # remove it until the next bootstrap call
+            self.table_adapters_by_domain[domain].remove(table)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -239,12 +236,14 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
         with TimingContext() as timer:
             eval_context = EvaluationContext(doc)
-            for table in self.table_adapters_by_domain[domain]:
+            # make copy to avoid modifying list during iteration
+            adapters = list(self.table_adapters_by_domain[domain])
+            for table in adapters:
                 if table.config.filter(doc):
                     if table.run_asynchronous:
                         async_tables.append(table.config._id)
                     else:
-                        self._save_doc_to_table(table, doc, eval_context)
+                        self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
                 elif table.config.deleted_filter(doc) or table.doc_exists(doc):
                     table.delete(doc)

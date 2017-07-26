@@ -206,8 +206,8 @@ class HqdbContext(DatabaseContext):
             self.delete_couch_databases()
 
         sys.__stdout__.write("\n")  # newline for creating database message
-        if "REUSE_DB" in os.environ:
-            sys.__stdout__.write("REUSE_DB={REUSE_DB!r} ".format(**os.environ))
+        if self.reuse_db:
+            sys.__stdout__.write("REUSE_DB={} ".format(self.reuse_db))
         super(HqdbContext, self).setup()
 
     def _databases_ok(self):

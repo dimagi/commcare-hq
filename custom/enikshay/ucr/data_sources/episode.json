@@ -9,6 +9,7 @@
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
         "engine_id": "ucr",
         "description": "",
         "base_item_expression": {
@@ -1369,24 +1370,40 @@
                         "expression_if_true": {
                             "type": "conditional",
                             "test": {
-                                "operator": "eq",
+                                "operator": "in",
                                 "expression": {
                                     "type": "property_name",
-                                    "property_name": "diagnosing_facility_id"
+                                    "property_name": "treatment_initiating_facility_id"
                                 },
                                 "type": "boolean_expression",
-                                "property_value": {
-                                    "type": "property_name",
-                                    "property_name": "treatment_initiating_facility_id"
-                                }
+                                "property_value": [null, ""]
                             },
                             "expression_if_true": {
                                 "type": "constant",
-                                "constant": "Initiated on first line treatment in the same health facility"
+                                "constant": "NA"
                             },
                             "expression_if_false": {
-                                "type": "constant",
-                                "constant": "Initiated on treatment outside health facility"
+                                "type": "conditional",
+                                "test": {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "diagnosing_facility_id"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_initiating_facility_id"
+                                    }
+                                },
+                                "expression_if_true": {
+                                    "type": "constant",
+                                    "constant": "Initiated on first line treatment in the same health facility"
+                                },
+                                "expression_if_false": {
+                                    "type": "constant",
+                                    "constant": "Initiated on treatment outside health facility"
+                                }
                             }
                         },
                         "expression_if_false": {
@@ -4726,6 +4743,22 @@
                 }
             },
             {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "diagnostic_tests"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "diagnostic_tests_from_case"
+            },
+            {
                 "type": "expression",
                 "datatype": "integer",
                 "column_id": "positive_microscopy_tests",
@@ -6168,6 +6201,36 @@
                 }
             },
             {
+                "column_id": "patients_with_key_populations",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
                 "display_name": "pediatric_patient",
                 "column_id": "pediatric_patient",
                 "type": "boolean",
@@ -6773,17 +6836,37 @@
                 "transform": {}
             },
             {
-                "display_name": "",
-                "datatype": "string",
-                "expression": {
-                    "type": "constant",
-                    "constant": ""
-                },
-                "is_nullable": true,
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
                 "type": "expression",
+                "transform": {},
                 "is_primary_key": false,
-                "column_id": "date_of_registration",
-                "transform": {}
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                        ]
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "xmlns": "http://openrosa.org/formdesigner/5c6c6ade7697a80df85ed8a74e397744221f4d0f",
+                        "type": "first_case_form_with_xmlns",
+                        "reverse": true,
+                        "case_id_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    }
+                },
+                "column_id": "date_of_registration"
             },
             {
                 "display_name": "",
@@ -8253,6 +8336,121 @@
                         "name": "person_id"
                     }
                 }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "aggregated_score_count_taken",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "aggregated_score_count_taken"
+                },
+                "column_id": "aggregated_score_count_taken"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_treating_hospital"
+                },
+                "column_id": "episode_treating_hospital"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_fo"
+                },
+                "column_id": "episode_fo"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "registered_by"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "registered_by"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "registered_by_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "registered_by_id"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "enrolled_in_private"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "true"
+                },
+                "type": "boolean",
+                "display_name": "is_enrolled_in_private",
+                "comment": null,
+                "column_id": "is_enrolled_in_private"
             }
         ],
         "named_filters": {
@@ -10865,61 +11063,10 @@
                 }
             },
             "key_populations": {
-                "value_expression": {
-                    "datatype": "string",
-                    "type": "property_path",
-                    "property_path": [
-                        "form",
-                        "ql_patient_details",
-                        "key_populations"
-                    ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareCase",
-                "doc_id_expression": {
-                    "value_expression": {
-                        "type": "nested",
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
-                    }
-                }
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "key_populations"
+
             },
             "treatment_outcome": {
                 "datatype": "string",

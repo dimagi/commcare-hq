@@ -17,7 +17,7 @@ def is_supply_point_form(form):
 
 
 SUPPLY_POINT_CASE_TYPE = 'supply-point'
-REQUISITION_CASE_TYPE = 'commtrack-requisition'
+REQUISITION_CASE_TYPE = 'commtrack-requisition'  # legacy case type
 FULFILLMENT_CASE_TYPE = 'commtrack-fulfillment'
 RECEIVED_CASE_TYPE = 'commtrack-received'
 ORDER_CASE_TYPE = 'commtrack-order'
@@ -50,14 +50,6 @@ StockActions = enum(
     RECEIPTS='receipts',
     CONSUMPTION='consumption',
     LA='lossoradjustment'
-)
-
-RequisitionActions = enum(
-    REQUEST='request',
-    APPROVAL='approval',
-    FULFILL='fulfill',
-    PACK='pack',  # todo: pack and fulfill are the same thing but both are used. should reconcile
-    RECEIPTS='requisition-receipts',
 )
 
 

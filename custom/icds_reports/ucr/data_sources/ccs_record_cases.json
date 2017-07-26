@@ -79,7 +79,6 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
-        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -1754,6 +1753,10 @@
     "backend_id": "LABORATORY",
     "es_index_settings": {
       "number_of_shards": 5
-    }
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["supervisor_id", "edd"]},
+      {"column_ids": ["awc_id", "owner_id"]}
+    ]
   }
 }

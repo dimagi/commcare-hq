@@ -180,7 +180,7 @@ class CreateExportTagForm(forms.Form):
                 crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
-                        placeholder=_("Select Module"),
+                        placeholder=_("Select Menu"),
                         ng_model="formData.module",
                         ng_disabled="!formData.application",
                         ng_change="updateFormChoices()",
@@ -233,7 +233,7 @@ class CreateExportTagForm(forms.Form):
             # Require module and form fields if model_type is form
             errors = []
             if not cleaned_data.get("module"):
-                errors.append(forms.ValidationError(_("Module is required")))
+                errors.append(forms.ValidationError(_("Menu is required")))
             if not cleaned_data.get("form"):
                 errors.append(forms.ValidationError(_("Form is required")))
             if errors:

@@ -4,8 +4,8 @@ import datetime
 import socket
 from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -549,7 +549,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: error,
+            error_field: unicode(error),
         },
     )
 

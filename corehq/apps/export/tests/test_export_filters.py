@@ -55,7 +55,6 @@ class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             es = get_es_new()
             cls.tearDownClass()

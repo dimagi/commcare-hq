@@ -128,7 +128,7 @@ class QueryMergeException(Exception):
     pass
 
 
-def replace_custom_query_variables(query_addition, criteria):
+def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
     """Replaces values in custom queries with user input
 
     - In the custom query add '__{case_property_name}' as the value for the
@@ -143,8 +143,24 @@ def replace_custom_query_variables(query_addition, criteria):
         re.sub(SEARCH_QUERY_CUSTOM_VALUE, '', k): v
         for k, v in criteria.iteritems() if k.startswith(SEARCH_QUERY_CUSTOM_VALUE)
     }
+
+    # Only include this custom query if the replaceable parts are present
+    # TODO: do this only for specific parts of the custom query
+    conditional_include = query_addition.get('include_if')
+    if conditional_include and not replaceable_criteria.get(conditional_include):
+        return {}
+    elif conditional_include:
+        del query_addition['include_if']
+
     query_addition = json.dumps(query_addition)
     for key, value in replaceable_criteria.iteritems():
+        if ignore_patterns:
+            remove_char_regexs = ignore_patterns.filter(
+                case_property=re.sub('^__', '', key)
+            )
+            for removal_regex in remove_char_regexs:
+                to_remove = re.escape(removal_regex.regex)
+                value = re.sub(to_remove, '', value)
         query_addition = re.sub(key, value, query_addition)
 
     return json.loads(query_addition)

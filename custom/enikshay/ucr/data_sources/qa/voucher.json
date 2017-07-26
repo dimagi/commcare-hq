@@ -67,7 +67,7 @@
             {
                 "comment": null,
                 "create_index": false,
-                "display_name": "external_id",
+                "display_name": "person_id",
                 "datatype": "string",
                 "type": "expression",
                 "is_primary_key": false,
@@ -77,16 +77,16 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "external_id"
+                        "property_name": "person_id"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
                         "type": "named",
-                        "name": "episode_id"
+                        "name": "person_id"
                     }
                 },
-                "column_id": "external_id"
+                "column_id": "person_id"
             },
             {
                 "comment": null,
@@ -556,14 +556,17 @@
             },
             "person_id": {
                 "value_expression": {
-                    "type": "named",
-                    "name": "parent_case_id"
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "beneficiary_data",
+                        "person_id"
+                    ]
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareCase",
-                "doc_id_expression": {
+                "type": "nested",
+                "argument_expression": {
                     "type": "named",
-                    "name": "occurrence_id"
+                    "name": "order_form"
                 }
             },
             "order_investigation_form": {
@@ -578,6 +581,33 @@
             "prescription_id": {
                 "type": "named",
                 "name": "parent_case_id"
+            },
+            "order_form": {
+                "default": {
+                    "type": "constant",
+                    "constant": null
+                },
+                "cases": {
+                    "test": {
+                        "type": "named",
+                        "name": "order_investigation_form"
+                    },
+                    "prescription": {
+                        "xmlns": "http://openrosa.org/formdesigner/7841B351-E691-4D5B-B1FC-3A7D696AAED9",
+                        "type": "first_case_form_with_xmlns",
+                        "reverse": true,
+                        "case_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    }
+                },
+                "type": "switch",
+                "switch_on": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "voucher_type"
+                }
             }
         }
     }

@@ -6,13 +6,13 @@
 <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"
 />{% endblock stylesheets %}
 
-{% compress js %}
 {% block js %}{{ block.super }}
+{% compress js %}
 <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
 <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
 <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-{% endblock js %}
 {% endcompress %}
+{% endblock js %}
 
 {% block js-inline %}{{ block.super }}
 <script>

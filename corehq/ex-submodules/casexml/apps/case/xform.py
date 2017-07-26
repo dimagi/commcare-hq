@@ -14,6 +14,7 @@ from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     NoDomainProvided,
@@ -24,6 +25,7 @@ from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
+_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
 # Lightweight class used to store the dirtyness of a case/owner pair.
 DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
@@ -54,9 +56,9 @@ class CaseProcessingResult(object):
 
     def close_extensions(self, case_db):
         from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = list(self.extensions_to_close)
+        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
         if extensions_to_close:
-            return close_cases(list(self.extensions_to_close), self.domain, SYSTEM_USER_ID, case_db)
+            return close_cases(extensions_to_close, self.domain, SYSTEM_USER_ID, case_db)
 
     def commit_dirtiness_flags(self):
         """
@@ -264,6 +266,20 @@ def _validate_indices(case_db, cases):
                     invalid = True
                 if invalid:
                     # fail hard on invalid indices
+                    from distutils.version import LooseVersion
+                    if case_db.cached_xforms:
+                        xform = case_db.cached_xforms[0]
+                        if xform.metadata and xform.metadata.commcare_version:
+                            commcare_version = xform.metadata.commcare_version
+                            _soft_assert(
+                                commcare_version < LooseVersion("2.35"),
+                                "Invalid Case Index in CC version >= 2.35", {
+                                    'domain': case_db.domain,
+                                    'xform_id': xform.form_id,
+                                    'missing_case_id': index.referenced_id,
+                                    'version': str(commcare_version)
+                                }
+                            )
                     raise InvalidCaseIndex(
                         "Case '%s' references non-existent case '%s'" % (case.case_id, index.referenced_id)
                     )
@@ -286,7 +302,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 def get_extensions_to_close(case, domain):
     if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return CaseAccessors(domain).get_extension_chain([case.case_id])
+        return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
     else:
         return set()
 

@@ -1,12 +1,7 @@
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
-from touchforms.formplayer.api import post_data
-import json
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
-from django.urls import reverse
 from corehq.apps.users.models import CouchUser
-from corehq import toggles
-from django.conf import settings
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -29,28 +24,6 @@ class BaseSessionDataHelper(object):
         session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
         return session_data
 
-    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None, use_formplayer=False):
-        """
-        Filter a list of cases by an xpath expression + additional filters
-        """
-        session_data = self.get_session_data()
-        session_data["additional_filters"] = additional_filters or {}
-        session_data['extra_instances'] = extra_instances or []
-
-        data = {
-            "action": "touchcare-filter-cases",
-            "filter_expr": xpath,
-            "session_data": session_data,
-            "domain": self.domain
-        }
-
-        response = post_data(
-            json.dumps(data),
-            content_type="application/json", auth=auth
-        )
-
-        return json.loads(response)
-
     def get_full_context(self, root_extras=None, session_extras=None):
         """
         Get the entire touchforms context for a given user/app/module/form/case
@@ -61,10 +34,7 @@ class BaseSessionDataHelper(object):
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
-        if toggles.EDIT_FORMPLAYER.enabled(session_data.get('domain')):
-            xform_url = root_extras.get('formplayer_url')
-        else:
-            xform_url = reverse("xform_player_proxy")
+        xform_url = root_extras.get('formplayer_url')
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,

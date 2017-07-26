@@ -241,6 +241,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
 
             if config.search_field == 'external_id':
                 extras['external_id'] = search_id
+            elif external_id:
+                extras['external_id'] = external_id
 
             try:
                 caseblock = CaseBlock(

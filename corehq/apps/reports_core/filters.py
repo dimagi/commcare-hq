@@ -466,14 +466,14 @@ class LocationDrilldownFilter(BaseFilter):
     def default_value(self, request_user=None):
         # Returns list of visible locations for the user if user is assigned to a location
         #   or special value of SHOW_ALL or SHOW_NONE depending whether
-        #   user is domain-admin or not respectively
+        #   user can access all locations or not respectively
         from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
         if request_user:
             user_location_id = self.user_location_id(request_user)
-            if user_location_id:
-                return self.valid_location_ids(user_location_id)
-            elif request_user.is_domain_admin(self.domain):
+            if request_user.has_permission(self.domain, 'access_all_locations'):
                 return LocationDrilldownFilterValue.SHOW_ALL
+            elif user_location_id:
+                return self.valid_location_ids(user_location_id)
             else:
                 return LocationDrilldownFilterValue.SHOW_NONE
         else:

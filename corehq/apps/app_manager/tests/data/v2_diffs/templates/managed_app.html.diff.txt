@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -8,11 +8,14 @@
+@@ -8,10 +8,14 @@
  
  {% block js %}
      {{ block.super }}
@@ -16,12 +16,12 @@
      <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
      <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
++    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 +    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -26,291 +29,177 @@
+@@ -25,277 +29,161 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -54,10 +54,17 @@
 +          <h2 class="appnav-name">
 +            <a href="{% url "view_app" domain app.id %}"
 +               class="appnav-responsive">
-+                <span class="variable-app_name">{{ app.name }}</span>
++                <span class="variable-app_name appname-text">{{ app.name }}</span>
              </a>
 -        </li>
--
++          </h2>
++          <div id="js-publish-status"
++               class="appnav-name-publish"
++               style="display: none;">
++            {% trans "Updates Available to Publish" %}
++          </div>
++      </div>
+ 
 -        {% if show_live_preview and can_preview_form %}
 -        <li>
 -          <a class="js-preview-toggle">
@@ -66,7 +73,21 @@
 -              <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
 -          </a>
 -        </li>
--        {% endif %}
++      {% if app.get_doc_type == 'Application' %}
++        {% if not app.is_remote_app and app.langs|length > 1%}
++            <div id="langs" class="appnav-language-select">
++                <label for="app-language-select-nav">{% trans "Language" %}</label>
++                <select name="lang" class="form-control input-sm">
++                    {% for lang in app.langs %}
++                        <option value="{{ lang }}"
++                                {% if lang == langs.0 %}selected=""{% endif %}>
++                            {% if lang == app.langs.0 %}*{% endif %}
++                            {{ lang }}
++                        </option>
++                    {% endfor %}
++                </select>
++          </div>
+         {% endif %}
 -        <li class="divider"></li>
 -        <li {% if not module and not form and not release_manager %}class="app-name-div
 -                {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
@@ -107,16 +128,10 @@
 -            {% endif %}
 -        </li>
 -        {% endif %}
--        <li class="rollout-toggle-label">
+-        <li>
 -            <a href="{% url "app_summary" domain app.id %}">
 -                <i class="fa fa-list"></i>
 -                {% trans "App Summary" %}
--            </a>
--        </li>
--        <li>
--            <a href="#" data-toggle="modal" data-target="#rollout-modal">
--                <i class="fa fa-bell-o"></i>
--                {% trans "New App Builder" %}
 -            </a>
 -        </li>
 -        <li class="divider"></li>
@@ -142,7 +157,7 @@
 -                            {% elif module.module_type == 'report' %}class="fa fa-bar-chart appmanager-icon-type"
 -                            {% elif module.module_type == 'shadow' %}class="fa fa-folder-open-o appmanager-icon-type"
 -                            {% else %}class="fa fa-folder-open"{% endif %}
--
+ 
 -                            {% if module.case_type and app.get_case_types|length > 1 %}
 -                            title="Case Type: {{ module.case_type }}"
 -                            data-toggle="tooltip"
@@ -211,7 +226,7 @@
 -                                      method="post" class="hide">{% csrf_token %}
 -                                    <input type="hidden" name="form_type">
 -                                </form>
--                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+-                                {% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 -                                    {% if show_shadow_forms and module.doc_type == "AdvancedModule" %}
 -                                        <li class="sort-disabled dropdown">
 -                                            <a href="#" data-toggle="dropdown">
@@ -248,7 +263,7 @@
 -                          method="post" class="hide">{% csrf_token %}
 -                    <input id="new-module-type" type="hidden" name="module_type" />
 -                </form>
--                {% if show_care_plan or show_advanced or show_report_modules or show_shadow_modules %}
+-                {% if show_advanced or show_report_modules or show_shadow_modules %}
 -                    <li class="sort-disabled dropdown">
 -                        <a href="#" data-toggle="dropdown">
 -                            <i class="new-module-icon fa fa-plus icon-blue"></i>
@@ -256,9 +271,6 @@
 -                        </a>
 -                        <ul class="dropdown-menu" role="menu">
 -                            <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
--                            {% if show_care_plan %}
--                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
--                            {% endif %}
 -                            {% if show_advanced %}
 -                            <li>
 -                                <a href="#" class="new-module" data-type="advanced">
@@ -282,7 +294,6 @@
 -                            {% endif %}
 -                        </ul>
 -                    </li>
--                    {% include "app_manager/v1/partials/new_careplan_module.html" %}
 -                {% else %}
 -                <li class="sort-disabled">
 -                    <a href="#" class="new-module" data-type="case">
@@ -313,43 +324,6 @@
 -    </ul>
 -</nav>
 -{% endif %}
-+          </h2>
-+      </div>
-+
-+      {% if app.get_doc_type == 'Application' %}
-+        {% if not app.is_remote_app and app.langs|length > 1%}
-+            <div id="langs" class="appnav-language-select">
-+                <label for="app-language-select-nav">{% trans "Language" %}</label>
-+                <select name="lang" class="form-control input-sm">
-+                    {% for lang in app.langs %}
-+                        <option value="{{ lang }}"
-+                                {% if lang == langs.0 %}selected=""{% endif %}>
-+                            {% if lang == app.langs.0 %}*{% endif %}
-+                            {{ lang }}
-+                        </option>
-+                    {% endfor %}
-+                </select>
-+          </div>
-+        {% endif %}
-+
-+        {% if allow_v2_opt_out %}
-+          <div class="appnav-toggle-label">
-+              <div class="btn-group pull-right">
-+                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+                <button type="button"
-+                        class="btn btn-xs btn-default"
-+                        data-toggle="modal"
-+                        data-target="#rollout-revert-modal"
-+                        data-redirect="{% url "view_app" domain app.id %}"
-+                >{% trans "Off" %}</button>
-+              </div>
-+              {% trans "New App Builder" %}
-+              <span class="hq-help-template"
-+                    data-title="New App Builder"
-+                    data-content="{% trans "Turn off new app builder for now." %}"></span>
-+          </div>
-+        {% endif %}
-+
 +        {% include 'app_manager/v2/partials/appnav_menu.html' %}
 +      {% endif %}
 +    </nav>
@@ -366,6 +340,7 @@
      {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
      {% initial_page_data 'app_subset' app_subset %}
      {% initial_page_data 'formdesigner' formdesigner %}
++    {% initial_page_data 'current_app_version_url' current_app_version_url %}
 +    {% registerurl "new_form" domain app.id "---" %}
 +    {% registerurl "toggle_app_manager_v2" %}
 +    {% block pre_form_content %}{% endblock %}
@@ -412,15 +387,6 @@
 +            </button>
 +          </div>
 +        {% endif %}
-+        {% if show_care_plan %}
-+          <div class="pull-left">
-+            <button type="button" class="popover-additem-option new-module"
-+                    data-toggle="modal" data-stopsubmit="yes" href="#careplan-module-modal">
-+              <i class="fa fa-clipboard"></i> {% trans "Care Plan" %}
-+              <p>{% blocktrans %}Tasks and goals.{% endblocktrans %}</p>
-+            </button>
-+          </div>
-+        {% endif %}
 +      </div>
 +    </script>
 +
@@ -434,11 +400,17 @@
 +                  </button>
 +              </div>
 +          <% } %>
-+          <% if (showFollowup) { %>
++          <% if (showCaseForms) { %>
 +              <div class="pull-left">
 +                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
 +                          data-case-action="update" data-type="followup" data-form-type="form">
 +                    <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
++                  </button>
++              </div>
++              <div class="pull-left">
++                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
++                          data-case-action="open" data-type="followup" data-form-type="form">
++                    <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
 +                  </button>
 +              </div>
 +          <% } %>
@@ -462,14 +434,11 @@
 +              {% csrf_token %}
 +              <input type="hidden" name="case_action" />
 +              <input type="hidden" name="form_type" />
-+              <input type="hidden" name="name" />
 +          </form>
 +      </div>
 +    </script>
  {% endblock %}
- 
- {% block modals %}{{ block.super }}
--    {% include "hqwebapp/rollout_modal.html" %}
--{% endblock %}
++
++{% block modals %}{{ block.super }}
 +    {% include "hqwebapp/rollout_revert_modal.html" %}
 +{% endblock %}

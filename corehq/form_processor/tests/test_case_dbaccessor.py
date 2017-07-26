@@ -358,18 +358,6 @@ class CaseAccessorTestsSQL(TestCase):
         with self.assertRaises(CaseSaveError):
             CaseAccessorSQL.save_case(case)
 
-    def test_save_case_update_transaction(self):
-        case = _create_case()
-
-        [transaction] = CaseAccessorSQL.get_transactions(case.case_id)
-        transaction.revoked = True
-
-        # hack to call the sql function with an already saved transaction
-        case.track_create(transaction)
-
-        with self.assertRaises(CaseSaveError):
-            CaseAccessorSQL.save_case(case)
-
     def test_get_case_ids_by_owners(self):
         case1 = _create_case(user_id="user1")
         case2 = _create_case(user_id="user1")

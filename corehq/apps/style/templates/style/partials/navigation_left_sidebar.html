@@ -7,7 +7,7 @@
                 class="{% if nav.is_active and not nav.subpage %}active{% endif %}{% if nav.description %} has-description{% endif %}"
                 {% if nav.id %}id="{{ nav.id }}"{% endif %}
             >
-                <a href="{{ nav.url }}" {% if nav.description %}class="js-report-description-popover popover-report" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
+                <a href="{{ nav.url }}" {% if nav.description %}class="report-description-popover popover-report" data-title="{{ nav.title }}" data-content="{{ nav.description }}"{% endif %}>
                     {% if nav.warning %}
                         <span class="label label-warning pull-right">
                             <i class="fa fa-warning"></i> {{ nav.warning }}

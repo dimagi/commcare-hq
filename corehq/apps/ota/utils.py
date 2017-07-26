@@ -1,7 +1,8 @@
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from couchdbkit import ResourceConflict
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
@@ -62,9 +63,16 @@ def reset_demo_user_restore(commcare_user, domain):
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
-    # set reference to new restore
-    commcare_user.demo_restore_id = demo_restore.id
-    commcare_user.save()
+    # Set reference to new restore
+    try:
+        commcare_user.demo_restore_id = demo_restore.id
+        commcare_user.save()
+    except ResourceConflict:
+        # If CommCareUser.report_metadata gets updated by sync log pillow, after a restore is
+        #   generated or for any other reason, there will be a DocumentUpdate conflict
+        commcare_user = CommCareUser.get(commcare_user.get_id)
+        commcare_user.demo_restore_id = demo_restore.id
+        commcare_user.save()
 
 
 def delete_demo_restore_for_user(commcare_user):
@@ -93,7 +101,7 @@ def demo_restore_date_created(commcare_user):
             return restore.timestamp_created
 
 
-def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
+def is_permitted_to_restore(domain, couch_user, as_user):
     """
     This function determines if the couch_user is permitted to restore
     for the domain and/or as_user
@@ -112,7 +120,6 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
             if not as_user_obj:
                 raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
 
-            _ensure_cleanup_permission(domain, couch_user, as_user_obj, has_data_cleanup_privilege)
             _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
@@ -130,14 +137,6 @@ def _restoring_as_yourself(couch_user, as_user):
 def _ensure_valid_domain(domain, couch_user):
     if not couch_user.is_member_of(domain):
         raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(couch_user.username, domain))
-
-
-def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege):
-    if not has_data_cleanup_privilege and not couch_user.is_superuser:
-        raise RestorePermissionDenied(_(u"{} does not have permissions to restore as {}").format(
-            couch_user.username,
-            as_user,
-        ))
 
 
 def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
@@ -210,5 +209,6 @@ def handle_401_response(f):
 def update_device_id(user, device_id):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
-            user.update_device_id_last_used(device_id)
-            user.save()
+            updated = user.update_device_id_last_used(device_id)
+            if updated:
+                user.save()

@@ -7,7 +7,6 @@ Updating SQL Case and Form models
 3. Update psycopg2 type adapters
   - `corehq/form_processor/utils/sql.py`
 3. Update SQL functions. Most likely these ones but possible others:
-  - `save_case_and_related_models.sql`
   - `save_form_and_related_models.sql`
 4. Run commands:
   - `./manage.py makemigrations sql_accessors --empty`

@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
 {% endblock %}
@@ -32,6 +32,7 @@
         var reportColumnOptions = {{ report_column_options|JSON }};
         var dateRangeOptions = {{ date_range_options|JSON }};
         var isGroupByRequired = {{ is_group_by_required|JSON }};
+        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
@@ -44,7 +45,8 @@
                 dataSourceIndicators,
                 reportColumnOptions,
                 dateRangeOptions,
-                isGroupByRequired
+                isGroupByRequired,
+                groupByInitialValue
             )
         );
 

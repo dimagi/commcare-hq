@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
     ENROLLED_IN_PRIVATE,
+    OTHER_NUMBER,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -265,6 +266,7 @@ class ENikshayCaseStructureMixin(object):
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
+        self.other_number = "0123456666"
         self._episode = None
         self._person = None
 
@@ -300,6 +302,7 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
+                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }
@@ -416,6 +419,8 @@ class ENikshayLocationStructureMixin(object):
             'is_test': 'no',
         }
         self.sto.save()
+
+        self.cto = locations['CTO']
 
         self.dto = locations['DTO']
         self.dto.metadata = {

@@ -25,28 +25,6 @@
             </div>
         </fieldset>
 
-        <fieldset style="display:none;">
-            <legend>{% trans "Requisitions" %}</legend>
-            <div class="form-group">
-                <div class="checkbox">
-                  <label><input id="requisitions_enabled" type="checkbox" data-bind="checked: false" /> {% trans "Enable Requisitions" %}</label>
-                </div>
-            </div>
-        </fieldset>
-
-        <fieldset data-bind="with: requisition_config(), visible: requisition_config().enabled">
-            <legend>{% trans "Requisitions Actions" %}</legend>
-            <div class="form-group">
-                <label class="col-sm-2 control-label">{% trans 'Edit Actions' %}</label>
-                <div class="col-sm-10">
-                    {% include "domain/admin/commtrack_action_table.html" %}
-                <button type="button" class="btn btn-default" data-bind="click: new_action">
-                    <i class="fa fa-plus"></i> {% trans "New Action" %}
-                </button>
-                </div>
-            </div>
-        </fieldset>
-
         <div class="form-actions">
             <div class="col-sm-10 col-sm-offset-2">
                 <button type="submit" class="btn btn-primary">

@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.test import SimpleTestCase, TestCase
 from mock import patch
+from corehq.util.test_utils import flag_enabled
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -94,6 +95,7 @@ def mock_fetch_case_attachment(case_id, attachments):
 class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
     maxDiff = 1000000
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def test_make_creating_casexml(self):
         for input, files, output in TESTS:
             with mock_fetch_case_attachment(input.case_id, files):
@@ -110,6 +112,7 @@ class ExplodeCasesDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ExplodeCasesDbTest, cls).setUpClass()
         delete_all_cases()
         cls.domain = Domain(name='foo')
         cls.domain.save()
@@ -129,6 +132,7 @@ class ExplodeCasesDbTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(ExplodeCasesDbTest, cls).tearDownClass()
 
     @run_with_all_backends
     def test_simple(self):

@@ -86,7 +86,6 @@
        "build_number": null,
        "latest": true
    },
-   "commtrack_requisition_mode": null,
    "build_comment": "child cases",
    "short_odk_url": null,
    "amplifies_workers": "not_set",

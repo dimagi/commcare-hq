@@ -9,8 +9,8 @@ from pytz import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import (
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
@@ -175,19 +175,22 @@ class IncentivePayload(BETSPayload):
         episode_case_properties = episode_case.dynamic_case_properties()
 
         location = cls._get_location(
-            episode_case_properties.get("created_by_user_location_id"),
-            field_name="created_by_user_location_id",
+            episode_case_properties.get("registered_by"),
+            field_name="registered_by",
             related_case_type="episode",
             related_case_id=episode_case.case_id,
         )
+        if not location.user_id:
+            raise NikshayLocationNotFound(
+                "Location {} does not have a virtual location user".format(location.location_id))
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("created_by_user_id"),
+            BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
-            Location=episode_case_properties.get("created_by_user_location_id"),
+            Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
         )
 
@@ -343,7 +346,10 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                    "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
         _assert(len(thresholds_to_send) == 1, message)
 
-        return thresholds_to_send[0]
+        try:
+            return thresholds_to_send[0]
+        except IndexError:
+            return 0
 
     def get_payload(self, repeat_record, episode_case):
         n = self._get_prescription_threshold_to_send(episode_case)

@@ -46,14 +46,21 @@ nav.appmanager-content {
 
 .appnav-primary-icon {
   font-size: 1.7rem;
-  margin-right: 5px;
+  color: lighten(@cc-text, 20);
+}
+
+.appnav-menu .appnav-primary-icon {
   top: 6px;
   position: absolute;
-  color: lighten(@cc-text, 20);
+  margin-right: 5px;
+
 }
 
 .appnav-primary-icon-lg {
   font-size: 2rem;
+}
+
+.appnav-menu .appnav-primary-icon-lg  {
   top: 2px;
 }
 
@@ -115,11 +122,6 @@ nav.appmanager-content {
       opacity: 100;
     }
   }
-}
-
-.appnav-menu > li > .appnav-item a.appnav-title-no-delete {
-  padding-left: @appnav-trash-width;
-  width: @appnav-width;
 }
 
 .appnav-menu > li > .appnav-item a.appnav-title-secondary {
@@ -260,6 +262,31 @@ nav.appmanager-content {
   }
 }
 
+.appnav-name-publish {
+  padding: 5px 15px;
+  text-transform: uppercase;
+  color: white;
+  font-size: 10px;
+  line-height: 15px;
+  background-color: @cc-dark-cool-accent-mid;
+  display: block;
+  font-weight: bold;
+  position: relative;
+  &:after {
+    content: '';
+	position: absolute;
+	top: 0;
+	left: 25px;
+	width: 0;
+	height: 0;
+	border: 10px solid transparent;
+	border-bottom-color: @cc-dark-cool-accent-mid;
+	border-top: 0;
+	margin-left: -10px;
+	margin-top: -10px;
+  }
+}
+
 .appnav-name-settings {
   float: right;
   width: 51px;
@@ -306,8 +333,10 @@ nav.appmanager-content {
   color: lighten(@cc-text, 10);
   vertical-align: top;
   font-size: 9px;
-  margin-top: 15px;
+  margin-top: -1px;
+  margin-right: 1px;
   padding-bottom: 3px;
+  line-height: 10px;
 }
 
 .appnav-section-name {
@@ -321,6 +350,19 @@ nav.appmanager-content {
 
 .appnav-link-full {
   width: 100%;
+  position: relative;
+  span {
+    display: block;
+    line-height: 14px;
+    padding: 8px 0;
+    margin-left: 22px;
+  }
+  .appnav-primary-icon {
+    margin-top: 2px;
+  }
+  .appnav-primary-icon-lg {
+    margin-top: 4px;
+  }
 }
 
 .appnav-menu .nav-divider {

@@ -522,7 +522,6 @@
    ],
    "created_from_template": null,
    "attribution_notes": null,
-   "commtrack_requisition_mode": null,
    "translation_strategy": "select-known",
    "case_sharing": false,
    "_attachments": {

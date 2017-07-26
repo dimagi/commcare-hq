@@ -46,9 +46,14 @@
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
                class="appnav-responsive">
-                <span class="variable-app_name">{{ app.name }}</span>
+                <span class="variable-app_name appname-text">{{ app.name }}</span>
             </a>
           </h2>
+          <div id="js-publish-status"
+               class="appnav-name-publish"
+               style="display: none;">
+            {% trans "Updates Available to Publish" %}
+          </div>
       </div>
 
       {% if app.get_doc_type == 'Application' %}
@@ -67,24 +72,6 @@
           </div>
         {% endif %}
 
-        {% if allow_v2_opt_out %}
-          <div class="appnav-toggle-label">
-              <div class="btn-group pull-right">
-                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-                <button type="button"
-                        class="btn btn-xs btn-default"
-                        data-toggle="modal"
-                        data-target="#rollout-revert-modal"
-                        data-redirect="{% url "view_app" domain app.id %}"
-                >{% trans "Off" %}</button>
-              </div>
-              {% trans "New App Builder" %}
-              <span class="hq-help-template"
-                    data-title="New App Builder"
-                    data-content="{% trans "Turn off new app builder for now." %}"></span>
-          </div>
-        {% endif %}
-
         {% include 'app_manager/v2/partials/appnav_menu.html' %}
       {% endif %}
     </nav>
@@ -98,6 +85,7 @@
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
+    {% initial_page_data 'current_app_version_url' current_app_version_url %}
     {% registerurl "new_form" domain app.id "---" %}
     {% registerurl "toggle_app_manager_v2" %}
     {% block pre_form_content %}{% endblock %}
@@ -144,15 +132,6 @@
             </button>
           </div>
         {% endif %}
-        {% if show_care_plan %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module"
-                    data-toggle="modal" data-stopsubmit="yes" href="#careplan-module-modal">
-              <i class="fa fa-clipboard"></i> {% trans "Care Plan" %}
-              <p>{% blocktrans %}Tasks and goals.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
       </div>
     </script>
 
@@ -166,11 +145,17 @@
                   </button>
               </div>
           <% } %>
-          <% if (showFollowup) { %>
+          <% if (showCaseForms) { %>
               <div class="pull-left">
                   <button type="button" class="popover-additem-option js-new-form appnav-responsive"
                           data-case-action="update" data-type="followup" data-form-type="form">
                     <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+                  </button>
+              </div>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="open" data-type="followup" data-form-type="form">
+                    <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
                   </button>
               </div>
           <% } %>
@@ -194,7 +179,6 @@
               {% csrf_token %}
               <input type="hidden" name="case_action" />
               <input type="hidden" name="form_type" />
-              <input type="hidden" name="name" />
           </form>
       </div>
     </script>
