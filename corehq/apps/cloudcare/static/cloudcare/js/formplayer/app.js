@@ -9,9 +9,9 @@ var FormplayerFrontend = new Marionette.Application();
 var showError = hqImport('cloudcare/js/util.js').showError;
 var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
-var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
-var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
-var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var formplayerLoading = hqImport('cloudcare/js/util.js').formplayerLoading;
+var formplayerLoadingComplete = hqImport('cloudcare/js/util.js').formplayerLoadingComplete;
+var formplayerSyncComplete = hqImport('cloudcare/js/util.js').formplayerSyncComplete;
 var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
@@ -97,10 +97,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 
 $(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
-    tfLoading();
+    formplayerLoading();
 }).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
-    tfLoadingComplete();
+    formplayerLoadingComplete();
 });
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
@@ -127,8 +127,8 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
 
-    data.onLoading = tfLoading;
-    data.onLoadingComplete = tfLoadingComplete;
+    data.onLoading = formplayerLoading;
+    data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
@@ -357,7 +357,7 @@ FormplayerFrontend.on("sync", function () {
             }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
-            tfSyncComplete(response.responseJSON.status === 'error');
+            formplayerSyncComplete(response.responseJSON.status === 'error');
         }
     };
     options = {
@@ -457,17 +457,17 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
-    tfLoading();
+    formplayerLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-        tfLoadingComplete(true);
+        formplayerLoadingComplete(true);
     }).done(function(response) {
         if (response.hasOwnProperty('exception')) {
-            tfLoadingComplete(true);
+            formplayerLoadingComplete(true);
             return;
         }
 
-        tfLoadingComplete();
+        formplayerLoadingComplete();
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
@@ -492,10 +492,10 @@ FormplayerFrontend.reqres.setHandler('clearUserData', function() {
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
-    tfLoading();
+    formplayerLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-        tfLoadingComplete(true);
+        formplayerLoadingComplete(true);
     }).done(function(response) {
         clearUserDataComplete(response.hasOwnProperty('exception'));
     });
