@@ -381,8 +381,10 @@ class MumbaiConstants(object):
     """A collection of Mumbai specific constants"""
     # TODO: (WAITING) Fill in these values
     # This is waiting on upload of the locations. It looks like for mumbai these might not be constants
-    drtb_center_name = None
-    drtb_center_id = None
+    # Some more info in the email with subject "Mehsana DRTB Data Migration"
+    # TODO: These are temp
+    drtb_center_name = "Mumbai DRTB Center"
+    drtb_center_id = "7b2deaf9b3e44dfea3fc3c9c58c86fc5"
 
 
 class MehsanaConstants(object):
@@ -601,8 +603,11 @@ def get_reason_for_test_properties(column_mapping, row):
     if not value:
         return {}
     if value not in test_reason_map:
-        raise Exception("Unexpected test reason: {}".format(value))
-    rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = test_reason_map[value]
+        # raise Exception("Unexpected test reason: {}".format(value))
+        # TODO: (Waiting) this mapping needs updating. Returning None's for now so that we can test
+        rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = None, None, None
+    else:
+        rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = test_reason_map[value]
     return {
         "rft_general": "diagnosis_drtb",
         "rft_dstb_diagnosis": rft_dstb_diagnosis,
@@ -661,6 +666,7 @@ def get_disease_site_properties_for_person(column_mapping, row):
 
 
 def convert_treatment_outcome(xlsx_value):
+    return None
     return {
         "DIED": "died",
         None: None
@@ -717,6 +723,8 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
     if result is None:
         return {}
     else:
+        # TODO: We have this now
+        return {}
         raise NotImplementedError(
             "No example data was in the original data dump, so didn't know how to handle it.")
 
@@ -867,7 +875,8 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 
 def get_culture_test_case_properties(domain, column_mapping, row):
     lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row))
-    raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+    # TODO: These have values now... need to figure out how this culture stuff will work
+    # raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": lab_name,
@@ -969,7 +978,11 @@ def convert_sensitivity(sensitivity_value):
         "Conta": "unknown",
         "": "unknown",
         "Neg": "unknown",  # TODO: (WAITING) Which should this be?
+        "C": "unknown",  #TODO: What should this be?
         None: "unknown",
+        "LJ": "unknwon",  # TODO: What should this be
+        "Liquid": "unknown",  # TODO: What should this be
+        "MGIT": "unknown",  # TODO
     }[sensitivity_value]
 
 
@@ -1056,6 +1069,8 @@ def get_drug_resistances_from_sl_lpa(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
         return []
+    # TODO: We have this now
+    return []
     raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
 
 
@@ -1118,6 +1133,8 @@ def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initi
 
 
 def get_secondary_owner_case_properties(city_constants):
+    # TODO: It is weird that mehsana has district right? Isn't mehsana the district?
+
     return {
         "secondary_owner_name": city_constants.drtb_center_name,
         "secondary_owner_type": "DRTB",
@@ -1126,6 +1143,7 @@ def get_secondary_owner_case_properties(city_constants):
 
 
 def clean_diabetes_status(xlsx_value):
+    # Ok to pass id
     if xlsx_value is None:
         return "unknown"
     return {
@@ -1135,11 +1153,13 @@ def clean_diabetes_status(xlsx_value):
 
 
 def clean_weight_band(value):
+    # Ok to pass id
     pass
     # TODO: (WAITING) Not sure what the valid values are
 
 
 def clean_height(value):
+    # Ok to pass id
     if value is None:
         return None
     if re.match("[0-9]*", str(value)):
@@ -1148,12 +1168,21 @@ def clean_height(value):
 
 
 def clean_treatment_regimen(value):
+    # ok to pass id
     if value is None:
         return None
     return {
         "Regimen for MDR/RR TB": "mdr_rr",
         "Regimen for XDR TB": "xdr",
         "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
+        "?": None,
+        # TODO: Find out mapping for all of these
+        "3": None,
+        3: None,
+        "CP": None,
+        "IP": None,
+        "Case closed (select relevant option in treatment outcome)": None,
+        "Still on Trt.": None,
     }[value]
 
 
@@ -1208,6 +1237,7 @@ def clean_hiv_status(value):
         "Negative": NON_REACTIVE,
         "Neg": NON_REACTIVE,
         "NEg": NON_REACTIVE,
+        "NK-unwilling": None,
         "?": None,
     }[value]
 
@@ -1222,6 +1252,8 @@ def clean_socioeconomic_status(value):
 
 
 def clean_result(value):
+    if isinstance(value, datetime.date):
+        return NO_RESULT
     return {
         None: NO_RESULT,
         "Sample rejected": NO_RESULT,
@@ -1245,15 +1277,20 @@ def clean_result(value):
 def clean_drtb_type(value):
     if value is None:
         return "unknown"
-    return {
-        "MDR": "mdr",
-        "XDR": "xdr",
-        "Modified MDR": "mdr",  # TODO: (WAITING) confirm this value
-        "RR TB": "rr",
-        "MDR TB": "mdr",
-        "XDR TB": "xdr",
-        "RRTB": "rr",
-    }[value]
+    try:
+        return {
+            "MDR": "mdr",
+            "XDR": "xdr",
+            "Modified MDR": "mdr",  # TODO: (WAITING) confirm this value
+            "RR TB": "rr",
+            "MDR TB": "mdr",
+            "XDR TB": "xdr",
+            "RRTB": "rr",
+        }[value]
+    except:
+        # raise Exception("Invalid drtb type: {}".format(value))
+        # TODO: uncomment this
+        return "unknown"
 
 
 def result_label(result):
@@ -1369,6 +1406,12 @@ class Command(BaseCommand):
 
         import_log_file_name = "drtb-import-{}.csv".format(migration_id)
 
+        missing_cbnaat_result = 0
+        bad_phone_number = 0
+        bad_date_string = 0
+        missing_phi = 0
+        cases_created = []
+
         with open_any_workbook(excel_file_path) as workbook:
             with open(import_log_file_name, "w") as import_log_file:
                 import_log_writer = csv.writer(import_log_file)
@@ -1376,7 +1419,7 @@ class Command(BaseCommand):
 
                 for i, row in enumerate(workbook.worksheets[0].iter_rows()):
                     if i == 0:
-                        # Skip the headers row
+                        header_row = row
                         continue
 
                     row_contains_data = any(cell.value for cell in row)
@@ -1393,10 +1436,26 @@ class Command(BaseCommand):
 
                         if options['commit']:
                             case_factory.create_or_update_cases(case_structures)
-                    except Exception:
+                    except Exception as e:
                         logger.info("Creating case structures for row {} failed".format(i))
                         exception_as_string = traceback.format_exc()
                         import_log_writer.writerow([i, "", exception_as_string])
+
+                        if "Got a date like" in e.message:
+                            bad_date_string += 1
+                        elif "phi_name is required" in e.message:
+                            missing_phi += 1
+                        else:
+                            raise
+
+
+
+        print "{} rows missing cbnaat result".format(missing_cbnaat_result)
+        print "{} rows with bad phone number".format(bad_phone_number)
+        print "{} rows with bad date string".format(bad_date_string)
+        print "{} rows with missing phi".format(missing_phi)
+        # print "Most cases created is {}".format(max(cases_created))
+        # print "avg cases created is {}".format(sum(cases_created)/float(len(cases_created)))
 
     def generate_id(self):
         now = datetime.datetime.now()
