@@ -3,9 +3,7 @@
 FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, Marionette, $){
     Apps.Controller = {
         listApps: function(){
-            var fetchingApps = FormplayerFrontend.request("appselect:apps");
-
-            $.when(fetchingApps).done(function (apps) {
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
 
                 var appGridView = new Apps.Views.GridView({
                     collection: apps,

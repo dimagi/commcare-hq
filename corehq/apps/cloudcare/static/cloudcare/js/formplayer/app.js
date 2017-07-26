@@ -172,8 +172,7 @@ FormplayerFrontend.on('startForm', function (data) {
 
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
-        savedDisplayOptions,
-        appId;
+        savedDisplayOptions;
     user.username = options.username;
     user.apps = options.apps;
     user.domain = options.domain;
@@ -196,36 +195,39 @@ FormplayerFrontend.on("start", function (options) {
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
-    if (Backbone.history) {
-        Backbone.history.start();
-        FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.Users.Views.RestoreAsBanner({
-                model: user,
-            })
-        );
-        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-            appId = options.apps[0]['_id'];
-        }
+    $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+        var appId;
 
-        // will be the same for every domain. TODO: get domain/username/pass from django
-        if (this.getCurrentRoute() === "") {
-            if (user.displayOptions.singleAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:singleApp", appId);
-            } else if (user.displayOptions.landingPageAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:landingPageApp", appId);
-            } else {
-                FormplayerFrontend.trigger("apps:list", options.apps);
+        if (Backbone.history) {
+            Backbone.history.start();
+            FormplayerFrontend.regions.restoreAsBanner.show(
+                new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                    model: user,
+                })
+            );
+            if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                appId = apps[0]['_id'];
             }
-            if (user.displayOptions.phoneMode) {
-                // Refresh on start of preview mode so it ensures we're on the latest app
-                // since app updates do not work.
-                FormplayerFrontend.trigger('refreshApplication', appId);
+
+            // will be the same for every domain. TODO: get domain/username/pass from django
+            if (this.getCurrentRoute() === "") {
+                if (user.displayOptions.singleAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:singleApp", appId);
+                } else if (user.displayOptions.landingPageAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:landingPageApp", appId);
+                } else {
+                    FormplayerFrontend.trigger("apps:list", apps);
+                }
+                if (user.displayOptions.phoneMode) {
+                    // Refresh on start of preview mode so it ensures we're on the latest app
+                    // since app updates do not work.
+                    FormplayerFrontend.trigger('refreshApplication', appId);
+                }
             }
         }
-    }
-
+    });
     if (options.allowedHost) {
         window.addEventListener(
             "message",
