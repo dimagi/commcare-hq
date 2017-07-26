@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from couchdbkit import ResourceNotFound
 
@@ -13,6 +13,9 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from couchforms.models import XFormInstance
+
+
+ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
 
 
 def reprocess_unfinished_stub(stub):
@@ -35,9 +38,9 @@ def reprocess_unfinished_stub(stub):
         return
 
     assert form.is_normal
-    _reprocess_form(form)
-
+    result = _reprocess_form(form)
     stub.delete()
+    return result
 
 
 def reprocess_xform_error(form):
@@ -55,7 +58,7 @@ def reprocess_xform_error(form):
     if not form.is_error:
         raise Exception('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
 
-    return _reprocess_form(form)
+    return _reprocess_form(form).form
 
 
 def reprocess_xform_error_by_id(form_id, domain=None):
@@ -85,6 +88,7 @@ def _reprocess_form(form):
         assert stock_result.populated
 
         cases = case_stock_result.case_models
+        ledgers = []
         if should_use_sql_backend(form.domain):
             cases = _filter_already_processed_cases(form, cases)
             cases_updated = {case.case_id for case in cases if case.is_saved()}
@@ -120,7 +124,7 @@ def _reprocess_form(form):
         case_stock_result.stock_result.finalize()
         case_stock_result.case_result.commit_dirtiness_flags()
 
-    return form
+    return ReprocessingResult(form, cases, ledgers)
 
 
 def _filter_already_processed_cases(form, cases):

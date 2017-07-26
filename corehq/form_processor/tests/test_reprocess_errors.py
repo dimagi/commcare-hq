@@ -136,7 +136,10 @@ class ReprocessSubmissionStubTests(TestCase):
 
         self.assertEqual(0, len(CaseAccessorSQL.get_case_ids_in_domain(self.domain)))
 
-        reprocess_unfinished_stub(stubs[0])
+        result = reprocess_unfinished_stub(stubs[0])
+        self.assertEqual(1, len(result.cases))
+        self.assertEqual(0, len(result.ledgers))
+
         case_ids = CaseAccessorSQL.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         self.assertEqual(case_id, case_ids[0])
@@ -178,7 +181,9 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(2, len(case.transactions))
         self.assertEqual('b', case.get_case_property('prop'))
 
-        reprocess_unfinished_stub(stubs[0])
+        result = reprocess_unfinished_stub(stubs[0])
+        self.assertEqual(1, len(result.cases))
+        self.assertEqual(0, len(result.ledgers))
 
         case = CaseAccessorSQL.get_case(case_id)
         self.assertEqual('b', case.get_case_property('prop'))  # should be property value from most recent form
@@ -221,7 +226,9 @@ class ReprocessSubmissionStubTests(TestCase):
         ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
         self.assertEqual(0, len(ledger_transactions))
 
-        reprocess_unfinished_stub(stubs[0])
+        result = reprocess_unfinished_stub(stubs[0])
+        self.assertEqual(0, len(result.cases))
+        self.assertEqual(1, len(result.ledgers))
 
         ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
         self.assertEqual(1, len(ledgers))
@@ -274,7 +281,9 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(2, len(ledger_transactions))
 
         # should rebuild ledger transactions
-        reprocess_unfinished_stub(stubs[0])
+        result = reprocess_unfinished_stub(stubs[0])
+        self.assertEqual(0, len(result.cases))
+        self.assertEqual(1, len(result.ledgers))
 
         ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
         self.assertEqual(1, len(ledgers))  # still only 1
