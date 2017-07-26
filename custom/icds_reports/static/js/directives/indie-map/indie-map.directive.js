@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, storageService) {
+function IndieMapController($scope, $compile, $location, $filter, storageService) {
     var vm = this;
 
     setTimeout(function() {
@@ -140,7 +140,11 @@ function IndieMapController($scope, $compile, $location, storageService) {
                         if (this.options.rightLegend['average']) {
                             html += '<tr>';
                             html += '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
-                            html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + this.options.rightLegend['average'] + '%</td>';
+                            if (this.options.rightLegend['average_format'] === 'number') {
+                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
+                            } else {
+                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + this.options.rightLegend['average'] + '%</td>';
+                            }
                             html += '<tr/>';
                         }
                         html += '<tr>';
@@ -187,7 +191,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', 'storageService'];
+IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService'];
 
 window.angular.module('icdsApp').directive('indieMap', function() {
     return {

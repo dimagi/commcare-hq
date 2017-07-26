@@ -3967,7 +3967,6 @@ def get_awcs_covered_data_map(config, loc_level):
                 "info": _((
                     "Total AWCs that have launched ICDS CAS"
                 )),
-                'period': 'Daily',
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
             "data": map_data,
@@ -4041,6 +4040,89 @@ def get_awcs_covered_sector_data(config, loc_level):
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
+            }
+        ]
+    }
+
+
+def get_registered_household_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        del filters['month']
+        return AggAwcMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            household=Sum('cases_household'),
+        )
+    average = []
+    map_data = {}
+    for row in get_data_for(config):
+        name = row['%s_name' % loc_level]
+        household = row['household']
+        average.append(household)
+        row_values = {
+            'household': household,
+            'fillKey': 'Household',
+        }
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'Household': BLUE})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "registered_household",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "average_format": 'number',
+                "info": _("Total number of households registered"),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_registered_household_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    del config['month']
+
+    data = AggAwcMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+            household=Sum('cases_household'),
+    ).order_by('%s_name' % loc_level)
+
+    chart_data = {
+        'blue': []
+    }
+
+    for row in data:
+        household = row['household']
+        chart_data['blue'].append(household or 0)
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['blue'],
+                "key": "Registered household",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
             }
         ]
     }
