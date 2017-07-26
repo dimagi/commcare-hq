@@ -123,7 +123,6 @@ hqDefine('cloudcare/js/util.js', function () {
         showError: showError,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
-        showLoading: showLoading,
         clearUserDataComplete: clearUserDataComplete,
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
