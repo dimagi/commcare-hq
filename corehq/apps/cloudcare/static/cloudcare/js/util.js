@@ -75,11 +75,11 @@ hqDefine('cloudcare/js/util.js', function () {
         NProgress.start();
     };
 
-    var tfLoading = function (selector) {
+    var formplayerLoading = function (selector) {
         showLoading();
     };
 
-    var tfLoadingComplete = function (isError, message) {
+    var formplayerLoadingComplete = function (isError, message) {
         hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
@@ -125,8 +125,8 @@ hqDefine('cloudcare/js/util.js', function () {
         showSuccess: showSuccess,
         showLoading: showLoading,
         clearUserDataComplete: clearUserDataComplete,
-        tfLoading: tfLoading,
-        tfLoadingComplete: tfLoadingComplete,
+        formplayerLoading: formplayerLoading,
+        formplayerLoadingComplete: formplayerLoadingComplete,
         tfSyncComplete: tfSyncComplete,
         hideLoading: hideLoading,
         hideLoadingCallback: hideLoadingCallback
