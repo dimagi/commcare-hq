@@ -27,18 +27,6 @@ hqDefine('cloudcare/js/util.js', function () {
         return urlRoot + "/" + appId + "/";
     };
 
-    var getCaseFilterUrl = function(urlRoot, appId, moduleId, special, parentId) {
-        // TODO: make this cleaner
-        var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
-        if (parentId){
-            url += "parent/" + parentId + "/";
-        }
-        if (special === 'task-list') {
-            url += '?task-list=true';
-        }
-        return url;
-    };
-
     var isParentField = function(field) {
         return field ? field.startsWith('parent/') : false;
     };
@@ -136,7 +124,6 @@ hqDefine('cloudcare/js/util.js', function () {
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
-        getCaseFilterUrl: getCaseFilterUrl,
         isParentField: isParentField,
         showError: showError,
         showHTMLError: showHTMLError,
