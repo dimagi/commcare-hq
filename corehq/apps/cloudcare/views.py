@@ -1,4 +1,5 @@
 import json
+import urllib
 from xml.etree import ElementTree
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.users.util import format_username
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
@@ -105,8 +107,26 @@ class FormplayerMain(View):
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
+    @staticmethod
+    def get_restore_as_user(request, domain):
+        set_cookie = lambda response: response
+        cookie_name = urllib.quote(
+            'restoreAs:{}:{}'.format(domain, request.couch_user.username))
+        username = request.COOKIES.get(cookie_name)
+        if username:
+            user = CouchUser.get_by_username(format_username(username, domain))
+            if user:
+                return user, set_cookie
+            else:
+                def set_cookie(response):
+                    response.delete_cookie(cookie_name)
+                    return response
+
+        return request.couch_user, set_cookie
+
     def get(self, request, domain):
-        apps = self.get_web_apps_available_to_user(domain, request.couch_user)
+        restore_as, set_cookie = self.get_restore_as_user(request, domain)
+        apps = self.get_web_apps_available_to_user(domain, restore_as)
 
         def _default_lang():
             try:
@@ -130,7 +150,9 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
-        return render(request, "cloudcare/formplayer_home.html", context)
+        return set_cookie(
+            render(request, "cloudcare/formplayer_home.html", context)
+        )
 
 
 class FormplayerMainPreview(FormplayerMain):
