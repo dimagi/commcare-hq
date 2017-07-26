@@ -299,4 +299,3 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(-50, ledger_transactions[1].delta)
         self.assertEqual(25, ledger_transactions[2].updated_balance)
         self.assertEqual(-25, ledger_transactions[2].delta)
-
