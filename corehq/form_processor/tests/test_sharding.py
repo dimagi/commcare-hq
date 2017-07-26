@@ -178,3 +178,13 @@ class ShardAccessorTests(TestCase):
         uuid = UUID('403724ef9fe141f2908363918c62c2ff')
         self.assertEqual(ShardAccessor.hash_doc_id_python(uuid), 1415444857)
         self.assertEqual(ShardAccessor.hash_doc_uuid_sql(uuid), 1415444857)
+
+    def test_same_dbalias_util(self):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
+        for i in range(10):
+            # test multiple times to test a wider probability
+            f1_id = unicode(uuid4())
+            old_db_alias = get_db_alias_for_partitioned_doc(f1_id)
+            f2_id = new_id_in_same_dbalias(f1_id)
+            new_db_alias = get_db_alias_for_partitioned_doc(f2_id)
+            self.assertEqual(new_db_alias, old_db_alias)
