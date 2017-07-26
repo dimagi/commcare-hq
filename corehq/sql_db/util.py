@@ -130,8 +130,9 @@ def new_id_in_same_dbalias(partition_value):
     """
     old_db_name = get_db_alias_for_partitioned_doc(partition_value)
     new_db_name = None
-    while old_db_name != new_db_name:
-        # todo; guard against infinite recursion
+    while new_db_name != old_db_name:
+        # try finding a key till we get the one that belongs to correct shard
+        #   could be slow only if the number of shards are extremely high
         new_partition_value = unicode(uuid.uuid4())
         new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
     return new_partition_value
