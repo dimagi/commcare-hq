@@ -2,13 +2,11 @@ import logging
 import hashlib
 import re
 import json
-import uuid
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
 import itertools
 
-from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
@@ -32,7 +30,6 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
-    ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
@@ -68,7 +65,6 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
-    CareplanForm,
     DeleteFormRecord,
     Form,
     FormActions,
@@ -83,8 +79,6 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_FORM,
     CustomInstance,
     CaseReferences,
-    AdvancedModule,
-    ShadowForm,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -209,27 +203,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
-    return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
-    app = get_app(domain, app_id)
-    form = app.get_form(form_unique_id)
-    transaction = json.loads(request.POST.get('transaction'))
-
-    for question in transaction['fixedQuestions']:
-        setattr(form, question['name'], question['path'])
-
-    def to_dict(properties):
-        return dict((p['key'], p['path']) for p in properties)
-
-    form.custom_case_updates = to_dict(transaction['case_properties'])
-    form.case_preload = to_dict(transaction['case_preload'])
-
-    response_json = {}
-    app.save(response_json)
     return json_response(response_json)
 
 
@@ -593,8 +566,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'xform_validation_missing': xform_validation_missing,
         'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
-        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not form_has_schedule,
+        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -642,19 +615,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    if isinstance(form, CareplanForm):
-        case_config_options.update({
-            'case_preload': [
-                {'key': key, 'path': path} for key, path in form.case_preload.items()
-            ],
-            'customCaseUpdates': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
-            'fixedQuestions': form.get_fixed_questions(),
-            'mode': form.mode,
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
-        })
-    elif isinstance(form, AdvancedForm):
+    if isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
                 programs = Program.by_domain(app.domain)

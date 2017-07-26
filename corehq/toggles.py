@@ -307,12 +307,6 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-APP_BUILDER_CAREPLAN = StaticToggle(
-    'careplan',
-    'Careplan module',
-    TAG_EXPERIMENTAL
-)
-
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
