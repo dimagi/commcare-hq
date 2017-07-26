@@ -25,7 +25,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test)
+    get_lab_referral_from_test, get_occurrence_case_from_episode)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -258,7 +258,9 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
 
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
-            test_case, test_case_properties)
+            test_case, test_case_properties, occurence_case,
+            self.use_new_2b_app_structure(person_case, episode_case)
+        )
 
         test_reported_on = _format_date_or_null_date(test_case_properties, 'date_reported')
         properties_dict = self._base_properties(repeat_record)
@@ -276,12 +278,13 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         return json.dumps(properties_dict)
 
-    def _get_mandatory_fields(self, test_case, test_case_properties):
+    def _get_mandatory_fields(self, test_case, test_case_properties, occurence_case, use_new_2b_app_structure):
         # list of fields that we want the case to have and should raise an exception if its missing or not in
         # expected state to highlight missing essentials in repeat records. Check added here instead of
         # allow_to_forward to bring to notice these records instead of silently ignoring them
-        interval_id = self._get_interval_id(test_case_properties.get('purpose_of_testing'),
-                                            test_case_properties.get('follow_up_test_reason'))
+        interval_id = self._get_interval_id(
+            test_case_properties, use_new_2b_app_structure
+        )
 
         dmc_code = self._get_dmc_code(test_case, test_case_properties)
         lab_serial_number = test_case_properties.get('lab_serial_number')
@@ -303,8 +306,14 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         elif test_result_grade == 'scanty':
             return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)
 
-    def _get_interval_id(self, testing_purpose, follow_up_test_reason):
-        if testing_purpose == 'diagnostic':
+    def _get_interval_id(self, test_case_properties, use_new_2b_app_structure):
+        if use_new_2b_app_structure:
+            testing_purpose = test_case_properties.get('rft_general')
+            follow_up_test_reason = test_case_properties.get('rft_dstb_followup')
+        else:
+            testing_purpose = test_case_properties.get('rft_general')
+            follow_up_test_reason = test_case_properties.get('rft_dstb_followup')
+        if testing_purpose in ['diagnostic', 'diagnosis_dstb', 'diagnosis_drtb']:
             interval_id = 0
         else:
             interval_id = purpose_of_testing.get(follow_up_test_reason, None)
