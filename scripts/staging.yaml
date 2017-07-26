@@ -51,7 +51,6 @@ branches:
   - app-manager-labs # Jenny 6/19
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
-  - je/cache-build-files # j$ 7/25
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
 submodules:
