@@ -86,9 +86,6 @@ class DataFileDownloadDetailTest(ViewTestCase):
         cls.data_file.delete()
         _db.pop()
 
-    def setUp(self):
-        super(DataFileDownloadDetailTest, self).setUp()
-
     def test_data_file_download(self):
         data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
             'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
@@ -100,17 +97,6 @@ class DataFileDownloadDetailTest(ViewTestCase):
 
 
 class ExportViewTest(ViewTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ExportViewTest, cls).setUpClass()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(ExportViewTest, cls).tearDownClass()
-
-    def setUp(self):
-        super(ExportViewTest, self).setUp()
 
     def tearDown(self):
         delete_all_export_instances()
