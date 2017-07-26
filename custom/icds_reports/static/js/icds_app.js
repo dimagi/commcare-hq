@@ -107,6 +107,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/immunization_coverage/:step", {
                 template : "<immunization-coverage></immunization-coverage>",
+            })
+            .when("/awc_daily_status", {
+                redirectTo : "/awc_daily_status/map",
+            })
+            .when("/awc_daily_status/:step", {
+                template : "<awc-daily-status></awc-daily-status>",
             });
     }]);
 

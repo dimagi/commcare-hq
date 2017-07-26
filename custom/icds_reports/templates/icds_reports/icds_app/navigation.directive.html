@@ -8,7 +8,7 @@
     <div>
         <ul class="nav nav-list">
             <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
-                <div class="row pointer" ng-click="$location.path('/');  healthCollapsed = true;">
+                <div class="row pointer" ng-click="$location.path('/');  healthCollapsed = true; icdsCasReach = true;">
                     <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "Program Summary" %}</div>
                 </div>
@@ -51,11 +51,17 @@
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
-                <div class="row pointer">
+                <div class="row pointer" ng-click="icdsCasReach = !icdsCasReach">
                     <div class="col-sm-1"><i class="fa fa-bar-chart" aria-hidden="true"></i></div>
                     <div class="col-sm-8">{% trans "ICDS CAS Reach" %}</div>
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
+                <ul class="nav nav-list collapse" uib-collapse="icdsCasReach">
+                    <li ng-class="{'active': $location.path().indexOf('/awc_daily_status') !== -1}">
+                        <a href="{$ goToStep('awc_daily_status', $location.search()) $}" class="fa">{% trans "AWC Daily Status" %}
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
                 <div class="row pointer">

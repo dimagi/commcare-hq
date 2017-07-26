@@ -4,7 +4,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
     ExportIndicatorView, ProgressReportView, PrevalenceOfSevereView, PrevalenceOfStunningView, \
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
-    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView
+    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -53,4 +53,8 @@ urlpatterns = [
         r'^immunization_coverage/(?P<step>[\w-]+)/',
         ImmunizationCoverageView.as_view(),
         name='immunization_coverage'),
+    url(
+        r'^awc_daily_status/(?P<step>[\w-]+)/',
+        AWCDailyStatusView.as_view(),
+        name='awc_daily_status'),
 ]

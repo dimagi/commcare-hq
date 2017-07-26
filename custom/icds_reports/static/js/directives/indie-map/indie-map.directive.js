@@ -136,6 +136,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
                 customTable: function () {
                     if (this.options.rightLegend !== null) {
                         var loc_name = $location.search()['location_name'] || "National";
+                        var period = this.options.rightLegend['period'] || 'Monthly';
                         var html = [
                             '<table style="width: 250px;">',
                             '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>',
@@ -147,7 +148,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
                             '<tr/>',
                             '<tr>',
                             '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: Monthly</td>',
+                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>',
                             '<tr/>',
                             '</table>',
                         ];

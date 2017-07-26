@@ -55,6 +55,7 @@
         <script type="text/javascript" src="{% static 'js/angular-services/locations.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/storage.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
@@ -80,6 +81,7 @@
         <script type="text/javascript" src="{% static 'js/directives/children-initiated/children-initiated.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -169,6 +171,7 @@
                     {% registerurl 'children_initiated' domain '---' %}
                     {% registerurl 'institutional_deliveries' domain '---' %}
                     {% registerurl 'immunization_coverage' domain '---' %}
+                    {% registerurl 'awc_daily_status' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>
