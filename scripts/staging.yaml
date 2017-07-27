@@ -54,6 +54,7 @@ branches:
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
   - template-apps-in-v2 # Jenny 7/27
+  - es/products-fixture  # Ethan 7/27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
