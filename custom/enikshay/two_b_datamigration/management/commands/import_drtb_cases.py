@@ -475,7 +475,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "hiv_program_id": column_mapping.get_value("hiv_program_id", row),
         "cpt_initiation_date": clean_date(column_mapping.get_value("cpt_initiation_date", row)),
         "art_initiation_date": clean_date(column_mapping.get_value("art_initiation_date", row)),
-        "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row))
+        "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row)),
+        "language_code": "hin",
     }
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
@@ -489,7 +490,6 @@ def get_person_case_properties(domain, column_mapping, row):
     if phone_number:
         properties['contact_phone_number'] = clean_phone_number(phone_number, 12)
         properties['phone_number'] = clean_phone_number(phone_number, 10)
-        properties['language_code'] = "hin"
 
     social_scheme = column_mapping.get_value("social_scheme", row)
     properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
