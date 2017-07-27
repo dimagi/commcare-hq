@@ -81,6 +81,12 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
 
 class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
     default_text = ugettext_noop('Enter a worker')
+    is_paginated = True
+
+    @property
+    def pagination_source(self):
+        from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+        return reverse(MobileWorkersOptionsView.urlname, args=[self.domain])
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):

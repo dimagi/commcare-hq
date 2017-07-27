@@ -195,6 +195,44 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     """
     urlname = 'users_select2_options'
 
+
+    # This endpoint is used by select2 single option filters
+    def post(self, request, domain):
+        self.domain = domain
+        self.q = self.request.POST.get('q', None)
+        try:
+            count, options = self.get_post_options()
+            return self.render_json_response({
+                'items': options,
+                'total': count,
+                'limit': request.POST.get('page_limit', 10),
+                'success': True
+            })
+        except ESError as e:
+            if self.q:
+                # Likely caused by an invalid user query
+                # A query that causes this error immediately follows a very
+                # similar query that should be caught by the else clause if it
+                # errors.  If that error didn't happen, the error was probably
+                # introduced by the addition of the query_string query, which
+                # contains the user's input.
+                logger.info('ElasticSearch error caused by query "%s": %s',
+                            self.q, e)
+            else:
+                # The error was our fault
+                notify_exception(request, e)
+        return self.render_json_response({
+            'results': [],
+            'total': 0,
+        })
+
+    def get_post_options(self):
+        page = int(self.request.POST.get('page', 1))
+        size = int(self.request.POST.get('page_limit', 10))
+        start = size * (page - 1)
+        count, options = paginate_options(self.data_sources, self.q, start, size)
+        return count, [{'id': id_, 'text': text} for id_, text in options]
+
     @property
     @memoized
     def utils(self):
