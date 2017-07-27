@@ -180,7 +180,7 @@ def show(slug, request, app, module=None, form=None):
     # Show if app has no add-ons and domain was created before add-ons were released
     if not app.add_ons:
         domain = Domain.get_by_name(app.domain)
-        if getattr(domain, 'date_created', datetime(2000, 1, 1)) < _RELEASE_DATE:
+        if (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE:
             return True
 
     # Show if add-on has been enabled for app
@@ -246,7 +246,7 @@ def init_app(request, app):
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
 
             # Turn on if this domain was created prior to add-ons release
-            enable = enable or getattr(domain, 'date_created', datetime(2000, 1, 1)) < _RELEASE_DATE
+            enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable
 
     app.save()
