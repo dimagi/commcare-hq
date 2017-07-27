@@ -49,6 +49,8 @@ from casexml.apps.phone.const import (
     ASYNC_RETRY_AFTER,
     ASYNC_RESTORE_CACHE_KEY_PREFIX,
     RESTORE_CACHE_KEY_PREFIX,
+    CLEAN_OWNERS,
+    LIVEQUERY,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from casexml.apps.phone.utils import get_restore_response_class
@@ -61,9 +63,6 @@ from xml.etree import ElementTree
 
 logger = logging.getLogger(__name__)
 
-# case sync algorithms
-CLEAN_OWNERS = 'clean_owners'
-LIVEQUERY = 'livequery'
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
