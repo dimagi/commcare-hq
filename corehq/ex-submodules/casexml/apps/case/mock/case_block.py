@@ -96,16 +96,16 @@ class CaseBlock(object):
         if self.index:
             result['index'] = {}
             for name in self.index.keys():
-                self.case_type = self.index[name].case_type
-                self.case_id = self.index[name].case_id
+                case_type = self.index[name].case_type
+                case_id = self.index[name].case_id
 
                 relationship = self.index[name].relationship
-                _attrib = {'case_type': self.case_type}
+                _attrib = {'case_type': case_type}
                 if relationship != 'child':
                     _attrib['relationship'] = relationship
                 result['index'][name] = {
                     '_attrib': _attrib,
-                    '_text': self.case_id
+                    '_text': case_id
                 }
         return result
 
@@ -115,6 +115,11 @@ class CaseBlock(object):
             'case_id', 'date_modified', 'create', 'update', 'close', 'case_type',
             'user_id', 'case_name', 'external_id', 'owner_id', 'date_opened'])
         return case
+
+    @classmethod
+    def from_xml(cls, case):
+        # TODO add more fields, esp. indices to returned case
+        return cls(case_id=case.get("case_id"))
 
     def as_string(self):
         return ElementTree.tostring(self.as_xml())
