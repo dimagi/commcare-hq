@@ -2,7 +2,7 @@
 
 function MapOrSectorController() {
     var vm = this;
-    vm.height = 650;
+    vm.height = 700;
 
     vm.chartOptions = {
         chart: {
@@ -20,7 +20,7 @@ function MapOrSectorController() {
                 return d[1];
             },
             showControls: false,
-            showValues: true,
+            showValues: false,
             duration: 500,
             xAxis: {
                 showMaxMin: false,

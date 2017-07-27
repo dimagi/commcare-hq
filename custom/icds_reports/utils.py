@@ -19,6 +19,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
@@ -1354,11 +1355,10 @@ def get_awc_reports_pse(config, month, two_before, domain):
                     'message': awc_name,
                 }
             })
-        url = reverse('download_attachment', kwargs={'domain': domain, 'instance_id': doc_id})
         if image_name:
             tmp_image.append({
                 'id': count,
-                'image': url + '?attachment=' + image_name,
+                'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
                 'date': pse_date.strftime("%d/%m/%Y")
             })
             img_count += 1
@@ -1560,15 +1560,6 @@ def get_awc_reports_maternal_child(config, month, prev_month):
 def get_awc_report_demographics(config, month):
     selected_month = datetime(*month)
 
-    def get_data_for(date, filters):
-        return AggAwcMonthly.objects.filter(
-            month=date, **filters
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            household=Sum('cases_household')
-        )
-
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
@@ -1605,6 +1596,7 @@ def get_awc_report_demographics(config, month):
         ).values(
             'aggregation_level'
         ).annotate(
+            household=Sum('cases_household'),
             ccs_pregnant=Sum('cases_ccs_pregnant'),
             ccs_lactating=Sum('cases_ccs_lactating'),
             adolescent=Sum('cases_person_adolescent_girls_11_18'),
@@ -1616,9 +1608,6 @@ def get_awc_report_demographics(config, month):
     two_days_ago = yesterday - relativedelta(days=1)
     kpi_yesterday = get_data_for_kpi(config, yesterday.date())
     kpi_two_days_ago = get_data_for_kpi(config, two_days_ago.date())
-
-    this_month = get_data_for(selected_month, config)
-    prev_month = get_data_for(selected_month - relativedelta(months=1), config)
 
     return {
         'chart': [
@@ -1635,10 +1624,10 @@ def get_awc_report_demographics(config, month):
                     'help_text': _("Total number of households registered"),
                     'percent': percent_increase(
                         'household',
-                        this_month,
-                        prev_month,
+                        kpi_yesterday,
+                        kpi_two_days_ago,
                     ),
-                    'value': get_value(this_month, 'household'),
+                    'value': get_value(kpi_yesterday, 'household'),
                     'all': '',
                     'format': 'number',
                     'frequency': 'month'
@@ -1662,7 +1651,7 @@ def get_awc_report_demographics(config, month):
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
                     'percent': percent_increase(
-                        ['ccs_lactating'],
+                        'ccs_lactating',
                         kpi_yesterday,
                         kpi_two_days_ago
                     ),
@@ -1692,7 +1681,7 @@ def get_awc_report_demographics(config, month):
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
                     'percent': percent_diff(
-                        ['has_aadhaar'],
+                        'has_aadhaar',
                         kpi_yesterday,
                         kpi_two_days_ago,
                         'all_cases'
@@ -1771,8 +1760,8 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': row.age_in_months, 'y': (row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': row.age_in_months, 'y': (row.recorded_height or 0)})
+        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': int(row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': int(row.age_in_months), 'y': int(row.recorded_height or 0)})
     return beneficiary
 
 

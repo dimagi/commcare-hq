@@ -875,7 +875,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
         if (parseInt(vm.selectedLocationLevel) === 4) {
-            $http({
+            vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
                 params: $location.search(),
@@ -1008,7 +1008,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }).then(
             function (response) {
                 vm.beneficiary = response.data;
-                highest_age = vm.beneficiary.age
+                highest_age = vm.beneficiary.age * 12;
                 vm.lineChartOneData = vm.beneficiary.weight;
                 vm.lineChartTwoData = vm.beneficiary.height;
 
