@@ -1,9 +1,11 @@
 import json
+import urllib
 from xml.etree import ElementTree
 
 from django.conf import settings
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404, \
+    JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -16,6 +18,7 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.users.util import format_username
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
@@ -88,7 +91,7 @@ class FormplayerMain(View):
         else:
             return get_latest_released_app_doc(domain, app_id)
 
-    def get(self, request, domain):
+    def get_web_apps_available_to_user(self, domain, user):
         app_access = ApplicationAccess.get_by_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
@@ -98,11 +101,52 @@ class FormplayerMain(View):
         )
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-        role = request.couch_user.get_role(domain)
+        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        role = user.get_role(domain)
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
+        return apps
+
+    @staticmethod
+    def get_restore_as_user(request, domain):
+        """
+        returns (user, set_cookie), where set_cookie is a function to be called on
+        the eventual response
+        """
+
+        def set_cookie(response):  # set_coookie is a noop by default
+            return response
+
+        cookie_name = urllib.quote(
+            'restoreAs:{}:{}'.format(domain, request.couch_user.username))
+        username = request.COOKIES.get(cookie_name)
+        if username:
+            user = CouchUser.get_by_username(format_username(username, domain))
+            if user:
+                return user, set_cookie
+            else:
+                def set_cookie(response):  # overwrite the default noop set_cookie
+                    response.delete_cookie(cookie_name)
+                    return response
+
+        return request.couch_user, set_cookie
+
+    def get(self, request, domain):
+        option = request.GET.get('option')
+        if option == 'apps':
+            return self.get_option_apps(request, domain)
+        else:
+            return self.get_main(request, domain)
+
+    def get_option_apps(self, request, domain):
+        restore_as, set_cookie = self.get_restore_as_user(request, domain)
+        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        return JsonResponse(apps, safe=False)
+
+    def get_main(self, request, domain):
+        restore_as, set_cookie = self.get_restore_as_user(request, domain)
+        apps = self.get_web_apps_available_to_user(domain, restore_as)
 
         def _default_lang():
             try:
@@ -126,7 +170,9 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
-        return render(request, "cloudcare/formplayer_home.html", context)
+        return set_cookie(
+            render(request, "cloudcare/formplayer_home.html", context)
+        )
 
 
 class FormplayerMainPreview(FormplayerMain):
