@@ -875,7 +875,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
         if (parseInt(vm.selectedLocationLevel) === 4) {
-            $http({
+            vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
                 params: $location.search(),

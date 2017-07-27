@@ -386,18 +386,19 @@ class AwcReportsView(View):
 
         config = {
             'aggregation_level': aggregation_level,
+            'awc_id': "d5d0fce5e73ff2b04417f40bd2bc84c7"
         }
-        if location:
-            try:
-                sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                locations = sql_location.get_ancestors(include_self=True)
-                for loc in locations:
-                    location_key = '%s_id' % loc.location_type.code
-                    config.update({
-                        location_key: loc.location_id,
-                    })
-            except SQLLocation.DoesNotExist:
-                pass
+        # if location:
+        #     try:
+        #         sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
+        #         locations = sql_location.get_ancestors(include_self=True)
+        #         for loc in locations:
+        #             location_key = '%s_id' % loc.location_type.code
+        #             config.update({
+        #                 location_key: loc.location_id,
+        #             })
+        #     except SQLLocation.DoesNotExist:
+        #         pass
 
         data = []
         if step == 'system_usage':
