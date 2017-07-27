@@ -54,7 +54,7 @@ def _uses_detail_format(module, column_format):
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
 
-_RELEASE_DATE = datetime(2017, 7, 31, 8)
+_RELEASE_DATE = datetime(2017, 7, 31, 20)
 
 _ADD_ONS = {
     "advanced_itemsets": AddOn(
