@@ -1008,7 +1008,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }).then(
             function (response) {
                 vm.beneficiary = response.data;
-                highest_age = vm.beneficiary.age
+                highest_age = vm.beneficiary.age * 12;
                 vm.lineChartOneData = vm.beneficiary.weight;
                 vm.lineChartTwoData = vm.beneficiary.height;
 

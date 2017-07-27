@@ -286,6 +286,14 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -385,20 +393,19 @@ class AwcReportsView(View):
         aggregation_level = 5
 
         config = {
-            'aggregation_level': aggregation_level,
-            'awc_id': "d5d0fce5e73ff2b04417f40bd2bc84c7"
+            'aggregation_level': aggregation_level
         }
-        # if location:
-        #     try:
-        #         sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-        #         locations = sql_location.get_ancestors(include_self=True)
-        #         for loc in locations:
-        #             location_key = '%s_id' % loc.location_type.code
-        #             config.update({
-        #                 location_key: loc.location_id,
-        #             })
-        #     except SQLLocation.DoesNotExist:
-        #         pass
+        if location:
+            try:
+                sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
+                locations = sql_location.get_ancestors(include_self=True)
+                for loc in locations:
+                    location_key = '%s_id' % loc.location_type.code
+                    config.update({
+                        location_key: loc.location_id,
+                    })
+            except SQLLocation.DoesNotExist:
+                pass
 
         data = []
         if step == 'system_usage':
@@ -527,6 +534,14 @@ class PrevalenceOfSevereView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -558,6 +573,14 @@ class PrevalenceOfStunningView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -589,6 +612,14 @@ class NewbornsWithLowBirthWeightView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -620,6 +651,14 @@ class EarlyInitiationBreastfeeding(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -650,6 +689,14 @@ class ExclusiveBreastfeedingView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
