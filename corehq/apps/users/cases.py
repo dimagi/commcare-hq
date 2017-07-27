@@ -30,8 +30,6 @@ def get_wrapped_owner(owner_id, support_deleted=False):
 
     def _get_deleted_class(doc_type):
         return {
-            'CommCareUser-Deleted': CommCareUser,
-            'WebUser-Deleted': WebUser,
             'Group-Deleted': Group,
         }.get(doc_type)
 
