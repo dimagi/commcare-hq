@@ -5,7 +5,7 @@ from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     ColumnMapping,
     clean_phone_number,
-)
+    clean_contact_phone_number)
 
 
 class MockColumnMapping(ColumnMapping):
@@ -81,5 +81,12 @@ class TestCleaningFunctions(SimpleTestCase):
         good_short_number = "123-456-7890"
 
         for number in (good_number, good_number_with_punc, good_short_number):
-            self.assertEqual(clean_phone_number(number, 12), "911234567890")
-            self.assertEqual(clean_phone_number(number, 10), "1234567890")
+            clean_number = clean_phone_number(number)
+            clean_12_number = clean_contact_phone_number(clean_number)
+            self.assertEqual(clean_12_number, "911234567890")
+            self.assertEqual(clean_number, "1234567890")
+
+        # Confirm that clean_contact_phone_number returns none for badly formatted numbers
+        self.assertIsNone(clean_contact_phone_number("123"))
+        # Confirm that clean_phone_number returns the number for badly formatted numbers
+        self.assertEqual(clean_phone_number("123"), "123")
