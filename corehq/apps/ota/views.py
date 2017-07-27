@@ -1,7 +1,7 @@
 from distutils.version import LooseVersion
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -19,7 +19,8 @@ from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_app_ids_and_versions
+from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
@@ -380,8 +381,33 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 def heartbeat(request, domain, id):
     # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
     for_app_id = request.GET.get('app_id', '')
+    app = get_app(domain, for_app_id)
     return JsonResponse({
         "app_id": for_app_id,
-        "latest_apk_version": {},
-        "latest_ccz_version": {}
+        "latest_apk_version": get_latest_apk_version(app),
+        "latest_ccz_version": get_latest_build_version(app),
     })
+
+
+def get_latest_apk_version(app):
+    if app.latest_apk_prompt == "off":
+        return {"value": "", "force": False}
+    else:
+        value = get_default_build_spec().version
+        if app.latest_apk_prompt == "on":
+            return {"value": value, "force": False}
+        elif app.latest_apk_prompt == "forced":
+            return {"value": value, "force": True}
+
+
+def get_latest_build_version(app):
+    if app.latest_app_prompt == "off":
+        return {"value": "", "force": False}
+    else:
+        value = get_latest_app_ids_and_versions(app.domain, app._id).get(app._id)
+        if not value:
+            raise Http404()
+        if app.latest_app_prompt == "on":
+            return {"value": value, "force": False}
+        elif app.latest_app_prompt == "forced":
+            return {"value": value, "force": True}
