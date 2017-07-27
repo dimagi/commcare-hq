@@ -59,8 +59,13 @@ class ProductFixturesProvider(FixtureProvider):
         if not fixture_nodes:
             return []
 
-        schema_node = get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])
-        fixture_nodes[0].attrib['indexed'] = 'true'
-        return [schema_node] + fixture_nodes
+        if restore_state.params.openrosa_version and restore_state.params.openrosa_version < '2.1':
+            # Don't include index schema when openrosa version is specified and below 2.1
+            return fixture_nodes
+        else:
+            schema_node = get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])
+            fixture_nodes[0].attrib['indexed'] = 'true'
+            return [schema_node] + fixture_nodes
+
 
 product_fixture_generator = ProductFixturesProvider()
