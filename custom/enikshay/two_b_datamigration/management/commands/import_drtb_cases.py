@@ -433,6 +433,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None):
     owner_id = properties.pop("owner_id")
     props = {k: v for k, v in properties.iteritems() if v is not None}
     props['__created_by_migration'] = migration_identifier
+    props['migration_data_source'] = "excel_document"
     kwargs = {
         "case_id": uuid.uuid4().hex,
         "walk_related": False,
@@ -504,11 +505,12 @@ def get_person_case_properties(domain, column_mapping, row):
 
 
 def get_occurrence_case_properties(column_mapping, row):
+    initial_visit_date = column_mapping.get_value("initial_home_visit_date", row)
     properties = {
         "owner_id": "-",
         "current_episode_type": "confirmed_drtb",
-        "initial_home_visit_status":
-            "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
+        "initial_home_visit_status": "completed" if initial_visit_date else None,
+        "initial_home_visit_date": clean_date(initial_visit_date),
         "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
