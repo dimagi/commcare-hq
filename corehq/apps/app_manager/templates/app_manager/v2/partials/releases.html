@@ -8,6 +8,26 @@
 
 {% if intro_only %}
   <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
+  {% if request|toggle_enabled:"APP_MANAGER_V2_TEMPLATE_APPS" %}
+  {% blocktrans %}
+    <p class="lead">
+      This example app keeps track of items over time.
+      Customize it to meet your needs!
+    </p>
+    <div class="alert alert-info">
+        <p>The <strong>Registration</strong> form adds new items.</p>
+        <p>The <strong>Visit</strong> form collects additional updated information about a previously registered item.</p>
+        <p>The <strong>Close</strong> form removes an item from the phone.</p>
+    </div>
+  {% endblocktrans %}
+  </div>
+  <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 300px;">
+  {% blocktrans %}
+    <p class="lead">
+      As you build your app, check out the <strong>App Preview</strong> to demo it in real time!
+    </p>
+  {% endblocktrans %}
+  {% else %}
   {% blocktrans %}
     <p class="lead">
       Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
@@ -23,9 +43,10 @@
       As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
     </p>
   {% endblocktrans %}
+  {% endif %}
   </div>
 {% else %}
-  
+
 {% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
 <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
      data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
