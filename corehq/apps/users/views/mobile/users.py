@@ -733,6 +733,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {
                 'error': _(u'Username {} cannot contain "@".').format(username)
             }
+        if '&' in username:
+            return {
+                'error': _(u'Username {} cannot contain "&".').format(username)
+            }
         if ' ' in username:
             return {
                 'error': _(u'Username {} cannot contain '

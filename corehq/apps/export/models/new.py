@@ -1391,7 +1391,7 @@ class ExportDataSchema(Document):
             current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
         except Exception as e:
             _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app._id, e))
+            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app_id, e))
 
         current_schema.domain = domain
         current_schema.app_id = app_id

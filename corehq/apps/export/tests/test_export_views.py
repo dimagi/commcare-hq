@@ -1,12 +1,14 @@
 # encoding: utf-8
 import json
+from StringIO import StringIO
 
+from botocore.response import StreamingBody
 from django.test import TestCase
 from django.urls import reverse
 from mock import patch
 
 from corehq.apps.export.models import CaseExportInstance
-from corehq.apps.export.models.new import DailySavedExportNotification
+from corehq.apps.export.models.new import DailySavedExportNotification, DataFile
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
@@ -15,20 +17,34 @@ from corehq.apps.export.dbaccessors import (
     get_case_export_instances,
 )
 from corehq.apps.export.views import (
-    CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
+    CreateNewCustomFormExportView,
+    CreateNewDailySavedCaseExport,
+    DailySavedExportListView,
+    DataFileDownloadDetail,
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
-    DailySavedExportListView,
-    CreateNewDailySavedCaseExport,
 )
+from corehq.blobs import _db
 
 
-class ExportViewTest(TestCase):
+class FakeDB(object):
+
+    @staticmethod
+    def get(blob_id):
+        content = 'foo\n'
+        return StreamingBody(StringIO(content), len(content))
+
+    @staticmethod
+    def delete(blob_id):
+        pass
+
+
+class ViewTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(ExportViewTest, cls).setUpClass()
+        super(ViewTestCase, cls).setUpClass()
         cls.domain = Domain(name="donkeykong", is_active=True)
         cls.domain.save()
 
@@ -42,10 +58,45 @@ class ExportViewTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
-        super(ExportViewTest, cls).tearDownClass()
+        super(ViewTestCase, cls).tearDownClass()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
+
+
+class DataFileDownloadDetailTest(ViewTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(DataFileDownloadDetailTest, cls).setUpClass()
+        _db.append(FakeDB)
+        cls.data_file = DataFile(
+            domain=cls.domain,
+            filename='foo.txt',
+            description='all of the foo',
+            content_type='text/plain',
+            blob_id='fake',
+            content_length=4,
+        )
+        cls.data_file.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(DataFileDownloadDetailTest, cls).tearDownClass()
+        cls.data_file.delete()
+        _db.pop()
+
+    def test_data_file_download(self):
+        data_file_url = reverse(DataFileDownloadDetail.urlname, kwargs={
+            'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
+        })
+        try:
+            self.client.get(data_file_url)
+        except TypeError as err:
+            self.fail('Getting a data file raised a TypeError: {}'.format(err))
+
+
+class ExportViewTest(ViewTestCase):
 
     def tearDown(self):
         delete_all_export_instances()

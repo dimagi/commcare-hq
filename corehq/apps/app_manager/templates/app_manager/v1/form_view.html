@@ -36,8 +36,6 @@
     {% if module.doc_type == 'AdvancedModule' %}
         <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
-    {% elif module.doc_type == 'CareplanModule' %}
-        <script src="{% static 'app_manager/js/forms/careplan_config_ui.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
     {% endif %}
@@ -238,8 +236,6 @@
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
                             {% include 'app_manager/v1/partials/case_config_advanced.html' %}
-                        {% elif module.doc_type == 'CareplanModule' %}
-                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
                         {% else %}
                             {% include 'app_manager/v1/partials/case_config.html' %}
                         {% endif %}

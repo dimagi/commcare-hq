@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
+from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
 from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
@@ -170,6 +171,8 @@ def release_build(request, domain, app_id, saved_app_id):
     app_post_release.send(Application, application=saved_app)
 
     if is_released:
+        if saved_app.build_profiles and domain_has_privilege(domain, privileges.BUILD_PROFILES):
+            create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:

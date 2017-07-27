@@ -4,7 +4,6 @@ from xml.etree import ElementTree
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -19,8 +18,6 @@ from couchdbkit import ResourceConflict
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
-from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
@@ -42,7 +39,6 @@ from corehq.apps.cloudcare.api import (
     CaseAPIResult,
     get_filtered_cases,
     get_filters_from_request_params,
-    get_open_form_sessions,
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
@@ -50,7 +46,7 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -66,7 +62,6 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.quickcache import quickcache
-from corehq.util.xml_utils import indent_xml
 
 
 @require_cloudcare_access
@@ -380,37 +375,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
-def get_cases_vary_on(request, domain):
-    request_params = request.GET
-
-    return [
-        request.couch_user.get_id
-        if request.couch_user.is_commcare_user() else request_params.get('user_id', ''),
-        request_params.get('ids_only', 'false'),
-        request_params.get('case_id', ''),
-        request_params.get('footprint', 'false'),
-        request_params.get('closed', 'false'),
-        json.dumps(get_filters_from_request_params(request_params)),
-        domain,
-    ]
-
-
-def get_cases_skip_arg(request, domain):
-    """
-    When this function returns True, quickcache will not go to the cache for the result. By default,
-    if neither of these params are passed into the function, nothing will be cached. Cache will always be
-    skipped if ids_only is false.
-
-    The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
-    get the list of case_ids associated with a user.
-    """
-    request_params = request.GET
-    return (not string_to_boolean(request_params.get('use_cache', 'false')) or
-        not string_to_boolean(request_params.get('ids_only', 'false')))
-
-
 @cloudcare_api
-@quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     request_params = request.GET
 
@@ -532,21 +497,6 @@ def get_ledgers(request, domain):
     )
 
 
-@cloudcare_api
-def sync_db_api(request, domain):
-    auth_cookie = request.COOKIES.get('sessionid')
-    username = request.GET.get('username')
-    try:
-        response = sync_db(username, domain, DjangoAuth(auth_cookie))
-    except Exception as e:
-        return json_response(
-            {'status': 'error', 'message': unicode(e)},
-            status_code=500
-        )
-    else:
-        return json_response(response)
-
-
 class ReadableQuestions(View):
 
     urlname = 'readable_questions'
@@ -575,37 +525,6 @@ class ReadableQuestions(View):
             'form_data': rendered_readable_form,
             'form_questions': pretty_questions
         })
-
-
-@cloudcare_api
-def render_form(request, domain):
-    # get session
-    session_id = request.GET.get('session_id')
-
-    session = get_object_or_404(EntrySession, session_id=session_id)
-
-    try:
-        raw_instance = get_raw_instance(session_id, domain)
-    except Exception as e:
-        return HttpResponse(e, status=500, content_type="text/plain")
-
-    xmlns = raw_instance["xmlns"]
-    form_data_xml = raw_instance["output"]
-
-    _, form_data_json = xml2json(form_data_xml)
-    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
-
-    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
-
-    rendered_readable_form = render_to_string(
-        'reports/form/partials/readable_form.html',
-        {'questions': readable_form}
-    )
-
-    return json_response({
-        'form_data': rendered_readable_form,
-        'instance_xml': indent_xml(form_data_xml)
-    })
 
 
 class HttpResponseConflict(HttpResponse):

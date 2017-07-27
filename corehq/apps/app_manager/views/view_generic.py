@@ -2,8 +2,6 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
-    get_usercase_properties
 from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
@@ -46,7 +44,6 @@ from corehq.apps.app_manager.models import (
     ReportModule,
 )
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics import ab_tests
 
 
 @retry_resource(3)
@@ -303,7 +300,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': app and should_show_preview_app(
             request,

@@ -110,6 +110,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,

@@ -39,7 +39,7 @@
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
-            <div class="row">
+            <div class="row" style="width: 100% !important;">
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
             <div ng-if="$ctrl.showNational()" class="row">

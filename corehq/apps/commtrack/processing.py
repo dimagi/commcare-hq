@@ -33,6 +33,7 @@ class StockProcessingResult(object):
         self.models_to_save = None
         self.models_to_delete = None
         self.populated = False
+        self.cases_with_deprecated_transactions = None
 
     def populate_models(self):
         self.populated = True
@@ -51,6 +52,10 @@ class StockProcessingResult(object):
             self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
         )
         self.models_to_save, self.models_to_delete = models_result
+
+        self.cases_with_deprecated_transactions = {
+            trans.case_id for srh in deprecated_helpers for trans in srh.transactions
+        }
 
     def commit(self):
         assert self.populated

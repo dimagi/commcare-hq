@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
-from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
+from corehq.apps.app_manager.models import Module, AdvancedModule, ShadowModule
 from corehq.apps.domain.models import Domain
 from corehq.privileges import LOOKUP_TABLES
 
@@ -51,8 +51,6 @@ def _uses_detail_format(module, column_format):
         details = [module.case_details, module.ref_details]
     elif isinstance(module, AdvancedModule):
         details = [module.case_details, module.product_details]
-    elif isinstance(module, CareplanModule):
-        details = [module.goal_details, module.task_details]
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
 

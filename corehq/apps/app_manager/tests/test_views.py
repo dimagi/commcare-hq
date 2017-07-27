@@ -6,8 +6,8 @@ from django.urls import reverse
 from django.test import TestCase
 from mock import patch
 
+from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
 
@@ -40,22 +40,21 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.app = Application.new_app(cls.domain.name, "TestApp")
-        cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
 
     def setUp(self):
+        self.app = Application.new_app(self.domain.name, "TestApp")
+        self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        if self.app._id:
+            self.app.delete()
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.build.delete()
-        if cls.app:
-            try:
-                cls.app.delete()
-            except TypeError:
-                pass 
         cls.domain.delete()
         super(TestViews, cls).tearDownClass()
 
@@ -75,11 +74,10 @@ class TestViews(TestCase):
         add_build(**build1)
         add_build(**build2)
 
-        with open(os.path.join(os.path.dirname(__file__), "data", "invalid_form.xml")) as f:
-            xform_str = f.read()
-        self.app.new_form(module.id, name="Form0-0", attachment=xform_str, lang="en")
+        self.app.new_form(module.id, name="Form0-0", lang="en")
         self.app.save()
 
+        mock.side_effect = XFormValidationError('')
         response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.domain.name,
                                                                             app_id=self.app.get_id,
                                                                             path='modules-0/forms-0.xml')))
@@ -145,8 +143,14 @@ class TestViews(TestCase):
             AppSummaryView.urlname,
         ], kwargs)
 
-        self.build = self.app.make_build()
-        self.build.save()
+        build = self.app.make_build()
+        build.save()
+        content = self._json_content_from_get('current_app_version', {
+            'domain': self.domain.name,
+            'app_id': self.app.id,
+        })
+        self.assertEqual(content['currentVersion'], 1)
+        self.app.save()
         content = self._json_content_from_get('current_app_version', {
             'domain': self.domain.name,
             'app_id': self.app.id,
@@ -187,19 +191,6 @@ class TestViews(TestCase):
 
     def test_shadow_module(self, mockh):
         module = self.app.add_module(ShadowModule.new_module("Module0", "en"))
-        self.app.save()
-        self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
-            'app_id': self.app.id,
-            'module_id': module.id,
-        })
-
-    def test_careplan_module(self, mock):
-        target_module = self.app.add_module(Module.new_module("Module0", "en"))
-        target_module.case_type = 'person'
-
-        module = new_careplan_module(self.app, 'Module1', 'en', target_module)
-
         self.app.save()
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
