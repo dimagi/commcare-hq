@@ -322,9 +322,10 @@ class BlobDbBackendMigrator(BaseDocMigrator):
 
 class BlobDbBackendExporter(BaseDocProcessor):
 
-    def __init__(self, slug, domain, couchdb):
+    def __init__(self, slug, domain, couchdb, blob_helper=BlobHelper):
         from corehq.blobs.zipdb import ZipBlobDB
         self.slug = slug
+        self.blob_helper = blob_helper
         self.db = ZipBlobDB(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
