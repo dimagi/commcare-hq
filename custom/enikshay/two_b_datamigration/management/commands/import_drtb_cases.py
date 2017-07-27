@@ -400,7 +400,8 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
     test_case_properties = get_test_case_properties(
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
-    secondary_owner_case_properties = get_secondary_owner_case_properties(city_constants)
+    secondary_owner_case_properties = get_secondary_owner_case_properties(
+        domain, city_constants, person_case_properties['district_id'], occurrence_case_properties['occurrence_id'])
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
@@ -415,8 +416,10 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
         get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
         for props in test_case_properties
     ]
-    secondary_owner_case_structure = get_case_structure(
-        CASE_TYPE_SECONDARY_OWNER, secondary_owner_case_properties, migration_id, host=occurrence_case_structure)
+    secondary_owner_case_structure = [
+        get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure)
+        for props in secondary_owner_case_properties
+    ]
 
     return [
         person_case_structure,
@@ -507,9 +510,9 @@ def get_occurrence_case_properties(column_mapping, row):
         "initial_home_visit_status":
             "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
         "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
-
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
+        "occurrence_id": None,  # TODO: Do this
     }
     properties.update(get_disease_site_properties(column_mapping, row))
 
@@ -1119,12 +1122,22 @@ def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initi
         return str(int(round((date_tested - treatment_initiation_date).days / 30.4)))
 
 
-def get_secondary_owner_case_properties(city_constants):
-    return {
-        "secondary_owner_name": city_constants.drtb_center_name,
-        "secondary_owner_type": "DRTB",
-        "owner_id": city_constants.drtb_center_id,
-    }
+def get_secondary_owner_case_properties(domain, city_constants, district_id, occurrence_id):
+    name, loc_id = get_drtb_hiv_location(domain, district_id)
+    return [
+        {
+            "secondary_owner_name": city_constants.drtb_center_name,
+            "secondary_owner_type": "DRTB",
+            "owner_id": city_constants.drtb_center_id,
+        },
+        # TODO: (WAITING) Will the host of this case be the occurence?
+        {
+            "secondary_owner_name": name,
+            "secondary_owner_type": "drtb-hiv",
+            "owner_id": loc_id,
+            "name": occurrence_id + "drtb-hiv",
+        }
+    ]
 
 
 def clean_diabetes_status(xlsx_value):
@@ -1347,6 +1360,13 @@ def get_tu(domain, phi_id):
         return None, None
     phi = SQLLocation.active_objects.get(domain=domain, location_id=phi_id)
     return phi.parent.name, phi.parent.location_id
+
+
+def get_drtb_hiv_location(domain, district_id):
+    if not district_id:
+        return None, None
+    drtb_hiv = SQLLocation.get(domain=domain, parent__location_id=district_id, location_type__code="drtb-hiv")
+    return drtb_hiv.name, drtb_hiv.location_id
 
 
 class Command(BaseCommand):
