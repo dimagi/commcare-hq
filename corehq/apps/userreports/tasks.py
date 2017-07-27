@@ -214,9 +214,6 @@ def run_queue_async_indicators_task():
 def queue_async_indicators():
     day_ago = datetime.utcnow() - timedelta(days=1)
     indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
-    if indicators:
-        lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
         # don't requeue anything that's be queued in the past day
@@ -341,6 +338,11 @@ def async_indicators_metrics():
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
+    indicator = AsyncIndicator.objects.first()
+    if indicator:
+        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
     for config_id, metrics in _indicator_metrics().iteritems():
         tags = ["config_id:{}".format(config_id)]
