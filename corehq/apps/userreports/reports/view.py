@@ -516,7 +516,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             })
 
         raw_rows = list(data.get_data())
-        headers = [column.header for column in self.data_source.columns]
+        headers = [column.header for column in self.data_source.columns if column.data_tables_column.visible]
 
         column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
