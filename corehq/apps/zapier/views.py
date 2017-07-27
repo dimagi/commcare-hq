@@ -19,6 +19,7 @@ from corehq.apps.zapier.consts import EventTypes
 from corehq import privileges
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from dimagi.utils.web import json_response
 
 from .models import ZapierSubscription
 
@@ -50,7 +51,7 @@ class SubscribeView(View):
             application = Application.get(data['application'])
             if not application or not application.get_forms_by_xmlns(data['form']):
                 return HttpResponse(status=400)
-            ZapierSubscription.objects.create(
+            subscription = ZapierSubscription.objects.create(
                 domain=domain,
                 user_id=str(request.couch_user.get_id),
                 event_name=data['event'],
@@ -59,7 +60,7 @@ class SubscribeView(View):
                 form_xmlns=data['form'],
             )
         elif data['event'] == EventTypes.NEW_CASE:
-            ZapierSubscription.objects.create(
+            subscription = ZapierSubscription.objects.create(
                 domain=domain,
                 user_id=str(request.couch_user.get_id),
                 event_name=data['event'],
@@ -69,7 +70,8 @@ class SubscribeView(View):
         else:
             return HttpResponse(status=400)
 
-        return HttpResponse('OK')
+        # respond with the ID so that zapier can use it to unsubscribe
+        return json_response({'id': subscription.id})
 
 
 class UnsubscribeView(View):

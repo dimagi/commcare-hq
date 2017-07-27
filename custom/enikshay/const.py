@@ -25,8 +25,6 @@ MERM_PROPERTIES = [
     MERM_RT_HOURS,
 ]
 
-ENROLLED_IN_PRIVATE = "enrolled_in_private"
-
 ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
@@ -88,6 +86,8 @@ PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 VALID_ADHERENCE_SOURCES = (
     'field_officer', 'treatment_supervisor', 'patient', 'provider', 'other', '99DOTS', 'MERM',
 )
+
+CASE_VERSION = 'case_version'
 
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"

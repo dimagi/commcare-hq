@@ -31,6 +31,8 @@ class ENikshayRepeaterFilter(RepeaterFilter):
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     name = 'eNikshay Forwarder Report'
+    base_template = 'reports/base_template.html'
+    asynchronous = True
     section_name = 'Custom Reports'
     slug = 'enikshay_repeater_report'
     dispatcher = CustomProjectReportDispatcher

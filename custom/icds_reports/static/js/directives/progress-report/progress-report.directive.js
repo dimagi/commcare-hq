@@ -23,7 +23,7 @@ function ProgressReportController($scope, $location, progressReportService, stor
     });
 
     vm.loadData = function () {
-        progressReportService.getData(vm.filtersData).then(function(response) {
+        vm.myPromise = progressReportService.getData(vm.filtersData).then(function(response) {
             vm.data = response.data.config;
         });
     };
