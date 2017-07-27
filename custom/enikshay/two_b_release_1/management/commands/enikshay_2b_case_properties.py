@@ -330,8 +330,9 @@ class ENikshay2BMigrator(object):
         occurrence_ids = [index.referenced_id for index in indices
                           if index.referenced_type == CASE_TYPE_OCCURRENCE]
         occurrence_id = occurrence_ids[0] if occurrence_ids else None
-        return max((case.opened_on, case.case_id) for case in episodes
-                   if is_episode_of_occurrence(case, occurrence_id))[1]
+        episodes = ((case.opened_on, case.case_id) for case in episodes
+                    if is_episode_of_occurrence(case, occurrence_id))
+        return max(episodes)[1] if episodes else None
 
     def migrate_episode(self, episode, episodes):
         self.total_episodes += 0
