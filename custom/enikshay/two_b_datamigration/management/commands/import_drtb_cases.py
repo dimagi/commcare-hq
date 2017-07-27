@@ -1129,7 +1129,7 @@ def get_secondary_owner_case_properties(domain, city_constants, district_id, occ
     return [
         {
             "secondary_owner_name": city_constants.drtb_center_name,
-            "secondary_owner_type": "DRTB",
+            "secondary_owner_type": "drtb",
             "owner_id": city_constants.drtb_center_id,
         },
         # TODO: (WAITING) Will the host of this case be the occurence?
