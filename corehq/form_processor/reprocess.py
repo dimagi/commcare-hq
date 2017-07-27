@@ -161,7 +161,7 @@ def _filter_already_processed_cases(form, cases):
     cases_by_id = {
         case.case_id: case
         for case in cases
-        }
+    }
     case_dbs = defaultdict(list)
     for case in cases:
         db_name = get_db_alias_for_partitioned_doc(case.case_id)

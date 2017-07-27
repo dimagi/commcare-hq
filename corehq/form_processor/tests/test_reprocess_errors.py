@@ -15,7 +15,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.models import UnfinishedSubmissionStub
@@ -101,11 +101,11 @@ class ReprocessSubmissionStubTests(TestCase):
         super(ReprocessSubmissionStubTests, self).setUp()
         self.domain = uuid.uuid4().hex
         self.factory = CaseFactory(domain=self.domain)
-        
+
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(ReprocessSubmissionStubTests, self).tearDown()
-        
+
     def test_reprocess_unfinished_submission_case_create(self):
         case_id = uuid.uuid4().hex
         transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
@@ -209,7 +209,7 @@ class ReprocessSubmissionStubTests(TestCase):
             submit_case_blocks(
                 get_single_balance_block(case_id, 'product1', 100),
                 self.domain
-                )
+            )
 
         stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
         self.assertEqual(1, len(stubs))

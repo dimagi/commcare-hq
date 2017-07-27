@@ -6,13 +6,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.paginator import Paginator
 from django.db.models import Count
 
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
-from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 from corehq.util.markup import SimpleTableWriter
 from corehq.util.markup import TableRowFormatter
-from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import UnfinishedSubmissionStub
 
 MODES = [
