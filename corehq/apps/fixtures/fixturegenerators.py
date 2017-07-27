@@ -6,6 +6,8 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 
+from .utils import get_index_schema_node
+
 
 def item_lists_by_domain(domain):
     ret = list()
@@ -96,16 +98,9 @@ class ItemListsProvider(FixtureProvider):
         return fixture_element
 
     def _get_schema_element(self, data_type):
-        schema_element = ElementTree.Element(
-            'schema',
-            attrib={'id': ':'.join((self.id, data_type.tag))}
-        )
-        indices_element = ElementTree.SubElement(schema_element, 'indices')
-        for field in data_type.fields:
-            if field.is_indexed:
-                index_element = ElementTree.SubElement(indices_element, 'index')
-                index_element.text = field.field_name
-        return schema_element
+        attrs_to_index = [field.field_name for field in data_type.fields if field.is_indexed]
+        fixture_id = ':'.join((self.id, data_type.tag))
+        return get_index_schema_node(fixture_id, attrs_to_index)
 
 
 item_lists = ItemListsProvider()

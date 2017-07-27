@@ -17,7 +17,7 @@ from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
-from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
+from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import QueryMergeException
@@ -190,7 +190,7 @@ def get_restore_params(request):
         openrosa_headers = getattr(request, 'openrosa_headers', {})
         openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
     except KeyError:
-        openrosa_version = request.GET.get('openrosa_version', OPENROSA_DEFAULT_VERSION)
+        openrosa_version = request.GET.get('openrosa_version', None)
 
     return {
         'since': request.GET.get('since'),
@@ -211,7 +211,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
-                         openrosa_version=OPENROSA_DEFAULT_VERSION,
+                         openrosa_version=None,
                          case_sync=None):
 
     if user_id and user_id != couch_user.user_id:
@@ -251,8 +251,9 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
     async_restore_enabled = (
-        toggles.ASYNC_RESTORE.enabled(domain) and
-        LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+        toggles.ASYNC_RESTORE.enabled(domain)
+        and openrosa_version
+        and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     )
     restore_config = RestoreConfig(
         project=project,
@@ -264,6 +265,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             include_item_count=items,
             app=app,
             device_id=device_id,
+            openrosa_version=openrosa_version,
         ),
         cache_settings=RestoreCacheSettings(
             force_cache=force_cache or async_restore_enabled,
