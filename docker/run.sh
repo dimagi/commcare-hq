@@ -21,7 +21,7 @@ function setup() {
     python -m compileall -q corehq custom submodules testapps *.py
 
     if [[ "$TEST" =~ ^python ]]; then
-        /usr/lib/jvm/jdk1.7.0/bin/keytool -genkey \
+        keytool -genkey \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
