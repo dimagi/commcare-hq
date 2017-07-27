@@ -18,7 +18,7 @@ class Command(BaseCommand):
         for nikshay_id, location_owner_id in NIKSHAY_ID_TO_LOCATION_OWNER_ID.items():
             patient = PatientDetail.objects.get(PregId=nikshay_id)
             print 'Found patient %s' % patient.PregId
-            location_owner = SQLLocation.active_objects.filter(
+            location_owner = SQLLocation.active_objects.get(
                 domain=domain,
                 location_id=location_owner_id,
             )
