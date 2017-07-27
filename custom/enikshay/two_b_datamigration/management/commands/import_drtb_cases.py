@@ -488,8 +488,10 @@ def get_person_case_properties(domain, column_mapping, row):
 
     phone_number = column_mapping.get_value("phone_number", row)
     if phone_number:
-        properties['contact_phone_number'] = clean_phone_number(phone_number, 12)
-        properties['phone_number'] = clean_phone_number(phone_number, 10)
+        clean_number = clean_phone_number(phone_number)
+        contact_number = clean_contact_phone_number(clean_number)
+        properties['contact_phone_number'] = contact_number
+        properties['phone_number'] = clean_number
 
     social_scheme = column_mapping.get_value("social_scheme", row)
     properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
@@ -1145,15 +1147,13 @@ def clean_treatment_regimen(value):
     }[value]
 
 
-def clean_phone_number(value, digits):
+def clean_phone_number(value):
     """
-    Phone numbers should be "91" followed by 10 digits. No symbols allowed.
+    Convert the phone number to the 10 digit format if possible, else return the misformated number
     """
     if not value:
         return None
-    assert digits in (10, 12)
 
-    # TODO: (WAITING) what to do if there are two numbers?
     try:
         values = value.split("/")
         value = values[0]
@@ -1162,13 +1162,26 @@ def clean_phone_number(value, digits):
         pass
 
     cleaned = re.sub('[^0-9]', '', str(value))
+
     if len(cleaned) == 12 and cleaned[:2] == "91":
-        if digits != 12:
-            return cleaned[2:]
-    elif len(cleaned) == 10:
-        if digits != 10:
-            return "91" + cleaned
-    return cleaned
+        return cleaned[2:]
+    elif len(cleaned) == 11 and cleaned[0] == "0":
+        return cleaned[1:]
+    else:
+        return cleaned
+
+
+def clean_contact_phone_number(clean_phone_number):
+    """
+    :param clean_phone_number: A string returned by clean_phone_number()
+    :return: The phone number in 12 digit format if clean_phone_number was 10 digits, otherwise None.
+    """
+    if not clean_phone_number:
+        return None
+    elif len(clean_phone_number) == 10:
+        return "91" + clean_phone_number
+    else:
+        return None
 
 
 def _starts_with_any(value, strings):
