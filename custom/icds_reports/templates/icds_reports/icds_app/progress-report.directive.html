@@ -30,7 +30,7 @@
     <div ng-if="$ctrl.data === void(0)">
         <h2>No Data</h2>
     </div>
-    <div class="report-content">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
         <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>

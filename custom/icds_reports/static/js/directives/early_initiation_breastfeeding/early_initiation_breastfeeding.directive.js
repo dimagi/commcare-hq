@@ -10,7 +10,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Newborns with Low Birth Weight";
+    vm.label = "% Early Initiation of Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/early_initiation/map', label: 'Map'},
@@ -66,7 +66,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
