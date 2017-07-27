@@ -244,6 +244,7 @@ class ENikshay2BMigrator(object):
             episode = None
 
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'enrolled_in_private': 'false',
             'case_version': '20',
             'area': person.get_case_property('phi_area'),
@@ -305,6 +306,7 @@ class ENikshay2BMigrator(object):
         episode = max(episodes)[1]  # Most recently opened episode for the occurrence
 
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'current_episode_type': episode.get_case_property('episode_type'),
             'disease_classification': episode.get_case_property('disease_classification'),
             'site_choice': episode.get_case_property('site_choice'),
@@ -340,6 +342,7 @@ class ENikshay2BMigrator(object):
         latest_episode_id = self._get_last_episode_id(episode.indices, episodes)
         test_type = episode.get_case_property('test_confirming_diagnosis')
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'is_active': 'yes' if episode.case_id == latest_episode_id and not episode.closed else 'no',
             'dosage_display': episode.get_case_property('full_dosage'),
             'dosage_summary': episode.get_case_property('full_dosage'),
@@ -378,6 +381,7 @@ class ENikshay2BMigrator(object):
     def migrate_test(self, test, person, episodes):
         self.total_tests += 1
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'is_direct_test_entry': 'no',
             'rft_drtb_diagnosis': test.get_case_property('diagnostic_drtb_test_reason'),
             'dataset': person.get_case_property('dataset'),
@@ -415,6 +419,7 @@ class ENikshay2BMigrator(object):
         self.total_referrals += 1
         prop = referral.get_case_property
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'referral_initiated_date': (prop('referral_date') or prop('date_of_referral')),
             'referred_to_name': prop('referred_to_location_name'),
             'referred_by_name': prop('referred_by'),
@@ -461,7 +466,7 @@ class ENikshay2BMigrator(object):
             walk_related=False,
             attrs={
                 "create": False,
-                "update": {},
+                "update": {'__updated_by_migration': 'enikshay_2b_case_properties'},
             },
             **index_kwargs
         )
@@ -482,6 +487,7 @@ class ENikshay2BMigrator(object):
 
         location = self.locations.get(person.owner_id)
         props = {
+            '__updated_by_migration': 'enikshay_2b_case_properties',
             'secondary_owner_type': 'drtb-hiv',
             'secondary_owner_name': location.name if location else "",
         }
