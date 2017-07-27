@@ -1,6 +1,8 @@
 from xml.etree import ElementTree
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from casexml.apps.case.xml import V1, V2
+from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.mock import CaseBlock, CaseFactory
+from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     get_sync_log_class_by_format,
@@ -151,3 +153,69 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
         params.sync_log_id = last_sync._id
         restore_state._last_sync_log = last_sync
     return gen(restore_state)
+
+
+class MockDevice(object):
+
+    def __init__(self, project, user, restore_options, default_case_type="case"):
+        self.project = project
+        self.user = user
+        self.user_id = user.user_id
+        self.restore_options = restore_options
+        self.case_blocks = []
+        self.case_factory = CaseFactory(
+            case_defaults={
+                'user_id': self.user_id,
+                'owner_id': self.user_id,
+                'case_type': default_case_type,
+            },
+        )
+        self.last_sync = None
+        self.sync(overwrite_cache=True)
+
+    def change_cases(self, case_blocks):
+        if isinstance(case_blocks, CaseBlock):
+            self.case_blocks.append(case_blocks.as_xml())
+        else:
+            assert isinstance(case_blocks, list), case_blocks
+            self.case_blocks.extend(b.as_xml() for b in case_blocks)
+
+    def sync(self, **config):
+        if self.case_blocks:
+            # post device case changes
+            token = self.last_sync.log._id
+            self.case_factory.post_case_blocks(
+                self.case_blocks,
+                form_extras={"last_sync_token": token},
+            )
+            self.case_blocks = []
+        # restore
+        for name, value in self.restore_options.items():
+            config.setdefault(name, value)
+        config.setdefault('version', V2)
+        assert 'restore_id' not in config, "illegal parameter: restore_id"
+        if self.last_sync is not None:
+            config['restore_id'] = self.last_sync.log._id
+        restore_config = get_restore_config(self.project, self.user, **config)
+        payload = restore_config.get_payload().as_string()
+        log = synclog_from_restore_payload(payload)
+        self.last_sync = SyncResult(payload, log)
+        return self.last_sync
+
+
+class SyncResult(object):
+
+    def __init__(self, payload, log):
+        self.xml = ElementTree.fromstring(payload)
+        self.log = log
+
+    def _cases(self):
+        # TODO make into memoized property named "cases", but only after
+        # populating more case fields in CaseBlock.from_xml()
+        return [CaseBlock.from_xml(case)
+            for case in self.xml.findall("{%s}case" % V2_NAMESPACE)]
+
+    @property
+    @memoized
+    def case_ids(self):
+        return {case.case_id for case in self._cases()}
