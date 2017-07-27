@@ -1154,6 +1154,9 @@ def clean_phone_number(value):
     if not value:
         return None
 
+    if not isinstance(value, (basestring, int)):
+        raise Exception("Unexpected type for phone number {}".format(value))
+
     try:
         values = value.split("/")
         value = values[0]
