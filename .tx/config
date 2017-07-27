@@ -11,3 +11,14 @@ trans.hi = locale/hin/LC_MESSAGES/django.po
 trans.pt = locale/por/LC_MESSAGES/django.po
 trans.sw = locale/sw/LC_MESSAGES/django.po
 type = PO
+
+[commcare-hq.djangojspo]
+file_filter = locale/<lang>/LC_MESSAGES/djangojs.po
+source_file = locale/en/LC_MESSAGES/djangojs.po
+source_lang = en
+trans.fr = locale/fra/LC_MESSAGES/djangojs.po
+trans.es = locale/es/LC_MESSAGES/djangojs.po
+trans.hi = locale/hin/LC_MESSAGES/djangojs.po
+trans.pt = locale/por/LC_MESSAGES/djangojs.po
+trans.sw = locale/sw/LC_MESSAGES/djangojs.po
+type = PO

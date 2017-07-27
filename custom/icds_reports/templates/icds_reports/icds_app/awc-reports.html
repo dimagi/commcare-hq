@@ -8,8 +8,8 @@
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.moveToLocation('national', -1)">National </span>
-                <span class="location-breadcump" ng-click="$ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < -1 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                     <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
                 </span>
             </div>
@@ -30,8 +30,8 @@
             </div>
         </div>
     </div>
-    <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.message" style="margin-top: 30px;">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
+        <div class="alert alert-info" ng-show="$ctrl.message && !$ctrl.myPromise" style="margin-top: 30px;">
             <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
         </div>
         <div ng-show="$ctrl.data">
@@ -46,7 +46,6 @@
                 <div class="row no-margin">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
-{#                    <indie-map legend-title="Percentage Children" data="$ctrl.data.map.data" bubbles="$ctrl.data.map.bubbles"></indie-map>#}
                 </div>
                 <div class="row no-margin">
                     <h2 class="center">PSE Photo Submissions</h2>
@@ -64,7 +63,7 @@
                 <kpi data="$ctrl.data.kpi"></kpi>
             </div>
             <div class="row" ng-show="$ctrl.step === 'demographics'">
-                <div class="row no-margin black">
+                <div class="row no-margin black break">
                     <h2 class="center">{$ $ctrl.data.chart[0].key $}</h2>
                     <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
                 </div>

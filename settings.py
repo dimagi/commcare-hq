@@ -346,7 +346,6 @@ HQ_APPS = (
     'mvp',
     'mvp_docs',
     'mvp_indicators',
-    'custom.opm',
     'pact',
 
     'custom.reports.mc',
@@ -385,6 +384,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.two_b_datamigration',
+    'custom.enikshay.two_b_release_1',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -419,9 +419,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-
-    # submodules with tests that run on travis
-    'dimagi.utils',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
@@ -593,6 +590,8 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
+
+ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -1398,8 +1397,6 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm', 'fluff-opm'),
-    ('fluff', 'fluff-opm'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -1564,6 +1561,12 @@ MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
 # Used by the old reminders framework
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
          "Abt: The case owner's location's parent location"],
@@ -1731,7 +1734,6 @@ PILLOWTOPS = {
         },
     ],
     'fluff': [
-        'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
@@ -1864,11 +1866,15 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'adherence.json'),
+
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
@@ -1948,11 +1954,14 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode_for_adherence_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
@@ -1995,7 +2004,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'uth-rhd-test',
     'crs-remind',
     'succeed',
-    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -2082,7 +2090,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-mbola': 'mvp',
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
-    'opm': 'custom.opm',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -2119,6 +2126,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
     'sheel-enikshay': 'custom.enikshay',
+    'enikshay-reports-qa': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2135,6 +2143,13 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
+
+RESTORE_TIMING_DOMAINS = {
+    # ("env", "domain"),
+    ("production", "malawi-fp-study"),
+    ("production", "rec"),
+    ("softlayer", "enikshay"),
+}
 
 #### Django Compressor Stuff after localsettings overrides ####
 

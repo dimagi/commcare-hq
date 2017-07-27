@@ -83,7 +83,7 @@
 
                 {% if case.add_child_data and case.add_child_data.edit_form_id != None %}
                 {% with case.add_child_data as data %}
-                <a href="#" class="btn btn-sm btn-default touchforms-link"
+                <a href="#" class="btn btn-sm btn-default formplayer-link"
                     data-target="#edit_{{ case.get_id }}"
                     data-app-id="{{ data.app_id }}"
                     data-module-id="{{ data.create_module_id }}"
@@ -99,7 +99,7 @@
                 <div class="pull-right btn-group">
                     {% if case.edit_data.edit_form_id != None and not case.closed %}
                     {% with case.edit_data as data %}
-                    <a href="#" class="btn btn-sm btn-default touchforms-link"
+                    <a href="#" class="btn btn-sm btn-default formplayer-link"
                         data-target="#edit_{{ case.get_id }}"
                         data-app-id="{{ data.app_id }}"
                         data-module-id="{{ data.edit_module_id }}"

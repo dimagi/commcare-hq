@@ -2940,14 +2940,14 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class FeatureFlagsView(BaseAdminProjectSettingsView):
-    urlname = 'domain_feature_flags'
-    page_title = ugettext_lazy("Feature Flags")
-    template_name = 'domain/admin/feature_flags.html'
+class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'feature_flags_and_privileges'
+    page_title = ugettext_lazy("Feature Flags and Privileges")
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     @memoized
     def enabled_flags(self):
@@ -2959,32 +2959,20 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
             key=_sort_key,
         )
 
-    @property
-    def page_context(self):
-        return {
-            'flags': self.enabled_flags(),
-            'use_sql_backend': self.domain_object.use_sql_backend
-        }
-
-
-class PrivilegesView(BaseAdminProjectSettingsView):
-    urlname = 'domain_privileges'
-    page_title = ugettext_lazy("Privileges")
-    template_name = 'domain/admin/privileges.html'
-
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(PrivilegesView, self).dispatch(request, *args, **kwargs)
-
     def _get_privileges(self):
         return sorted([
-            (privilege, domain_has_privilege(self.domain, privilege))
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
         ], key=lambda (name, has): (not has, name))
 
     @property
     def page_context(self):
-        return {'privileges': self._get_privileges()}
+        return {
+            'flags': self.enabled_flags(),
+            'use_sql_backend': self.domain_object.use_sql_backend,
+            'privileges': self._get_privileges(),
+        }
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):

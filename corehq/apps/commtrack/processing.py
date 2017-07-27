@@ -33,6 +33,7 @@ class StockProcessingResult(object):
         self.models_to_save = None
         self.models_to_delete = None
         self.populated = False
+        self.cases_with_deprecated_transactions = None
 
     def populate_models(self):
         self.populated = True
@@ -51,6 +52,10 @@ class StockProcessingResult(object):
             self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
         )
         self.models_to_save, self.models_to_delete = models_result
+
+        self.cases_with_deprecated_transactions = {
+            trans.case_id for srh in deprecated_helpers for trans in srh.transactions
+        }
 
     def commit(self):
         assert self.populated
@@ -147,7 +152,12 @@ def mark_cases_changed(case_action_intents, case_db):
         if len(intents) > 1:
             primary_intent, deprecation_intent = sorted(case_action_intents, key=lambda i: i.is_deprecation)
         else:
-            [primary_intent] = intents
+            [intent] = intents
+            if intent.is_deprecation:
+                primary_intent = None
+                deprecation_intent = intent
+            else:
+                primary_intent = intent
         case_db.apply_action_intents(case, primary_intent, deprecation_intent)
         case_db.mark_changed(case)
 

@@ -133,15 +133,15 @@
                     </span>\
                     <!-- /ko -->\
                     <!-- ko if: lang -->\
-                        {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
-                        <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>\
-                        {% else %}\
+                        {% if request|toggle_enabled:"APP_MANAGER_V1" %}\
                         <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right" data-bind="text: lang, visible: !value()"></span>\
+                        {% else %}\
+                        <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>\
                         {% endif %}\
                     <!-- /ko -->\
                     <span data-bind="text: value, attr: {\'class\': containerClass + \' \' + readOnlyClass + \' text\'}"></span>\
                     <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>\
-                    {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
+                    {% if not request|toggle_enabled:"APP_MANAGER_V1" %}\
                     <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>\
                     {% endif %}\
                 </div>\

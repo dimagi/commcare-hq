@@ -1,4 +1,4 @@
-/* globals hqDefine COMMCAREHQ django */
+/* globals hqDefine COMMCAREHQ django hqLayout */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
@@ -86,6 +86,14 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
     };
 
+    module.setPublishStatus = function (isOn) {
+        if (isOn) {
+            $(hqLayout.selector.publishStatus).fadeIn();
+        } else {
+            $(hqLayout.selector.publishStatus).fadeOut();
+        }
+    };
+
     module.init = function (args) {
 
         _initCommcareVersion(args);
@@ -94,10 +102,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         _initLangs();
         _initNewItemForm();
 
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            _initResponsiveMenus();
-            _initAddItemPopovers();
-        } else {
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             // legacy JS
             $('#form-tabs').show();
             $('#forms').tab('show');
@@ -121,6 +126,10 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     $(this).attr('value', val);
                 }
             });
+        } else {
+            _initResponsiveMenus();
+            _initAddItemPopovers();
+            _initPublishStatus();
         }
 
 
@@ -160,6 +169,34 @@ hqDefine('app_manager/js/app_manager.js', function () {
             });
         });
         module.setCommcareVersion(args.commcareVersion);
+    };
+
+    var _initPublishStatus = function () {
+        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data.js').get('current_app_version_url');
+        var _checkPublishStatus = function () {
+            $.ajax({
+                url: currentAppVersionUrl,
+                success: function (data) {
+                    module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
+                },
+            });
+        };
+        _checkPublishStatus();
+        // check publish status every 20 seconds
+        setInterval(_checkPublishStatus, 20000);
+
+        // sniff ajax calls to other urls that make app changes
+        $(document).ajaxComplete(function(e, xhr, options) {
+            if (/edit_form_attr/.test(options.url) ||
+                /edit_module_attr/.test(options.url) ||
+                /edit_module_detail_screens/.test(options.url) ||
+                /edit_app_attr/.test(options.url) ||
+                /edit_form_actions/.test(options.url) ||
+                /edit_commcare_settings/.test(options.url) ||
+                /patch_xform/.test(options.url)) {
+                module.setPublishStatus(true);
+            }
+        });
     };
 
     /**
@@ -264,7 +301,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 form.submit();
             }
         });
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
@@ -311,7 +348,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             $('.js-appnav-drag-module').on('mouseenter', function() {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
@@ -381,17 +418,19 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
 
-                            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-                                // Show loading screen and disable rearranging
-                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                                $sortable.find('.drag_handle').remove();
-                            } else {
+                            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                                 $sortable.sortable('option', 'disabled', true);
+                            } else {
+                                // Show loading screen and disable rearranging
+                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                                $sortable.find('.drag_handle').remove();
                             }
                             $form.submit();
                         }
+
+                        module.setPublishStatus(true);
                     }
                 };
                 if (sorting_forms) {
@@ -425,14 +464,14 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         }
                         if (data.hasOwnProperty('case_list-show') &&
                                 module.hasOwnProperty('module_view')) {
-                            var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
+                            var requires_case_details = hqImport('app_manager/js/details/screen_config.js').state.requires_case_details;
                             requires_case_details(data['case_list-show']);
                         }
                     },
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                 hqImport("app_manager/js/section_changer.js").attachToForm($form);
             }
         });

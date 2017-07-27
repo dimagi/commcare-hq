@@ -14,17 +14,16 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
-    Document,
-    DocumentSchema,
-    SchemaProperty,
-    StringListProperty,
-)
-from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DictProperty,
+    Document,
+    DocumentSchema,
     IntegerProperty,
     ListProperty,
+    SchemaProperty,
+    SchemaListProperty,
     StringProperty,
+    StringListProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import (
@@ -64,6 +63,10 @@ from dimagi.utils.modules import to_function
 class ElasticSearchIndexSettings(DocumentSchema):
     refresh_interval = StringProperty(default="5s")
     number_of_shards = IntegerProperty(default=2)
+
+
+class SQLColumnIndexes(DocumentSchema):
+    column_ids = StringListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -111,6 +114,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.

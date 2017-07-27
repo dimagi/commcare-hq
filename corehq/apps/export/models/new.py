@@ -1355,7 +1355,8 @@ class ExportDataSchema(Document):
         app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            if app_doc.get('doc_type', '') != 'Application':
+            doc_type = app_doc.get('doc_type', '')
+            if doc_type not in ('Application', 'LinkedApplication'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
@@ -1390,7 +1391,7 @@ class ExportDataSchema(Document):
             current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
         except Exception as e:
             _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app._id, e))
+            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app_id, e))
 
         current_schema.domain = domain
         current_schema.app_id = app_id

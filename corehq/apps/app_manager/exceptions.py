@@ -43,10 +43,6 @@ class XFormException(AppManagerException):
     pass
 
 
-class BlankXFormError(XFormException):
-    pass
-
-
 class CaseError(XFormException):
     pass
 

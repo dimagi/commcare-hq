@@ -2,8 +2,6 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
-    get_usercase_properties
 from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
@@ -45,7 +43,6 @@ from corehq.apps.app_manager.models import (
     ReportModule,
 )
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics import ab_tests
 
 
 @retry_resource(3)
@@ -96,7 +93,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-        if (form is not None and "usercase_preload" in form.actions
+        if (form is not None and "usercase_preload" in getattr(form, "actions", {})
                 and form.actions.usercase_preload.preload):
             _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
             _assert(False, 'User property easy refs + old-style config = bad', {
@@ -161,12 +158,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
-            from corehq.apps.dashboard.views import DomainDashboardView
-            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
-        else:
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
             from corehq.apps.dashboard.views import NewUserDashboardView
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        else:
+            from corehq.apps.dashboard.views import DomainDashboardView
+            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
@@ -262,6 +259,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
+    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
@@ -295,7 +293,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': app and should_show_preview_app(
             request,

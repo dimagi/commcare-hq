@@ -844,10 +844,10 @@ var height_for_age = {
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
-    vm.label = "Program Summary";
+    vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.data = null;
@@ -875,7 +875,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
         if (parseInt(vm.selectedLocationLevel) === 4) {
-            $http({
+            vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
                 params: $location.search(),
@@ -901,6 +901,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
     };
 
+    $scope.$on('filtersChange', function() {
+        vm.getDataForStep(vm.step);
+    });
+
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
@@ -917,6 +921,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             chart: {
                 type: 'multiBarChart',
                 height: 450,
+                width: 1100,
                 margin: {
                     top: 20,
                     right: 20,
@@ -1003,7 +1008,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }).then(
             function (response) {
                 vm.beneficiary = response.data;
-                highest_age = vm.beneficiary.age
+                highest_age = vm.beneficiary.age * 12;
                 vm.lineChartOneData = vm.beneficiary.weight;
                 vm.lineChartTwoData = vm.beneficiary.height;
 
@@ -1091,10 +1096,20 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.steps ={
         // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
-        pse: { route: "/awc_reports/pse", label: "Primary School Education (PSE)"},
-        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal & Child Health"},
+        pse: { route: "/awc_reports/pse", label: "Pre School Education"},
+        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
+    };
+
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
     };
 
     vm.moveToLocation = function(loc, index) {
@@ -1102,15 +1117,12 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
     };
-
-
 
     vm.layers = {
         baselayers: {
@@ -1133,7 +1145,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

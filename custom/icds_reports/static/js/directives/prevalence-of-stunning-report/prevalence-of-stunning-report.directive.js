@@ -11,7 +11,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Stunning (Height for age)";
+    vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/stunning/map', label: 'Map'},
@@ -28,7 +28,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.filters = [];
 
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -3 standard deviations of the WHO Child Growth Standards median.',
+        info: 'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -53,25 +53,28 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.total : 0);
-        var sever = $filter('indiaNumbers')(row ? row.severe : 0);
-        var moderate = $filter('indiaNumbers')(row ? row.moderate : 0);
-        var normal = $filter('indiaNumbers')(row ? row.normal : 0);
+        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
+        var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
+            vm.steps['map'].label = 'Sector';
         } else {
             vm.mode = 'map';
+            vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
@@ -106,6 +109,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,
@@ -122,7 +126,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -142,14 +146,12 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return day['all'];
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return d3.format(".2%")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>38-100% children with stunted growth: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>25-38% children with stunted growth: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>0-25% children with stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
+                    tooltip_content += "<p>% children with moderate or severely stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
                     tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
@@ -159,17 +161,30 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         },
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 

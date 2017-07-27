@@ -15,7 +15,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
     ENROLLED_IN_PRIVATE,
+    OTHER_NUMBER,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -242,6 +243,26 @@ def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
     )
 
 
+def get_trail_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_TRAIL,
+            "create": True,
+            "update": extra_update,
+        },
+        # Prior to 2017-08-01, the parent is a referral case
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='parent',
+            relationship=CASE_INDEX_CHILD,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -265,6 +286,7 @@ class ENikshayCaseStructureMixin(object):
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
+        self.other_number = "0123456666"
         self._episode = None
         self._person = None
 
@@ -300,6 +322,7 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
+                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }

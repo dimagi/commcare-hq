@@ -1,4 +1,4 @@
-function MainController($scope, $route, $routeParams, $location) {
+function MainController($scope, $route, $routeParams, $location, $rootScope) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -8,7 +8,7 @@ function MainController($scope, $route, $routeParams, $location) {
 
 MainController.$inject = ['$scope', '$route', '$routeParams', '$location'];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'leaflet-directive'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'leaflet-directive', 'cgBusy'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -72,6 +72,24 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/progress_report", {
                 template : "<progress-report></progress-report>",
+            })
+            .when("/exclusive_breastfeeding", {
+                redirectTo : "/exclusive_breastfeeding/map",
+            })
+            .when("/exclusive_breastfeeding/:step", {
+                template: "<exclusive-breastfeeding></exclusive-breastfeeding>",
+            })
+            .when("/low_birth", {
+                redirectTo : "/low_birth/map",
+            })
+            .when("/low_birth/:step", {
+                template : "<newborn-low-weight></newborn-low-weight>",
+            })
+            .when("/early_initiation", {
+                redirectTo : "/early_initiation/map",
+            })
+            .when("/early_initiation/:step", {
+                template : "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
             });
     }]);
 

@@ -31,6 +31,8 @@ class ENikshayRepeaterFilter(RepeaterFilter):
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     name = 'eNikshay Forwarder Report'
+    base_template = 'reports/base_template.html'
+    asynchronous = True
     section_name = 'Custom Reports'
     slug = 'enikshay_repeater_report'
     dispatcher = CustomProjectReportDispatcher
@@ -64,12 +66,12 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def _make_row(self, record):
         try:
             payload = record.get_payload()
-        except ENikshayException as error:
+        except Exception as error:
             payload = u"Error: {}".format(error)
         attempt_messages = [
             escape("{date}: {message}".format(
                 date=self._format_date(attempt.datetime),
-                message=attempt.success_response if attempt.succeeded else attempt.failure_reason))
+                message=attempt.message))
             for attempt in record.attempts]
         row = [
             record._id,

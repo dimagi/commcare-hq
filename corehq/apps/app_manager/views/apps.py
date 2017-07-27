@@ -23,6 +23,8 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
+from corehq.elastic import ESError
+from dimagi.utils.logging import notify_exception
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
@@ -92,9 +94,9 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
-    return back_to_main(request, domain)
+    if toggles.APP_MANAGER_V1.enabled(request.user.username):
+        return back_to_main(request, domain)
+    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 @no_conflict_require_POST
@@ -121,24 +123,14 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
-        identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
-
-    if not toggles.APP_MANAGER_V2.enabled(request.user.username):
-        # APP MANAGER V2 is completely blank on new app
-        module = Module.new_module(_("Untitled Module"), lang)
-        app.add_module(module)
-        app.new_form(0, _("Untitled Form"), lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
+    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
 
 
 def get_app_view_context(request, app):
@@ -226,7 +218,11 @@ def get_app_view_context(request, app):
 
     practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
     if practice_user_setting and has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
-        practice_users = get_practice_mode_mobile_workers(request.domain)
+        try:
+            practice_users = get_practice_mode_mobile_workers(request.domain)
+        except ESError:
+            notify_exception(request, 'Error getting practice mode mobile workers')
+            practice_users = []
         practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
         practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
 
@@ -307,10 +303,6 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
         context.update({
-            'show_care_plan': (
-                not app.has_careplan_module
-                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
-            ),
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
@@ -318,11 +310,6 @@ def get_apps_base_context(request, domain, app):
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
-
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        rollout = toggles.APP_MANAGER_V2.enabled_for_new_users_after
-        if not toggles.was_user_created_after(request.user.username, rollout):
-            context.update({'allow_v2_opt_out': True})
 
     return context
 
@@ -384,7 +371,7 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
@@ -489,7 +476,7 @@ def app_settings(request, domain, app_id=None):
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id,
-                        release_manager=toggles.APP_MANAGER_V2.enabled(request.user.username))
+                        release_manager=(not toggles.APP_MANAGER_V1.enabled(request.user.username)))
 
 
 @no_conflict_require_POST
@@ -703,7 +690,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('case_sharing', None),
         ('cloudcare_enabled', None),
         ('anonymous_cloudcare_enabled', None),
-        ('commtrack_requisition_mode', lambda m: None if m == 'disabled' else m),
         ('manage_urls', None),
         ('name', None),
         ('platform', None),
@@ -803,20 +789,20 @@ def rearrange(request, domain, app_id, key):
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
             try:
-                app_manager_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
+                app_manager_v2 = not toggles.APP_MANAGER_V1.enabled(request.user.username)
                 app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
             except ConflictingCaseTypeError:
                 messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
             messages.error(request, _(
-                'The form cannot be moved into the desired menu.'
+                'The form cannot be moved into the desired module.'
             ))
         else:
             messages.error(request, _(
-                'The form can not be moved into the desired module.'
+                'The form can not be moved into the desired menu.'
             ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
@@ -851,9 +837,9 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
+        _('You have successfully removed User Case Properties from this application.')
+        if toggles.APP_MANAGER_V1.enabled(request.user.username) else
         _('You have successfully removed User Properties from this application.')
-        if toggles.APP_MANAGER_V2.enabled(request.user.username) else
-        _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
 

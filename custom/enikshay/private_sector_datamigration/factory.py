@@ -8,11 +8,11 @@ from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import (
-    Adherence_Jul7,
-    Episode_Jul7,
-    EpisodePrescription_Jul7,
+    Adherence,
+    Episode,
+    EpisodePrescription,
     MigratedBeneficiaryCounter,
-    Voucher_Jul7,
+    Voucher,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -215,7 +215,6 @@ class BeneficiaryCaseFactory(object):
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
-                    'private_sector_episode_pending_registration': 'no',
                     'transfer_in': '',
                     'treatment_options': '',
 
@@ -257,6 +256,9 @@ class BeneficiaryCaseFactory(object):
             )
             kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
             kwargs['attrs']['update']['patient_type'] = self._episode.patient_type
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = (
+                'yes' if self._episode.nikshayID is None else 'no'
+            )
             kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
             kwargs['attrs']['update']['site'] = self._episode.site_property
             kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
@@ -286,6 +288,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = ''
             kwargs['attrs']['update']['dots_99_enabled'] = 'false'
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
 
         if self.beneficiary.creating_agency:
@@ -358,10 +361,10 @@ class BeneficiaryCaseFactory(object):
         }
 
         try:
-            voucher = Voucher_Jul7.objects.get(voucherNumber=prescription.voucherID)
+            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
             if voucher.voucherStatusId == '3':
                 kwargs['attrs']['update']['date_fulfilled'] = voucher.voucherUsedDate.date()
-        except Voucher_Jul7.DoesNotExist:
+        except Voucher.DoesNotExist:
             pass
 
         return CaseStructure(**kwargs)
@@ -369,7 +372,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        episodes = Episode_Jul7.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
+        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
         else:
@@ -379,13 +382,13 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _adherences(self):
         return list(
-            Adherence_Jul7.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
+            Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
         ) if self._episode else []
 
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription_Jul7.objects.filter(beneficiaryId=self.beneficiary.caseId))
+        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
 
     @property
     @memoized

@@ -467,6 +467,18 @@ class BaseScheduleCaseReminderForm(forms.Form):
         required=False,
         label=ugettext_noop("Please Specify Custom Content Handler")
     )
+    use_custom_user_data_filter = BooleanField(
+        required=False,
+        label=ugettext_lazy("Filter recipients on user data field")
+    )
+    custom_user_data_filter_field = TrimmedCharField(
+        required=False,
+        label=ugettext_lazy("User Data Field")
+    )
+    custom_user_data_filter_value = TrimmedCharField(
+        required=False,
+        label=ugettext_lazy("User Data Value")
+    )
 
     def __init__(self, data=None, is_previewer=False,
                  domain=None, is_edit=False, can_use_survey=False,
@@ -923,6 +935,26 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 twbscrispy.PrependedText('force_surveys_to_use_triggered_case', ''),
                 data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
+            crispy.Div(
+                InlineField(
+                    twbscrispy.PrependedText(
+                        'use_custom_user_data_filter', '',
+                        data_bind="checked: use_custom_user_data_filter"
+                    ),
+                    css_class='col-sm-6'
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'custom_user_data_filter_field',
+                        data_bind="value: custom_user_data_filter_field",
+                    ),
+                    crispy.Field(
+                        'custom_user_data_filter_value',
+                        data_bind="value: custom_user_data_filter_value",
+                    ),
+                    data_bind="visible: use_custom_user_data_filter"
+                )
+            ),
         ]
         if self.is_previewer:
             fields.append(
@@ -1368,6 +1400,29 @@ class BaseScheduleCaseReminderForm(forms.Form):
         else:
             return None
 
+    def custom_user_data_filter_specified(self):
+        return self.cleaned_data['use_custom_user_data_filter']
+
+    def clean_custom_user_data_filter_field(self):
+        if not self.custom_user_data_filter_specified():
+            return None
+
+        value = self.cleaned_data['custom_user_data_filter_field']
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_custom_user_data_filter_value(self):
+        if not self.custom_user_data_filter_specified():
+            return None
+
+        value = self.cleaned_data['custom_user_data_filter_value']
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
     def save(self, reminder_handler):
         if not isinstance(reminder_handler, CaseReminderHandler):
             raise ValueError(_(
@@ -1422,6 +1477,15 @@ class BaseScheduleCaseReminderForm(forms.Form):
         reminder_handler.ui_type = self.ui_type
         reminder_handler.domain = self.domain
         reminder_handler.start_condition_type = CASE_CRITERIA
+
+        if self.custom_user_data_filter_specified():
+            reminder_handler.user_data_filter = {
+                self.cleaned_data['custom_user_data_filter_field']: [
+                    self.cleaned_data['custom_user_data_filter_value']
+                ],
+            }
+        else:
+            reminder_handler.user_data_filter = {}
 
         # If any of the scheduling information has changed, have it recalculate
         # the schedule for each reminder instance
@@ -1522,6 +1586,14 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         if reminder_handler.until:
             initial['stop_condition'] = STOP_CONDITION_CASE_PROPERTY
+
+        if reminder_handler.user_data_filter:
+            initial['use_custom_user_data_filter'] = True
+            user_data_field_value = reminder_handler.user_data_filter.items()[0]
+            initial['custom_user_data_filter_field'] = user_data_field_value[0]
+            initial['custom_user_data_filter_value'] = user_data_field_value[1][0]
+        else:
+            initial['use_custom_user_data_filter'] = False
 
         return initial
 

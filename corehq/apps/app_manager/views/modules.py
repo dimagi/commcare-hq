@@ -1,5 +1,5 @@
 # coding=utf-8
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 import json
 import logging
 from lxml import etree
@@ -20,20 +20,16 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
-from corehq import toggles, feature_previews
+from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL,
-    CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
     prefix_usercase_properties,
-    commtrack_ledger_sections,
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
@@ -46,7 +42,6 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
-    CareplanModule,
     CaseSearch,
     CaseSearchProperty,
     DeleteModuleRecord,
@@ -71,13 +66,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_module_template(user, module):
-    if isinstance(module, CareplanModule):
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view_careplan.html",
-            "app_manager/v2/module_view_careplan.html",
-        )
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         return get_app_manager_template(
             user,
             "app_manager/v1/module_view_advanced.html",
@@ -112,10 +101,7 @@ def get_module_view_context(app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    if isinstance(module, CareplanModule):
-        module_brief.update({'parent_select': module.parent_select})
-        context.update(_get_careplan_module_view_context(app, module, case_property_builder))
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         module_brief.update({
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,
@@ -178,41 +164,6 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'print_media_info': print_template,
         })
     return context
-
-
-def _get_careplan_module_view_context(app, module, case_property_builder):
-    subcase_types = list(app.get_subcase_types(module.case_type))
-    return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder,
-                                             CAREPLAN_GOAL),
-        'details': [
-            {
-                'label': gettext_lazy('Goal List'),
-                'detail_label': gettext_lazy('Goal Detail'),
-                'type': 'careplan_goal',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_GOAL)),
-                'sort_elements': module.goal_details.short.sort_elements,
-                'short': module.goal_details.short,
-                'long': module.goal_details.long,
-                'subcase_types': subcase_types,
-            },
-            {
-                'label': gettext_lazy('Task List'),
-                'detail_label': gettext_lazy('Task Detail'),
-                'type': 'careplan_task',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_TASK)),
-                'sort_elements': module.task_details.short.sort_elements,
-                'short': module.task_details.short,
-                'long': module.task_details.long,
-                'subcase_types': subcase_types,
-            },
-        ],
-    }
 
 
 def _get_advanced_module_view_context(app, module):
@@ -396,7 +347,7 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
                 'detail_label': gettext_lazy('Product Detail'),
                 'type': 'product',
                 'model': 'product',
-                'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                'properties': ['name'],
                 'sort_elements': module.product_details.short.sort_elements,
                 'short': module.product_details.short,
                 'subcase_types': subcase_types,
@@ -485,22 +436,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module["case_type"] = case_type
 
             # rename other reference to the old case type
-            other_careplan_modules = []
             all_advanced_modules = []
             modules_with_old_case_type_exist = False
             for mod in app.modules:
-                if mod.unique_id != module_id:
-                    if isinstance(mod, CareplanModule):
-                        other_careplan_modules.append(mod)
-
                 if isinstance(mod, AdvancedModule):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
-            for cp_mod in other_careplan_modules:
-                if cp_mod.parent_select.module_id == module_id:
-                    cp_mod.case_type = case_type
 
             for mod in all_advanced_modules:
                 for form in mod.forms:
@@ -772,10 +714,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     if detail_type == 'case':
         detail = module.case_details
-    elif detail_type == CAREPLAN_GOAL:
-        detail = module.goal_details
-    elif detail_type == CAREPLAN_TASK:
-        detail = module.task_details
     else:
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
@@ -965,7 +903,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -975,7 +913,9 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
+            app.new_form(module_id, "Untitled Form", lang)
+        else:
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, _("Register"), lang)
@@ -997,8 +937,6 @@ def new_module(request, domain, app_id):
             else:
                 app.new_form(module_id, _("Survey"), lang)
             form_id = 0
-        else:
-            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
@@ -1017,22 +955,6 @@ def new_module(request, domain, app_id):
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
         return back_to_main(request, domain, app_id=app_id)
-
-
-def _new_careplan_module(request, domain, app, name, lang):
-    from corehq.apps.app_manager.util import new_careplan_module
-    target_module_index = request.POST.get('target_module_id')
-    target_module = app.get_module(target_module_index)
-    if not target_module.case_type:
-        name = target_module.name[lang]
-        messages.error(request, _("Please set the case type for the target module '{name}'.".format(name=name)))
-        return back_to_main(request, domain, app_id=app.id)
-    module = new_careplan_module(app, name, lang, target_module)
-    app.save()
-    response = back_to_main(request, domain, app_id=app.id, module_id=module.id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Care Plan modules are a labs feature'))
-    return response
 
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
@@ -1059,13 +981,6 @@ def view_module(request, domain, app_id, module_id):
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
-    'careplan': {
-        FN: _new_careplan_module,
-        VALIDATIONS: [
-            (lambda app: app.has_careplan_module,
-             _('This application already has a Careplan module'))
-        ]
-    },
     'advanced': {
         FN: _new_advanced_module,
         VALIDATIONS: []

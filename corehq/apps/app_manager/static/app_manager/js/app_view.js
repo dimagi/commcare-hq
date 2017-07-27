@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
 hqDefine("app_manager/js/app_view.js", function() {
     $(function () {
@@ -7,14 +8,14 @@ hqDefine("app_manager/js/app_view.js", function() {
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
-            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
+            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings.js').CommcareSettings;
             $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
         }
 
         // Languages
         var $languagesContainer = $("#supported-languages");
         if ($languagesContainer.length) {
-            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
+            var SupportedLanguages = hqImport('app_manager/js/supported_languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: initial_page_data("langs"),
                 saveURL: reverse("edit_app_langs"),
@@ -64,7 +65,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         if ($('#multimedia-tab').length) {
             var multimediaTab = new MultimediaTab();
             $("#multimedia-tab").koApplyBindings(multimediaTab);
-            var selector = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2') ? '[href="#multimedia-tab"]' : '#demand-multimedia';
+            var selector = COMMCAREHQ.toggleEnabled('APP_MANAGER_V1') ? '#demand-multimedia' : '[href="#multimedia-tab"]';
             $(selector).on('shown.bs.tab', function () {
                 if (multimediaTab.load_state() === null) {
                     multimediaTab.load_if_necessary();
@@ -73,7 +74,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         }
 
         // Releases content (v1 only)
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
@@ -111,7 +112,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                             fetchLimit: initial_page_data("fetch_limit"),
                         };
                         var el = $('#releases-table');
-                        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+                        var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
                         var releasesMain = new ReleasesMain(o);
                         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
                         el.koApplyBindings(releasesMain);
@@ -123,12 +124,12 @@ hqDefine("app_manager/js/app_view.js", function() {
                             var app_profiles = initial_page_data('build_profiles');
                             var enable_practice_users = initial_page_data('enable_practice_users');
                             var practice_users = initial_page_data('practice_users');
-                            var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+                            var ProfileManager = hqImport('app_manager/js/releases/language_profiles.js').ProfileManager;
                             $profileManager.koApplyBindings(new ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users));
                         }
 
                         // App diff
-                        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
+                        var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
                         $('#recent-changes-btn').on('click', function (e) {
                             appDiff.renderDiff(initial_page_data("app_id"), initial_page_data("latest_build_id"));
                         });

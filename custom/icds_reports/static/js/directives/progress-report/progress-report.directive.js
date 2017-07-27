@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ProgressReportController($scope, $location, progressReportService, storageService) {
+function ProgressReportController($scope, $location, progressReportService, storageService, userLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -23,7 +23,7 @@ function ProgressReportController($scope, $location, progressReportService, stor
     });
 
     vm.loadData = function () {
-        progressReportService.getData(vm.filtersData).then(function(response) {
+        vm.myPromise = progressReportService.getData(vm.filtersData).then(function(response) {
             vm.data = response.data.config;
         });
     };
@@ -45,12 +45,22 @@ function ProgressReportController($scope, $location, progressReportService, stor
         }
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
@@ -61,7 +71,7 @@ function ProgressReportController($scope, $location, progressReportService, stor
     vm.loadData();
 }
 
-ProgressReportController.$inject = ['$scope', '$location', 'progressReportService', 'storageService'];
+ProgressReportController.$inject = ['$scope', '$location', 'progressReportService', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('progressReport', function() {
     return {

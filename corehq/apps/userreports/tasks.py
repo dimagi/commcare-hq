@@ -10,7 +10,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
-from django.db.models import Count, F
+from django.db.models import Count, F, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
@@ -36,6 +36,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_async_indica
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
 from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
+from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from dimagi.utils.couch import CriticalSection
@@ -212,37 +213,23 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(
-    run_every=crontab(minute="*/5", hour="0-8,18-23"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+@periodic_task(run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
+def run_queue_async_indicators_task():
+    queue_async_indicators.delay()
+
+
+@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
-    start = datetime.utcnow()
-    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
-    time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
+    day_ago = datetime.utcnow() - timedelta(days=1)
+    indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    indicators_by_domain_doc_type = defaultdict(list)
+    for indicator in indicators:
+        # don't requeue anything that's be queued in the past day
+        if not indicator.date_queued or indicator.date_queued < day_ago:
+            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
-    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
-    if oldest_indicator and oldest_indicator.date_queued:
-        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
-
-    with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
-        day_ago = datetime.utcnow() - timedelta(days=1)
-        indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
-        if indicators:
-            lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
-            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
-        indicators_by_domain_doc_type = defaultdict(list)
-        for indicator in indicators:
-            # don't requeue anything htat's be queued in the past day
-            if not indicator.date_queued or indicator.date_queued < day_ago:
-                indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
-
-        for k, indicators in indicators_by_domain_doc_type.items():
-            now = datetime.utcnow()
-            if now > cutoff:
-                break
-            _queue_indicators(indicators)
+    for k, indicators in indicators_by_domain_doc_type.items():
+        _queue_indicators(indicators)
 
 
 def _queue_indicators(indicators):
@@ -326,19 +313,26 @@ def _save_document_helper(indicator, doc):
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             continue
+        except ESError:
+            celery_task_logger.info("ES errored when trying to retrieve config")
+            something_failed = True
+            return
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
-            # a database had an issue so don't log it and go on to the next config
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("DB error when saving config: {}".format(config_id))
             something_failed = True
+            return
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
             something_failed = True
+            return
 
     return not something_failed
 
@@ -348,40 +342,52 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
-    for config_id, count in _indicators_by_count().iteritems():
-        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=["config_id:{}".format(config_id)])
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
+    indicator = AsyncIndicator.objects.first()
+    if indicator:
+        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+
+    for config_id, metrics in _indicator_metrics().iteritems():
+        tags = ["config_id:{}".format(config_id)]
+        datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
 
 
-def _indicators_by_count(date_created=None):
+def _indicator_metrics(date_created=None):
     """
-    Number of docs in the queue that have a specific indicator config ids
-
     returns {
-        "config_id": "number of indicators with that config"
+        "config_id": {
+            "count": number of indicators with that config,
+            "lag": number of seconds ago that the row was created
+        }
     }
     """
-    ret = defaultdict(lambda: 0)
-    indicators_by_count = (
+    ret = {}
+    indicator_metrics = (
         AsyncIndicator.objects
         .values('indicator_config_ids')
-        .annotate(Count('indicator_config_ids'))
+        .annotate(Count('indicator_config_ids'), Min('date_created'))
         .order_by()  # needed to get rid of implict ordering by date_created
     )
+    now = datetime.utcnow()
     if date_created:
-        indicators_by_count = indicators_by_count.filter(date_created__lt=date_created)
-    for ind in indicators_by_count:
+        indicator_metrics = indicator_metrics.filter(date_created__lt=date_created)
+    for ind in indicator_metrics:
+        count = ind['indicator_config_ids__count']
+        lag = (now - ind['date_created__min']).total_seconds()
         for config_id in ind['indicator_config_ids']:
-            ret[config_id] += ind['indicator_config_ids__count']
+            if ret.get(config_id):
+                ret[config_id]['count'] += ind['indicator_config_ids__count']
+                ret[config_id]['lag'] = max(lag, ret[config_id]['lag'])
+            else:
+                ret[config_id] = {
+                    "count": count,
+                    "lag": lag
+                }
 
     return ret
-
-
-@periodic_task(
-    run_every=crontab(minute="*/15"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
-def icds_async_indicators_metrics():
-    indicator_count_until_28 = _indicators_by_count(datetime(2017, 6, 28))
-
-    for config_id, count in indicator_count_until_28.iteritems():
-        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=["config_id:{}".format(config_id)])

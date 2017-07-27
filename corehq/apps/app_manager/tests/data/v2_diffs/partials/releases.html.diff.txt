@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -6,7 +6,27 @@
+@@ -6,7 +6,48 @@
  {% load i18n %}
  
  
@@ -24,12 +24,33 @@
 +  {% endblocktrans %}
 +  </div>
 +{% else %}
++  
++{% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
++<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
++     data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
++     role="alert">
++  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
++    <span aria-hidden="true">&times;</span>
++  </button>
++  <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
++  <p class="alert alert-info">
++    <i class="fa fa-info-circle"></i>
++    {% blocktrans %}
++      Instead of starring versions of your app, you can now mark them
++      as "Released" or "In Test." "Released" has the same effect as
++      starring a version.  Any version you do not mark as "Released"
++      will default to "In Test."
++    {% endblocktrans %}
++  </p>
++ </div>
++ {% endif %}
 +
 +{% if not intro_only and build_profile_access %}
++
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -33,181 +53,152 @@
+@@ -33,181 +74,182 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -48,12 +69,11 @@
 -                </button>
 -                {% endif %}
 +                <p class="pull-right auto-release-notes">
-+                  <span data-bind="starred: true"></span> {% trans "Auto-Update On" %} |
-+                  <span data-bind="starred: false"></span> {% trans "Auto-Update Off" %}
++                  {% trans 'What are Released Versions?' %}
 +                  <span class="hq-help-template"
-+                    data-title="Auto-Update"
++                    data-title="Released Versions"
 +                    data-container="body"
-+                    data-content="Use this for automatically updating CommCare applications. If the &quot;Auto-update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
++                    data-content="Mark versions as Released for automatically updating CommCare applications. If the Auto-Update app setting is set to Daily or Weekly, any application versions that are marked as Released will update to the latest Released version automatically. When the user clicks 'Update App' from mobile, the latest Released version will be downloaded."
 +                    data-placement="left"
 +                  ></span>
 +                </p>
@@ -193,10 +213,34 @@
 +                                  css: {hide: false}"></i>
 +                  </div>
 +              {% endif %}
++              <div class="build-is-released">
++                  <span class="label label-info"
++                        data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
++                  <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
++                  <div class="btn-group">
++                      <button type="button"
++                              class="btn btn-xs"
++                              data-bind="click: $root.toggleRelease,
++                                         css: {
++                                            'active': is_released(),
++                                            'btn-success': is_released(),
++                                            'btn-default': !is_released()
++                                         }">
++                          {% trans "Released" %}
++                      </button>
++                      <button type="button"
++                              class="btn btn-xs btn-default"
++                              data-bind="click: $root.toggleRelease,
++                                         css: {
++                                            'active': !is_released(),
++                                            'btn-primary': !is_released(),
++                                            'btn-default': is_released()
++                                         }">
++                          {% trans "In Test" %}
++                      </button>
++                  </div>
++              </div>
 +              <h4 class="panel-release-title">
-+                <span class="build-is-released">
-+                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
-+                </span>
 +                <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
 +                <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
 +                <span data-bind="text: comment_user_name"></span>
@@ -246,18 +290,25 @@
 +              </h4>
 +          </div>
 +          <div class="panel-body">
-+            <inline-edit params="
-+                value: build_comment,
-+                iconClass: 'fa fa-comment',
-+                rows: 1,
-+                placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-+                url: '{% url "update_build_comment" domain app.id %}',
-+                saveParams: {'build_id': id},
-+                saveValueName: 'comment',
-+                errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-+            "></inline-edit>
++            <div class="comment-container"
++                 data-bind="visible: is_comment_visible">
++              <inline-edit params="
++                  value: build_comment,
++                  iconClass: 'fa fa-comment',
++                  rows: 1,
++                  placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
++                  url: '{% url "update_build_comment" domain app.id %}',
++                  saveParams: {'build_id': id},
++                  saveValueName: 'comment',
++                  errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
++              "></inline-edit>
++            </div>
 +          </div><!-- .panel-body -->
 +          <div class="panel-footer">
++            <button class="btn btn-default"
++                    data-bind="visible: !is_comment_visible(), click: showComment">
++              <i class="fa fa-comment"></i> {% trans "Add Comment" %}
++            </button>
 +            <button class="btn btn-default hide"
 +                    data-bind="
                          openModal: 'revert-build-modal-template',
@@ -347,7 +398,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -255,18 +246,19 @@
+@@ -255,18 +297,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

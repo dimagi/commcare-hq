@@ -96,9 +96,8 @@ class TreatmentOutcomeSqlData(EnikshaySqlData):
     @property
     def filters(self):
         filters = super(TreatmentOutcomeSqlData, self).filters
-        filters.append(
-            RawFilter('episode_type_patient = 1')
-        )
+        filters.append(RawFilter('episode_type_patient = 1'))
+        filters.append(RawFilter("is_enrolled_in_private = 0"))
         return filters
 
     @property

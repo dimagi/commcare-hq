@@ -41,7 +41,7 @@
 - id: practice_mobile_worker_id
   name: 'Practice Mobile Worker'
   widget: select
-  since: '2.30'
+  since: '2.26'
   privilege: 'practice_mobile_workers'
   description: "Select the mobile worker to use as a practice user for this application"
 
@@ -101,20 +101,6 @@
   since: "2.0"
   permission: "cloudcare"
   toggle: ANONYMOUS_WEB_APPS_USAGE
-
-- id: commtrack_requisition_mode
-  name: "CommCare Supply Requisition Mode"
-  description: "CommCare Supply Requisition Mode"
-  description_format: html
-  requires: "{$parent.commtrack_enabled}=true"
-  values: ['disabled', '3-step', '4-step']
-  value_names:
-   - "Disable Requisitions"
-   - "3 Step Requisitions (Requisition -> Fulfillment -> Receipt)"
-   - "4 Step Requisitions (Requisition -> Approval -> Fulfillment -> Receipt)"
-  hide_if_not_enabled: true
-  preview: true
-  since: "2.0"
 
 - id: use_custom_suite
   name: "Custom Suite File"

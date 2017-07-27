@@ -375,6 +375,12 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
+        {% block additional_initial_page_data %}
+            {% comment %}
+                fallback place to put initial page data for templates where it's
+                awkward or impossible to include it in another block
+            {% endcomment %}
+        {% endblock %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
@@ -400,14 +406,15 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        <script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
+        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
         {% addtoblock js-inline %}
         <script>
             $(function () {
-                var $notificationsMenu = $('#js-settingsmenu-notifications');
-                if ($notificationsMenu.length > 0) {
-                    $notificationsMenu.startNotificationsService('{% url 'notifications_service' %}');
-                }
+                var notifications = hqImport('notifications/js/notifications_service.js');
+                var csrfToken = $("#csrfTokenContainer").val();
+                notifications.setRMI('{% url 'notifications_service' %}', csrfToken);
+                notifications.initService('#js-settingsmenu-notifications');
+                notifications.initUINotify('.alert-ui-notify');
             });
         </script>
         {% endaddtoblock %}

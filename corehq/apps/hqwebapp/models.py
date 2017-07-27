@@ -28,4 +28,8 @@ class MaintenanceAlert(models.Model):
     def html(self):
         return mark_up_urls(self.text)
 
+    def __repr__(self):
+        return u"MaintenanceAlert(text='{}', active='{}')".format(self.text, self.active)
+
+
 from .signals import *

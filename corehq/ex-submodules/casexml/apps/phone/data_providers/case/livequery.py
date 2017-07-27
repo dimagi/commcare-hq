@@ -45,8 +45,25 @@ def do_livequery(timing_context, restore_state, async_task=None):
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
 
+    def is_extension(case_id):
+        """Determine if case_id is an extension case
+
+        A case that is both a child and an extension is not an extension.
+        """
+        return case_id in hosts_by_extension and case_id not in parents_by_child
+
     def has_live_extension(case_id, cache={}):
-        """Recursively check if case_id has a live extension case
+        """Check if available case_id has a live extension case
+
+        Do not check for live children because an available parent
+        cannot cause it's children to become live. This is unlike an
+        available host, which can cause its available extension to
+        become live through the recursive rules:
+
+        - A case is available if
+            - it is open and not an extension case (applies to host).
+            - it is open and is the extension of an available case.
+        - A case is live if it is owned and available.
 
         The result is cached to reduce recursion in subsequent calls
         and to prevent infinite recursion.
@@ -56,93 +73,90 @@ def do_livequery(timing_context, restore_state, async_task=None):
         except KeyError:
             cache[case_id] = False
         cache[case_id] = result = any(
-            ext_id in live_ids
-            or ext_id in owned_ids
-            or ext_id in open_ids and has_live_extension(ext_id)
-            for ext_id in extensions_by_host[case_id])
+            ext_id in live_ids      # has live extension
+            or ext_id in owned_ids  # ext is owned and available, will be live
+            or has_live_extension(ext_id)
+            for ext_id in extensions_by_host[case_id]
+        )
         return result
 
     def enliven(case_id):
         """Mark the given case, its extensions and their hosts as live
 
-        This closure mutates `live_ids`, `extensions_by_host`, and
-        `hosts_by_extension`, which are data structures local to the
-        enclosing function.
+        This closure mutates `live_ids` from the enclosing function.
         """
         if case_id in live_ids:
             # already live
             return
         debug('enliven(%s)', case_id)
         live_ids.add(case_id)
-        ext_ids = extensions_by_host.get(case_id)
-        if ext_ids:
-            for ext_id in ext_ids:
-                if ext_id in open_ids:
-                    # case is open and is the extension of a live case
-                    enliven(ext_id)
-        host_ids = hosts_by_extension.pop(case_id, None)
-        if host_ids:
-            for host_id in host_ids:
-                # case has live extension
-                enliven(host_id)
+        # case is open and is the extension of a live case
+        ext_ids = extensions_by_host.get(case_id, [])
+        # case has live extension
+        host_ids = hosts_by_extension.get(case_id, [])
+        # case has live child
+        parent_ids = parents_by_child.get(case_id, [])
+        for cid in chain(ext_ids, host_ids, parent_ids):
+            enliven(cid)
 
     def classify(index, prev_ids):
         """Classify index as either live or extension with live status pending
 
-        This closure mutates `indices` from the enclosing function as
-        well as the same data structres mutated by `enliven()`.
+        This closure mutates case graph data structures from the
+        enclosing function.
 
-        :returns: Case id for next related index fetch or CIRCULAR_REF
-        if the related case has already been seen.
+        :returns: Case id for next related index fetch or IGNORE
+        if the related case should be ignored.
         """
-        seen_ix.add(index_key(index))
-        indices[index.case_id].append(index)
         sub_id = index.case_id
         ref_id = index.referenced_id  # aka parent/host/super
         relationship = index.relationship
+        ix_key = index_key(index)
+        if ix_key in seen_ix[sub_id]:
+            return IGNORE  # unexpected, don't process duplicate index twice
+        seen_ix[sub_id].add(ix_key)
+        seen_ix[ref_id].add(ix_key)
+        indices[sub_id].append(index)
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
-        if sub_id in prev_ids:
-            # traverse to parent/host
-            if sub_id in live_ids or (sub_id in open_ids
-                    and (relationship != EXTENSION
-                        or (relationship == EXTENSION and ref_id in live_ids))):
-                # one of the following is true
-                # - ref has a live child
-                # - ref has a live extension
-                # - sub is open and is not an extension case
-                # - sub is open and is the extension of a live case
-                enliven(sub_id)
-                enliven(ref_id)
+        if sub_id in live_ids:
+            # ref has a live child or extension
+            enliven(ref_id)
+            # It does not matter that sub_id -> ref_id never makes it into
+            # hosts_by_extension since both are live and therefore this index
+            # will not need to be traversed in other liveness calculations.
+        elif relationship == EXTENSION:
+            if sub_id in open_ids:
+                if ref_id in live_ids:
+                    # sub is open and is the extension of a live case
+                    enliven(sub_id)
+                else:
+                    # live status pending:
+                    # if ref becomes live -> sub is open extension of live case
+                    # if sub becomes live -> ref has a live extension
+                    extensions_by_host[ref_id].add(sub_id)
+                    hosts_by_extension[sub_id].add(ref_id)
             else:
-                # need to know if parent is live before -> live
-                extensions_by_host[ref_id].add(sub_id)
-                hosts_by_extension[sub_id].add(ref_id)
-
-            if ref_id not in all_ids:
-                return ref_id
+                return IGNORE  # closed extension
+        elif sub_id in owned_ids:
+            # sub is owned and available (open and not an extension case)
+            enliven(sub_id)
+            # ref has a live child
+            enliven(ref_id)
         else:
-            # traverse to open extension
-            assert ref_id in prev_ids, (index, prev_ids)
-            assert relationship == EXTENSION, index
+            # live status pending: if sub becomes live -> ref has a live child
+            parents_by_child[sub_id].add(ref_id)
 
-            if ref_id in live_ids and sub_id in open_ids:
-                # sub is open and is the extension of a live case
-                enliven(sub_id)
-            else:
-                # need to know if parent is live before -> live
-                extensions_by_host[ref_id].add(sub_id)
-                hosts_by_extension[sub_id].add(ref_id)
-
-            if sub_id not in all_ids:
-                return sub_id
-        return CIRCULAR_REF
+        next_id = ref_id if sub_id in prev_ids else sub_id
+        if next_id not in all_ids:
+            return next_id
+        return IGNORE  # circular reference
 
     def update_open_and_deleted_ids(related):
         """Update open_ids and deleted_ids with related case_ids
 
         TODO store referenced case (parent) deleted and closed status in
         CommCareCaseIndexSQL to reduce number of related indices fetched
-        and avoid this extra query per related level.
+        and avoid this extra query per related query.
         """
         case_ids = {case_id
             for index in related
@@ -156,15 +170,18 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
-    CIRCULAR_REF = object()
+    IGNORE = object()
     debug = logging.getLogger(__name__).debug
     accessor = CaseAccessors(restore_state.domain)
+
+    # case graph data structures
     live_ids = set()
     deleted_ids = set()
-    extensions_by_host = defaultdict(set)  # host_id -> extension_ids
-    hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
+    extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
+    hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
+    parents_by_child = defaultdict(set)    # child_id -> parent_ids
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
-    seen_ix = set()  # set of '<index.case_id> <index.identifier>'
+    seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
     owner_ids = list(restore_state.owner_ids)
 
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
@@ -176,33 +193,33 @@ def do_livequery(timing_context, restore_state, async_task=None):
         next_ids = all_ids = set(owned_ids)
         owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
         open_ids = set(owned_ids)
-        level = 0
         while next_ids:
-            level += 1
-            with timing_context("get_related_indices(level %s)" % level):
-                related = accessor.get_related_indices(list(next_ids), seen_ix)
+            exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
+            with timing_context("get_related_indices({} cases, {} seen)".format(
+                    len(next_ids), len(exclude))):
+                related = accessor.get_related_indices(list(next_ids), exclude)
                 if not related:
                     break
                 update_open_and_deleted_ids(related)
                 next_ids = {classify(index, next_ids)
                     for index in related
-                    if index_key(index) not in seen_ix
-                        and index.referenced_id not in deleted_ids
+                    if index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
-                next_ids.discard(CIRCULAR_REF)
+                next_ids.discard(IGNORE)
                 all_ids.update(next_ids)
                 debug('next: %r', next_ids)
 
-        with timing_context("enliven open root cases"):
+        with timing_context("enliven open roots (%s cases)" % len(open_ids)):
             debug('open: %r', open_ids)
             # owned, open, not an extension -> live
             for case_id in owned_ids:
-                if case_id not in hosts_by_extension:
+                if not is_extension(case_id):
                     enliven(case_id)
 
-            # open root case with live extension -> live
+            # available case with live extension -> live
             for case_id in open_ids:
-                if (case_id not in hosts_by_extension and case_id not in live_ids
+                if (case_id not in live_ids
+                        and not is_extension(case_id)
                         and has_live_extension(case_id)):
                     enliven(case_id)
 
@@ -215,9 +232,9 @@ def do_livequery(timing_context, restore_state, async_task=None):
                     live_ids, restore_state, accessor)
         else:
             sync_ids = live_ids
-        restore_state.current_sync_log.case_ids_on_phone = live_ids | sync_ids
+        restore_state.current_sync_log.case_ids_on_phone = live_ids
 
-        with timing_context("compile_response"):
+        with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
             response = compile_response(
                 timing_context,

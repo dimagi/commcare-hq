@@ -5,7 +5,7 @@
 {# For APP BUILDER PROTOTYPE use only #}
 
 <a href="{% url "view_module" domain app.id module.id %}"
-   class="appnav-title{% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
+   class="appnav-title{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
     <i class="drag_handle appnav-drag-icon js-appnav-drag-module"></i>
     {% if module.module_type == 'advanced' %}
       <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"></i>

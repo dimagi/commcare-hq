@@ -154,3 +154,20 @@ class DateOfDiagnosisFilter(DatespanFilter):
 
 class TreatmentInitiationDateFilter(DatespanFilter):
     label = _('Date of Treatment Initiation')
+
+
+class PeriodFilter(BaseSingleOptionFilter):
+    slug = 'period'
+    label = _('Time Period')
+    default_text = None
+    options = (
+        ("three_day", "Last 3 days"),
+        ("one_week", "Last 7 days"),
+        ("two_week", "Last 2 weeks"),
+        ("month", "Last 30 days")
+    )
+
+    @property
+    @memoized
+    def selected(self):
+        return self.get_value(self.request, self.domain) or self.options[0][0]

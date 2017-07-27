@@ -1,4 +1,5 @@
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
+from collections import defaultdict
+
 from corehq.sql_db.config import partition_config
 from django.conf import settings
 from django import db
@@ -99,8 +100,21 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
             yield result
 
 
+def split_list_by_db_partition(partition_values):
+    """
+    :param partition_values: Iterable of partition values (e.g. case IDs)
+    :return: dict(db_alias -> [partition_values])
+    """
+    mapping = defaultdict(list)
+    for value in partition_values:
+        db_name = get_db_alias_for_partitioned_doc(value)
+        mapping[db_name].append(value)
+    return mapping
+
+
 def get_db_alias_for_partitioned_doc(partition_value):
     if settings.USE_PARTITIONED_DATABASE:
+        from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
         db_name = ShardAccessor.get_database_for_doc(partition_value)
     else:
         db_name = 'default'

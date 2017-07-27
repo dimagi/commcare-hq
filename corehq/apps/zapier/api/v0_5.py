@@ -107,7 +107,7 @@ class ZapierCustomTriggerFieldFormResource(BaseZapierCustomFieldResource):
             ))
 
         for form_property in MAIN_FORM_TABLE_PROPERTIES:
-            if form_property.is_advanced:
+            if form_property.is_advanced or form_property.item.transform:
                 continue
             custom_fields.append(CustomField(
                 dict(
