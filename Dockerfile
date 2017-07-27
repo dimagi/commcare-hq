@@ -12,15 +12,7 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
-RUN wget -O jdk.tar.gz --quiet --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
- && tar -xzf jdk.tar.gz --absolute-names \
- && mkdir -p /usr/lib/jvm \
- && mv ./jdk1.7.0* /usr/lib/jvm/jdk1.7.0 \
- && update-alternatives --install "/usr/bin/java" "java" "/usr/lib/jvm/jdk1.7.0/bin/java" 1 \
- && update-alternatives --install "/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.7.0/bin/javac" 1 \
- && update-alternatives --install "/usr/bin/javaws" "javaws" "/usr/lib/jvm/jdk1.7.0/bin/javaws" 1 \
- && update-alternatives --auto java \
- && rm -f jdk.tar.gz
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
 COPY requirements/requirements.txt \
      requirements/dev-requirements.txt \

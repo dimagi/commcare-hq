@@ -30,7 +30,7 @@
         "datatype": "date",
         "required": false,
         "slug": "month",
-        "field": "month_start",
+        "field": "month",
         "type": "date",
         "display": "Month for Data"
       },

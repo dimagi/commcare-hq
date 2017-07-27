@@ -69,7 +69,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

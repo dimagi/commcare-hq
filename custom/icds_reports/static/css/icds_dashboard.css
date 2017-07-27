@@ -59,6 +59,10 @@
     border-radius: 10px;
 }
 
+.xy-tooltip {
+    color: black !important;
+}
+
 nvd3 > svg {
     margin: 0 auto !important;
 }
