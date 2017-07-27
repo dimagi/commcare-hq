@@ -13,7 +13,7 @@ def get_owner_id(case):
     return case.owner_id or case.modified_by
 
 
-def get_wrapped_owner(owner_id):
+def get_wrapped_owner(owner_id, support_deleted=False):
     """
     Returns the wrapped user or group object for a given ID, or None
     if the id isn't a known owner type.
@@ -28,6 +28,13 @@ def get_wrapped_owner(owner_id):
             'Group': Group,
         }.get(doc_type)
 
+    def _get_deleted_class(doc_type):
+        return {
+            'CommCareUser-Deleted': CommCareUser,
+            'WebUser-Deleted': WebUser,
+            'Group-Deleted': Group,
+        }.get(doc_type)
+
     try:
         return SQLLocation.objects.get(location_id=owner_id)
     except SQLLocation.DoesNotExist:
@@ -39,6 +46,8 @@ def get_wrapped_owner(owner_id):
         pass
     else:
         cls = _get_class(owner_doc['doc_type'])
+        if support_deleted and cls is None:
+            cls = _get_deleted_class(owner_doc['doc_type'])
         return cls.wrap(owner_doc) if cls else None
 
     return None
