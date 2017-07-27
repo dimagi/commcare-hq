@@ -211,7 +211,6 @@ FormplayerFrontend.on("start", function (options) {
                 appId = apps[0]['_id'];
             }
 
-            // will be the same for every domain. TODO: get domain/username/pass from django
             if (self.getCurrentRoute() === "") {
                 if (user.displayOptions.singleAppMode) {
                     FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
