@@ -1,4 +1,3 @@
-/* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,

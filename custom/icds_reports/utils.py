@@ -4104,7 +4104,7 @@ def get_registered_household_sector_data(config, loc_level):
     ).values(
         *group_by
     ).annotate(
-            household=Sum('cases_household'),
+        household=Sum('cases_household'),
     ).order_by('%s_name' % loc_level)
 
     chart_data = {
