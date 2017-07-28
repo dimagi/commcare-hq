@@ -65,7 +65,6 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
             except ENikshayCaseNotFound:
                 return False
-
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and

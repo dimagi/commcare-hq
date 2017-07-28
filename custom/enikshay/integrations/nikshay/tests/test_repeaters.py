@@ -209,6 +209,15 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self._create_nikshay_enabled_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'unreal'
+        })
+        self._create_nikshay_enabled_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
     def test_trigger_non_test_submission(self):
         self.phi.metadata['is_test'] = 'no'
         self.phi.save()
@@ -216,6 +225,15 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
+
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'real'
+        })
+        self._create_nikshay_enabled_case()
+        self.assertEqual(2, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -425,6 +443,52 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         })
         self.assertEqual(3, len(self.repeat_records().all()))
 
+    def test_trigger_test_submission(self):
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.create_case(self.episode)
+        self._create_nikshay_registered_case()
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "owner_id": self.phi.location_id,
+        })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'unreal'
+        })
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "owner_id": self.phi.location_id,
+        })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_non_test_submission(self):
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        self.create_case(self.episode)
+        self._create_nikshay_registered_case()
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "owner_id": self.phi.location_id,
+        })
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'real'
+        })
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "owner_id": self.phi.location_id,
+        })
+        self.assertEqual(2, len(self.repeat_records().all()))
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -545,6 +609,41 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
             TREATMENT_OUTCOME: "cured",
         })
         self.assertEqual(0, len(self.repeat_records().all()))
+
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'unreal'
+        })
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "cured",
+        })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_non_test_submission(self):
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "cured",
+        })
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        self.set_up_to_use_2b_version()
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        update_case(self.domain, self.person_id, {
+            'dataset': 'real'
+        })
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "cured",
+        })
+        self.assertEqual(2, len(self.repeat_records().all()))
 
     def test_trigger(self):
         # nikshay not enabled
@@ -718,6 +817,28 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
             "date_reported": datetime.now(),
         })
         self.assertTrue(check_repeat_record_added())
+
+    def test_trigger_test_submission(self):
+        self.dmc.metadata['is_test'] = 'yes'
+        self.dmc.save()
+        self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+        update_case(self.domain, self.test_id, {
+            "date_reported": datetime.now()
+        })
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_non_test_submission(self):
+        self.dmc.metadata['is_test'] = 'no'
+        self.dmc.save()
+        self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        self._create_nikshay_registered_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+        update_case(self.domain, self.test_id, {
+            "date_reported": datetime.now()
+        })
+        self.assertEqual(1, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
