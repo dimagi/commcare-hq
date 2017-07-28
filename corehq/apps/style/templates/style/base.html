@@ -486,18 +486,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2 or request.use_select2_v4 %}
-        {% addtoblock js-inline %}
-        <script>
-            $(function() {
-                _.each($(".ko-select2"), function(element) {
-                    $(element).select2();
-                });
-            });
-        </script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_nvd3 %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
