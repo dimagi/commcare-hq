@@ -20,6 +20,7 @@ group_prefix_re = [
     re.compile( ".*" ),           # catch strange entries
 ]
 
+
 class ProfileMiddleware(MiddlewareMixin):
     """
     Displays hotshot profiling for any view.

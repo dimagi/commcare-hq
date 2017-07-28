@@ -195,7 +195,6 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     """
     urlname = 'users_select2_options'
 
-
     # This endpoint is used by select2 single option filters
     def post(self, request, domain):
         self.domain = domain
