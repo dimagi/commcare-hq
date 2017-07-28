@@ -303,10 +303,6 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
         context.update({
-            'show_care_plan': (
-                not app.has_careplan_module
-                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
-            ),
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),

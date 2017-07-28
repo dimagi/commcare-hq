@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.util import add_odk_profile_after_build, \
@@ -40,6 +40,8 @@ def download_odk_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -51,13 +53,15 @@ def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
     )
 
 
-@safe_download
+@safe_cached_download
 def download_suite(request, domain, app_id):
     """
     See Application.create_suite
@@ -71,7 +75,7 @@ def download_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
     See Application.create_media_suite
@@ -85,7 +89,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -96,7 +100,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
@@ -115,7 +119,7 @@ def download_xform(request, domain, app_id, module_id, form_id):
         return response
 
 
-@safe_download
+@safe_cached_download
 def download_jad(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -137,7 +141,7 @@ def download_jad(request, domain, app_id):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_jar(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -174,7 +178,7 @@ def download_test_jar(request):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
     See ApplicationBase.fetch_jar
@@ -203,7 +207,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_download
+@safe_cached_download
 def download_file(request, domain, app_id, path):
     if path == "app.json":
         return JsonResponse(request.app.to_json())
@@ -313,6 +317,8 @@ def download_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile()
     )
@@ -323,12 +329,14 @@ def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
 
 
-@safe_download
+@safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
         make_async_build.delay(request.app)

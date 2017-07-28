@@ -957,6 +957,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "date_death",
+        "create_index": true,
         "type": "expression"
       },
       {

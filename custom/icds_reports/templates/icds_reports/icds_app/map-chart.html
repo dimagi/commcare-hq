@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <div class="report-content">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-if="$ctrl.message" class="alert alert-info">
             <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>
@@ -39,7 +39,7 @@
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
-            <div class="row">
+            <div class="row" style="width: 100% !important;">
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
             <div ng-if="$ctrl.showNational()" class="row">

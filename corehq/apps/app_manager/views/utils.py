@@ -11,9 +11,10 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
-from corehq.apps.app_manager.models import Application, ReportModule, ATTACHMENT_REGEX
+from corehq.apps.app_manager.models import Application, ReportModule, ATTACHMENT_REGEX, enable_usercase_if_necessary
 
 from dimagi.utils.make_uuid import random_hex
+
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -154,6 +155,8 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
                 raise AppEditingError('Report map not passed to overwrite_app')
     if maintain_ids:
         wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
+    wrapped_app.copy_attachments(master_build)
+    enable_usercase_if_necessary(wrapped_app)
     wrapped_app.save(increment_version=False)
 
 

@@ -28,11 +28,8 @@ def all_sms_codes(domain):
 
     actions = dict((action.keyword, action) for action in config.actions)
     products = dict((p.code, p) for p in Product.by_domain(domain))
-    commands = {
-        config.multiaction_keyword: {'type': 'stock_report_generic', 'caption': 'Stock Report'},
-    }
 
-    sms_codes = zip(('action', 'product', 'command'), (actions, products, commands))
+    sms_codes = zip(('action', 'product'), (actions, products))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 
@@ -76,8 +73,6 @@ def _create_commtrack_config_if_needed(domain):
 
     CommtrackConfig(
         domain=domain,
-        multiaction_enabled=True,
-        multiaction_keyword='report',
         actions=[
             CommtrackActionConfig(
                 action='receipts',

@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-25 19:18+0000\n"
+"POT-Creation-Date: 2017-07-27 22:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2017\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -250,15 +250,15 @@ msgid "Home Screen"
 msgstr "Pantalla Principal"
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:122
-msgid "Module Menu"
-msgstr "Menú Módulo"
+msgid "First Menu"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:123
-msgid "Module: "
+msgid "Menu: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:125
-msgid "Parent Module: "
+msgid "Parent Menu: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:127
@@ -2059,12 +2059,12 @@ msgstr ""
 msgid "Form successfully saved"
 msgstr "Formulario guardado exitosamente"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:357
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:385
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:382
 msgid "Please wait..."
 msgstr ""
 
@@ -2112,34 +2112,32 @@ msgstr ""
 msgid "Confirm?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:68
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:74
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:32
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:38
 msgid "Sorry, an error occurred while processing that request."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:121
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:85
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:129
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:93
 msgid ""
 "Could not sync user data. Please try again and report a bug if issue "
 "persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:133
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:97
 msgid "User Data successfully synced."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:141
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:105
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:145
-#, fuzzy
-#| msgid "Report successfully emailed"
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:109
 msgid "User data successfully cleared."
-msgstr "Reporte enviado por correo electrónico exitosamente"
+msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs.async.js:29
 msgid ""
@@ -2870,16 +2868,4 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:133
 msgid "Unable to save DataSet maps"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "show"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "hide"
-msgstr ""
-
-#: submodules/formdesigner/_build/src/global-deps.js:3
-msgid "toggle"
 msgstr ""

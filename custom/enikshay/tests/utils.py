@@ -15,7 +15,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -237,6 +237,26 @@ def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
             CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
+def get_trail_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_TRAIL,
+            "create": True,
+            "update": extra_update,
+        },
+        # Prior to 2017-08-01, the parent is a person or referral case
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='parent',
+            relationship=CASE_INDEX_CHILD,
             related_type='occurrence',
         )],
         walk_related=False,

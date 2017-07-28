@@ -591,6 +591,9 @@ class SQLLocation(MPTTModel):
         except cls.DoesNotExist:
             return None
 
+    # For quick_find compatability
+    by_id = by_location_id
+
     def linked_supply_point(self):
         if not self.supply_point_id:
             return None

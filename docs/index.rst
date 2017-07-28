@@ -22,6 +22,7 @@ Welcome to CommCareHQ's documentation!
    pillows
    api
    maps
+   exports
    ui_helpers
    class_views
    testing

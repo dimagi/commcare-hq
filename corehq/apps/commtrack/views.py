@@ -196,7 +196,6 @@ class SMSSettingsView(BaseCommTrackManageView):
     @property
     def settings_context(self):
         return {
-            'keyword': self.domain_object.commtrack_settings.multiaction_keyword,
             'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.actions],
         }
 
@@ -216,8 +215,6 @@ class SMSSettingsView(BaseCommTrackManageView):
 
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
-
-        self.domain_object.commtrack_settings.multiaction_keyword = payload['keyword']
 
         def mk_action(action):
             return CommtrackActionConfig(**{

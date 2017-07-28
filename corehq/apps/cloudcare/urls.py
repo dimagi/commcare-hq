@@ -9,8 +9,8 @@ from corehq.apps.cloudcare.views import (
     PreviewAppView,
     LoginAsUsers,
     SingleAppLandingPageView,
-    form_context, get_cases, get_apps_api, get_app_api,
-    get_fixtures, get_ledgers, default,
+    form_context, get_cases,
+    get_fixtures, default,
 )
 
 app_urls = [
@@ -34,12 +34,9 @@ app_urls = [
 api_urls = [
     url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
     url(r'^cases/$', get_cases, name='cloudcare_get_cases'),
-    url(r'^apps/$', get_apps_api, name='cloudcare_get_apps'),
-    url(r'^apps/(?P<app_id>[\w-]*)/$', get_app_api, name='cloudcare_get_app'),
     url(r'^fixtures/(?P<user_id>[\w-]*)/$', get_fixtures, name='cloudcare_get_fixtures'),
     url(r'^fixtures/(?P<user_id>[\w-]*)/(?P<fixture_id>[:\w-]*)$', get_fixtures,
         name='cloudcare_get_fixtures'),
-    url(r'^ledgers/$', get_ledgers, name='cloudcare_get_ledgers'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
 ]
 

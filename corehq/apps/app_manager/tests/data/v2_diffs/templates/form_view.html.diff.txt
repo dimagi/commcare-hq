@@ -13,7 +13,7 @@
  
  {% block stylesheets %}{{ block.super }}
      <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
-@@ -55,7 +55,7 @@
+@@ -53,7 +53,7 @@
  
      <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
  
@@ -22,7 +22,7 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -66,6 +66,41 @@
+@@ -64,6 +64,41 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
          <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
      {% endif %}
@@ -64,7 +64,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -102,79 +137,21 @@
+@@ -100,79 +135,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -153,7 +153,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -182,35 +159,36 @@
+@@ -180,35 +157,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -207,7 +207,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -222,77 +200,72 @@
+@@ -220,75 +198,70 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -235,9 +235,6 @@
                              {% initial_page_data 'schedule_options' schedule_options %}
 -                            {% include 'app_manager/v1/partials/case_config_advanced.html' %}
 +                            {% include 'app_manager/v2/partials/case_config_advanced.html' %}
-                         {% elif module.doc_type == 'CareplanModule' %}
--                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
-+                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                          {% else %}
 -                            {% include 'app_manager/v1/partials/case_config.html' %}
 +                            {% include 'app_manager/v2/partials/case_config.html' %}
@@ -335,7 +332,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -301,14 +274,15 @@
+@@ -297,14 +270,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -353,7 +350,7 @@
              {% endif %}
          </div>
      </div>
-@@ -316,12 +290,13 @@
+@@ -312,12 +286,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

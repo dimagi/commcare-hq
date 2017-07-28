@@ -275,43 +275,6 @@ class CaseAPIMiscTests(TestCase):
         json = res_unsanitized.case_json
         self.assertEqual(json['properties']['case_type'], None)
 
-    def testGetCasesCaching(self):
-        _create_case(self.user, 'case_type_A', close=False, domain=self.domain)
-
-        self.client.login(username=self.user.username, password=self.password)
-        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
-            'ids_only': 'true',
-            'use_cache': 'true',
-        })
-        cases = json.loads(result.content)
-        self.assertEqual(result.status_code, 200)
-        self.assertEqual(len(cases), 1)
-
-        _create_case(self.user, 'case_type_A', close=False, domain=self.domain)
-
-        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
-            'ids_only': 'true',
-            'use_cache': 'true',
-        })
-        cases_cached = json.loads(result.content)
-        self.assertEqual(len(cases_cached), 1)
-
-        # Shouldn't cache when use_cache=false
-        result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
-            'ids_only': 'true',
-            'use_cache': 'false',
-        })
-        cases_not_cached = json.loads(result.content)
-        self.assertEqual(len(cases_not_cached), 2)
-
-        # shouldn't cache when requesting full cases
-        full_result = self.client.get(reverse('cloudcare_get_cases', args=[self.domain]), {
-            'ids_only': 'false',
-            'use_cache': 'true',
-        })
-        full_cases = json.loads(full_result.content)
-        self.assertEqual(len(full_cases), 2)
-
 
 def _child_case_type(type):
     return "%s-child" % type
