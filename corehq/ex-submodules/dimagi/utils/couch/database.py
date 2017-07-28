@@ -50,13 +50,6 @@ def get_design_docs(database):
         ret.append(DesignDoc(database, row["id"]))
     return ret
 
-def get_view_names(database):
-    design_docs = get_design_docs(database)
-    views = []
-    for doc in design_docs:
-        for view_name in doc.views:
-            views.append("%s/%s" % (doc.name, view_name))
-    return views
 
 def iter_docs(database, ids, chunksize=100, **query_params):
     for doc_ids in chunked(ids, chunksize):
