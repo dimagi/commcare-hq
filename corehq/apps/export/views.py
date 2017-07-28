@@ -788,8 +788,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         """
         try:
             download = self._get_download_task(in_data)
-        except ExportAsyncException:
-            return format_angular_error(_("There was an error."), log_error=True)
+        except ExportAsyncException as e:
+            return format_angular_error(e.message, log_error=True)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         return format_angular_success({
