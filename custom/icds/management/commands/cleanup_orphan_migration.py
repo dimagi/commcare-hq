@@ -9,7 +9,6 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 from dimagi.utils.chunked import chunked
 
-from corehq.util.log import with_progress_bar
 
 class Command(BaseCommand):
 
@@ -51,7 +50,6 @@ class Command(BaseCommand):
                 fh.write(case_id + '\n')
             fh.write('--------Logging Complete--------------\n')
             print('-------------COMPLETE--------------')
-
 
     def _get_cases(self):
         hh_cases = CommCareCaseSQL.objects.using(self.db).filter(domain=self.domain,

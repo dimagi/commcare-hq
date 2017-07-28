@@ -50,9 +50,9 @@ class Command(BaseCommand):
             print('-------------COMPLETE--------------')
 
     def _get_cases_to_process(self, domain):
-        # from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        # dbs = get_db_aliases_for_partitioned_query()
-        for db in ['p8', 'p9', 'p10']:
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
             cases = CommCareCaseSQL.objects.using(db).filter(domain=domain, type='household', closed=True)
             for case in cases:
                 yield case.case_id
@@ -60,6 +60,8 @@ class Command(BaseCommand):
     def _get_related_cases(self, cases):
         related_cases = {case.case_id for case in self.case_accessor.get_all_reverse_indices_info(list(cases))
                          if case.relationship == CommCareCaseIndexSQL.CHILD}
-        related_cases |= {case.case_id for case in self.case_accessor.get_all_reverse_indices_info(list(related_cases))
+        related_cases |= {case.case_id for case in
+                          self.case_accessor.get_all_reverse_indices_info(list(related_cases))
                          if case.relationship == CommCareCaseIndexSQL.CHILD}
         return related_cases
+
