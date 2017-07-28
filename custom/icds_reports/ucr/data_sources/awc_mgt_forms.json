@@ -45,6 +45,23 @@
         "column_id": "user_id"
       },
       {
+        "display_name": "",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "awc_selected_location_id"
+          ]
+        },
+        "column_id": "awc_id"
+      },
+      {
         "display_name": null,
         "datatype": "string",
         "expression": {
