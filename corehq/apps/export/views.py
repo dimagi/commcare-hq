@@ -918,6 +918,10 @@ class BulkDownloadFormExportView(DownloadFormExportView):
         filters &= SerializableFunction(instances)
         return filters
 
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        return False
+
 
 class DownloadCaseExportView(BaseDownloadExportView):
     """View to download a SINGLE Case Export with Filters
