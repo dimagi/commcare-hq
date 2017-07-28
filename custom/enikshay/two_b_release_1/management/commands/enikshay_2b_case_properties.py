@@ -170,7 +170,8 @@ class ENikshay2BMigrator(object):
 
             referrals_and_occurrences_to_person = {}
             type_to_bucket = {CASE_TYPE_OCCURRENCE: 'occurrences',
-                              CASE_TYPE_REFERRAL: 'referrals'}
+                              CASE_TYPE_REFERRAL: 'referrals',
+                              CASE_TYPE_TRAIL: 'trails'}
             for case in self.accessor.get_reverse_indexed_cases(
                     [person_id for person_id in all_persons]):
                 bucket = type_to_bucket.get(case.type, None)
@@ -178,7 +179,8 @@ class ENikshay2BMigrator(object):
                     for index in case.indices:
                         if index.referenced_id in all_persons:
                             getattr(all_persons[index.referenced_id], bucket).append(case)
-                            referrals_and_occurrences_to_person[case.case_id] = index.referenced_id
+                            if bucket != 'trails':
+                                referrals_and_occurrences_to_person[case.case_id] = index.referenced_id
                             break
 
             type_to_bucket = {CASE_TYPE_EPISODE: 'episodes',
