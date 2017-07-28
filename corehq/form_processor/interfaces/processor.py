@@ -37,11 +37,7 @@ class FormProcessorInterface(object):
     @memoized
     def sync_log_model(self):
         from casexml.apps.phone.models import SyncLog
-
-        if should_use_sql_backend(self.domain):
-            return SyncLog
-        else:
-            return SyncLog
+        return SyncLog
 
     @property
     @memoized
