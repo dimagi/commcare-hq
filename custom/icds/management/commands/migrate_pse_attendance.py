@@ -42,4 +42,4 @@ class Command(BaseCommand):
                 print('Migrating pse data')
                 cursor.execute(migration_query)
                 print('Vacuuming table')
-                cursor.execute("VACUUM ANALYZE {}".format(new_table))
+                cursor.execute('VACUUM ANALYZE "{}"'.format(new_table))
