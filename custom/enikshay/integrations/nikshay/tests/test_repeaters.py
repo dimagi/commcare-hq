@@ -13,7 +13,9 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
-    ENROLLED_IN_PRIVATE)
+    ENROLLED_IN_PRIVATE,
+    PERSON_CASE_2B_VERSION,
+)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
@@ -124,6 +126,32 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def _assert_case_property_equal(self, case, case_property, expected_value):
         self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
 
+    def set_up_to_use_2b_version(self):
+        update_case(self.domain, self.person_id, {
+            'case_version': PERSON_CASE_2B_VERSION,
+        })
+
+        update_case(self.domain, self.occurrence_id, {
+            'site_choice': 'pleural_effusion',
+            'disease_classification': 'extra_pulmonary',
+        })
+
+        update_case(self.domain, self.person_id, {
+            'occupation': 'engineer',
+        })
+
+        update_case(self.domain, self.episode_id, {
+            'occupation': '',
+            'site_choice': '',
+            'disease_classification': '',
+        })
+        update_case(self.domain, self.test_id, {
+            "rft_general": 'diagnosis_dstb',
+            "rft_dstb_followup": 'end_of_ip',
+            'purpose_of_testing': '',
+            'follow_up_test_reason': '',
+        })
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -229,6 +257,14 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['dotpType'], '5')
         self.assertEqual(payload['dotdesignation'], 'ngo_volunteer')
         self.assertEqual(payload['dateofInitiation'], '2015-03-03')
+
+        self.set_up_to_use_2b_version()
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['sitedetail'], 2)
+        self.assertEqual(payload['disease_classification'], 'EP')
+        self.assertEqual(payload['poccupation'], 4)
 
     def test_username_password(self):
         episode_case = self._create_nikshay_enabled_case()
@@ -729,6 +765,13 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         })
         self.assertFalse(check_repeat_record_added())
 
+        self.set_up_to_use_2b_version()
+        update_case(self.domain, self.test_id, {
+            "test_type_value": "microscopy-zn",
+            "date_reported": datetime.now(),
+        })
+        self.assertTrue(check_repeat_record_added())
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
@@ -779,6 +822,13 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload["DMC"], '123')
         self.assertEqual(payload["PatientID"], DUMMY_NIKSHAY_ID)
 
+        self.set_up_to_use_2b_version()
+        self.test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, self.test_case))
+        )
+        self.assertEqual(payload['IntervalId'], 0)
+
     def test_intervalId(self):
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
@@ -798,6 +848,27 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             },
             external_id=DUMMY_NIKSHAY_ID,
         )
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['IntervalId'], 4)
+
+        self.set_up_to_use_2b_version()
+        update_case(self.domain, self.test_id, {
+            "rft_general": "diagnostic",
+            "rft_dstb_followup": "not sure"
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['IntervalId'], 0)
+
+        update_case(self.domain, self.test_id, {
+            "rft_general": "testing",
+            "rft_dstb_followup": "end_of_cp"
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
@@ -855,6 +926,30 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                     },
                     external_id=DUMMY_NIKSHAY_ID,
                     )
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        self.set_up_to_use_2b_version()
+        update_case(self.domain, self.test_id, {
+            "rft_general": "testing",
+            "rft_dstb_followup": "unknown_reason"
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+
+        # raises error when purpose_of_testing is not diagnostic and test reason is not known to system
+        with self.assertRaisesMessage(NikshayRequiredValueMissing,
+                                      "Value missing for intervalID, purpose_of_testing: {testing_purpose}, "
+                                      "follow_up_test_reason: {follow_up_test_reason}".format(
+                                          testing_purpose="testing",
+                                          follow_up_test_reason="unknown_reason"
+                                      )):
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        # does not raise error with purpose_of_testing being diagnostic since test reason is not relevant
+        update_case(self.domain, self.test_id, {
+            "rft_general": "diagnostic",
+            "rft_dstb_followup": "unknown_reason"
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
