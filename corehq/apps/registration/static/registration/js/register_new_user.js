@@ -1,3 +1,4 @@
+/* globals Blazy */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
 
