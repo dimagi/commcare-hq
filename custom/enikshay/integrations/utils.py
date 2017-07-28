@@ -8,7 +8,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_voucher)
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from custom.enikshay.const import (
-    NEW_2B_APP_PERSON_CASE_VERSION,
+    PERSON_CASE_2B_VERSION,
     REAL_DATASET_PROPERTY_VALUE,
 )
 
@@ -33,7 +33,7 @@ def _is_submission_from_test_location(case_id, owner_id):
 def is_valid_person_submission(person_case):
     if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
         return False
-    if person_case.dynamic_case_properties().get('case_version') == NEW_2B_APP_PERSON_CASE_VERSION:
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
@@ -43,7 +43,7 @@ def is_valid_episode_submission(episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case)
     except ENikshayCaseNotFound:
         return False
-    if person_case.dynamic_case_properties().get('case_version') == NEW_2B_APP_PERSON_CASE_VERSION:
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
@@ -82,7 +82,7 @@ def is_valid_archived_submission(episode_case):
     if owner_id == ARCHIVED_CASE_OWNER_ID:
         owner_id = person_case.dynamic_case_properties().get('last_owner', None)
 
-    if person_case.dynamic_case_properties().get('case_version') == NEW_2B_APP_PERSON_CASE_VERSION:
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, owner_id)
 
