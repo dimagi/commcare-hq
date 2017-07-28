@@ -7,7 +7,7 @@
     "server_environment": [
         "softlayer"
     ],
-    "data_source_table": "test",
+    "data_source_table": "test_drtb",
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
@@ -52,8 +52,11 @@
             {
                 "compare_as_string": false,
                 "datatype": "string",
-                "type": "dynamic_choice_list",
-                "slug": "village",
+                "fields": [
+                    "person_owner_id",
+                    "testing_facility_id"
+                ],
+                "display": "Location",
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
@@ -61,7 +64,8 @@
                     "order_by_hierarchy": true,
                     "show_full_path": true
                 },
-                "display": "Location"
+                "type": "multi_field_dynamic_choice_list",
+                "slug": "village"
             }
         ],
         "columns": [
@@ -71,10 +75,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "test_type_value",
+                "field": "lab_serial_number",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Test Type"
+                "display": "Lab Serial Number"
             },
             {
                 "sortable": false,
@@ -91,12 +95,22 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "other_dst": "Other",
+                        "dst": "DST",
+                        "sl_line_probe_assay": "SL LPA",
+                        "culture": "Culture",
+                        "fl_line_probe_assay": "FL LPA",
+                        "cbnaat": "CBNAAT"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
-                "field": "lab_serial_number",
+                "field": "test_type_value",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Lab Serial Number"
+                "display": "Test Type"
             },
             {
                 "sortable": false,
@@ -137,7 +151,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "person_age",
+                "field": "age_entered",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Age"
@@ -157,7 +171,20 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "refugee": "Refugee",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "other": "Other",
+                        "health_care_worker": "Health Care Worker",
+                        "tribal_population": "Tribal Population",
+                        "slum_dweller": "Slum Dweller",
+                        "prison_inmate": "Prison Inmate"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "key_populations_from_occurrence",
                 "calculate_total": false,
@@ -179,7 +206,16 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "new": "New",
+                        "recurrent": "Recurrent",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Lost to Follow Up",
+                        "other_previously_treated": "Other Previously Treated "
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "patient_type",
                 "calculate_total": false,
@@ -190,7 +226,15 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "follow_up_drtb": "Follow up of DRTB",
+                        "follow_up_dstb": "Follow Up of DSTB",
+                        "diagnosis_drtb": "Diagnosis of DRTB",
+                        "diagnosis_dstb": "Diagnosis of DSTB"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "rft_general",
                 "calculate_total": false,
@@ -201,7 +245,39 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "extended_dst discordance_resolution": "Extended DST, Discordance Resolution",
+                        "new_drug_mdr_rr_fq_sli": "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance",
+                        "repeat_exam_for_diagnosis": "Repeat examination for diagnosis",
+                        "private_referral": "Private Referral",
+                        "new_mixed_pattern": "Regimen with New Drug for mixed pattern resistance",
+                        "mdr_at_diagnosis": "At Diagnosis",
+                        "extended_dst mdr_rr_diagnosis": "Extended DST, MDR/RR at Diagnosis",
+                        "mdr_at_diagnosis, contact_of_mdr_rr": "At Diagnosis, Contact of MDR/RR TB ",
+                        "new_xdr": "Regimen with New Drug for XDR-TB",
+                        "mixed_pattern": "Modified Regimen for mixed pattern resistance",
+                        "short_regimen": "Shorter Regimen",
+                        "extended_dst 3_monthly_culture_positives": "Extended DST, 3 Monthly, for persistent culture positive",
+                        "presumptive_ntm": "Presumptive NTM",
+                        "contact_of_mdr_rr": "Contact of MDR/RR TB",
+                        "extended_dst mdr_rr_failure": "Extended DST, Failure of MDR/RR-TB Regimen, extended_dst, \u00ac\u00acculture_reversion",
+                        "new_fail_mdr": "Regimen with New Drug for failures of regimen for MDR TB",
+                        "mdr_rr_fq_sli": "Modified Regimen for MDR/RR-TB + FQ /SLI resistance",
+                        "follow_up_sm_ve_ip": "Follow up Sm+ve at end IP",
+                        "extended_dst 4mo_culture_positive": "Extended DST, More than 4 months Culture Positive",
+                        "xdr": "Regimen for XDR TB",
+                        "presumptive_tb": "Presumptive TB",
+                        "inh_poly_mono": "Regimen for INH mono/poly resistant TB",
+                        "end_of_ip": "End of I.P.",
+                        "discordance_resolution": "Discordance Resolution",
+                        "mdr_rr": "Regimen for MDR/RR TB",
+                        "extended_dst recurrent_second_line_treatment": "Extended DST, Recurrent case of second line treatment",
+                        "end_of_cp": "End of C.P.",
+                        "new_fail_xdr": "Regimen with New Drug for failures of regimen for XDR-TB"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "criteria_for_testing",
                 "calculate_total": false,
@@ -267,7 +343,12 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "sputum": "Sputum"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "specimen_type_from_case",
                 "calculate_total": false,
@@ -278,21 +359,19 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "saliva": "Saliva",
+                        "blood_stained": "Blood Stained",
+                        "mucupurulent": "Mucopurulent"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "sputum_visual_appearance",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Sputum Specimen Condition"
-            },
-            {
-                "type": "expression",
-                "expression": {
-                    "type": "constant",
-                    "constant": ""
-                },
-                "display": "eNikshay Specimen Condition",
-                "column_id": "enikshay_specimen_condition"
             },
             {
                 "sortable": false,
@@ -320,7 +399,13 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "tb_detected": "TB Detected",
+                        "tb_not_detected": "TB Not Detected"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "result",
                 "calculate_total": false,
