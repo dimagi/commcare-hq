@@ -406,18 +406,8 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
+        {% registerurl 'notifications_service' %}
         <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                var notifications = hqImport('notifications/js/notifications_service.js');
-                var csrfToken = $("#csrfTokenContainer").val();
-                notifications.setRMI('{% url 'notifications_service' %}', csrfToken);
-                notifications.initService('#js-settingsmenu-notifications');
-                notifications.initUINotify('.alert-ui-notify');
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% include "style/includes/ko.html" %}
@@ -496,18 +486,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2 or request.use_select2_v4 %}
-        {% addtoblock js-inline %}
-        <script>
-            $(function() {
-                _.each($(".ko-select2"), function(element) {
-                    $(element).select2();
-                });
-            });
-        </script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_nvd3 %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
@@ -583,14 +561,6 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                $.timeago.settings.allowFuture = true;
-                $(".timeago").timeago();
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
@@ -599,20 +569,6 @@
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'style/js/multiselect_utils.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_blazy %}
-        {# Blazy for async loading images #}
-        {% compress js %}
-            <script src="{% static 'blazy/blazy.js' %}"></script>
-        {% endcompress %}
-        {% addtoblock js-inline %}
-        <script>
-          var hqLazy = new Blazy({
-            container: 'body',
-          });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_ko_validation %}
