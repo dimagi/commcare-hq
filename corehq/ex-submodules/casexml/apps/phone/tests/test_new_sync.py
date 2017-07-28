@@ -4,7 +4,8 @@ from django.test import TestCase, SimpleTestCase
 from jsonobject import JsonObject
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from casexml.apps.phone.const import CLEAN_OWNERS, LIVEQUERY
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, RestoreException
 from casexml.apps.phone.models import (
     CaseState,
     LOG_FORMAT_LEGACY,
@@ -14,7 +15,11 @@ from casexml.apps.phone.models import (
     SyncLog,
 )
 from casexml.apps.phone.restore import RestoreConfig
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload, create_restore_user
+from casexml.apps.phone.tests.utils import (
+    create_restore_user,
+    MockDevice,
+    synclog_from_restore_payload,
+)
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -140,6 +145,30 @@ class TestSyncLogMigration(SimpleTestCase):
         sync_log = SimplifiedSyncLog(log_format=LOG_FORMAT_LIVEQUERY)
         with self.assertRaises(IncompatibleSyncLogType):
             SimplifiedSyncLog.from_other_format(sync_log)
+
+
+class TestLiveQuery(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestLiveQuery, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+        cls.user = create_restore_user(
+            cls.domain,
+            username=uuid.uuid4().hex,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super(TestLiveQuery, cls).tearDownClass()
+
+    def test_clean_owners_after_livequery(self):
+        device = MockDevice(self.project, self.user, {"case_sync": LIVEQUERY})
+        with self.assertRaises(RestoreException):
+            device.sync(case_sync=CLEAN_OWNERS)
 
 
 class TestNewSyncSpecifics(TestCase):

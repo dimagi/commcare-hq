@@ -477,11 +477,15 @@ class RestoreState(object):
                 case_sync = DEFAULT_CASE_SYNC
         if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
             raise ValueError("unknown case sync algorithm: %s" % case_sync)
+        self._case_sync = case_sync
         self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
+            if (self._case_sync == CLEAN_OWNERS and
+                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
+                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
