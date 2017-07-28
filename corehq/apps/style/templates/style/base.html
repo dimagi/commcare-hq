@@ -571,20 +571,6 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_blazy %}
-        {# Blazy for async loading images #}
-        {% compress js %}
-            <script src="{% static 'blazy/blazy.js' %}"></script>
-        {% endcompress %}
-        {% addtoblock js-inline %}
-        <script>
-          var hqLazy = new Blazy({
-            container: 'body',
-          });
-        </script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_ko_validation %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
           <script src="{% static 'style/js/validators.ko.js' %}"></script>

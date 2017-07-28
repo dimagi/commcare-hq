@@ -86,6 +86,13 @@ $(function () {
         });
     }
 
+    // Blazy for loading images asynchronously
+    // Usage: specify the b-lazy class on an element and adding the path
+    // to the image in data-src="{% static 'path/to/image.jpg' %}"
+    var hqLazy = new Blazy({
+        container: 'body',
+    });
+
     // A/B test setup
     var ab_test = hqImport('hqwebapp/js/initial_page_data.js').get('ab_test');
     if (ab_test) {

@@ -32,7 +32,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_blazy, use_jquery_ui, \
+from corehq.apps.style.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from django.contrib.auth.models import User
@@ -168,7 +168,6 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
-    @use_blazy
     @use_jquery_ui
     @use_ko_validation
     @method_decorator(transaction.atomic)
