@@ -1,4 +1,3 @@
-/* globals alert_user */
 hqDefine('app_manager/js/case_config_utils.js', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
@@ -61,8 +60,8 @@ hqDefine('app_manager/js/case_config_utils.js', function () {
                 error: function(e) {
                     $el.removeClass('btn-success').addClass('btn-danger');
                     $el.find('i').removeClass('fa-spin');
-                    alert_user("Something went wrong refreshing your form properties. "
-                               + "Please refresh the page and try again", "danger");
+                    hqImport("style/js/alert_user.js").alert_user(gettext("Something went wrong refreshing "
+                               + "your form properties. Please refresh the page and try again", "danger"));
                 },
             });
         },

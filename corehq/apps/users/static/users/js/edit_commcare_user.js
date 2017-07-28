@@ -33,6 +33,7 @@ hqDefine('users/js/edit_commcare_user.js', function () {
                 expires: 1});
     });
 
+    var alert_user = hqImport("style/js/alert_user.js").alert_user;
     $('#reset-password-form').submit(function(){
         $(this).ajaxSubmit({
             url: $(this).attr('action'),
