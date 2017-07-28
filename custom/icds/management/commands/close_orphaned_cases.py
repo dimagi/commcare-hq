@@ -64,4 +64,3 @@ class Command(BaseCommand):
                           self.case_accessor.get_all_reverse_indices_info(list(related_cases))
                          if case.relationship == CommCareCaseIndexSQL.CHILD}
         return related_cases
-
