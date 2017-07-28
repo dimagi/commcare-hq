@@ -120,6 +120,7 @@ def split_path(path):
 
 def save_xform(app, form, xml):
     from corehq.apps.app_manager.models import ShadowForm
+
     def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render()
         data = data.replace(old_xmlns, new_xmlns, 1)
@@ -136,7 +137,7 @@ def save_xform(app, form, xml):
             GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
             xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
             tag_xmlns = xform.data_node.tag_xmlns
-            if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  #no xmlns
+            if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
                 xml = change_xmlns(xform, GENERIC_XMLNS, xmlns)
             elif tag_xmlns != xmlns:
                 xml = change_xmlns(xform, tag_xmlns, xmlns)
