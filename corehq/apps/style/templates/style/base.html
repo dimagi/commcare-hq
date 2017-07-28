@@ -406,18 +406,8 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
+        {% registerurl 'notifications_service' %}
         <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                var notifications = hqImport('notifications/js/notifications_service.js');
-                var csrfToken = $("#csrfTokenContainer").val();
-                notifications.setRMI('{% url 'notifications_service' %}', csrfToken);
-                notifications.initService('#js-settingsmenu-notifications');
-                notifications.initUINotify('.alert-ui-notify');
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% include "style/includes/ko.html" %}
