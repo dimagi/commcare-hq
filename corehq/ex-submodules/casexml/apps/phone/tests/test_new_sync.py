@@ -5,8 +5,14 @@ from jsonobject import JsonObject
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
-from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LEGACY, \
-    CaseState
+from casexml.apps.phone.models import (
+    CaseState,
+    LOG_FORMAT_LEGACY,
+    LOG_FORMAT_LIVEQUERY,
+    LOG_FORMAT_SIMPLIFIED,
+    SimplifiedSyncLog,
+    SyncLog,
+)
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload, create_restore_user
 from corehq.apps.domain.models import Domain
@@ -124,6 +130,16 @@ class TestSyncLogMigration(SimpleTestCase):
     def test_migrate_backwards(self):
         with self.assertRaises(IncompatibleSyncLogType):
             SyncLog.from_other_format(SimplifiedSyncLog())
+
+    def test_livequery_to_legacy(self):
+        sync_log = SimplifiedSyncLog(log_format=LOG_FORMAT_LIVEQUERY)
+        with self.assertRaises(IncompatibleSyncLogType):
+            SyncLog.from_other_format(sync_log)
+
+    def test_livequery_to_simplified(self):
+        sync_log = SimplifiedSyncLog(log_format=LOG_FORMAT_LIVEQUERY)
+        with self.assertRaises(IncompatibleSyncLogType):
+            SimplifiedSyncLog.from_other_format(sync_log)
 
 
 class TestNewSyncSpecifics(TestCase):

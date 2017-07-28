@@ -24,10 +24,11 @@ from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
-    SyncLog,
     get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
+    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -599,6 +600,8 @@ class RestoreState(object):
             previous_log_rev=previous_log_rev,
             extensions_checked=True,
         )
+        if self.is_livequery:
+            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
     @property

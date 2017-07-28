@@ -31,8 +31,14 @@ from casexml.apps.case.tests.util import (
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases,
     check_payload_has_case_ids, assert_user_doesnt_have_cases)
 from casexml.apps.phone.tests.utils import create_restore_user, has_cached_payload
-from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
-    AbstractSyncLog
+from casexml.apps.phone.models import (
+    AbstractSyncLog,
+    get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
+    LOG_FORMAT_SIMPLIFIED,
+    SimplifiedSyncLog,
+    SyncLog,
+)
 from casexml.apps.phone.restore import (
     CachedResponse,
     CLEAN_OWNERS,
@@ -144,7 +150,10 @@ class SyncBaseTest(TestCase):
             all_ids.update(dependent_case_id_map)
             self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
             # livequery sync does not use or populate sync_log.index_tree
-            if self.restore_options['case_sync'] != LIVEQUERY:
+            if self.restore_options['case_sync'] == LIVEQUERY:
+                self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
+            else:
+                self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
                 self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
                 for case_id, indices in case_id_map.items():
                     if indices:
