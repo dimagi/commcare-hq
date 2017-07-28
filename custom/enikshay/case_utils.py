@@ -330,7 +330,7 @@ def _get_private_locations(person_case):
         )
 
     try:
-        tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id']
+        tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
     except KeyError:
         tu_location_nikshay_code = None
 
