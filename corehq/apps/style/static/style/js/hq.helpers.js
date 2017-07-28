@@ -38,6 +38,11 @@ $(function() {
             $(element).select2();
         });
     });
+
+    if ($.timeago) {
+        $.timeago.settings.allowFuture = true;
+        $(".timeago").timeago();
+    }
 });
 
 window.onerror = function(message, file, line, col, error) {

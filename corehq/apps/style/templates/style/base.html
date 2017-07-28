@@ -561,14 +561,6 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                $.timeago.settings.allowFuture = true;
-                $(".timeago").timeago();
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
