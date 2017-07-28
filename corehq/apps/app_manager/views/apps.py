@@ -123,8 +123,13 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    lang = 'en'
-    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+
+    if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
+        template = load_app_template("case_management")
+        app = import_app_util(template, domain)
+    else:
+        lang = 'en'
+        app = Application.new_app(domain, _("Untitled Application"), lang=lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
