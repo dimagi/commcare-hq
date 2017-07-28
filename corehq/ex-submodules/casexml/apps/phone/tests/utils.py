@@ -214,8 +214,7 @@ class MockDevice(object):
         for name, value in self.restore_options.items():
             config.setdefault(name, value)
         config.setdefault('version', V2)
-        assert 'restore_id' not in config, "illegal parameter: restore_id"
-        if self.last_sync is not None:
+        if self.last_sync is not None and 'restore_id' not in config:
             config['restore_id'] = self.last_sync.log._id
         restore_config = get_restore_config(self.project, self.user, **config)
         payload = restore_config.get_payload().as_string()
@@ -230,13 +229,13 @@ class SyncResult(object):
         self.xml = ElementTree.fromstring(payload)
         self.log = log
 
-    def _cases(self):
-        # TODO make into memoized property named "cases", but only after
-        # populating more case fields in CaseBlock.from_xml()
-        return [CaseBlock.from_xml(case)
-            for case in self.xml.findall("{%s}case" % V2_NAMESPACE)]
+    @property
+    @memoized
+    def cases(self):
+        return {case.case_id: case for case in (CaseBlock.from_xml(node)
+                for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
 
     @property
     @memoized
     def case_ids(self):
-        return {case.case_id for case in self._cases()}
+        return set(self.cases)

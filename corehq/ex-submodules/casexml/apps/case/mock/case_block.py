@@ -3,7 +3,7 @@ from datetime import datetime, date
 import numbers
 from xml.etree import ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
-from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
 
@@ -118,8 +118,27 @@ class CaseBlock(object):
 
     @classmethod
     def from_xml(cls, case):
-        # TODO add more fields, esp. indices to returned case
-        return cls(case_id=case.get("case_id"))
+
+        def index_tuple(node):
+            attrs = IndexAttrs(
+                node.get("case_type"),
+                node.text,
+                node.get("relationship") or 'child',
+            )
+            tag = node.tag
+            if tag.startswith(NS):
+                tag = tag.replace(NS, '')
+            return tag, attrs
+
+        NS = "{%s}" % V2_NAMESPACE
+        return cls(
+            case_id=case.get("case_id"),
+            date_modified=string_to_datetime(case.get("date_modified")),
+            user_id=case.get("user_id"),
+            # create=...,
+            # update=...,
+            index=dict(index_tuple(x) for x in case.find(NS + "index") or []),
+        )
 
     def as_string(self):
         return ElementTree.tostring(self.as_xml())

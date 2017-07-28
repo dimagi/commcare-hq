@@ -2329,7 +2329,7 @@ class IndexSyncTest(SyncBaseTest):
         other_parent_id = "sky"
         branch_index = 'stem_index'
         wave_index = 'wave_index'
-        self.factory.create_or_update_case(CaseStructure(
+        self.device.change_cases(CaseStructure(
             case_id=child_id,
             attrs={'create': True},
             indices=[CaseIndex(
@@ -2347,16 +2347,10 @@ class IndexSyncTest(SyncBaseTest):
                 identifier=wave_index,
             )],
         ))
-        payload = generate_restore_payload(
-            self.project, self.user, version=V2, **self.restore_options)
-        check_payload_has_case_ids(
-            self,
-            payload_string=payload,
-            username=self.user.username,
-            case_ids=[child_id, parent_id, other_parent_id]
-        )
-        self.assertIn(branch_index, payload)  # HACK
-        self.assertIn(wave_index, payload)  # HACK
+        sync = self.device.sync(restore_id='')
+        self.assertEqual(sync.case_ids, {child_id, parent_id, other_parent_id})
+        self.assertIn(branch_index, sync.cases[child_id].index)
+        self.assertIn(wave_index, sync.cases[child_id].index)
 
 
 @use_sql_backend
