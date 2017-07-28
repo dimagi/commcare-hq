@@ -410,14 +410,14 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return json_response({'status': 'conflict', 'xform': current_xml})
 
     dmp = diff_match_patch()
-    xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    save_xform(app, form, xform)
+    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = save_xform(app, form, xml)
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
