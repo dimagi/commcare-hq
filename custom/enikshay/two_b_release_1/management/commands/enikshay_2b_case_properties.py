@@ -337,7 +337,7 @@ class ENikshay2BMigrator(object):
         return max(episodes)[1] if episodes else None
 
     def migrate_episode(self, episode, episodes):
-        self.total_episodes += 0
+        self.total_episodes += 1
 
         latest_episode_id = self._get_last_episode_id(episode.indices, episodes)
         test_type = episode.get_case_property('test_confirming_diagnosis')
