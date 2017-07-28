@@ -183,6 +183,7 @@ class TestCreateEnikshayCases(TestCase):
             'dto_name': 'DTO',
             'dto_id': self.locations['DTO'].location_id,
             'dataset': 'real',
+            'updated_by_migration': 'enikshay_2b_case_properties',
         }, new_person.dynamic_case_properties())
 
         new_occurrence = accessor.get_case(person.occurrences[0].case_id)
