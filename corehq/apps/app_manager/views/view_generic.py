@@ -46,7 +46,7 @@ from django_prbac.utils import has_privilege
 
 
 @retry_resource(3)
-def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
+def view_generic(request, domain, app_id, module_id=None, form_id=None,
                  copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
@@ -57,8 +57,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     app = module = form = None
     try:
-        if app_id:
-            app = get_app(domain, app_id)
+        app = get_app(domain, app_id)
         if module_id:
             try:
                 module = app.get_module(module_id)
