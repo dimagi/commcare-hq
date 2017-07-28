@@ -24,12 +24,6 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
-    CT_REQUISITION_MODE_3,
-    CT_LEDGER_STOCK,
-    CT_LEDGER_REQUESTED,
-    CT_REQUISITION_MODE_4,
-    CT_LEDGER_APPROVED,
-    CT_LEDGER_PREFIX,
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
@@ -318,16 +312,6 @@ def languages_mapping():
     return mapping
 
 
-def commtrack_ledger_sections(mode):
-    sections = [CT_LEDGER_STOCK]
-    if mode == CT_REQUISITION_MODE_3:
-        sections += [CT_LEDGER_REQUESTED]
-    elif mode == CT_REQUISITION_MODE_4:
-        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
-
-    return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
-
-
 def version_key(ver):
     """
     A key function that takes a version and returns a numeric value that can
@@ -529,13 +513,14 @@ def get_app_manager_template(user, v1, v2):
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
-        return v2
-    return v1
+    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
+        return v1
+    return v2
 
 
-def get_form_data(domain, app):
+def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+    from corehq.apps.app_manager.models import ShadowForm
 
     modules = []
     errors = []
@@ -549,7 +534,10 @@ def get_form_data(domain, app):
             'is_surveys': module.is_surveys,
         }
 
-        for form in module.get_forms():
+        form_list = module.get_forms()
+        if not include_shadow_forms:
+            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
+        for form in form_list:
             form_meta = {
                 'id': form.unique_id,
                 'name': form.name,

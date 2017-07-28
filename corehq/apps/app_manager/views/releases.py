@@ -28,6 +28,7 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -128,7 +129,7 @@ def get_releases_context(request, domain, app_id):
         'latest_build_id': get_latest_build_id(domain, app_id),
     })
     if not app.is_remote_app():
-        if toggles.APP_MANAGER_V2.enabled(request.user.username) and len(app.modules) == 0:
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username) and len(app.modules) == 0:
             context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
@@ -142,6 +143,7 @@ def get_releases_context(request, domain, app_id):
 
 
 @login_and_domain_required
+@location_safe
 def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release

@@ -356,7 +356,7 @@ TREETABLE_INDENT_PX = 19
 def process_case_hierarchy(case_output, get_case_url, type_info):
     current_case = case_output['case']
     submit_url_root = reverse('receiver_post', args=[current_case.domain])
-    form_url_root = reverse('cloudcare_main', args=[current_case.domain, ''])
+    form_url_root = reverse('formplayer_main', args=[current_case.domain])
 
     def process_output(case_output, depth=0):
         for c in case_output['child_cases']:

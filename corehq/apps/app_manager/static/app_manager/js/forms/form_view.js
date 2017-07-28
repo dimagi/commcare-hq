@@ -64,7 +64,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
         setupValidation(hqImport("hqwebapp/js/urllib.js").reverse("validate_form_for_build"));
 
         // CloudCare "Preview Form" URL
-        if (initial_page_data('allow_cloudcare') && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (initial_page_data('allow_cloudcare') && COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
@@ -96,12 +96,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
                 app_id = initial_page_data('app_id'),
                 module_id = initial_page_data('module_id'),
                 form_id = initial_page_data('form_id');
-            var cloudCareUrl = "";
-            if (!COMMCAREHQ.toggleEnabled('USE_OLD_CLOUDCARE')) {
-                cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
-            } else {
-                cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
-            }
+            var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function() {

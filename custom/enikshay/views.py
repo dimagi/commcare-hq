@@ -8,7 +8,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from .exceptions import EnikshayTaskException
-from .tasks import EpisodeAdherenceUpdate, EpisodeUpdater
+from .tasks import EpisodeAdherenceUpdate
 
 
 class EpisodeTaskDebugView(View):
@@ -22,6 +22,6 @@ class EpisodeTaskDebugView(View):
     def get(self, request, domain, episode_id, *args, **kwargs):
         try:
             episode = CaseAccessors(domain).get_case(episode_id)
-            return JsonResponse(EpisodeAdherenceUpdate(episode, EpisodeUpdater(domain)).update_json())
+            return JsonResponse(EpisodeAdherenceUpdate(domain, episode).update_json())
         except EnikshayTaskException, e:
             return HttpResponse(e)

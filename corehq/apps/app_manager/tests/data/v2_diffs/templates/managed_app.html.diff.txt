@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -8,11 +8,14 @@
+@@ -8,10 +8,14 @@
  
  {% block js %}
      {{ block.super }}
@@ -16,12 +16,12 @@
      <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
      <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
++    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 +    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -26,291 +29,188 @@
+@@ -25,281 +29,170 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -57,7 +57,14 @@
 +                <span class="variable-app_name appname-text">{{ app.name }}</span>
              </a>
 -        </li>
--
++          </h2>
++          <div id="js-publish-status"
++               class="appnav-name-publish"
++               style="display: none;">
++            {% trans "Updates Available to Publish" %}
++          </div>
++      </div>
+ 
 -        {% if show_live_preview and can_preview_form %}
 -        <li>
 -          <a class="js-preview-toggle">
@@ -66,7 +73,21 @@
 -              <span class="js-preview-action-hide hide">{% trans "Hide App Preview" %}</span>
 -          </a>
 -        </li>
--        {% endif %}
++      {% if app.get_doc_type == 'Application' %}
++        {% if not app.is_remote_app and app.langs|length > 1%}
++            <div id="langs" class="appnav-language-select">
++                <label for="app-language-select-nav">{% trans "Language" %}</label>
++                <select name="lang" class="form-control input-sm">
++                    {% for lang in app.langs %}
++                        <option value="{{ lang }}"
++                                {% if lang == langs.0 %}selected=""{% endif %}>
++                            {% if lang == app.langs.0 %}*{% endif %}
++                            {{ lang }}
++                        </option>
++                    {% endfor %}
++                </select>
++          </div>
+         {% endif %}
 -        <li class="divider"></li>
 -        <li {% if not module and not form and not release_manager %}class="app-name-div
 -                {% if not copy_app_form or not copy_app_form.is_bound %}active{% endif %}"
@@ -107,16 +128,10 @@
 -            {% endif %}
 -        </li>
 -        {% endif %}
--        <li class="rollout-toggle-label">
+-        <li>
 -            <a href="{% url "app_summary" domain app.id %}">
 -                <i class="fa fa-list"></i>
 -                {% trans "App Summary" %}
--            </a>
--        </li>
--        <li>
--            <a href="#" data-toggle="modal" data-target="#rollout-modal">
--                <i class="fa fa-bell-o"></i>
--                {% trans "New App Builder" %}
 -            </a>
 -        </li>
 -        <li class="divider"></li>
@@ -142,7 +157,7 @@
 -                            {% elif module.module_type == 'report' %}class="fa fa-bar-chart appmanager-icon-type"
 -                            {% elif module.module_type == 'shadow' %}class="fa fa-folder-open-o appmanager-icon-type"
 -                            {% else %}class="fa fa-folder-open"{% endif %}
--
+ 
 -                            {% if module.case_type and app.get_case_types|length > 1 %}
 -                            title="Case Type: {{ module.case_type }}"
 -                            data-toggle="tooltip"
@@ -313,48 +328,6 @@
 -    </ul>
 -</nav>
 -{% endif %}
-+          </h2>
-+          <div id="js-publish-status"
-+               class="appnav-name-publish"
-+               style="display: none;">
-+            {% trans "Updates Available to Publish" %}
-+          </div>
-+      </div>
-+
-+      {% if app.get_doc_type == 'Application' %}
-+        {% if not app.is_remote_app and app.langs|length > 1%}
-+            <div id="langs" class="appnav-language-select">
-+                <label for="app-language-select-nav">{% trans "Language" %}</label>
-+                <select name="lang" class="form-control input-sm">
-+                    {% for lang in app.langs %}
-+                        <option value="{{ lang }}"
-+                                {% if lang == langs.0 %}selected=""{% endif %}>
-+                            {% if lang == app.langs.0 %}*{% endif %}
-+                            {{ lang }}
-+                        </option>
-+                    {% endfor %}
-+                </select>
-+          </div>
-+        {% endif %}
-+
-+        {% if allow_v2_opt_out %}
-+          <div class="appnav-toggle-label">
-+              <div class="btn-group pull-right">
-+                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+                <button type="button"
-+                        class="btn btn-xs btn-default"
-+                        data-toggle="modal"
-+                        data-target="#rollout-revert-modal"
-+                        data-redirect="{% url "view_app" domain app.id %}"
-+                >{% trans "Off" %}</button>
-+              </div>
-+              {% trans "New App Builder" %}
-+              <span class="hq-help-template"
-+                    data-title="New App Builder"
-+                    data-content="{% trans "Turn off new app builder for now." %}"></span>
-+          </div>
-+        {% endif %}
-+
 +        {% include 'app_manager/v2/partials/appnav_menu.html' %}
 +      {% endif %}
 +    </nav>
@@ -478,9 +451,7 @@
 +      </div>
 +    </script>
  {% endblock %}
- 
- {% block modals %}{{ block.super }}
--    {% include "hqwebapp/rollout_modal.html" %}
--{% endblock %}
++
++{% block modals %}{{ block.super }}
 +    {% include "hqwebapp/rollout_revert_modal.html" %}
 +{% endblock %}

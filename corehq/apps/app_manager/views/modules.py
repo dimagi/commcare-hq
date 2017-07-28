@@ -33,7 +33,6 @@ from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
     prefix_usercase_properties,
-    commtrack_ledger_sections,
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
@@ -396,7 +395,7 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
                 'detail_label': gettext_lazy('Product Detail'),
                 'type': 'product',
                 'model': 'product',
-                'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                'properties': ['name'],
                 'sort_elements': module.product_details.short.sort_elements,
                 'short': module.product_details.short,
                 'subcase_types': subcase_types,
@@ -965,7 +964,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -975,7 +974,9 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
+            app.new_form(module_id, "Untitled Form", lang)
+        else:
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, _("Register"), lang)
@@ -997,8 +998,6 @@ def new_module(request, domain, app_id):
             else:
                 app.new_form(module_id, _("Survey"), lang)
             form_id = 0
-        else:
-            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,

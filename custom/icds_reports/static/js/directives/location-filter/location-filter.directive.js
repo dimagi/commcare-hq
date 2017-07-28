@@ -46,7 +46,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
         }
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -65,6 +65,23 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
         $uibModalInstance.close(vm.selectedLocations);
+    };
+
+    vm.reset = function() {
+        if (userLocationId !== null) {
+            var i = -1;
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id === userLocationId) {
+                    i = value;
+                }
+            });
+            vm.selectedLocations = vm.selectedLocations.slice(0, i + 1);
+            vm.selectedLocations.push(ALL_OPTION);
+            vm.selectedLocationId = userLocationId;
+        } else {
+            vm.selectedLocations = [ALL_OPTION];
+            vm.selectedLocationId = null;
+        }
     };
 
     vm.close = function () {
@@ -91,6 +108,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     vm.hierarchy = [];
     vm.currentLevel = 0;
     vm.maxLevel = 0;
+    vm.location_id = $location.search()['location_id'] || vm.selectedLocationId;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
 
@@ -211,8 +229,8 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             controller: LocationModalController,
             controllerAs: '$ctrl',
             resolve: {
-                location: function () {
-                    return vm.location;
+                location_id: function () {
+                    return vm.location_id;
                 },
                 selectedLocationId: function () {
                     return vm.selectedLocationId;
@@ -240,7 +258,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
             if (selectedLocationIndex() >= 0) {
                 vm.selectedLocationId = vm.selectedLocation.location_id;
-                vm.location = vm.selectedLocationId;
+                vm.location_id = vm.selectedLocationId;
                 var locations = vm.getLocationsForLevel(selectedLocationIndex());
                 var loc = _.filter(locations, function (loc) {
                     return loc.location_id === vm.selectedLocationId;
@@ -252,10 +270,9 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 $location.search('location_name', '');
                 $location.search('location_id', '');
                 $location.search('selectedLocationLevel', '');
-                $location.search('location', '');
-                vm.location = 'all';
+                vm.location_id = 'all';
             }
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4) {
                 $location.path('awc_reports');
             }
@@ -291,12 +308,10 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
     return {
         restrict:'E',
         scope: {
-            location_id: '=',
-            selectedLocationId: '=ngModel',
+            selectedLocationId: '=',
             selectedLocations: '=',
         },
         bindToController: true,
-        require: 'ngModel',
         templateUrl: url('icds-ng-template', 'location_filter'),
         controller: LocationFilterController,
         controllerAs: "$ctrl",

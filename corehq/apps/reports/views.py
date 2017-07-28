@@ -1835,7 +1835,6 @@ class EditFormInstance(View):
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'use_sqlite_backend': use_sqlite_backend(domain),
             'username': context.get('user').username,
-            'edit_formplayer': toggles.EDIT_FORMPLAYER.enabled(domain),
             'edit_context': {
                 'formUrl': self._form_instance_to_context_url(domain, instance),
                 'submitUrl': reverse('receiver_secure_post_with_app_id', args=[domain, instance.build_id]),

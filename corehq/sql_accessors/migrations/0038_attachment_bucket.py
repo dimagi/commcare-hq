@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration, noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('save_new_form_and_related_models_1.sql'),
+        noop_migration()
     ]

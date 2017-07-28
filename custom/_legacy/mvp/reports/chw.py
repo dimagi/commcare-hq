@@ -8,7 +8,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 

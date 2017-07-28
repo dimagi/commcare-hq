@@ -50,15 +50,14 @@ branches:
   - nh/new_rb  # Norman 11/22
   - app-manager-labs # Jenny 6/19
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
-  - ce/mobile-user-loc-id # 7/18
+  - br/kill-old-cloucare  # Danny 7/21
+  - je/cache-build-files # j$ 7/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches: []
-  submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []

@@ -84,7 +84,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
 
     @allow_remote_invocation
     def get_form_data(self, in_data):
-        modules, errors = get_form_data(self.domain, self.app)
+        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
         return {
             'response': modules,
             'errors': errors,
@@ -97,7 +97,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
     urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
-        modules, errors = get_form_data(self.domain, self.app)
+        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
         return json_response({
             'response': {
                 'form_data': {

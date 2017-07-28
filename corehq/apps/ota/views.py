@@ -37,7 +37,7 @@ from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -48,10 +48,31 @@ from .utils import (
     handle_401_response, update_device_id)
 
 
-TIMED_RESTORE_SEGMENTS = {
+RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
+
+
+def _get_time_bucket(duration):
+    """Get time bucket for the given duration
+
+    Bucket restore times because datadog's histogram is too limited
+
+    Basically restore frequency is not high enough to have a meaningful
+    time distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    if duration < 5:
+        return "lt_005s"
+    if duration < 20:
+        return "lt_020s"
+    if duration < 60:
+        return "lt_060s"
+    if duration < 120:
+        return "lt_120s"
+    return "over_120s"
 
 
 @location_safe
@@ -71,22 +92,17 @@ def restore(request, domain, app_id=None):
     env = settings.SERVER_ENVIRONMENT
     if (env, domain) in settings.RESTORE_TIMING_DOMAINS:
         tags.append(u'domain:{}'.format(domain))
-    datadog_counter('commcare.restores.count', tags=tags)
     if timing_context is not None:
-        datadog_histogram(
-            'commcare.restores.total_time',
-            timing_context.duration,
-            tags=tags,
-        )
         for timer in timing_context.to_list(exclude_root=True):
-            if timer.name in TIMED_RESTORE_SEGMENTS:
-                segment = TIMED_RESTORE_SEGMENTS[timer.name]
-                datadog_histogram(
-                    'commcare.restores.timings',
-                    timer.duration,
-                    tags=tags + [u'segment:{}'.format(segment)],
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = _get_time_bucket(timer.duration)
+                datadog_counter(
+                    'commcare.restores.{}'.format(segment),
+                    tags=tags + ['duration:%s' % bucket],
                 )
-
+        tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
+    datadog_counter('commcare.restores.count', tags=tags)
     return response
 
 
@@ -147,17 +163,13 @@ def claim(request, domain):
     """
     as_user = request.POST.get('commcare_login_as', None)
     restore_user = get_restore_user(domain, request.couch_user, as_user)
-    cache = get_redis_default_cache()
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if (
-            cache.get(_claim_key(restore_user.user_id)) == case_id or
-            get_first_claim(domain, restore_user.user_id, case_id)
-        ):
+        if get_first_claim(domain, restore_user.user_id, case_id):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
@@ -166,12 +178,7 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    cache.set(_claim_key(restore_user.user_id), case_id)
     return HttpResponse(status=200)
-
-
-def _claim_key(user_id):
-    return u'last_claimed_case_case_id-{}'.format(user_id)
 
 
 def get_restore_params(request):
@@ -191,7 +198,6 @@ def get_restore_params(request):
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
@@ -205,7 +211,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
-                         has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION,
                          case_sync=None):
 
@@ -225,7 +230,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         domain,
         couch_user,
         as_user,
-        has_data_cleanup_privelege,
     )
     if not is_permitted:
         return HttpResponse(message, status=401), None
@@ -378,6 +382,6 @@ def heartbeat(request, domain, id):
     for_app_id = request.GET.get('app_id', '')
     return JsonResponse({
         "app_id": for_app_id,
-        "latest_apk_version": {"value": ""},
-        "latest_ccz_version": {"value": ""}
+        "latest_apk_version": {},
+        "latest_ccz_version": {}
     })

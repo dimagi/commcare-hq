@@ -11,7 +11,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
     def test_deletion_open_cases(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
-        call_command('create_enikshay_cases', self.domain)
+        call_command('create_enikshay_cases', self.domain, 'test_migration')
         assert len(self.case_accessor.get_case_ids_in_domain(type='person')) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
@@ -29,7 +29,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
         self.outcome.Outcome = '1'
         self.outcome.OutcomeDate = '2/01/2017'
         self.outcome.save()
-        call_command('create_enikshay_cases', self.domain)
+        call_command('create_enikshay_cases', self.domain, 'test_migration')
         assert len(self.case_accessor.get_case_ids_in_domain(type='person')) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
@@ -46,7 +46,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
     def test_deletion_by_person_case_id(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
-        call_command('create_enikshay_cases', self.domain)
+        call_command('create_enikshay_cases', self.domain, 'test_migration')
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         assert len(person_case_ids) == 1
         assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 1
@@ -63,7 +63,7 @@ class TestDeleteMigratedCases(ENikshayCaseStructureMixin, NikshayMigrationMixin,
     def test_other_cases_not_deleted(self):
         self.outcome.HIVStatus = None
         self.outcome.save()
-        call_command('create_enikshay_cases', self.domain)
+        call_command('create_enikshay_cases', self.domain, 'test_migration')
         self.create_case_structure()
         assert len(self.case_accessor.get_case_ids_in_domain(type='person')) == 2
         assert len(self.case_accessor.get_case_ids_in_domain(type='occurrence')) == 2

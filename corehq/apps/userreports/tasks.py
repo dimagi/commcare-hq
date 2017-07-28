@@ -10,7 +10,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
-from django.db.models import Count, F
+from django.db.models import Count, F, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
@@ -347,40 +347,42 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
-    for config_id, count in _indicators_by_count().iteritems():
-        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=["config_id:{}".format(config_id)])
+    for config_id, metrics in _indicator_metrics().iteritems():
+        tags = ["config_id:{}".format(config_id)]
+        datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
 
 
-def _indicators_by_count(date_created=None):
+def _indicator_metrics(date_created=None):
     """
-    Number of docs in the queue that have a specific indicator config ids
-
     returns {
-        "config_id": "number of indicators with that config"
+        "config_id": {
+            "count": number of indicators with that config,
+            "lag": number of seconds ago that the row was created
+        }
     }
     """
-    ret = defaultdict(lambda: 0)
-    indicators_by_count = (
+    ret = {}
+    indicator_metrics = (
         AsyncIndicator.objects
         .values('indicator_config_ids')
-        .annotate(Count('indicator_config_ids'))
+        .annotate(Count('indicator_config_ids'), Min('date_created'))
         .order_by()  # needed to get rid of implict ordering by date_created
     )
+    now = datetime.utcnow()
     if date_created:
-        indicators_by_count = indicators_by_count.filter(date_created__lt=date_created)
-    for ind in indicators_by_count:
+        indicator_metrics = indicator_metrics.filter(date_created__lt=date_created)
+    for ind in indicator_metrics:
+        count = ind['indicator_config_ids__count']
+        lag = (now - ind['date_created__min']).total_seconds()
         for config_id in ind['indicator_config_ids']:
-            ret[config_id] += ind['indicator_config_ids__count']
+            if ret.get(config_id):
+                ret[config_id]['count'] += ind['indicator_config_ids__count']
+                ret[config_id]['lag'] = max(lag, ret[config_id]['lag'])
+            else:
+                ret[config_id] = {
+                    "count": count,
+                    "lag": lag
+                }
 
     return ret
-
-
-@periodic_task(
-    run_every=crontab(minute="*/15"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
-def icds_async_indicators_metrics():
-    indicator_count_until_28 = _indicators_by_count(datetime(2017, 6, 28))
-
-    for config_id, count in indicator_count_until_28.iteritems():
-        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=["config_id:{}".format(config_id)])

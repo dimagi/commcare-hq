@@ -1,6 +1,6 @@
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group

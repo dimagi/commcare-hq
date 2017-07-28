@@ -10,26 +10,6 @@ hqDefine('cloudcare/js/util.js', function () {
         showSpinner: false
     });
 
-    var getLocalizedString = function (property, language) {
-        // simple utility to localize a string based on a dict of
-        // language mappings.
-        return localize(this.get(property), language);
-    };
-
-    var localize = function(obj, language) {
-        var s = obj[language];
-        if (!s) {
-            for (var lang in obj) {
-                if (obj.hasOwnProperty(lang) && obj[lang]) {
-                    s = obj[lang];
-                    break;
-                }
-            }
-        }
-        return s || localize.NOT_FOUND;
-    };
-    localize.NOT_FOUND = '?';
-
     var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
         // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
@@ -77,11 +57,6 @@ hqDefine('cloudcare/js/util.js', function () {
             url += '?task-list=true';
         }
         return url;
-    };
-
-    var getSessionContextUrl = function(sessionUrlRoot, session_id) {
-        // TODO: make this cleaner
-        return sessionUrlRoot + session_id;
     };
 
     var isParentField = function(field) {
@@ -159,6 +134,18 @@ hqDefine('cloudcare/js/util.js', function () {
         }
     };
 
+    var clearUserDataComplete = function(isError) {
+        hideLoading();
+        if (isError) {
+            showError(
+                gettext('Could not clear user data. Please report an issue if this persists.'),
+                $('#cloudcare-notifications')
+            );
+        } else {
+            showSuccess(gettext('User data successfully cleared.'), $('#cloudcare-notifications'), 5000);
+        }
+    };
+
     var hideLoading = function (selector) {
         NProgress.done();
     };
@@ -167,20 +154,18 @@ hqDefine('cloudcare/js/util.js', function () {
         hideLoading();
     };
     return {
-        getLocalizedString: getLocalizedString,
-        localize: localize,
         getFormUrl: getFormUrl,
         getFormEntryUrl: getFormEntryUrl,
         getChildSelectUrl: getChildSelectUrl,
         getFormEntryPath: getFormEntryPath,
         getSubmitUrl: getSubmitUrl,
         getCaseFilterUrl: getCaseFilterUrl,
-        getSessionContextUrl: getSessionContextUrl,
         isParentField: isParentField,
         showError: showError,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         showLoading: showLoading,
+        clearUserDataComplete: clearUserDataComplete,
         tfLoading: tfLoading,
         tfLoadingComplete: tfLoadingComplete,
         tfSyncComplete: tfSyncComplete,
