@@ -400,11 +400,26 @@ class ENikshay2BMigrator(object):
             props['rft_general'] = {
                 'diagnostic': 'diagnosis_dstb',
                 'diagnosis_dstb': 'diagnosis_dstb',
-                'follow_up_dstb': 'follow_up_dstb',
+                'follow_up': 'follow_up_dstb',
                 'diagnosis_drtb': 'diagnosis_drtb',
             }.get(test.get_case_property('purpose_of_testing'), "")
             props['rft_dstb_diagnosis'] = test.get_case_property('diagnostic_test_reason')
             props['rft_dstb_followup'] = test.get_case_property('follow_up_test_reason')
+
+        if test.get_case_property('result') == 'tb_detected':
+            detected = 'TB Detected'
+        elif test.get_case_property('result') == 'tb_not_detected':
+            detected = 'TB Not Detected'
+        else:
+            detected = None
+        bacilli_count = test.get_case_property('max_bacilli_count')
+
+        props['result_summary_display'] = '\n'.join(filter(None, [
+            detected,
+            test.get_case_property('result_grade'),
+            'Count of bacilli: {}'.format(bacilli_count) if bacilli_count else None,
+            test.get_case_property('clinical_remarks'),
+        ]))
 
         return CaseStructure(
             case_id=test.case_id,

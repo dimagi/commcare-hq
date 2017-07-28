@@ -95,6 +95,9 @@ class TestCreateEnikshayCases(TestCase):
             'follow_up_test_reason': 'definitely_not_private_ntm',
             'diagnostic_test_reason': 'diagnostic_test_reason',
             'purpose_of_testing': 'diagnostic',
+            'max_bacilli_count': '11',
+            'clinical_remarks': 'that looks infected',
+            'result': 'tb_not_detected',
         })
         return test
 
@@ -213,6 +216,7 @@ class TestCreateEnikshayCases(TestCase):
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
             'episode_case_id': 'roland-deschain-occurrence-episode',
+            'result_summary_display': "TB Not Detected\nCount of bacilli: 11\nthat looks infected"
         }, new_test.dynamic_case_properties())
 
         new_referral = accessor.get_case(person.referrals[0].case_id)
