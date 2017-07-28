@@ -4110,13 +4110,13 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Name")},
+                header={lang: ugettext("Name")},
                 field='name',
                 model='case',
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang): name or ugettext("Untitled Module")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
