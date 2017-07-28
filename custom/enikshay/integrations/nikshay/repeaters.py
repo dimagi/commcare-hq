@@ -180,7 +180,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
-                    test_case_properties.get('rft_general') == 'diagnostic' or
+                    test_case_properties.get('rft_general') in ['diagnosis_dstb', 'diagnosis_drtb'] or
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
