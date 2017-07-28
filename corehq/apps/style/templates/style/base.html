@@ -561,7 +561,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if reqeust.maps_prefer_canvas %}
+        {% if request.maps_prefer_canvas %}
         {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
         {% endaddtoblock %}
