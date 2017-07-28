@@ -252,7 +252,7 @@ def get_trail_case_structure(case_id, indexed_occurrence_id, extra_update=None):
             "create": True,
             "update": extra_update,
         },
-        # Prior to 2017-08-01, the parent is a referral case
+        # Prior to 2017-08-01, the parent is a person or referral case
         indices=[CaseIndex(
             CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
             identifier='parent',
