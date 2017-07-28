@@ -10,6 +10,7 @@ from cStringIO import StringIO
 from uuid import uuid4
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from distutils.version import LooseVersion
 
 from couchdbkit import ResourceNotFound
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
@@ -409,13 +410,16 @@ class RestoreParams(object):
             state_hash='',
             include_item_count=False,
             device_id=None,
-            app=None):
+            app=None,
+            openrosa_version=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
         self.device_id = device_id
+        self.openrosa_version = (LooseVersion(openrosa_version)
+            if isinstance(openrosa_version, basestring) else openrosa_version)
 
     @property
     def app_id(self):

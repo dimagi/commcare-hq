@@ -114,7 +114,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
     def generate_product_fixture_xml(self, user, randomize_data=True):
         return """
-            <fixture id="commtrack:products" user_id="{user_id}">
+            <fixture id="commtrack:products" indexed="true" user_id="{user_id}">
                 <products>
                     {products}
                 </products>
@@ -126,13 +126,22 @@ class FixtureTest(TestCase, TestXmlMixin):
 
     def test_product_fixture(self):
         user = self.user
-        xml = self.generate_product_fixture_xml(user)
-        fixture = call_fixture_generator(product_fixture_generator, user)
+        fixture_xml = self.generate_product_fixture_xml(user)
+        index_schema, fixture = call_fixture_generator(product_fixture_generator, user)
 
-        self.assertXmlEqual(
-            xml,
-            ElementTree.tostring(fixture[0])
-        )
+        self.assertXmlEqual(fixture_xml, ElementTree.tostring(fixture))
+
+        schema_xml = """
+            <schema id="commtrack:products">
+                <indices>
+                    <index>@id</index>
+                    <index>category</index>
+                    <index>code</index>
+                    <index>program_id</index>
+                </indices>
+            </schema>
+        """
+        self.assertXmlEqual(schema_xml, ElementTree.tostring(index_schema))
 
     def test_selective_product_sync(self):
         user = self.user
@@ -142,11 +151,11 @@ class FixtureTest(TestCase, TestXmlMixin):
         product_list = Product.by_domain(user.domain)
         self._initialize_product_names(len(product_list))
 
-        fixture_original = call_fixture_generator(product_fixture_generator, user)
+        fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
         generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_original[0])
+            ElementTree.tostring(fixture_original)
         )
 
         first_sync = sorted(SyncLog.view(
@@ -184,12 +193,12 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         # now that we've updated a product, we should get
         # product data in sync again
-        fixture_post_change = call_fixture_generator(product_fixture_generator, user, last_sync=second_sync)
+        fixture_post_change = call_fixture_generator(product_fixture_generator, user, last_sync=second_sync)[1]
 
         # regenerate the fixture xml to make sure it is still legit
         self.assertXmlEqual(
             expected_xml,
-            ElementTree.tostring(fixture_post_change[0])
+            ElementTree.tostring(fixture_post_change)
         )
 
     def generate_program_xml(self, program_list, user):
