@@ -668,11 +668,22 @@ def get_disease_site_properties_for_person(column_mapping, row):
 
 
 def convert_treatment_outcome(xlsx_value):
-    return {
-        "DIED": "died",
-        None: None
-    }[xlsx_value]
-    # TODO: (WAITING) waiting on mumbai mapping values
+    if xlsx_value not in [
+        "cured",
+        "treatment_complete",
+        "failure",
+        "loss_to_follow_up",
+        "regimen_changed",
+        "pediatric_failure_to_respond",
+        "not_evaluated",
+        "treatment_failure_culture_non_reversion",
+        "treatment_failure_culture_reversion",
+        "treatment_failure_additional_drug_resistance",
+        "treatment_failure_adverse_drug_reaction",
+        None,
+    ]:
+        raise Exception("Unexpected treatment outcome: {}".format(xlsx_value))
+    return xlsx_value
 
 
 def get_selection_criteria_properties(column_mapping, row):
@@ -751,7 +762,18 @@ def clean_mumbai_lpa_resistance_value(value):
         "R": True,
         "Resistant": True,
         "Sensitive": False,
+        "S": False,
     }[value]
+
+
+def clean_sex(value):
+    return {
+        "female": "female",
+        "male": "male",
+        "f": "female",
+        "m": "male",
+        "transgender": "transgender"
+    }[value.lower()]
 
 
 def get_mehsana_resistance_properties(column_mapping, row):
@@ -968,16 +990,17 @@ def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
 
 
 def convert_sensitivity(sensitivity_value):
+    if not sensitivity_value:
+        return "unknown"
     return {
-        "Sensitive": "sensitive",
-        "Resistant": "resistant",
-        "S": "sensitive",
-        "R": "resistant",
-        "Conta": "unknown",
+        "sensitive": "sensitive",
+        "resistant": "resistant",
+        "unknown": "unknown",
+        "s": "sensitive",
+        "r": "resistant",
+        "conta": "unknown",
         "": "unknown",
-        "Neg": "unknown",  # TODO: (WAITING) Which should this be?
-        None: "unknown",
-    }[sensitivity_value]
+    }[sensitivity_value.lower()]
 
 
 def convert_treatment_status(status_in_xlsx):
@@ -1167,11 +1190,26 @@ def clean_height(value):
 def clean_treatment_regimen(value):
     if value is None:
         return None
-    return {
-        "Regimen for MDR/RR TB": "mdr_rr",
-        "Regimen for XDR TB": "xdr",
-        "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
-    }[value]
+    if value not in {
+        "inh_poly_mono",
+        "mdr_rr",
+        "short_regimen",
+        "mdr_rr_fq_sli",
+        "xdr",
+        "mixed_pattern",
+        "new_drug_mdr_rr_fq_sli",
+        "new_drug_xdr",
+        "new_fail_mdr",
+        "new_fail_xdr",
+        "new_mixed_pattern",
+    }:
+        raise Exception("Invalid treatment regimen: {}".format(value))
+    return value
+    # return {
+    #     "Regimen for MDR/RR TB": "mdr_rr",
+    #     "Regimen for XDR TB": "xdr",
+    #     "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
+    # }[value]
 
 
 def clean_phone_number(value):
@@ -1222,25 +1260,12 @@ def _starts_with_any(value, strings):
 
 
 def clean_hiv_status(value):
-    NON_REACTIVE = "non_reactive"
-    REACTIVE = "reactive"
     if not value:
         return None
-    if _starts_with_any(value, ["Non Reactive", "NR", "Nr", "NON REACTIVE"]):
-        return NON_REACTIVE
-    if _starts_with_any(value, ["R ", "Reactive", "Ractive"]) or value == "R":
-        return REACTIVE
-    return {
-        # TODO: (WAITING) Have we mapped pos/neg to reactive/non-reactive correctly?
-        "Pos (on ART)": REACTIVE,
-        "Pos (not on ART)": REACTIVE,
-        "Pos": REACTIVE,
-        "Positive": REACTIVE,
-        "Negative": NON_REACTIVE,
-        "Neg": NON_REACTIVE,
-        "NEg": NON_REACTIVE,
-        "?": None,
-    }[value]
+    if value not in ("reactive", "non_reactive"):
+        raise Exception("Invalid hiv status: {}".format(value))
+    return value
+
 
 
 def clean_socioeconomic_status(value):
@@ -1255,6 +1280,9 @@ def clean_socioeconomic_status(value):
 def clean_result(value):
     return {
         None: NO_RESULT,
+        NO_RESULT: NO_RESULT,
+        NOT_DETECTED: NOT_DETECTED,
+        DETECTED: DETECTED,
         "Sample rejected": NO_RESULT,
         "Result awaited": NO_RESULT,
         "conta": NO_RESULT,
