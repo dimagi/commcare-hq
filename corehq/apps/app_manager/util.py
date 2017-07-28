@@ -119,7 +119,6 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
-    from corehq.apps.app_manager.models import ShadowForm
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render()
