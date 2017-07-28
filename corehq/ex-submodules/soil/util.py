@@ -73,7 +73,7 @@ def get_download_context(download_id, message=None, require_result=False):
         'progress': task_status.progress._asdict(),
         'download_id': download_id,
         'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,
-        'has_file': download_data is not None and download_data.has_file,
+        'has_file': download_data.has_file,
         'custom_message': message,
     }
 
