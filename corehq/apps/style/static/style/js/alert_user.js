@@ -18,13 +18,13 @@ hqDefine("style/js/alert_user.js", function() {
             "message": ko.observable(message),
             "alert_class": ko.observable(
                 "alert fade in alert-block alert-full page-level-alert message-alert"
-            )
+            ),
         };
         if (tags) {
             alert_obj.alert_class(alert_obj.alert_class() + " " + tags);
         }
         return alert_obj;
-    }
+    };
     var message_alerts = ko.observableArray();
 
     var alert_user = function(message, emphasis, append) {
@@ -38,18 +38,18 @@ hqDefine("style/js/alert_user.js", function() {
                 alert.alert_class(alert.alert_class() + ' ' + tags);
             }
         }
-    }
+    };
 
     $(function() {
         // remove closed alerts from backend model
-        $(document).on('close.bs.alert','.message-alert', function (e) {
+        $(document).on('close.bs.alert','.message-alert', function() {
             message_alerts.remove(ko.dataFor(this));
         });
 
         var message_element = $("#message-alerts").get(0);
         ko.cleanNode(message_element);
         $(message_element).koApplyBindings({
-            alerts: message_alerts
+            alerts: message_alerts,
         });
     });
 
