@@ -401,7 +401,7 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
-        domain, city_constants, person_case_properties['district_id'], occurrence_case_properties['occurrence_id'])
+        domain, city_constants, person_case_properties['dto_id'], occurrence_case_properties['occurrence_id'])
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
@@ -466,6 +466,7 @@ def get_person_case_properties(domain, column_mapping, row):
         "dto_name": district_name,
         "dto_id": district_id,
         "owner_id": phi_id or "-",
+        "manual_nikshay_id": "yes",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
         "sex": column_mapping.get_value("sex", row),
@@ -482,6 +483,7 @@ def get_person_case_properties(domain, column_mapping, row):
         "art_initiation_date": clean_date(column_mapping.get_value("art_initiation_date", row)),
         "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row)),
         "language_code": "hin",
+        "case_version": "20",
     }
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
