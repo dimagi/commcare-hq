@@ -190,7 +190,7 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
-        #
+
         # set as registered, should not register a new repeat record
         self._create_nikshay_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
@@ -408,33 +408,21 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        update_case(
-            self.domain,
-            self.person_id,
-            {
-                "hiv_status": "unknown",
-                "owner_id": self.phi.location_id,
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "owner_id": self.phi.location_id,
+        })
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        update_case(
-            self.domain,
-            self.person_id,
-            {
-                "hiv_status": "reactive",
-                "cpt_1_date": "2016-01-01"
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "reactive",
+            "cpt_1_date": "2016-01-01"
+        })
         self.assertEqual(2, len(self.repeat_records().all()))
 
-        update_case(
-            self.domain,
-            self.person_id,
-            {
-                "art_initiation_date": "2016-02-01"
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "art_initiation_date": "2016-02-01"
+        })
         self.assertEqual(3, len(self.repeat_records().all()))
 
 
@@ -456,24 +444,16 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
             [self.person, self.episode]))}
 
     def _create_nikshay_registered_case(self):
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-            external_id=DUMMY_NIKSHAY_ID,
-        )
+        update_case(self.domain, self.episode_id, {
+            "nikshay_id": DUMMY_NIKSHAY_ID,
+        }, external_id=DUMMY_NIKSHAY_ID)
 
     @patch("socket.gethostbyname", return_value="198.1.1.1")
     def test_payload_properties(self, _):
-        update_case(
-            self.domain, self.person_id,
-            {
-                "hiv_status": "unknown",
-                "hiv_test_date": "2016-01-01",
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "hiv_status": "unknown",
+            "hiv_test_date": "2016-01-01",
+        })
         self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
         payload = (json.loads(
             NikshayHIVTestPayloadGenerator(None).get_payload(self.repeat_record, self.person_case))
@@ -491,12 +471,9 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["InitiatedDate"], "01/01/1900")
         self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
-        update_case(
-            self.domain, self.person_id,
-            {
-                "cpt_1_date": "2016-01-02",
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "cpt_1_date": "2016-01-02",
+        })
         self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
 
         payload = (json.loads(
@@ -507,13 +484,10 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["InitiatedDate"], "01/01/1900")
         self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
-        update_case(
-            self.domain, self.person_id,
-            {
-                "art_initiation_date": "2016-04-03",
-                "art_initiated": "yes"
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "art_initiation_date": "2016-04-03",
+            "art_initiated": "yes"
+        })
 
         self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
         payload = (json.loads(
@@ -524,12 +498,9 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["InitiatedDate"], "03/04/2016")
         self.assertEqual(payload["ARTCentreDate"], "03/04/2016")
 
-        update_case(
-            self.domain, self.person_id,
-            {
-                "art_initiation_date": "foo",
-            }
-        )
+        update_case(self.domain, self.person_id, {
+            "art_initiation_date": "foo",
+        })
 
         self.person_case = CaseAccessors(self.domain).get_case(self.person_id)
         payload = (json.loads(
@@ -570,13 +541,9 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "cured",
-            }
-        )
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "cured",
+        })
         self.assertEqual(0, len(self.repeat_records().all()))
 
     def test_trigger(self):
@@ -587,33 +554,22 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # change triggered
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "cured",
-            }
-        )
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "cured",
+        })
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # treatment outcome updated
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "treatment_complete",
-            }
-        )
+        update_case(self.domain, self.episode_id,
+        {
+            TREATMENT_OUTCOME: "treatment_complete",
+        })
         self.assertEqual(2, len(self.repeat_records().all()))
 
         # dont trigger for unknown outcome values
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "james_bond",
-            }
-        )
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "james_bond",
+        })
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -626,16 +582,12 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
 
     @patch("socket.gethostbyname", return_value="198.1.1.1")
     def test_payload_properties(self, _):
-        episode_case = self._create_nikshay_enabled_case()
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "treatment_complete",
-                TREATMENT_OUTCOME_DATE: "1990-01-01",
-                'nikshay_id': self.person_id,
-            }
-        )
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "treatment_complete",
+            TREATMENT_OUTCOME_DATE: "1990-01-01",
+            'nikshay_id': self.person_id,
+        })
         episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         payload = (json.loads(
             NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
@@ -649,14 +601,9 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
         self.assertEqual(payload['Outcome'], '2')
 
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                TREATMENT_OUTCOME: "regimen_changed",
-
-            }
-        )
+        update_case(self.domain, self.episode_id, {
+            TREATMENT_OUTCOME: "regimen_changed",
+        })
         episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         payload = (json.loads(
             NikshayTreatmentOutcomePayload(None).get_payload(None, episode_case))
@@ -792,14 +739,9 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             [self.lab_referral, self.test, self.episode]))}
 
     def _create_nikshay_registered_case(self):
-        update_case(
-            self.domain,
-            self.episode_id,
-            {
-                "nikshay_id": DUMMY_NIKSHAY_ID,
-            },
-            external_id=DUMMY_NIKSHAY_ID,
-        )
+        update_case(self.domain, self.episode_id, {
+            "nikshay_id": DUMMY_NIKSHAY_ID,
+        }, external_id=DUMMY_NIKSHAY_ID,)
 
     @patch("socket.gethostbyname", return_value="198.1.1.1")
     def test_payload_properties(self, _):
@@ -833,21 +775,17 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
             "follow_up_test_reason": "not sure"
-        }, external_id=DUMMY_NIKSHAY_ID)
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
         )
         self.assertEqual(payload['IntervalId'], 0)
 
-        update_case(self.domain,
-            self.test_id,
-            {
-                "purpose_of_testing": "testing",
-                "follow_up_test_reason": "end_of_cp"
-            },
-            external_id=DUMMY_NIKSHAY_ID,
-        )
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "testing",
+            "follow_up_test_reason": "end_of_cp"
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
@@ -898,14 +836,10 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(payload['SmearResult'], 1)
 
     def test_mandatory_field_interval_id(self):
-        update_case(self.domain,
-                    self.test_id,
-                    {
-                        "purpose_of_testing": "testing",
-                        "follow_up_test_reason": "unknown_reason"
-                    },
-                    external_id=DUMMY_NIKSHAY_ID,
-                    )
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "testing",
+            "follow_up_test_reason": "unknown_reason"
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         # raises error when purpose_of_testing is not diagnostic and test reason is not known to system
@@ -918,14 +852,10 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         # does not raise error with purpose_of_testing being diagnostic since test reason is not relevant
-        update_case(self.domain,
-                    self.test_id,
-                    {
-                        "purpose_of_testing": "diagnostic",
-                        "follow_up_test_reason": "unknown_reason"
-                    },
-                    external_id=DUMMY_NIKSHAY_ID,
-                    )
+        update_case(self.domain, self.test_id, {
+            "purpose_of_testing": "diagnostic",
+            "follow_up_test_reason": "unknown_reason"
+        })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
