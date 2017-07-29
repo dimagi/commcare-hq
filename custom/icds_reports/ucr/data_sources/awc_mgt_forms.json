@@ -320,7 +320,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
@@ -338,7 +338,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
@@ -356,7 +356,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
@@ -374,7 +374,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
@@ -392,7 +392,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
@@ -410,7 +410,7 @@
         "type": "boolean",
         "filter": {
           "type": "boolean_expression",
-          "operator": "lt",
+          "operator": "eq",
           "expression": {
             "type": "property_path",
             "property_path": [
