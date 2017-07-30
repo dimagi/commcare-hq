@@ -30,14 +30,12 @@ class BeneficiariesFilterForm(forms.Form):
         label=_("State"),
         required=False,
         choices=get_choices_for('stcode', 'stname'),
-        disabled=True
     )
 
     dtcode = forms.ChoiceField(
         label=_("District"),
         required=False,
         choices=get_choices_for('dtcode', 'dtname'),
-        disabled=True
     )
 
     awcid = forms.ChoiceField(
@@ -47,7 +45,7 @@ class BeneficiariesFilterForm(forms.Form):
     )
 
     village_code = forms.ChoiceField(
-        label=_("Village-ID"),
+        label=_("Village"),
         required=False,
         choices=((('', _('Select One')),) + get_choices_for('village_code', 'village_name'))
     )
