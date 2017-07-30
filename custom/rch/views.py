@@ -20,7 +20,8 @@ ICDS_CAS_DOMAIN = "icds-cas"
 RECORDS_PER_PAGE = 200
 
 
-@method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
+                   login_and_domain_required], name='dispatch')
 class BeneficariesList(TemplateView):
     urlname = 'rch_cas_dashboard'
     http_method_names = ['get', 'post']
@@ -191,6 +192,8 @@ class BeneficariesList(TemplateView):
         return self.template_name
 
 
+@method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
+                   login_and_domain_required], name='dispatch')
 class BeneficiaryView(TemplateView):
     http_method_names = ['get']
     urlname = 'beneficiary_view'
