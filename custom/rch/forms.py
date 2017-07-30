@@ -29,31 +29,40 @@ class BeneficiariesFilterForm(forms.Form):
     stcode = forms.ChoiceField(
         label=_("State"),
         required=False,
-        choices=get_choices_for('stcode', 'stname')
+        choices=get_choices_for('stcode', 'stname'),
+        disabled=True
     )
 
     dtcode = forms.ChoiceField(
         label=_("District"),
         required=False,
-        choices=get_choices_for('dtcode', 'dtname')
+        choices=get_choices_for('dtcode', 'dtname'),
+        disabled=True
     )
 
     awcid = forms.ChoiceField(
         label=_("AWC-ID"),
         required=False,
-        choices=get_choices_for('awcid', 'awcid')
+        choices=((('', _('Select One')),) + get_choices_for('awcid', 'awcid'))
     )
 
     village_code = forms.ChoiceField(
         label=_("Village-ID"),
         required=False,
-        choices=get_choices_for('village_code', 'village_name')
+        choices=((('', _('Select One')),) + get_choices_for('village_code', 'village_name'))
     )
 
     present_in = forms.ChoiceField(
         label=_("Present In"),
         required=False,
         choices=(('both', 'Both'), ('cas', 'ICDS-CAS'), ('rch', 'RCH'))
+    )
+
+    matched = forms.BooleanField(
+        label=_("Include matched beneficiaries"),
+        required=False,
+        help_text="Include matched beneficiaries when filtering for beneficiaries just in "
+                  "ICDS-CAS or RCH"
     )
 
     def __init__(self, domain, *args, **kwargs):
@@ -74,13 +83,16 @@ class BeneficiariesFilterForm(forms.Form):
                 'dtcode'
             ),
             crispy.Field(
-                'awcid'
-            ),
-            crispy.Field(
                 'village_code'
             ),
             crispy.Field(
+                'awcid'
+            ),
+            crispy.Field(
                 'present_in'
+            ),
+            crispy.Field(
+                'matched'
             ),
             ButtonHolder(
                 Submit('submit', 'Submit', css_class='button white pull-left')
