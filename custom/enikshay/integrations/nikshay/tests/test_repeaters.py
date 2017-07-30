@@ -1016,7 +1016,6 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         self.cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
-        update_case(self.domain, self.person_id, {"tu_choice": self.tu.location_id})
 
     def test_payload_properties(self):
         episode_case = self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)

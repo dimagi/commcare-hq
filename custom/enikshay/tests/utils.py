@@ -477,6 +477,7 @@ class ENikshayLocationStructureMixin(object):
         self.pcp.metadata = {
             'nikshay_code': '1234567',
             'is_test': 'no',
+            'nikshay_tu_id': '1',
         }
         self.pcp.save()
 
