@@ -132,9 +132,25 @@ class AreaMapping(models.Model):
     village_name = models.CharField(max_length=255, null=False)
 
     @classmethod
-    def fetch_village_ids_for_awcid(cls, awcid):
-        return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct().all())
+    def fetch_awc_ids_for_state(cls, state_id):
+        return list(cls.objects.filter(state_id=state_id).values_list('awcid', flat=True).distinct().all())
+
+    @classmethod
+    def fetch_village_ids_for_state(cls, state_id):
+        return list(cls.objects.filter(state_id=state_id).values_list('village_code', flat=True).distinct().all())
+
+    @classmethod
+    def fetch_awc_ids_for_district(cls, district_id):
+        return list(cls.objects.filter(district_id=district_id).values_list('awcid', flat=True).distinct().all())
+
+    @classmethod
+    def fetch_village_ids_for_district(cls, district_id):
+        return list(cls.objects.filter(district_id=district_id).values_list('village_code', flat=True).distinct().all())
 
     @classmethod
     def fetch_awc_ids_for_village_id(cls, village_id):
         return list(cls.objects.filter(village_code=village_id).values_list('awcid', flat=True).distinct().all())
+
+    @classmethod
+    def fetch_village_ids_for_awcid(cls, awcid):
+        return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct().all())

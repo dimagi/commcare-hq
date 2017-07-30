@@ -85,6 +85,10 @@ def case_ids(case_ids):
     return filters.term('_id', case_ids)
 
 
+def missing(field):
+    return filters.missing(field)
+
+
 def active_in_range(gt=None, gte=None, lt=None, lte=None):
     """Restricts cases returned to those with actions during the range"""
     return filters.nested(
