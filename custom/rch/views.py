@@ -179,7 +179,7 @@ class BeneficariesList(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
         context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
-        present_in = beneficiaries_in = self.request.GET.get('present_in')
+        present_in = self.request.GET.get('present_in')
         if present_in:
             self._set_beneficiaries(context, present_in)
         return context
