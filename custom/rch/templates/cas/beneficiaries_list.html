@@ -1,55 +1,58 @@
+{% extends "style/base_section.html" %}
 {% load hq_shared_tags %}{% load compress %}
 {% load crispy_forms_tags %}
 {% load xforms_extras %}
 {% load i18n %}
-{% block content %}
 {% load view_tags %}
+{% block page_content %}
+    <div class="row">
+      <div class="col-md-12">
+        {% crispy filter_form %}
+      </div>
+    </div>
 
-<div class="row">
-  <div class="col-md-12">
-    <h3>{{ filter_form.form_name }}</h3>
-
-    {% crispy filter_form %}
-  </div>
-</div>
-{% compress css %}
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-{% endcompress %}
-
-<div class="row">
-  <div class="col-md-12">
-    <strong>ICDS-CAS Beneficiaries:</strong>
-    {% if beneficiaries %}
-        <strong>{{ beneficiaries_count }} / {{ beneficiaries_total }}</strong>
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Husband</th>
-                    <th>Mother</th>
-                    <th>Aadhaar Number</th>
-                    <th>District</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for beneficiary in beneficiaries %}
+    <div class="row">
+      <div class="col-md-12">
+        <strong>ICDS-CAS Beneficiaries:</strong>
+        {% if beneficiaries %}
+            <strong>{{ beneficiaries_count }} / {{ beneficiaries_total }}</strong>
+            <table class="table table-striped table-bordered">
+                <thead>
                     <tr>
-                        <td>{{ beneficiary.name }}</td>
-                        <td>{{ beneficiary.husband_name }}</td>
-                        <td>{{ beneficiary.mother_name }}</td>
-                        {% if beneficiary.aadhar_number %}
-                            <td>{{ beneficiary.aadhar_number|mask_aadhar_number }}</td>
-                        {% else %}
-                            <td>{% trans 'Not Present' %}</td>
-                        {% endif %}
-                        <td>West Godavari</td>
+                        <th>Name</th>
+                        <th>Husband</th>
+                        <th>Mother</th>
+                        <th>Aadhaar Number</th>
+                        <th>District</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No Beneficiaries</p>
-    {% endif %}
-  </div>
-</div>
+                </thead>
+                <tbody>
+                    {% for beneficiary in beneficiaries %}
+                        <tr>
+                            <td>{{ beneficiary.name }}</td>
+                            <td>{{ beneficiary.husband_name }}</td>
+                            <td>{{ beneficiary.mother_name }}</td>
+                            {% if beneficiary.aadhar_number %}
+                                <td>{{ beneficiary.aadhar_number|mask_aadhar_number }}</td>
+                            {% else %}
+                                <td>{% trans 'Not Present' %}</td>
+                            {% endif %}
+                            <td>West Godavari</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No Beneficiaries</p>
+        {% endif %}
+      </div>
+    </div>
+{% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        $("#id_village_code").select2();
+        $("#id_awcid").select2();
+    </script>
 {% endblock %}

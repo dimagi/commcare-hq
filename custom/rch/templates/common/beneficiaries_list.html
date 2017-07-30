@@ -1,51 +1,59 @@
-{% load hq_shared_tags %}{% load compress %}
+{% extends "style/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
 {% load crispy_forms_tags %}
-<div class="row">
-  <div class="col-md-12">
-    <h3>{{ filter_form.form_name }}</h3>
 
-    {% crispy filter_form %}
-  </div>
-</div>
-{% compress css %}
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-{% endcompress %}
+{% block page_content %}
+    <div class="row">
+      <div class="col-md-12">
+        {% crispy filter_form %}
+      </div>
+    </div>
 
-<div class="row">
-  <div class="col-md-12">
-    <strong>Beneficiaries:</strong>
-    {% if beneficiaries %}
-        <strong>{{ beneficiaries.count }} / {{ beneficiaries_total }}</strong>
-        <table class="table table-striped table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Aadhar Number</th>
-                    <th>RCH ID</th>
-                    <th>MDDS Village Code</th>
-                    <th>RCH Village Name</th>
-                    <th>DOB</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for beneficiary in beneficiaries %}
+    <div class="row">
+      <div class="col-md-12">
+        <strong>Beneficiaries:</strong>
+        {% if beneficiaries %}
+            <strong>{{ beneficiaries.count }} / {{ beneficiaries_total }}</strong>
+            <table class="table table-striped table-bordered">
+                <thead>
                     <tr>
-                        <td>
-                            <a href='{% url "beneficiary_view" request.domain beneficiary.id %}'>
-                                {{beneficiary.name}}
-                            </a>
-                        </td>
-                        <td>{{ beneficiary.aadhar_num }}</td>
-                        <td>{{ beneficiary.rch_id}}</td>
-                        <td>{{ beneficiary.village_id}}</td>
-                        <td>{{ beneficiary.village_name }}</td>
-                        <td>{{ beneficiary.dob }}</td>
+                        <th>Name</th>
+                        <th>Aadhar Number</th>
+                        <th>RCH ID</th>
+                        <th>MDDS Village Code</th>
+                        <th>RCH Village Name</th>
+                        <th>DOB</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No Beneficiaries</p>
-    {% endif %}
-  </div>
-</div>
+                </thead>
+                <tbody>
+                    {% for beneficiary in beneficiaries %}
+                        <tr>
+                            <td>
+                                <a href='{% url "beneficiary_view" request.domain beneficiary.id %}'>
+                                    {{beneficiary.name}}
+                                </a>
+                            </td>
+                            <td>{{ beneficiary.aadhar_num }}</td>
+                            <td>{{ beneficiary.rch_id}}</td>
+                            <td>{{ beneficiary.village_id}}</td>
+                            <td>{{ beneficiary.village_name }}</td>
+                            <td>{{ beneficiary.dob }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No Beneficiaries</p>
+        {% endif %}
+      </div>
+    </div>
+{% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script>
+        $("#id_village_code").select2();
+        $("#id_awcid").select2();
+    </script>
+{% endblock %}

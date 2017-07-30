@@ -3,9 +3,10 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.db.utils import ProgrammingError
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Layout, ButtonHolder, Submit, HTML
+from crispy_forms.layout import Layout
 from crispy_forms.helper import FormHelper
-
+from crispy_forms.bootstrap import StrictButton
+from corehq.apps.style import crispy as hqcrispy
 from custom.rch.models import AreaMapping
 
 
@@ -74,30 +75,35 @@ class BeneficiariesFilterForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-3'
         self.helper.form_method = 'GET'
         self.helper.layout = Layout(
-            crispy.Field(
-                'stcode',
+            crispy.Fieldset(
+                _('Filter'),
+                crispy.Field(
+                    'stcode',
+                ),
+                crispy.Field(
+                    'dtcode'
+                ),
+                crispy.Field(
+                    'village_code'
+                ),
+                crispy.Field(
+                    'awcid'
+                ),
+                crispy.Field(
+                    'present_in'
+                ),
+                crispy.Field(
+                    'matched'
+                ),
             ),
-            crispy.Field(
-                'dtcode'
-            ),
-            crispy.Field(
-                'village_code'
-            ),
-            crispy.Field(
-                'awcid'
-            ),
-            crispy.Field(
-                'present_in'
-            ),
-            crispy.Field(
-                'matched'
-            ),
-            ButtonHolder(
-                Submit('submit', 'Submit', css_class='button white pull-left')
-            ),
-            ButtonHolder(
-                HTML('<a href="{}" class="btn btn-primary">{}</a>'.format(
-                    reverse(BeneficariesList.urlname, args=[domain]),
-                    _('Clear')))
+            hqcrispy.FormActions(
+                hqcrispy.LinkButton(_("Clear"),
+                                    reverse(BeneficariesList.urlname,
+                                            args=[domain]),
+                                    css_class="btn btn-default"),
+                StrictButton(_("Submit"),
+                             type="submit",
+                             css_class='btn btn-success disable-on-submit-no-spinner '
+                                       'add-spinner-on-click'),
             ),
         )
