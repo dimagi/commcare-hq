@@ -1,7 +1,7 @@
 import datetime
 from django.db import models
 from django.conf import settings
-from custom.rch.utils import fetch_beneficiaries_records, MOTHER_DATA_TYPE, CHILD_DATA_TYPE
+from custom.rch.utils import fetch_beneficiaries_records, MOTHER_RECORD_TYPE, CHILD_RECORD_TYPE
 from jsonfield.fields import JSONField
 
 
@@ -11,9 +11,11 @@ STATE_DISTRICT_MAPPING = {
     ]
 }
 
+# For every record type in RCH there is a corresponding value here which is then used
+# like for display options or maintaining permitted fields
 RCH_RECORD_TYPE_MAPPING = {
-    MOTHER_DATA_TYPE: '0',
-    CHILD_DATA_TYPE: '1',
+    MOTHER_RECORD_TYPE: 'mother',
+    CHILD_RECORD_TYPE: 'child',
 }
 
 
@@ -28,39 +30,41 @@ class RCHRecord(models.Model):
     aadhar_num = models.BigIntegerField(null=True)
     dob = models.DateTimeField(null=True)
     rch_id = models.BigIntegerField(null=True)
-    doc_type = models.CharField(max_length=1, choices=[('0', 'mother'), ('1', 'child')], null=False)
+    doc_type = models.CharField(max_length=1, null=False,
+                                choices=[(k, v) for k, v in RCH_RECORD_TYPE_MAPPING.items()])
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
     @classmethod
     def accepted_fields(cls, beneficiary_type):
-        if beneficiary_type == MOTHER_DATA_TYPE:
-            return settings.RCH_PERMITTED_FIELDS['mother']
-        elif beneficiary_type == CHILD_DATA_TYPE:
-            return settings.RCH_PERMITTED_FIELDS['child']
+        """
+        :param beneficiary_type: can be any of the keys in RCH_RECORD_TYPE_MAPPING
+        :return: fields that are expected to be received from RCH
+        """
+        if beneficiary_type in RCH_RECORD_TYPE_MAPPING:
+            return settings.RCH_PERMITTED_FIELDS[RCH_RECORD_TYPE_MAPPING[beneficiary_type]]
         else:
             return set()
 
     def mother_record(self):
-        return self.doc_type == RCH_RECORD_TYPE_MAPPING[MOTHER_DATA_TYPE]
+        return self.doc_type == MOTHER_RECORD_TYPE
 
     def child_record(self):
-        return self.doc_type == RCH_RECORD_TYPE_MAPPING[CHILD_DATA_TYPE]
+        return self.doc_type == CHILD_RECORD_TYPE
 
     @classmethod
     def _get_rch_id_key(cls, beneficiary_type):
-        if beneficiary_type == MOTHER_DATA_TYPE:
+        # This gives the corresponding field that contains the RCH_ID when records are received from RCH
+        # which then gets saved as the rch_id field and later used for filtering by RCH_ID when needed
+        if beneficiary_type == MOTHER_RECORD_TYPE:
             return 'Registration_no'
-        elif beneficiary_type == CHILD_DATA_TYPE:
+        elif beneficiary_type == CHILD_RECORD_TYPE:
             return 'Child_RCH_ID_No'
 
     @property
     def rch_id_key(self):
-        if self.mother_record():
-            return 'Registration_no'
-        elif self.child_record():
-            return 'Child_RCH_ID_No'
+        return self._get_rch_id_key(self.doc_type)
 
     def _set_mother_fields(self, dict_of_props):
         self.aadhar_num = dict_of_props['PW_Aadhar_No']
@@ -108,7 +112,7 @@ class RCHRecord(models.Model):
                         rch_beneficiary = results[0]
                         rch_beneficiary.details = dict_of_props
                     else:
-                        rch_beneficiary = cls(doc_type=RCH_RECORD_TYPE_MAPPING[beneficiary_type])
+                        rch_beneficiary = cls(doc_type=beneficiary_type)
 
                     rch_beneficiary.set_beneficiary_fields(dict_of_props)
                     rch_beneficiary.details = dict_of_props

@@ -16,8 +16,8 @@ def etree_to_dict(t):
 PROJECTID = settings.RCH_CREDENTIALS.get('project_id')
 ID = settings.RCH_CREDENTIALS.get('id')
 PASSWORD = settings.RCH_CREDENTIALS.get('password')
-MOTHER_DATA_TYPE = '1'
-CHILD_DATA_TYPE = '2'
+MOTHER_RECORD_TYPE = '1'
+CHILD_RECORD_TYPE = '2'
 
 RCH_WSDL_URL = 'http://rchrpt.nhm.gov.in/RCH_WS/rchwebservices.svc?wsdl'
 
