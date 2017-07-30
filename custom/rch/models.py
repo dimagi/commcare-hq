@@ -1,18 +1,13 @@
 import datetime
 from django.db import models
 from django.conf import settings
-from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from custom.rch.utils import fetch_beneficiaries_records, MOTHER_DATA_TYPE, CHILD_DATA_TYPE
 from jsonfield.fields import JSONField
-from dimagi.ext.couchdbkit import (
-    Document,
-    DictProperty,
-)
+
 
 STATE_DISTRICT_MAPPING = {
-    '28': [
-        '523'
+    '28': [  # Andhra Pradesh
+        '523'  # West Godavari
     ]
 }
 
@@ -22,13 +17,7 @@ RCH_RECORD_TYPE_MAPPING = {
 }
 
 
-class RCHRecordDetails(QuickCachedDocumentMixin, Document):
-    details = DictProperty()
-
-
 class RCHRecord(models.Model):
-    RCH_Primary_Key = None
-
     cas_case_id = models.CharField(null=True, max_length=255)
     details = JSONField(default=dict)
     district_id = models.PositiveSmallIntegerField(null=True)
