@@ -4,12 +4,13 @@ import socket
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
 from datetime import timedelta, date
+from importlib import import_module
 
 import dateutil
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, SESSION_KEY, get_user_model
 from django.contrib.auth.models import User
 from django.core import management, cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -1134,3 +1135,24 @@ class WebUserDataView(View):
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)
+
+
+class SessionDetialsView(View):
+    urlname = 'session_details'
+
+    def get(self, request, session_id, *args, **kwargs):
+        if not session_id:
+            raise Http404
+
+        engine = import_module(settings.SESSION_ENGINE)
+        session = engine.SessionStore(session_id)
+        try:
+            if session.is_empty():
+                raise Http404
+        except AttributeError:
+            raise Http404
+
+        user_id = get_user_model()._meta.pk.to_python(session[SESSION_KEY])
+        return JsonResponse({
+            'user_id': user_id
+        })
