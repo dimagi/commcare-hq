@@ -83,12 +83,17 @@
 </script>
 
 <script type="text/html" id="debugger-evaluate-result-template">
-    <!--ko if: success() && formattedResult() === ''-->
+    <!--ko if: xPathQuery.success() && xPathQuery.formattedResult() === ''-->
     <div><i>{% trans "Empty String" %}</i></div>
     <!--/ko-->
+    <!--ko if: options.useCodeMirror-->
     <textarea type="text" data-bind="
-        codeMirror: formattedResult()
+        codeMirror: xPathQuery.formattedResult()
     "></textarea>
+    <!--/ko-->
+    <!--ko if: !options.useCodeMirror && xPathQuery.formattedResult()-->
+        <pre data-bind="text: xPathQuery.formattedResult()"></pre>
+    <!--/ko-->
 </script>
 
 <script type="text/html" id="debugger-evaluate-template">
@@ -118,7 +123,7 @@
         </div>
         <div class="col-sm-12" data-bind="template: {
             name: 'debugger-evaluate-result-template',
-            data: xPathQuery()
+            data: {xPathQuery: xPathQuery(), options: {useCodeMirror: true}}
         }">
         </div>
     </form>
@@ -145,14 +150,10 @@
                     <td class="col-sm-8 debugger-code">
                         <span data-bind="text: xpath"></span>
                     </td>
-                    <td class="col-sm-3">
-                        <!--ko if: success() && formattedResult() === ''-->
-                        <div><i>{% trans "Empty String" %}</i></div>
-                        <!--/ko-->
-                        <!--ko if: formattedResult()-->
-                        <pre data-bind="text: formattedResult()"></pre>
-                        <!--/ko-->
-                    </td>
+                    <td class="col-sm-3" data-bind="template: {
+                        name: 'debugger-evaluate-result-template',
+                        data: {xPathQuery: $data, options: {useCodeMirror: false}}
+                    }"></td>
                 </tr>
             </tbody>
         </table>
