@@ -403,6 +403,7 @@ class ENikshay2BMigrator(object):
                 'diagnostic': 'diagnosis_dstb',
                 'diagnosis_dstb': 'diagnosis_dstb',
                 'follow_up': 'follow_up_dstb',
+                "follow_up_dstb": "follow_up_dstb",
                 'diagnosis_drtb': 'diagnosis_drtb',
             }.get(test.get_case_property('purpose_of_testing'), "")
             props['rft_dstb_diagnosis'] = test.get_case_property('diagnostic_test_reason')
