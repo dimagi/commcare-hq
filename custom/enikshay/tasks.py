@@ -1,4 +1,7 @@
 import datetime
+from cStringIO import StringIO
+from dimagi.utils.csv import UnicodeWriter
+
 from collections import defaultdict
 import pytz
 
@@ -15,7 +18,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
-
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .case_utils import (
     CASE_TYPE_EPISODE,
@@ -85,7 +88,7 @@ class EpisodeUpdater(object):
         # iterate over all open 'episode' cases and set 'adherence' properties
         update_count = 0
         noupdate_count = 0
-        error_count = 0
+        errors = []
         with Timer() as t:
             batch_size = 100
             updates = []
@@ -96,10 +99,8 @@ class EpisodeUpdater(object):
                         updater(self.domain, episode)
                         update_json.update(updater.update_json())
                     except Exception as e:
-                        error_count += 1
-                        logger.error(
-                            "Error calculating {} for episode case_id({}): {}"
-                            .format(updater.__class__, episode.case_id, e)
+                        errors.append(
+                            [episode.case_id, updater.__class__, e]
                         )
                     if update_json:
                         updates.append((episode.case_id, update_json, False))
@@ -112,12 +113,32 @@ class EpisodeUpdater(object):
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
 
-        logger.info(
+        summary = (
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
             "cases didn't need update. ".format(
-                domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
+                domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
                 noupdates=noupdate_count)
+        )
+        self.send_final_email(summary, errors)
+
+    def send_final_email(self, message, errors):
+        subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
+        recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
+        cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
+
+        csv_file = StringIO()
+        writer = UnicodeWriter(csv_file)
+        writer.writerow(['Episode ID', 'Updater Class', 'Error'])
+        writer.writerows(errors)
+
+        attachment = {
+            'title': "failed_episodes_{}.csv".format(datetime.date.today()),
+            'mimetype': 'text/csv',
+            'file_obj': csv_file,
+        }
+        send_html_email_async.delay(
+            subject, recipient, message, cc=cc, text_content=message, file_attachments=[attachment]
         )
 
     def update_single_case(self, episode_case):
