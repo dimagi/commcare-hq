@@ -218,6 +218,7 @@ MUMBAI_MAP = {
     "R": 80,  # Rif
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
     # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
+    "dst_result_date": 83,
     # TODO: (WAITING) not sure how this maps
     "bdq_eligible": 88,
     "treatment_initiation_date": 89,
@@ -933,7 +934,7 @@ def get_dst_test_case_properties(column_mapping, row):
         properties = {
             "owner_id": "-",
             "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
-            "date_reported": column_mapping.get_value("culture_result_date", row),
+            "date_reported": column_mapping.get_value("dst_result_date", row),
             "dst_test_type": column_mapping.get_value("dst_type", row),
         }
         properties.update(resistance_props)
