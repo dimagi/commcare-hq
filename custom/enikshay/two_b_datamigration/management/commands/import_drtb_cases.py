@@ -626,7 +626,7 @@ def get_diagnosis_properties(column_mapping, domain, row):
     has_cbnaat_result = bool(column_mapping.get_value("cbnaat_result", row))
     if has_cbnaat_result:
         properties = {}
-        cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
+        cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
         if cbnaat_lab_name:
             properties.update({
                 "diagnosing_facility_name": cbnaat_lab_name,
@@ -840,7 +840,7 @@ def get_mehsana_test_case_properties(domain, column_mapping, row):
 
 
 def get_cbnaat_test_case_properties(domain, column_mapping, row):
-    cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
+    cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
 
     properties = {
         "owner_id": "-",
@@ -859,7 +859,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
 
 
 def get_lpa_test_case_properties(domain, column_mapping, row):
-    lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row))
+    lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row), "cdst")
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": lpa_lab_name,
@@ -877,7 +877,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_sl_lpa_test_case_properties(domain, column_mapping, row):
-    sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row))
+    sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row), "cdst")
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": sl_lpa_lab_name,
@@ -894,7 +894,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_culture_test_case_properties(domain, column_mapping, row):
-    lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row))
+    lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row), "cdst")
     culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
     properties = {
         "owner_id": "-",
@@ -1427,6 +1427,7 @@ def clean_date(messy_date_string):
 def match_district(domain, xlsx_district_name):
     return match_location(domain, xlsx_district_name, "dto")
 
+
 @memoized
 def match_location(domain, xlsx_name, location_type=None):
     """
@@ -1434,16 +1435,17 @@ def match_location(domain, xlsx_name, location_type=None):
     """
     if not xlsx_name:
         return None, None
+
+    default_query_kwargs = {"domain": domain}
+    if location_type:
+        default_query_kwargs["location_type__code"] = location_type
+
     try:
-        kwargs = {"domain": domain, "name__iexact": xlsx_name}
-        if location_type:
-            kwargs["location_type__code"] = location_type
+        kwargs = {"name__iexact": xlsx_name}
+        kwargs.update(default_query_kwargs)
         location = SQLLocation.active_objects.get(**kwargs)
     except SQLLocation.DoesNotExist:
-        kwargs = {"domain": domain}
-        if location_type:
-            kwargs["location_type__code"] = location_type
-        possible_matches = SQLLocation.active_objects.filter(**kwargs).filter(models.Q(name__icontains=xlsx_name))
+        possible_matches = SQLLocation.active_objects.filter(**default_query_kwargs).filter(models.Q(name__icontains=xlsx_name))
         if len(possible_matches) == 1:
             location = possible_matches[0]
         elif len(possible_matches) > 1:
