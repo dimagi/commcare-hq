@@ -355,7 +355,7 @@ def _create_user_defined_column(old_column, column_path, transform):
 def _app_id_from_xmlns(domain, xmlns):
     apps = get_apps_in_domain(domain)
     for app in apps:
-        if xmlns in app.get_xmlns_map():
+        if hasattr(app, 'get_xmlns_map') and xmlns in app.get_xmlns_map():
             return app._id
     return None
 
