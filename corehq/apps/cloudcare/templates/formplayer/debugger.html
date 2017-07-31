@@ -111,7 +111,7 @@
             <!--ko if: success() && formatResult(result()) === ''-->
             <div><i>{% trans "Empty String" %}</i></div>
             <!--/ko-->
-            <textarea id="evaluate-result" type="text" data-bind="
+            <textarea type="text" data-bind="
                 codeMirror: formatResult(result())
             "></textarea>
         </div>
