@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-27 22:16+0000\n"
+"POT-Creation-Date: 2017-07-31 17:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -36,6 +36,12 @@ msgstr ""
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 "Vaya, hubo un problema al cargar esta sección. Por favor intente otra vez. "
+
+#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:63
+msgid ""
+"Something went wrong refreshing your form properties. Please refresh the "
+"page and try again"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:528
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:426
@@ -1936,6 +1942,14 @@ msgstr "Reemplazar"
 msgid "No Reference"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+msgid "Advanced: Show Path"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+msgid "Hide Path"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Image"
 msgstr "Imagen"
@@ -2193,15 +2207,15 @@ msgstr ""
 msgid "Show previous versions"
 msgstr "Mostrar versiones anteriores"
 
-#: corehq/apps/export/static/export/js/download_data_files.js:16
+#: corehq/apps/export/static/export/js/download_data_files.js:17
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:25
+#: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Data file URL copied to clipboard."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:47
+#: corehq/apps/export/static/export/js/download_data_files.js:48
 msgid "Data file deleted."
 msgstr ""
 
@@ -2325,7 +2339,7 @@ msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:40
+#: corehq/apps/locations/static/locations/js/location.js:41
 msgid "Error saving user"
 msgstr ""
 
@@ -2750,34 +2764,34 @@ msgstr ""
 msgid "Form"
 msgstr "Formulario"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:44
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"
 msgstr "Contraseña cambiada exitosamente"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:47
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:48
 msgid "Password was not changed "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:50
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:398
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Available Groups"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:97
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:97
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:108
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:109
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
@@ -2866,6 +2880,6 @@ msgstr ""
 msgid "(filtered from _MAX_ total messages)"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:133
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
 msgstr ""
