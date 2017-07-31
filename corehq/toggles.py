@@ -1243,3 +1243,10 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
