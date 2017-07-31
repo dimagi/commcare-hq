@@ -76,6 +76,12 @@ class EpisodeUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
+        self.updaters = [
+            EpisodeAdherenceUpdate,
+            EpisodeVoucherUpdate,
+            EpisodeTestUpdate,
+            EpisodeFacilityIDMigration,
+        ]
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
@@ -86,16 +92,17 @@ class EpisodeUpdater(object):
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases():
-                try:
-                    adherence_update = EpisodeAdherenceUpdate(self.domain, episode)
-                    voucher_update = EpisodeVoucherUpdate(self.domain, episode)
-                    test_update = EpisodeTestUpdate(self.domain, episode)
-                    episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
-
-                    update_json = adherence_update.update_json()
-                    update_json.update(voucher_update.update_json())
-                    update_json.update(test_update.update_json())
-                    update_json.update(episode_facility_id_migration.update_json())
+                update_json = {}
+                for updater in self.updaters:
+                    try:
+                        updater(self.domain, episode)
+                        update_json.update(updater.update_json())
+                    except Exception as e:
+                        error_count += 1
+                        logger.error(
+                            "Error calculating {} for episode case_id({}): {}"
+                            .format(updater.__class__, episode.case_id, e)
+                        )
                     if update_json:
                         updates.append((episode.case_id, update_json, False))
                         update_count += 1
@@ -104,16 +111,9 @@ class EpisodeUpdater(object):
                     if len(updates) >= batch_size:
                         bulk_update_cases(self.domain, updates)
                         updates = []
-                except Exception, e:
-                    error_count += 1
-                    logger.error(
-                        "Error calculating updates for episode case_id({}): {}".format(
-                            episode.case_id,
-                            e
-                        )
-                    )
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
+
         logger.info(
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
