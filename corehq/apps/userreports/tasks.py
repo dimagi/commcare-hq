@@ -212,16 +212,10 @@ def run_queue_async_indicators_task():
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
-    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
-    if oldest_indicator and oldest_indicator.date_queued:
-        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
-
-    day_ago = datetime.utcnow() - timedelta(days=1)
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
+    day_ago = start - timedelta(days=1)
     indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
-    if indicators:
-        lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
         # don't requeue anything that's be queued in the past day
@@ -230,6 +224,8 @@ def queue_async_indicators():
 
     for k, indicators in indicators_by_domain_doc_type.items():
         _queue_indicators(indicators)
+        if datetime.utcnow() > cutoff:
+            break
 
 
 def _queue_indicators(indicators):
@@ -342,6 +338,16 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
+    indicator = AsyncIndicator.objects.first()
+    if indicator:
+        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+
     for config_id, metrics in _indicator_metrics().iteritems():
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)

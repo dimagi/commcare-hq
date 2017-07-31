@@ -1103,8 +1103,10 @@ def quick_find(request):
             else:
                 doc = django_model.objects.get(pk=query)
         except django_model.DoesNotExist:
-            pass
+            continue
         else:
+            if doc is None:
+                continue
             domain = doc.domain
             return deal_with_doc(doc, domain, get_object_info)
 

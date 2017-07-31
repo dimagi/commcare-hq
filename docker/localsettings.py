@@ -224,7 +224,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     CELERY_SEND_TASK_ERROR_EMAILS = True
 
     LESS_DEBUG = True
-    LESS_WATCH = False
     COMPRESS_OFFLINE = False
 
     XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'

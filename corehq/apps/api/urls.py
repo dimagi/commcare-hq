@@ -81,8 +81,8 @@ def api_url_patterns():
         pass # maybe pact isn't installed
     for view_class in DomainAPI.__subclasses__():
         yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
-    yield url(r'^case/attachment/(?P<case_id>[\w\-]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
-    yield url(r'^form/attachment/(?P<form_id>[\w\-]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
+    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
+    yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
 
 urlpatterns = list(api_url_patterns())

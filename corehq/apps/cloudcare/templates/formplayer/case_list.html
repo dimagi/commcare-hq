@@ -176,7 +176,7 @@
                 <thead>
                 <tr>
                     <% _.each(headers, function(header, index) { %>
-                    <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
+                    <% if (!(styles[index].widthHint === 0)) { %>
                     <th class="module-caselist-header"> <%= header %></th>
                     <% } %>
                     <% }); %>

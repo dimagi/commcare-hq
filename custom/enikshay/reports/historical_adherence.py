@@ -282,7 +282,7 @@ class HistoricalAdherenceReport(EnikshayReport):
             None,
             ""
         ):
-            assert_ = soft_assert(to='ncarnahan' + '@' + 'dimagi' + '.com')
+            assert_ = soft_assert(to="{}@dimagi.com".format("cellowitz"))
             assert_(False, "Got an unexpected adherence_value of {} for case {}".format(
                 adherence_value, primary_adherence_case.case_id))
         return adherence_value

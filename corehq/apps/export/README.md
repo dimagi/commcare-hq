@@ -103,6 +103,39 @@ System properties are properties that CommCareHQ adds to the form or case that a
 
 Often times iterating through each build in an application can be time consuming. To reduce the time to process an application, the code only processes applications that have been marked as having submissions.
 
+### Migrating Exports
+
+At the time of writing this HQ is still in the process of migrating exports over to the new export
+infrastructure. In order to migrate an export there are two commands you can use:
+
+```
+./manage.py migrate_exports
+./manage.py migrate_exports_for_domain <domain>
+```
+
+Check out the command for more documentation on the options.
+
+#### Migration strategy
+
+The general approach for migrating exports is:
+
+1. Load the `SavedExportSchema` (old export model)
+2. Generate a new schema of the export using the applications in the project
+3. Generate an `ExportInstance` based off the new schema
+4. Use the `SavedExportSchema` to determine which columns should be selected and the order they should be in
+
+If the old schema has a column that is not found in the new schema, then the conversion fails. The conversion process is fairly complex to cover the many edge cases. The function to convert a `SavedExportSchema` to a `ExportInstance` can be found in `corehq/apps/export/utils.py:convert_saved_export_to_export_instance`.
+
+There are many situations where the new schema cannot find a column that was selected in the old schema. This is because old exports included every possible attribute and node to be exported from all the data submitted, and also included a few bugs that created duplicate or redundant columns. The new exports whitelists the properties you can export to avoid seeing things like `doc_type` on the export page. When we cannot find the corresponding column, we can use `--force-column-convert`. This option takes any columns that were not found in the new schema and force adds them via an `InferredSchema`. The `InferredSchema` accounts for all columns that should be added to the export, but CommCare cannot account for them in any of the `Application`s in the domain. Once added to the `InferredSchema`, the column will show up in any additional exports created.
+
+There is one further difficulty that has made the last 20 or so domains difficult to migrate. When migrating some of the leftover domains, you may see the error:
+
+```
+Failed parsing 83b6fbfadc1fe0a43bc084fadb456a3f: Form exports require an app id
+```
+
+This is because when parsing the export 83b6fbfadc1fe0a43bc084fadb456a3f, it could not find a match application for the XMLNS found in the export. This usually happens because of `RemoteApplication`s. The new `FormExportInstance` requires that all exports contain an `app_id` in order to exist. In the future, the correct way to resolve this is to drop that requirement.
+
 ### Caveats and edge cases
 
 - Unknown deleted questions: It is possible to have an export where there lists properties that do not have any data associated with them. This case can arise when adding a question, `q1`, to the current application (without making a build), opening an export (to kick off the processing of the current application), then deleting `q1` before making a build. `q1` will now always be in the schema but will be shown as deleted.

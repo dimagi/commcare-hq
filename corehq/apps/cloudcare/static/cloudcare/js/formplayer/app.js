@@ -173,15 +173,16 @@ FormplayerFrontend.on('startForm', function (data) {
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
         savedDisplayOptions,
-        appId;
+        self = this;
     user.username = options.username;
-    user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
     user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
+
+    FormplayerFrontend.Apps.API.primeApps(user.restoreAs, options.apps);
 
     savedDisplayOptions = _.pick(
         Util.getSavedDisplayOptions(),
@@ -196,36 +197,38 @@ FormplayerFrontend.on("start", function (options) {
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
-    if (Backbone.history) {
-        Backbone.history.start();
-        FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.Users.Views.RestoreAsBanner({
-                model: user,
-            })
-        );
-        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-            appId = options.apps[0]['_id'];
-        }
-
-        // will be the same for every domain. TODO: get domain/username/pass from django
-        if (this.getCurrentRoute() === "") {
-            if (user.displayOptions.singleAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:singleApp", appId);
-            } else if (user.displayOptions.landingPageAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:landingPageApp", appId);
-            } else {
-                FormplayerFrontend.trigger("apps:list", options.apps);
+    $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
+        var appId;
+        var apps = appCollection.toJSON();
+        if (Backbone.history) {
+            Backbone.history.start();
+            FormplayerFrontend.regions.restoreAsBanner.show(
+                new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                    model: user,
+                })
+            );
+            if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                appId = apps[0]['_id'];
             }
-            if (user.displayOptions.phoneMode) {
-                // Refresh on start of preview mode so it ensures we're on the latest app
-                // since app updates do not work.
-                FormplayerFrontend.trigger('refreshApplication', appId);
+
+            if (self.getCurrentRoute() === "") {
+                if (user.displayOptions.singleAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:singleApp", appId);
+                } else if (user.displayOptions.landingPageAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:landingPageApp", appId);
+                } else {
+                    FormplayerFrontend.trigger("apps:list", apps);
+                }
+                if (user.displayOptions.phoneMode) {
+                    // Refresh on start of preview mode so it ensures we're on the latest app
+                    // since app updates do not work.
+                    FormplayerFrontend.trigger('refreshApplication', appId);
+                }
             }
         }
-    }
-
+    });
     if (options.allowedHost) {
         window.addEventListener(
             "message",
@@ -258,12 +261,6 @@ FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
     });
     ko.cleanNode($debug[0]);
     $debug.koApplyBindings(cloudCareDebugger);
-});
-
-FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
-    var appId = FormplayerFrontend.request('getCurrentAppId');
-    var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
-    return currentApp;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -510,9 +507,9 @@ FormplayerFrontend.on('navigateHome', function() {
     FormplayerFrontend.regions.breadcrumb.empty();
     if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
-        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+        FormplayerFrontend.trigger("app:singleApp", appId);
     } else {
-        FormplayerFrontend.navigate("/apps", { trigger: true });
+        FormplayerFrontend.trigger("apps:list");
     }
 });
 
