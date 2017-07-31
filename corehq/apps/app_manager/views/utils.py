@@ -13,9 +13,7 @@ from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import Application, ReportModule, ATTACHMENT_REGEX, enable_usercase_if_necessary
 
-from dimagi.utils.make_uuid import random_hex
-
-from corehq.apps.app_manager.util import get_attachments, update_unique_ids
+from corehq.apps.app_manager.util import update_unique_ids
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -170,7 +168,6 @@ def _get_form_id_map(app):
 
 
 def _update_form_ids(app, master_app, id_map):
-    from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     attachments = master_app.get_attachments()
 
