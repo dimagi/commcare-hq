@@ -203,7 +203,18 @@ class MockDevice(object):
         else:
             self.case_blocks.extend(b.as_xml() for b in cases)
 
-    def sync(self, **config):
+    def post_changes(self, *args, **kw):
+        """Post enqueued changes from device to HQ
+
+        Calls `change_cases(*args, **kw)` with any arguments (if given)
+        for convenience.
+
+        This is the first half of a full sync. It does not affect the
+        latest sync log on the device or HQ and can be used when the
+        result of a restore on this device is not important.
+        """
+        if args or kw:
+            self.change_cases(*args, **kw)
         if self.case_blocks:
             # post device case changes
             token = self.last_sync.log._id
@@ -212,6 +223,10 @@ class MockDevice(object):
                 form_extras={"last_sync_token": token},
             )
             self.case_blocks = []
+
+    def sync(self, **config):
+        """Synchronize device with HQ"""
+        self.post_changes()
         # restore
         for name, value in self.restore_options.items():
             config.setdefault(name, value)
@@ -230,6 +245,12 @@ class SyncResult(object):
     def __init__(self, payload, log):
         self.xml = ElementTree.fromstring(payload)
         self.log = log
+
+    def get_log(self):
+        restore_id = (self.xml
+            .findall('{%s}Sync' % SYNC_XMLNS)[0]
+            .findall('{%s}restore_id' % SYNC_XMLNS)[0].text)
+        return get_properly_wrapped_sync_log(restore_id)
 
     @property
     @memoized

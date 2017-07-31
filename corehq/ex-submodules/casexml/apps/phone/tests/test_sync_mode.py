@@ -2172,92 +2172,27 @@ class SyncTokenReprocessingTest(SyncBaseTest):
     Tests sync token logic for fixing itself when it gets into a bad state.
     """
 
-    def testUpdateNonExisting(self):
-        case_id = 'non_existent'
-        caseblock = CaseBlock(
-            create=False,
-            case_id=case_id,
-            user_id=self.user_id,
-            owner_id=self.user_id,
-            case_type=PARENT_TYPE,
-        ).as_xml()
-        try:
-            self._postFakeWithSyncToken(caseblock, self.sync_log.get_id)
-            self.fail('posting an update to a non-existant case should fail')
-        except AssertionError:
-            # this should fail because it's a true error
-            pass
-
     def testShouldHaveCase(self):
         case_id = "should_have"
-        self._createCaseStubs([case_id])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(case_id=case_id, create=True)
+        sync_log = self.device.last_sync.get_log()
         cases_on_phone = sync_log.tests_only_get_cases_on_phone()
-        self.assertEqual(1, len(cases_on_phone))
-        self.assertEqual(case_id, cases_on_phone[0].case_id)
+        self.assertEqual({case_id}, {c.case_id for c in cases_on_phone})
 
         # manually delete it and then try to update
         sync_log.test_only_clear_cases_on_phone()
         sync_log.save()
 
-        update = CaseBlock(
-            create=False,
+        self.device.post_changes(CaseBlock(
             case_id=case_id,
             user_id=self.user_id,
             owner_id=self.user_id,
             case_type=PARENT_TYPE,
             update={'something': "changed"},
-        ).as_xml()
-
+        ))
         # this should work because it should magically fix itself
-        self._postFakeWithSyncToken(update, self.sync_log.get_id)
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        sync_log = self.device.last_sync.get_log()
         self.assertFalse(getattr(sync_log, 'has_assert_errors', False))
-
-    def testCodependencies(self):
-
-        case_id1 = 'bad1'
-        case_id2 = 'bad2'
-        initial_caseblocks = [CaseBlock(
-            create=True,
-            case_id=case_id,
-            user_id='not_me',
-            owner_id='not_me',
-            case_type=PARENT_TYPE,
-        ).as_xml() for case_id in [case_id1, case_id2]]
-
-        post_case_blocks(
-            initial_caseblocks,
-        )
-
-        def _get_bad_caseblocks(ids):
-            return [CaseBlock(
-                create=False,
-                case_id=id,
-                user_id=self.user_id,
-                owner_id=self.user_id,
-                case_type=PARENT_TYPE,
-            ).as_xml() for id in ids]
-
-        try:
-            post_case_blocks(
-                _get_bad_caseblocks([case_id1, case_id2]),
-                form_extras={ "last_sync_token": self.sync_log._id }
-            )
-            self.fail('posting an update to non-existant cases should fail')
-        except AssertionError:
-            # this should fail because it's a true error
-            pass
-
-        try:
-            post_case_blocks(
-                _get_bad_caseblocks([case_id2, case_id1]),
-                form_extras={ "last_sync_token": self.sync_log._id }
-            )
-            self.fail('posting an update to non-existant cases should fail')
-        except AssertionError:
-            # this should fail because it's a true error
-            pass
 
 
 @use_sql_backend
@@ -2277,24 +2212,17 @@ class LiveQuerySyncTokenReprocessingTestSQL(LiveQuerySyncTokenReprocessingTest):
 class LooseSyncTokenValidationTest(SyncBaseTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
-        domain = 'submission-domain-with-toggle'
-
-        def _test():
-            post_case_blocks(
-                [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
-                form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
-                domain=domain,
-            )
-
         # this is just asserting that an exception is not raised when there's no synclog
-        _test()
+        post_case_blocks(
+            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
+            form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
+            domain='submission-domain-with-toggle',
+        )
 
     def test_restore_with_bad_log_toggle_enabled(self):
-        domain = 'restore-domain-with-toggle'
-
-        def _test():
+        with self.assertRaises(RestoreException):
             RestoreConfig(
-                project=Domain(name=domain),
+                project=Domain(name='restore-domain-with-toggle'),
                 restore_user=self.user,
                 params=RestoreParams(
                     version=V2,
@@ -2302,9 +2230,6 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 ),
                 **self.restore_options
             ).get_payload()
-
-        with self.assertRaises(RestoreException):
-            _test()
 
 
 @use_sql_backend
