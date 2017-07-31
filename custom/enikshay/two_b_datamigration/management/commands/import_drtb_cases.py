@@ -894,7 +894,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 
 def get_culture_test_case_properties(domain, column_mapping, row):
     lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row))
-    raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+    culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": lab_name,
@@ -903,10 +903,27 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "test_type_value": "culture",
         "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
         "date_reported": clean_date(column_mapping.get_value("culture_result_date", row)),
-        # NEEDED: Culture type
-        # NEEDED: Result
+        "culture_type": culture_type,
+        "culture_type_label": get_culture_type_label(culture_type),
+        "result": clean_result(column_mapping.get_value("culture_result", row))
     }
     return properties
+
+
+def clean_culture_type(value):
+    if value is None:
+        return None
+    if value not in ("lc", "lj"):
+        raise Exception("Unexpected culture type: {}".format(value))
+    return value
+
+
+def get_culture_type_label(culture_type):
+    return {
+        None: None,
+        "lc": "Culture (LC)",
+        "lj": "Culture (LJ)",
+    }[culture_type]
 
 
 def get_dst_test_case_properties(column_mapping, row):
