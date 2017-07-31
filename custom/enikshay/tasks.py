@@ -14,12 +14,15 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+
 
 from .case_utils import (
     CASE_TYPE_EPISODE,
     get_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
+    get_person_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -127,10 +130,24 @@ class EpisodeUpdater(object):
             update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
-        # return all open 'episode' cases
         case_accessor = CaseAccessors(self.domain)
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        return case_accessor.iter_cases(case_ids)
+        episode_cases = case_accessor.iter_cases(case_ids)
+
+        for episode_case in episode_cases:
+            # if this episode is part of a deleted or archived person, don't update
+            try:
+                person_case = get_person_case_from_episode(self.domain, episode_case.case_id)
+            except ENikshayCaseNotFound:
+                continue
+
+            if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+                continue
+
+            if person_case.closed:
+                continue
+
+            yield episode_case
 
 
 class EpisodeAdherenceUpdate(object):
