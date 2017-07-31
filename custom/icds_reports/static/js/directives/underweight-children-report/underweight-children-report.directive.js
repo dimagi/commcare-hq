@@ -10,7 +10,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Undernutrition (weight-for-age)";
+    vm.label = "Prevalence of Undernutrition (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/underweight_children/map', label: 'Map'},
@@ -50,10 +50,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.total : 0);
-        var severely_underweight = $filter('indiaNumbers')(row ? row.severely_underweight : 0);
-        var moderately_underweight = $filter('indiaNumbers')(row ? row.moderately_underweight : 0);
-        var normal = $filter('indiaNumbers')(row ? row.normal : 0);
+        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / row.total) : 'N/A';
+        var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / row.total) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Underweight: <strong>' + severely_underweight + '</strong></div><div>Moderately Underweight: <strong>' + moderately_underweight +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
@@ -66,8 +66,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             vm.steps['map'].label = 'Map';
         }
 
-
-        maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -127,6 +126,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,
@@ -144,7 +144,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -164,7 +164,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(".2%")(day['y']);
                     };
 

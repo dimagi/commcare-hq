@@ -31,7 +31,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     if (menuResponse.appId === null || menuResponse.appId === undefined) {
                         FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
                             "required. If this persists, please report an issue to CommCareHQ");
-                        FormplayerFrontend.trigger("apps:list", options.apps);
+                        FormplayerFrontend.trigger("apps:list");
                         return;
                     }
                     urlObject.appId = menuResponse.appId;
@@ -106,18 +106,18 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 },
             });
 
-            if (model.isPersistentDetail) {
-                $('#select-case').hide();
-            } else {
-                $('#select-case').show();
-            }
-
             $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", caseId);
             });
             $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
+
+            if (model.isPersistentDetail) {
+                $('#case-detail-modal').find('#select-case').hide();
+            } else {
+                $('#case-detail-modal').find('#select-case').show();
+            }
         },
 
         getDetailList: function (detailObject) {

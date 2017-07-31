@@ -6,7 +6,7 @@
    id: app-settings-basic
    settings:
      - hq.application_version # App Version (disabled)
-@@ -14,7 +14,7 @@
+@@ -13,7 +13,7 @@
      - hq.profile_url
      - hq.manage_urls
  

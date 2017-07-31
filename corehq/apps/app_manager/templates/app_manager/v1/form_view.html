@@ -36,8 +36,6 @@
     {% if module.doc_type == 'AdvancedModule' %}
         <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
-    {% elif module.doc_type == 'CareplanModule' %}
-        <script src="{% static 'app_manager/js/forms/careplan_config_ui.js' %}"></script>
     {% else %}
         <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
     {% endif %}
@@ -53,9 +51,7 @@
         }
     </style>
 
-    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
 
     {% include "app_manager/v1/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}
@@ -111,7 +107,6 @@
     {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
     {% initial_page_data 'can_preview_form' can_preview_form %}
     {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
-    {% registerurl "cloudcare_main" domain '' %}
     {% registerurl "formplayer_single_app" domain app.id %}
 
     <div id="build_errors"></div>
@@ -241,8 +236,6 @@
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
                             {% include 'app_manager/v1/partials/case_config_advanced.html' %}
-                        {% elif module.doc_type == 'CareplanModule' %}
-                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
                         {% else %}
                             {% include 'app_manager/v1/partials/case_config.html' %}
                         {% endif %}

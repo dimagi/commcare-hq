@@ -153,7 +153,7 @@ A shadow module can neither **be** a parent module nor **have** a parent module
 
 A shadow module's source can be a parent module (the shadow will include a copy of the children), or have a parent module (the shadow will appear as a child of that same parent)
 
-Shadow modules are designed to be used with case modules. They may behave unpredictably if given an advanced module, reporting module, or careplan module as a source.
+Shadow modules are designed to be used with case modules. They may behave unpredictably if given an advanced module or reporting module as a source.
 
 Shadow modules do not necessarily behave well when the source module uses custom case tiles. If you experience problems, make the shadow module's case tile configuration exactly matches the source module's.
 

@@ -1,7 +1,7 @@
 /*globals $, COMMCAREHQ, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
+        v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
@@ -167,20 +167,6 @@ $(function () {
         $('#auto-select-case').koApplyBindings({
             auto_select_case: ko.observable(moduleBrief.auto_select_case),
         });
-    } else if (moduleType === 'careplan') {
-        var $container = $('#detail-screen-parent');
-        if ($container.length) {
-            var ParentSelect = hqImport('app_manager/js/details/screen_config.js').ParentSelect;
-            var parent_select_model = moduleBrief.parent_select;
-            var parentSelect = new ParentSelect({
-                active: parent_select_model.active,
-                moduleId: parent_select_model.module_id,
-                parentModules: initial_page_data('parent_modules'),
-                lang: moduleBrief.lang,
-                langs: moduleBrief.langs,
-            });
-            $container.koApplyBindings(parentSelect);
-        }
     }
 
     $(function () {

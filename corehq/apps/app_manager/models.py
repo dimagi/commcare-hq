@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -72,7 +72,6 @@ from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import get_url_base
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -90,7 +89,6 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
-import commcare_translations
 from corehq.util import bitly
 from corehq.util import view_utils
 from corehq.util.string_utils import random_string
@@ -921,10 +919,7 @@ class FormBase(DocumentSchema):
             elif doc_type == 'ShadowForm':
                 return ShadowForm.wrap(data)
             else:
-                try:
-                    return CareplanForm.wrap(data)
-                except ValueError:
-                    raise ValueError('Unexpected doc_type for Form', doc_type)
+                raise ValueError('Unexpected doc_type for Form', doc_type)
         else:
             return super(FormBase, cls).wrap(data)
 
@@ -2250,8 +2245,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             doc_type = data['doc_type']
             if doc_type == 'Module':
                 return Module.wrap(data)
-            elif doc_type == 'CareplanModule':
-                return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
@@ -3586,320 +3579,6 @@ class AdvancedModule(ModuleBase):
                 pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
 
 
-class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
-    form_type = 'careplan_form'
-    mode = StringProperty(required=True, choices=['create', 'update'])
-    custom_case_updates = DictProperty()
-    case_preload = DictProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        if cls is CareplanForm:
-            doc_type = data['doc_type']
-            if doc_type == 'CareplanGoalForm':
-                return CareplanGoalForm.wrap(data)
-            elif doc_type == 'CareplanTaskForm':
-                return CareplanTaskForm.wrap(data)
-            else:
-                raise ValueError('Unexpected doc_type for CareplanForm', doc_type)
-        else:
-            return super(CareplanForm, cls).wrap(data)
-
-    def add_stuff_to_xform(self, xform, build_profile_id=None):
-        super(CareplanForm, self).add_stuff_to_xform(xform, build_profile_id)
-        xform.add_care_plan(self)
-
-    def get_case_updates(self, case_type):
-        if case_type == self.case_type:
-            format_key = self.get_case_property_name_formatter()
-            return [format_key(*item) for item in self.case_updates().iteritems()]
-        else:
-            return []
-
-    def get_case_type(self):
-        return self.case_type
-
-    def get_parent_case_type(self):
-        return self._parent.case_type
-
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
-        if case_type == self.case_type:
-            if case_type == CAREPLAN_GOAL:
-                parent_types.add((module_case_type, 'parent'))
-            elif case_type == CAREPLAN_TASK:
-                parent_types.add((CAREPLAN_GOAL, 'goal'))
-            case_properties.update(self.case_updates().keys())
-
-        return parent_types, case_properties
-
-    def is_registration_form(self, case_type=None):
-        return self.mode == 'create' and (not case_type or self.case_type == case_type)
-
-    def update_app_case_meta(self, app_case_meta):
-        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {
-            q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
-        }
-        meta = app_case_meta.get_type(self.case_type)
-        for name, question_path in self.case_updates().items():
-            self.add_property_save(
-                app_case_meta,
-                self.case_type,
-                name,
-                questions,
-                question_path
-            )
-        for name, question_path in self.case_preload.items():
-            self.add_property_load(
-                app_case_meta,
-                self.case_type,
-                name,
-                questions,
-                question_path
-            )
-        meta.add_opener(self.unique_id, FormActionCondition(
-            type='always',
-        ))
-        meta.add_closer(self.unique_id, FormActionCondition(
-            type='if',
-            question=self.close_path,
-            answer='yes',
-        ))
-
-
-class CareplanGoalForm(CareplanForm):
-    case_type = CAREPLAN_GOAL
-    name_path = StringProperty(required=True, default='/data/name')
-    date_followup_path = StringProperty(required=True, default='/data/date_followup')
-    description_path = StringProperty(required=True, default='/data/description')
-    close_path = StringProperty(required=True, default='/data/close_goal')
-
-    @classmethod
-    def new_form(cls, lang, name, mode):
-        action = 'Update' if mode == 'update' else 'New'
-        form = CareplanGoalForm(mode=mode)
-        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[form.case_type])
-        form.name = {lang: name}
-        if mode == 'update':
-            form.description_path = '/data/description_group/description'
-        source = load_form_template('%s_%s.xml' % (form.case_type, mode))
-        return form, source
-
-    def case_updates(self):
-        changes = self.custom_case_updates.copy()
-        changes.update({
-            'date_followup': self.date_followup_path,
-            'description': self.description_path,
-        })
-        return changes
-
-    def get_fixed_questions(self):
-        def q(name, case_key, label):
-            return {
-                'name': name,
-                'key': case_key,
-                'label': label,
-                'path': self[name]
-            }
-        questions = [
-            q('description_path', 'description', _('Description')),
-            q('date_followup_path', 'date_followup', _('Followup date')),
-        ]
-        if self.mode == 'create':
-            return [q('name_path', 'name', _('Name'))] + questions
-        else:
-            return questions + [q('close_path', 'close', _('Close if'))]
-
-
-class CareplanTaskForm(CareplanForm):
-    case_type = CAREPLAN_TASK
-    name_path = StringProperty(required=True, default='/data/task_repeat/name')
-    date_followup_path = StringProperty(required=True, default='/data/date_followup')
-    description_path = StringProperty(required=True, default='/data/description')
-    latest_report_path = StringProperty(required=True, default='/data/progress_group/progress_update')
-    close_path = StringProperty(required=True, default='/data/task_complete')
-
-    @classmethod
-    def new_form(cls, lang, name, mode):
-        action = 'Update' if mode == 'update' else 'New'
-        form = CareplanTaskForm(mode=mode)
-        name = name or '%s Careplan %s' % (action, CAREPLAN_CASE_NAMES[form.case_type])
-        form.name = {lang: name}
-        if mode == 'create':
-            form.date_followup_path = '/data/task_repeat/date_followup'
-            form.description_path = '/data/task_repeat/description'
-        source = load_form_template('%s_%s.xml' % (form.case_type, mode))
-        return form, source
-
-    def case_updates(self):
-        changes = self.custom_case_updates.copy()
-        changes.update({
-            'date_followup': self.date_followup_path,
-        })
-        if self.mode == 'create':
-            changes['description'] = self.description_path
-        else:
-            changes['latest_report'] = self.latest_report_path
-        return changes
-
-    def get_fixed_questions(self):
-        def q(name, case_key, label):
-            return {
-                'name': name,
-                'key': case_key,
-                'label': label,
-                'path': self[name]
-            }
-        questions = [
-            q('date_followup_path', 'date_followup', _('Followup date')),
-        ]
-        if self.mode == 'create':
-            return [
-                q('name_path', 'name', _('Name')),
-                q('description_path', 'description', _('Description')),
-            ] + questions
-        else:
-            return questions + [
-                q('latest_report_path', 'latest_report', _('Latest report')),
-                q('close_path', 'close', _('Close if')),
-            ]
-
-
-class CareplanModule(ModuleBase):
-    """
-    A set of forms and configuration for managing the Care Plan workflow.
-    """
-    module_type = 'careplan'
-    parent_select = SchemaProperty(ParentSelect)
-
-    display_separately = BooleanProperty(default=False)
-    forms = SchemaListProperty(CareplanForm)
-    goal_details = SchemaProperty(DetailPair)
-    task_details = SchemaProperty(DetailPair)
-
-    @classmethod
-    def new_module(cls, name, lang, target_module_id, target_case_type):
-        lang = lang or 'en'
-        module = CareplanModule(
-            name={lang: name or ugettext("Care Plan")},
-            parent_select=ParentSelect(
-                active=True,
-                relationship='parent',
-                module_id=target_module_id
-            ),
-            case_type=target_case_type,
-            goal_details=DetailPair(
-                short=cls._get_detail(lang, 'goal_short'),
-                long=cls._get_detail(lang, 'goal_long'),
-            ),
-            task_details=DetailPair(
-                short=cls._get_detail(lang, 'task_short'),
-                long=cls._get_detail(lang, 'task_long'),
-            )
-        )
-        module.get_or_create_unique_id()
-        return module
-
-    @classmethod
-    def _get_detail(cls, lang, detail_type):
-        header = ugettext('Goal') if detail_type.startswith('goal') else ugettext('Task')
-        columns = [
-            DetailColumn(
-                format='plain',
-                header={lang: header},
-                field='name',
-                model='case'),
-            DetailColumn(
-                format='date',
-                header={lang: ugettext("Followup")},
-                field='date_followup',
-                model='case')]
-
-        if detail_type.endswith('long'):
-            columns.append(DetailColumn(
-                format='plain',
-                header={lang: ugettext("Description")},
-                field='description',
-                model='case'))
-
-        if detail_type == 'tasks_long':
-            columns.append(DetailColumn(
-                format='plain',
-                header={lang: ugettext("Last update")},
-                field='latest_report',
-                model='case'))
-
-        return Detail(type=detail_type, columns=columns)
-
-    def add_insert_form(self, from_module, form, index=None, with_source=False):
-        if isinstance(form, CareplanForm):
-            if index is not None:
-                self.forms.insert(index, form)
-            else:
-                self.forms.append(form)
-            return self.get_form(index or -1)
-        else:
-            raise IncompatibleFormTypeException()
-
-    def requires_case_details(self):
-        return True
-
-    def get_case_types(self):
-        return set([self.case_type]) | set(f.case_type for f in self.forms)
-
-    def get_form_by_type(self, case_type, mode):
-        for form in self.get_forms():
-            if form.case_type == case_type and form.mode == mode:
-                return form
-
-    def get_details(self):
-        return (
-            ('%s_short' % CAREPLAN_GOAL, self.goal_details.short, True),
-            ('%s_long' % CAREPLAN_GOAL, self.goal_details.long, True),
-            ('%s_short' % CAREPLAN_TASK, self.task_details.short, True),
-            ('%s_long' % CAREPLAN_TASK, self.task_details.long, True),
-        )
-
-    def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
-
-        module_info = self.get_module_info()
-
-        if needs_case_type and not self.case_type:
-            yield {
-                'type': 'no case type',
-                'module': module_info,
-            }
-
-        if needs_case_detail:
-            if not self.goal_details.short.columns:
-                yield {
-                    'type': 'no case detail for goals',
-                    'module': module_info,
-                }
-            if not self.task_details.short.columns:
-                yield {
-                    'type': 'no case detail for tasks',
-                    'module': module_info,
-                }
-            columns = self.goal_details.short.columns + self.goal_details.long.columns
-            columns += self.task_details.short.columns + self.task_details.long.columns
-            errors = self.validate_detail_columns(columns)
-            for error in errors:
-                yield error
-
-    def validate_for_build(self):
-        errors = super(CareplanModule, self).validate_for_build()
-        if not self.forms:
-            errors.append({
-                'type': 'no forms',
-                'module': self.get_module_info(),
-            })
-        return errors
-
-
 class ReportAppFilter(DocumentSchema):
 
     @classmethod
@@ -4989,10 +4668,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
 
     @property
-    def has_careplan_module(self):
-        return False
-
-    @property
     def url_base(self):
         custom_base_url = getattr(self, 'custom_base_url', None)
         return custom_base_url or get_url_base()
@@ -5485,7 +5160,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     created_from_template = StringProperty()
@@ -5517,6 +5191,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def wrap(cls, data):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
+        data['modules'] = [module for module in data.get('modules', [])
+                           if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
@@ -6248,10 +5924,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return setting
         return yaml_setting.get("default")
 
-    @property
-    def has_careplan_module(self):
-        return any((module for module in self.modules if isinstance(module, CareplanModule)))
-
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
@@ -6502,11 +6174,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
                 m.valid_domains.append(domain)
                 m.save()
 
-    if not app.is_remote_app() and any(module.uses_usercase() for module in app.get_modules()):
-        from corehq.apps.app_manager.util import enable_usercase
-        enable_usercase(domain)
+    if not app.is_remote_app():
+        enable_usercase_if_necessary(app)
 
     return app
+
+
+def enable_usercase_if_necessary(app):
+    if any(module.uses_usercase() for module in app.get_modules()):
+        from corehq.apps.app_manager.util import enable_usercase
+        enable_usercase(app.domain)
 
 
 class DeleteApplicationRecord(DeleteRecord):
@@ -6555,36 +6232,6 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
-
-
-class CareplanAppProperties(DocumentSchema):
-    name = StringProperty()
-    latest_release = StringProperty()
-    case_type = StringProperty()
-    goal_conf = DictProperty()
-    task_conf = DictProperty()
-
-
-class CareplanConfig(Document):
-    domain = StringProperty()
-    app_configs = SchemaDictProperty(CareplanAppProperties)
-
-    @classmethod
-    def for_domain(cls, domain):
-        res = cache_core.cached_view(
-            cls.get_db(),
-            "by_domain_doc_type_date/view",
-            key=[domain, 'CareplanConfig', None],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap)
-
-        if len(res) > 0:
-            result = res[0]
-        else:
-            result = None
-
-        return result
 
 
 # backwards compatibility with suite-1.0.xml

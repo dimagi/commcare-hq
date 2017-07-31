@@ -24,12 +24,6 @@ from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
-    CT_REQUISITION_MODE_3,
-    CT_LEDGER_STOCK,
-    CT_LEDGER_REQUESTED,
-    CT_REQUISITION_MODE_4,
-    CT_LEDGER_APPROVED,
-    CT_LEDGER_PREFIX,
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
@@ -125,37 +119,30 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
-    def change_xmlns(xform, replacing):
+
+    def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render()
-        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-        data = data.replace(replacing, xmlns, 1)
+        data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
-        xml = xform.render()
-        return xform, xml
+        return xform.render()
 
     try:
         xform = XForm(xml)
     except XFormException:
         pass
     else:
-        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-        for duplicate in duplicates:
-            if form == duplicate:
-                continue
-            else:
-                xform, xml = change_xmlns(xform, xform.data_node.tag_xmlns)
-                break
-
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
-            xform, xml = change_xmlns(xform, GENERIC_XMLNS)
+        tag_xmlns = xform.data_node.tag_xmlns
+        if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
+            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+            xml = change_xmlns(xform, GENERIC_XMLNS, xmlns)
 
     form.source = xml
 
-    # For registration forms, assume that the first question is the case name
-    # unless something else has been specified
     if form.is_registration_form():
+        # For registration forms, assume that the first question is the
+        # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
             path = form.actions.open_case.name_path
@@ -165,6 +152,8 @@ def save_xform(app, form, xml):
                     path = None
             if not path and len(questions):
                 form.actions.open_case.name_path = questions[0]['value']
+
+    return xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -286,27 +275,6 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
-def new_careplan_module(app, name, lang, target_module):
-    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
-    module = app.add_module(CareplanModule.new_module(
-        name,
-        lang,
-        target_module.unique_id,
-        target_module.case_type
-    ))
-
-    forms = [form_class.new_form(lang, name, mode)
-                for form_class in [CareplanGoalForm, CareplanTaskForm]
-                for mode in ['create', 'update']]
-
-    for form, source in forms:
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = source
-
-    return module
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
@@ -316,16 +284,6 @@ def languages_mapping():
         mapping["default"] = ["Default Language"]
         cache.set('__languages_mapping', mapping, 12*60*60)
     return mapping
-
-
-def commtrack_ledger_sections(mode):
-    sections = [CT_LEDGER_STOCK]
-    if mode == CT_REQUISITION_MODE_3:
-        sections += [CT_LEDGER_REQUESTED]
-    elif mode == CT_REQUISITION_MODE_4:
-        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
-
-    return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
 
 
 def version_key(ver):
@@ -529,13 +487,14 @@ def get_app_manager_template(user, v1, v2):
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
-        return v2
-    return v1
+    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
+        return v1
+    return v2
 
 
-def get_form_data(domain, app):
+def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+    from corehq.apps.app_manager.models import ShadowForm
 
     modules = []
     errors = []
@@ -549,7 +508,10 @@ def get_form_data(domain, app):
             'is_surveys': module.is_surveys,
         }
 
-        for form in module.get_forms():
+        form_list = module.get_forms()
+        if not include_shadow_forms:
+            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
+        for form in form_list:
             form_meta = {
                 'id': form.unique_id,
                 'name': form.name,

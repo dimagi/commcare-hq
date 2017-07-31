@@ -82,15 +82,6 @@ class CommtrackActionConfig(DocumentSchema):
         return self.action in STOCK_ACTION_ORDER
 
 
-# todo: delete this?
-class CommtrackRequisitionConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    # requisitions have their own sets of actions
-    actions = SchemaListProperty(CommtrackActionConfig)
-
-
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
@@ -103,23 +94,6 @@ class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
     understock_threshold = DecimalProperty(default=1.5)  # in months
     overstock_threshold = DecimalProperty(default=3)  # in months
-
-
-class OpenLMISConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    url = StringProperty()
-    username = StringProperty()
-    # we store passwords in cleartext right now, but in the future may want
-    # to leverage something like oauth to manage this better
-    password = StringProperty()
-
-    using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
-
-    @property
-    def is_configured(self):
-        return True if self.enabled and self.url and self.password and self.username else False
 
 
 class AlertConfig(DocumentSchema):
@@ -154,13 +128,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     actions = SchemaListProperty(CommtrackActionConfig)
     # TODO must catch ambiguous action lists (two action configs with the same 'name')
 
-    multiaction_enabled = BooleanProperty()
-    multiaction_keyword_ = StringProperty()
-
-    # todo: remove?
-    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
-    openlmis_config = SchemaProperty(OpenLMISConfig)
-
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
@@ -170,14 +137,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
     individual_consumption_defaults = BooleanProperty(default=False)
-
-    @property
-    def multiaction_keyword(self):
-        return self.multiaction_keyword_
-
-    @multiaction_keyword.setter
-    def multiaction_keyword(self, val):
-        self.multiaction_keyword_ = val.lower() if val else None
 
     # configured on Subscribe Sms page
     alert_config = SchemaProperty(AlertConfig)
@@ -197,16 +156,10 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     @property
     def all_actions(self):
-        return self.actions + (self.requisition_config.actions if self.requisitions_enabled else [])
+        return self.actions
 
     def action_by_keyword(self, keyword):
-        def _action(action, type):
-            action.type = type
-            return action
-        actions = [_action(a, 'stock') for a in self.actions]
-        if self.requisitions_enabled:
-            actions += [_action(a, 'req') for a in self.requisition_config.actions]
-        return dict((a.keyword.lower(), a) for a in actions).get(keyword.lower())
+        return dict((a.keyword.lower(), a) for a in self.actions).get(keyword.lower())
 
     def get_consumption_config(self):
         def _default_monthly_consumption(case_id, product_id):
@@ -242,14 +195,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
-
-    @property
-    def requisitions_enabled(self):
-        return self.requisition_config.enabled
-
-    @property
-    def openlmis_enabled(self):
-        return self.openlmis_config.enabled
 
 
 @receiver(commcare_domain_pre_delete)

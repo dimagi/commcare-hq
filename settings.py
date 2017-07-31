@@ -16,10 +16,6 @@ djcelery.setup_loader()
 
 DEBUG = True
 LESS_DEBUG = DEBUG
-# Enable LESS_WATCH if you want less.js to constantly recompile.
-# Useful if you're making changes to the less files and don't want to refresh
-# your page.
-LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -386,6 +382,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.two_b_datamigration',
+    'custom.enikshay.two_b_release_1',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -420,9 +417,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-
-    # submodules with tests that run on travis
-    'dimagi.utils',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
@@ -1874,10 +1868,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'adherence.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
@@ -1957,7 +1953,9 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
@@ -2147,6 +2145,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "malawi-fp-study"),
     ("production", "rec"),
     ("softlayer", "enikshay"),
 }
@@ -2164,7 +2163,6 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
-    'less_watch': LESS_WATCH,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'

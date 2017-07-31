@@ -10,7 +10,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
-from corehq.apps.app_manager.models import Application, ReportModule
+from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -37,7 +37,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
-    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
+    form_view = 'view_form' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'form_source'
 
     if app_id is not None:
         args.append(app_id)
@@ -149,6 +149,7 @@ def overwrite_app(app, master_build, report_map=None):
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
     wrapped_app.copy_attachments(master_build)
+    enable_usercase_if_necessary(wrapped_app)
     wrapped_app.save(increment_version=False)
 
 

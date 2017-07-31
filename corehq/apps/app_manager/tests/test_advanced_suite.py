@@ -52,11 +52,6 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         self.assertXmlEqual(self.get_xml('suite-advanced-filter'), app.create_suite())
 
-    @commtrack_enabled(True)
-    def test_advanced_suite_commtrack(self):
-        app = Application.wrap(self.get_json('suite-advanced'))
-        self.assertXmlEqual(self.get_xml('suite-advanced-commtrack'), app.create_suite())
-
     def test_advanced_suite_auto_select_case_mobile(self):
         app = Application.wrap(self.get_json('suite-advanced'))
         app.get_module(1).auto_select_case = True

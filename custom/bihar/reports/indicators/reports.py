@@ -8,7 +8,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn
 from custom.bihar.utils import groups_for_user, get_all_owner_ids_from_group
