@@ -222,7 +222,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         };
 
         var resultRegex = new RegExp(
-            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>([\\s\\S]*?)\\s*</result>\\s*|' +
+            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>\n*([\\s\\S]*?)\\s*</result>\\s*|' +
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
 
         self.formatResult = function (output) {

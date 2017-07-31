@@ -149,7 +149,9 @@
                         <!--ko if: success() && formattedResult() === ''-->
                         <div><i>{% trans "Empty String" %}</i></div>
                         <!--/ko-->
-                        <span data-bind="text: formattedResult()"></span>
+                        <!--ko if: formattedResult()-->
+                        <pre data-bind="text: formattedResult()"></pre>
+                        <!--/ko-->
                     </td>
                 </tr>
             </tbody>
