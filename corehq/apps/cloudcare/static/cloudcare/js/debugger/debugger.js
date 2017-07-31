@@ -198,7 +198,15 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         self.$xpath = null;
         self.codeMirrorResult = null;
         self.result = ko.observable('');
-        self.success = ko.observable(true);
+        self.success = ko.observable();
+        var resultRegex = new RegExp(
+            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>([\\s\\S]*?)\\s*</result>\\s*|' +
+            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
+
+        self.formatResult = function (output) {
+            return output.replace(resultRegex, "$1");
+        };
+
         self.onSubmitXPath = function() {
             self.evaluate(self.xpath());
         };
@@ -264,7 +272,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         };
 
         self.result.subscribe(function(newResult) {
-            self.codeMirrorResult.setValue(newResult);
+            self.codeMirrorResult.setValue(self.formatResult(newResult));
         });
 
         self.isSuccess = function(query) {
