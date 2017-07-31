@@ -161,8 +161,8 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
 
 def _get_form_id_map(app):
     id_map = {}
-    for module in app['modules'].values():
-        for form in module['forms'].values():
+    for module in app['modules']:
+        for form in module['forms']:
             id_map[form['xmlns']] = form['unique_id']
     return id_map
 
