@@ -741,20 +741,15 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
             "No example data was in the original data dump, so didn't know how to handle it.")
 
 
-def get_cbnaat_resistance(column_mapping, row):
-    # TODO: This needs a remapping
-    return None
 
+def get_cbnaat_resistance(column_mapping, row):
     value = column_mapping.get_value("cbnaat_result", row)
     if value is None:
         return None
-    if value.startswith("R ") or value in ("R", "R\n R", "RR"):
-        resistant = True
-    elif value == "S":
-        resistant = False
-    else:
-        raise Exception("Unrecognized result: {}".format(value))
-    return resistant
+    if value not in ["sensitive", "resistant"]:
+        Exception("Unrecognized cbnaat result: {}".format(value))
+    return value == "resistant"
+
 
 
 def clean_mumbai_lpa_resistance_value(value):
