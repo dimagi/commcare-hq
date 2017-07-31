@@ -34,9 +34,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-31 17:53+0000\n"
-"PO-Revision-Date: 2017-07-31 12:36+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>\n"
+"POT-Creation-Date: 2017-07-31 18:31+0000\n"
+"PO-Revision-Date: 2017-07-31 18:23+0000\n"
+"Last-Translator: Jennifer Schweers <jschweers@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -6406,7 +6406,7 @@ msgstr "Installer CommCare"
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:18
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html:25
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:35
-#: corehq/apps/prelogin/templates/prelogin/base.html:228
+#: corehq/apps/prelogin/templates/prelogin/base.html:227
 #: corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:152
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
@@ -10526,9 +10526,9 @@ msgstr ""
 "Ce menu n'utilise actuellement pas de dossiers.\n"
 "Les changements faits ici n'auront pas d'effet jusqu'à ce vous utilisez:\n"
 "<ol>\n"
-"<li>des formulaires qui exigent un dossier ou<li>\n"
+"<li>des formulaires qui exigent un dossier ou</li>\n"
 "<li>si vous sélectionnez le paramètre <strong> d'item du menu de la liste "
-"des dossiers <strong>. </li>\n"
+"des dossiers </strong>. </li>\n"
 "</ol>"
 
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_list_setting.html:24
@@ -15344,7 +15344,7 @@ msgstr "changer"
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:19
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/shared_pricing_table.html:50
-#: corehq/apps/prelogin/templates/prelogin/base.html:177
+#: corehq/apps/prelogin/templates/prelogin/base.html:176
 #: corehq/apps/userreports/views.py:310
 msgid "Pricing"
 msgstr "Tarifs"
@@ -17058,7 +17058,7 @@ msgstr "Utilisez les bons sauvegardés"
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html:9
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html:9
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
-#: corehq/apps/prelogin/templates/prelogin/base.html:186
+#: corehq/apps/prelogin/templates/prelogin/base.html:185
 #: corehq/apps/style/templates/style/base.html:278
 msgid "Sign In"
 msgstr "Connexion"
@@ -26228,23 +26228,23 @@ msgstr ""
 "\n"
 "Avez-vous les questions ou voulez-vous demander une démonstration?"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:158
+#: corehq/apps/prelogin/templates/prelogin/base.html:157
 msgid "Toggle Navigation"
 msgstr "Bascule la navigation"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:175
+#: corehq/apps/prelogin/templates/prelogin/base.html:174
 msgid "Solutions"
 msgstr "Solutions"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:176
+#: corehq/apps/prelogin/templates/prelogin/base.html:175
 msgid "Impact"
 msgstr "Impact"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:182
+#: corehq/apps/prelogin/templates/prelogin/base.html:181
 msgid "Ask for a Demo"
 msgstr "Demander une version démo"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:215
+#: corehq/apps/prelogin/templates/prelogin/base.html:214
 #, python-format
 msgid ""
 "\n"
@@ -26260,11 +26260,11 @@ msgstr ""
 "Lisez <a href=\"https://www.commcarehq.org/eula/\">Licence Utilisateur "
 "Final</a>."
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:230
+#: corehq/apps/prelogin/templates/prelogin/base.html:229
 msgid "Get in Touch With Us: Contact Dimagi"
 msgstr "Faites nous signe: Contactez Dimagi"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:235
+#: corehq/apps/prelogin/templates/prelogin/base.html:234
 msgid ""
 "\n"
 "                            Please fill out the form below and someone from "
@@ -40046,29 +40046,29 @@ msgstr ""
 msgid "BETS - Beneficiary creation and update"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:50
+#: custom/enikshay/integrations/nikshay/repeaters.py:49
 msgid "Forward eNikshay Patients to Nikshay (episode case type)"
 msgstr ""
 "Transférer les patients eNikshay à Nikshay (type de dossiers d'épisode)"
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:86
+#: custom/enikshay/integrations/nikshay/repeaters.py:85
 msgid "Forward eNikshay Patient's HIV Test to Nikshay (person case type)"
 msgstr ""
 "Transférer les test de VIH des patients eNikshay à Nikshay (type de dossiers "
 "de personnes)"
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:124
+#: custom/enikshay/integrations/nikshay/repeaters.py:123
 msgid "Forward Treatment Outcomes to Nikshay (episode case type)"
 msgstr ""
 "Transférer les résultats des traitements à Nikshay (type de dossiers "
 "d'épisode)"
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:154
+#: custom/enikshay/integrations/nikshay/repeaters.py:153
 msgid "Forward eNikshay Patient's Follow Ups to Nikshay (test case type)"
 msgstr ""
 "Transférer les suivis des patients eNikshay à Nikshay (type de dossiers test)"
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:199
+#: custom/enikshay/integrations/nikshay/repeaters.py:200
 msgid "Forward eNikshay Private Patients to Nikshay (episode case type)"
 msgstr ""
 "Transférer les patients eNikshay à Nikshay (type de dossiers d'épisode)"

@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-31 17:53+0000\n"
-"PO-Revision-Date: 2017-07-27 16:11+0000\n"
+"POT-Creation-Date: 2017-07-31 18:31+0000\n"
+"PO-Revision-Date: 2017-07-31 17:55+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
@@ -5454,7 +5454,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:18
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html:25
 #: corehq/apps/hqmedia/templates/hqmedia/partials/multimedia_uploader.html:35
-#: corehq/apps/prelogin/templates/prelogin/base.html:228
+#: corehq/apps/prelogin/templates/prelogin/base.html:227
 #: corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:152
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
@@ -13320,7 +13320,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:19
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/shared_pricing_table.html:50
-#: corehq/apps/prelogin/templates/prelogin/base.html:177
+#: corehq/apps/prelogin/templates/prelogin/base.html:176
 #: corehq/apps/userreports/views.py:310
 msgid "Pricing"
 msgstr ""
@@ -14720,7 +14720,7 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/password_change_done.html:9
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html:9
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
-#: corehq/apps/prelogin/templates/prelogin/base.html:186
+#: corehq/apps/prelogin/templates/prelogin/base.html:185
 #: corehq/apps/style/templates/style/base.html:278
 msgid "Sign In"
 msgstr ""
@@ -22478,23 +22478,23 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:158
+#: corehq/apps/prelogin/templates/prelogin/base.html:157
 msgid "Toggle Navigation"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:175
+#: corehq/apps/prelogin/templates/prelogin/base.html:174
 msgid "Solutions"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:176
+#: corehq/apps/prelogin/templates/prelogin/base.html:175
 msgid "Impact"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:182
+#: corehq/apps/prelogin/templates/prelogin/base.html:181
 msgid "Ask for a Demo"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:215
+#: corehq/apps/prelogin/templates/prelogin/base.html:214
 #, python-format
 msgid ""
 "\n"
@@ -22505,11 +22505,11 @@ msgid ""
 "                    "
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:230
+#: corehq/apps/prelogin/templates/prelogin/base.html:229
 msgid "Get in Touch With Us: Contact Dimagi"
 msgstr ""
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:235
+#: corehq/apps/prelogin/templates/prelogin/base.html:234
 msgid ""
 "\n"
 "                            Please fill out the form below and someone from "
@@ -34883,23 +34883,23 @@ msgstr ""
 msgid "BETS - Beneficiary creation and update"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:50
+#: custom/enikshay/integrations/nikshay/repeaters.py:49
 msgid "Forward eNikshay Patients to Nikshay (episode case type)"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:86
+#: custom/enikshay/integrations/nikshay/repeaters.py:85
 msgid "Forward eNikshay Patient's HIV Test to Nikshay (person case type)"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:124
+#: custom/enikshay/integrations/nikshay/repeaters.py:123
 msgid "Forward Treatment Outcomes to Nikshay (episode case type)"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:154
+#: custom/enikshay/integrations/nikshay/repeaters.py:153
 msgid "Forward eNikshay Patient's Follow Ups to Nikshay (test case type)"
 msgstr ""
 
-#: custom/enikshay/integrations/nikshay/repeaters.py:199
+#: custom/enikshay/integrations/nikshay/repeaters.py:200
 msgid "Forward eNikshay Private Patients to Nikshay (episode case type)"
 msgstr ""
 
