@@ -212,7 +212,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 },
                 success: function () {
                     return this.status === 'accepted';
-                }
+                },
             };
         };
         self.xPathQuery = ko.observable(null);
@@ -391,7 +391,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
     ko.bindingHandlers.codeMirror = {
         /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
-        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        init: function(element, valueAccessor) {
             var options = {
                 mode: 'xml',
                 viewportMargin: Infinity,
@@ -402,12 +402,12 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             editor.setSize(null, 200);  // hard-coded right now;
             element.editor = editor;
         },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        update: function(element, valueAccessor) {
             var observedValue = ko.unwrap(valueAccessor());
             if (element.editor) {
                 element.editor.setValue(observedValue);
             }
-        }
+        },
     };
 
     return {
