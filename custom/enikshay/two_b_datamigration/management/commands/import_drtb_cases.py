@@ -653,18 +653,27 @@ def get_disease_site_properties(column_mapping, row):
     xlsx_value = column_mapping.get_value("site_of_disease", row)
     if not xlsx_value:
         return {}
-    if xlsx_value.split()[0] in ("EP", "Extrapulmonary"):
-        return {
-            "disease_classification": "extra_pulmonary",
-            "site_choice": None,
-            "site_detail": xlsx_value,
-        }
+    if xlsx_value not in [
+        "pulmonary",
+        "extra_pulmonary",
+        "extra_pulmonary (lymph_node)",
+        "extra_pulmonary (spine)",
+        "extra_pulmonary (brain)",
+        "extra_pulmonary (pleural_effusion)",
+        "extra_pulmonary (abdominal)",
+        "extra_pulmonary (other)",
+    ]:
+        raise Exception("Invalid site of disease: {}".format(xlsx_value))
+    classification = "extra_pulmonary" if "extra_pulmonary" in xlsx_value else "pulmonary"
+    match = re.match("\((.*)\)", xlsx_value)
+    if match:
+        site = match.groups()[0]
+    else:
+        site = None
     return {
-        "site_detail": xlsx_value,
+        "disease_classification": classification,
+        "site_detail": site,
     }
-    # TODO: (WAITING) waiting for EY to explain the mapping
-    # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=1748484835
-
 
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
