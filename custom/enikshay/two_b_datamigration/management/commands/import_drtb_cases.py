@@ -222,8 +222,7 @@ MUMBAI_MAP = {
     "bdq_eligible": 88,
     "treatment_initiation_date": 89,
     "drtb_type": 90,
-    # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
-    # "treatment_status": 93,
+    "mumbai_treatment_status": 93,
     "treatment_regimen": 94,
     "ip_to_cp_date": 97,
     "treatment_outcome": 180,
@@ -556,6 +555,8 @@ def get_episode_case_properties(domain, column_mapping, row):
         "height": clean_height(column_mapping.get_value("height", row)),
         "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
+        "treatment_status": clean_mumbai_treatment_status(
+            column_mapping.get_value("mumbai_treatment_status", row), treatment_initiation_date),
     }
 
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
@@ -1016,6 +1017,31 @@ def convert_treatment_status(status_in_xlsx):
         "Not initiated (reason remark)": "other",
     }[status_in_xlsx]
 
+
+def clean_mumbai_treatment_status(value, treatment_initiation_date):
+    # TODO: (WAITING) Note that this value may also need to be used for treatment outcome
+    if value == "Transferred Out":
+        return "referred_pending_feedback"
+    elif treatment_initiation_date:
+        return "initiated_second_line_treatment"
+    else:
+        if value in [
+            None,
+            "initiated_first_line_treatment",
+            "initiated_outside_facility",
+            "initiated_second_line_treatment",
+            "initiated_outside_rntcp",
+            "untraceable_incomplete_address",
+            "untraceable_migrated",
+            "refuse_treatment",
+            "repeat_diagnosis",
+            "wrong_diagnosis",
+            "referred_pending_feedback",
+            "other",
+            "died",
+        ]:
+            return value
+        raise Exception("Unexpected treatment status: {}".format(value))
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
 
