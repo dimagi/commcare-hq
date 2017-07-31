@@ -153,7 +153,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             this.formattedQuestionsHtml(response.formattedQuestions);
             this.instanceXml(response.instanceXml);
             this.evalXPath.autocomplete(response.questionList);
-            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
             this.updating(false);
         }.bind(this));
     };
@@ -175,7 +175,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             }
         ).done(function(response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
-            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
             this.updating(false);
         }.bind(this));
     };
@@ -194,15 +194,33 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         });
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
-        self.recentXPathQueries = ko.observableArray();
         self.$xpath = null;
-        self.result = ko.observable('');
-        self.success = ko.observable();
-        self.codeMirrorOptions = {
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
+        self.newXPathQuery = function (data) {
+            return {
+                status: data.status,
+                output: data.output,
+                xpath: data.xpath,
+                result: function () {
+                    if (this.success()) {
+                        return data.output;
+                    } else {
+                        return data.output || gettext('Error evaluating expression.');
+                    }
+                },
+                formattedResult: function () {
+                    return self.formatResult(this.result());
+                },
+                success: function () {
+                    return self.isSuccess(this);
+                }
+            };
         };
+        self.xPathQuery = ko.observable(self.newXPathQuery({}));
+        self.recentXPathQueries = ko.observableArray();
+        self.setRecentXPathQueries = function (rawQueries) {
+            self.recentXPathQueries(_.map(rawQueries, self.newXPathQuery));
+        };
+
         var resultRegex = new RegExp(
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>([\\s\\S]*?)\\s*</result>\\s*|' +
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
@@ -246,21 +264,17 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 },
                 self.options.sessionType
             ).done(function(response) {
-                self.success(response.status === "accepted");
-                self.recentXPathQueries.unshift({
+                var xPathQuery = self.newXPathQuery({
                     status: response.status,
                     output: response.output,
                     xpath: xpath,
                 });
+                self.xPathQuery(xPathQuery);
+                self.recentXPathQueries.unshift(xPathQuery);
                 // Ensure at the maximum we only show 6 queries
                 self.recentXPathQueries(
                     self.recentXPathQueries.slice(0, 6)
                 );
-                if (self.success()) {
-                    self.result(response.output);
-                } else {
-                    self.result(response.output || gettext('Error evaluating expression.'));
-                }
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
@@ -382,7 +396,11 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     ko.bindingHandlers.codeMirror = {
         /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
         init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-            var options = viewModel.codeMirrorOptions || {};
+            var options = {
+                mode: 'xml',
+                viewportMargin: Infinity,
+                readOnly: true,
+            };
             options.value = ko.unwrap(valueAccessor());
             var editor = CodeMirror.fromTextArea(element, options);
             editor.setSize(null, 200);  // hard-coded right now;

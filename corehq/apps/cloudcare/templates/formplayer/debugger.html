@@ -82,6 +82,15 @@
     <div id="xml-viewer-pretty"></div>
 </script>
 
+<script type="text/html" id="debugger-evaluate-result-template">
+    <!--ko if: success() && formattedResult() === ''-->
+    <div><i>{% trans "Empty String" %}</i></div>
+    <!--/ko-->
+    <textarea type="text" data-bind="
+        codeMirror: formattedResult()
+    "></textarea>
+</script>
+
 <script type="text/html" id="debugger-evaluate-template">
 <!--ko with: evalXPath-->
     <form class="form-horizontal" data-bind="submit: onSubmitXPath">
@@ -107,13 +116,10 @@
                     data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
             </div>
         </div>
-        <div class="col-sm-12">
-            <!--ko if: success() && formatResult(result()) === ''-->
-            <div><i>{% trans "Empty String" %}</i></div>
-            <!--/ko-->
-            <textarea type="text" data-bind="
-                codeMirror: formatResult(result())
-            "></textarea>
+        <div class="col-sm-12" data-bind="template: {
+            name: 'debugger-evaluate-result-template',
+            data: xPathQuery()
+        }">
         </div>
     </form>
     <div class="row">
@@ -129,10 +135,10 @@
                     <td class="col-sm-1 query-status">
                         <span><i class="fa" data-bind="
                             css: {
-                                'fa-check': $parent.isSuccess($data),
-                                'fa-times': !$parent.isSuccess($data),
-                                'text-success': $parent.isSuccess($data),
-                                'text-danger': !$parent.isSuccess($data)
+                                'fa-check': success(),
+                                'fa-times': !success(),
+                                'text-success': success(),
+                                'text-danger': !success()
                             }
                         "></i></span>
                     </td>
@@ -140,10 +146,10 @@
                         <span data-bind="text: xpath"></span>
                     </td>
                     <td class="col-sm-3">
-                        <!--ko if: $parent.isSuccess($data) && $parent.formatResult(output) === ''-->
+                        <!--ko if: success() && formattedResult() === ''-->
                         <div><i>{% trans "Empty String" %}</i></div>
                         <!--/ko-->
-                        <span data-bind="text: $parent.formatResult(output)"></span>
+                        <span data-bind="text: formattedResult()"></span>
                     </td>
                 </tr>
             </tbody>
