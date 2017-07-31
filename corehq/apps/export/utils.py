@@ -90,8 +90,6 @@ def convert_saved_export_to_export_instance(
         else:
             app_id = saved_export.app_id
 
-        assert app_id, 'Form exports require an app id'
-
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
             domain,
