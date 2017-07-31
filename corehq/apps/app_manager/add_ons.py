@@ -231,7 +231,9 @@ def init_app(request, app):
     if app.add_ons:
         return
 
-    previews = feature_previews.previews_dict(app.domain)
+    # Don't use previews_dict because it doesn't include disabled previews
+    previews = {p.slug: p.enabled(app.domain) for p in feature_previews.all_previews()}
+
     domain = Domain.get_by_name(app.domain)
     for slug in _ADD_ONS.keys():
         add_on = _ADD_ONS[slug]
@@ -246,5 +248,6 @@ def init_app(request, app):
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
 
             # Turn on if this domain was created prior to add-ons release
-            enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
+            if slug != 'empty_case_lists' and slug not in previews:
+                enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable
