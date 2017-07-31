@@ -125,6 +125,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/registered_household/:step", {
                 template : "<registered-household></registered-household>",
+            })
+            .when("/enrolled_children", {
+                redirectTo : "/enrolled_children/map",
+            })
+            .when("/enrolled_children/:step", {
+                template : "<enrolled-children></enrolled-children>",
             });
     }]);
 

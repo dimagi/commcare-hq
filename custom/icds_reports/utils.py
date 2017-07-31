@@ -4126,3 +4126,180 @@ def get_registered_household_sector_data(config, loc_level):
             }
         ]
     }
+
+
+def get_enrolled_children_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            valid=Sum('valid_in_month'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        average.append(valid)
+        row_values = {
+            'valid': valid or 0,
+            'fillKey': 'Children'
+        }
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'Children': BLUE})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "enrolled_children",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Total number of households registered."
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_enrolled_children_data_chart(config, loc_level):
+    config['month'] = datetime(*config['month'])
+
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', 'age_tranche', '%s_name' % loc_level
+    ).annotate(
+        valid=Sum('valid_in_month'),
+    ).order_by('month')
+
+    chart = OrderedDict()
+    chart.update({'0-1 month': 0})
+    chart.update({'1-6 months': 0})
+    chart.update({'6-12 months': 0})
+    chart.update({'1-3 years': 0})
+    chart.update({'3-6 years': 0})
+
+    all = 0
+    best_worst = {}
+    for row in chart_data:
+        location = row['%s_name' % loc_level]
+
+        if not row['age_tranche']:
+            continue
+
+        age = int(row['age_tranche'])
+        valid = row['valid']
+        all += valid
+        if 0 <= age < 1:
+            chart['0-1 month'] += valid
+        elif 1 <= age < 6:
+            chart['1-6 months'] += valid
+        elif 6 <= age < 12:
+            chart['6-12 months'] += valid
+        elif 12 <= age < 36:
+            chart['1-3 years'] += valid
+        elif 36 <= age <= 72:
+            chart['3-6 years'] += valid
+
+        if location in best_worst:
+            best_worst[location] += valid
+        else:
+            best_worst[location] = valid
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value,
+                        'all': all
+                    } for key, value in chart.iteritems()
+                ],
+                "key": "Children (0-6 years) who are enrolled",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+    }
+
+
+def get_enrolled_children_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        valid=Sum('valid_in_month'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'blue': 0,
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'blue': []
+    }
+
+    for row in data:
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['blue'].append([tmp_name, loc_data['blue']])
+            loc_data = {
+                'blue': 0
+            }
+
+        loc_data['blue'] += valid
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['blue'].append([tmp_name, loc_data['blue']])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['blue'],
+                "key": "Number Of Children",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ]
+    }

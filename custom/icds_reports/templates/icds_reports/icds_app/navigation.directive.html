@@ -78,6 +78,10 @@
                         <a href="{$ goToStep('registered_household', $location.search()) $}" class="fa">{% trans "Registered Households" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/enrolled_children') !== -1}">
+                        <a href="{$ goToStep('enrolled_children', $location.search()) $}" class="fa">{% trans "Children (0-6 years) who are enrolled for ICDS services" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
