@@ -6,7 +6,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
     ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, LactatingEnrolledWomenView, \
-    AdolescentGirlsView
+    AdolescentGirlsView, AdhaarBeneficiariesView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -83,4 +83,8 @@ urlpatterns = [
         r'^adolescent_girls/(?P<step>[\w-]+)/',
         AdolescentGirlsView.as_view(),
         name='adolescent_girls'),
+    url(
+        r'^adhaar/(?P<step>[\w-]+)/',
+        AdhaarBeneficiariesView.as_view(),
+        name='adhaar'),
 ]

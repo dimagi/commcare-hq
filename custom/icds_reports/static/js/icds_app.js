@@ -149,6 +149,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/adolescent_girls/:step", {
                 template : "<adolescent-girls></adolescent-girls>",
+            })
+            .when("/adhaar", {
+                redirectTo : "/adhaar/map",
+            })
+            .when("/adhaar/:step", {
+                template : "<adhaar-beneficiary></adhaar-beneficiary>",
             });
     }]);
 

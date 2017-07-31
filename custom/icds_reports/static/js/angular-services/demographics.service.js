@@ -42,5 +42,13 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             });
         },
+        getAdhaarData: function(step, params) {
+            var get_url = url('adhaar', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

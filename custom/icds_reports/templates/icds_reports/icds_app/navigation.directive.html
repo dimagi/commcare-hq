@@ -94,6 +94,10 @@
                         <a href="{$ goToStep('adolescent_girls', $location.search()) $}" class="fa">{% trans "Adolescent Girls (11-18 years)" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/adhaar') !== -1}">
+                        <a href="{$ goToStep('adhaar', $location.search()) $}" class="fa">{% trans "% Adhaar seeded beneficaries" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
