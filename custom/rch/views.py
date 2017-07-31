@@ -6,6 +6,8 @@ from django.utils.translation import ugettext_noop
 from django.views.generic import TemplateView
 from django.core import serializers
 from django.utils.decorators import method_decorator
+from django.conf import settings
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -15,7 +17,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.style.decorators import use_select2
 from custom.rch.forms import BeneficiariesFilterForm
-from custom.rch.models import RCHRecord, AreaMapping
+from custom.rch.models import RCHRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
 
 ICDS_CAS_DOMAIN = "icds-cas"
 RECORDS_PER_PAGE = 200
@@ -207,6 +209,17 @@ class BeneficiaryView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(BeneficiaryView, self).dispatch(request, *args, **kwargs)
 
+    def _get_cas_values(self, details, beneficiary_type, person_case_id):
+        person_case = CaseAccessors('icds-cas').get_case(person_case_id)
+        if person_case:
+            person_case_properties = person_case.dynamic_case_properties()
+            field_mappings = settings.RCH_PERMITTED_FIELD_MAPPINGS[RCH_RECORD_TYPE_MAPPING[beneficiary_type]]
+            for case_type in field_mappings:
+                if case_type == 'person':
+                    for rch_field, cas_field in field_mappings[case_type].items():
+                        details[rch_field] = [(details[rch_field], person_case_properties.get(cas_field))]
+        return details
+
     def get_context_data(self, **kwargs):
         context = super(BeneficiaryView, self).get_context_data(**kwargs)
         beneficiary = RCHRecord.objects.get(pk=kwargs.get('beneficiary_id'))
@@ -214,9 +227,18 @@ class BeneficiaryView(TemplateView):
         # delete the details dict and include it as details in context
         del beneficiary_details['details']
         beneficiary_details.update(beneficiary.details)
+        if beneficiary.cas_case_id:
+            beneficiary_details = self._get_cas_values(beneficiary_details, beneficiary.doc_type,
+                                                       beneficiary.cas_case_id)
         ordered_beneficiary_details = OrderedDict()
-        for detail in sorted(beneficiary_details.iterkeys()):
-            ordered_beneficiary_details[detail] = beneficiary_details[detail]
+        # 1. order the details according to detail name
+        # 2. if its not a list i.e if corr. value for cas has not been added then
+        #    add "N/A"
+        for detail in sorted(beneficiary_details.iter()):
+            detail_value = beneficiary_details[detail]
+            if not isinstance(detail_value, list):
+                detail_value = [(detail_value, 'N/A')]
+            ordered_beneficiary_details[detail] = detail_value
         context['beneficiary_details'] = ordered_beneficiary_details
 
         return context

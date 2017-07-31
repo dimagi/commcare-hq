@@ -13,11 +13,13 @@
                 <th>CAS Value</th>
             </tr>
         </thead>
-        {% for property_name, property_value in beneficiary_details.items %}
+        {% for property_name, property_values in beneficiary_details.items %}
         <tr>
             <td>{{ property_name }}</td>
-            <td>{{ property_value }}</td>
-            <td>N/A</td>
+            {% for rch_value, cas_value in property_values %}
+                <td>{{ rch_value }}</td>
+                <td>{{ cas_value }}</td>
+            {% endfor %}
         </tr>
         {% endfor %}
     </table>

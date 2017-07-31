@@ -2206,7 +2206,22 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
         }
     ]
 
+
+RCH_PERMITTED_FIELD_MAPPINGS = {
+    'mother': json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields'],
+    'child': json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']
+}
+
+
+def extract_rch_fields_from_mapping(beneficiary_type):
+    field_mappings = RCH_PERMITTED_FIELD_MAPPINGS[beneficiary_type]
+    rch_fields = []
+    for case_type in field_mappings:
+        rch_fields = rch_fields + field_mappings[case_type].keys()
+    return rch_fields
+
+
 RCH_PERMITTED_FIELDS = {
-    'mother': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields']),
-    'child': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']),
+    'mother': extract_rch_fields_from_mapping('mother'),
+    'child': extract_rch_fields_from_mapping('child'),
 }
