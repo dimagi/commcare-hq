@@ -168,7 +168,7 @@ MUMBAI_MAP = {
     "phi_name": 25,
     "reason_for_testing": 27,
     "site_of_disease": 28,
-    "type_of_patient": 29,  # TODO: (WAITING) Map this value to case properties
+    "type_of_patient": 29,
     "weight": 30,
     "weight_band": 31,
     "height": 32,
@@ -557,6 +557,7 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
         "treatment_status": clean_mumbai_treatment_status(
             column_mapping.get_value("mumbai_treatment_status", row), treatment_initiation_date),
+        "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row))
     }
 
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
@@ -1059,6 +1060,19 @@ def clean_mumbai_treatment_status(value, treatment_initiation_date):
         ]:
             return value
         raise Exception("Unexpected treatment status: {}".format(value))
+
+
+def clean_patient_type(value):
+    if value not in [
+        "new",
+        "recurrent",
+        "treatment_after_failure",
+        "treatment_after_ltfu",
+        "other_previously_treated",
+        None
+    ]:
+        raise Exception("Unexpected type of patient: {}".format())
+    return value
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
 
