@@ -90,6 +90,10 @@
                         <a href="{$ goToStep('lactating_enrolled_women', $location.search()) $}" class="fa">{% trans "Lactating Mothers enrolled for ICDS services" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/adolescent_girls') !== -1}">
+                        <a href="{$ goToStep('adolescent_girls', $location.search()) $}" class="fa">{% trans "Adolescent Girls (11-18 years)" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">

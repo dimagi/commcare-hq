@@ -34,5 +34,13 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             });
         },
+        getAdolescentGirlsData: function(step, params) {
+            var get_url = url('adolescent_girls', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);
