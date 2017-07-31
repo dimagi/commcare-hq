@@ -497,9 +497,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
         else:
-            # remove upload questions (attachemnts) until MM Case Properties
+            # remove upload questions (attachments) until MM Case Properties
             # are released to general public
-            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled_for_request(request)
             xform_questions = [q for q in xform_questions
                                if q["tag"] != "upload" or is_previewer]
 
