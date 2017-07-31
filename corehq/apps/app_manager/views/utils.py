@@ -169,13 +169,15 @@ def _get_form_id_map(app):
 
 def _update_form_ids(app, master_app, id_map):
 
-    attachments = master_app.get_attachments()
+    _attachments = master_app.get_attachments()
 
     app_source = app.to_json()
     app_source.pop('external_blobs')
+    app_source['_attachments'] = _attachments
 
     updated_source = update_unique_ids(app_source, id_map)
 
+    attachments = app_source.pop('_attachments')
     new_wrapped_app = Application.wrap(updated_source)
     new_wrapped_app = new_wrapped_app.save_attachments(attachments)
     return new_wrapped_app
