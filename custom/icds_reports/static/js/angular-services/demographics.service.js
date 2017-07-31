@@ -26,5 +26,13 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             });
         },
+        getLactatingEnrolledWomenData: function(step, params) {
+            var get_url = url('lactating_enrolled_women', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

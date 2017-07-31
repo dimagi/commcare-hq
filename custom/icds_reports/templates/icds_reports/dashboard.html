@@ -87,6 +87,7 @@
         <script type="text/javascript" src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/lactating-enrolled-women/lactating-enrolled-women.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -181,6 +182,7 @@
                     {% registerurl 'registered_household' domain '---' %}
                     {% registerurl 'enrolled_children' domain '---' %}
                     {% registerurl 'enrolled_women' domain '---' %}
+                    {% registerurl 'lactating_enrolled_women' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>
