@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import Application, ReportModule, ATTACHMENT
 
 from dimagi.utils.make_uuid import random_hex
 
+from corehq.apps.app_manager.util import get_attachments, update_unique_ids
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -171,36 +172,16 @@ def _get_form_id_map(app):
 def _update_form_ids(app, master_app, id_map):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
-    id_changes = {}
-    attachments = _get_attachments(master_app)
+    attachments = master_app.get_attachments()
 
-    for module in app.modules:
-        for form in module.forms:
-            new_id = id_map.get(form.xmlns, random_hex())
-            id_changes[form.unique_id] = new_id
-            if ("%s.xml" % form.unique_id) in attachments:
-                attachments["%s.xml" % new_id] = attachments.pop("%s.xml" % form.unique_id)
-            form.unique_id = new_id
     app_source = app.to_json()
     app_source.pop('external_blobs')
 
-    for reference_path in form_id_references:
-        for reference in reference_path.find(app_source):
-            if reference.value in id_changes:
-                jsonpath_update(reference, id_changes[reference.value])
+    updated_source = update_unique_ids(app_source, id_map)
 
-    new_wrapped_app = Application.wrap(app_source)
-    new_wrapped_app = _save_attachments(new_wrapped_app, attachments)
+    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = new_wrapped_app.save_attachments(attachments)
     return new_wrapped_app
-
-
-def _get_attachments(app):
-    attachments = {}
-    for name in app.lazy_list_attachments():
-        if re.match(ATTACHMENT_REGEX, name):
-            # FIXME loss of metadata (content type, etc.)
-            attachments[name] = app.lazy_fetch_attachment(name)
-    return attachments
 
 
 def _save_attachments(app, attachments):

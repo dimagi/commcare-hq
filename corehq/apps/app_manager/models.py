@@ -4374,11 +4374,7 @@ class VersionedDoc(LazyBlobDoc):
         for field in self._meta_fields:
             if field in source:
                 del source[field]
-        _attachments = {}
-        for name in self.lazy_list_attachments():
-            if re.match(ATTACHMENT_REGEX, name):
-                # FIXME loss of metadata (content type, etc.)
-                _attachments[name] = self.lazy_fetch_attachment(name)
+        _attachments = self.get_attachments()
 
         # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
@@ -4387,6 +4383,21 @@ class VersionedDoc(LazyBlobDoc):
         source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
+
+    def get_attachments(self):
+        attachments = {}
+        for name in self.lazy_list_attachments():
+            if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
+                attachments[name] = self.lazy_fetch_attachment(name)
+        return attachments
+
+    def save_attachments(self, attachments):
+        with self.atomic_blobs():
+            for name, attachment in attachments.items():
+                if re.match(ATTACHMENT_REGEX, name):
+                    self.put_attachment(attachment, name)
+        return self
 
     @classmethod
     def from_source(cls, source, domain):
@@ -6163,10 +6174,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
-    with app.atomic_blobs():
-        for name, attachment in attachments.items():
-            if re.match(ATTACHMENT_REGEX, name):
-                app.put_attachment(attachment, name)
+    app.save_attachments(attachments)
 
     if not app.is_remote_app():
         for _, m in app.get_media_objects():
