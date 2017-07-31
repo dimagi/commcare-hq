@@ -248,5 +248,3 @@ def init_app(request, app):
             # Turn on if this domain was created prior to add-ons release
             enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable
-
-    app.save()
