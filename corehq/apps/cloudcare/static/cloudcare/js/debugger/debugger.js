@@ -196,9 +196,13 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         self.selectedXPath = ko.observable('');
         self.recentXPathQueries = ko.observableArray();
         self.$xpath = null;
-        self.codeMirrorResult = null;
         self.result = ko.observable('');
         self.success = ko.observable();
+        self.codeMirrorOptions = {
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+        };
         var resultRegex = new RegExp(
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>([\\s\\S]*?)\\s*</result>\\s*|' +
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
@@ -260,20 +264,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
-
-        self.afterRender = function() {
-            var options = {
-                mode: 'xml',
-                viewportMargin: Infinity,
-                readOnly: true,
-            };
-            self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
-            self.codeMirrorResult.setSize(null, 200);
-        };
-
-        self.result.subscribe(function(newResult) {
-            self.codeMirrorResult.setValue(self.formatResult(newResult));
-        });
 
         self.isSuccess = function(query) {
             return query.status === 'accepted';
@@ -387,6 +377,23 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 xhrFields: {withCredentials: true},
             });
         },
+    };
+
+    ko.bindingHandlers.codeMirror = {
+        /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
+        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+            var options = viewModel.codeMirrorOptions || {};
+            options.value = ko.unwrap(valueAccessor());
+            var editor = CodeMirror.fromTextArea(element, options);
+            editor.setSize(null, 200);  // hard-coded right now;
+            element.editor = editor;
+        },
+        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+            var observedValue = ko.unwrap(valueAccessor());
+            if (element.editor) {
+                element.editor.setValue(observedValue);
+            }
+        }
     };
 
     return {

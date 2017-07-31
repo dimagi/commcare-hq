@@ -83,14 +83,7 @@
 </script>
 
 <script type="text/html" id="debugger-evaluate-template">
-    <div data-bind="template: {
-        name: 'debugger-eval-ko-template',
-        afterRender: evalXPath.afterRender,
-        data: evalXPath
-    }"></div>
-</script>
-
-<script type="text/html" id="debugger-eval-ko-template">
+<!--ko with: evalXPath-->
       <form class="form-horizontal" data-bind="submit: onSubmitXPath">
           <div class="col-sm-12">
           <div class="form-group">
@@ -118,11 +111,8 @@
               <!--ko if: success() && formatResult(result()) === ''-->
               <div><i>{% trans "Empty String" %}</i></div>
               <!--/ko-->
-              <textarea
-                  id="evaluate-result"
-                  type="text"
-                  data-bind="
-                      css: { 'text-danger': !success() }
+              <textarea id="evaluate-result" type="text" data-bind="
+                  codeMirror: formatResult(result())
               "></textarea>
           </div>
       </form>
@@ -167,4 +157,5 @@
         </div>
       </div>
       <!-- /ko -->
+<!--/ko-->
 </script>
