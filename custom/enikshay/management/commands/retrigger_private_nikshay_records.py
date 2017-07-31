@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 continue
 
             episode_case_properties = episode.dynamic_case_properties()
-            if(episode_case_properties.get('nikshay_registered', 'false') == 'false'
+            if(episode_case_properties.get('private_nikshay_registered', 'false') == 'false'
                and not episode_case_properties.get('nikshay_id')
                and episode_case_properties.get('episode_type') == 'confirmed_tb'
                and is_valid_episode_submission(episode)):
