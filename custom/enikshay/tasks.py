@@ -37,7 +37,6 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
-from .model_migration_sets import EpisodeFacilityIDMigration
 
 logger = get_task_logger(__name__)
 
@@ -80,7 +79,6 @@ class EpisodeUpdater(object):
             EpisodeAdherenceUpdate,
             EpisodeVoucherUpdate,
             EpisodeTestUpdate,
-            EpisodeFacilityIDMigration,
         ]
 
     def run(self):
