@@ -1,4 +1,5 @@
 from django.test.testcases import SimpleTestCase, TestCase
+from django.http import Http404
 
 import corehq.apps.app_manager.util as util
 from corehq.apps.app_manager.exceptions import AppEditingError
@@ -6,8 +7,10 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     LoadUpdateAction,
-    ReportModule, ReportAppConfig)
+    ReportModule, ReportAppConfig, Module)
+from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.app_manager.views.utils import overwrite_app
+from corehq.apps.domain.models import Domain
 
 
 class TestGetFormData(SimpleTestCase):
@@ -50,3 +53,77 @@ class TestOverwriteApp(TestCase):
         overwrite_app(self.target_json, self.master_app, report_map)
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
+
+
+class TestLatestAppInfo(TestCase):
+    domain = 'test-latest-app'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestLatestAppInfo, cls).setUpClass()
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+
+        app = Application(
+            domain=cls.domain,
+            name='foo',
+            langs=["en"],
+            version=1,
+            modules=[Module()]
+        )  # app is v1
+
+        app.save()  # app is v2
+        cls.v2_build = app.make_build()
+        cls.v2_build.is_released = True
+        cls.v2_build.save()  # There is a starred build at v2
+
+        app.save()  # app is v3
+        app.make_build().save()  # There is a build at v3
+
+        app.save()  # app is v4
+        cls.app = app
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super(TestLatestAppInfo, cls).tearDownClass()
+
+    def test_apk_prompt(self):
+        from corehq.apps.builds.utils import get_default_build_spec
+        latest_apk = get_default_build_spec().version
+        test_cases = [
+            ('off', {}),
+            ('on', {'value': latest_apk, 'force': False}),
+            ('forced', {'value': latest_apk, 'force': True}),
+        ]
+        for config, response in test_cases:
+            self.app.latest_apk_prompt = config
+            self.app.save()
+            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            self.assertEquals(
+                latest_info.get_latest_apk_version(),
+                response
+            )
+
+    def test_app_prompt(self):
+        test_cases = [
+            ('off', {}),
+            ('on', {'value': self.v2_build.version, 'force': False}),
+            ('forced', {'value': self.v2_build.version, 'force': True}),
+        ]
+        for config, response in test_cases:
+            self.app.latest_app_prompt = config
+            self.app.save()
+            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            self.assertEquals(
+                latest_info.get_latest_app_version(),
+                response
+            )
+
+    def test_args(self):
+        with self.assertRaises(AssertionError):
+            # should not be id of a copy
+            LatestAppInfo(self.v2_build.id, self.domain).get_info()
+
+        with self.assertRaises(Http404):
+            LatestAppInfo('wrong-id', self.domain).get_info()

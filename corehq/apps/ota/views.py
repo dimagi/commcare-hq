@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
+from django.views.generic import View
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -19,8 +20,7 @@ from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_app_ids_and_versions
-from corehq.apps.builds.utils import get_default_build_spec
+from corehq.apps.app_manager.util import get_app, LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
@@ -378,36 +378,25 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, id):
-    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
-    for_app_id = request.GET.get('app_id', '')
-    app = get_app(domain, for_app_id)
-    return JsonResponse({
-        "app_id": for_app_id,
-        "latest_apk_version": get_latest_apk_version(app),
-        "latest_ccz_version": get_latest_build_version(app),
-    })
+def heartbeat(request, domain, app_id):
+    """
+    An endpoint for CommCare mobile to get latest CommCare APK and app version
+        info. (Should serve from cache as it's going to be busy view)
 
+    'app_id' (that comes from URL) can be id of any version of the app
+    'app_id' (urlparam) is usually id of an app that is not a copy
+        mobile simply wants it to be resent back in the JSON, and doesn't
+        need any validation.
+    """
+    url_param_app_id = request.GET.get('app_id', '')
+    info = {"app_id": url_param_app_id}
+    try:
+        # mobile will send brief_app_id
+        info.update(LatestAppInfo(url_param_app_id, domain).get_info())
+    except:
+        # if it's not a valid 'brief' app id, find it by talking to couch
+        app = get_app(domain, app_id)
+        brief_app_id = app.copy_of or app.id
+        info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
-def get_latest_apk_version(app):
-    if app.latest_apk_prompt == "off":
-        return {"value": "", "force": False}
-    else:
-        value = get_default_build_spec().version
-        if app.latest_apk_prompt == "on":
-            return {"value": value, "force": False}
-        elif app.latest_apk_prompt == "forced":
-            return {"value": value, "force": True}
-
-
-def get_latest_build_version(app):
-    if app.latest_app_prompt == "off":
-        return {"value": "", "force": False}
-    else:
-        value = get_latest_app_ids_and_versions(app.domain, app._id).get(app._id)
-        if not value:
-            raise Http404()
-        if app.latest_app_prompt == "on":
-            return {"value": value, "force": False}
-        elif app.latest_app_prompt == "forced":
-            return {"value": value, "force": True}
+    return JsonResponse(info)

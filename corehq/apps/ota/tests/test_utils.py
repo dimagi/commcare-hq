@@ -1,9 +1,5 @@
-import mock
+from django.test import TestCase
 
-from django.test import TestCase, SimpleTestCase
-
-from corehq.util.test_utils import generate_cases
-from corehq.apps.app_manager.models import Application
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
@@ -11,8 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 
-from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user, _restoring_as_yourself
-from corehq.apps.ota.views import get_latest_apk_version, get_latest_build_version
+from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
 
 
 class RestorePermissionsTest(LocationHierarchyTestCase):
@@ -317,43 +312,3 @@ class GetRestoreUserTest(TestCase):
             self.other_commcare_user.username
         )
         self.assertEquals(user.user_id, self.other_commcare_user._id)
-
-
-class TestAppPromptCheck(SimpleTestCase):
-    def test_apk_prompt(self):
-        from corehq.apps.builds.utils import get_default_build_spec
-        app = Application(name='Test', domain='test-domain')
-        latest_apk = get_default_build_spec().version
-        test_cases = [
-            ('off', {'value': '', 'force': False}),
-            ('on', {'value': latest_apk, 'force': False}),
-            ('forced', {'value': latest_apk, 'force': True}),
-        ]
-        for config, response in test_cases:
-            app.latest_apk_prompt = config
-            self.assertEquals(
-                get_latest_apk_version(app),
-                response
-            )
-
-    @mock.patch('corehq.apps.ota.views.get_latest_app_ids_and_versions')
-    def test_app_prompt(self, latest_app_id_mock):
-        app = Application(
-            name="Test",
-            domain="test-domain",
-        )
-        app._id = 'my_app_id'
-        latest_version = 20
-        # the mock function itself has a separate unit test, so okay to mock
-        latest_app_id_mock.return_value = {app._id: latest_version}
-        test_cases = [
-            ('off', {'value': '', 'force': False}),
-            ('on', {'value': latest_version, 'force': False}),
-            ('forced', {'value': latest_version, 'force': True}),
-        ]
-        for config, response in test_cases:
-            app.latest_app_prompt = config
-            self.assertEquals(
-                get_latest_build_version(app),
-                response
-            )

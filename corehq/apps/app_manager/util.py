@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain
+    get_apps_in_domain, get_app
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
@@ -30,7 +30,9 @@ from corehq.apps.app_manager.const import (
     USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 
 
@@ -595,3 +597,62 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
                 username=user.username)
         )
     return user
+
+
+class LatestAppInfo(object):
+
+    def __init__(self, brief_app_id, domain):
+        """
+        Wrapper to get latest app version and CommCare APK version info
+
+        args:
+            brief_app_id: id of an app that is not copy (to facilitate quickcaching)
+
+        raises Http404 error if id is not valid
+        raises assertion error if an id of app copy is passed
+        """
+        self.app_id = brief_app_id
+        self.domain = domain
+
+    @property
+    @memoized
+    def app(self):
+        app = get_app(self.domain, self.app_id)
+        # quickache based on a copy app_id will have to be updated too fast
+        assert not app.copy_of, "this class doesn't handle copy app ids"
+        return app
+
+    def clear_caches(self):
+        self.get_latest_apk_version.clear(self)
+        self.get_latest_app_version.clear(self)
+
+    @quickcache(vary_on=['self.app_id'])
+    def get_latest_apk_version(self):
+        from corehq.apps.builds.utils import get_default_build_spec
+        if self.app.latest_apk_prompt == "off":
+            return {}
+        else:
+            value = get_default_build_spec().version
+            if self.app.latest_apk_prompt == "on":
+                return {"value": value, "force": False}
+            elif self.app.latest_apk_prompt == "forced":
+                return {"value": value, "force": True}
+
+    @quickcache(vary_on=['self.app_id'])
+    def get_latest_app_version(self):
+        if self.app.latest_app_prompt == "off":
+            return {}
+        else:
+            latest_app = self.app.get_latest_app(released_only=True)
+            if not latest_app or not latest_app.is_released:
+                return {}
+            if self.app.latest_app_prompt == "on":
+                return {"value": latest_app.version, "force": False}
+            elif self.app.latest_app_prompt == "forced":
+                return {"value": latest_app.version, "force": True}
+
+    def get_info(self):
+        return {
+            "latest_apk_version": self.get_latest_apk_version(),
+            "latest_ccz_version": self.get_latest_app_version(),
+        }

@@ -1,7 +1,7 @@
 from django.conf.urls import url
 from corehq.apps.ota.views import (
     PrimeRestoreCacheView, AdvancedPrimeRestoreCacheView,
-    restore, search, claim,
+    restore, search, claim, heartbeat,
     heartbeat)
 from corehq.apps.hqadmin.views import DomainAdminRestoreView
 
@@ -16,5 +16,5 @@ urlpatterns = [
         name=AdvancedPrimeRestoreCacheView.urlname),
     url(r'^search/$', search, name='remote_search'),
     url(r'^claim-case/$', claim, name='claim_case'),
-    url(r'^heartbeat/(?P<id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
+    url(r'^heartbeat/(?P<app_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
 ]

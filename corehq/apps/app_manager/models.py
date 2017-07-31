@@ -122,6 +122,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
+    LatestAppInfo,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5374,6 +5375,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
+
+        brief_app_id = self.copy_of or self.id
+        if brief_app_id:
+            LatestAppInfo(brief_app_id, self.domain).clear_caches()
+
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
