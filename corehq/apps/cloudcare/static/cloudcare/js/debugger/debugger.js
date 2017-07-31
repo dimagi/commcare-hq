@@ -200,11 +200,13 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 status: data.status,
                 output: data.output,
                 xpath: data.xpath,
-                formattedResult: function () {
-                    var result;
+                successResult: function () {
                     if (this.success()) {
                         return self.formatResult(data.output);
-                    } else {
+                    }
+                },
+                errorResult: function () {
+                    if (!this.success()) {
                         return data.output || gettext('Error evaluating expression.');
                     }
                 },
@@ -213,7 +215,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 }
             };
         };
-        self.xPathQuery = ko.observable(self.newXPathQuery({}));
+        self.xPathQuery = ko.observable(null);
         self.recentXPathQueries = ko.observableArray();
         self.setRecentXPathQueries = function (rawQueries) {
             self.recentXPathQueries(_.map(rawQueries, self.newXPathQuery));

@@ -83,16 +83,19 @@
 </script>
 
 <script type="text/html" id="debugger-evaluate-result-template">
-    <!--ko if: xPathQuery.success() && xPathQuery.formattedResult() === ''-->
+    <!--ko if: xPathQuery.successResult() === ''-->
     <div><i>{% trans "Empty String" %}</i></div>
     <!--/ko-->
-    <!--ko if: options.useCodeMirror-->
+    <!--ko if: xPathQuery.errorResult()-->
+    <div data-bind="text: xPathQuery.errorResult(), css: 'text-danger'"></div>
+    <!--/ko-->
+    <!--ko if: options.useCodeMirror && xPathQuery.successResult()-->
     <textarea type="text" data-bind="
-        codeMirror: xPathQuery.formattedResult()
+        codeMirror: xPathQuery.successResult()
     "></textarea>
     <!--/ko-->
-    <!--ko if: !options.useCodeMirror && xPathQuery.formattedResult()-->
-        <pre data-bind="text: xPathQuery.formattedResult()"></pre>
+    <!--ko if: !options.useCodeMirror && xPathQuery.successResult()-->
+        <pre data-bind="text: xPathQuery.successResult()"></pre>
     <!--/ko-->
 </script>
 
@@ -123,7 +126,8 @@
         </div>
         <div class="col-sm-12" data-bind="template: {
             name: 'debugger-evaluate-result-template',
-            data: {xPathQuery: xPathQuery(), options: {useCodeMirror: true}}
+            data: {xPathQuery: xPathQuery(), options: {useCodeMirror: true}},
+            if: xPathQuery()
         }">
         </div>
     </form>
