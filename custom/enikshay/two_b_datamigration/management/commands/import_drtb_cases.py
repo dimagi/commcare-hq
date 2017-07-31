@@ -1215,8 +1215,35 @@ def clean_diabetes_status(xlsx_value):
 
 
 def clean_weight_band(value):
-    pass
-    # TODO: (WAITING) Not sure what the valid values are
+    if value not in [
+        None,
+        "adult_25-39",
+        "adult_40-54",
+        "adult_55-69",
+        "adult_greater_than_70",
+        "pediatric_4-7",
+        "pediatric_8-11",
+        "pediatric_12-15",
+        "pediatric_16-24",
+        "pediatric_25-29",
+        "pediatric_30-39",
+        "6-10",
+        "11-17",
+        "18-25",
+        "26-30",
+        "31-60",
+        "above_60",
+        "drtb_conventional_lt_16",
+        "drtb_conventional_16_29",
+        "drtb_conventional_30_45",
+        "drtb_conventional_46_70",
+        "drtb_conventional_gt70",
+        "drtb_short_lt30",
+        "drtb_short_30_50",
+        "drtb_short_gt50",
+    ]:
+        raise Exception("Unexpected weight band: {}".format(value))
+    return value
 
 
 def clean_height(value):
