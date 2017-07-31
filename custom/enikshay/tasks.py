@@ -98,7 +98,7 @@ class EpisodeUpdater(object):
                         update_count += 1
                     else:
                         noupdate_count += 1
-                    if len(updates) == batch_size:
+                    if len(updates) >= batch_size:
                         bulk_update_cases(self.domain, updates)
                         updates = []
                 except Exception, e:
