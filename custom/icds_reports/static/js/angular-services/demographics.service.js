@@ -18,5 +18,13 @@ window.angular.module('icdsApp').factory('demographicsService', ['$http', functi
                 params: params,
             });
         },
+        getEnrolledWomenData: function(step, params) {
+            var get_url = url('enrolled_women', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

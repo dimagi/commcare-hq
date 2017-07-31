@@ -41,7 +41,8 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_immunization_coverage_data_chart, get_awc_daily_status_sector_data, get_awc_daily_status_data_map, \
     get_awc_daily_status_data_chart, get_awcs_covered_sector_data, get_awcs_covered_data_map, \
     get_registered_household_sector_data, get_registered_household_data_map, get_enrolled_children_sector_data, \
-    get_enrolled_children_data_map, get_enrolled_children_data_chart
+    get_enrolled_children_data_map, get_enrolled_children_data_chart, get_enrolled_women_data_map, \
+    get_enrolled_women_sector_data
 from . import const
 from .exceptions import TableauTokenException
 
@@ -870,6 +871,34 @@ class EnrolledChildrenView(View):
                 data = get_enrolled_children_data_map(config, loc_level)
         elif step == "chart":
             data = get_enrolled_children_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class EnrolledWomenView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        day = int(self.request.GET.get('day', now.day))
+        test_date = datetime(year, month, day)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_enrolled_women_sector_data(config, loc_level)
+        else:
+            data = get_enrolled_women_data_map(config, loc_level)
 
         return JsonResponse(data={
             'report_data': data,
