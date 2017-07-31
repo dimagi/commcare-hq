@@ -212,7 +212,9 @@ def run_queue_async_indicators_task():
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
-    day_ago = datetime.utcnow() - timedelta(days=1)
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
+    day_ago = start - timedelta(days=1)
     indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
@@ -222,6 +224,8 @@ def queue_async_indicators():
 
     for k, indicators in indicators_by_domain_doc_type.items():
         _queue_indicators(indicators)
+        if datetime.utcnow() > cutoff:
+            break
 
 
 def _queue_indicators(indicators):
