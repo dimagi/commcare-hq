@@ -920,6 +920,8 @@ def new_module(request, domain, app_id):
             unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
                 if not unstructured:
+                    form_id = 0
+
                     # registration form
                     register = app.new_form(module_id, _("Registration Form"), lang)
                     register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
@@ -938,8 +940,8 @@ def new_module(request, domain, app_id):
                 else:
                     module.case_type = 'case'
             else:
+                form_id = 0
                 app.new_form(module_id, _("Survey"), lang)
-            form_id = 0
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
