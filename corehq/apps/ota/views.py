@@ -1,3 +1,4 @@
+import logging
 from distutils.version import LooseVersion
 
 from django.conf import settings
@@ -102,6 +103,10 @@ def restore(request, domain, app_id=None):
                     tags=tags + ['duration:%s' % bucket],
                 )
         tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
+        if timing_context.duration > 20 or response.status_code == 412:
+            log = logging.getLogger(__name__)
+            log.info("restore: domain=%s status=%s duration=%.2f",
+                domain, response.status_code, timing_context.duration)
     datadog_counter('commcare.restores.count', tags=tags)
     return response
 
