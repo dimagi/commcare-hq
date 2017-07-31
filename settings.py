@@ -15,10 +15,6 @@ djcelery.setup_loader()
 
 DEBUG = True
 LESS_DEBUG = DEBUG
-# Enable LESS_WATCH if you want less.js to constantly recompile.
-# Useful if you're making changes to the less files and don't want to refresh
-# your page.
-LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -2164,7 +2160,6 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
-    'less_watch': LESS_WATCH,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
