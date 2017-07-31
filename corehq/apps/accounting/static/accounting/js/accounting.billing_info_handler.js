@@ -105,6 +105,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
         _.each($(".ko-email-select2"), function(input) {
             var handler = new EmailSelect2Handler($(input).attr("name"));
             handler.init();
+            console.log(input);
         });
 
         _.each($(".ko-async-select2"), function(input) {
