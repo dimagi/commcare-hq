@@ -816,7 +816,7 @@ def get_episode_regimen_change_history(column_mapping, row, episode_treatment_in
 def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
     test_cases = []
 
-    if column_mapping.get_value("cbnaat_lab", row) or column_mapping.get_value("cbnaat_result", row):
+    if column_mapping.get_value("cbnaat_result", row):
         test_cases.append(get_cbnaat_test_case_properties(domain, column_mapping, row))
     elif column_mapping.get_value("testing_facility", row):
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
@@ -850,10 +850,13 @@ def get_mehsana_test_case_properties(domain, column_mapping, row):
 
 def get_cbnaat_test_case_properties(domain, column_mapping, row):
     cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
+    date_reported = column_mapping.get_value("cbnaat_result_date", row)
+    if not date_reported:
+        raise Exception("cbnaat result date required if result given")
 
     properties = {
         "owner_id": "-",
-        "date_reported": column_mapping.get_value("cbnaat_result_date", row),
+        "date_reported": date_reported,
         "testing_facility_saved_name": cbnaat_lab_name,
         "testing_facility_id": cbnaat_lab_id,
         "test_type_label": "CBNAAT",
@@ -869,6 +872,10 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
 
 def get_lpa_test_case_properties(domain, column_mapping, row):
     lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row), "cdst")
+    result_date = clean_date(column_mapping.get_value("lpa_result_date", row))
+    if not result_date:
+        raise Exception("LPA result date required if result included")
+
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": lpa_lab_name,
@@ -876,7 +883,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "FL LPA",
         "test_type_value": "fl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
+        "date_reported": result_date,
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
@@ -887,6 +894,9 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
 
 def get_sl_lpa_test_case_properties(domain, column_mapping, row):
     sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row), "cdst")
+    date_reported = clean_date(column_mapping.get_value("lpa_result_date", row))
+    if not date_reported:
+        raise Exception("LPA result date required if result included")
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": sl_lpa_lab_name,
@@ -894,7 +904,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "SL LPA",
         "test_type_value": "sl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
+        "date_reported": date_reported,
         # TODO: Should this have a "result"?
     }
 
@@ -905,6 +915,10 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 def get_culture_test_case_properties(domain, column_mapping, row):
     lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row), "cdst")
     culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
+    date_reported = clean_date(column_mapping.get_value("culture_result_date", row))
+    if not date_reported:
+        raise Exception("Culture date reported required if result included")
+
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": lab_name,
@@ -912,7 +926,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "test_type_label": "Culture",
         "test_type_value": "culture",
         "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
-        "date_reported": clean_date(column_mapping.get_value("culture_result_date", row)),
+        "date_reported": date_reported,
         "culture_type": culture_type,
         "culture_type_label": get_culture_type_label(culture_type),
         "result": clean_result(column_mapping.get_value("culture_result", row))
