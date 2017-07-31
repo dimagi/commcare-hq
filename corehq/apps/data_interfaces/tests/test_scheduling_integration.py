@@ -300,6 +300,69 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
+    @run_with_all_backends
+    @patch('corehq.apps.data_interfaces.models.VisitSchedulerIntegrationHelper.get_visit_scheduler_module_and_form')
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_visit_scheduler_integration(self, utcnow_patch, module_and_form_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            time(9, 0),
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        _, definition = rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),)
+        )
+
+        module, form = get_visit_scheduler_module_and_form_for_test()
+
+        definition.set_scheduler_module_info(CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+            enabled=True,
+            app_id='n/a for test',
+            form_unique_id=form.unique_id,
+            visit_number=1,
+            window_position=VISIT_WINDOW_START,
+        ))
+
+        definition.save()
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2017, 8, 1, 7, 0)
+        module_and_form_patch.return_value = module, form
+
+        with create_case(self.domain, 'person') as case:
+            # Schedule phase does not match, nothing is scheduled
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            update_case(self.domain, case.case_id,
+                case_properties={'add': '2017-08-01', 'current_schedule_phase': '2'})
+
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 6))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # Terminate the schedule, no more schedule instances should be scheduled
+            update_case(self.domain, case.case_id, case_properties={'current_schedule_phase': '-1'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
 
 class VisitSchedulerIntegrationHelperTestCase(TestCase):
     domain = 'visit-scheduler-integration-helper'
