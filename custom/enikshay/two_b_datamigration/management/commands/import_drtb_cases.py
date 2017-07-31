@@ -221,7 +221,7 @@ MUMBAI_MAP = {
     "dst_result_date": 83,
     "bdq_eligible": 88,  # TODO: (WAITING) not sure how this maps
     "treatment_initiation_date": 89,
-    "drtb_type": 90,
+    "drtb_type": 92,
     "mumbai_treatment_status": 93,
     "treatment_regimen": 94,
     "ip_to_cp_date": 97,
@@ -1386,15 +1386,16 @@ def clean_result(value):
 def clean_drtb_type(value):
     if value is None:
         return "unknown"
-    return {
-        "MDR": "mdr",
-        "XDR": "xdr",
-        "Modified MDR": "mdr",  # TODO: (WAITING) confirm this value
-        "RR TB": "rr",
-        "MDR TB": "mdr",
-        "XDR TB": "xdr",
-        "RRTB": "rr",
-    }[value]
+    if value not in [
+        "mdr",
+        "xdr",
+        "rr",
+        "pdr",
+        "mr",
+        "unknown",
+    ]:
+        raise Exception("Unexpected drtb type: {}".format(value))
+    return value
 
 
 def result_label(result):
