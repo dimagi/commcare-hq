@@ -24,10 +24,11 @@ from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
-    SyncLog,
     get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
+    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -476,11 +477,15 @@ class RestoreState(object):
                 case_sync = DEFAULT_CASE_SYNC
         if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
             raise ValueError("unknown case sync algorithm: %s" % case_sync)
+        self._case_sync = case_sync
         self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
+            if (self._case_sync == CLEAN_OWNERS and
+                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
+                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -599,6 +604,8 @@ class RestoreState(object):
             previous_log_rev=previous_log_rev,
             extensions_checked=True,
         )
+        if self.is_livequery:
+            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
     @property
