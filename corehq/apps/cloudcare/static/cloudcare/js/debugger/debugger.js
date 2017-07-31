@@ -200,18 +200,16 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 status: data.status,
                 output: data.output,
                 xpath: data.xpath,
-                result: function () {
+                formattedResult: function () {
+                    var result;
                     if (this.success()) {
-                        return data.output;
+                        return self.formatResult(data.output);
                     } else {
                         return data.output || gettext('Error evaluating expression.');
                     }
                 },
-                formattedResult: function () {
-                    return self.formatResult(this.result());
-                },
                 success: function () {
-                    return self.isSuccess(this);
+                    return this.status === 'accepted';
                 }
             };
         };
@@ -277,10 +275,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 );
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
-        };
-
-        self.isSuccess = function(query) {
-            return query.status === 'accepted';
         };
 
         self.onMouseUp = function() {
