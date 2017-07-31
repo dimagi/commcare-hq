@@ -1,7 +1,16 @@
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    AdvancedForm,
+    FormSchedule,
+    ScheduleVisit,
+    SchedulePhase,
+    SchedulePhaseForm,
+)
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
+    VisitSchedulerIntegrationHelper,
 )
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
 from corehq.apps.domain.models import Domain
@@ -9,6 +18,7 @@ from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.messaging.scheduling.const import VISIT_WINDOW_START, VISIT_WINDOW_END, VISIT_WINDOW_DUE_DATE
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, SMSContent
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule,
@@ -24,6 +34,31 @@ from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
 from mock import patch
+
+
+def get_visit_scheduler_module_and_form_for_test():
+    form = AdvancedForm(
+        schedule=FormSchedule(
+            unique_id='form-unique-id-1',
+            schedule_form_id='form1',
+            enabled=True,
+            visits=[
+                ScheduleVisit(due=1, starts=-1, expires=1, repeats=False, increment=None),
+                ScheduleVisit(due=7, starts=-2, expires=3, repeats=False, increment=None),
+                ScheduleVisit(due=None, starts=None, expires=None, repeats=True, increment=14),
+            ],
+        )
+    )
+
+    module = AdvancedModule(
+        schedule_phases=[
+            SchedulePhase(anchor='edd', forms=[]),
+            SchedulePhase(anchor='add', forms=[SchedulePhaseForm(form_id=form.unique_id)]),
+        ],
+        forms=[form],
+    )
+
+    return module, form
 
 
 class CaseRuleSchedulingIntegrationTest(TestCase):
@@ -264,3 +299,91 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
+
+
+class VisitSchedulerIntegrationHelperTestCase(TestCase):
+    domain = 'visit-scheduler-integration-helper'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.module, cls.form = get_visit_scheduler_module_and_form_for_test()
+        super(VisitSchedulerIntegrationHelperTestCase, cls).setUpClass()
+
+    def get_helper(self, case, visit_number=2, window_position=VISIT_WINDOW_START):
+        return VisitSchedulerIntegrationHelper(
+            case,
+            CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+                enabled=True,
+                app_id='n/a for test',
+                form_unique_id=self.form.unique_id,
+                visit_number=visit_number,
+                window_position=window_position,
+            )
+        )
+
+    def test_get_visit_scheduler_form_phase(self):
+        with create_case(self.domain, 'person') as case:
+            phase_num, phase = self.get_helper(case).get_visit_scheduler_form_phase(self.module)
+            self.assertEqual(phase_num, 2)
+            self.assertEqual(phase.to_json(), self.module.schedule_phases[1].to_json())
+
+    def test_calculate_window_date(self):
+        with create_case(self.domain, 'person') as case:
+            helper = self.get_helper(case, window_position=VISIT_WINDOW_START)
+            self.assertEqual(
+                helper.calculate_window_date(self.form.schedule.visits[1], date(2017, 8, 1)),
+                date(2017, 7, 30)
+            )
+
+            helper = self.get_helper(case, window_position=VISIT_WINDOW_DUE_DATE)
+            self.assertEqual(
+                helper.calculate_window_date(self.form.schedule.visits[1], date(2017, 8, 1)),
+                date(2017, 8, 1)
+            )
+
+            helper = self.get_helper(case, window_position=VISIT_WINDOW_END)
+            self.assertEqual(
+                helper.calculate_window_date(self.form.schedule.visits[1], date(2017, 8, 1)),
+                date(2017, 8, 4)
+            )
+
+    @run_with_all_backends
+    def test_get_case_current_schedule_phase(self):
+        with create_case(self.domain, 'person') as case:
+            helper = self.get_helper(case)
+            self.assertIsNone(helper.get_case_current_schedule_phase())
+
+            update_case(self.domain, case.case_id, case_properties={'current_schedule_phase': '2'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            helper = self.get_helper(case)
+            self.assertEqual(helper.get_case_current_schedule_phase(), 2)
+
+    def test_get_visit(self):
+        with create_case(self.domain, 'person') as case:
+            helper = self.get_helper(case, visit_number=1)
+            self.assertEqual(
+                helper.get_visit(self.form).to_json(),
+                self.form.schedule.visits[1].to_json()
+            )
+
+            # Repeat visits aren't supported
+            helper = self.get_helper(case, visit_number=2)
+            with self.assertRaises(VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException):
+                helper.get_visit(self.form)
+
+            # Index out of range
+            helper = self.get_helper(case, visit_number=999)
+            with self.assertRaises(VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException):
+                helper.get_visit(self.form)
+
+    @run_with_all_backends
+    def test_get_anchor_date(self):
+        with create_case(self.domain, 'person') as case:
+            helper = self.get_helper(case)
+            with self.assertRaises(VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException):
+                helper.get_anchor_date('add')
+
+            update_case(self.domain, case.case_id, case_properties={'add': '2017-08-01'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            helper = self.get_helper(case)
+            self.assertEqual(helper.get_anchor_date('add'), date(2017, 8, 1))

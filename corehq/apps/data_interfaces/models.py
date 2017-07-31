@@ -940,7 +940,7 @@ class VisitSchedulerIntegrationHelper(object):
 
     def calculate_window_date(self, visit, visit_due_date):
         if self.scheduler_module_info.window_position == VISIT_WINDOW_START:
-            return visit_due_date + timedelta(days=visit.start)
+            return visit_due_date + timedelta(days=visit.starts)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
             if not isinstance(visit.expires, int):
                 raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
@@ -956,7 +956,7 @@ class VisitSchedulerIntegrationHelper(object):
         try:
             return int(phase_num)
         except:
-            raise self.VisitSchedulerIntegrationException("Unrecognized value for case.current_schedule_phase")
+            return None
 
     def get_visit(self, form):
         try:
