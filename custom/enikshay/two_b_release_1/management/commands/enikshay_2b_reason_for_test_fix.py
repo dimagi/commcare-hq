@@ -36,15 +36,17 @@ class Command(BaseCommand):
         cases = (CaseSearchES()
                     .domain(domain)
                     .case_type("test")
-                    .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must"))
+                    .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must")
+                    .run().hits)
 
         with open(log_path, "w") as f:
             for case in cases:
+                case_props = {prop['key']: prop['value'] for prop in case['case_properties']}
                 if (
-                    case['properties']['purpose_of_testing'] == "follow_up_dstb" and
-                    case['properties'].get("rft_general", "") in ("", None)
+                    case_props.get('purpose_of_testing') == "follow_up_dstb" and
+                    case_props.get("rft_general", "") in ("", None)
                 ):
-                    case_id = case['case_id']
+                    case_id = case['_id']
                     f.write(case_id + "\n")
                     logger.info(case_id)
 
