@@ -1,23 +1,20 @@
 from distutils.version import LooseVersion
 
 from django.conf import settings
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
-from django.views.generic import View
 
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
-from corehq import toggles, privileges
+from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.util import get_app, LatestAppInfo
