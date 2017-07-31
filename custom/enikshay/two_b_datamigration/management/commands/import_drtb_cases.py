@@ -219,8 +219,7 @@ MUMBAI_MAP = {
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
     # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
     "dst_result_date": 83,
-    # TODO: (WAITING) not sure how this maps
-    "bdq_eligible": 88,
+    "bdq_eligible": 88,  # TODO: (WAITING) not sure how this maps
     "treatment_initiation_date": 89,
     "drtb_type": 90,
     "mumbai_treatment_status": 93,
@@ -432,7 +431,7 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
 def get_case_structure(case_type, properties, migration_identifier, host=None):
     owner_id = properties.pop("owner_id")
     props = {k: v for k, v in properties.iteritems() if v is not None}
-    props['__created_by_migration'] = migration_identifier
+    props['created_by_migration'] = migration_identifier
     props['migration_data_source'] = "excel_document"
     kwargs = {
         "case_id": uuid.uuid4().hex,
@@ -465,7 +464,7 @@ def get_person_case_properties(domain, column_mapping, row):
         "name": person_name,
         "dto_name": district_name,
         "dto_id": district_id,
-        "owner_id": phi_id or "-",
+        "owner_id": phi_id,
         "manual_nikshay_id": "yes",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
@@ -1210,7 +1209,6 @@ def get_secondary_owner_case_properties(domain, city_constants, district_id, occ
             "secondary_owner_type": "drtb",
             "owner_id": city_constants.drtb_center_id,
         },
-        # TODO: (WAITING) Will the host of this case be the occurence?
         {
             "secondary_owner_name": name,
             "secondary_owner_type": "drtb-hiv",
@@ -1226,6 +1224,7 @@ def clean_diabetes_status(xlsx_value):
     return {
         "no": "non_diabetic",
         "yes": "diabetic",
+        "unknown": "unknown",
     }[xlsx_value.lower()]
 
 
@@ -1356,6 +1355,7 @@ def clean_socioeconomic_status(value):
     return {
         "bpl": "bpl",
         "apl": "apl",
+        "unknown": "unknown",
     }[value.lower()]
 
 
@@ -1508,7 +1508,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, excel_file_path, format, **options):
-
         migration_id = self.generate_id()
         self.log_meta_info(migration_id, options['commit'])
         column_mapping = self.get_column_mapping(format)
