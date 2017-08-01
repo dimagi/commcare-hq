@@ -22,6 +22,15 @@ class PartitionRouter(object):
     def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
 
+    def allow_relation(self, obj1, obj2, **hints):
+        from corehq.sql_db.models import PartitionedModel
+        obj1_partitioned = isinstance(obj1, PartitionedModel)
+        obj2_partitioned = isinstance(obj2, PartitionedModel)
+        if obj1_partitioned and obj2_partitioned:
+            return obj1.db == obj2.db
+        elif not obj1_partitioned and not obj2_partitioned:
+            return True
+
 
 class MonolithRouter(object):
 
