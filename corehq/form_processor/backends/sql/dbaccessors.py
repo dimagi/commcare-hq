@@ -597,7 +597,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
             assert old_db_name == db_name, "this method doesn't support moving the form to new db"
 
-        form_id_updated = form.orig_id != form.id or form.orig_id is None
+        form_id_updated = form.orig_id != form.form_id and form.orig_id is not None
 
         if form_id_updated:
             attachments = form.get_attachments()
