@@ -547,7 +547,7 @@ def get_episode_case_properties(domain, column_mapping, row):
             column_mapping, row, treatment_initiation_date),
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
-        "treatment_outcome": convert_treatment_outcome(column_mapping.get_value("treatment_outcome", row)),
+        "treatment_outcome": get_treatment_outcome(column_mapping, row, treatment_initiation_date),
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
@@ -679,23 +679,40 @@ def get_disease_site_properties_for_person(column_mapping, row):
     return {"current_{}".format(k): v for k, v in props.iteritems()}
 
 
-def convert_treatment_outcome(xlsx_value):
-    if xlsx_value not in [
-        "cured",
-        "treatment_complete",
-        "failure",
-        "loss_to_follow_up",
-        "regimen_changed",
-        "pediatric_failure_to_respond",
-        "not_evaluated",
-        "treatment_failure_culture_non_reversion",
-        "treatment_failure_culture_reversion",
-        "treatment_failure_additional_drug_resistance",
-        "treatment_failure_adverse_drug_reaction",
-        None,
-    ]:
-        raise Exception("Unexpected treatment outcome: {}".format(xlsx_value))
-    return xlsx_value
+def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
+    # Treatment outcome is listed in two columns, but we've been promised that they will not contradict eachother
+    mumbai_treatment_status_value = column_mapping.get_value("mumbai_treatment_status", row)
+    outcomes = []
+    if treatment_initiation_date and not mumbai_treatment_status_value == "Transferred Out":
+        # treatment status contains an outcome
+        outcomes.append(mumbai_treatment_status_value)
+
+    outcome_column_value = column_mapping.get_value("treatment_outcome")
+    if outcome_column_value:
+        outcomes.append(outcome_column_value)
+
+    if not outcomes:
+        return None
+    else:
+        # Confirm that values are the same
+        if not all(outcomes[0] == value for value in outcomes):
+            raise Exception(
+                "Treatment outcomes in final treatment outcome column and treatment status column do not match")
+        if outcomes[0] not in [
+            "cured",
+            "treatment_complete",
+            "failure",
+            "loss_to_follow_up",
+            "regimen_changed",
+            "pediatric_failure_to_respond",
+            "not_evaluated",
+            "treatment_failure_culture_non_reversion",
+            "treatment_failure_culture_reversion",
+            "treatment_failure_additional_drug_resistance",
+            "treatment_failure_adverse_drug_reaction",
+        ]:
+            raise Exception("Invalid treatment outcome: {}".format(outcomes[0]))
+        return outcomes[0]
 
 
 def get_selection_criteria_properties(column_mapping, row):
@@ -1059,7 +1076,6 @@ def convert_treatment_status(status_in_xlsx):
 
 
 def clean_mumbai_treatment_status(value, treatment_initiation_date):
-    # TODO: (WAITING) Note that this value may also need to be used for treatment outcome
     if value == "Transferred Out":
         return "referred_pending_feedback"
     elif treatment_initiation_date:
