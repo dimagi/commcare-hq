@@ -1288,7 +1288,7 @@ class CaseInferredSchema(InferredSchema):
 
 class FormInferredSchema(InferredSchema):
     xmlns = StringProperty(required=True)
-    app_id = StringProperty(required=True)
+    app_id = StringProperty()
 
     @property
     def identifier(self):
