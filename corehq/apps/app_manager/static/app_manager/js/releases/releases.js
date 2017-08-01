@@ -375,17 +375,13 @@ hqDefine('app_manager/js/releases/releases.js', function () {
                 "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {
             savedApp._deleteState('pending');
-            $.post({
-                url: self.reverse('delete_copy'),
-                data: {saved_app: savedApp.id()},
-                success: function () {
-                    self.savedApps.remove(savedApp);
-                    savedApp._deleteState(false);
-                },
-                error: function () {
-                    savedApp._deleteState('error');
-                    alert(self.reload_message);
-                },
+            var url = self.reverse('delete_copy');
+            $.post(url, {saved_app: savedApp.id()}, function () {
+                self.savedApps.remove(savedApp);
+                savedApp._deleteState(false);
+            }).fail(function () {
+                savedApp._deleteState('error');
+                alert(self.reload_message);
             });
         };
         self.revertSavedApp = function (savedApp) {
@@ -397,26 +393,23 @@ hqDefine('app_manager/js/releases/releases.js', function () {
             }
 
             self.fetchState('pending');
-            $.get({
-                url: self.reverse('current_app_version'),
-                success: function(data) {
-                    self.fetchState('');
-                    self.currentAppVersion(data.currentVersion);
-                    if (!data.latestRelease) {
-                        self.actuallyMakeBuild();
-                    } else if (data.latestRelease !== self.lastAppVersion()) {
-                        window.alert(gettext("The versions list has changed since you loaded the page."));
-                        self.reloadApps();
-                    } else if (self.lastAppVersion() !== self.currentAppVersion()) {
-                        self.actuallyMakeBuild();
-                    } else {
-                        window.alert(gettext("No new changes!"));
-                    }
-                },
-                error: function () {
-                    self.fetchState('error');
-                    window.alert(self.reload_message);
-                },
+            var url = self.reverse('current_app_version');
+            $.get(url, function(data) {
+                self.fetchState('');
+                self.currentAppVersion(data.currentVersion);
+                if (!data.latestRelease) {
+                    self.actuallyMakeBuild();
+                } else if (data.latestRelease !== self.lastAppVersion()) {
+                    window.alert(gettext("The versions list has changed since you loaded the page."));
+                    self.reloadApps();
+                } else if (self.lastAppVersion() !== self.currentAppVersion()) {
+                    self.actuallyMakeBuild();
+                } else {
+                    window.alert(gettext("No new changes!"));
+                }
+            }).fail(function() {
+                self.fetchState('error');
+                window.alert(self.reload_message);
             });
         };
         self.reloadApps = function () {
@@ -426,20 +419,17 @@ hqDefine('app_manager/js/releases/releases.js', function () {
         };
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
-            $.post({
-                url: self.reverse('save_copy'),
-                success: function(data) {
-                    $('#build-errors-wrapper').html(data.error_html);
-                    if (data.saved_app) {
-                        var app = SavedApp(data.saved_app, self);
-                        self.addSavedApp(app, true);
-                    }
-                    self.buildState('');
-                    hqImport('app_manager/js/app_manager.js').setPublishStatus(false);
-                },
-                error: function() {
-                    self.buildState('error');
-                },
+            var url = self.reverse('save_copy');
+            $.post(url, function(data) {
+                $('#build-errors-wrapper').html(data.error_html);
+                if (data.saved_app) {
+                    var app = SavedApp(data.saved_app, self);
+                    self.addSavedApp(app, true);
+                }
+                self.buildState('');
+                hqImport('app_manager/js/app_manager.js').setPublishStatus(false);
+            }).fail(function() {
+                self.buildState('error');
             });
         };
     }
