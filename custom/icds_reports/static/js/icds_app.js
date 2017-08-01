@@ -167,6 +167,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/functional_toilet/:step", {
                 template : "<functional-toilet></functional-toilet>",
+            })
+            .when("/medicine_kit", {
+                redirectTo : "/medicine_kit/map",
+            })
+            .when("/medicine_kit/:step", {
+                template : "<medicine-kit></medicine-kit>",
             });
     }]);
 

@@ -1,7 +1,7 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function FunctionalToiletController($scope, $routeParams, $location, $filter, infrastructureService,
+function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,11 +10,11 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with functional toilet";
+    vm.label = "% AWCs with Medicine Kit";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/functional_toilet/map', label: 'Map'},
-        'chart': {route: '/functional_toilet/chart', label: 'Chart'},
+        'map': {route: '/medicine_kit/map', label: 'Map'},
+        'chart': {route: '/medicine_kit/chart', label: 'Chart'},
     };
     vm.data = {
         legendTitle: 'Percentage',
@@ -26,7 +26,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.loaded = false;
     vm.filters = ['gender', 'age', 'month'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with a functional toilet',
+        info: 'Percentage of AWCs with a Medicine Kit',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -52,7 +52,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / row.all) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of AWCs with a functional toilet: <strong>' + total + '</strong></div><div>% of AWCs with a functional toilet: <strong>' + percent + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of AWCs with a Medicine Kit: <strong>' + total + '</strong></div><div>% of AWCs with a Medicine Kit: <strong>' + percent + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -64,7 +64,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
             vm.steps['map'].label = 'Map';
         }
 
-        infrastructureService.getFunctionalToiletData(vm.step, vm.filtersData).then(function(response) {
+        infrastructureService.getMedicineKitData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -164,9 +164,9 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
                     var all = _.find(vm.chartData[1].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs with a functional toilet: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a functional toilet: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
-                    tooltip_content += "<br/><p>Percentage of AWCs with a functional toilet</p>";
+                    tooltip_content += "<p>Total number of AWCs with a Medicine Kit: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
+                    tooltip_content += "<p>% of AWCs with a Medicine Kit: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
+                    tooltip_content += "<br/><p>Percentage of AWCs with a Medicine Kit</p>";
 
                     return tooltip_content;
                 });
@@ -180,9 +180,9 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     };
 }
 
-FunctionalToiletController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService'];
+MedicineKitController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('functionalToilet', function() {
+window.angular.module('icdsApp').directive('medicineKit', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -190,7 +190,7 @@ window.angular.module('icdsApp').directive('functionalToilet', function() {
         scope: {
             data: '=',
         },
-        controller: FunctionalToiletController,
+        controller: MedicineKitController,
         controllerAs: '$ctrl',
     };
 });

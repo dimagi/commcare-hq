@@ -18,5 +18,13 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             });
         },
+        getMedicineKitData: function(step, params) {
+            var get_url = url('medicine_kit', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);
