@@ -47,7 +47,7 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc, split_list_by_db_partition
+from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
 
@@ -503,12 +503,10 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def save_new_form(form):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         """
         Save a previously unsaved form
         """
 
-        db_name = get_db_alias_for_partitioned_doc(form.form_id)
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
@@ -529,7 +527,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form = form
 
         try:
-            with transaction.atomic(using=db_name, savepoint=False):
+            with transaction.atomic(using=form.db, savepoint=False):
                 form.save()
                 for attachment in unsaved_attachments:
                     attachment.save()
@@ -683,9 +681,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def case_exists(case_id):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-        db = get_db_alias_for_partitioned_doc(case_id)
-        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
+        return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -854,7 +850,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def save_case(case):
-        db_name = get_db_alias_for_partitioned_doc(case.case_id)
         transactions_to_save = case.get_live_tracked_models(CaseTransaction)
 
         indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
@@ -872,7 +867,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 )
 
         try:
-            with transaction.atomic(using=db_name, savepoint=False):
+            with transaction.atomic(using=case.db, savepoint=False):
                 case.save()
                 for case_transaction in transactions_to_save:
                     case_transaction.save()
@@ -885,12 +880,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                         update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
                     index.save(update_fields=update_fields)
 
-                CommCareCaseIndexSQL.objects.using(db_name).filter(id__in=index_ids_to_delete).delete()
+                CommCareCaseIndexSQL.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
                     attachment.save()
 
-                CaseAttachmentSQL.objects.using(db_name).filter(id__in=attachment_ids_to_delete).delete()
+                CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
 
@@ -1152,10 +1147,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                     ).delete()
 
             for ledger_value in ledger_values:
-                db_name = get_db_alias_for_partitioned_doc(ledger_value.case_id)
                 transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-                with transaction.atomic(using=db_name, savepoint=False):
+                with transaction.atomic(using=ledger_value.db, savepoint=False):
                     ledger_value.save()
                     for trans in transactions_to_save:
                         trans.save()

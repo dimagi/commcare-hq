@@ -1,14 +1,11 @@
 import uuid
-from tempfile import mkdtemp
 from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from shutil import rmtree
 
 import settings
 from corehq.blobs import get_blob_db
-from corehq.blobs.fsdb import FilesystemBlobDB
 from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -24,9 +21,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'

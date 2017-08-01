@@ -56,6 +56,9 @@ class RequireDBManager(models.Manager):
             }
         return self.using(self.get_db(partition_value)).get(**kwargs)
 
+    def partitioned_query(self, partition_value):
+        return self.using(self.get_db(partition_value))
+
 
 class PartitionedModel(models.Model):
     """
@@ -80,7 +83,7 @@ class PartitionedModel(models.Model):
     @property
     def db(self):
         assert self.partition_value, 'Partitioned model must have a partition value'
-        return self.objects.get_db(self.partition_value)
+        return RequireDBManager.get_db(self.partition_value)
 
     class Meta:
         abstract = True
