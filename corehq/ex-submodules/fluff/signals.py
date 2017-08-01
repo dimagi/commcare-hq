@@ -5,6 +5,7 @@ import logging
 
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
@@ -228,6 +229,15 @@ def add_columns(engine, raw_diffs, table_names):
             op.add_column(table_name, col)
 
 
+def get_tables_to_migrate(diffs, table_names):
+    tables_with_indexes = get_tables_with_index_changes(diffs, table_names)
+    tables_with_added_columns = get_tables_with_added_nullable_columns(diffs, table_names)
+    return tables_with_indexes | tables_with_added_columns
+
+
+def migrate_tables(engine, raw_diffs, table_names):
+    apply_index_changes(engine, raw_diffs, table_names)
+    add_columns(engine, raw_diffs, table_names)
 
 
 def rebuild_table(engine, pillow, indicator_doc):
