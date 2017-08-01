@@ -19,7 +19,7 @@ from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
-from custom.enikshay.user_setup import compress_nikshay_id, get_last_used_device_number
+from custom.enikshay.user_setup import compress_nikshay_id
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger('two_b_datamigration')
@@ -1747,8 +1747,9 @@ class Command(BaseCommand):
 
     def generate_id(self):
         now = datetime.datetime.now()
-        seconds_since_epoch = (now - datetime.datetime(1970, 1, 1)).total_seconds()
-        return str(seconds_since_epoch)
+        # YYYY-MM-DD-HHMMSS
+        format = "%Y-%m-%d_%H%M%S"
+        return now.strftime(format)
 
     @staticmethod
     def log_meta_info(migration_id, commit):
