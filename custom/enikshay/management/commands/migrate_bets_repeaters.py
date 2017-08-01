@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 print "    copying {} ({})".format(prop, type(value))
                 setattr(new_repeater, prop, value)
 
-        new_repeater.url = 'http://enikshay.myndgenie.in/Service/enikshay/bets/' + old_repeater.url.split('/')[-1]
+        new_repeater.url = 'https://enikshay.myndgenie.in/Service/enikshay/bets/' + old_repeater.url.split('/')[-1]
         new_repeater.username = self.username
         new_repeater.password = self.password
         print new_repeater.__repr__()
