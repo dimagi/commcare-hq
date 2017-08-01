@@ -2044,9 +2044,8 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
             cls.project.name,
             username=OTHER_USERNAME,
         )
-        cls.other_user_id = cls.other_user.user_id
         cls._create_ownership_cleanliness(cls.user_id)
-        cls._create_ownership_cleanliness(cls.other_user_id)
+        cls._create_ownership_cleanliness(cls.other_user.user_id)
 
     @classmethod
     def _create_ownership_cleanliness(cls, user_id):
@@ -2070,87 +2069,77 @@ class SteadyStateExtensionSyncTest(SyncBaseTest):
             )],
         )
         # Make a simple extension
-        self.factory.create_or_update_case(extension)
+        self.device.post_changes(extension)
         return host, extension
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_delegating_extensions(self):
         """Make an extension, delegate it, send it back, see what happens"""
+        guy = self.get_device()
+        ferrel = self.get_device(user=self.other_user)
         host, extension = self._create_extension()
 
         # Make sure we get it
-        assert_user_has_case(self, self.user, host.case_id)
+        self.assertIn(host.case_id, guy.sync().cases)
         # But ferrel doesn't
-        assert_user_doesnt_have_case(self, self.other_user, host.case_id)
+        self.assertNotIn(host.case_id, ferrel.sync().cases)
 
         # Reassign the extension to ferrel
-        re_assigned_extension = CaseStructure(
-            case_id='extension',
-            attrs={'owner_id': self.other_user_id}
-        )
-        self.factory.create_or_update_case(re_assigned_extension)
+        self.device.post_changes(case_id=extension.case_id, owner_id=ferrel.user_id)
 
         # other user should sync the host
-        assert_user_has_case(self, self.other_user, host.case_id)
+        self.assertIn(host.case_id, ferrel.sync().cases)
 
         # original user should sync the extension because it has changed
-        sync_log_id = SyncLog.last_for_user(self.user_id)._id
-        assert_user_has_case(self, self.user, extension.case_id,
-                             restore_id=sync_log_id)
         # but not the host, because that didn't
-        assert_user_doesnt_have_case(self, self.user, host.case_id,
-                                     restore_id=sync_log_id)
+        self.assertEqual(set(guy.sync().cases), {extension.case_id})
 
         # syncing again by original user should not pull anything
-        sync_again_id = SyncLog.last_for_user(self.user_id)._id
-        assert_user_doesnt_have_cases(self, self.user, [extension.case_id, host.case_id],
-                                     restore_id=sync_again_id)
+        self.assertFalse(guy.sync().cases)
 
         # reassign the extension case
-        re_assigned_extension = CaseStructure(
-            case_id='extension',
-            attrs={'owner_id': '-'}
-        )
-        self.factory.create_or_update_case(re_assigned_extension)
+        self.device.post_changes(case_id=extension.case_id, owner_id='-')
 
         # make sure other_user gets it because it changed
-        assert_user_has_case(self, self.other_user, extension.case_id,
-                             restore_id=SyncLog.last_for_user(self.other_user_id)._id)
+        self.assertIn(extension.case_id, ferrel.sync().cases)
         # first user should also get it since it was updated
-        assert_user_has_case(
-            self,
-            self.user,
-            extension.case_id,
-            restore_id=SyncLog.last_for_user(self.user_id)._id
-        )
+        self.assertIn(extension.case_id, guy.sync().cases)
 
         # other user syncs again, should not get the extension
-        assert_user_doesnt_have_case(self, self.other_user, extension.case_id,
-                                     restore_id=SyncLog.last_for_user(self.other_user_id)._id)
+        self.assertNotIn(extension.case_id, ferrel.sync().cases)
 
         # Hooray!
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_multiple_syncs(self):
+        guy = self.get_device()
         host, extension = self._create_extension()
-        assert_user_has_cases(self, self.user, [host.case_id, extension.case_id])
+        both_ids = {host.case_id, extension.case_id}
 
-        sync_log = SyncLog.last_for_user(self.user_id)
-        self.assertItemsEqual(sync_log.case_ids_on_phone, ['host', 'extension'])
+        # NOTE for clean_owners sync it is important that this is the
+        # first sync for this device. In other words, the restore state
+        # must not have a last sync log. This is possibly due to a bug
+        # in the clean_owners sync implementation, which omits extension
+        # cases that have been created since the last sync because they
+        # are not in last_sync_log.extension_index_tree. See
+        # _get_case_ids_for_owners_with_extensions after the comment "we
+        # also need to fetch unowned extension cases that have been
+        # modified"
+        sync0 = guy.sync()
+        self.assertEqual(sync0.log.case_ids_on_phone, both_ids)
+        self.assertEqual(set(sync0.cases), both_ids)
 
-        generate_restore_payload(
-            self.project, self.user, restore_id=sync_log._id, version=V2,
-            **self.restore_options
-        )
-        second_sync_log = SyncLog.last_for_user(self.user_id)
-        self.assertItemsEqual(second_sync_log.case_ids_on_phone, ['host', 'extension'])
+        sync1 = guy.sync()
+        self.assertEqual(sync1.log.case_ids_on_phone, both_ids)
+        self.assertFalse(sync1.cases)
 
-        generate_restore_payload(
-            self.project, self.user, restore_id=second_sync_log._id, version=V2,
-            **self.restore_options
-        )
-        third_sync_log = SyncLog.last_for_user(self.user_id)
-        self.assertItemsEqual(third_sync_log.case_ids_on_phone, ['host', 'extension'])
+        sync2 = guy.sync()
+        self.assertEqual(sync2.log.case_ids_on_phone, both_ids)
+        self.assertFalse(sync2.cases)
+
+        sync3 = guy.sync()
+        self.assertEqual(sync3.log.case_ids_on_phone, both_ids)
+        self.assertFalse(sync3.cases)
 
 
 @use_sql_backend
