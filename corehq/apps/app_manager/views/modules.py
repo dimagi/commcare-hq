@@ -390,6 +390,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
         "display_separately": None,
@@ -479,6 +480,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_post_form_workflow'):
+        module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
     if should_edit('case_list_form_media_image'):
         new_path = process_media_attribute(
             'case_list_form_media_image',
