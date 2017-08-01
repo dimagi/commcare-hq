@@ -119,6 +119,10 @@
                         <a href="{$ goToStep('medicine_kit', $location.search()) $}" class="fa">{% trans "% AWCs with Medicine Kit" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/infants_weight_scale') !== -1}">
+                        <a href="{$ goToStep('infants_weight_scale', $location.search()) $}" class="fa">{% trans "% AWCs with Weighing Scale: Infants" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <hr>

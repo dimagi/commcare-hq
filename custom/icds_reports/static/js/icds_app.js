@@ -173,6 +173,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/medicine_kit/:step", {
                 template : "<medicine-kit></medicine-kit>",
+            })
+            .when("/infants_weight_scale", {
+                redirectTo : "/infants_weight_scale/map",
+            })
+            .when("/infants_weight_scale/:step", {
+                template : "<infants-weight-scale></infants-weight-scale>",
             });
     }]);
 
