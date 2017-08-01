@@ -631,21 +631,6 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_app_lang(request, domain, app_id):
-    """
-    DEPRECATED
-    Called when a language (such as 'zh') is to be deleted from app.langs
-
-    """
-    lang_id = int(request.POST['index'])
-    app = get_app(domain, app_id)
-    del app.langs[lang_id]
-    app.save()
-    return back_to_main(request, domain, app_id=app_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
