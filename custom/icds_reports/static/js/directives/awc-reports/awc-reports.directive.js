@@ -1001,7 +1001,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         params['case_id'] = case_id;
         var highest_age = 0;
 
-        $http({
+        vm.myPromise = $http({
             method: "GET",
             url: get_url,
             params: params,

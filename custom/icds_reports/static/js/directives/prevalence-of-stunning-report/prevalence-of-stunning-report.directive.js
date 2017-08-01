@@ -54,10 +54,18 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
         var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
         var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>Total Children with height measured in given month: <strong>' + measured + '</strong></div>' +
+            '<div>% Severely stunted: <strong>' + sever + '</strong></div>' +
+            '<div>% Moderately stunted: <strong>' + moderate +'</strong></div>' +
+            '<div>% Normal: <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {

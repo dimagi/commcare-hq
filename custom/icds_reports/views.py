@@ -402,7 +402,7 @@ class AwcReportsView(View):
                 for loc in locations:
                     location_key = '%s_id' % loc.location_type.code
                     config.update({
-                        location_key: loc.location_id,
+                        location_key: "d5d0fce5e73ff2b04417f40bd2bc84c7",
                     })
             except SQLLocation.DoesNotExist:
                 pass
@@ -436,7 +436,7 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             data = get_awc_report_beneficiary(
-                config['awc_id'],
+                "d5d0fce5e73ff2b04417f40bd2bc84c7",
                 tuple(month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
             )
