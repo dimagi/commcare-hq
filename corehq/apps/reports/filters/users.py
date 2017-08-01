@@ -173,7 +173,7 @@ class EmwfUtils(object):
         else:
             raise Exception("Unexpcted id: {}".format(id_))
 
-        if owner.is_deleted:
+        if hasattr(owner, 'is_deleted') and owner.is_deleted:
             ret = (ret[0], 'Deleted - ' + ret[1])
 
         return ret

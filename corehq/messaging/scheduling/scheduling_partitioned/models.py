@@ -197,6 +197,7 @@ class AbstractAlertScheduleInstance(ScheduleInstance):
 class AbstractTimedScheduleInstance(ScheduleInstance):
     timed_schedule_id = models.UUIDField()
     start_date = models.DateField()
+    schedule_revision = models.CharField(max_length=126, null=True)
 
     class Meta(ScheduleInstance.Meta):
         abstract = True
@@ -228,6 +229,7 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
         self.active = True
         schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
         schedule.move_to_next_event_not_in_the_past(self)
+        self.schedule_revision = schedule.memoized_schedule_revision
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):

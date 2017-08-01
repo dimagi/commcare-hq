@@ -470,5 +470,12 @@ class UnfinishedSubmissionStub(models.Model):
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
 
+    def __repr__(self):
+        return "UnfinishedSubmissionStub( \
+            xform_id={s.xform_id}, \
+            timestamp={s.timestamp}, \
+            saved={s.saved}, \
+            domain={s.domain})".format(s=self)
+
     class Meta:
         app_label = 'couchforms'

@@ -169,6 +169,22 @@
   </aside>
 </script>
 
+{% if request|ui_notify_enabled:"APP_BUILDER_ADD_ONS" %}
+<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-no-arrow fade in"
+     data-slug="{{ "APP_BUILDER_ADD_ONS"|ui_notify_slug }}"
+     role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    <p class="lead">{% trans 'New Add-ons tab' %}</p>
+    <p>
+        Intermediate functionality, such as child cases, can now be enabled or disabled using the
+        <strong>Add-Ons</strong> tab below. Several feature previews, such as icons in the case list,
+        are also now accessible in this tab.
+    </p>
+</div>
+{% endif %}
+
 <div class="tabbable">
     <ul class="nav nav-tabs">
     {% if app.get_doc_type == 'LinkedApplication' %}
@@ -180,6 +196,7 @@
             <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
         {% endif %}
         <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+        <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
         <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
     {% endif %}
     </ul>
@@ -280,6 +297,9 @@
                     </div>
                 </form>
             </div>
+        </div>
+        <div class="tab-pane" id="add-ons">
+            {% include 'app_manager/v2/partials/add_ons.html' %}
         </div>
         <div class="tab-pane" id="commcare-settings">
             {% include 'app_manager/v2/partials/commcare_settings.html' %}

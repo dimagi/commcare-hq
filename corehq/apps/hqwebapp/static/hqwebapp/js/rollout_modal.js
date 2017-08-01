@@ -1,4 +1,3 @@
-/* globals alert_user */
 /*
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
@@ -14,7 +13,8 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
     }
 
     $(function() {
-        var $modal = $("#rollout-modal"),
+        var alert_user = hqImport("style/js/alert_user.js").alert_user,
+            $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
         if ($modal.length && (!$.cookie(cookieName(slug)) || $modal.data("force"))) {

@@ -1060,6 +1060,13 @@ APP_MANAGER_V1 = StaticToggle(
     [NAMESPACE_USER]
 )
 
+APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
+    'app_manager_v2_template_apps',
+    'Experiment with template apps in app builder v2',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1241,5 +1248,12 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'Used for ICDS emergencies when UCR sync is killing the DB',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

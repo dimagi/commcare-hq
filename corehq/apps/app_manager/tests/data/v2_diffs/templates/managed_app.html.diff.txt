@@ -21,7 +21,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,277 +29,161 @@
+@@ -25,277 +29,165 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -58,11 +58,13 @@
              </a>
 -        </li>
 +          </h2>
++          {% if not intro_only %}
 +          <div id="js-publish-status"
 +               class="appnav-name-publish"
 +               style="display: none;">
 +            {% trans "Updates Available to Publish" %}
 +          </div>
++          {% endif %}
 +      </div>
  
 -        {% if show_live_preview and can_preview_form %}
@@ -340,6 +342,8 @@
      {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
      {% initial_page_data 'app_subset' app_subset %}
      {% initial_page_data 'formdesigner' formdesigner %}
++    {% initial_page_data 'add_ons' add_ons %}
++    {% initial_page_data 'add_ons_layout' add_ons_layout %}
 +    {% initial_page_data 'current_app_version_url' current_app_version_url %}
 +    {% registerurl "new_form" domain app.id "---" %}
 +    {% registerurl "toggle_app_manager_v2" %}
