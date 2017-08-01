@@ -111,6 +111,10 @@
                         <a href="{$ goToStep('clean_water', $location.search()) $}" class="fa">{% trans "% AWCs with Clean Drinking Water" %}
                         </a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/functional_toilet') !== -1}">
+                        <a href="{$ goToStep('functional_toilet', $location.search()) $}" class="fa">{% trans "% AWCs with functional toilet" %}
+                        </a>
+                    </li>
                 </ul>
             </li>
             <hr>
