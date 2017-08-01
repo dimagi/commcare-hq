@@ -6,7 +6,7 @@ from corehq.apps.export.models import (
     ExportItem,
     ExportColumn,
     Option, MultipleChoiceItem)
-from corehq.apps.export.models.new import (
+from corehq.apps.export.models import (
     MAIN_TABLE,
     PathNode,
 )
@@ -15,7 +15,7 @@ MockRequest = namedtuple('MockRequest', 'domain')
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestExportItemGeneration(SimpleTestCase):

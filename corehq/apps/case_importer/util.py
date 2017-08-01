@@ -407,7 +407,7 @@ def get_case_properties_for_case_type(domain, case_type):
     # todo: possibly by moving this there.
     if should_use_sql_backend(domain):
         from corehq.apps.export.models import CaseExportDataSchema
-        from corehq.apps.export.models.new import MAIN_TABLE
+        from corehq.apps.export.models import MAIN_TABLE
         schema = CaseExportDataSchema.generate_schema_from_builds(
             domain,
             None,

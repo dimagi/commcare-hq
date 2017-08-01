@@ -159,14 +159,14 @@ class TestConvertBase(TestCase, TestFileMixin):
 
     def _convert_form_export(self, export_file_name, force=False):
         return self._convert_export(
-            'corehq.apps.export.models.new.FormExportDataSchema.generate_schema_from_builds',
+            'corehq.apps.export.models.FormExportDataSchema.generate_schema_from_builds',
             export_file_name,
             force=force
         )
 
     def _convert_case_export(self, export_file_name, force=False):
         return self._convert_export(
-            'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+            'corehq.apps.export.models.CaseExportDataSchema.generate_schema_from_builds',
             export_file_name,
             force=force
         )
@@ -188,7 +188,7 @@ class TestConvertBase(TestCase, TestFileMixin):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
 @mock.patch(
@@ -231,7 +231,7 @@ class TestConvertMissingAppID(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
 @mock.patch(
@@ -301,7 +301,7 @@ class TestForceConvertFormExport(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestForceConvertCaseExport(TestConvertBase):
@@ -363,7 +363,7 @@ class TestForceConvertCaseExport(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
@@ -511,7 +511,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -777,7 +777,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -843,7 +843,7 @@ class TestConversionOrdering(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -902,7 +902,7 @@ class TestSingleNodeRepeatConversion(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.get_request',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(

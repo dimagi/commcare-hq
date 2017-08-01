@@ -509,8 +509,8 @@ def _get_system_property(index, transform, export_type, table_path):
 
 
 def _convert_index_to_path_nodes(index):
-    from corehq.apps.export.models.new import MAIN_TABLE
-    from corehq.apps.export.models.new import PathNode
+    from corehq.apps.export.models import MAIN_TABLE
+    from corehq.apps.export.models import PathNode
     if index == '#':
         return MAIN_TABLE
     elif _is_repeat(index):
