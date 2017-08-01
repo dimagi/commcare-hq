@@ -3,6 +3,26 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from django.db.models import Count
+
+from corehq.apps.accounting.utils import get_account_name_from_default_name
+from corehq.sql_db.operations import HqRunPython
+
+
+def _make_existing_billing_account_names_unique(apps, schema_editor):
+    BillingAccount = apps.get_model('accounting', 'BillingAccount')
+
+    counts_by_name = BillingAccount.objects.values('name').annotate(Count('name'))
+    duplicated_names = [
+        count_by_name['name']
+        for count_by_name in counts_by_name
+        if count_by_name['name__count'] > 1
+    ]
+
+    for duplicated_name in duplicated_names:
+        for billing_account in BillingAccount.objects.filter(name=duplicated_name).order_by('date_created')[1:]:
+            billing_account.name = get_account_name_from_default_name(billing_account.name)
+            billing_account.save()
 
 
 class Migration(migrations.Migration):
@@ -12,6 +32,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        HqRunPython(_make_existing_billing_account_names_unique),
         migrations.AlterField(
             model_name='billingaccount',
             name='name',
