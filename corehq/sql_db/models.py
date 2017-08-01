@@ -50,6 +50,21 @@ class RequireDBManager(models.Manager):
         return get_db_alias_for_partitioned_doc(partition_value)
 
     def partitioned_get(self, partition_value, **kwargs):
+        """Get a partioned model from it's database
+
+        If the lookup should be performed using a different lookup value then it
+        should be supplied as a keyword argument:
+
+            model.objects.partitioned_get(partition_value, other_field=value)
+
+        is equivalent to:
+
+            db = get_db_alias_for_partitioned_doc(partition_value)
+            model.objects.using(db).get(other_field=value)
+
+        :param partition_value: The value that is used to partition the model;
+                                this value will be used to select the database
+        """
         if not kwargs:
             kwargs = {
                 self.model.partition_attr: partition_value
@@ -57,6 +72,12 @@ class RequireDBManager(models.Manager):
         return self.using(self.get_db(partition_value)).get(**kwargs)
 
     def partitioned_query(self, partition_value):
+        """Shortcut to get a queryset for a partitioned database.
+        Equivalent to:
+
+            db = get_db_alias_for_partitioned_doc(partition_value)
+            qs = Model.objects.using(db)
+        """
         return self.using(self.get_db(partition_value))
 
 
@@ -82,6 +103,7 @@ class PartitionedModel(models.Model):
 
     @property
     def db(self):
+        """The partitioned database for this object"""
         assert self.partition_value, 'Partitioned model must have a partition value'
         return RequireDBManager.get_db(self.partition_value)
 
