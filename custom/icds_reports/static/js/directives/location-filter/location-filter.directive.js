@@ -255,7 +255,6 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             vm.currentLevel = selectedLocationIndex();
             vm.selectedLocation = vm.selectedLocations[selectedLocationIndex()];
 
-
             if (selectedLocationIndex() >= 0) {
                 vm.selectedLocationId = vm.selectedLocation.location_id;
                 vm.location_id = vm.selectedLocationId;

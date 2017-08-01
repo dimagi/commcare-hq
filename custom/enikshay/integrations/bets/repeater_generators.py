@@ -283,7 +283,7 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
             VoucherID="DUMMY-VOUCHER-ID",
-            Amount=0,
+            Amount="0",
             EventID="DUMMY-EVENT-ID",
             EventOccurDate="2017-01-01",
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",

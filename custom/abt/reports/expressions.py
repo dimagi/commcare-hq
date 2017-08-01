@@ -104,7 +104,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
         """
         Return the language in which this row should be rendered.
         """
-        if item.get("domain", None) == "airsmadagascar":
+        if item.get("domain", None) in ("airsmadagascar", "abtmali"):
             return "fra"
         country = cls._get_val(item, ["location_data", "country"])
         if country in ["Senegal", u'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:

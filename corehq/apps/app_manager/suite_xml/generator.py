@@ -6,7 +6,6 @@ from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
-from corehq.apps.app_manager.suite_xml.features.careplan import CareplanMenuContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtureContributor
 from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
@@ -57,14 +56,10 @@ class SuiteGenerator(object):
         # by module
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
-        careplan_menus = CareplanMenuContributor(self.suite, self.app, self.modules)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
-            self.suite.menus.extend(
-                careplan_menus.get_module_contributions(module)
-            )
             self.suite.menus.extend(
                 menus.get_module_contributions(module)
             )

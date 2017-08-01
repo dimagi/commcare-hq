@@ -105,7 +105,7 @@ class FormProcessorSQL(object):
 
             if stock_result:
                 ledgers_to_save = stock_result.models_to_save
-                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
+                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
         if publish_to_kafka:
             cls._publish_changes(processed_forms, cases, stock_result)

@@ -11,6 +11,7 @@ from casexml.apps.phone.tests.utils import (
     get_exactly_one_wrapped_sync_log,
     get_next_sync_log,
     generate_restore_payload,
+    MockDevice,
 )
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import synclog_from_restore_payload, get_restore_config
@@ -30,8 +31,14 @@ from casexml.apps.case.tests.util import (
     assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases,
     check_payload_has_case_ids, assert_user_doesnt_have_cases)
 from casexml.apps.phone.tests.utils import create_restore_user, has_cached_payload
-from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
-    AbstractSyncLog
+from casexml.apps.phone.models import (
+    AbstractSyncLog,
+    get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
+    LOG_FORMAT_SIMPLIFIED,
+    SimplifiedSyncLog,
+    SyncLog,
+)
 from casexml.apps.phone.restore import (
     CachedResponse,
     CLEAN_OWNERS,
@@ -77,23 +84,21 @@ class SyncBaseTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
 
-        restore_config = RestoreConfig(
+        self.device = MockDevice(
             self.project,
-            restore_user=self.user,
-            cache_settings=RestoreCacheSettings(overwrite_cache=True),
-            **self.restore_options
+            self.user,
+            self.restore_options,
+            default_case_type=PARENT_TYPE,
         )
-        self.sync_log = synclog_from_restore_payload(restore_config.get_payload().as_string())
-        self.factory = CaseFactory(
-            case_defaults={
-                'user_id': self.user_id,
-                'owner_id': self.user_id,
-                'case_type': PARENT_TYPE,
-            },
-            form_extras={
-                'last_sync_token': self.sync_log._id
-            }
-        )
+        self.sync_log = self.device.last_sync.log
+        self.factory = self.device.case_factory
+        # HACK remove once all tests are converted to use self.device
+        # NOTE self.device.sync() overrides last_sync_token with the
+        # most recent sync token, so this is effectively ignored when
+        # using that method.
+        self.factory.form_extras = {
+            'last_sync_token': self.sync_log._id,
+        }
 
     def tearDown(self):
         restore_config = RestoreConfig(
@@ -145,7 +150,10 @@ class SyncBaseTest(TestCase):
             all_ids.update(dependent_case_id_map)
             self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
             # livequery sync does not use or populate sync_log.index_tree
-            if self.restore_options['case_sync'] != LIVEQUERY:
+            if self.restore_options['case_sync'] == LIVEQUERY:
+                self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
+            else:
+                self.assertEqual(sync_log.log_format, LOG_FORMAT_SIMPLIFIED)
                 self.assertEqual(set(dependent_case_id_map.keys()), sync_log.dependent_case_ids_on_phone)
                 for case_id, indices in case_id_map.items():
                     if indices:
@@ -1929,6 +1937,83 @@ class MultiUserSyncTest(SyncBaseTest):
         self._testUpdate(latest_sync_log._id, {
             child_id: [new_mom_ref, dad_ref], mom_id: [], dad_id: [], new_mom_id: []
         })
+
+    def test_incremental_sync_with_close_and_create(self):
+        def create_case_graph(num):
+            person = CaseStructure(
+                case_id='person-%s' % num,
+                attrs={'create': True, 'owner_id': self.shared_group._id},
+            )
+            occurrence = CaseStructure(
+                case_id="occurrence-%s" % num,
+                attrs={'create': True, 'owner_id': None},
+                indices=[
+                    CaseIndex(
+                        person,
+                        relationship='extension',
+                        related_type='person',
+                        identifier='person-index',
+                    ),
+                ],
+            )
+            episode = CaseStructure(
+                case_id='episode-%s' % num,
+                attrs={'create': True, 'owner_id': None},
+                indices=[
+                    CaseIndex(
+                        occurrence,
+                        relationship='extension',
+                        related_type='occurrence',
+                        identifier='occurrence-index',
+                    ),
+                ],
+            )
+            self.factory.create_or_update_cases([episode])
+            return person, occurrence, episode
+
+        p1, o1, e1 = create_case_graph(1)
+        p2, o2, e2 = create_case_graph(2)
+
+        # Alice and Bob sync
+        alice = MockDevice(self.project, self.user, self.restore_options)
+        bob = MockDevice(self.project, self.other_user, self.restore_options)
+        all_cases = {case.case_id for case in [p1, o1, e1, p2, o2, e2]}
+        self.assertEqual(set(alice.last_sync.log.case_ids_on_phone), all_cases)
+        self.assertEqual(set(bob.last_sync.log.case_ids_on_phone), all_cases)
+
+        close_e1 = CaseBlock(
+            create=False,
+            case_id=e1.case_id,
+            user_id=bob.user_id,
+            owner_id=None,
+            close=True,
+        )
+        e3 = CaseBlock(
+            create=True,
+            case_id='episode-3',
+            user_id=bob.user_id,
+            owner_id=None,
+            index={'occurrence-index': ('occurrence', o1.case_id, 'extension')},
+        )
+        bob.change_cases([close_e1, e3])
+        bob.sync()
+
+        a1 = CaseBlock(
+            create=True,
+            case_id='adherence-1',
+            user_id=alice.user_id,
+            index={'episode-index': ('episode', e2.case_id, 'extension')},
+        )
+        alice.change_cases([a1])
+        alice_cases = {case.case_id for case in [p1, o1, e3, p2, o2, e2, a1]}
+
+        sync2 = alice.sync()
+        self.assertEqual(set(sync2.log.case_ids_on_phone), alice_cases)
+        self.assertEqual(sync2.case_ids, {e1.case_id, e3.case_id})
+
+        sync3 = alice.sync()
+        self.assertEqual(set(sync3.log.case_ids_on_phone), alice_cases)
+        self.assertEqual(sync3.case_ids, set())
 
 
 @use_sql_backend

@@ -1,4 +1,3 @@
-from django.contrib import messages
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -7,8 +6,6 @@ from corehq.apps.app_manager.decorators import require_deploy_apps, \
 from corehq.apps.app_manager.xform import XForm, validate_xform
 from corehq.apps.app_manager.util import get_app_manager_template
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.subprocess_timeout import ProcessTimedOut
 
 
 @require_can_edit_apps
@@ -46,19 +43,7 @@ def multimedia_ajax(request, domain, app_id):
 
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
-        try:
-            multimedia_state = app.check_media_state()
-        except ProcessTimedOut:
-            notify_exception(request)
-            messages.warning(request, (
-                "We were unable to check if your forms had errors. "
-                "Refresh the page and we will try again."
-            ))
-            multimedia_state = {
-                'has_media': False,
-                'has_form_errors': True,
-                'has_missing_refs': False,
-            }
+        multimedia_state = app.check_media_state()
         context = {
             'multimedia_state': multimedia_state,
             'domain': domain,

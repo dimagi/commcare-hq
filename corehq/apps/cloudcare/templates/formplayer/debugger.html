@@ -100,6 +100,7 @@
                   name="xpath"
                   placeholder="XPath Expression"
                   autocomplete="off"
+                  spellcheck=false
                   data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
           </div>
           </div>
@@ -114,6 +115,9 @@
           </div>
           </div>
           <div class="col-sm-12">
+              <!--ko if: success() && formatResult(result()) === ''-->
+              <div><i>{% trans "Empty String" %}</i></div>
+              <!--/ko-->
               <textarea
                   id="evaluate-result"
                   type="text"
@@ -146,7 +150,10 @@
                 <span data-bind="text: xpath"></span>
               </td>
               <td class="col-sm-3">
-                <span data-bind="text: output"></span>
+                <!--ko if: $parent.isSuccess($data) && $parent.formatResult(output) === ''-->
+                <div><i>{% trans "Empty String" %}</i></div>
+                <!--/ko-->
+                <span data-bind="text: $parent.formatResult(output)"></span>
               </td>
             </tr>
           </tbody>

@@ -96,12 +96,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
                 app_id = initial_page_data('app_id'),
                 module_id = initial_page_data('module_id'),
                 form_id = initial_page_data('form_id');
-            var cloudCareUrl = "";
-            if (!COMMCAREHQ.toggleEnabled('USE_OLD_CLOUDCARE')) {
-                cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
-            } else {
-                cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
-            }
+            var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function() {
@@ -124,10 +119,10 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
             var FormWorkflow = hqImport('app_manager/js/forms/form_workflow.js').FormWorkflow;
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
-            labels[FormWorkflow.Values.ROOT] = gettext("Module Menu");
-            labels[FormWorkflow.Values.MODULE] = gettext("Module: ") + initial_page_data('module_name');
+            labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
+            labels[FormWorkflow.Values.MODULE] = gettext("Menu: ") + initial_page_data('module_name');
             if (initial_page_data('root_module_name')) {
-                labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Module: ") + initial_page_data('root_module_name');
+                labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Menu: ") + initial_page_data('root_module_name');
             }
             labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
 

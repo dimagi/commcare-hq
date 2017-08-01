@@ -269,8 +269,7 @@
       "sense": "false"
     }
   }, 
-  "commtrack_requisition_mode": null, 
-  "attribution_notes": null, 
+  "attribution_notes": null,
   "user_registration": {
     "doc_type": "UserRegistrationForm", 
     "unique_id": "88a4829cef83c32622e27f67e82f77679f4dd50d", 

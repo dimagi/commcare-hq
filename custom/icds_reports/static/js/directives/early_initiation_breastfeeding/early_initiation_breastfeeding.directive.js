@@ -10,7 +10,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Newborns with Low Birth Weight";
+    vm.label = "% Early Initiation of Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/early_initiation/map', label: 'Map'},
@@ -52,8 +52,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.in_month : 0);
-        var birth = $filter('indiaNumbers')(row ? row.birth : 0);
+        var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
+        var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div><div>Total Number of Children who were put to the breast within one hour of birth: <strong>' + birth + '</strong></div></ul>';
     };
 
@@ -66,7 +66,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -122,7 +122,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -142,7 +142,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
 

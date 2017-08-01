@@ -10,4 +10,3 @@ class UnicodeMixIn(object):
     def __unicode__(self):
         # avoid recursion when we forget to override this
         return super(UnicodeMixIn, self).__str__()
-    

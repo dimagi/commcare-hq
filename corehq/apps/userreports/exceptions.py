@@ -10,6 +10,10 @@ class TableNotFoundWarning(UserReportsWarning):
     pass
 
 
+class MissingColumnWarning(UserReportsWarning):
+    pass
+
+
 class BadBuilderConfigError(UserReportsError):
     pass
 

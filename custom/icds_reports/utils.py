@@ -20,6 +20,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
@@ -451,7 +452,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'low_birth'
                 }
             ],
             [
@@ -472,7 +473,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'early_initiation'
                 },
                 {
                     'label': _('% Exclusive breastfeeding'),
@@ -491,7 +492,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'exclusive_breastfeeding'
                 }
             ],
             [
@@ -512,7 +513,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'children_initiated'
                 },
                 {
                     'label': _('% Institutional deliveries'),
@@ -531,7 +532,7 @@ def get_maternal_child_data(config):
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'institutional_deliveries'
                 }
             ]
         ]
@@ -1014,19 +1015,19 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             'total': valid or 0,
             'normal': normal
         }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 21 <= value <= 35:
-            row_values.update({'fillKey': '21%-35%'})
-        elif value > 35:
-            row_values.update({'fillKey': '36%-100%'})
+        if value < 20:
+            row_values.update({'fillKey': '0%-19%'})
+        elif 20 <= value < 35:
+            row_values.update({'fillKey': '20%-34%'})
+        elif value >= 35:
+            row_values.update({'fillKey': '35%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': GREEN})
-    fills.update({'21%-35%': YELLOW})
-    fills.update({'36%-100%': RED})
+    fills.update({'0%-19%': GREEN})
+    fills.update({'20%-34%': YELLOW})
+    fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -1355,11 +1356,10 @@ def get_awc_reports_pse(config, month, two_before, domain):
                     'message': awc_name,
                 }
             })
-        url = reverse('download_attachment', kwargs={'domain': domain, 'instance_id': doc_id})
         if image_name:
             tmp_image.append({
                 'id': count,
-                'image': url + '?attachment=' + image_name,
+                'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
                 'date': pse_date.strftime("%d/%m/%Y")
             })
             img_count += 1
@@ -1561,15 +1561,6 @@ def get_awc_reports_maternal_child(config, month, prev_month):
 def get_awc_report_demographics(config, month):
     selected_month = datetime(*month)
 
-    def get_data_for(date, filters):
-        return AggAwcMonthly.objects.filter(
-            month=date, **filters
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            household=Sum('cases_household')
-        )
-
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
@@ -1606,6 +1597,7 @@ def get_awc_report_demographics(config, month):
         ).values(
             'aggregation_level'
         ).annotate(
+            household=Sum('cases_household'),
             ccs_pregnant=Sum('cases_ccs_pregnant'),
             ccs_lactating=Sum('cases_ccs_lactating'),
             adolescent=Sum('cases_person_adolescent_girls_11_18'),
@@ -1617,9 +1609,6 @@ def get_awc_report_demographics(config, month):
     two_days_ago = yesterday - relativedelta(days=1)
     kpi_yesterday = get_data_for_kpi(config, yesterday.date())
     kpi_two_days_ago = get_data_for_kpi(config, two_days_ago.date())
-
-    this_month = get_data_for(selected_month, config)
-    prev_month = get_data_for(selected_month - relativedelta(months=1), config)
 
     return {
         'chart': [
@@ -1636,10 +1625,10 @@ def get_awc_report_demographics(config, month):
                     'help_text': _("Total number of households registered"),
                     'percent': percent_increase(
                         'household',
-                        this_month,
-                        prev_month,
+                        kpi_yesterday,
+                        kpi_two_days_ago,
                     ),
-                    'value': get_value(this_month, 'household'),
+                    'value': get_value(kpi_yesterday, 'household'),
                     'all': '',
                     'format': 'number',
                     'frequency': 'month'
@@ -1663,7 +1652,7 @@ def get_awc_report_demographics(config, month):
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
                     'percent': percent_increase(
-                        ['ccs_lactating'],
+                        'ccs_lactating',
                         kpi_yesterday,
                         kpi_two_days_ago
                     ),
@@ -1693,7 +1682,7 @@ def get_awc_report_demographics(config, month):
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
                     'percent': percent_diff(
-                        ['has_aadhaar'],
+                        'has_aadhaar',
                         kpi_yesterday,
                         kpi_two_days_ago,
                         'all_cases'
@@ -1772,8 +1761,8 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': row.age_in_months, 'y': (row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': row.age_in_months, 'y': (row.recorded_height or 0)})
+        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': int(row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': int(row.age_in_months), 'y': int(row.recorded_height or 0)})
     return beneficiary
 
 
@@ -1790,6 +1779,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             severe=Sum('wasting_severe'),
             normal=Sum('wasting_normal'),
             valid=Sum('height_eligible'),
+            total_measured=Sum('height_measured_in_month'),
         )
 
     map_data = {}
@@ -1801,15 +1791,18 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
         normal = row['normal']
+        total_measured = row['total_measured']
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
         average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
             'total': valid or 0,
-            'normal': normal
+            'normal': normal,
+            'total_measured': total_measured or 0,
         }
+
         if value < 5:
             row_values.update({'fillKey': '0%-5%'})
         elif 5 <= value < 7:
@@ -1831,7 +1824,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": "%.2f" % (sum(average) / (len(average) or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
                     "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
@@ -2039,7 +2032,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         moderate = row['moderate']
         normal = row['normal']
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
         average.append(value)
         row_values = {
             'severe': severe or 0,
@@ -2047,18 +2040,18 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             'total': valid or 0,
             'normal': normal
         }
-        if value < 5:
-            row_values.update({'fillKey': '0%-25%'})
-        elif 5 <= value < 7:
-            row_values.update({'fillKey': '25%-38%'})
-        elif value >= 7:
+        if value < 25:
+            row_values.update({'fillKey': '0%-24%'})
+        elif 25 <= value < 38:
+            row_values.update({'fillKey': '25%-37%'})
+        elif value >= 38:
             row_values.update({'fillKey': '38%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-25%': GREEN})
-    fills.update({'25%-38%': YELLOW})
+    fills.update({'0%-24%': GREEN})
+    fills.update({'25%-37%': YELLOW})
     fills.update({'38%-100%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2068,14 +2061,13 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": "%.2f" % (sum(average) / (len(average) or 1)),
                 "info": _((
-                    "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
+                    "-2Z standard deviations of the WHO Child Growth Standards median."
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
+                    "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+                    "consequences on the growth of a child"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -2278,18 +2270,18 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             'low_birth': low_birth,
             'in_month': in_month,
         }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+        if value < 20:
+            row_values.update({'fillKey': '0%-19%'})
+        elif 20 <= value < 60:
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': GREEN})
-    fills.update({'20%-60%': YELLOW})
+    fills.update({'0%-19%': GREEN})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2521,18 +2513,18 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             'in_month': in_month,
         }
         if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
+            row_values.update({'fillKey': '0%-19%'})
         elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
+    fills.update({'0%-19%': RED})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': GREEN})
-    fills.update({'20%-60%': YELLOW})
-    fills.update({'0%-20%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2763,17 +2755,17 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
+            row_values.update({'fillKey': '0%-19%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
+            row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
             row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': YELLOW})
+    fills.update({'0%-19%': RED})
+    fills.update({'20%-59%': YELLOW})
     fills.update({'60%-100%': GREEN})
     fills.update({'defaultFill': GREY})
 

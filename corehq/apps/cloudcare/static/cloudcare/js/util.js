@@ -10,26 +10,6 @@ hqDefine('cloudcare/js/util.js', function () {
         showSpinner: false
     });
 
-    var getLocalizedString = function (property, language) {
-        // simple utility to localize a string based on a dict of
-        // language mappings.
-        return localize(this.get(property), language);
-    };
-
-    var localize = function(obj, language) {
-        var s = obj[language];
-        if (!s) {
-            for (var lang in obj) {
-                if (obj.hasOwnProperty(lang) && obj[lang]) {
-                    s = obj[lang];
-                    break;
-                }
-            }
-        }
-        return s || localize.NOT_FOUND;
-    };
-    localize.NOT_FOUND = '?';
-
     var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
         // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
@@ -39,53 +19,12 @@ hqDefine('cloudcare/js/util.js', function () {
         return url;
     };
 
-    var getFormEntryUrl = function (urlRoot, appId, moduleId, formId, caseId) {
-        return urlRoot + getFormEntryPath(appId, moduleId, formId, caseId);
-    };
-    var getChildSelectUrl = function(urlRoot, appId, moduleId, formId, parentId){
-        return urlRoot + getChildSelectPath(appId, moduleId, formId, parentId);
-    };
-    var getChildSelectPath = function(appId, moduleId, formId, parentId){
-        return "view/" + appId + "/" + moduleId + "/" + formId + "/parent/" + parentId;
-    };
-
-    var getFormEntryPath = function(appId, moduleId, formId, caseId) {
-        // TODO: make this cleaner
-        var url = "view/" + appId + "/" + moduleId + "/" + formId;
-        if (caseId) {
-            url = url + '/case/' + caseId;
-        }
-        url += "/enter/";
-        return url;
-    };
-
     var getSubmitUrl = function (urlRoot, appId) {
         // deprecated but still called from "touchforms-inline"
         // which is used to fill out forms from within case details view
         // use app.getSubmitUrl instead
         // todo: replace and remove
         return urlRoot + "/" + appId + "/";
-    };
-
-    var getCaseFilterUrl = function(urlRoot, appId, moduleId, special, parentId) {
-        // TODO: make this cleaner
-        var url = urlRoot + "module/" + appId + "/modules-" + moduleId + "/";
-        if (parentId){
-            url += "parent/" + parentId + "/";
-        }
-        if (special === 'task-list') {
-            url += '?task-list=true';
-        }
-        return url;
-    };
-
-    var getSessionContextUrl = function(sessionUrlRoot, session_id) {
-        // TODO: make this cleaner
-        return sessionUrlRoot + session_id;
-    };
-
-    var isParentField = function(field) {
-        return field ? field.startsWith('parent/') : false;
     };
 
     var showError = function (message, $el) {
@@ -136,18 +75,18 @@ hqDefine('cloudcare/js/util.js', function () {
         NProgress.start();
     };
 
-    var tfLoading = function (selector) {
+    var formplayerLoading = function (selector) {
         showLoading();
     };
 
-    var tfLoadingComplete = function (isError, message) {
+    var formplayerLoadingComplete = function (isError, message) {
         hideLoading();
         if (isError) {
             showError(message || gettext('Error saving!'), $('#cloudcare-notifications'));
         }
     };
 
-    var tfSyncComplete = function (isError) {
+    var formplayerSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
             showError(
@@ -175,29 +114,15 @@ hqDefine('cloudcare/js/util.js', function () {
         NProgress.done();
     };
 
-    var hideLoadingCallback = function () {
-        hideLoading();
-    };
     return {
-        getLocalizedString: getLocalizedString,
-        localize: localize,
         getFormUrl: getFormUrl,
-        getFormEntryUrl: getFormEntryUrl,
-        getChildSelectUrl: getChildSelectUrl,
-        getFormEntryPath: getFormEntryPath,
         getSubmitUrl: getSubmitUrl,
-        getCaseFilterUrl: getCaseFilterUrl,
-        getSessionContextUrl: getSessionContextUrl,
-        isParentField: isParentField,
         showError: showError,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
-        showLoading: showLoading,
         clearUserDataComplete: clearUserDataComplete,
-        tfLoading: tfLoading,
-        tfLoadingComplete: tfLoadingComplete,
-        tfSyncComplete: tfSyncComplete,
-        hideLoading: hideLoading,
-        hideLoadingCallback: hideLoadingCallback
+        formplayerLoading: formplayerLoading,
+        formplayerLoadingComplete: formplayerLoadingComplete,
+        formplayerSyncComplete: formplayerSyncComplete,
     };
 });

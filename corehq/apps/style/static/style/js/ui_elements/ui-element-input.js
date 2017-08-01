@@ -51,9 +51,10 @@ hqDefine('style/js/ui_elements/ui-element-input.js', function () {
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
                 this.ui.css("position", "relative");
-                var langcode_button = module.langcode_tag_btn(
+                var langcode_button = hqImport('style/js/ui_elements/ui-element-langcode-button.js').new(
                     $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
-                    translated.lang);
+                    translated.lang
+                );
                 this.ui.append(langcode_button.button);
                 this.setPlaceholderValue(translated.value);
                 this.$edit_view.change(function () {

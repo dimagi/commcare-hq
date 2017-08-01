@@ -302,6 +302,14 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -401,7 +409,7 @@ class AwcReportsView(View):
         aggregation_level = 5
 
         config = {
-            'aggregation_level': aggregation_level,
+            'aggregation_level': aggregation_level
         }
         if location:
             try:
@@ -542,6 +550,14 @@ class PrevalenceOfSevereView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -573,6 +589,14 @@ class PrevalenceOfStunningView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -604,6 +628,14 @@ class NewbornsWithLowBirthWeightView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -635,6 +667,14 @@ class EarlyInitiationBreastfeeding(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -665,6 +705,14 @@ class ExclusiveBreastfeedingView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 

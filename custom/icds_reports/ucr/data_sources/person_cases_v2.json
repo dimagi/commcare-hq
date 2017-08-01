@@ -2686,10 +2686,6 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 8
-    },
     "sql_column_indexes": [
       {
         "column_ids": [
@@ -2699,8 +2695,26 @@
       },
       {
         "column_ids": [
+          "supervisor_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "opened_on"
+        ]
+      },
+      {
+        "column_ids": [
           "awc_id",
           "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "owner_id"
         ]
       },
       {

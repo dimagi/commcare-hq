@@ -1017,7 +1017,6 @@
        }
    ],
    "attribution_notes": null,
-   "commtrack_requisition_mode": null,
    "translation_strategy": "select-known",
    "case_sharing": false,
    "show_user_registration": false

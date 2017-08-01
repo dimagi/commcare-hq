@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <div class="report-content">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-if="$ctrl.message" class="alert alert-info">
             <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>
@@ -39,13 +39,13 @@
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
-            <div class="row" style="margin: 0 auto;">
+            <div class="row" style="width: 100% !important;">
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
             <div ng-if="$ctrl.showNational()" class="row">
                 <div class="col-md-6">
                     <div class="small-table">
-                        <div class="small-table-title">Top 3 {$ $ctrl.location_type $}s</div>
+                        <div class="small-table-title">Top 5 {$ $ctrl.location_type $}s</div>
                         <div class="small-table-record" ng-repeat="top in $ctrl.top_three">
                             <span class="circle-green" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
@@ -54,7 +54,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="small-table">
-                        <div class="small-table-title">Bottom 3 {$ $ctrl.location_type $}s</div>
+                        <div class="small-table-title">Bottom 5 {$ $ctrl.location_type $}s</div>
                         <div class="small-table-record" ng-repeat="bottom in $ctrl.bottom_three">
                             <span class="circle-red" ng-bind="5 - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>

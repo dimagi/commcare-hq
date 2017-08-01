@@ -150,7 +150,7 @@ class ReprocessXFormErrorView(View):
     http_method_names = ['post']
 
     def post(self, request, domain):
-        from corehq.form_processor.utils.xform import reprocess_xform_error_by_id
+        from corehq.form_processor.reprocess import reprocess_xform_error_by_id
 
         form_id = request.POST['form_id']
         if not form_id:

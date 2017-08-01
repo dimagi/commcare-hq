@@ -65,7 +65,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
 
 
-        maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -142,7 +142,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -162,7 +162,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
 

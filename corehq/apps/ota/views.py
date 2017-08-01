@@ -1,3 +1,4 @@
+import logging
 from distutils.version import LooseVersion
 
 from django.conf import settings
@@ -98,8 +99,8 @@ def restore(request, domain, app_id=None):
                 segment = RESTORE_SEGMENTS[timer.name]
                 bucket = _get_time_bucket(timer.duration)
                 datadog_counter(
-                    'commcare.restores.{}.{}'.format(segment, bucket),
-                    tags=tags,
+                    'commcare.restores.{}'.format(segment),
+                    tags=tags + ['duration:%s' % bucket],
                 )
         tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
     datadog_counter('commcare.restores.count', tags=tags)
@@ -163,17 +164,13 @@ def claim(request, domain):
     """
     as_user = request.POST.get('commcare_login_as', None)
     restore_user = get_restore_user(domain, request.couch_user, as_user)
-    cache = get_redis_default_cache()
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if (
-            cache.get(_claim_key(restore_user.user_id)) == case_id or
-            get_first_claim(domain, restore_user.user_id, case_id)
-        ):
+        if get_first_claim(domain, restore_user.user_id, case_id):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
@@ -182,12 +179,7 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    cache.set(_claim_key(restore_user.user_id), case_id)
     return HttpResponse(status=200)
-
-
-def _claim_key(user_id):
-    return u'last_claimed_case_case_id-{}'.format(user_id)
 
 
 def get_restore_params(request):
@@ -282,7 +274,14 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         async=async_restore_enabled,
         case_sync=case_sync,
     )
-    return restore_config.get_response(), restore_config.timing_context
+    response = restore_config.get_response()
+    timing = restore_config.timing_context
+    if timing.duration > 20 or response.status_code == 412:
+        sync_log_id = restore_config.restore_state.current_sync_log._id
+        log = logging.getLogger(__name__)
+        log.info("restore %s: domain=%s status=%s duration=%.3f",
+            sync_log_id, domain, response.status_code, timing.duration)
+    return response, timing
 
 
 class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):

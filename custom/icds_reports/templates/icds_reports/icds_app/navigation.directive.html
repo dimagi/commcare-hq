@@ -21,14 +21,14 @@
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
                     <li ng-class="{'active': $location.path().indexOf('/underweight_children') !== -1}">
-                        <a href="{$ goToStep('underweight_children', $location.search()) $}" class="fa">{% trans "Prevalence of Undernutrition (Weight for Age)" %}
+                        <a href="{$ goToStep('underweight_children', $location.search()) $}" class="fa">{% trans "Prevalence of Undernutrition (Weight-for-Age)" %}
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/wasting') !== -1}">
-                        <a href="{$ goToStep('wasting', $location.search()) $}" class="fa">{% trans "Prevalence of Severe Wasting (Weight for Height)" %}</a>
+                        <a href="{$ goToStep('wasting', $location.search()) $}" class="fa">{% trans "Prevalence of Wasting (Weight-for-Height)" %}</a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/stunning') !== -1}">
-                        <a href="{$ goToStep('stunning', $location.search()) $}" class="fa">{% trans "Prevalence of Stunting (Height for Age)" %}</a>
+                        <a href="{$ goToStep('stunning', $location.search()) $}" class="fa">{% trans "Prevalence of Stunting (Height-for-Age)" %}</a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/low_birth') !== -1}">
                         <a href="{$ goToStep('low_birth', $location.search()) $}" class="fa">{% trans "% Newborns with Low Birth Weight" %}</a>
@@ -36,8 +36,8 @@
                     <li ng-class="{'active': $location.path().indexOf('/early_initiation') !== -1}">
                         <a href="{$ goToStep('early_initiation', $location.search()) $}" class="fa">{% trans "% Early Initiation of Breastfeeding" %}</a>
                     </li>
-                    <li ng-class="{'active': $location.path().indexOf('/exclusive-breastfeeding') !== -1}">
-                        <a href="{$ goToStep('exclusive-breastfeeding', $location.search()) $}" class="fa">{% trans "% Exclusive breastfeeding" %}</a>
+                    <li ng-class="{'active': $location.path().indexOf('/exclusive_breastfeeding') !== -1}">
+                        <a href="{$ goToStep('exclusive_breastfeeding', $location.search()) $}" class="fa">{% trans "% Exclusive breastfeeding" %}</a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/children_initiated') !== -1}">
                         <a href="{$ goToStep('children_initiated', $location.search()) $}" class="fa">{% trans "% Children initiated appropriate complementary feeding" %}</a>

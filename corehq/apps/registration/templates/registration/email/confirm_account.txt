@@ -1,18 +1,18 @@
-{% load i18n %}
+Dear {{ full_name }},
 
-{% blocktrans %}Hey there,{% endblocktrans %},
+Welcome to CommCare!
 
-{% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}
+As a first step, please confirm your email address and activate your new
+CommCare project titled: {{ domain }}. You will not be able to use your project
+until you have confirmed your email address.
 
-{% blocktrans %}To accept this invitation, please access the following url: {{ registration_link }}{% endblocktrans %}
+{{ registration_link }}
 
-{% blocktrans %}CommCareHQ is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}
+Once you have confirmed, our team will be in touch with some helpful tips for
+getting started!
 
-<p>{% blocktrans %}If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.{% endblocktrans %}</p>
-
-<p>{% blocktrans %}Thanks for using our site!{% endblocktrans %}</p>
-
-<p>{% blocktrans %}-The CommCareHQ team{% endblocktrans %}</p>
+Cheers,
+The CommCare Team
 
 Dimagi, Inc.
 585 Massachusetts Ave, Suite 4

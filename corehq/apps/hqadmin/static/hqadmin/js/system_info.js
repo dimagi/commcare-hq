@@ -302,8 +302,8 @@ hqDefine('hqadmin/js/system_info.js', function () {
                 self.update(data);
     
                 if (!data.success) {
-                    alert_user("Operation failed: " + data.operation + " on "
-                            + data.pillow_name + ', ' + data.message, 'error');
+                    hqImport("style/js/alert_user.js").alert_user("Operation failed: " + data.operation + " on "
+                            + data.pillow_name + ', ' + data.message, 'danger');
                 }
             }, "json")
             .fail(function (jqxhr, textStatus, error) {

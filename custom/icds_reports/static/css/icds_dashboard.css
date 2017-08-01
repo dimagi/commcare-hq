@@ -59,9 +59,37 @@
     border-radius: 10px;
 }
 
+.xy-tooltip {
+    color: black !important;
+}
+
+nvd3 > svg {
+    margin: 0 auto !important;
+}
+
 @media print {
-    span {
+    .white, .fa, .fa-info-circle:before, .number, .second_number {
       color: white !important;
+    }
+
+    table {
+        page-break-after: always;
+    }
+
+    .break {
+        page-break-after: always;
+    }
+
+    .report-content {
+        width: 1152px !important;
+    }
+
+    .fa-arrow-down:before {
+        color: #c61400 !important;
+    }
+
+    .fa-arrow-up:before {
+        color: #07c600 !important;
     }
 
     .report-cell {
@@ -368,10 +396,10 @@ h4 {
 }
 
 .small-table > .small-table-title {
-    background-color: #00A8C6;
+    background-color: #00A8C6 !important;
     font-size: 30px;
     font-weight: bold;
-    color: white;
+    color: white !important;
     margin: 0 auto;
     text-align: center;
 }
@@ -407,10 +435,10 @@ h4 {
 }
 
 .circle-green {
-    background-color: green;
+    background-color: green !important;
     border-radius: 30px;
     font-size: 20px;
-    color: white;
+    color: white !important;
     width: 40px;
     height: 40px;
     text-align: center;
@@ -418,10 +446,10 @@ h4 {
 }
 
 .circle-red {
-    background-color: red;
+    background-color: red !important;
     border-radius: 30px;
     font-size: 20px;
-    color: white;
+    color: white !important;
     width: 40px;
     height: 40px;
     text-align: center;
