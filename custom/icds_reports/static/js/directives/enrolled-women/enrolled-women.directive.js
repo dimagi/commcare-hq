@@ -1,4 +1,3 @@
-/* global d3*/
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
@@ -13,7 +12,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.label = "Pregnant Women enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_women/map', label: 'Map'}
+        'map': {route: '/enrolled_women/map', label: 'Map'},
     };
     vm.data = {
         legendTitle: 'Number of Women',

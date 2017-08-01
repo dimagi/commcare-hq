@@ -38,16 +38,17 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_children_initiated_data_chart, get_institutional_deliveries_sector_data, \
     get_institutional_deliveries_data_map, get_institutional_deliveries_data_chart, \
     get_immunization_coverage_sector_data, get_immunization_coverage_data_map, \
-    get_immunization_coverage_data_chart, get_awc_daily_status_sector_data, get_awc_daily_status_data_map, \
-    get_awc_daily_status_data_chart, get_awcs_covered_sector_data, get_awcs_covered_data_map, \
-    get_registered_household_sector_data, get_registered_household_data_map, get_enrolled_children_sector_data, \
-    get_enrolled_children_data_map, get_enrolled_children_data_chart, get_enrolled_women_data_map, \
-    get_enrolled_women_sector_data, get_lactating_enrolled_women_sector_data, get_lactating_enrolled_women_data_map, \
-    get_adolescent_girls_sector_data, get_adolescent_girls_data_map, get_adhaar_sector_data, get_adhaar_data_map, \
-    get_adhaar_data_chart, get_clean_water_sector_data, get_clean_water_data_map, get_clean_water_data_chart, \
-    get_functional_toilet_sector_data, get_functional_toilet_data_map, get_functional_toilet_data_chart, \
-    get_medicine_kit_sector_data, get_medicine_kit_data_map, get_medicine_kit_data_chart, \
-    get_infants_weight_scale_sector_data, get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
+    get_immunization_coverage_data_chart, get_awc_daily_status_sector_data, \
+    get_awc_daily_status_data_map, get_awc_daily_status_data_chart, get_awcs_covered_sector_data, \
+    get_awcs_covered_data_map, get_registered_household_sector_data, get_registered_household_data_map, \
+    get_enrolled_children_sector_data, get_enrolled_children_data_map, get_enrolled_children_data_chart, \
+    get_enrolled_women_data_map, get_enrolled_women_sector_data, get_lactating_enrolled_women_sector_data, \
+    get_lactating_enrolled_women_data_map, get_adolescent_girls_sector_data, get_adolescent_girls_data_map, \
+    get_adhaar_sector_data, get_adhaar_data_map, get_adhaar_data_chart, get_clean_water_sector_data, \
+    get_clean_water_data_map, get_clean_water_data_chart, get_functional_toilet_sector_data, \
+    get_functional_toilet_data_map, get_functional_toilet_data_chart, get_medicine_kit_sector_data, \
+    get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
+    get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
     get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
 from . import const
 from .exceptions import TableauTokenException

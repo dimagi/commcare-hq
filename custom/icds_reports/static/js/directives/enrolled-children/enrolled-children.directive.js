@@ -128,7 +128,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 showMaxMin: true,
                 tickValues: function() {
                     return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
-                }
+                },
             },
 
             yAxis: {
