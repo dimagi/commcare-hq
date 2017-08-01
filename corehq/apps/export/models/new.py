@@ -41,7 +41,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_app,
 )
-from corehq.apps.app_manager.models import Application, AdvancedFormActions
+from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -1408,6 +1408,9 @@ class ExportDataSchema(Document):
         try:
             app = get_app(current_schema.domain, app_id)
         except Http404:
+            return current_schema
+
+        if isinstance(app, RemoteApp):
             return current_schema
 
         ordered_schema = cls._process_app_build(
