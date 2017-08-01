@@ -127,6 +127,7 @@ def default_new_app(request, domain):
     if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
         template = load_app_template("case_management")
         app = import_app_util(template, domain)
+        app.name = "Untitled Application"
     else:
         lang = 'en'
         app = Application.new_app(domain, _("Untitled Application"), lang=lang)
