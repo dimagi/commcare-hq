@@ -590,15 +590,27 @@ class FormAccessorSQL(AbstractFormAccessor):
     def update_form(form):
         from corehq.form_processor.change_publishers import publish_form_saved
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        assert form.is_saved(), "this method doesn't support creating unsaved forms"
+
         db_name = get_db_alias_for_partitioned_doc(form.form_id)
-        if not form.is_saved():
-            FormAccessorSQL.save_new_form(form)
-        else:
-            if form.orig_id:
-                old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
-                assert old_db_name == db_name, "this method doesn't support moving the form to new db"
-            form.save(using=db_name)
-            publish_form_saved(form)
+        if form.orig_id:
+            old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
+            assert old_db_name == db_name, "this method doesn't support moving the form to new db"
+
+        form_id_updated = form.orig_id != form.id or form.orig_id is None
+
+        if form_id_updated:
+            attachments = form.get_attachments()
+            operations = form.history
+            with transaction.atomic(db_name):
+                form.save(using=db_name)
+                for a in attachments:
+                    a.form = form
+                    a.save(using=db_name)
+                for op in operations:
+                    op.form = form
+                    op.save(using=db_name)
+        publish_form_saved(form)
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):

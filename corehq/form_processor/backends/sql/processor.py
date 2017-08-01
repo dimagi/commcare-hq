@@ -160,9 +160,6 @@ class FormProcessorSQL(object):
         orig_id = instance.form_id
         cls.assign_new_id(instance)
         instance.orig_id = orig_id
-        if instance.is_saved():
-            # clear the ID since we want to make a new doc
-            instance.id = None
 
         return instance
 
