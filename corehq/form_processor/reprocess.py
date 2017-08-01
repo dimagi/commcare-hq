@@ -112,7 +112,7 @@ def _reprocess_form(form, save=True):
                 LedgerAccessorSQL.save_ledger_values(ledgers)
 
             if save:
-                FormAccessorSQL.update_form_problem_and_state(form)
+                FormAccessorSQL.update_form(form)
                 publish_form_saved(form)
 
             _log_changes('filtered', cases, ledgers, [])
