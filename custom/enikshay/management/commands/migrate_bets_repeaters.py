@@ -1,5 +1,7 @@
 from datetime import datetime
 from django.core.management.base import BaseCommand
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
@@ -28,6 +30,7 @@ class Command(BaseCommand):
 
     def get_repeaters(self):
         return [
+            bets_repeaters.BETSBeneficiaryRepeater.get('ba001296f76894d629a63588ae041e21'),
             bets_repeaters.ChemistBETSVoucherRepeater.get('ce5c88afa4dd86a53d7966dd3596ef30'),
             bets_repeaters.LabBETSVoucherRepeater.get('c1053ada294e88a9128aba078b5aab2a'),
             bets_repeaters.BETS180TreatmentRepeater.get('ce5c88afa4dd86a53d7966dd3596f3d6'),
@@ -35,7 +38,6 @@ class Command(BaseCommand):
             bets_repeaters.BETSSuccessfulTreatmentRepeater.get('d0113e7507323484229dd4de23bbba1b'),
             bets_repeaters.BETSDiagnosisAndNotificationRepeater.get('d0113e7507323484229dd4de23dca872'),
             bets_repeaters.BETSAYUSHReferralRepeater.get('2e2daa2c8e8c894d88e563d8fc6920a9'),
-            # bets_repeaters.BETSBeneficiaryRepeater.get('ba001296f76894d629a63588ae041e21'),
             # not case repeaters
             # bets_repeaters.BETSLocationRepeater.get('ce5c88afa4dd86a53d7966dd350ca4c9'),
             # bets_repeaters.BETSUserRepeater.get('ba001296f76894d629a63588ae245336'),
@@ -65,7 +67,20 @@ class Command(BaseCommand):
 
         already_sent = set()
         records = iter_repeat_records_by_domain(DOMAIN, repeater_id=old_repeater._id)
+        accessor = CaseAccessors(DOMAIN)
         for record in with_progress_bar(records, length=record_count):
+
+            if isinstance(old_repeater, bets_repeaters.BETSBeneficiaryRepeater):
+                try:
+                     person = accessor.get_case(record.payload_id)
+                except CaseNotFound:
+                    # don't trigger missing cases
+                    continue
+                else:
+                    if person.get_case_property('migration_created_case') == 'true':
+                        # don't trigger person cases created by migrations
+                        continue
+
             if not record.payload_id in already_sent:
                 new_record = RepeatRecord(
                     domain=DOMAIN,
