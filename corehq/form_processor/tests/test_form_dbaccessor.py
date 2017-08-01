@@ -9,7 +9,7 @@ from shutil import rmtree
 import settings
 from corehq.blobs import get_blob_db
 from corehq.blobs.fsdb import FilesystemBlobDB
-from corehq.blobs.tests.util import TemporaryS3BlobDB
+from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
@@ -401,13 +401,10 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
 class DeleteAttachmentsFSDBTests(TestCase):
     def setUp(self):
         super(DeleteAttachmentsFSDBTests, self).setUp()
-        self.rootdir = mkdtemp(prefix="blobdb")
-        self.db = FilesystemBlobDB(self.rootdir)
+        self.db = TemporaryFilesystemBlobDB()
 
     def tearDown(self):
-        self.db = None
-        rmtree(self.rootdir)
-        self.rootdir = None
+        self.db.close()
         super(DeleteAttachmentsFSDBTests, self).tearDown()
 
     def test_hard_delete_forms_and_attachments(self):
