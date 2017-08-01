@@ -338,7 +338,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
     """
-    name = models.CharField(max_length=200, db_index=True)
+    name = models.CharField(max_length=200, db_index=True, unique=True)
     salesforce_account_id = models.CharField(
         db_index=True,
         max_length=80,
