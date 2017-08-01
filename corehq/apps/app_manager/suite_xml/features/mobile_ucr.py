@@ -152,6 +152,13 @@ def _get_summary_details(config, domain, module):
                 graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration(
                     series=[GraphSeries() for c in chart_config.y_axis_columns],
                 ))
+
+                # Reconcile graph_config.series with any additions/deletions in chart_config.y_axis_columns
+                while len(chart_config.y_axis_columns) > len(graph_config.series):
+                    graph_config.series.append(GraphSeries())
+                if len(chart_config.y_axis_columns) < len(graph_config.series):
+                    graph_config.series = graph_config.series[:len(chart_config.y_axis_columns)]
+
                 for index, column in enumerate(chart_config.y_axis_columns):
                     graph_config.series[index].data_path = (
                         graph_config.series[index].data_path or
