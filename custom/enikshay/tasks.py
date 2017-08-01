@@ -96,8 +96,7 @@ class EpisodeUpdater(object):
                 update_json = {}
                 for updater in self.updaters:
                     try:
-                        updater(self.domain, episode)
-                        update_json.update(updater.update_json())
+                        update_json.update(updater(self.domain, episode).update_json())
                     except Exception as e:
                         errors.append(
                             [episode.case_id, updater.__class__, e]
