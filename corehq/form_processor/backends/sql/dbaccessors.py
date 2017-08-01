@@ -610,6 +610,8 @@ class FormAccessorSQL(AbstractFormAccessor):
                 for op in operations:
                     op.form = form
                     op.save(using=db_name)
+        else:
+            form.save(using=db_name)
         publish_form_saved(form)
 
     @staticmethod
