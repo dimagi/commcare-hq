@@ -155,8 +155,9 @@ class NoCacheMiddleware(MiddlewareMixin):
             response['Expires'] = "Thu, 01 Dec 1994 16:00:00 GMT"
             response['Pragma'] = "no-cache"
         else:
+            max_age = getattr(response, '_cache_max_age', "31536000")
             content_type, _ = mimetypes.guess_type(request.path)
-            response['Cache-Control'] = "max-age=31536000"
+            response['Cache-Control'] = "max-age={}".format(max_age)
             del response['Vary']
             del response['Set-Cookie']
             response['Content-Type'] = content_type

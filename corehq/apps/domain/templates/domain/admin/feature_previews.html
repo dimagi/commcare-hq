@@ -1,5 +1,6 @@
 {% extends "style/base_section.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% block page_content %}
     <div class="row">
@@ -18,6 +19,20 @@
                     which you can find under the question mark in the navigation bar.
                 {% endblocktrans %}
             </p>
+            {% if not request|toggle_enabled:"APP_MANAGER_V1" %}
+                <div class="alert alert-info">
+                    {% blocktrans %}
+                    Looking for something that used to be here?
+                    <br><br>
+                    The feature flags
+                    <strong>Conditional ID Mapping in Case List</strong>,
+                    <strong>Custom Calculations in Case List</strong>,
+                    <strong>Custom Single and Multiple Answer Questions</strong>, and
+                    <strong>Icons in Case List</strong> are now add-ons for individual apps. To turn them on,
+                    go to the application's settings and choose the <strong>Add-Ons</strong> tab.
+                    {% endblocktrans %}
+                </div>
+            {% endif %}
             <br/>
         </div>
     </div>

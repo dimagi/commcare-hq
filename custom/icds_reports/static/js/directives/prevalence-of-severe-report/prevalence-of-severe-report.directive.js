@@ -55,9 +55,9 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? $filter('indiaNumbers')(row.severe) : 'N/A';
-        var moderate = row ? $filter('indiaNumbers')(row.moderate) : 'N/A';
-        var normal = row ? $filter('indiaNumbers')(row.normal) : 'N/A';
+        var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
+        var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
@@ -70,7 +70,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -110,6 +110,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,

@@ -17,12 +17,12 @@ from corehq.apps.app_manager.views import (
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
     edit_form_attr_api, patch_xform, validate_form_for_build, rename_language, validate_language,
-    edit_form_actions, edit_careplan_form_actions, edit_advanced_form_actions, edit_visit_schedule,
+    edit_form_actions, edit_advanced_form_actions, edit_visit_schedule,
     edit_schedule_phases, multimedia_list_download, edit_module_detail_screens, edit_module_attr,
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, get_form_questions, pull_master_app,
+    direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -41,6 +41,7 @@ app_urls = [
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
     url(r'^settings/$', app_settings, name='app_settings'),
+    url(r'^add_ons/edit/$', edit_add_ons, name='edit_add_ons'),
     url(r'^releases_ajax/$', releases_ajax, name='release_manager_ajax'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
     url(r'^releases/json/$', paginate_releases, name='paginate_releases'),
@@ -117,8 +118,6 @@ urlpatterns = [
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
-    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
-        edit_careplan_form_actions, name='edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_advanced_form_actions, name='edit_advanced_form_actions'),
 

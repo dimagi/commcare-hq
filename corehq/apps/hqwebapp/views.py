@@ -64,6 +64,7 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -1092,6 +1093,20 @@ def quick_find(request):
         except (XFormNotFound, CaseNotFound):
             pass
         else:
+            domain = doc.domain
+            return deal_with_doc(doc, domain, get_object_info)
+
+    for django_model in (SQLLocation,):
+        try:
+            if hasattr(django_model, 'by_id') and callable(django_model.by_id):
+                doc = django_model.by_id(query)
+            else:
+                doc = django_model.objects.get(pk=query)
+        except django_model.DoesNotExist:
+            continue
+        else:
+            if doc is None:
+                continue
             domain = doc.domain
             return deal_with_doc(doc, domain, get_object_info)
 

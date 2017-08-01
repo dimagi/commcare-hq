@@ -439,6 +439,11 @@ def _extract_form_attachment_info(form, properties):
                 ret = find_question_id(v, value)
                 if ret:
                     return [k] + ret
+            elif isinstance(v, list):
+                for repeat in v:
+                    ret = find_question_id(repeat, value)
+                    if ret:
+                        return [k] + ret
             else:
                 if v == value:
                     return [k]

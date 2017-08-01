@@ -2,14 +2,13 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
-    get_usercase_properties
 from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
 from corehq import privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
@@ -45,7 +44,6 @@ from corehq.apps.app_manager.models import (
     ReportModule,
 )
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics import ab_tests
 
 
 @retry_resource(3)
@@ -130,6 +128,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     lang = context['lang']
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
+
+    if app:
+        context.update({
+            'add_ons': add_ons.get_dict(request, app, module, form),
+            'add_ons_layout': add_ons.get_layout(request),
+        })
 
     if form:
         template, form_context = get_form_view_context_and_template(
@@ -296,7 +300,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': app and should_show_preview_app(
             request,

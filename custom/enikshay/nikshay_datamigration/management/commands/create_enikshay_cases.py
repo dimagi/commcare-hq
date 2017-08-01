@@ -61,9 +61,11 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            '--nikshay_id',
-            dest='nikshay_id',
+            '--nikshay_ids',
+            dest='nikshay_ids',
             default=None,
+            metavar='nikshay_id',
+            nargs='+',
         )
 
     @mock_ownership_cleanliness_checks()
@@ -88,8 +90,8 @@ class Command(BaseCommand):
                 location_filter = location_filter | q
             base_query = base_query.filter(location_filter)
 
-        if options['nikshay_id']:
-            base_query = base_query.filter(PregId=options['nikshay_id'])
+        if options['nikshay_ids']:
+            base_query = base_query.filter(PregId__in=options['nikshay_ids'])
 
         start = options['start']
         limit = options['limit']

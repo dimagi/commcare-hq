@@ -8,7 +8,6 @@ from mock import patch
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
 
@@ -192,19 +191,6 @@ class TestViews(TestCase):
 
     def test_shadow_module(self, mockh):
         module = self.app.add_module(ShadowModule.new_module("Module0", "en"))
-        self.app.save()
-        self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
-            'app_id': self.app.id,
-            'module_id': module.id,
-        })
-
-    def test_careplan_module(self, mock):
-        target_module = self.app.add_module(Module.new_module("Module0", "en"))
-        target_module.case_type = 'person'
-
-        module = new_careplan_module(self.app, 'Module1', 'en', target_module)
-
         self.app.save()
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,

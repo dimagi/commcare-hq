@@ -85,6 +85,8 @@
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
+    {% initial_page_data 'add_ons' add_ons %}
+    {% initial_page_data 'add_ons_layout' add_ons_layout %}
     {% initial_page_data 'current_app_version_url' current_app_version_url %}
     {% registerurl "new_form" domain app.id "---" %}
     {% registerurl "toggle_app_manager_v2" %}
@@ -129,15 +131,6 @@
             <button type="button" class="popover-additem-option new-module" data-type="shadow">
               <i class="fa fa-moon-o"></i> {% trans "Shadow Menu" %}
               <p>{% blocktrans %}Mimic another menu.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
-        {% if show_care_plan %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module"
-                    data-toggle="modal" data-stopsubmit="yes" href="#careplan-module-modal">
-              <i class="fa fa-clipboard"></i> {% trans "Care Plan" %}
-              <p>{% blocktrans %}Tasks and goals.{% endblocktrans %}</p>
             </button>
           </div>
         {% endif %}

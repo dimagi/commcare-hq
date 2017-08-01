@@ -232,7 +232,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
                     live_ids, restore_state, accessor)
         else:
             sync_ids = live_ids
-        restore_state.current_sync_log.case_ids_on_phone = live_ids | sync_ids
+        restore_state.current_sync_log.case_ids_on_phone = live_ids
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)

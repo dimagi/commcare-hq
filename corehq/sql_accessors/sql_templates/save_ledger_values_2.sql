@@ -44,7 +44,8 @@ BEGIN
             WHERE
                 case_id = ledger_transaction.case_id
                 AND section_id = ledger_transaction.section_id
-                AND entry_id = ledger_transaction.entry_id;
+                AND entry_id = ledger_transaction.entry_id
+                AND form_id = ledger_transaction.form_id;
         ELSE
             INSERT INTO form_processor_ledgertransaction (
                 form_id, server_date, report_date, type, case_id, entry_id, section_id,
