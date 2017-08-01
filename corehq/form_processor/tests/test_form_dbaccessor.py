@@ -37,7 +37,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1, using=db_for_read_write(XFormInstanceSQL)):
+        with self.assertNumQueries(1, using=form.db):
             form = FormAccessorSQL.get_form(form.form_id)
         self._check_simple_form(form)
 
@@ -92,7 +92,8 @@ class FormAccessorTestsSQL(TestCase):
         with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(2, using=db_for_read_write(XFormAttachmentSQL)):
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)), \
+                self.assertNumQueries(1, using=form.db):
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)

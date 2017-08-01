@@ -265,8 +265,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return FormAccessorSQL.get_forms([form_id])[0]
-        except IndexError:
+            return XFormInstanceSQL.objects.partitioned_get(form_id)
+        except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
     @staticmethod
@@ -657,8 +657,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
-        except IndexError:
+            return CommCareCaseSQL.objects.partitioned_get(case_id)
+        except CommCareCaseSQL.DoesNotExist:
             raise CaseNotFound
 
     @staticmethod
