@@ -31,34 +31,6 @@ def get_object_from_partitioned_database(model_class, partition_value, lookup_fi
     return model_class.objects.using(db_name).get(**kwargs)
 
 
-def save_object_to_partitioned_database(obj, partition_value):
-    """
-    Determines to which database to save a partitioned model object and
-    saves it there.
-
-    :param obj: A Django model object
-
-    :param parition_value: The value that is used to partition the model; this
-    value will be used to select the database
-    """
-    db_name = get_db_alias_for_partitioned_doc(partition_value)
-    obj.save(using=db_name)
-
-
-def delete_object_from_partitioned_database(obj, partition_value):
-    """
-    Determines from which database to delete a partitioned model object and
-    deletes it there.
-
-    :param obj: A Django model object
-
-    :param parition_value: The value that is used to partition the model; this
-    value will be used to select the database
-    """
-    db_name = get_db_alias_for_partitioned_doc(partition_value)
-    obj.delete(using=db_name)
-
-
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
     """
     Runs a query across all partitioned databases and produces a generator
