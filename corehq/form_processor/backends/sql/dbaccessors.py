@@ -38,26 +38,17 @@ from corehq.form_processor.models import (
     CommCareCaseSQL,
     XFormAttachmentSQL,
     XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE,
-    CaseAttachmentSQL_DB_TABLE,
-    LedgerTransaction_DB_TABLE,
-    LedgerValue_DB_TABLE,
     LedgerValue,
     LedgerTransaction,
 )
 from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
-    fetchall_as_namedtuple,
-    case_adapter,
-    case_transaction_adapter,
-    case_index_adapter,
-    case_attachment_adapter
+    fetchall_as_namedtuple
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc, split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
