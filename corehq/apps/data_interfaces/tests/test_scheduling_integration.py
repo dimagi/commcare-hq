@@ -307,7 +307,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             time(9, 0),
-            SMSContent(message={'en': 'Hello'})
+            SMSContent(message={'en': 'Hello'}),
+            total_iterations=1,
         )
 
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
@@ -358,10 +359,165 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
             self.assertTrue(instances[0].active)
 
+            # If the anchor date gets updated (due to correction, for example), the schedule recalculates
+            update_case(self.domain, case.case_id, case_properties={'add': '2017-08-10'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 15))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 15, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # If the anchor date is in the past, the schedule instance is deactivated
+            update_case(self.domain, case.case_id, case_properties={'add': '2017-07-01'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 7, 6))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 2)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 7, 7, 13, 0))
+            self.assertFalse(instances[0].active)
+
+            # If the anchor date is reset, the schedule instance is reactivated
+            update_case(self.domain, case.case_id, case_properties={'add': '2017-08-01'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 6))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # Making an arbitrary update doesn't cause any recalculating to happen
+            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
+                update_case(self.domain, case.case_id, case_properties={'new_property': 'new value'})
+                self.assertEqual(recalculate_patch.call_count, 0)
+
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 6))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
+            self.assertTrue(instances[0].active)
+
             # Terminate the schedule, no more schedule instances should be scheduled
             update_case(self.domain, case.case_id, case_properties={'current_schedule_phase': '-1'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_start_offset(self, utcnow_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            time(9, 0),
+            SMSContent(message={'en': 'Hello'}),
+            start_offset=2,
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        utcnow_patch.return_value = datetime(2017, 8, 1, 15, 0)
+
+        with create_case(self.domain, 'person') as case:
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 3, 13, 0))
+            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertTrue(instances[0].active)
+
+            # Change the schedule's start offset and force a case update to reprocess the schedule instance.
+            # The start date should not change, but the schedule instance should respond to the new start offset
+            # by calculating a new next_event_due timestamp.
+            schedule.start_offset = 5
+            schedule.save()
+            schedule = TimedSchedule.objects.get(schedule_id=schedule.schedule_id)
+            utcnow_patch.return_value = datetime(2017, 8, 4, 7, 0)
+            update_case(self.domain, case.case_id, case_properties={'new_property': 'new value'})
+
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
+            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertTrue(instances[0].active)
+
+            # Making another arbitrary update doesn't cause any recalculating to happen
+            with patch('corehq.messaging.scheduling.scheduling_partitioned.models.AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
+                update_case(self.domain, case.case_id, case_properties={'new_property': 'new value 2'})
+                self.assertEqual(recalculate_patch.call_count, 0)
+
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 8, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
+            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertTrue(instances[0].active)
 
 
 class VisitSchedulerIntegrationHelperTestCase(TestCase):

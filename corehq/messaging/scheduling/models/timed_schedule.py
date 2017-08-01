@@ -146,13 +146,16 @@ class TimedSchedule(Schedule):
             instance.active = False
 
     @classmethod
-    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY):
+    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY,
+            start_offset=0):
         schedule = cls(domain=domain)
-        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations)
+        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations,
+            start_offset=start_offset)
         return schedule
 
-    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY):
+    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0):
         with transaction.atomic():
+            self.start_offset = start_offset
             self.schedule_length = 1
             self.total_iterations = total_iterations
             self.save()
