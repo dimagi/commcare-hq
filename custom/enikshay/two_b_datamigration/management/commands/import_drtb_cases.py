@@ -14,9 +14,12 @@ from django.db import models
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.ota.utils import update_device_id
 from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
+from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
+from custom.enikshay.user_setup import compress_nikshay_id, get_last_used_device_number
 from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger('two_b_datamigration')
@@ -415,7 +418,7 @@ class MehsanaConstants(object):
     drtb_center_id = None
 
 
-def get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row):
+def get_case_structures_from_row(commit, domain, migration_id, column_mapping, city_constants, row):
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
@@ -424,6 +427,13 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
         domain, city_constants, person_case_properties['dto_id'], occurrence_case_properties['occurrence_id'])
+
+    # We do this as a separate step because we don't want to generate ids if there is going to be an exception
+    # raised while generating the other properties.
+    update_cases_with_readable_ids(
+        commit, person_case_properties, occurrence_case_properties, episode_case_properties,
+        secondary_owner_case_properties
+    )
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
@@ -449,6 +459,24 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
         episode_case_structure,
         secondary_owner_case_structure
     ] + drug_resistance_case_structures + test_case_structures
+
+
+def update_cases_with_readable_ids(commit, person_case_properties, occurrence_case_properties,
+                                   episode_case_properties, secondary_owner_case_properties):
+    phi_id = person_case_properties['owner_id']
+    person_id_flat = PersonIdGenerator.generate_person_id_flat(phi_id, commit)
+    person_id = PersonIdGenerator.get_person_id(person_id_flat)
+    occurrence_id = person_id + "O1"
+    episode_id = person_id + "E1"
+    secondary_owner_name = occurrence_id + "drtb"
+
+    person_case_properties['person_id'] = person_id
+    person_case_properties['person_id_flat'] = person_id_flat
+    occurrence_case_properties["occurrence_id"] = occurrence_id
+    occurrence_case_properties["name"] = occurrence_id
+    episode_case_properties['episode_id'] = episode_id
+    episode_case_properties['name'] = episode_id
+    secondary_owner_case_properties['name'] = secondary_owner_name
 
 
 def get_case_structure(case_type, properties, migration_identifier, host=None):
@@ -538,7 +566,6 @@ def get_occurrence_case_properties(column_mapping, row):
         "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
-        "occurrence_id": None,  # TODO: Do this
     }
     properties.update(get_disease_site_properties(column_mapping, row))
 
@@ -1600,6 +1627,60 @@ def get_drtb_hiv_location(domain, district_id):
     return drtb_hiv.name, drtb_hiv.location_id
 
 
+class PersonIdGenerator(object):
+
+    dry_run_counter = 0
+
+    @classmethod
+    def _next_serial_count(cls, commit):
+        if commit:
+            return MigratedDRTBCaseCounter.get_next_counter()
+        else:
+            cls.dry_run_counter += 1
+            return cls.dry_run_counter
+
+    @classmethod
+    def _next_serial_count_compressed(cls, commit):
+        return compress_nikshay_id(cls._next_serial_count(commit), 2)
+
+    @classmethod
+    def get_id_issuer_body(cls, user):
+        id_issuer_body = user.user_data['id_issuer_body']
+        assert id_issuer_body
+        return id_issuer_body
+
+    @classmethod
+    def get_user(cls, phi_id):
+        # TODO: (WAITING) Figure out how to get this from related users
+        raise NotImplementedError
+
+    @classmethod
+    def id_device_body(cls, user, commit):
+        script_device_id = "drtb-case-import-script"
+        update_device_id(user, script_device_id)
+        if commit:
+            user.save()
+        index = [x.device_id for x in user.devices].index(script_device_id)
+        return compress_nikshay_id(index + 1, 0)
+
+    @classmethod
+    def generate_person_id_flat(cls, phi_id, commit):
+        user = cls.get_user(phi_id)
+        return (
+            cls.get_id_issuer_body(user) +
+            cls.id_device_body(user, commit) +
+            cls._next_serial_count_compressed(commit)
+        )
+
+    @classmethod
+    def get_person_id(cls, person_id_flat):
+        num_chars_between_hyphens = 3
+        return '-'.join([
+            person_id_flat[i:i + num_chars_between_hyphens]
+            for i in range(0, len(person_id_flat), num_chars_between_hyphens)
+        ])
+
+
 class Command(BaseCommand):
 
     MEHSANA_2017 = "mehsana2017"
@@ -1652,7 +1733,7 @@ class Command(BaseCommand):
                     try:
                         column_mapping.check_for_required_fields(row)
                         case_structures = get_case_structures_from_row(
-                            domain, migration_id, column_mapping, city_constants, row
+                            options['commit'], domain, migration_id, column_mapping, city_constants, row
                         )
                         import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
                         logger.info("Creating cases for row {}".format(i))
