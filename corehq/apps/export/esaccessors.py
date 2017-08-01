@@ -11,10 +11,11 @@ from corehq.toggles import EXPORT_NO_SORT
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
     query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
-            .app(app_id)
             .xmlns(xmlns)
             .remove_default_filter('has_user'))
 
+    if app_id:
+        query = query.app(app_id)
     if not EXPORT_NO_SORT.enabled(domain):
         query = query.sort("received_on")
 

@@ -1554,7 +1554,7 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
         if not app_id:
-            raise BadExportConfiguration('Must include app id for form data schemas')
+            return []
         return [app_id]
 
     @staticmethod
