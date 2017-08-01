@@ -37,10 +37,8 @@ from corehq.apps.domain.calculations import (
     all_domain_stats,
     calced_props,
     CALC_FNS,
-    total_distinct_users,
 )
 from corehq.apps.es.domains import DomainES
-from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -231,7 +229,8 @@ def export_all_rows_task(ReportClass, report_state):
     setattr(report.request, 'REQUEST', {})
 
     file = report.excel_response
-    hash_id = _store_excel_in_redis(file)
+    report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+    hash_id = _store_excel_in_redis(report_class, file)
     _send_email(report.request.couch_user, report, hash_id)
 
 
@@ -253,11 +252,11 @@ def _send_email(user, report, hash_id):
     )
 
 
-def _store_excel_in_redis(file):
+def _store_excel_in_redis(report_class, file):
     hash_id = uuid.uuid4().hex
 
     r = get_redis_client()
-    r.set(hash_id, file.getvalue())
+    r.set(hash_id, [report_class, file.getvalue()])
     r.expire(hash_id, EXPIRE_TIME)
 
     return hash_id
@@ -440,6 +439,11 @@ def _extract_form_attachment_info(form, properties):
                 ret = find_question_id(v, value)
                 if ret:
                     return [k] + ret
+            elif isinstance(v, list):
+                for repeat in v:
+                    ret = find_question_id(repeat, value)
+                    if ret:
+                        return [k] + ret
             else:
                 if v == value:
                     return [k]

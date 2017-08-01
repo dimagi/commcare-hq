@@ -25,8 +25,6 @@ MERM_PROPERTIES = [
     MERM_RT_HOURS,
 ]
 
-ENROLLED_IN_PRIVATE = "enrolled_in_private"
-
 ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
@@ -66,6 +64,7 @@ NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_OUTCOME_DATE,
     TREATMENT_START_DATE,
     WEIGHT_BAND,
+    OTHER_NUMBER,
 ] + MERM_PROPERTIES
 
 DOSE_TAKEN_INDICATORS = [
@@ -84,6 +83,12 @@ SCHEDULE_ID_FIXTURE = 'id'
 HISTORICAL_CLOSURE_REASON = 'historical'
 PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 
+VALID_ADHERENCE_SOURCES = (
+    'field_officer', 'treatment_supervisor', 'patient', 'provider', 'other', '99DOTS', 'MERM',
+)
+
+CASE_VERSION = 'case_version'
+
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
@@ -94,8 +99,11 @@ INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
 
+DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
+
 AGENCY_USER_FIELDS = [
     # (slug, label, choices)
+    ('user_level', "User Level", ["dev", "test", "real"]),
     ('tb_corner', "TB Corner", ["Yes", "No"]),
     ('pcp_qualification', "MBBS Qualification", ["MBBS", "DTCD", "MD - Chest Physician",
                                                  "MD - Medicine", "MS", "DM"]),
@@ -111,7 +119,7 @@ AGENCY_USER_FIELDS = [
     ('plc_hf_if_nikshay', "HF-ID Nikshay", []),
     ('pcc_pharmacy_name', "Pharmacy Name", []),
     ('pcc_pharmacy_affiliation', "Pharmacy Affiliation", ["IPA", "AIOCD"]),
-    ('pcc_tb_drugs_in_stock ', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
+    ('pcc_tb_drugs_in_stock', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
                                                      "Private and government drugs"]),
     ('agency_status', "Status", ["Registered", "Mapped", "Mapped and Targeted", "engaged- state scheme",
                                  "dropped"]),
@@ -161,3 +169,7 @@ AGENCY_USER_FIELDS = [
 AGENCY_LOCATION_FIELDS = [
     ('private_sector_org_id', "Private Sector Org ID", []),
 ]
+
+DSTB_EPISODE_TYPE = "confirmed_tb"
+PERSON_CASE_2B_VERSION = '20'
+REAL_DATASET_PROPERTY_VALUE = 'real'

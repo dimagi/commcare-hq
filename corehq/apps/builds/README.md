@@ -80,8 +80,8 @@ Following is a manual process to find and import a build. Alternatively, you can
 This will run you through all the builds and let you import the build you need.
 
 * First you need to get the CommCare build off the Dimagi build server:
-    1. Go here http://jenkins.dimagi.com/view/CommCare%20Mobile/ 
-    2. Pick the branch you want and click on the link (e.g. "commcare-mobile-2.19")
+    1. Go here https://jenkins.dimagi.com/
+    2. Select the commcare-core job for the version of CommCare you are interested in (e.g. "commcare-core-2.30")
     3. Pick a build (probably the first one in the table on the left) and write down
        the build number (under "#"). This will be referenced as `$build_number`
        below

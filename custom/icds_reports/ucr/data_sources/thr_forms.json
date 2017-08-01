@@ -67,7 +67,6 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
-        "create_index": true,
         "expression": {
           "location_id_expression": {
             "value_expression": {
@@ -123,9 +122,8 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "sql_column_indexes": [
+      {"column_ids": ["supervisor_id", "submitted_on"]}
+    ]
   }
 }

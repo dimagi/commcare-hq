@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import django_fsm
 
 
 class Migration(migrations.Migration):
@@ -88,7 +87,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('slug', models.CharField(max_length=255)),
-                ('state', django_fsm.FSMField(db_index=True, default=b'needs_updating', max_length=50)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('last_batch_id', models.CharField(max_length=255)),
             ],

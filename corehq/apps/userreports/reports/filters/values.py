@@ -174,7 +174,7 @@ class NumericFilterValue(FilterValue):
             return None
 
         filter_class = self.operators_to_filters[self.value['operator']].es
-        return filter_class(self.filter.field, self.filter.value)
+        return filter_class(self.filter.field, self.value['operand'])
 
 
 class BasicBetweenFilter(BasicFilter):

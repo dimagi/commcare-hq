@@ -3,7 +3,7 @@ import logging
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from django.utils.translation import ugettext_noop, ugettext as _
 from custom.bihar.reports.indicators.reports import ClientListBase
 from custom.bihar.reports.supervisor import (SubCenterSelectionReport, BiharNavReport, GroupReferenceMixIn,

@@ -2,17 +2,15 @@ import logging
 import hashlib
 import re
 import json
-import uuid
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
 import itertools
 
-from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -32,8 +30,6 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
-    BlankXFormError,
-    ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
@@ -69,22 +65,20 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
-    CareplanForm,
     DeleteFormRecord,
     Form,
     FormActions,
     FormActionCondition,
     FormDatum,
     FormLink,
-    UpdateCaseAction,
+    OpenCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    UpdateCaseAction,
     load_case_reserved_words,
     WORKFLOW_FORM,
     CustomInstance,
     CaseReferences,
-    AdvancedModule,
-    ShadowForm,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -122,16 +116,13 @@ def copy_form(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     module = form.get_module()
     to_module_id = int(request.POST['to_module_id'])
+    to_module = app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module_id)
-    except ConflictingCaseTypeError:
-        messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+        new_form = app.copy_form(module.id, form.id, to_module.id)
+        if module['case_type'] != to_module['case_type']:
+            messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
-    except BlankXFormError:
-        # don't save!
-        messages.error(request, _('We could not copy this form, because it is blank.'
-                                  'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
@@ -141,8 +132,7 @@ def copy_form(request, domain, app_id, form_unique_id):
 
     if new_form:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
-    return back_to_main(request, domain, app_id=app_id, module_id=module.id,
-                        form_id=form.id)
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module.id, form.id]))
 
 
 @no_conflict_require_POST
@@ -213,27 +203,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
-    return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
-    app = get_app(domain, app_id)
-    form = app.get_form(form_unique_id)
-    transaction = json.loads(request.POST.get('transaction'))
-
-    for question in transaction['fixedQuestions']:
-        setattr(form, question['name'], question['path'])
-
-    def to_dict(properties):
-        return dict((p['key'], p['path']) for p in properties)
-
-    form.custom_case_updates = to_dict(transaction['case_properties'])
-    form.case_preload = to_dict(transaction['case_preload'])
-
-    response_json = {}
-    app.save(response_json)
     return json_response(response_json)
 
 
@@ -395,8 +364,9 @@ def new_form(request, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
-    name = request.POST.get('name')
     form_type = request.POST.get('form_type', 'form')
+    case_action = request.POST.get('case_action', 'none')
+    name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
     if form_type == "shadow":
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
@@ -407,12 +377,14 @@ def new_form(request, domain, app_id, module_id):
     else:
         form = app.new_form(module_id, name, lang)
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username) and form_type != "shadow":
-        case_action = request.POST.get('case_action', 'none')
+    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and form_type != "shadow":
         if case_action == 'update':
             form.requires = 'case'
             form.actions.update_case = UpdateCaseAction(
                 condition=FormActionCondition(type='always'))
+        elif case_action == 'open':
+            form.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
     app.save()
     # add form_id to locals()
@@ -438,14 +410,14 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return json_response({'status': 'conflict', 'xform': current_xml})
 
     dmp = diff_match_patch()
-    xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    save_xform(app, form, xform)
+    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = save_xform(app, form, xml)
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
@@ -525,9 +497,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
         else:
-            # remove upload questions (attachemnts) until MM Case Properties
+            # remove upload questions (attachments) until MM Case Properties
             # are released to general public
-            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled_for_request(request)
             xform_questions = [q for q in xform_questions
                                if q["tag"] != "upload" or is_previewer]
 
@@ -565,6 +537,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'case_type': case_type,
                 'module_type': module.doc_type
             })
+    module = form.get_module()
 
     if not form.unique_id:
         form.get_unique_id()
@@ -575,7 +548,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     if allow_usercase:
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
-    form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
+    form_has_schedule = isinstance(form, AdvancedForm) and module.has_schedule
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
@@ -593,8 +566,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'xform_validation_missing': xform_validation_missing,
         'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
-        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not form_has_schedule,
+        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
@@ -614,14 +587,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     }
 
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
         request.guided_tour = tours.NEW_APP.get_tour_data()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        module = form.get_module()
-
         def qualified_form_name(form, auto_link):
-            module_name = trans(form.get_module().name, langs)
+            module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
@@ -644,19 +615,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    if isinstance(form, CareplanForm):
-        case_config_options.update({
-            'case_preload': [
-                {'key': key, 'path': path} for key, path in form.case_preload.items()
-            ],
-            'customCaseUpdates': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
-            'fixedQuestions': form.get_fixed_questions(),
-            'mode': form.mode,
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
-        })
-    elif isinstance(form, AdvancedForm):
+    if isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
                 programs = Program.by_domain(app.domain)
@@ -681,7 +640,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'actions': form.actions,
                 'isShadowForm': False,
             })
-        if module.has_schedule:
+        if getattr(module, 'has_schedule', False):
             schedule_options = get_schedule_context(form)
             schedule_options.update({
                 'phase': schedule_options['schedule_phase'],

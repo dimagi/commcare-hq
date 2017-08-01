@@ -12,6 +12,7 @@ from custom.enikshay.case_utils import (
     get_open_drtb_hiv_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
+from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
 from custom.enikshay.nikshay_datamigration.models import (
     Followup,
     Outcome,
@@ -31,9 +32,14 @@ def validate_phone_number(string_value):
     if string_value is None or string_value.strip() in ['', '0']:
         return ''
     else:
-        phone_number = str(int(string_value))
-        assert 8 <= len(phone_number) <= 10
-        return phone_number
+        string_value = string_value.strip()
+        assert string_value.isdigit()
+
+        if len(string_value) == 11 and string_value[0] == '0':
+            string_value = string_value[1:]
+
+        assert 8 <= len(string_value) <= 10
+        return string_value
 
 
 def get_human_friendly_id():
@@ -45,8 +51,9 @@ class EnikshayCaseFactory(object):
     domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail, nikshay_codes_to_location, test_phi=None):
+    def __init__(self, domain, migration_comment, patient_detail, nikshay_codes_to_location, test_phi=None):
         self.domain = domain
+        self.migration_comment = migration_comment
         self.patient_detail = patient_detail
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
@@ -68,7 +75,8 @@ class EnikshayCaseFactory(object):
         if matching_external_ids:
             assert len(matching_external_ids) == 1
             existing_episode = matching_external_ids[0]
-            assert existing_episode.dynamic_case_properties().get('migration_created_case') == 'true'
+            if existing_episode.dynamic_case_properties().get('migration_created_case') != 'true':
+                raise MatchingNikshayIdCaseNotMigrated
             return matching_external_ids[0]
         return None
 
@@ -143,6 +151,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
+                    'contact_phone_number': '91' + validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
                     'current_episode_type': 'confirmed_tb',
                     'current_patient_type_choice': self.patient_detail.patient_type_choice,
@@ -164,6 +173,7 @@ class EnikshayCaseFactory(object):
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -221,6 +231,7 @@ class EnikshayCaseFactory(object):
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -250,6 +261,11 @@ class EnikshayCaseFactory(object):
         This gets the episode case structure with a nested occurrence and person case structures
         inside of it.
         """
+        treatment_initiation_date = (
+            self.patient_detail.treatment_initiation_date
+            if self.patient_detail.treatment_initiation_date
+            else self.patient_detail.pregdate1
+        )
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
@@ -257,13 +273,9 @@ class EnikshayCaseFactory(object):
                 'external_id': self.nikshay_id,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_date_start': (
-                        self.patient_detail.treatment_initiation_date
-                        if self.patient_detail.treatment_initiation_date
-                        else self.patient_detail.pregdate1
-                    ),
+                    'adherence_schedule_date_start': treatment_initiation_date,
                     'adherence_schedule_id': 'schedule_mwf',
-                    'date_of_diagnosis': self.patient_detail.pregdate1,
+                    'date_of_diagnosis': treatment_initiation_date,
                     'date_of_mo_signature': (
                         self.patient_detail.date_of_mo_signature
                         if self.patient_detail.date_of_mo_signature
@@ -281,16 +293,13 @@ class EnikshayCaseFactory(object):
                     'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else '',
                     'treatment_card_completed_date': self.patient_detail.pregdate1,
                     'treatment_initiated': 'yes_phi',
-                    'treatment_initiation_date': (
-                        self.patient_detail.treatment_initiation_date
-                        if self.patient_detail.treatment_initiation_date
-                        else self.patient_detail.pregdate1
-                    ),
+                    'treatment_initiation_date': treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_phone_number(self.patient_detail.dotmob),
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -302,6 +311,11 @@ class EnikshayCaseFactory(object):
                 related_type=OCCURRENCE_CASE_TYPE,
             )],
         }
+
+        if self.phi.location_type.code == 'phi':
+            phi_location_id = self.phi.location_id
+            kwargs['attrs']['update']['diagnosing_facility_id'] = phi_location_id
+            kwargs['attrs']['update']['treatment_initiating_facility_id'] = phi_location_id
 
         if self.patient_detail.disease_classification == 'extra_pulmonary':
             kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
@@ -329,6 +343,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'name': self.patient_detail.pname,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 }
@@ -364,6 +379,7 @@ class EnikshayCaseFactory(object):
                     'result_recorded': 'yes',
                     'testing_facility_id': followup.DMC,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_id': followup.id,
                     'migration_created_from_record': self.patient_detail.PregId,

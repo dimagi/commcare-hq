@@ -32,7 +32,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_blazy, use_jquery_ui, \
+from corehq.apps.style.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from django.contrib.auth.models import User
@@ -68,6 +68,24 @@ class NewUserNumberAbTestMixin__Enabled(object):
         self._ab.update_response(response)
 
 
+class NewUserNumberAbTestMixin__NoAbEnabled(object):
+    @property
+    @memoized
+    def _ab(self):
+        return None
+
+    @property
+    def ab_show_number(self):
+        return True
+
+    @property
+    def ab_context(self):
+        return None
+
+    def ab_update_response(self, response):
+        pass
+
+
 class NewUserNumberAbTestMixin__Disabled(object):
     @property
     def ab_show_number(self):
@@ -81,7 +99,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
         pass
 
 
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Disabled
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
@@ -150,7 +168,6 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
-    @use_blazy
     @use_jquery_ui
     @use_ko_validation
     @method_decorator(transaction.atomic)
@@ -360,7 +377,7 @@ def confirm_domain(request, guid=None):
 
     requested_domain = Domain.get_by_name(req.domain)
     view_name = "dashboard_default"
-    if toggles.APP_MANAGER_V2.enabled(request.user.username) and not domain_has_apps(req.domain):
+    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and not domain_has_apps(req.domain):
         view_name = "default_new_app"
 
     # Has guid already been confirmed?

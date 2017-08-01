@@ -20,9 +20,9 @@
                 "datatype": "datetime",
                 "required": false,
                 "display": "Date of Notification",
-                "field": "date_of_diagnosis",
+                "field": "date_of_notification",
                 "type": "date",
-                "slug": "date_of_diagnosis"
+                "slug": "date_of_notification"
             },
             {
                 "compare_as_string": false,
@@ -33,249 +33,308 @@
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
-                    "show_full_path": true,
-                    "order_by_hierarchy": true
+                    "order_by_hierarchy": true,
+                    "show_full_path": true
                 },
                 "display": "Location"
+            },
+            {
+                "pre_value": "true",
+                "datatype": "string",
+                "display": null,
+                "field": "enrolled_in_private",
+                "type": "pre",
+                "slug": "enrolled_in_private"
             }
         ],
         "columns": [
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "external_id",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Beneficiary ID"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary ID",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "person_name",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Beneficiary Name"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary Name",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "husband_father_name",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Father/Husband's Name"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Father/Husband's Name",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "sex",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Gender"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Gender",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "age_entered",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Age"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Age",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "phone_number",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Mobile No. 1"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Mobile No. 1",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "secondary_phone",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Mobile No. 2"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Mobile No. 2",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "current_address_first_line",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Address"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Address",
-                "aggregation": "simple"
-            },
-            {
-                "field": "current_address_ward",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Ward No.",
-                "aggregation": "simple"
-            },
-            {
-                "field": "current_address_district_choice",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "District",
-                "aggregation": "simple"
-            },
-            {
-                "field": "current_address_village_town_city",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Village / Town / City",
-                "aggregation": "simple"
-            },
-            {
-                "field": "current_address_state_choice",
                 "transform": {
                     "type": "custom",
                     "custom_type": "owner_display"
                 },
+                "aggregation": "simple",
+                "field": "current_address_ward",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Ward No."
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "current_address_district_choice",
                 "calculate_total": false,
                 "type": "field",
-                "display": "State",
-                "aggregation": "simple"
+                "display": "District"
             },
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "current_address_village_town_city",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Village / Town / City"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "current_address_state_choice",
+                "calculate_total": false,
+                "type": "field",
+                "display": "State"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "current_address_postal_code",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Pincode"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "episode_treating_hospital",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Pincode",
-                "aggregation": "simple"
+                "display": "Treating Hospital"
             },
             {
-                "field": "treating_provider_name",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "person_owner_id",
                 "calculate_total": false,
+                "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name",
-                "aggregation": "simple"
+                "display": "Treating Provider Name"
             },
             {
-                "field": "treating_provider_id",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_owner_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treating Provider ID",
-                "aggregation": "simple"
+                "display": "Treating Provider ID"
             },
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "column_id": "treatment_supervisor_name",
                 "field": "treatment_supervisor_name",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Treatment Supervisor Name",
                 "aggregation": "simple"
             },
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "treatment_supervisor_phone",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "TS Mobile NO."
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "episode_fo",
                 "calculate_total": false,
                 "type": "field",
-                "display": "TS Mobile NO.",
-                "aggregation": "simple"
+                "display": "Assigned FO"
             },
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "date_of_registration",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Registration"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "registered_by",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Date of Registration",
-                "aggregation": "simple"
+                "display": "Registered by Provider Name"
             },
             {
-                "field": "registered_by_provider_name",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "registered_by_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Registered by Provider Name",
-                "aggregation": "simple"
+                "display": "Registered by Provider ID"
             },
             {
-                "field": "registered_by_provider_id",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "pcp": "MBBS",
+                        "pcc-chemist": "Chemist",
+                        "pac": "Ayush",
+                        "plc": "Lab",
+                        "ps-fieldstaff": "Field Staff",
+                        "ppia-do": "PPIA Admin"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "created_by_user_type",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Registered by Provider ID",
-                "aggregation": "simple"
+                "display": "Registered by Provider Type"
             },
             {
-                "field": "registered_by_provider_type",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Registered by Provider Type",
-                "aggregation": "simple"
-            },
-            {
-                "field": "episode_type",
                 "transform": {
                     "type": "translation",
                     "translations": {
@@ -283,233 +342,290 @@
                         "confirmed_tb": "Confirmed TB"
                     }
                 },
+                "aggregation": "simple",
+                "field": "episode_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Status (Presumptive TB/Confirmed TB)"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Status (Presumptive TB/Confirmed TB)",
-                "aggregation": "simple"
-            },
-            {
-                "field": "date_of_diagnosis",
                 "transform": {},
+                "aggregation": "simple",
+                "field": "date_of_notification",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Notification"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Notification",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "nikshay_id",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Nikshay ID"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "diagnostic_tests_from_case",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Nikshay ID",
-                "aggregation": "simple"
+                "display": "Diagnostic Tests"
             },
             {
-                "field": "diagnostic_tests",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Diagnostic Tests",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "diagnostic_test_results",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Diagnostic Test Results"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Diagnostic Test Results",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "basis_of_diagnosis",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Basis of Diagnosis"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "date_of_diagnosis",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Basis of Diagnosis",
-                "aggregation": "simple"
+                "display": "Date of Diagnosis"
             },
             {
-                "field": "date_of_diagnosis2",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Diagnosis",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "treatment_initiation_date",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Rx. Start"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Rx. Start",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "treatment_initiation_status",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Rx. Initiation Status"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Rx. Initiation Status",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "first_voucher_generation_date",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of 1st Voucher Generation"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of 1st Voucher Generation",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "first_voucher_validation_date",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of 1st Voucher Validation"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of 1st Voucher Validation",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "first_voucher_drugs",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Drug Names (First Voucher)"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Drug Names (First Voucher)",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "site",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Type (P/EP)"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Type (P/EP)",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "site_choice",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Site"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Site",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "treatment_phase",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Rx Phase"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Rx Phase",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "new_retreatment",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "New/Retreatment"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "New/Retreatment",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "hiv_status",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "HIV status"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "HIV status",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {},
+                "aggregation": "simple",
                 "field": "dst_status",
-                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "DST status"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "DST status",
-                "aggregation": "simple"
-            },
-            {
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "99dots": "99DOTS",
+                        "contact_centre": "Contact Centre",
+                        "treatment_supporter": "Treatment Supporter",
+                        "merm": "MERM",
+                        "field_officer": "Field Officer"
+                    }
+                },
+                "aggregation": "simple",
                 "field": "adherence_tracking_mechanism",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Adherence Mechanism Assigned",
-                "aggregation": "simple"
+                "display": "Adherence Mechanism Assigned"
             },
             {
-                "field": "total_adherence_score",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "calculate_total": false,
-                "type": "field",
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "treatment_initiation_date"
+                        },
+                        "b": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "aggregated_score_count_taken"
+                        }
+                    },
+                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
+                },
+                "type": "expression",
                 "display": "Total Adherence Score",
-                "aggregation": "simple"
+                "column_id": "total_adherence_score"
             },
             {
-                "field": "treatment_outcome",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "visible": true,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_outcome_date",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treatment Outcome",
-                "aggregation": "simple"
+                "display": "Date of Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "aggregated_score_count_taken",
+                "calculate_total": false,
+                "column_id": "aggregated_score_count_taken",
+                "type": "field",
+                "display": "aggregated_score_count_taken"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "treatment_regimen_changed": "Treatment Regimen Changed",
+                        "death": "Death",
+                        "cured": "Cured",
+                        "failure": "Failure",
+                        "switched_to_cat_ivv": "Switched to Cat IV/V",
+                        "transferred_to_public_sector": "Transferred to Public Sector",
+                        "not_evaluated": "Not Evaluated",
+                        "lost_to_followup": "Lost to followup",
+                        "loss_to_followup_default": "Loss to followup: default",
+                        "treatment_completed": "Treatment Completed",
+                        "transferred_out": "Transferred Out"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "treatment_outcome",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Outcome"
             }
         ]
     }

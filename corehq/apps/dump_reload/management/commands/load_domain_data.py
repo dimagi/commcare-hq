@@ -13,9 +13,9 @@ from corehq.apps.dump_reload.sql import SqlDataLoader
 
 class Command(BaseCommand):
     help = 'Loads data from the give file into the database.'
-    args = '<dump file path>'
 
     def add_arguments(self, parser):
+        parser.add_argument('dump_file_path')
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
                             help="Use already extracted dump if it exists.")
         parser.add_argument('--force', action='store_true', default=False, dest='force',

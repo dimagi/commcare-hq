@@ -1,0 +1,96 @@
+<div class="download-directive">
+    <div class="row fixes-filters">
+        <div class="col-md-11">
+            <span class="breadcrump-element">Export Program Area Indicators: </span>
+        </div>
+    </div>
+    <div class="report-content">
+        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+        </div>
+        <div class="form-horizontal black">
+            <div class="form-group" style="margin-bottom: 0px !important;">
+                <label class="control-label col-sm-2" for="location">Location: </label>
+                <div class="col-sm-6">
+                    <div style="margin-bottom: 15px;" ng-repeat="locationTypes in $ctrl.hierarchy" ng-show="$ctrl.isVisible($index)">
+                        <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+                            <ui-select-match placeholder="{$ $ctrl.getPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                              <ui-select-choices repeat="location.location_id as location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
+                                <div ng-bind-html="location.name | highlight: $select.search"></div>
+                              </ui-select-choices>
+                        </ui-select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="view_by">View by: </label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
+                        <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="level.id as level in $ctrl.levels | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="level.name | highlight: $select.search"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="month">Month:</label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                        <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="month.name | highlight: $select.search"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="year">Year: </label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
+                            <div ng-bind-html="year.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="indicator">Program Area: </label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedIndicator" theme="bootstrap">
+                        <ui-select-match placeholder="Program Area"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="indicator.id as indicator in $ctrl.indicators | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="indicator.name"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="format">Format: </label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedFormat" theme="bootstrap">
+                    <ui-select-match placeholder="Format"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                      <ui-select-choices repeat="format.id as format in $ctrl.formats | propsFilter: {name: $select.search}">
+                        <div ng-bind-html="format.name"></div>
+                      </ui-select-choices>
+                </ui-select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-6">
+                    <form action="{% url 'icds_export_indicator' domain %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="location" ng-value="$ctrl.selectedLocationId" />
+                        <input type="hidden" name="aggregation_level" ng-value="$ctrl.selectedLevel" />
+                        <input type="hidden" name="month" ng-value="$ctrl.selectedMonth" />
+                        <input type="hidden" name="year" ng-value="$ctrl.selectedYear" />
+                        <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
+                        <input type="hidden" name="format" ng-value="$ctrl.selectedFormat" />
+                        <button type="submit" class="btn btn-default normalButton orangeButton">Export</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -277,177 +277,214 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "default": 0,
-          "cases": {
-            "mozambique": {
-              "default": 0,
-              "cases": {
-                "derre": 16555,
-                "milange": 91807,
-                "mocuba": 140365,
-                "molumbo": 44715,
-                "mopeia": 15607,
-                "morrumbala": 104617,
-                "quelimane": 67630
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "not_eq",
+            "property_value": null,
+            "expression": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "level_1_target"
+                ]
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
               }
+            }
+          },
+          "expression_if_true": {
+            "value_expression": {
+              "type": "property_path",
+              "property_path": [
+                "user_data",
+                "level_1_target"
+              ]
             },
-            "Rwanda": {
-              "default": 0,
-              "cases": {
-                "Kirehe": 82946,
-                "Nyagatare": 105243
+            "type": "related_doc",
+            "related_doc_type": "CommCareUser",
+            "doc_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            }
+          },
+          "expression_if_false": {
+            "default": 0,
+            "cases": {
+              "mozambique": {
+                "default": 0,
+                "cases": {
+                  "derre": 16555,
+                  "milange": 91807,
+                  "mocuba": 140365,
+                  "molumbo": 44715,
+                  "mopeia": 15607,
+                  "morrumbala": 104617,
+                  "quelimane": 67630
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "Rwanda": {
+                "default": 0,
+                "cases": {
+                  "Kirehe": 82946,
+                  "Nyagatare": 105243
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "zambia": {
-              "default": 0,
-              "cases": {
-                "eastern": 214302,
-                "luapula": 153755,
-                "muchinga": 52525,
-                "northern": 121602
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "zambia": {
+                "default": 0,
+                "cases": {
+                  "eastern": 214302,
+                  "luapula": 153755,
+                  "muchinga": 52525,
+                  "northern": 121602
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "Tanzania": {
-              "default": 0,
-              "cases": {
-                "Geita": 0
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "Tanzania": {
+                "default": 0,
+                "cases": {
+                  "Geita": 0
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "kenya": {
-              "default": 0,
-              "cases": {
-                "migori": 226827
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "kenya": {
+                "default": 0,
+                "cases": {
+                  "migori": 226827
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "Madagascar": {
-              "default": 0,
-              "cases": {
-                "Atsinanana": 107832,
-                "Analanjirofo": 81125,
-                "Vatovavy Fitovinany": 41018,
-                "Atsimo Atsinanana": 81941
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "Madagascar": {
+                "default": 0,
+                "cases": {
+                  "Atsinanana": 107832,
+                  "Analanjirofo": 81125,
+                  "Vatovavy Fitovinany": 41018,
+                  "Atsimo Atsinanana": 81941
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "Ethiopia": {
-              "default": 0,
-              "cases": {
-                "Benishangul Gumuz": 112780,
-                "Oromia": 674878
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_1_name"
-                  ]
+              "Ethiopia": {
+                "default": 0,
+                "cases": {
+                  "Benishangul Gumuz": 112780,
+                  "Oromia": 674878
                 },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
                 }
-              }
-            },
-            "benin": {
+              },
+              "benin": {
                 "default": 0,
                 "cases": {
                   "Atacora": 82986,
@@ -471,11 +508,11 @@
                   }
                 }
               },
-            "Mali": {
+              "Mali": {
                 "default": 0,
                 "cases": {
-                    "koulikoro": 169156,
-                    "segou": 73528
+                  "koulikoro": 169156,
+                  "segou": 73528
                 },
                 "type": "switch",
                 "switch_on": {
@@ -493,22 +530,47 @@
                     "property_name": "owner_id"
                   }
                 }
+              },
+              "Senegal": {
+                "default": 0,
+                "cases": {
+                  "Kaolack": 129769,
+                  "Tambacounda": 57532,
+                  "Kaffrine": 88018
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_1_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
               }
-          },
-          "type": "switch",
-          "switch_on": {
-            "value_expression": {
-              "type": "property_path",
-              "property_path": [
-                "user_data",
-                "country"
-              ]
             },
-            "type": "related_doc",
-            "related_doc_type": "CommCareUser",
-            "doc_id_expression": {
-              "type": "property_name",
-              "property_name": "owner_id"
+            "type": "switch",
+            "switch_on": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
             }
           }
         },
@@ -522,355 +584,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "default": 0,
-          "cases": {
-            "mozambique": {
-              "default": 0,
-              "cases": {
-                "alto_benfica": 9933,
-                "chimuara": 3196,
-                "chire": 21069,
-                "corromana": 19652,
-                "dachudua": 16805,
-                "derre_sede": 14017,
-                "dulanha": 10084,
-                "guerissa": 2538,
-                "liciro": 12042,
-                "madal": 9235,
-                "maquival": 15260,
-                "megaza": 7499,
-                "mocuba_sede": 52953,
-                "molumbo_sede ": 25063,
-                "mopeia_sede": 8601,
-                "morrumbala_sede": 48849,
-                "muandiua": 16676,
-                "muaquiua": 12697,
-                "mugeba": 31865,
-                "munhiba": 17409,
-                "namanjavira": 15508,
-                "namuinho": 43135,
-                "pinda": 10524,
-                "posto_campo": 3810,
-                "sede": 52876
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "not_eq",
+            "property_value": null,
+            "expression": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "level_2_target"
+                ]
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
               }
-            },
-            "Senegal": {
-              "default": 0,
-              "cases": {
-                "nioro": 123407,
-                "malem_hodar": 5445,
-                "koungheul": 45995,
-                "koumpentoum": 45704
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_id"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Rwanda": {
-              "default": 0,
-              "cases": {
-                "Gahara I": 5498,
-                "Gahara II": 4199,
-                "Gatore": 6062,
-                "Gatunda": 7799,
-                "Karama": 7226,
-                "Karangazi I": 6277,
-                "Karangazi II": 6941,
-                "Katabagemu": 8330,
-                "Kigarama I": 4282,
-                "Kigarama II": 3299,
-                "Kigina": 6454,
-                "Kirehe": 5476,
-                "Kiyombe": 3860,
-                "Mahama": 6029,
-                "Matimba": 4651,
-                "Mimuri": 6857,
-                "Mpanga I": 4603,
-                "Mpanga II": 3060,
-                "Mukama": 5946,
-                "Musaza": 6618,
-                "Musheri": 5692,
-                "Mushikiri": 6454,
-                "Nasho": 7029,
-                "Nyagatare I": 4963,
-                "Nyagatare II": 6741,
-                "Nyamugari": 9494,
-                "Nyarubuye": 4389,
-                "Rukomo": 7928,
-                "Rwempasha": 3743,
-                "Rwimiyaga 1": 6981,
-                "Rwimiyaga II": 3964,
-                "Tabagwe": 7344
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "zambia": {
-              "default": 0,
-              "cases": {
-                "chadiza": 14969,
-                "chama": 17724,
-                "chembe": 5544,
-                "chiengi": 27035,
-                "chilubi": 14147,
-                "chinsali": 11284,
-                "chipata": 61671,
-                "chipili_district": 1556,
-                "isoka": 5821,
-                "kaputa": 11385,
-                "kasama": 23365,
-                "katete": 24253,
-                "kawambwa": 11722,
-                "lundazi": 27423,
-                "luwingu": 15265,
-                "mafinga": 5903,
-                "mambwe": 7855,
-                "mansa": 24142,
-                "mbala": 13338,
-                "milenge": 1933,
-                "mpika": 12407,
-                "mporokoso": 11180,
-                "mpulungu": 9274,
-                "mungwi": 15504,
-                "mwansabombwe": 7634,
-                "mwense": 18910,
-                "nakonde": 12663,
-                "nchelenge": 25168,
-                "nsama": 8144,
-                "nyimba": 14152,
-                "petauke": 34023,
-                "samfya": 30111,
-                "shiwangandu_district": 4447,
-                "sinda": 6889,
-                "vubwi": 5343
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Mali": {
-              "default": 0,
-              "cases": {
-                "baroueli": 73528,
-                "koulikoro": 66927,
-                "dioila": 102229
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_data"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Tanzania": {
-              "default": 0,
-              "cases": {
-                "Geita TC": 20000
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "kenya": {
-              "default": 0,
-              "cases": {
-                "awendo": 36511,
-                "nyatike": 51064,
-                "rongo": 34127,
-                "suna_east": 32021,
-                "suna_west": 30664,
-                "uriri": 42440
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Ethiopia": {
-              "default": 0,
-              "cases": {
-                "Assosa": 76189,
-                "Buno Bedele": 37670,
-                "East Wollega": 144636,
-                "Horo Guduru Wollega": 65376,
-                "Kamashi": 36591,
-                "Kelem Wollega": 104351,
-                "South West Shewa": 55456,
-                "West Guji": 48655,
-                "West Shewa": 77698,
-                "West Wollega": 141036
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Madagascar": {
-              "default": 0,
-              "cases": {
-                "Brickaville": 48850,
-                "Farafangana": 81941,
-                "Fenerive Est": 81125,
-                "Tamatave II": 58982,
-                "Vohipeno": 41018
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_2_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "benin": {
-                  "default": 0,
-                  "cases": {
-                    "Kerou": 45000,
-                    "Pehunco": 37986,
-                    "Djougou": 138722,
-                    "Ouake": 31249,
-                    "Copargo": 26809,
-                    "Kandi": 74913,
-                    "Gogounou": 51244,
-                    "Segbana": 37121
-                  },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_2_name"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
-                  }
-                }
+            }
           },
-          "type": "switch",
-          "switch_on": {
+          "expression_if_true": {
             "value_expression": {
               "type": "property_path",
               "property_path": [
                 "user_data",
-                "country"
+                "level_2_target"
               ]
             },
             "type": "related_doc",
@@ -878,6 +618,366 @@
             "doc_id_expression": {
               "type": "property_name",
               "property_name": "owner_id"
+            }
+          },
+          "expression_if_false": {
+            "default": 0,
+            "cases": {
+              "mozambique": {
+                "default": 0,
+                "cases": {
+                  "alto_benfica": 9933,
+                  "chimuara": 3196,
+                  "chire": 21069,
+                  "corromana": 19652,
+                  "dachudua": 16805,
+                  "derre_sede": 14017,
+                  "dulanha": 10084,
+                  "guerissa": 2538,
+                  "liciro": 12042,
+                  "madal": 9235,
+                  "maquival": 15260,
+                  "megaza": 7499,
+                  "mocuba_sede": 52953,
+                  "molumbo_sede ": 25063,
+                  "mopeia_sede": 8601,
+                  "morrumbala_sede": 48849,
+                  "muandiua": 16676,
+                  "muaquiua": 12697,
+                  "mugeba": 31865,
+                  "munhiba": 17409,
+                  "namanjavira": 15508,
+                  "namuinho": 43135,
+                  "pinda": 10524,
+                  "posto_campo": 3810,
+                  "sede": 52876
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Senegal": {
+                "default": 0,
+                "cases": {
+                  "Nioro": 129769,
+                  "Koumpentoum": 57532,
+                  "Malem Hodar": 18523,
+                  "Koungheul": 69495
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Rwanda": {
+                "default": 0,
+                "cases": {
+                  "Gahara I": 5498,
+                  "Gahara II": 4199,
+                  "Gatore": 6062,
+                  "Gatunda": 7799,
+                  "Karama": 7226,
+                  "Karangazi I": 6277,
+                  "Karangazi II": 6941,
+                  "Katabagemu": 8330,
+                  "Kigarama I": 4282,
+                  "Kigarama II": 3299,
+                  "Kigina": 6454,
+                  "Kirehe": 5476,
+                  "Kiyombe": 3860,
+                  "Mahama": 6029,
+                  "Matimba": 4651,
+                  "Mimuri": 6857,
+                  "Mpanga I": 4603,
+                  "Mpanga II": 3060,
+                  "Mukama": 5946,
+                  "Musaza": 6618,
+                  "Musheri": 5692,
+                  "Mushikiri": 6454,
+                  "Nasho": 7029,
+                  "Nyagatare I": 4963,
+                  "Nyagatare II": 6741,
+                  "Nyamugari": 9494,
+                  "Nyarubuye": 4389,
+                  "Rukomo": 7928,
+                  "Rwempasha": 3743,
+                  "Rwimiyaga 1": 6981,
+                  "Rwimiyaga II": 3964,
+                  "Tabagwe": 7344
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "zambia": {
+                "default": 0,
+                "cases": {
+                  "chadiza": 14969,
+                  "chama": 17724,
+                  "chembe": 5544,
+                  "chiengi": 27035,
+                  "chilubi": 14147,
+                  "chinsali": 11284,
+                  "chipata": 61671,
+                  "chipili_district": 1556,
+                  "isoka": 5821,
+                  "kaputa": 11385,
+                  "kasama": 23365,
+                  "katete": 24253,
+                  "kawambwa": 11722,
+                  "lundazi": 27423,
+                  "luwingu": 15265,
+                  "mafinga": 5903,
+                  "mambwe": 7855,
+                  "mansa": 24142,
+                  "mbala": 13338,
+                  "milenge": 1933,
+                  "mpika": 12407,
+                  "mporokoso": 11180,
+                  "mpulungu": 9274,
+                  "mungwi": 15504,
+                  "mwansabombwe": 7634,
+                  "mwense": 18910,
+                  "nakonde": 12663,
+                  "nchelenge": 25168,
+                  "nsama": 8144,
+                  "nyimba": 14152,
+                  "petauke": 34023,
+                  "samfya": 30111,
+                  "shiwangandu_district": 4447,
+                  "sinda": 6889,
+                  "vubwi": 5343
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Mali": {
+                "default": 0,
+                "cases": {
+                  "baroueli": 73528,
+                  "koulikoro": 66927,
+                  "dioila": 102229
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_data"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Tanzania": {
+                "default": 0,
+                "cases": {
+                  "Geita TC": 20000
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "kenya": {
+                "default": 0,
+                "cases": {
+                  "awendo": 36511,
+                  "nyatike": 51064,
+                  "rongo": 34127,
+                  "suna_east": 32021,
+                  "suna_west": 30664,
+                  "uriri": 42440
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Ethiopia": {
+                "default": 0,
+                "cases": {
+                  "Assosa": 76189,
+                  "Buno Bedele": 37670,
+                  "East Wollega": 144636,
+                  "Horo Guduru Wollega": 65376,
+                  "Kamashi": 36591,
+                  "Kelem Wollega": 104351,
+                  "South West Shewa": 55456,
+                  "West Guji": 48655,
+                  "West Shewa": 77698,
+                  "West Wollega": 141036
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Madagascar": {
+                "default": 0,
+                "cases": {
+                  "Brickaville": 48850,
+                  "Farafangana": 81941,
+                  "Fenerive Est": 81125,
+                  "Tamatave II": 58982,
+                  "Vohipeno": 41018
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "benin": {
+                "default": 0,
+                "cases": {
+                  "Kerou": 45000,
+                  "Pehunco": 37986,
+                  "Djougou": 138722,
+                  "Ouake": 31249,
+                  "Copargo": 26809,
+                  "Kandi": 74913,
+                  "Gogounou": 51244,
+                  "Segbana": 37121
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_2_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              }
+            },
+            "type": "switch",
+            "switch_on": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
             }
           }
         },
@@ -891,492 +991,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "default": 0,
-          "cases": {
-            "Senegal": {
-              "default": 0,
-              "cases": {
-                "nioro_site": 13141,
-                "nioro": 13141,
-                "porokhane": 12703,
-                "keur_moussa": 7182,
-                "keur_maba": 9812,
-                "keur_tapha": 6764,
-                "ndrame_escale": 11244,
-                "wakh_ngouna": 11679,
-                "taiba_niassene_1": 9294,
-                "taiba_niassene_2": 10019,
-                "keur_madiabel_1": 9374,
-                "keur_madiabel_2": 8752,
-                "kaymor_1": 6821,
-                "kaymor_2": 6622,
-                "ndioum_ngainth": 5445,
-                "koungheul_": 12846,
-                "ida_mouride": 9305,
-                "missirah": 7734,
-                "saly_escale": 8545,
-                "gainthe_pathe": 7565,
-                "koumpentoum": 10648,
-                "malem_niani": 6100,
-                "mereto": 5218,
-                "payar": 8738,
-                "bamba": 10648,
-                "kouthia_gaidy": 4352
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "not_eq",
+            "property_value": null,
+            "expression": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "level_3_target"
+                ]
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_id"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Ethiopia": {
-              "default": 0,
-              "cases": {
-                "Abay chomen": 18872,
-                "Abe dengoro": 24650,
-                "Abeya": 19885,
-                "Agalo Meti": 10316,
-                "Amru": 14709,
-                "Babo Gambel": 18155,
-                "Bako Tibe": 19691,
-                "Bambasi": 22057,
-                "Begi": 17384,
-                "Boneya Boshe": 12233,
-                "Chewaka": 37670,
-                "Dale Sadi": 17815,
-                "Dale Wabara": 20323,
-                "Danno": 21964,
-                "Diga": 15748,
-                "Gelana": 16295,
-                "Gida Ayana": 22137,
-                "Gobu Sayo": 14226,
-                "Goro": 17000,
-                "Guliso": 13766,
-                "Guto Gida": 16920,
-                "Hawa Galan": 37056,
-                "Ilu": 21820,
-                "Ilu Galan": 20295,
-                "Jardega jarte": 7145,
-                "Kamash": 8101,
-                "Kiltu Kara": 12272,
-                "Kondala": 20632,
-                "Lalo Kile": 13035,
-                "Limu": 11610,
-                "Manasibu": 40566,
-                "Melka Soda": 12475,
-                "Menge": 18228,
-                "Nejo Rural": 18261,
-                "Nonno": 15748,
-                "Oda": 24725,
-                "Sasiga": 18108,
-                "Seyo": 16122,
-                "Sherkole": 11179,
-                "Tedal": 8152,
-                "Waliso Rural": 16636,
-                "Wama Hagalo": 17069,
-                "Wayu Tuka": 16585,
-                "Yaso": 10022
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Madagascar": {
-              "default": 0,
-              "cases": {
-                "Ambalarondra": 4916,
-                "Ambalatany": 3032,
-                "Ambalavato Nord": 1027,
-                "Ambalavato Sud": 953,
-                "Ambanja": 3727,
-                "Ambatoharanana": 6660,
-                "Ambinaninony": 3688,
-                "Ambodilazana": 5357,
-                "Ambodimanga II": 6454,
-                "Ambodiriana": 2026,
-                "Amboditandroho": 2728,
-                "Ambohigogo": 2460,
-                "Ambohimandroso": 2891,
-                "Amborobe": 1208,
-                "Ampasimadinika": 2230,
-                "Ampasimbe": 4704,
-                "Ampasimbe Manantsatrana": 4193,
-                "Ampasimbe Onibe": 6683,
-                "Ampasina Maningory": 14805,
-                "Amporoforo": 3683,
-                "Andemaka": 3326,
-                "Andodabe": 6130,
-                "Andovoranto": 5080,
-                "Andranobolaha": 3255,
-                "Anjahamana": 2266,
-                "Ankarana Miraihina": 1853,
-                "Ankarimbary": 1518,
-                "Anoloka": 777,
-                "Anosivelo": 2757,
-                "Anosy Tsararafa": 5901,
-                "Antananabo": 1225,
-                "Antetezambaro": 5359,
-                "Antsampanana": 3700,
-                "Antseranambe": 1299,
-                "Antsiatsiaka": 4416,
-                "Betampona": 2836,
-                "Bevoay Beretra": 2336,
-                "Brickaville Centre": 8835,
-                "Efatsy": 1617,
-                "Etrotroka": 5463,
-                "Evato": 4346,
-                "Fanandrana": 4044,
-                "Farafangana": 7443,
-                "Fenerive Est": 12162,
-                "Fenoarivo": 1618,
-                "Foulpointe": 7021,
-                "Iabohazo": 1423,
-                "Iaborano Namohora": 1250,
-                "Ifatsy": 2136,
-                "Ihorombe": 1894,
-                "Ilakatra": 3182,
-                "Ivandrika": 1393,
-                "Ivato": 818,
-                "Lanivo": 1616,
-                "Mahabo": 1605,
-                "Mahabo Mananivo": 1736,
-                "Mahafasa Centre": 2324,
-                "Mahambo": 11339,
-                "Mahanoro": 2765,
-                "Mahasoabe": 1381,
-                "Mahatsara": 4567,
-                "Mahavelo": 2220,
-                "Mahazoarivo": 6350,
-                "Maheriraty": 1460,
-                "Manambotra Sud": 962,
-                "Marovandrika": 2466,
-                "Miorimivalana": 1060,
-                "Nato": 989,
-                "Onjatsy": 398,
-                "Ranomafana Est": 6844,
-                "Sahalava": 1828,
-                "Sahamadio": 4600,
-                "Sahambala": 7526,
-                "Saranambana": 2003,
-                "Savana": 1089,
-                "Tamatave Suburbaine": 6623,
-                "Tangainony": 2504,
-                "Tovona": 1699,
-                "Vohilany": 250,
-                "Vohilava": 1523,
-                "Vohilengo": {
-                  "default": 0,
-                  "cases": {
-                    "Farafangana": 3451,
-                    "Fenerive Est": 4164
-                  },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_2_name"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
-                  }
-                },
-                "Vohimasy": 1280,
-                "Vohindava": 2202,
-                "Vohipeno": {
-                  "default": 0,
-                  "cases": {
-                    "Fenerive Est": 4541,
-                    "Vohipeno": 3919
-                  },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_2_name"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
-                  }
-                },
-                "Vohitranivona": 4250,
-                "Vohitrindry": 2783,
-                "Vohitromby": 1077,
-                "Zafindrafady": 2418
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "Tanzania": {
-              "default": 0,
-              "cases": {
-                "Bulela": 2887,
-                "Bunegezi": 2914,
-                "Bung'wangoko": 2819,
-                "Kalangalala": 2993,
-                "Kasamwa": 2745,
-                "Mtakuja": 3018,
-                "Nyankumbu": 2624
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "kenya": {
-              "default": 0,
-              "cases": {
-                "agenga_dispensary": 7810,
-                "alendo_chief's_camp": 5471,
-                "anjego_dispensary": 12045,
-                "arombe_dispensary": 8102,
-                "awendo_sub_county_hospital": 7899,
-                "bande_dispensary": 6838,
-                "bondo_dispensary": 7430,
-                "bware_dispensary": 9761,
-                "dede_dispensary": 6387,
-                "karungu_sub_county_hospital": 6921,
-                "kochola_dispensary": 6009,
-                "lela_dispensary": 9353,
-                "macalder_sub_county_hospital": 7682,
-                "mariwa_health_centre": 12816,
-                "migori_county_referral_hospital": 9435,
-                "minyenya_dispensary": 6233,
-                "muhuru_health_centre": 8220,
-                "nyamaranga_health_centre": 6640,
-                "ongo_health_centre": 9008,
-                "osingo_dispensary": 4945,
-                "othoro_sub_county_hospital": 12901,
-                "oyani_health_centre": 4691,
-                "rabondo_dispensary": 9409,
-                "rongo_sub_county_hospital": 12877,
-                "suna_rabuor_health_centre": 5596,
-                "suna_ragana_dispensary": 8492,
-                "uriri_health_centre": 5734,
-                "wath_onger_dispensary": 8122
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "benin": {
-                  "default": 0,
-                  "cases": {
-                    "Firou": 14458,
-                    "Kerou": 30542,
-                    "Gnemasson": 8786,
-                    "Pehunco": 29200,
-                    "Barei": 38256,
-                    "Djougou 3": 33897,
-                    "Kolokonde": 33944,
-                    "Partago": 32625,
-                    "Semerè 1": 31249,
-                    "Copargo": 26809,
-                    "Angaradebou": 22539,
-                    "Kassakou": 23283,
-                    "Sonsoro": 29091,
-                    "Borodarou": 19435,
-                    "Sori": 31809,
-                    "Libante": 13300,
-                    "Piami": 23821
-                  },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_3_name"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
-                  }
-                },
-            "Mali": {
-              "default": 0,
-              "cases": {
-                "koulikoro": 66927,
-                "fana": 102229,
-                "baroueli": 73528
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_data"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "zambia": {
-              "default": 0,
-              "cases": {
-                "chadiza": 14969,
-                "chaka_rhc": 12254,
-                "chalabesa_rhc": 7519,
-                "chama": 17724,
-                "chembe_rhc": 5544,
-                "chiengi": 15403,
-                "chifwenge_rhc": 6171,
-                "chilubi_island_rhc": 7976,
-                "chinsali": 11284,
-                "chipata": 38912,
-                "chipili_district": 1556,
-                "ilondola_mission_rhc": 2972,
-                "isoka": 5821,
-                "kabole_rhc": 11632,
-                "kaputa": 8082,
-                "kasama": 23365,
-                "kasongole": 3303,
-                "katete": 24253,
-                "katuta_rhc": 3998,
-                "kawambwa": 7729,
-                "kazembe_rhc": 7634,
-                "lubwe_mission": 14982,
-                "lundazi": 27423,
-                "luwingu": 11267,
-                "lwela_rhc": 933,
-                "mafinga": 5903,
-                "mambwe": 4362,
-                "mansa": 24142,
-                "matumbo": 1475,
-                "mbala": 8564,
-                "milenge": 1000,
-                "mpika": 4888,
-                "mporokoso": 5945,
-                "mpulungu": 9274,
-                "mukanda_rhc": 22759,
-                "mukupa_kaoma": 5235,
-                "mungwi": 15504,
-                "mushota_rhc": 3993,
-                "mwense": 18910,
-                "nakonde": 8663,
-                "nchelenge": 25168,
-                "nsama_rhc": 4759,
-                "ntatumbila_rhc": 4000,
-                "nyanje": 6889,
-                "nyimba": 14152,
-                "petauke": 21769,
-                "samfya": 15129,
-                "senga_rhc": 4774,
-                "st_luke_msoro": 3493,
-                "sumbu_rhc": 3385,
-                "vubwi": 5343
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_3_name"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
               }
             }
           },
-          "type": "switch",
-          "switch_on": {
+          "expression_if_true": {
             "value_expression": {
               "type": "property_path",
               "property_path": [
                 "user_data",
-                "country"
+                "level_3_target"
               ]
             },
             "type": "related_doc",
@@ -1384,6 +1025,510 @@
             "doc_id_expression": {
               "type": "property_name",
               "property_name": "owner_id"
+            }
+          },
+          "expression_if_false": {
+            "default": 0,
+            "cases": {
+              "Senegal": {
+                "default": 0,
+                "cases": {
+                  "Nioro": 13551,
+                  "Porokhane": 12683,
+                  "Keur Moussa": 7182,
+                  "Keur Maba": 9818,
+                  "Keur Tapha": 6785,
+                  "Ndrame Escale": 12293,
+                  "Wakh Ngouna": 12810,
+                  "Taiba Niassene": 20905,
+                  "Keur Madiabel": 19662,
+                  "Kaymor": 14080,
+                  "Koumpentoum": 10673,
+                  "Malem Niani": 6055,
+                  "Mereto": 5068,
+                  "Payar": 6548,
+                  "Bamba": 4395,
+                  "Kouthia Gaidy": 6921,
+                  "Kahene": 9145,
+                  "Kouthiaba": 8727,
+                  "Diaga": 1262,
+                  "Maka Belal": 1608,
+                  "Tip Saloum": 1028,
+                  "Touba Ngueyenne": 1547,
+                  "Niahenne": 3715,
+                  "Ndiobene": 2651,
+                  "Malem": 6712,
+                  "Koungheul": 17819,
+                  "Ida Mouride": 7254,
+                  "Missirah": 7553,
+                  "Saly Escale": 9104,
+                  "Gainth Pathe": 7711,
+                  "Lour Escale": 9761,
+                  "Ribot Escale": 3306,
+                  "Maka Yop": 6986
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Ethiopia": {
+                "default": 0,
+                "cases": {
+                  "Abay chomen": 18872,
+                  "Abe dengoro": 24650,
+                  "Abeya": 19885,
+                  "Agalo Meti": 10316,
+                  "Amru": 14709,
+                  "Babo Gambel": 18155,
+                  "Bako Tibe": 19691,
+                  "Bambasi": 22057,
+                  "Begi": 17384,
+                  "Boneya Boshe": 12233,
+                  "Chewaka": 37670,
+                  "Dale Sadi": 17815,
+                  "Dale Wabara": 20323,
+                  "Danno": 21964,
+                  "Diga": 15748,
+                  "Gelana": 16295,
+                  "Gida Ayana": 22137,
+                  "Gobu Sayo": 14226,
+                  "Goro": 17000,
+                  "Guliso": 13766,
+                  "Guto Gida": 16920,
+                  "Hawa Galan": 37056,
+                  "Ilu": 21820,
+                  "Ilu Galan": 20295,
+                  "Jardega jarte": 7145,
+                  "Kamash": 8101,
+                  "Kiltu Kara": 12272,
+                  "Kondala": 20632,
+                  "Lalo Kile": 13035,
+                  "Limu": 11610,
+                  "Manasibu": 40566,
+                  "Melka Soda": 12475,
+                  "Menge": 18228,
+                  "Nejo Rural": 18261,
+                  "Nonno": 15748,
+                  "Oda": 24725,
+                  "Sasiga": 18108,
+                  "Seyo": 16122,
+                  "Sherkole": 11179,
+                  "Tedal": 8152,
+                  "Waliso Rural": 16636,
+                  "Wama Hagalo": 17069,
+                  "Wayu Tuka": 16585,
+                  "Yaso": 10022
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Madagascar": {
+                "default": 0,
+                "cases": {
+                  "Ambalarondra": 4916,
+                  "Ambalatany": 3032,
+                  "Ambalavato Nord": 1027,
+                  "Ambalavato Sud": 953,
+                  "Ambanja": 3727,
+                  "Ambatoharanana": 6660,
+                  "Ambinaninony": 3688,
+                  "Ambodilazana": 5357,
+                  "Ambodimanga II": 6454,
+                  "Ambodiriana": 2026,
+                  "Amboditandroho": 2728,
+                  "Ambohigogo": 2460,
+                  "Ambohimandroso": 2891,
+                  "Amborobe": 1208,
+                  "Ampasimadinika": 2230,
+                  "Ampasimbe": 4704,
+                  "Ampasimbe Manantsatrana": 4193,
+                  "Ampasimbe Onibe": 6683,
+                  "Ampasina Maningory": 14805,
+                  "Amporoforo": 3683,
+                  "Andemaka": 3326,
+                  "Andodabe": 6130,
+                  "Andovoranto": 5080,
+                  "Andranobolaha": 3255,
+                  "Anjahamana": 2266,
+                  "Ankarana Miraihina": 1853,
+                  "Ankarimbary": 1518,
+                  "Anoloka": 777,
+                  "Anosivelo": 2757,
+                  "Anosy Tsararafa": 5901,
+                  "Antananabo": 1225,
+                  "Antetezambaro": 5359,
+                  "Antsampanana": 3700,
+                  "Antseranambe": 1299,
+                  "Antsiatsiaka": 4416,
+                  "Betampona": 2836,
+                  "Bevoay Beretra": 2336,
+                  "Brickaville Centre": 8835,
+                  "Efatsy": 1617,
+                  "Etrotroka": 5463,
+                  "Evato": 4346,
+                  "Fanandrana": 4044,
+                  "Farafangana": 7443,
+                  "Fenerive Est": 12162,
+                  "Fenoarivo": 1618,
+                  "Foulpointe": 7021,
+                  "Iabohazo": 1423,
+                  "Iaborano Namohora": 1250,
+                  "Ifatsy": 2136,
+                  "Ihorombe": 1894,
+                  "Ilakatra": 3182,
+                  "Ivandrika": 1393,
+                  "Ivato": 818,
+                  "Lanivo": 1616,
+                  "Mahabo": 1605,
+                  "Mahabo Mananivo": 1736,
+                  "Mahafasa Centre": 2324,
+                  "Mahambo": 11339,
+                  "Mahanoro": 2765,
+                  "Mahasoabe": 1381,
+                  "Mahatsara": 4567,
+                  "Mahavelo": 2220,
+                  "Mahazoarivo": 6350,
+                  "Maheriraty": 1460,
+                  "Manambotra Sud": 962,
+                  "Marovandrika": 2466,
+                  "Miorimivalana": 1060,
+                  "Nato": 989,
+                  "Onjatsy": 398,
+                  "Ranomafana Est": 6844,
+                  "Sahalava": 1828,
+                  "Sahamadio": 4600,
+                  "Sahambala": 7526,
+                  "Saranambana": 2003,
+                  "Savana": 1089,
+                  "Tamatave Suburbaine": 6623,
+                  "Tangainony": 2504,
+                  "Tovona": 1699,
+                  "Vohilany": 250,
+                  "Vohilava": 1523,
+                  "Vohilengo": {
+                    "default": 0,
+                    "cases": {
+                      "Farafangana": 3451,
+                      "Fenerive Est": 4164
+                    },
+                    "type": "switch",
+                    "switch_on": {
+                      "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "user_data",
+                          "level_2_name"
+                        ]
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareUser",
+                      "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                      }
+                    }
+                  },
+                  "Vohimasy": 1280,
+                  "Vohindava": 2202,
+                  "Vohipeno": {
+                    "default": 0,
+                    "cases": {
+                      "Fenerive Est": 4541,
+                      "Vohipeno": 3919
+                    },
+                    "type": "switch",
+                    "switch_on": {
+                      "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "user_data",
+                          "level_2_name"
+                        ]
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareUser",
+                      "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                      }
+                    }
+                  },
+                  "Vohitranivona": 4250,
+                  "Vohitrindry": 2783,
+                  "Vohitromby": 1077,
+                  "Zafindrafady": 2418
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Tanzania": {
+                "default": 0,
+                "cases": {
+                  "Bulela": 2887,
+                  "Bunegezi": 2914,
+                  "Bung'wangoko": 2819,
+                  "Kalangalala": 2993,
+                  "Kasamwa": 2745,
+                  "Mtakuja": 3018,
+                  "Nyankumbu": 2624
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "kenya": {
+                "default": 0,
+                "cases": {
+                  "agenga_dispensary": 7810,
+                  "alendo_chief's_camp": 5471,
+                  "anjego_dispensary": 12045,
+                  "arombe_dispensary": 8102,
+                  "awendo_sub_county_hospital": 7899,
+                  "bande_dispensary": 6838,
+                  "bondo_dispensary": 7430,
+                  "bware_dispensary": 9761,
+                  "dede_dispensary": 6387,
+                  "karungu_sub_county_hospital": 6921,
+                  "kochola_dispensary": 6009,
+                  "lela_dispensary": 9353,
+                  "macalder_sub_county_hospital": 7682,
+                  "mariwa_health_centre": 12816,
+                  "migori_county_referral_hospital": 9435,
+                  "minyenya_dispensary": 6233,
+                  "muhuru_health_centre": 8220,
+                  "nyamaranga_health_centre": 6640,
+                  "ongo_health_centre": 9008,
+                  "osingo_dispensary": 4945,
+                  "othoro_sub_county_hospital": 12901,
+                  "oyani_health_centre": 4691,
+                  "rabondo_dispensary": 9409,
+                  "rongo_sub_county_hospital": 12877,
+                  "suna_rabuor_health_centre": 5596,
+                  "suna_ragana_dispensary": 8492,
+                  "uriri_health_centre": 5734,
+                  "wath_onger_dispensary": 8122
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "benin": {
+                "default": 0,
+                "cases": {
+                  "Firou": 14458,
+                  "Kerou": 30542,
+                  "Gnemasson": 8786,
+                  "Pehunco": 29200,
+                  "Barei": 38256,
+                  "Djougou 3": 33897,
+                  "Kolokonde": 33944,
+                  "Partago": 32625,
+                  "Semerè 1": 31249,
+                  "Copargo": 26809,
+                  "Angaradebou": 22539,
+                  "Kassakou": 23283,
+                  "Sonsoro": 29091,
+                  "Borodarou": 19435,
+                  "Sori": 31809,
+                  "Libante": 13300,
+                  "Piami": 23821
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "Mali": {
+                "default": 0,
+                "cases": {
+                  "koulikoro": 66927,
+                  "fana": 102229,
+                  "baroueli": 73528
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_data"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "zambia": {
+                "default": 0,
+                "cases": {
+                  "chadiza": 14969,
+                  "chaka_rhc": 12254,
+                  "chalabesa_rhc": 7519,
+                  "chama": 17724,
+                  "chembe_rhc": 5544,
+                  "chiengi": 15403,
+                  "chifwenge_rhc": 6171,
+                  "chilubi_island_rhc": 7976,
+                  "chinsali": 11284,
+                  "chipata": 38912,
+                  "chipili_district": 1556,
+                  "ilondola_mission_rhc": 2972,
+                  "isoka": 5821,
+                  "kabole_rhc": 11632,
+                  "kaputa": 8082,
+                  "kasama": 23365,
+                  "kasongole": 3303,
+                  "katete": 24253,
+                  "katuta_rhc": 3998,
+                  "kawambwa": 7729,
+                  "kazembe_rhc": 7634,
+                  "lubwe_mission": 14982,
+                  "lundazi": 27423,
+                  "luwingu": 11267,
+                  "lwela_rhc": 933,
+                  "mafinga": 5903,
+                  "mambwe": 4362,
+                  "mansa": 24142,
+                  "matumbo": 1475,
+                  "mbala": 8564,
+                  "milenge": 1000,
+                  "mpika": 4888,
+                  "mporokoso": 5945,
+                  "mpulungu": 9274,
+                  "mukanda_rhc": 22759,
+                  "mukupa_kaoma": 5235,
+                  "mungwi": 15504,
+                  "mushota_rhc": 3993,
+                  "mwense": 18910,
+                  "nakonde": 8663,
+                  "nchelenge": 25168,
+                  "nsama_rhc": 4759,
+                  "ntatumbila_rhc": 4000,
+                  "nyanje": 6889,
+                  "nyimba": 14152,
+                  "petauke": 21769,
+                  "samfya": 15129,
+                  "senga_rhc": 4774,
+                  "st_luke_msoro": 3493,
+                  "sumbu_rhc": 3385,
+                  "vubwi": 5343
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_3_name"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              }
+            },
+            "type": "switch",
+            "switch_on": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
             }
           }
         },
@@ -1397,171 +1542,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "default": 0,
-          "cases": {
-            "Mali": {
-              "default": 0,
-              "cases": {
-                "banido": 1968,
-                "baraoueli": 9248,
-                "beleco": 11428,
-                "boidie": 3492,
-                "bougoucouroula": 1640,
-                "chola": 2352,
-                "dandougou": 5044,
-                "diebe": 3723,
-                "diele": 995,
-                "dioforongo": 1635,
-                "djoumazana": 6174,
-                "dotembougou": 1748,
-                "dougoufe": 2930,
-                "doumba": 1900,
-                "falako": 6776,
-                "fana": 17450,
-                "fabacoro": 907,
-                "fougadougou": 1147,
-                "garna": 2474,
-                "gouendo": 3385,
-                "gouni": 4435,
-                "kalake": 3711,
-                "kamani": 2609,
-                "kankoni": 2864,
-                "kenenkoun": 5832,
-                "kerela": 4634,
-                "kolebougou": 3380,
-                "koni": 4158,
-                "konkon": 1377,
-                "konobougou": 8285,
-                "korokoro": 2395,
-                "kotoula": 3085,
-                "koula": 2946,
-                "koulikoroba": 3167,
-                "m'pebougou": 1507,
-                "markacoungo": 4670,
-                "massala": 2335,
-                "mena": 7053,
-                "moabougou": 3513,
-                "monzobala": 3427,
-                "n'djilla": 1802,
-                "n'gassola": 2051,
-                "nangola": 7003,
-                "nianzana": 2939,
-                "nyamina": 6706,
-                "sanando": 4708,
-                "seguela": 2054,
-                "seyla": 3808,
-                "sirakorobougou": 2304,
-                "sirakorola": 8007,
-                "sizani": 2012,
-                "somo": 4195,
-                "souban": 1440,
-                "tamani": {
-                  "default": 0,
-                  "cases": {
-                    "koulikoro": 4748,
-                    "baroueli": 3206
-
-                  },
-                  "type": "switch",
-                  "switch_on": {
-                    "value_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "level_3_data"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "type": "property_name",
-                      "property_name": "owner_id"
-                    }
-                  }
-                },
-                "tesserela": 2311,
-                "tienfala": 2669,
-                "tigui": 2554,
-                "tingole": 5898,
-                "tombougou": 2238,
-                "tougouni": 4420,
-                "wondobougou": 2260,
-                "yerebougou": 1552
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "not_eq",
+            "property_value": null,
+            "expression": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "level_4_target"
+                ]
               },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "level_4_data"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
-              }
-            },
-            "kenya": {
-              "default": 0,
-              "cases": {
-                "agenga_dispensary": 7810,
-                "alendo_chief's_camp": 5471,
-                "anjego_dispensary": 12045,
-                "arombe_dispensary": 8102,
-                "awendo_sub_county_hospital": 7899,
-                "bande_dispensary": 6838,
-                "bondo_dispensary": 7430,
-                "bware_dispensary": 9761,
-                "dede_dispensary": 6387,
-                "karungu_sub_county_hospital": 6921,
-                "kochola_dispensary": 6009,
-                "lela_dispensary": 9353,
-                "macalder_sub_county_hospital": 7682,
-                "mariwa_health_centre": 12816,
-                "migori_county_referral_hospital": 9435,
-                "minyenya_dispensary": 6233,
-                "muhuru_health_centre": 8220,
-                "nyamaranga_health_centre": 6640,
-                "ongo_health_centre": 9008,
-                "osingo_dispensary": 4945,
-                "othoro_sub_county_hospital": 12901,
-                "oyani_health_centre": 4691,
-                "rabondo_dispensary": 9409,
-                "rongo_sub_county_hospital": 12877,
-                "suna_rabuor_health_centre": 5596,
-                "suna_ragana_dispensary": 8492,
-                "uriri_health_centre": 5734,
-                "wath_onger_dispensary": 8122
-              },
-              "type": "switch",
-              "switch_on": {
-                "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "ward_code"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                }
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
               }
             }
           },
-          "type": "switch",
-          "switch_on": {
+          "expression_if_true": {
             "value_expression": {
               "type": "property_path",
               "property_path": [
                 "user_data",
-                "country"
+                "level_4_target"
               ]
             },
             "type": "related_doc",
@@ -1569,6 +1576,181 @@
             "doc_id_expression": {
               "type": "property_name",
               "property_name": "owner_id"
+            }
+          },
+          "expression_if_false": {
+            "default": 0,
+            "cases": {
+              "Mali": {
+                "default": 0,
+                "cases": {
+                  "banido": 1968,
+                  "baraoueli": 9248,
+                  "beleco": 11428,
+                  "boidie": 3492,
+                  "bougoucouroula": 1640,
+                  "chola": 2352,
+                  "dandougou": 5044,
+                  "diebe": 3723,
+                  "diele": 995,
+                  "dioforongo": 1635,
+                  "djoumazana": 6174,
+                  "dotembougou": 1748,
+                  "dougoufe": 2930,
+                  "doumba": 1900,
+                  "falako": 6776,
+                  "fana": 17450,
+                  "fabacoro": 907,
+                  "fougadougou": 1147,
+                  "garna": 2474,
+                  "gouendo": 3385,
+                  "gouni": 4435,
+                  "kalake": 3711,
+                  "kamani": 2609,
+                  "kankoni": 2864,
+                  "kenenkoun": 5832,
+                  "kerela": 4634,
+                  "kolebougou": 3380,
+                  "koni": 4158,
+                  "konkon": 1377,
+                  "konobougou": 8285,
+                  "korokoro": 2395,
+                  "kotoula": 3085,
+                  "koula": 2946,
+                  "koulikoroba": 3167,
+                  "m'pebougou": 1507,
+                  "markacoungo": 4670,
+                  "massala": 2335,
+                  "mena": 7053,
+                  "moabougou": 3513,
+                  "monzobala": 3427,
+                  "n'djilla": 1802,
+                  "n'gassola": 2051,
+                  "nangola": 7003,
+                  "nianzana": 2939,
+                  "nyamina": 6706,
+                  "sanando": 4708,
+                  "seguela": 2054,
+                  "seyla": 3808,
+                  "sirakorobougou": 2304,
+                  "sirakorola": 8007,
+                  "sizani": 2012,
+                  "somo": 4195,
+                  "souban": 1440,
+                  "tamani": {
+                    "default": 0,
+                    "cases": {
+                      "koulikoro": 4748,
+                      "baroueli": 3206
+                    },
+                    "type": "switch",
+                    "switch_on": {
+                      "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "user_data",
+                          "level_3_data"
+                        ]
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareUser",
+                      "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                      }
+                    }
+                  },
+                  "tesserela": 2311,
+                  "tienfala": 2669,
+                  "tigui": 2554,
+                  "tingole": 5898,
+                  "tombougou": 2238,
+                  "tougouni": 4420,
+                  "wondobougou": 2260,
+                  "yerebougou": 1552
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "level_4_data"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              },
+              "kenya": {
+                "default": 0,
+                "cases": {
+                  "agenga_dispensary": 7810,
+                  "alendo_chief's_camp": 5471,
+                  "anjego_dispensary": 12045,
+                  "arombe_dispensary": 8102,
+                  "awendo_sub_county_hospital": 7899,
+                  "bande_dispensary": 6838,
+                  "bondo_dispensary": 7430,
+                  "bware_dispensary": 9761,
+                  "dede_dispensary": 6387,
+                  "karungu_sub_county_hospital": 6921,
+                  "kochola_dispensary": 6009,
+                  "lela_dispensary": 9353,
+                  "macalder_sub_county_hospital": 7682,
+                  "mariwa_health_centre": 12816,
+                  "migori_county_referral_hospital": 9435,
+                  "minyenya_dispensary": 6233,
+                  "muhuru_health_centre": 8220,
+                  "nyamaranga_health_centre": 6640,
+                  "ongo_health_centre": 9008,
+                  "osingo_dispensary": 4945,
+                  "othoro_sub_county_hospital": 12901,
+                  "oyani_health_centre": 4691,
+                  "rabondo_dispensary": 9409,
+                  "rongo_sub_county_hospital": 12877,
+                  "suna_rabuor_health_centre": 5596,
+                  "suna_ragana_dispensary": 8492,
+                  "uriri_health_centre": 5734,
+                  "wath_onger_dispensary": 8122
+                },
+                "type": "switch",
+                "switch_on": {
+                  "value_expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "user_data",
+                      "ward_code"
+                    ]
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareUser",
+                  "doc_id_expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                  }
+                }
+              }
+            },
+            "type": "switch",
+            "switch_on": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
             }
           }
         },
@@ -1582,26 +1764,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "default": 0,
-          "cases": {
-            "mozambique": 481296,
-            "Senegal": 220551,
-            "Tanzania": 595393,
-            "Rwanda": 188189,
-            "zambia": 542184,
-            "Ethiopia": 787658,
-            "Mali": 242684,
-            "Madagascar": 311916,
-            "kenya": 226827,
-            "benin": 443044
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "not_eq",
+            "property_value": null,
+            "expression": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country_target"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
+            }
           },
-          "type": "switch",
-          "switch_on": {
+          "expression_if_true": {
             "value_expression": {
               "type": "property_path",
               "property_path": [
                 "user_data",
-                "country"
+                "country_target"
               ]
             },
             "type": "related_doc",
@@ -1609,6 +1798,37 @@
             "doc_id_expression": {
               "type": "property_name",
               "property_name": "owner_id"
+            }
+          },
+          "expression_if_false": {
+            "default": 0,
+            "cases": {
+              "mozambique": 481296,
+              "Senegal": 275319,
+              "Tanzania": 595393,
+              "Rwanda": 188189,
+              "zambia": 542184,
+              "Ethiopia": 787658,
+              "Mali": 242684,
+              "Madagascar": 311916,
+              "kenya": 226827,
+              "benin": 443044
+            },
+            "type": "switch",
+            "switch_on": {
+              "value_expression": {
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "country"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              }
             }
           }
         },

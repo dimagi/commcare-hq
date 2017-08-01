@@ -56,7 +56,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
         app_id = None
         try:
             sync_date = string_to_utc_datetime(synclog.get('date'))
-        except ValueError:
+        except (ValueError, AttributeError):
             return
         build_id = synclog.get('build_id')
         if build_id:

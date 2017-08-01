@@ -4,9 +4,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
-    CommtrackRequisitionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
@@ -20,7 +18,6 @@ from unidecode import unidecode
 from django.utils.translation import ugettext as _
 import re
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
@@ -31,11 +28,8 @@ def all_sms_codes(domain):
 
     actions = dict((action.keyword, action) for action in config.actions)
     products = dict((p.code, p) for p in Product.by_domain(domain))
-    commands = {
-        config.multiaction_keyword: {'type': 'stock_report_generic', 'caption': 'Stock Report'},
-    }
 
-    sms_codes = zip(('action', 'product', 'command'), (actions, products, commands))
+    sms_codes = zip(('action', 'product'), (actions, products))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 
@@ -79,8 +73,6 @@ def _create_commtrack_config_if_needed(domain):
 
     CommtrackConfig(
         domain=domain,
-        multiaction_enabled=True,
-        multiaction_keyword='report',
         actions=[
             CommtrackActionConfig(
                 action='receipts',
@@ -129,30 +121,7 @@ def make_domain_commtrack(domain_object):
     _enable_commtrack_previews(domain_object.name)
 
 
-def get_default_requisition_config():
-    return CommtrackRequisitionConfig(
-        enabled=True,
-        actions=[
-            CommtrackActionConfig(
-                action=RequisitionActions.REQUEST,
-                keyword='req',
-                caption='Request',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.FULFILL,
-                keyword='fulfill',
-                caption='Fulfilled',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.RECEIPTS,
-                keyword='rec',
-                caption='Requisition Receipts',
-            ),
-        ],
-    )
-
-
-def due_date_weekly(dow, past_period=0): # 0 == sunday
+def due_date_weekly(dow, past_period=0):  # 0 == sunday
     """compute the next due date on a weekly schedule, where reports are
     due on 'dow' day of the week (0:sunday, 6:saturday). 'next' due date
     is the first due date that occurs today or in the future. if past_period

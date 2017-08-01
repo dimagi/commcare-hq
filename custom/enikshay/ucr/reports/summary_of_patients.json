@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -37,6 +38,14 @@
                     "order_by_hierarchy": true
                 },
                 "display": "Location"
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_enrolled_in_private",
+                "type": "pre",
+                "slug": "is_enrolled_in_private"
             }
         ],
         "columns": [

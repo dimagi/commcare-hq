@@ -22,6 +22,8 @@
 <script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/router.js' %}"></script>
 
+<script src="{% static 'cloudcare/js/debugger/debugger.js' %}"></script>
+
 <script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/layout/views/settings.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/layout/views/phone_navigation.js' %}"></script>
@@ -51,7 +53,7 @@
 <script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
 
-<script src="{% static 'style/js/ui-element.js' %}"></script>
+{% include 'style/includes/ui_element_js.html' %}
 <script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
 <script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
 <script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>

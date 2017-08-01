@@ -1,7 +1,6 @@
 from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack import const
@@ -20,11 +19,11 @@ from corehq.apps.commtrack.xmlutil import XML
 from corehq.apps.products.models import Product
 from corehq.apps.users.models import CouchUser
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from xml.etree import ElementTree
-from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
-    NotAUserClassError)
+    NotAUserClassError,
+    RequisitionsHaveBeenRemoved,
+)
 import re
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 
@@ -124,33 +123,11 @@ class StockReportParser(object):
             args = args[1:]
 
         action = self.commtrack_settings.action_by_keyword(action_keyword)
-        if action and action.type == 'stock':
+        if action:
             # TODO: support single-action by product, as well as by action?
             self.verify_location_registration()
             self.case_id = self.case.case_id
             _tx = self.single_action_transactions(action, args)
-        elif action and action.action in [
-            RequisitionActions.REQUEST,
-            RequisitionActions.FULFILL,
-            RequisitionActions.RECEIPTS
-        ]:
-            _assert(False, 'Someone is actually using requisition actions', {
-                'domain': self.domain,
-                'action': action.action,
-            })
-            # dropped support for this
-            raise SMSError(_(
-                "You can no longer use requisitions! Please contact your project supervisor for help"
-            ))
-
-        elif (self.commtrack_settings.multiaction_enabled
-              and action_keyword == self.commtrack_settings.multiaction_keyword):
-            _assert(False, 'Someone is actually using multiaction_keyword', {
-                'domain': self.domain,
-                'commtrack_settings': self.commtrack_settings,
-            })
-            # multiple action stock report
-            _tx = self.multiple_action_transactions(args)
         else:
             # initial keyword not recognized; delegate to another handler
             return None
@@ -211,63 +188,6 @@ class StockReportParser(object):
                 products = []
         if products:
             raise SMSError('missing quantity for product "%s"' % products[-1].code)
-
-    def multiple_action_transactions(self, args):
-        action = None
-
-        # TODO: catch that we don't mix in requisiton and stock report keywords in the same multi-action message?
-
-        _args = iter(args)
-
-        def next():
-            return _args.next()
-
-        found_product_for_action = True
-        while True:
-            try:
-                keyword = next()
-            except StopIteration:
-                if not found_product_for_action:
-                    raise SMSError('product expected for action "%s"' % action)
-                break
-
-            old_action = action
-            _next_action = self.commtrack_settings.action_by_keyword(keyword)
-            if _next_action:
-                action = _next_action
-                if not found_product_for_action:
-                    raise SMSError('product expected for action "%s"' % old_action.keyword)
-                found_product_for_action = False
-                continue
-
-            try:
-                product = self.product_from_code(keyword)
-                found_product_for_action = True
-            except:
-                product = None
-            if product:
-                if not action:
-                    raise SMSError('need to specify an action before product')
-                elif action.action == const.StockActions.STOCKOUT:
-                    value = 0
-                else:
-                    try:
-                        value = int(next())
-                    except (ValueError, StopIteration):
-                        raise SMSError('quantity expected for product "%s"' % product.code)
-
-                yield StockTransactionHelper(
-                    domain=self.domain.name,
-                    location_id=self.location.location_id,
-                    case_id=self.case_id,
-                    product_id=product.get_id,
-                    action=action.action,
-                    subaction=action.subaction,
-                    quantity=value,
-                )
-                continue
-
-            raise SMSError('do not recognize keyword "%s"' % keyword)
 
     def get_supply_point_and_location(self, loc_code):
         """return the supply point case referenced by loc_code"""
@@ -420,14 +340,8 @@ def process_transactions(E, transactions):
         if tx.action in (
             const.StockActions.STOCKONHAND,
             const.StockActions.STOCKOUT,
-            # todo: remove?
-            const.RequisitionActions.REQUEST
         ):
             balances.append(tx)
-        # todo: remove?
-        elif tx.action == const.RequisitionActions.FULFILL:
-            balances.append(tx)
-            transfers.append(tx)
         else:
             transfers.append(tx)
 
@@ -435,14 +349,8 @@ def process_transactions(E, transactions):
 
 
 def process_balances(E, balances):
-    # todo: remove checks for requisition actions
     if balances:
-        if balances[0].action == const.RequisitionActions.REQUEST:
-            section_id = 'ct-requested'
-        elif balances[0].action == const.RequisitionActions.FULFILL:
-            section_id = 'ct-fulfilled'
-        else:
-            section_id = 'stock'
+        section_id = 'stock'
 
         attr = {
             'section-id': section_id,
@@ -465,8 +373,6 @@ def process_transfers(E, transfers):
 
         if transfers[0].action in [
             const.StockActions.RECEIPTS,
-            # todo: remove?
-            const.RequisitionActions.FULFILL
         ]:
             here, there = ('dest', 'src')
         else:
@@ -519,63 +425,6 @@ def verify_transaction_actions(transactions):
     )
 
 
-def requisition_case_xml(data, stock_blocks):
-    req_id = data['transactions'][0].case_id
-
-    verify_transaction_actions(data['transactions'])
-    action_type = data['transactions'][0].action
-    if action_type == const.RequisitionActions.REQUEST:
-        create = True
-        close = False
-        status = 'requested'
-    elif action_type == const.RequisitionActions.FULFILL:
-        create = False
-        close = False
-        status = 'fulfilled'
-    elif action_type == const.RequisitionActions.RECEIPTS:
-        create = False
-        close = True
-        status = 'received'
-    else:
-        raise NotImplementedError()
-
-    req_case_block = ElementTree.tostring(CaseBlock(
-        req_id,
-        create=create,
-        close=close,
-        case_type=const.REQUISITION_CASE_TYPE,
-        case_name='SMS Requisition',
-        index={'parent_id': (
-            const.SUPPLY_POINT_CASE_TYPE,
-            data['location'].linked_supply_point()._id
-        )},
-        update={'requisition_status': status},
-    ).as_xml())
-
-    timestamp = data['transactions'][0].timestamp or datetime.utcnow()
-    device_id = get_device_id(data)
-
-    return """
-        <data uiVersion="1" version="33" name="New Form" xmlns="%(xmlns)s">
-            <meta>
-                <deviceID>%(device_id)s</deviceID>
-                <timeStart>%(timestamp)s</timeStart>
-                <timeEnd>%(timestamp)s</timeEnd>
-                <userID>%(user_id)s</userID>
-            </meta>
-            %(case_block)s
-            %(stock_blocks)s
-        </data>
-    """ % {
-        'case_block': req_case_block,
-        'stock_blocks': '\n'.join(etree.tostring(b) for b in stock_blocks),
-        'user_id': str(data['user']._id),
-        'device_id': str(device_id) if device_id else '',
-        'xmlns': const.SMS_XMLNS,
-        'timestamp': json_format_datetime(timestamp)
-    }
-
-
 def to_instance(data):
     """convert the parsed sms stock report into an instance like what would be
     submitted from a commcare phone"""
@@ -601,9 +450,8 @@ def to_instance(data):
             *stock_blocks
         )
         return etree.tostring(root, encoding='utf-8', pretty_print=True)
-    # todo: remove?
     else:
-        return requisition_case_xml(data, stock_blocks)
+        raise RequisitionsHaveBeenRemoved()
 
 
 def truncate(text, maxlen, ellipsis='...'):

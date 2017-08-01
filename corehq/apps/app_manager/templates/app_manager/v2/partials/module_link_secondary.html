@@ -2,16 +2,14 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-{% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 
   <a href="#"
      class="appnav-secondary js-add-new-item"
      data-slug="form"
-     data-updateprop="data-moduleid"
-     data-updatevalue="replacewithmoduleid"
      data-moduleid="{{ module.id }}"
      data-show-survey="{% if module.is_surveys %}1{% endif %}"
-     data-show-followup="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+     data-show-case-forms="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
      data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
      data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
   >

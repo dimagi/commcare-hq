@@ -7,7 +7,8 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
-from corehq.apps.app_manager.util import get_app_manager_template
+from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
+from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -28,6 +29,7 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -40,12 +42,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
@@ -124,10 +127,10 @@ def get_releases_context(request, domain, app_id):
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
-        'latest_build_id': get_latest_build_id(domain, app_id)
+        'latest_build_id': get_latest_build_id(domain, app_id),
     })
     if not app.is_remote_app():
-        if toggles.APP_MANAGER_V2.enabled(request.user.username) and len(app.modules) == 0:
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username) and len(app.modules) == 0:
             context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
@@ -141,6 +144,7 @@ def get_releases_context(request, domain, app_id):
 
 
 @login_and_domain_required
+@location_safe
 def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release
@@ -167,6 +171,8 @@ def release_build(request, domain, app_id, saved_app_id):
     app_post_release.send(Application, application=saved_app)
 
     if is_released:
+        if saved_app.build_profiles and domain_has_privilege(domain, privileges.BUILD_PROFILES):
+            create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:
@@ -470,7 +476,19 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
-                build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+                def practice_user_id():
+                    if not app.enable_practice_users:
+                        return ''
+                    try:
+                        practice_user_id = profile.get('practice_user_id')
+                        if practice_user_id:
+                            get_and_assert_practice_user_in_domain(practice_user_id, domain)
+                        return practice_user_id
+                    except PracticeUserException:
+                        return HttpResponse(status=400)
+
+                build_profiles[id] = BuildProfile(
+                    langs=profile['langs'], name=profile['name'], practice_mobile_worker_id=practice_user_id())
         app.build_profiles = build_profiles
         app.save()
         return HttpResponse()

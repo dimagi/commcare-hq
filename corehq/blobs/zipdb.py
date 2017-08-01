@@ -15,7 +15,7 @@ class ZipBlobDB(AbstractBlobDB):
         self.zipname = get_export_filename(slug, domain)
         self._zipfile = None
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         raise NotImplementedError
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -39,6 +39,9 @@ class ZipBlobDB(AbstractBlobDB):
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         return path in self.zipfile.namelist()
+
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        raise NotImplementedError
 
     @property
     def zipfile(self):

@@ -97,14 +97,16 @@
 }
 
 .appmanager-loading {
+  @dim: 4rem;
   display: block;
   position: absolute;
-  font-size: 4rem;
-  width: 100px;
-  height: 100px;
-  left: 50%;
+  font-size: @dim;
+  width: @dim;
+  height: @dim;
+  left: calc(~"50% - " @dim / 2);
+  left: -moz-calc(~"50% - " @dim / 2);
+  left: -webkit-calc(~"50% - " @dim / 2);
   color: fadeOut(@cc-text, 40);
-  margin-left: -50px;
 }
 
 .appmanager-loading-nav {
@@ -144,23 +146,44 @@
      margin-top: 7.5px;
      margin-bottom: 2px;
   }
-  .read-write.app-comment {
-    white-space: normal;
-  }
+}
+
+.appmanager-edit-title {
+  margin-right: 300px;
+}
+.appmanager-edit-app-title {
+  margin-right: 248px;
 }
 
 .appmanager-edit-title .ko-inline-edit {
-  margin-left: -12px;
-
+  width: 100%;
+  .read-only {
+    margin-left: 15px;
+    margin-top: 8px;
+  }
+  .read-only .prefixed-icon {
+    margin-left: -30px;
+  }
+  .read-write {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
   .read-write.h3 input{
-    margin-left: 12px;
+    margin-left: 0;
+    width: 100%
+  }
+  .read-write .form-group:first-child {
+    min-width: 80%;
+  }
+}
+.appmanager-edit-app-title .ko-inline-edit {
+  .read-only {
+    margin-left: -12px;
+    margin-top: 12px;
   }
 }
 .appmanager-edit-description .ko-inline-edit {
   margin-left: -8px;
-  .read-write.app-comment {
-    margin-left: 8px;
-  }
 }
 
 .appmanager-page-actions {
@@ -201,6 +224,21 @@
 .app-preview-icon {
   position: relative;
   width: 10px;
+}
+
+.app-preview-toggle-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.btn-preview {
+  @btn-preview-width: 30px;
+  width: @btn-preview-width;
+  height: @btn-preview-width;
+  padding: 4px 10px;
+  .border-top-radius(@btn-preview-width/2);
+  .border-bottom-radius(@btn-preview-width/2);
 }
 
 .appmanager-content-single-page {

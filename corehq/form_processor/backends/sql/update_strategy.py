@@ -45,18 +45,21 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case
-        assert primary_intent.action_type == CASE_ACTION_COMMTRACK
-        transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
-        if deprecation_intent:
-            assert transaction.is_saved()
-        elif transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
-            # hack: clear the sync log id so this modification always counts
-            # since consumption data could change server-side
+        if primary_intent:
+            assert primary_intent.action_type == CASE_ACTION_COMMTRACK
+            transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
+            if deprecation_intent:
+                assert transaction.is_saved()
+            elif transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+                # hack: clear the sync log id so this modification always counts
+                # since consumption data could change server-side
+                transaction.sync_log_id = None
+                self.case.track_create(transaction)
+        elif deprecation_intent:
+            transaction = self.case.get_transaction_by_form_id(deprecation_intent.form.orig_id)
             transaction.sync_log_id = None
-            self.case.track_create(transaction)
-
-        # TODO: do we need to support unsetting the ledger flag on a transaction
-        # if the form previously had ledgers but now does not
+            transaction.type -= CaseTransaction.TYPE_LEDGER
+            self.case.track_update(transaction)
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
@@ -139,7 +142,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             elif key == 'name':
                 # replicate legacy behaviour
                 self.case.name = value
-            elif key not in const.CASE_TAGS:
+            elif key not in const.RESTRICTED_PROPERTIES:
                 self.case.case_json[key] = value
 
             if key == 'hq_user_id':

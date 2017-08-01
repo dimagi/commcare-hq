@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -11,7 +12,7 @@
         "description": "",
         "title": "Contact Center Outbound Call List",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": ["doc_id"],
         "filters": [

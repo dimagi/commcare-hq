@@ -2032,10 +2032,7 @@
         }
       }
     },
-    "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "asynchronous": true,
+    "engine_id": "icds-ucr"
   }
 }

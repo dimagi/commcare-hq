@@ -5,7 +5,7 @@
 
 {% block filter_content %}
 {% if show_user_filter %}
-    <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
+    <div id="{{ css_id }}" class="btn-group report-filter-button-group" data-toggle="buttons-checkbox">
 	    {% for user in toggle_users %}
         <button class="btn btn-default {% if user.show %} btn-success{% else %} active{% endif %} user-type-btn"
                 data-checkfilter="user-filter-{{ user.type }}"
@@ -25,10 +25,6 @@
 {% endif %}
 
 <script>
-    $.getScript("{% static 'reports/js/field.filter_buttons.js' %}", function() {
-        linkButtonGroup("{{ css_id }}");
-    });
-
     {% for user in toggle_users %}
     $("#btn-user-filter-{{ user.type }}").on('applied-click', function(data) {
         if(document.getElementById("user-filter-{{ user.type }}").checked ) {

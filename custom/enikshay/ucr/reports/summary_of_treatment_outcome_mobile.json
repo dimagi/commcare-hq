@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -45,6 +46,14 @@
                 "slug": "episode_type_patient",
                 "datatype": "integer",
                 "pre_value": 1
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_enrolled_in_private",
+                "type": "pre",
+                "slug": "is_enrolled_in_private"
             }
         ],
         "columns": [

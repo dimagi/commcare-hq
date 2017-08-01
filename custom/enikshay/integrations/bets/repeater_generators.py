@@ -7,14 +7,14 @@ import pytz
 from pytz import timezone
 
 from django.core.serializers.json import DjangoJSONEncoder
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import (
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
-    VOUCHER_ID,
     FULFILLED_BY_ID,
     FULFILLED_BY_LOCATION_ID,
     AMOUNT_APPROVED,
@@ -60,7 +60,7 @@ class BETSPayload(jsonobject.JsonObject):
         try:
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
-            msg = "Location with id {location_id} not found.".format(location_id)
+            msg = "Location with id {location_id} not found.".format(location_id=location_id)
             if field_name and related_case_type and related_case_id:
                 msg += " This is the {field_name} for {related_case_type} with id: {related_case_id}".format(
                     field_name=field_name,
@@ -84,11 +84,15 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
+        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        if treatment_outcome_date is None:
+            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+
         return cls(
             EventID=TREATMENT_180_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=treatment_outcome_date,
             BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
-            BeneficiaryType="patient",
+            BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
@@ -171,19 +175,22 @@ class IncentivePayload(BETSPayload):
         episode_case_properties = episode_case.dynamic_case_properties()
 
         location = cls._get_location(
-            episode_case_properties.get("created_by_user_location_id"),
-            field_name="created_by_user_location_id",
+            episode_case_properties.get("registered_by"),
+            field_name="registered_by",
             related_case_type="episode",
             related_case_id=episode_case.case_id,
         )
+        if not location.user_id:
+            raise NikshayLocationNotFound(
+                "Location {} does not have a virtual location user".format(location.location_id))
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("created_by_user_id"),
+            BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
-            Location=episode_case_properties.get("created_by_user_location_id"),
+            Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
         )
 
@@ -216,7 +223,7 @@ class VoucherPayload(BETSPayload):
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
-            VoucherID=voucher_case_properties.get(VOUCHER_ID),
+            VoucherID=voucher_case.case_id,
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
@@ -276,7 +283,7 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
             VoucherID="DUMMY-VOUCHER-ID",
-            Amount=0,
+            Amount="0",
             EventID="DUMMY-EVENT-ID",
             EventOccurDate="2017-01-01",
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
@@ -325,26 +332,31 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
-    def _get_prescription_threshold_to_send(episode_case_properties):
+    def _get_prescription_threshold_to_send(episode_case):
         from custom.enikshay.integrations.bets.repeaters import BETSDrugRefillRepeater
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                episode_case_properties, n
+                episode_case.dynamic_case_properties(), n
             )
         ]
-        assert len(thresholds_to_send) == 1, \
-            "Repeater should not have allowed to forward if there were more or less than one threshold to trigger"
 
-        return thresholds_to_send[0]
+        _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+        message = ("Repeater should not have allowed to forward if there were more or less than"
+                   "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
+        _assert(len(thresholds_to_send) == 1, message)
+
+        try:
+            return thresholds_to_send[0]
+        except IndexError:
+            return 0
 
     def get_payload(self, repeat_record, episode_case):
-        episode_case_properties = episode_case.dynamic_case_properties()
-        n = self._get_prescription_threshold_to_send(episode_case_properties)
+        n = self._get_prescription_threshold_to_send(episode_case)
         return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):
-        n = self._get_prescription_threshold_to_send(episode_case.dynamic_case_properties())
+        n = self._get_prescription_threshold_to_send(episode_case)
         return "event_{}_{}".format(self.event_id, n)
 
     def handle_success(self, response, case, repeat_record):

@@ -1,27 +1,28 @@
+from collections import namedtuple
 import copy
 import logging
 import time
-from collections import namedtuple
 from urllib import unquote
-from elasticsearch import Elasticsearch
+
 from django.conf import settings
+from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
-from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.util.datadog.gauges import datadog_histogram
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from dimagi.utils.decorators.memoized import memoized
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 
 def _es_hosts():
@@ -312,38 +313,27 @@ def scan(client, query=None, scroll='5m', **kwargs):
     return ScanResult(count, fetch_all(initial_resp))
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
-        interval="day", filters=[]):
-    q = {"query": {"match_all":{}}}
-
-    if domains is not None:
-        q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
-
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, interval="day", filters=[]):
+    from corehq.apps.es.es_query import HQESQuery
     date_field = DATE_FIELDS[histo_type]
 
-    q.update({
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": date_field,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            date_field: {
-                                "from": startdate,
-                                "to": enddate
-                            }}}]}}},
-        "size": 0
-    })
+    query = (
+        HQESQuery(index=histo_type)
+        .range_filter(date_field, gte=startdate, lte=enddate)
+    )
 
-    q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
-    q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
+    for filter_ in ADD_TO_ES_FILTER.get(histo_type, []):
+        query = query.filter(filter_)
 
-    es_meta = ES_META[histo_type]
-    ret_data = get_es_new().search(es_meta.index, es_meta.type, body=q)
-    return ret_data["facets"]["histo"]["entries"]
+    if domains is not None:
+        query = query.domain(domains)
+    if filters:
+        query = query.filter(filters)
+
+    query = query.date_histogram('histo', date_field, interval)
+
+    ret_data = query.run().aggregations.histo.as_facet_result()
+    return ret_data
 
 
 SIZE_LIMIT = 1000000

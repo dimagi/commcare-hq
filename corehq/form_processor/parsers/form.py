@@ -4,6 +4,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
@@ -176,13 +177,29 @@ def _handle_duplicate(new_doc):
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
-        # if the form contents are not the same:
-        #  - "Deprecate" the old form by making a new document with the same contents
-        #    but a different ID and a doc_type of XFormDeprecated
-        #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
-
-        return FormProcessingResult(new_doc, existing_doc)
+        if new_doc.xmlns != existing_doc.xmlns:
+            # if the XMLNS has changed this probably isn't a form edit
+            # it could be a UUID clash (yes we've had that before)
+            # Assign a new ID to the form and process as normal + notify_admins
+            xform = interface.assign_new_id(new_doc)
+            soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)(
+                False, "Potential UUID clash", {
+                    'incoming_form_id': conflict_id,
+                    'existing_form_id': existing_doc.form_id,
+                    'new_form_id': xform.form_id,
+                    'incoming_xmlns': new_doc.xmlns,
+                    'existing_xmlns': existing_doc.xmlns,
+                    'domain': new_doc.domain,
+                }
+            )
+            return FormProcessingResult(xform)
+        else:
+            # if the form contents are not the same:
+            #  - "Deprecate" the old form by making a new document with the same contents
+            #    but a different ID and a doc_type of XFormDeprecated
+            #  - Save the new instance to the previous document to preserve the ID
+            existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+            return FormProcessingResult(new_doc, existing_doc)
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate

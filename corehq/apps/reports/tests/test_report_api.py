@@ -66,11 +66,13 @@ class ReportAPITest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportAPITest, cls).setUpClass()
         load_data()
 
     @classmethod
     def tearDownClass(cls):
         Session.remove()
+        super(ReportAPITest, cls).tearDownClass()
 
     def test_basic(self):
         ds = UserDataSource({}, keys=[["user1"], ["user2"]], group_by=['user'])

@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import uuid
+from nose.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -14,7 +15,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -27,6 +28,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
     ENROLLED_IN_PRIVATE,
+    OTHER_NUMBER,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -217,6 +219,50 @@ def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=No
     )
 
 
+@nottest
+def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = dict(
+        date_reported=datetime(2016, 8, 6).date(),
+    )
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "test",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
+def get_trail_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_TRAIL,
+            "create": True,
+            "update": extra_update,
+        },
+        # Prior to 2017-08-01, the parent is a person or referral case
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='parent',
+            relationship=CASE_INDEX_CHILD,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -240,6 +286,7 @@ class ENikshayCaseStructureMixin(object):
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
+        self.other_number = "0123456666"
         self._episode = None
         self._person = None
 
@@ -275,6 +322,7 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
+                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }
@@ -368,6 +416,12 @@ class ENikshayCaseStructureMixin(object):
             get_referral_case_structure(case_id, self.person_id)
         ])
 
+    @nottest
+    def create_test_case(self, occurrence_id, extra_update=None):
+        return self.factory.create_or_update_case(
+            get_test_case_structure(uuid.uuid4().hex, occurrence_id, extra_update)
+        )[0]
+
 
 class ENikshayLocationStructureMixin(object):
     def setUp(self):
@@ -376,12 +430,17 @@ class ENikshayLocationStructureMixin(object):
         self.project.save()
         _, locations = setup_enikshay_locations(self.domain)
         self.locations = locations
+
+        self.ctd = locations['CTD']
+
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
             'is_test': 'no',
         }
         self.sto.save()
+
+        self.cto = locations['CTO']
 
         self.dto = locations['DTO']
         self.dto.metadata = {
@@ -418,6 +477,7 @@ class ENikshayLocationStructureMixin(object):
         self.pcp.metadata = {
             'nikshay_code': '1234567',
             'is_test': 'no',
+            'nikshay_tu_id': '1',
         }
         self.pcp.save()
 

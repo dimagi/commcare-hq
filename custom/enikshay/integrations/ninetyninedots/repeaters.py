@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
 
-from corehq.apps.repeaters.models import CaseRepeater
-from corehq.apps.repeaters.signals import create_repeat_records
+from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import \
     RegisterPatientPayloadGenerator, UpdatePatientPayloadGenerator, AdherencePayloadGenerator, \
@@ -154,7 +154,11 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
         if not allowed_case_types_and_users:
             return False
 
-        episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+        try:
+            episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+        except ENikshayCaseNotFound:
+            return False
+
         episode_case_properties = episode_case.dynamic_case_properties()
         adherence_case_properties = adherence_case.dynamic_case_properties()
 

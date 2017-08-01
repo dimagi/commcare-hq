@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import CaseSearchES, flatten_result, RELEVANCE_SCORE
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
@@ -142,14 +142,17 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
         self.checkQuery(query, json_output)
 
     def test_flatten_result(self):
-        expected = {'name': 'blah', 'foo': 'bar', 'baz': 'buzz'}
+        expected = {'name': 'blah', 'foo': 'bar', 'baz': 'buzz', RELEVANCE_SCORE: "1.095"}
         self.assertEqual(
             flatten_result(
                 {
-                    'name': 'blah',
-                    'case_properties': [
-                        {'key': 'foo', 'value': 'bar'},
-                        {'key': 'baz', 'value': 'buzz'}]
+                    "_score": "1.095",
+                    "_source": {
+                        'name': 'blah',
+                        'case_properties': [
+                            {'key': 'foo', 'value': 'bar'},
+                            {'key': 'baz', 'value': 'buzz'}]
+                    }
                 }
             ),
             expected

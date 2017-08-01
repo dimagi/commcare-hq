@@ -87,6 +87,14 @@ class Metadata(DocumentSchema):
     appVersion = StringProperty()
     location = GeoPointProperty()
 
+    @property
+    def commcare_version(self):
+        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
+        from distutils.version import LooseVersion
+        version_text = get_commcare_version_from_appversion_text(self.appVersion)
+        if version_text:
+            return LooseVersion(version_text)
+
 
 class XFormOperation(DocumentSchema):
     """
@@ -230,15 +238,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                     time.sleep(SLEEP)
                 else:
                     raise
-
-    def xpath(self, path):
-        """
-        Evaluates an xpath expression like: path/to/node and returns the value
-        of that element, or None if there is no value.
-        """
-        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
-        _soft_assert(False, "Reference to xpath instead of get_data")
-        return safe_index(self, path.split("/"))
 
     def get_data(self, path):
         """
@@ -470,6 +469,13 @@ class UnfinishedSubmissionStub(models.Model):
     timestamp = models.DateTimeField()
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+
+    def __repr__(self):
+        return "UnfinishedSubmissionStub( \
+            xform_id={s.xform_id}, \
+            timestamp={s.timestamp}, \
+            saved={s.saved}, \
+            domain={s.domain})".format(s=self)
 
     class Meta:
         app_label = 'couchforms'

@@ -9,7 +9,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
-    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
+    <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -31,7 +31,7 @@
         var saveURL = "{% url "edit_sms_languages" domain %}";
         var edit = true;
         var validate = true;
-        var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
+        var SupportedLanguages = hqImport('app_manager/js/supported_languages.js').SupportedLanguages;
         var sl = new SupportedLanguages({
             langs: langs,
             saveURL: saveURL,

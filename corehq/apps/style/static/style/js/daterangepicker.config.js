@@ -1,4 +1,4 @@
-$(function () {
+(function () {
     'use strict';
 
     var getLocalDate = function (date) {
@@ -62,4 +62,4 @@ $(function () {
             this.getDateRangeSeparator()
         );
     };
-});
+})();

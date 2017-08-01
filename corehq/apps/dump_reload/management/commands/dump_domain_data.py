@@ -14,14 +14,18 @@ from corehq.apps.dump_reload.sql import SqlDataDumper
 
 class Command(BaseCommand):
     help = "Dump a domain's data to disk."
-    args = '<domain>'
 
     def add_arguments(self, parser):
-        parser.add_argument('-e', '--exclude', dest='exclude', action='append', default=[],
+        parser.add_argument('domain_name')
+        parser.add_argument(
+            '-e', '--exclude', dest='exclude', action='append', default=[],
             help='An app_label or app_label.ModelName to exclude '
-                 '(use multiple --exclude to exclude multiple apps/models).')
-        parser.add_argument('--console', action='store_true', default=False, dest='console',
-                            help='Write output to the console instead of to file.')
+                 '(use multiple --exclude to exclude multiple apps/models).'
+        )
+        parser.add_argument(
+            '--console', action='store_true', default=False, dest='console',
+            help='Write output to the console instead of to file.'
+        )
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
@@ -50,7 +54,7 @@ class Command(BaseCommand):
                     stream.close()
 
             if not console:
-                with zipfile.ZipFile(zipname, 'a') as z:
+                with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
                     z.write(filename, '{}.gz'.format(dumper.slug))
 
                 os.remove(filename)

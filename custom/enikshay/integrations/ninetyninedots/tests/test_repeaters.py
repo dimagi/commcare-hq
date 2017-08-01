@@ -4,8 +4,8 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.mock import CaseStructure
-from corehq.apps.repeaters.models import RepeatRecord
-from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
@@ -18,6 +18,7 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
 from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
+    OTHER_NUMBER,
     MERM_ID,
     ENIKSHAY_ID,
     PERSON_FIRST_NAME,
@@ -162,6 +163,25 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # update a pertinent case with something that shouldn't trigger,
+        # and a non-pertinent case with a property that is in the list of triggers
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    "update": {'name': 'Elrond', },
+                }
+            ),
+            CaseStructure(
+                case_id=self.occurrence_id,
+                attrs={
+                    "update": {PRIMARY_PHONE_NUMBER: '999999999', },
+                }
+            ),
+
+        ])
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
         self.assertEqual(2, len(self.repeat_records().all()))
 
@@ -289,9 +309,10 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
                 u"he_code": person_locations.pcp,
             })
 
-        expected_numbers = u"+91{}, +91{}".format(
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
         ) if expected_numbers is False else expected_numbers
         expected_payload = {
             u"beneficiary_id": self.person_id,
@@ -299,9 +320,6 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
             u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
             u"phone_numbers": expected_numbers,
-            u"merm_params": {
-                u"IMEI": episode_case_properties.get(MERM_ID, None),
-            },
             u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
             u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
@@ -312,6 +330,12 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"address": person_case_properties.get(CURRENT_ADDRESS),
             u"sector": sector,
         }
+        if episode_case_properties.get(MERM_ID, None) is not None:
+            expected_payload.update({
+                u"merm_params": {
+                    u"IMEI": episode_case_properties.get(MERM_ID, None),
+                }
+            })
         expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
@@ -324,6 +348,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         return RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
     def test_get_payload(self):
+        del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases)
@@ -331,12 +356,14 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
         self.secondary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, None)
 
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
@@ -390,9 +417,10 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        expected_numbers = u"+91{}, +91{}".format(
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
         )
         self._assert_payload_equal(cases, expected_numbers)
 

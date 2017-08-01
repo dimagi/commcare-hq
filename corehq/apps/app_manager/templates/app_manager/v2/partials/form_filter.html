@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-{% if app.advanced_app_builder or form.form_filter %}
+
+{% if add_ons.display_conditions %}
 
 <div class="form-group">
     <label class="control-label col-sm-2">
@@ -12,7 +13,7 @@
     </label>
     <div id="form-filter" class="col-sm-4 row">
         <div data-bind="css: {'has-error': !allowed()}">
-            <textarea name="form_filter" class="form-control vertical-resize" data-bind="
+            <textarea name="form_filter" class="form-control" data-bind="
                     xpathValidator: {text: formFilter, allowCaseHashtags: true,
                                      errorHtml: $('#formFilterXpathErrorHtml').html()}
             "></textarea>

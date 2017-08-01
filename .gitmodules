@@ -1,18 +1,9 @@
 [submodule "submodules/couchforms-src"]
 	path = submodules/couchforms-src
 	url = git://github.com/dimagi/couchforms.git
-[submodule "submodules/dimagi-utils-src"]
-	path = submodules/dimagi-utils-src
-	url = git://github.com/dimagi/dimagi-utils.git
-[submodule "submodules/auditcare-src"]
-	path = submodules/auditcare-src
-	url = git://github.com/dimagi/auditcare.git
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
 	url = git://github.com/dimagi/commcare-translations.git
-[submodule "submodules/formtranslate-src"]
-	path = submodules/formtranslate-src
-	url = git://github.com/dimagi/formtranslate.git
 [submodule "submodules/langcodes"]
 	path = submodules/langcodes
 	url = git://github.com/dimagi/langcodes.git

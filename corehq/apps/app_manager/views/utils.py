@@ -7,9 +7,10 @@ from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
-
+from corehq.apps.app_manager.exceptions import AppEditingError
+from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -36,7 +37,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
-    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
+    form_view = 'view_form' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'form_source'
 
     if app_id is not None:
         args.append(app_id)
@@ -125,3 +126,79 @@ def get_blank_form_xml(form_name):
         'xmlns': str(uuid.uuid4()).upper(),
         'name': form_name,
     })
+
+
+def overwrite_app(app, master_build, report_map=None):
+    excluded_fields = set(Application._meta_fields).union(
+        ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
+    )
+    master_json = master_build.to_json()
+    for key, value in master_json.iteritems():
+        if key not in excluded_fields:
+            app[key] = value
+    app['version'] = master_json['version']
+    wrapped_app = wrap_app(app)
+    for module in wrapped_app.modules:
+        if isinstance(module, ReportModule):
+            if report_map is not None:
+                for config in module.report_configs:
+                    try:
+                        config.report_id = report_map[config.report_id]
+                    except KeyError:
+                        raise AppEditingError('Dynamic UCR used in linked app')
+            else:
+                raise AppEditingError('Report map not passed to overwrite_app')
+    wrapped_app.copy_attachments(master_build)
+    enable_usercase_if_necessary(wrapped_app)
+    wrapped_app.save(increment_version=False)
+
+
+def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
+
+    def is_set(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                return True
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                return True
+
+    def _practice_mode_configured(app):
+        if is_set(app):
+            return True
+        return any(is_set(profile) for _, profile in app.build_profiles.items())
+
+    return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
+
+
+def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
+    """
+    Unset practice user for apps that have a practice user configured directly or
+    on a build profile of apps in the domain. If a mobile_worker_id is specified,
+    only apps configured with that user will be unset
+
+    returns:
+        list of apps on which the practice user was unset
+
+    kwargs:
+        mobile_worker_id: id of mobile worker. If this is specified, only those apps
+        configured with this mobile worker will be unset. If not, apps that are configured
+        with any mobile worker are unset
+    """
+
+    def unset_user(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+
+    apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
+    for app in apps:
+        unset_user(app)
+        for _, profile in app.build_profiles.iteritems():
+            unset_user(profile)
+        app.save()
+
+    return apps

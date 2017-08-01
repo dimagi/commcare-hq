@@ -32,6 +32,17 @@ $(function() {
         $(this).parents('.alert').hide(150);
     });
 
+    // Initialize common widgets
+    $(function() {
+        _.each($(".ko-select2"), function(element) {
+            $(element).select2();
+        });
+    });
+
+    if ($.timeago) {
+        $.timeago.settings.allowFuture = true;
+        $(".timeago").timeago();
+    }
 });
 
 window.onerror = function(message, file, line, col, error) {

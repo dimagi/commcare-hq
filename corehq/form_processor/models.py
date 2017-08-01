@@ -305,8 +305,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
-        return None
-
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
@@ -495,7 +493,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
         ]
 
 
-class XFormOperationSQL(PartitionedModel, models.Model):
+class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     ARCHIVE = 'archive'
@@ -550,6 +548,14 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
+
+    @property
+    def commcare_version(self):
+        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
+        from distutils.version import LooseVersion
+        version_text = get_commcare_version_from_appversion_text(self.appVersion)
+        if version_text:
+            return LooseVersion(version_text)
 
 
 class SupplyPointCaseMixin(object):
@@ -865,6 +871,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         )
         return result[0] if result else None
 
+    @property
+    def host(self):
+        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
+        return result[0] if result else None
+
     def __unicode__(self):
         return (
             "CommCareCase("
@@ -1053,6 +1064,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPE_CASE_CLOSE = 256
     TYPE_CASE_INDEX = 512
     TYPE_CASE_ATTACHMENT = 1024
+    TYPE_REBUILD_FORM_REPROCESS = 2048
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -1060,6 +1072,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_REBUILD_FORM_REPROCESS, 'form_reprocessed_rebuild'),
         (TYPE_LEDGER, 'ledger'),
         (TYPE_CASE_CREATE, 'case_create'),
         (TYPE_CASE_CLOSE, 'case_close'),
@@ -1148,7 +1161,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             (self.TYPE_REBUILD_FORM_EDIT & self.type) or
             (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
             (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
-            (self.TYPE_REBUILD_WITH_REASON & self.type)
+            (self.TYPE_REBUILD_WITH_REASON & self.type) or
+            (self.TYPE_REBUILD_FORM_REPROCESS & self.type)
         )
 
     @property
@@ -1299,7 +1313,12 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
+class FormReprocessRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    form_id = StringProperty()
+
+
+class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
@@ -1314,7 +1333,7 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
     balance = models.IntegerField(default=0)
-    last_modified = models.DateTimeField(auto_now=True, db_index=True)
+    last_modified = models.DateTimeField(db_index=True)
     last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
@@ -1363,6 +1382,13 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
         from .serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
+
+    def __repr__(self):
+        return "LedgerValue(" \
+               "case_id={s.case_id}, " \
+               "section_id={s.section_id}, " \
+               "entry_id={s.entry_id}," \
+               "balance={s.balance}".format(s=self)
 
     class Meta:
         app_label = "form_processor"

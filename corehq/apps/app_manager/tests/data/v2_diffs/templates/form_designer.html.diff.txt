@@ -22,13 +22,20 @@
  {% block js %}{{ block.super }}
      <script src="{% static 'moment/moment.js' %}"></script>
      <script src="{% static 'requirejs/require.js' %}"></script>
-     <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
+     <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
      <script src="{% static 'js/ws4redis.js' %}"></script>
-+    <script src="{% static 'app_manager/js/edit_form_details.js' %}"></script>
-     <script src="{% static 'app_manager/js/form_designer.js' %}"></script>
++    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+     <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
  {% endblock %}
  
-@@ -32,12 +42,114 @@
+@@ -26,18 +36,114 @@
+     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+ {% endblock %}
+ 
+-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
++{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
+ 
+ {% block form-view %}
      {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
      {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
      {% initial_page_data 'guided_tour' request.guided_tour %}
@@ -44,12 +51,6 @@
 -    <div id="formdesigner" class="clearfix"></div>
 +    {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
 +    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
-+
-+    {% if can_preview_form %}
-+    <script type="text/html" id="js-fd-app-preview-btn-template">
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+    </script>
-+    {% endif %}
 +
 +    <script type="text/html" id="js-fd-manage-case">
 +      <div class="btn-group pull-right">
@@ -136,7 +137,7 @@
 +                  </div>
 +                  <div class="modal-footer">
 +                      <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-+                      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
++                      <button type="submit disable-on-submit" class="btn btn-primary">{% trans "Save" %}</button>
 +                  </div>
 +              </form>
 +          </div>

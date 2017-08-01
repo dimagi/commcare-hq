@@ -1,11 +1,11 @@
-/* globals alert_user */
 /*
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
     function snooze(slug) {
-        $.cookie(cookieName(slug), true, { expires: 7, path: '/' });
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         window.analytics.usage("Soft Rollout", "snooze", slug);
+        window.analytics.workflow("Soft Rollout snooze " + slug);
     }
 
     function cookieName(slug) {
@@ -13,7 +13,8 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
     }
 
     $(function() {
-        var $modal = $("#rollout-modal"),
+        var alert_user = hqImport("style/js/alert_user.js").alert_user,
+            $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
         if ($modal.length && (!$.cookie(cookieName(slug)) || $modal.data("force"))) {
@@ -42,6 +43,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 },
             });
             window.analytics.usage("Soft Rollout", "enable", slug);
+            window.analytics.workflow("Soft Rollout enable " + slug);
         });
 
         // User clicks to snooze
@@ -71,6 +73,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 },
             });
             window.analytics.usage("Soft Rollout", "disable", slug);
+            window.analytics.workflow("Soft Rollout disable " + slug);
         });
     });
 });
