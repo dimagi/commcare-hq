@@ -578,7 +578,7 @@ def _save_sql_case(doc):
 
 class RebuildTableTest(TestCase):
 
-    def teardown(self):
+    def tearDown(self):
         # we need to get the config multiple times in the test for it to properly
         # recalculate the schema, so we can't have a class wide config variable
         config = get_sample_data_source()
