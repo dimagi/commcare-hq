@@ -143,6 +143,7 @@ class RestrictedManager(RequireDBManager):
 
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
 
     # states should be powers of 2
@@ -462,6 +463,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
@@ -494,6 +496,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
 
 
 class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
 
     ARCHIVE = 'archive'
@@ -581,6 +584,7 @@ class SupplyPointCaseMixin(object):
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -896,6 +900,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
 
 class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
@@ -971,6 +976,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
 
 
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
@@ -1050,6 +1056,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -1314,6 +1321,7 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
@@ -1389,6 +1397,7 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
 
 
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     TYPE_BALANCE = 1

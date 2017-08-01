@@ -231,12 +231,14 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):
+    partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_alertscheduleinstance'
 
 
 class TimedScheduleInstance(AbstractTimedScheduleInstance):
+    partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_timedscheduleinstance'
@@ -268,6 +270,7 @@ class CaseScheduleInstanceMixin(object):
 
 class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
+    partition_attr = 'case_id'
     case_id = models.CharField(max_length=255)
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance
@@ -288,6 +291,7 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
 
 class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
+    partition_attr = 'case_id'
     case_id = models.CharField(max_length=255)
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance

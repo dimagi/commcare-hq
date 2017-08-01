@@ -57,17 +57,35 @@ class PartitionedModel(models.Model):
 
     objects = RequireDBManager()
 
+    @property
+    def partition_attr(self):
+        raise NotImplementedError
+
+    @property
+    def partition_value(self):
+        return getattr(self, self.partition_attr)
+
+    @property
+    def db_for_read_write(self):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        assert self.partition_value, 'Partitioned model must have a partition value'
+        return get_db_alias_for_partitioned_doc(self.partition_value)
+
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
-        if not kwargs.get('using'):
-            raise_access_restricted()
+        if kwargs.get('using'):
+            assert kwargs['using'] == self.db_for_read_write
+        else:
+            kwargs['using'] = self.db_for_read_write
 
         return super(PartitionedModel, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if not kwargs.get('using'):
-            raise_access_restricted()
+        if kwargs.get('using'):
+            assert kwargs['using'] == self.db_for_read_write
+        else:
+            kwargs['using'] = self.db_for_read_write
 
         return super(PartitionedModel, self).delete(*args, **kwargs)
