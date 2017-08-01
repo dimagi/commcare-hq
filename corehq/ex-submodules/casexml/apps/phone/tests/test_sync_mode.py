@@ -2011,11 +2011,11 @@ class MultiUserSyncTest(SyncBaseTest):
 
         sync2 = alice.sync()
         self.assertEqual(set(sync2.log.case_ids_on_phone), alice_cases)
-        self.assertEqual(sync2.case_ids, {e1.case_id, e3.case_id})
+        self.assertEqual(set(sync2.cases), {e1.case_id, e3.case_id})
 
         sync3 = alice.sync()
         self.assertEqual(set(sync3.log.case_ids_on_phone), alice_cases)
-        self.assertEqual(sync3.case_ids, set())
+        self.assertEqual(set(sync3.cases), set())
 
 
 @use_sql_backend
@@ -2348,7 +2348,7 @@ class IndexSyncTest(SyncBaseTest):
             )],
         ))
         sync = self.device.sync(restore_id='')
-        self.assertEqual(sync.case_ids, {child_id, parent_id, other_parent_id})
+        self.assertEqual(set(sync.cases), {child_id, parent_id, other_parent_id})
         self.assertIn(branch_index, sync.cases[child_id].index)
         self.assertIn(wave_index, sync.cases[child_id].index)
 

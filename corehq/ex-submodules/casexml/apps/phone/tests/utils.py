@@ -236,8 +236,3 @@ class SyncResult(object):
     def cases(self):
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
-
-    @property
-    @memoized
-    def case_ids(self):
-        return set(self.cases)
