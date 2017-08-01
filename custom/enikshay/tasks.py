@@ -101,14 +101,14 @@ class EpisodeUpdater(object):
                         errors.append(
                             [episode.case_id, updater.__class__, e]
                         )
-                    if update_json:
-                        updates.append((episode.case_id, update_json, False))
-                        update_count += 1
-                    else:
-                        noupdate_count += 1
-                    if len(updates) >= batch_size:
-                        bulk_update_cases(self.domain, updates)
-                        updates = []
+                if update_json:
+                    updates.append((episode.case_id, update_json, False))
+                    update_count += 1
+                else:
+                    noupdate_count += 1
+                if len(updates) >= batch_size:
+                    bulk_update_cases(self.domain, updates)
+                    updates = []
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
 
