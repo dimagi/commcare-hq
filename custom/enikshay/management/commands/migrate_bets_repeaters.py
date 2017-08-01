@@ -35,10 +35,10 @@ class Command(BaseCommand):
             bets_repeaters.BETSSuccessfulTreatmentRepeater.get('d0113e7507323484229dd4de23bbba1b'),
             bets_repeaters.BETSDiagnosisAndNotificationRepeater.get('d0113e7507323484229dd4de23dca872'),
             bets_repeaters.BETSAYUSHReferralRepeater.get('2e2daa2c8e8c894d88e563d8fc6920a9'),
-            bets_repeaters.BETSBeneficiaryRepeater.get('ba001296f76894d629a63588ae041e21'),
+            # bets_repeaters.BETSBeneficiaryRepeater.get('ba001296f76894d629a63588ae041e21'),
             # not case repeaters
-            bets_repeaters.BETSLocationRepeater.get('ce5c88afa4dd86a53d7966dd350ca4c9'),
-            bets_repeaters.BETSUserRepeater.get('ba001296f76894d629a63588ae245336'),
+            # bets_repeaters.BETSLocationRepeater.get('ce5c88afa4dd86a53d7966dd350ca4c9'),
+            # bets_repeaters.BETSUserRepeater.get('ba001296f76894d629a63588ae245336'),
         ]
 
     def migrate_repeater(self, old_repeater):
