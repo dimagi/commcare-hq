@@ -52,13 +52,13 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 def split_list_by_db_partition(partition_values):
     """
     :param partition_values: Iterable of partition values (e.g. case IDs)
-    :return: dict(db_alias -> [partition_values])
+    :return: list of tuples (db_name, list(partition_values))
     """
     mapping = defaultdict(list)
     for value in partition_values:
         db_name = get_db_alias_for_partitioned_doc(value)
         mapping[db_name].append(value)
-    return mapping
+    return list(mapping.items())
 
 
 def get_db_alias_for_partitioned_doc(partition_value):

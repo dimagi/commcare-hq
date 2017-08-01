@@ -388,9 +388,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         if delete_attachments:
             attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
 
-        db_form_ids = split_list_by_db_partition(form_ids)
         deleted_count = 0
-        for db_name, form_ids in db_form_ids.items():
+        for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the attachments and operations
             _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
                 domain=domain, form_id__in=form_ids
@@ -1140,7 +1139,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         try:
             if stock_result and stock_result.cases_with_deprecated_transactions:
                 db_cases = split_list_by_db_partition(stock_result.cases_with_deprecated_transactions)
-                for db_name, case_ids in db_cases.items():
+                for db_name, case_ids in db_cases:
                     LedgerTransaction.objects.using(db_name).filter(
                         case_id__in=case_ids,
                         form_id=stock_result.xform.form_id
