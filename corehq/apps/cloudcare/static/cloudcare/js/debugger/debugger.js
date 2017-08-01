@@ -389,26 +389,28 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         },
     };
 
-    ko.bindingHandlers.codeMirror = {
-        /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
-        init: function(element, valueAccessor) {
-            var options = {
-                mode: 'xml',
-                viewportMargin: Infinity,
-                readOnly: true,
-            };
-            options.value = ko.unwrap(valueAccessor());
-            var editor = CodeMirror.fromTextArea(element, options);
-            editor.setSize(null, 200);  // hard-coded right now;
-            element.editor = editor;
-        },
-        update: function(element, valueAccessor) {
-            var observedValue = ko.unwrap(valueAccessor());
-            if (element.editor) {
-                element.editor.setValue(observedValue);
-            }
-        },
-    };
+    _.delay(function  () {
+        ko.bindingHandlers.codeMirror = {
+            /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
+            init: function(element, valueAccessor) {
+                var options = {
+                    mode: 'xml',
+                    viewportMargin: Infinity,
+                    readOnly: true,
+                };
+                options.value = ko.unwrap(valueAccessor());
+                var editor = CodeMirror.fromTextArea(element, options);
+                editor.setSize(null, 200);  // hard-coded right now;
+                element.editor = editor;
+            },
+            update: function(element, valueAccessor) {
+                var observedValue = ko.unwrap(valueAccessor());
+                if (element.editor) {
+                    element.editor.setValue(observedValue);
+                }
+            },
+        };
+    });
 
     return {
         CloudCareDebuggerFormEntry: CloudCareDebuggerFormEntry,
