@@ -277,6 +277,30 @@ ALL_DRUGS = {
     "dlm": "23",
 }
 
+# A map of drug names used in the mumbai sheet to drug ids
+DRUG_NAME_TO_ID_MAPPING = {
+    "Levo": "lfx",
+    "Ethio": "eto",
+    "Cyclo": None,  # TODO: (Waiting)
+    "Etham": "e",
+    "PZA": "z",
+    "Kana": "km",
+    "Capr": "cm",
+    "Moxi": "mfx_05",
+    "High dose Moxi": "mfx_20",
+    "Clofa": "cfz",
+    "Line": "lzd",
+    "INH": "h_katg",
+    "High dose INH": "h_inha",
+    "Na-Pas": "pas",
+    "Oflox": None,  # TODO: (Waiting)
+    "Streptomycin": None,  # TODO: (Waiting)
+    "Clarithromycin": None,  # TODO: (Waiting)
+    "Rif": "r",
+    "Amoxyclav": None,  # TODO: (Waiting)
+    "Amikacin": None,  # TODO: (Waiting)
+}
+
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
 
@@ -779,10 +803,37 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
         return {}
-    else:
-        raise NotImplementedError(
-            "No example data was in the original data dump, so didn't know how to handle it.")
-
+    valid_drugs = {
+        "Levo",
+        "Ethio",
+        "Cyclo",
+        "Etham",
+        "PZA",
+        "Kana",
+        "Capr",
+        "Moxi",
+        "High dose Moxi",
+        "Clofa",
+        "Line",
+        "INH",
+        "High dose INH",
+        "Na - Pas",
+        "Oflox",
+        "Streptomycin",
+        "Clarithromycin",
+        "Rif",
+        "Amoxyclav",
+        "Amikacin",
+    }
+    drugs = result.split(",")
+    for drug in drugs:
+        drug = drug.strip()
+        if drug not in valid_drugs:
+            raise Exception("Invalid SLPA result: {}".format(result))
+    properties = {
+        "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
+    }
+    return properties
 
 
 def get_cbnaat_resistance(column_mapping, row):
@@ -1191,10 +1242,22 @@ def get_drug_resistances_from_lpa(column_mapping, row):
 
 
 def get_drug_resistances_from_sl_lpa(column_mapping, row):
-    result = column_mapping.get_value("sl_lpa_result", row)
-    if result is None:
-        return []
-    raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+    case_props = []
+    drug_list_string = get_sl_lpa_test_resistance_properties(column_mapping, row).get("drug_resistant_list", "")
+    drugs = drug_list_string.split(" ")
+    for drug in [x for x in drugs if x != ""]:
+        case_props.append({
+            "name": drug,
+            "owner_id": "-",
+            "drug_id": drug,
+            "sort_order": ALL_DRUGS[drug],
+            "specimen_date": clean_date(column_mapping.get_value("sl_lpa_sample_date", row)),
+            "result_date": column_mapping.get_value("sl_lpa_result_date", row),
+            "test_type": "sl_line_probe_assay",
+            "test_type_label": "SL LPA",
+            "sensitivity": "resistant",
+        })
+    return case_props
 
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
