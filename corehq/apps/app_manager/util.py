@@ -134,9 +134,11 @@ def save_xform(app, form, xml):
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
         tag_xmlns = xform.data_node.tag_xmlns
+        form_xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
-            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-            xml = change_xmlns(xform, GENERIC_XMLNS, xmlns)
+            xml = change_xmlns(xform, GENERIC_XMLNS, form_xmlns)
+        elif tag_xmlns != form_xmlns:
+            xml = change_xmlns(xform, tag_xmlns, form_xmlns)
 
     form.source = xml
 

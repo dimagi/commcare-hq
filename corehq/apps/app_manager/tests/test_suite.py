@@ -219,6 +219,27 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
         self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
 
+    def test_copy_form_changes_xform_xmlns(self):
+        PREFIX = 'http://openrosa.org/formdesigner/'
+        source = self.get_xml('original_form', override_path=('data',))
+        old_xmlns = PREFIX + 'A22A5D53-037A-48DE-979B-BAA54734194E'
+        assert old_xmlns in source, source
+
+        app = Application.new_app('domain', "Application")
+        module = app.add_module(Module.new_module('module', None))
+        old_form = app.new_form(module.id, "Original Form", None)
+        old_form.unique_id = 'A22A5D53-037A-48DE-979B-BAA54734194E'
+        old_form.source = source
+
+        new_form = app._copy_form(module, old_form, module)
+
+        new_xmlns = PREFIX + new_form.unique_id
+        self.assertNotEqual(new_form, old_form)
+        self.assertNotEqual(new_form.unique_id, old_form.unique_id)
+        self.assertIn(new_xmlns, new_form.source)
+        self.assertNotIn(old_xmlns, new_form.source)
+        self.assertNotIn(new_xmlns, old_form.source)
+
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
