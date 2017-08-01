@@ -1977,8 +1977,8 @@ class MultiUserSyncTest(SyncBaseTest):
         p2, o2, e2 = create_case_graph(2)
 
         # Alice and Bob sync
-        alice = self.get_device()
-        bob = self.get_device(user=self.other_user)
+        alice = self.get_device(sync=True)
+        bob = self.get_device(user=self.other_user, sync=True)
         all_cases = {case.case_id for case in [p1, o1, e1, p2, o2, e2]}
         self.assertEqual(set(alice.last_sync.log.case_ids_on_phone), all_cases)
         self.assertEqual(set(bob.last_sync.log.case_ids_on_phone), all_cases)

@@ -157,7 +157,8 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
 
 class MockDevice(object):
 
-    def __init__(self, project, user, restore_options, default_case_type="case"):
+    def __init__(self, project, user, restore_options,
+            sync=False, default_case_type="case"):
         self.project = project
         self.user = user
         self.user_id = user.user_id
@@ -171,7 +172,8 @@ class MockDevice(object):
             },
         )
         self.last_sync = None
-        self.sync(overwrite_cache=True)
+        if sync:
+            self.sync()
 
     def change_cases(self, cases=None, **case_kwargs):
         """Enqueue case changes to be synced
