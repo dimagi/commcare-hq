@@ -214,11 +214,16 @@ class SubmissionPost(object):
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _get_openrosa_response(self, instance, errors, known_submission_error):
-        if instance.is_normal and not errors:
-            response = self.get_success_response()
+        if not errors:
+            if instance.is_normal:
+                response = self.get_success_response()
+            elif instance.is_duplicate:
+                response = self.get_failure_response(instance.problem)
         elif not self.is_openrosa_version3():
+            # return 201 with error message for older openrosa
             response = self.get_failure_response(instance.problem)
         elif known_submission_error:
+            # return 422 asking mobile to retry for newer openrosa
             response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
         else:
             response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
