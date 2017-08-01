@@ -219,7 +219,6 @@ MUMBAI_MAP = {
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
     # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
     "dst_result_date": 83,
-    "bdq_eligible": 88,  # TODO: (WAITING) not sure how this maps
     "treatment_initiation_date": 89,
     "drtb_type": 92,
     "mumbai_treatment_status": 93,
@@ -1402,7 +1401,6 @@ def clean_result(value):
         "negative": NOT_DETECTED,
         "pos": DETECTED,
         "Positive": DETECTED,
-        "QNS": NO_RESULT,  # TODO: (WAITING) what should this really be?
     }[value]
 
 
