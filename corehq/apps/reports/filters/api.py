@@ -9,6 +9,7 @@ from braces.views import JSONResponseMixin
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
@@ -85,7 +86,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
-        size = int(self.request.GET.get('page_limit', 10))
+        size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
         start = size * (page - 1)
         count, options = paginate_options(self.data_sources, self.q, start, size)
         return count, [{'id': id_, 'text': text} for id_, text in options]
@@ -204,7 +205,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
             return self.render_json_response({
                 'items': options,
                 'total': count,
-                'limit': request.POST.get('page_limit', 10),
+                'limit': request.POST.get('page_limit', DEFAULT_PAGE_LIMIT),
                 'success': True
             })
         except ESError as e:
@@ -227,7 +228,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
 
     def get_post_options(self):
         page = int(self.request.POST.get('page', 1))
-        size = int(self.request.POST.get('page_limit', 10))
+        size = int(self.request.POST.get('page_limit', DEFAULT_PAGE_LIMIT))
         start = size * (page - 1)
         count, options = paginate_options(self.data_sources, self.q, start, size)
         return count, [{'id': id_, 'text': text} for id_, text in options]
@@ -324,11 +325,11 @@ class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
     def _page_limit(self):
-        page_limit = self.request.GET.get("page_limit", 10)
+        page_limit = self.request.GET.get("page_limit", DEFAULT_PAGE_LIMIT)
         try:
             return int(page_limit)
         except ValueError:
-            return 10
+            return DEFAULT_PAGE_LIMIT
 
     def _page(self):
         page = self.request.GET.get("page", 1)
