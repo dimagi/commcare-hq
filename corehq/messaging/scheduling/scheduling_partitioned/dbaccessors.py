@@ -1,5 +1,4 @@
 from corehq.sql_db.util import (
-    get_object_from_partitioned_database,
     run_query_across_partitioned_databases,
     get_db_alias_for_partitioned_doc,
 )
@@ -23,24 +22,14 @@ def get_alert_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        AlertScheduleInstance,
-        schedule_instance_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return AlertScheduleInstance.objects.partitioned_get(schedule_instance_id)
 
 
 def get_timed_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        TimedScheduleInstance,
-        schedule_instance_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return TimedScheduleInstance.objects.partitioned_get(schedule_instance_id)
 
 
 def save_alert_schedule_instance(instance):
@@ -195,12 +184,7 @@ def get_case_schedule_instance(cls, case_id, schedule_instance_id):
         raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        cls,
-        case_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return cls.objects.partitioned_get(case_id, schedule_instance_id=schedule_instance_id)
 
 
 def save_case_schedule_instance(instance):

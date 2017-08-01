@@ -44,6 +44,18 @@ class RequireDBManager(models.Manager):
         queryset = super(RequireDBManager, self).get_queryset()
         return RequireDBQuerySet(queryset)
 
+    @staticmethod
+    def get_db(partition_value):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        return get_db_alias_for_partitioned_doc(partition_value)
+
+    def partitioned_get(self, partition_value, **kwargs):
+        if not kwargs:
+            kwargs = {
+                self.model.partition_attr: partition_value
+            }
+        return self.using(self.get_db(partition_value)).get(**kwargs)
+
 
 class PartitionedModel(models.Model):
     """
@@ -66,26 +78,25 @@ class PartitionedModel(models.Model):
         return getattr(self, self.partition_attr)
 
     @property
-    def db_for_read_write(self):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+    def db(self):
         assert self.partition_value, 'Partitioned model must have a partition value'
-        return get_db_alias_for_partitioned_doc(self.partition_value)
+        return self.objects.get_db(self.partition_value)
 
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
         if kwargs.get('using'):
-            assert kwargs['using'] == self.db_for_read_write
+            assert kwargs['using'] == self.db
         else:
-            kwargs['using'] = self.db_for_read_write
+            kwargs['using'] = self.db
 
         return super(PartitionedModel, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if kwargs.get('using'):
-            assert kwargs['using'] == self.db_for_read_write
+            assert kwargs['using'] == self.db
         else:
-            kwargs['using'] = self.db_for_read_write
+            kwargs['using'] = self.db
 
         return super(PartitionedModel, self).delete(*args, **kwargs)
