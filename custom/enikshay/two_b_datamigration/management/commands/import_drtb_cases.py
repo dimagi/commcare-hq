@@ -29,6 +29,19 @@ DETECTED = "tb_detected"
 NOT_DETECTED = "tb_not_detected"
 NO_RESULT = "no_result"
 
+
+class ValidationFailure(Exception):
+    pass
+
+
+class FieldValidationFailure(ValidationFailure):
+    def __init__(self, value, column_name, *args, **kwargs):
+        self.value = value
+        self.column_name = column_name
+        msg = "Unexpected value in {} column: {}".format(value, column_name)
+        super(FieldValidationFailure, self).__init__(msg, *args, **kwargs)
+
+
 # Map format is: MDR selection criteria value -> (rft_drtb_diagnosis value, rft_drtb_diagnosis_ext_dst value)
 # TODO: (WAITING) Fill in these Nones
 SELECTION_CRITERIA_MAP = {
@@ -343,7 +356,7 @@ class ColumnMapping(object):
         for key in cls.required_fields:
             val = cls.get_value(key, row)
             if not val:
-                raise Exception("{} is required".format(key))
+                raise ValidationFailure("{} is required".format(key))
 
 
 class Mehsana2017ColumnMapping(ColumnMapping):
@@ -641,7 +654,7 @@ def get_reason_for_test_properties(column_mapping, row):
         return {}
 
     if not len(xlsx_value.split(",")) == 3:
-        raise Exception("Invalid reason for testing: {}".format(xlsx_value))
+        raise FieldValidationFailure(xlsx_value, "reason for testing")
     rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = xlsx_value.split(",")
 
     if rft_dstb_diagnosis not in [
@@ -651,8 +664,7 @@ def get_reason_for_test_properties(column_mapping, row):
         "rivate_referral",
         "resumptive_ntm",
     ]:
-        raise Exception(
-            "Invalid reason for testing. unexpected rft_dstb_diagnosis value: {}".format(rft_dstb_diagnosis))
+        raise FieldValidationFailure(rft_dstb_diagnosis, "reason for testing (rft_dstb_diagnosis)")
     if rft_drtb_diagnosis not in [
         "",
         "mdr_at_diagnosis",
@@ -662,8 +674,7 @@ def get_reason_for_test_properties(column_mapping, row):
         "discordance_resolution",
         "extended_dst",
     ]:
-        raise Exception(
-            "Invalid reason for testing. unexpected rft_drtb_diagnosis value: {}".format(rft_drtb_diagnosis))
+        raise FieldValidationFailure(rft_drtb_diagnosis, "reason for testing (rft_drtb_diagnosis)")
     if rft_drtb_diagnosis_ext_dst not in [
         "",
         "mdr_rr_diagnosis",
@@ -674,11 +685,7 @@ def get_reason_for_test_properties(column_mapping, row):
         "recurrent_second_line_treatment",
         "discordance_resolution",
     ]:
-        raise Exception(
-            "Invalid reason for testing. unexpected rft_drtb_diagnosis_ext_dst value: {}".format(
-                rft_drtb_diagnosis_ext_dst
-            )
-        )
+        raise FieldValidationFailure(rft_drtb_diagnosis_ext_dst, "reason for testing (rft_drtb_diagnosis_ext_dst)")
 
     return {
         "rft_general": "diagnosis_drtb",
@@ -729,7 +736,7 @@ def get_disease_site_properties(column_mapping, row):
         "extra_pulmonary (abdominal)",
         "extra_pulmonary (other)",
     ]:
-        raise Exception("Invalid site of disease: {}".format(xlsx_value))
+        raise FieldValidationFailure(xlsx_value, "site of disease")
     classification = "extra_pulmonary" if "extra_pulmonary" in xlsx_value else "pulmonary"
     match = re.match("\((.*)\)", xlsx_value)
     if match:
@@ -763,7 +770,7 @@ def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
     else:
         # Confirm that values are the same
         if not all(outcomes[0] == value for value in outcomes):
-            raise Exception(
+            raise ValidationFailure(
                 "Treatment outcomes in final treatment outcome column and treatment status column do not match")
         if outcomes[0] not in [
             "cured",
@@ -778,7 +785,7 @@ def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
             "treatment_failure_additional_drug_resistance",
             "treatment_failure_adverse_drug_reaction",
         ]:
-            raise Exception("Invalid treatment outcome: {}".format(outcomes[0]))
+            raise FieldValidationFailure(outcomes[0], "treatment outcome")
         return outcomes[0]
 
 
@@ -856,7 +863,7 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
     for drug in drugs:
         drug = drug.strip()
         if drug not in valid_drugs:
-            raise Exception("Invalid SLPA result: {}".format(result))
+            raise FieldValidationFailure(result, "SLPA result")
     properties = {
         "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
     }
@@ -868,7 +875,7 @@ def get_cbnaat_resistance(column_mapping, row):
     if value is None:
         return None
     if value not in ["sensitive", "resistant"]:
-        Exception("Unrecognized cbnaat result: {}".format(value))
+        FieldValidationFailure(value, "cbnaat result")
     return value == "resistant"
 
 
@@ -962,7 +969,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
     cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
     date_reported = column_mapping.get_value("cbnaat_result_date", row)
     if not date_reported:
-        raise Exception("cbnaat result date required if result given")
+        raise ValidationFailure("cbnaat result date required if result given")
 
     properties = {
         "owner_id": "-",
@@ -984,7 +991,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
     lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row), "cdst")
     result_date = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not result_date:
-        raise Exception("LPA result date required if result included")
+        raise ValidationFailure("LPA result date required if result included")
 
     properties = {
         "owner_id": "-",
@@ -1006,7 +1013,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
     sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row), "cdst")
     date_reported = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not date_reported:
-        raise Exception("LPA result date required if result included")
+        raise ValidationFailure("LPA result date required if result included")
     properties = {
         "owner_id": "-",
         "testing_facility_saved_name": sl_lpa_lab_name,
@@ -1027,7 +1034,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
     culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
     date_reported = clean_date(column_mapping.get_value("culture_result_date", row))
     if not date_reported:
-        raise Exception("Culture date reported required if result included")
+        raise ValidationFailure("Culture date reported required if result included")
 
     properties = {
         "owner_id": "-",
@@ -1048,7 +1055,7 @@ def clean_culture_type(value):
     if value is None:
         return None
     if value not in ("lc", "lj"):
-        raise Exception("Unexpected culture type: {}".format(value))
+        raise FieldValidationFailure(value, "culture type")
     return value
 
 
@@ -1191,7 +1198,7 @@ def clean_mumbai_treatment_status(value, treatment_initiation_date):
             "died",
         ]:
             return value
-        raise Exception("Unexpected treatment status: {}".format(value))
+        raise FieldValidationFailure(value, "treatment status")
 
 
 def clean_patient_type(value):
@@ -1203,7 +1210,7 @@ def clean_patient_type(value):
         "other_previously_treated",
         None
     ]:
-        raise Exception("Unexpected type of patient: {}".format())
+        raise FieldValidationFailure(value, "type of patient")
     return value
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
@@ -1400,7 +1407,7 @@ def clean_weight_band(value):
         "drtb_short_30_50",
         "drtb_short_gt50",
     ]:
-        raise Exception("Unexpected weight band: {}".format(value))
+        raise FieldValidationFailure(value, "weight band")
     return value
 
 
@@ -1409,7 +1416,7 @@ def clean_height(value):
         return None
     if re.match("[0-9]*", str(value)):
         return value
-    raise Exception("Invalid height: {}".format(value))
+    raise FieldValidationFailure(value, "height")
 
 
 def clean_treatment_regimen(value):
@@ -1428,7 +1435,7 @@ def clean_treatment_regimen(value):
         "new_fail_xdr",
         "new_mixed_pattern",
     }:
-        raise Exception("Invalid treatment regimen: {}".format(value))
+        raise FieldValidationFailure(value, "treatment reigmen")
     return value
     # return {
     #     "Regimen for MDR/RR TB": "mdr_rr",
@@ -1445,7 +1452,7 @@ def clean_phone_number(value):
         return None
 
     if not isinstance(value, (basestring, int)):
-        raise Exception("Unexpected type for phone number {}".format(value))
+        raise FieldValidationFailure(value, "phone number")
 
     try:
         values = value.split("/")
@@ -1488,7 +1495,7 @@ def clean_hiv_status(value):
     if not value:
         return None
     if value not in ("reactive", "non_reactive"):
-        raise Exception("Invalid hiv status: {}".format(value))
+        raise FieldValidationFailure(value, "HIV status")
     return value
 
 
@@ -1537,7 +1544,7 @@ def clean_drtb_type(value):
         "mr",
         "unknown",
     ]:
-        raise Exception("Unexpected drtb type: {}".format(value))
+        raise FieldValidationFailure(value, "DRTB type")
     return value
 
 
@@ -1592,9 +1599,9 @@ def match_location(domain, xlsx_name, location_type=None):
         if len(possible_matches) == 1:
             location = possible_matches[0]
         elif len(possible_matches) > 1:
-            raise Exception("Multiple location matches for {}".format(xlsx_name))
+            raise ValidationFailure("Multiple location matches for {}".format(xlsx_name))
         else:
-            raise Exception("No location matches for {}".format(xlsx_name))
+            raise ValidationFailure("No location matches for {}".format(xlsx_name))
     return location.name, location.location_id
 
 
@@ -1609,7 +1616,7 @@ def match_facility(domain, xlsx_facility_name):
 def match_phi(domain, xlsx_phi_name):
     location_name, location_id = match_location(domain, xlsx_phi_name, "phi")
     if not location_id:
-        raise Exception("A valid phi is required")
+        raise ValidationFailure("A valid phi is required")
     return location_name, location_id
 
 
@@ -1715,35 +1722,51 @@ class Command(BaseCommand):
         case_factory = CaseFactory(domain)
 
         import_log_file_name = "drtb-import-{}.csv".format(migration_id)
+        bad_rows_file_name = "{}-bad-rows.csv".format(migration_id)
+        rows_with_unknown_exceptions = 0
 
         with open_any_workbook(excel_file_path) as workbook:
-            with open(import_log_file_name, "w") as import_log_file:
-                import_log_writer = csv.writer(import_log_file)
-                import_log_writer.writerow(["row", "case_ids", "exception"])
+            with open(bad_rows_file_name, "w") as bad_rows_file:
+                with open(import_log_file_name, "w") as import_log_file:
+                    import_log_writer = csv.writer(import_log_file)
+                    bad_rows_file_writer = csv.writer(bad_rows_file)
+                    import_log_writer.writerow(["row", "case_ids", "exception"])
 
-                for i, row in enumerate(workbook.worksheets[0].iter_rows()):
-                    if i == 0:
-                        # Skip the headers row
-                        continue
+                    for i, row in enumerate(workbook.worksheets[0].iter_rows()):
+                        if i < 1:
+                            # Skip the headers rows
+                            if i == 0:
+                                extra_cols = ["original import row number", "error message"]
+                            else:
+                                extra_cols = [None, None]
+                            bad_rows_file_writer.writerow(extra_cols + [c.value for c in row])
+                            continue
 
-                    row_contains_data = any(cell.value for cell in row)
-                    if not row_contains_data:
-                        continue
+                        row_contains_data = any(cell.value for cell in row)
+                        if not row_contains_data:
+                            continue
 
-                    try:
-                        column_mapping.check_for_required_fields(row)
-                        case_structures = get_case_structures_from_row(
-                            options['commit'], domain, migration_id, column_mapping, city_constants, row
-                        )
-                        import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
-                        logger.info("Creating cases for row {}".format(i))
+                        try:
+                            column_mapping.check_for_required_fields(row)
+                            case_structures = get_case_structures_from_row(
+                                options['commit'], domain, migration_id, column_mapping, city_constants, row
+                            )
+                            import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
+                            logger.info("Creating cases for row {}".format(i))
 
-                        if options['commit']:
-                            case_factory.create_or_update_cases(case_structures)
-                    except Exception:
-                        logger.info("Creating case structures for row {} failed".format(i))
-                        exception_as_string = traceback.format_exc()
-                        import_log_writer.writerow([i, "", exception_as_string])
+                            if options['commit']:
+                                case_factory.create_or_update_cases(case_structures)
+                        except Exception as e:
+                            logger.info("Creating case structures for row {} failed".format(i))
+                            if isinstance(e, ValidationFailure):
+                                exception_as_string = e.message
+                            else:
+                                rows_with_unknown_exceptions += 1
+                                exception_as_string = traceback.format_exc()
+                            import_log_writer.writerow([i, "", exception_as_string])
+                            bad_rows_file_writer.writerow([i, exception_as_string] + [c.value for c in row])
+
+        print "{} rows with unknown exceptions".format(rows_with_unknown_exceptions)
 
     def generate_id(self):
         now = datetime.datetime.now()
