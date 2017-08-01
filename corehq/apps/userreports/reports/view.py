@@ -107,7 +107,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
     :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
-    request_dict = json_request(query_dict, booleans_as_strings=True)
+    request_dict = json_request(query_dict)
     request_dict['domain'] = domain
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
