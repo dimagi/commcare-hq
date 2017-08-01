@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-31 18:32+0000\n"
+"POT-Creation-Date: 2017-08-01 19:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -22,6 +22,16 @@ msgstr ""
 #: corehq/apps/domain/static/domain/js/pro-bono.js:25
 msgid "Please enter a valid email."
 msgstr "Por favor ingrese un correo electrónico válido."
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
+#: corehq/apps/locations/static/locations/js/location_types.js:350
+#: corehq/apps/reminders/static/reminders/js/reminders.js:12
+msgid "You have unsaved changes."
+msgstr "Usted tiene cambios sin guardar."
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:24
+msgid "There was an error saving."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:210
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
@@ -190,25 +200,19 @@ msgstr ""
 msgid "Audio"
 msgstr "Audio"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1090
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
-msgid " (Preview!)"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1095
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1100
 msgid "Calculate"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1103
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1104
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -227,19 +231,19 @@ msgstr ""
 msgid "You have unchanged user properties settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:680
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:687
 msgid "Property updated by two questions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:684
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:691
 msgid "Inside the wrong repeat!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:689
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:696
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:716
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:723
 msgid "Two properties load to the same question"
 msgstr ""
 
@@ -742,7 +746,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Text"
-msgstr ""
+msgstr "Texto"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Phone Number or Numeric ID"
@@ -2048,7 +2052,7 @@ msgstr "Formulario XML"
 msgid "Evaluate XPath"
 msgstr "Evaluar XPath"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:250
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:258
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2342,11 +2346,6 @@ msgstr ""
 #: corehq/apps/locations/static/locations/js/location.js:41
 msgid "Error saving user"
 msgstr ""
-
-#: corehq/apps/locations/static/locations/js/location_types.js:350
-#: corehq/apps/reminders/static/reminders/js/reminders.js:12
-msgid "You have unsaved changes."
-msgstr "Usted tiene cambios sin guardar."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:89
 msgid "Please enter your name."
