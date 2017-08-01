@@ -8,6 +8,7 @@ function NavigationController($window, $scope, $route, $routeParams, $location) 
     $scope.healthCollapsed = true;
     $scope.icdsCasReach = true;
     $scope.demographics = true;
+    $scope.infrastructure = true;
 
     $scope.goto = function(path) {
         $window.location.href = path;

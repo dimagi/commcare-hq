@@ -155,6 +155,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/adhaar/:step", {
                 template : "<adhaar-beneficiary></adhaar-beneficiary>",
+            })
+            .when("/clean_water", {
+                redirectTo : "/clean_water/map",
+            })
+            .when("/clean_water/:step", {
+                template : "<clean-water></clean-water>",
             });
     }]);
 
