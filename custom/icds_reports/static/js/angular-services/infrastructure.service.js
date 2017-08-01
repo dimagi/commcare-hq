@@ -34,5 +34,13 @@ window.angular.module('icdsApp').factory('infrastructureService', ['$http', func
                 params: params,
             });
         },
+        getAdultWeightScaleData: function(step, params) {
+            var get_url = url('adult_weight_scale', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

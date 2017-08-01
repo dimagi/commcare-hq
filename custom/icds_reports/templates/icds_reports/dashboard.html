@@ -95,6 +95,7 @@
         <script type="text/javascript" src="{% static 'js/directives/functional-toilet/functional-toilet.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -196,6 +197,7 @@
                     {% registerurl 'functional_toilet' domain '---' %}
                     {% registerurl 'medicine_kit' domain '---' %}
                     {% registerurl 'infants_weight_scale' domain '---' %}
+                    {% registerurl 'adult_weight_scale' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>

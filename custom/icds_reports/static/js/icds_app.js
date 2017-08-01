@@ -179,6 +179,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/infants_weight_scale/:step", {
                 template : "<infants-weight-scale></infants-weight-scale>",
+            })
+            .when("/adult_weight_scale", {
+                redirectTo : "/adult_weight_scale/map",
+            })
+            .when("/adult_weight_scale/:step", {
+                template : "<adult-weight-scale></adult-weight-scale>",
             });
     }]);
 

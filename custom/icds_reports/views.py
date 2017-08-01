@@ -47,7 +47,8 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_adhaar_data_chart, get_clean_water_sector_data, get_clean_water_data_map, get_clean_water_data_chart, \
     get_functional_toilet_sector_data, get_functional_toilet_data_map, get_functional_toilet_data_chart, \
     get_medicine_kit_sector_data, get_medicine_kit_data_map, get_medicine_kit_data_chart, \
-    get_infants_weight_scale_sector_data, get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart
+    get_infants_weight_scale_sector_data, get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
+    get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -1100,6 +1101,36 @@ class InfantsWeightScaleView(View):
                 data = get_infants_weight_scale_data_map(config, loc_level)
         elif step == "chart":
             data = get_infants_weight_scale_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AdultWeightScaleView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_adult_weight_scale_sector_data(config, loc_level)
+            else:
+                data = get_adult_weight_scale_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_adult_weight_scale_data_chart(config, loc_level)
 
         return JsonResponse(data={
             'report_data': data,

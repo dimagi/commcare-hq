@@ -7,7 +7,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, LactatingEnrolledWomenView, \
     AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, FunctionalToiletView, MedicineKitView, \
-    InfantsWeightScaleView
+    InfantsWeightScaleView, AdultWeightScaleView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -104,4 +104,8 @@ urlpatterns = [
         r'^infants_weight_scale/(?P<step>[\w-]+)/',
         InfantsWeightScaleView.as_view(),
         name='infants_weight_scale'),
+    url(
+        r'^adult_weight_scale/(?P<step>[\w-]+)/',
+        AdultWeightScaleView.as_view(),
+        name='adult_weight_scale'),
 ]
