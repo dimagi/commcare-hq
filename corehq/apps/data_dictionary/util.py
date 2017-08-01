@@ -21,7 +21,7 @@ def generate_data_dictionary(domain):
 
 def _get_all_case_properties(domain):
     # moved here to avoid circular import
-    from corehq.apps.export.models.new import CaseExportDataSchema
+    from corehq.apps.export.models import CaseExportDataSchema
 
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(

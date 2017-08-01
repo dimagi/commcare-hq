@@ -46,7 +46,7 @@ class ImporterUtilsTest(SimpleTestCase):
         )
 
         with mock.patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
+                'corehq.apps.export.models.CaseExportDataSchema.generate_schema_from_builds',
                 return_value=schema):
             case_types = get_case_properties_for_case_type('test-domain', 'case-type')
 

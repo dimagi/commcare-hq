@@ -15,7 +15,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.dbaccessors import (
     user_ids_at_locations_and_descendants, user_ids_at_locations
 )
-from corehq.apps.export.models.new import (
+from corehq.apps.export.models import (
     DatePeriod,
     CaseExportInstance,
     FormExportInstanceFilters,

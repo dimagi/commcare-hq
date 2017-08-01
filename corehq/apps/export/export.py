@@ -21,7 +21,7 @@ from corehq.apps.export.esaccessors import (
     get_case_export_base_query,
     get_sms_export_base_query,
 )
-from corehq.apps.export.models.new import (
+from corehq.apps.export.models import (
     CaseExportInstance,
     FormExportInstance,
     SMSExportInstance,

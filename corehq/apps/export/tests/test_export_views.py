@@ -8,7 +8,7 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.export.models import CaseExportInstance
-from corehq.apps.export.models.new import DailySavedExportNotification, DataFile
+from corehq.apps.export.models import DailySavedExportNotification, DataFile
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
@@ -198,7 +198,7 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-    @patch('corehq.apps.export.models.new.domain_has_daily_saved_export_access', lambda x: True)
+    @patch('corehq.apps.export.models.domain_has_daily_saved_export_access', lambda x: True)
     @patch.object(DailySavedExportNotification, 'user_added_before_feature_release')
     @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
     def test_view_daily_saved_export_notification(self, user_created_mock):

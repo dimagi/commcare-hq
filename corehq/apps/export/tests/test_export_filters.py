@@ -14,7 +14,7 @@ from corehq.apps.export.filters import (
     OR,
     FormSubmittedByFilter,
 )
-from corehq.apps.export.models.new import (
+from corehq.apps.export.models import (
     CaseExportInstance,
     FormExportInstance)
 from corehq.apps.export.tests.util import (

@@ -178,8 +178,8 @@ class SplitColumnTest(SimpleTestCase):
 class StockExportColumnTest(SimpleTestCase):
     domain = 'stock-domain'
 
-    @patch('corehq.apps.export.models.new.StockExportColumn._get_product_name', return_value='water')
-    @patch('corehq.apps.export.models.new.Product.by_domain', return_value=[])
+    @patch('corehq.apps.export.models.StockExportColumn._get_product_name', return_value='water')
+    @patch('corehq.apps.export.models.Product.by_domain', return_value=[])
     def test_get_headers(self, _, __):
         column = StockExportColumn(
             domain=self.domain,
@@ -187,7 +187,7 @@ class StockExportColumnTest(SimpleTestCase):
             item=ExportItem(),
         )
         with patch(
-                'corehq.apps.export.models.new.get_ledger_section_entry_combinations',
+                'corehq.apps.export.models.get_ledger_section_entry_combinations',
                 return_value=[
                     MockLedgerValue(section_id='abc', entry_id='def'),
                     MockLedgerValue(section_id='abc', entry_id='def'),

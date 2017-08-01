@@ -3,7 +3,7 @@ from mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.export.models.new import MAIN_TABLE, \
+from corehq.apps.export.models import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
 
 from corehq.util.context_managers import drop_connected_signals
@@ -607,7 +607,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         applications.
         '''
         with patch(
-                'corehq.apps.export.models.new.FormExportDataSchema._process_app_build',
+                'corehq.apps.export.models.FormExportDataSchema._process_app_build',
                 side_effect=Exception('boom')):
             FormExportDataSchema.generate_schema_from_builds(
                 self.current_app.domain,
@@ -760,7 +760,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(schema._id, existing_schema._id)
 
         with patch(
-                'corehq.apps.export.models.new.FORM_DATA_SCHEMA_VERSION',
+                'corehq.apps.export.models.FORM_DATA_SCHEMA_VERSION',
                 FORM_DATA_SCHEMA_VERSION + 1):
             rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
                 app.domain,
