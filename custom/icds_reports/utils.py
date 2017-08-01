@@ -374,7 +374,7 @@ def get_maternal_child_data(config):
         'records': [
             [
                 {
-                    'label': _('% Underweight Children (weight-for-age)'),
+                    'label': _('Prevalence of Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                         "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
@@ -908,7 +908,7 @@ def get_awc_infrastructure_data(config):
             ],
             [
                 {
-                    'label': _('Total number of AWCs with an infantometer'),
+                    'label': _('% AWCs with infantometer'),
                     'help_text': _('Percentage of AWCs with an Infantometer'),
                     'percent': 0,
                     'value': 0,
@@ -917,7 +917,7 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('Total number of AWCs with a stadiometer'),
+                    'label': _('% AWCs with Stadiometer'),
                     'help_text': _('Percentage of AWCs with a Stadiometer'),
                     'percent': 0,
                     'value': 0,
@@ -1568,13 +1568,13 @@ def get_awc_report_demographics(config, month):
         valid=Sum('valid_in_month')
     ).order_by('age_tranche')
 
-    chart_data = {
-        '0-1 month': 0,
-        '1-6 months': 0,
-        '6-12 months': 0,
-        '1-3 years': 0,
-        '3-6 years': 0
-    }
+    chart_data = OrderedDict()
+    chart_data.update({'0-1 month': 0})
+    chart_data.update({'1-6 months': 0})
+    chart_data.update({'6-12 months': 0})
+    chart_data.update({'1-3 years': 0})
+    chart_data.update({'3-6 years': 0})
+
     for chart_row in chart:
         if chart_row['age_tranche']:
             age = int(chart_row['age_tranche'])
@@ -1631,9 +1631,7 @@ def get_awc_report_demographics(config, month):
                     'all': '',
                     'format': 'number',
                     'frequency': 'month'
-                }
-            ],
-            [
+                },
                 {
                     'label': _('Pregnant Women'),
                     'help_text': _("Total number of pregnant women registered"),
@@ -1647,6 +1645,8 @@ def get_awc_report_demographics(config, month):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
@@ -1659,9 +1659,7 @@ def get_awc_report_demographics(config, month):
                     'all': '',
                     'format': 'number',
                     'frequency': 'day'
-                }
-            ],
-            [
+                },
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls who are registered'),
@@ -1675,6 +1673,8 @@ def get_awc_report_demographics(config, month):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('% Adhaar seeded beneficaries'),
                     'help_text': _(
@@ -1714,7 +1714,8 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
                 until=datetime(*month)
             )
         ],
-        'last_month': datetime(*month).strftime("%b %Y")
+        'last_month': datetime(*month).strftime("%b %Y"),
+        'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }
 
     def row_format(row_data):
@@ -1803,18 +1804,18 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         }
 
         if value < 5:
-            row_values.update({'fillKey': '0%-5%'})
-        elif 5 <= value < 7:
+            row_values.update({'fillKey': '0%-4%'})
+        elif 5 <= value <= 7:
             row_values.update({'fillKey': '5%-7%'})
-        elif value >= 7:
-            row_values.update({'fillKey': '7%-100%'})
+        elif value > 7:
+            row_values.update({'fillKey': '8%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-5%': GREEN})
+    fills.update({'0%-4%': GREEN})
     fills.update({'5%-7%': YELLOW})
-    fills.update({'7%-100%': RED})
+    fills.update({'8%-100%%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -1967,9 +1968,9 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
 
         if value < 5.0:
             loc_data['green'] += 1
-        elif 5.0 <= value < 7.0:
+        elif 5.0 <= value <= 7.0:
             loc_data['orange'] += 1
-        elif value >= 7.0:
+        elif value > 7.0:
             loc_data['red'] += 1
 
         tmp_name = name
@@ -1983,7 +1984,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-5%",
+                "key": "0%-4%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
@@ -1997,7 +1998,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
             },
             {
                 "values": chart_data['red'],
-                "key": "7%-100%",
+                "key": "8%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2019,6 +2020,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             severe=Sum('stunting_severe'),
             normal=Sum('stunting_normal'),
             valid=Sum('height_eligible'),
+            total_measured=Sum('height_measured_in_month'),
         )
 
     map_data = {}
@@ -2030,6 +2032,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
         normal = row['normal']
+        total_measured = row['total_measured']
 
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
         average.append(value)
@@ -2037,7 +2040,8 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             'severe': severe or 0,
             'moderate': moderate or 0,
             'total': valid or 0,
-            'normal': normal
+            'normal': normal or 0,
+            'total_measured': total_measured or 0,
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})

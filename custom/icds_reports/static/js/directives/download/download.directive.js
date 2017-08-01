@@ -36,6 +36,8 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 5, name: 'AWC'},
     ];
 
+    vm.groupByLevels = [];
+
     vm.formats = [
         {id: 'csv', name: 'CSV'},
         {id: 'xls', name: 'Excel'},
@@ -123,18 +125,19 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
                 var levels = [];
                 window.angular.forEach(vm.levels, function (value) {
-                    if (value.id >= selectedLocationIndex() + 1) {
+                    if (value.id > selectedLocationIndex() + 1) {
                         levels.push(value);
                     }
                 });
-                vm.levels = levels;
-                vm.selectedLevel = selectedLocationIndex() + 1;
+                vm.groupByLevels = levels;
+                vm.selectedLevel = selectedLocationIndex() + 2;
             });
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
                 locationsCache.root = data.locations;
             });
+            vm.groupByLevels = vm.levels;
         }
     };
 
@@ -192,12 +195,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
         });
         var levels = [];
         window.angular.forEach(vm.levels, function (value) {
-            if (value.id >= selectedLocationIndex() + 1) {
+            if (value.id > selectedLocationIndex() + 1) {
                 levels.push(value);
             }
         });
-        vm.levels = levels;
-        vm.selectedLevel = selectedLocationIndex() + 1;
+        vm.groupByLevels = levels;
+        vm.selectedLevel = selectedLocationIndex() + 2;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];

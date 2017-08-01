@@ -27,7 +27,7 @@
                 <div class="col-sm-6">
                     <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
                         <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                        <ui-select-choices repeat="level.id as level in $ctrl.levels | propsFilter: {name: $select.search}">
+                        <ui-select-choices repeat="level.id as level in $ctrl.groupByLevels | propsFilter: {name: $select.search}">
                             <div ng-bind-html="level.name | highlight: $select.search"></div>
                         </ui-select-choices>
                     </ui-select>

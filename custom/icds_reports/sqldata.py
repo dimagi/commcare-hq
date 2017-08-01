@@ -1,5 +1,6 @@
 from StringIO import StringIO
 
+import pytz
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.functions import datetime
 from sqlagg.base import AliasColumn
@@ -14,6 +15,9 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from custom.icds_reports.utils import ICDSMixin
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
+
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class BaseIdentification(object):
@@ -153,7 +157,11 @@ class ExportableMixin(object):
                     cell = row[c['slug']]
                 row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
-        filters = [['Generated at', datetime.datetime.utcnow().strftime("%H:%M:%S %d %B %Y")]]
+
+        utc_now = datetime.datetime.now(pytz.utc)
+        india_now = utc_now.astimezone(india_timezone)
+
+        filters = [['Generated at', india_now.strftime("%H:%M:%S %d %B %Y")]]
         if location:
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:

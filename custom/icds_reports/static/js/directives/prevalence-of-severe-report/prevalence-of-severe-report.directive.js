@@ -58,7 +58,14 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
         var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
         var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
+            '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
+            '<div>% Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div>' +
+            '<div>% Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
