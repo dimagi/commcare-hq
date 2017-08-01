@@ -206,6 +206,17 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
+@require_permission(Permissions.edit_apps, login_decorator=None)
+def rename_xform(request, domain, app_id, form_unique_id):
+    name = request.POST.get('name', 'true')
+    xform = request.POST.get('xform', 'true')
+    xform.set_name(name)
+
+            xform = form.wrapped_xform()
+            if xform.exists():
+                save_xform(app, form, xform.render())
+
+
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):

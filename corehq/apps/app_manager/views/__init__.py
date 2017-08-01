@@ -28,6 +28,7 @@ from corehq.apps.app_manager.views.apps import (
     new_app,
     rearrange,
     rename_language,
+    rename_xform,
     undo_delete_app,
     validate_language,
     view_app,

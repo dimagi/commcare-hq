@@ -154,13 +154,17 @@ hqDefine("app_manager/js/forms/form_designer.js", function() {
                 editDetails = hqImport('app_manager/js/forms/edit_form_details.js');
             editDetails.initName(
                 initial_page_data("form_name"),
-                reverse("edit_form_attr", "name")
+                reverse("rename_xform", "name")
             );
             editDetails.initComment(
                 initial_page_data("form_comment").replace(/\\n/g, "\n"),
                 reverse("edit_form_attr", "comment")
             );
-            editDetails.setUpdateCallbackFn(function (name) {
+            editDetails.setUpdateCallbackFn(function (name, xform) {
+// jls
+//$("#formdesigner").vellum("get").data.core.form;
+$("#formdesigner").vellum("get").loadXFormOrError('', undefined, true);
+
                 $('#formdesigner .fd-content-left .fd-head-text').text(name);
                 $('.variable-form_name').text(name);
                 hqImport('app_manager/js/app_manager.js').updatePageTitle(name);
