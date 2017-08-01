@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay-reports-qa"
+        "enikshay-reports-qa",
+        "sheel-enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -329,15 +330,25 @@
                 "display": "Date of MERM Registration"
             },
             {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "adherence_registered",
-                "calculate_total": false,
-                "type": "field",
-                "display": "% Adherence Reported"
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "treatment_initiation_date"
+                        },
+                        "b": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "aggregated_score_count_taken"
+                        }
+                    },
+                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
+                },
+                "type": "expression",
+                "display": "% Adherence Reported",
+                "column_id": "adherence_registered"
             },
             {
                 "sortable": false,
@@ -690,6 +701,19 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of last household visit"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "aggregated_score_count_taken",
+                "calculate_total": false,
+                "column_id": "aggregated_score_count_taken",
+                "type": "field",
+                "display": "aggregated_score_count_taken"
             }
         ]
     }
