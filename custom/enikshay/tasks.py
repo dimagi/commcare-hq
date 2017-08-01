@@ -138,7 +138,7 @@ class EpisodeUpdater(object):
             'file_obj': csv_file,
         }
         send_html_email_async.delay(
-            subject, recipient, message, cc=cc, text_content=message, file_attachments=[attachment]
+            subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
         )
 
     def update_single_case(self, episode_case):
