@@ -46,6 +46,7 @@ from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     EXCHANGE_RATE_DECIMAL_PLACES,
     fmt_dollar_amount,
+    get_account_name_from_default_name,
     get_address_from_invoice,
     get_change_status,
     get_dimagi_from_email,
@@ -400,8 +401,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
             entry_point = entry_point or EntryPoint.NOT_SET
             last_payment_method = last_payment_method or LastPayment.NONE
             pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
+            default_name = DEFAULT_ACCOUNT_FORMAT % domain
+            name = get_account_name_from_default_name(default_name)
             account = BillingAccount(
-                name=DEFAULT_ACCOUNT_FORMAT % domain,
+                name=name,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),

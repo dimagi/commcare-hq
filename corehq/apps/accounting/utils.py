@@ -327,3 +327,17 @@ def log_removed_grants(priv_slugs, dry_run=False):
             ("[DRY RUN] " if dry_run else ""),
             ", ".join(g.to_role.slug for g in grants),
         )
+
+
+def get_account_name_from_default_name(default_name):
+    from corehq.apps.accounting.models import BillingAccount
+    if not BillingAccount.objects.filter(name=default_name).exists():
+        return default_name
+    else:
+        matching_regex_count = BillingAccount.objects.filter(
+            name__iregex=r'^(%s) ()' % default_name,
+        ).count()
+        return '%s (%d)' % (
+            default_name,
+            matching_regex_count + 1
+        )
