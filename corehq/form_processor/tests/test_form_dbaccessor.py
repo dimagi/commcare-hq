@@ -387,10 +387,7 @@ class FormAccessorsTests(TestCase):
 
         for form_id in ['f1', 'f2']:
             form = FormAccessors(DOMAIN).get_form(form_id)
-            if isinstance(form, PartitionedModel):
-                form.delete(using=get_db_alias_for_partitioned_doc(form.form_id))
-            else:
-                form.delete()
+            form.delete()
 
 
 @use_sql_backend

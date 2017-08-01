@@ -176,12 +176,8 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         :return: True the django model is sharded, otherwise false.
         """
-        from corehq.form_processor.models import RestrictedManager
         from corehq.sql_db.models import PartitionedModel
-        return (
-            isinstance(self.model_class.objects, RestrictedManager) or
-            issubclass(self.model_class, PartitionedModel)
-        )
+        return issubclass(self.model_class, PartitionedModel)
 
     @property
     def sql_db_aliases(self):
@@ -543,12 +539,12 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         try:
             with transaction.atomic(using=db_name, savepoint=False):
-                form.save(using=db_name)
+                form.save()
                 for attachment in unsaved_attachments:
-                    attachment.save(using=db_name)
+                    attachment.save()
 
                 for operation in operations:
-                    operation.save(using=db_name)
+                    operation.save()
         except InternalError as e:
             raise XFormSaveError(e)
 
@@ -886,9 +882,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         try:
             with transaction.atomic(using=db_name, savepoint=False):
-                case.save(using=db_name)
+                case.save()
                 for case_transaction in transactions_to_save:
-                    case_transaction.save(using=db_name)
+                    case_transaction.save()
 
                 for index in indices_to_save_or_update:
                     index.domain = case.domain  # ensure domain is set on indices
@@ -896,12 +892,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     if index.is_saved():
                         # prevent changing identifier
                         update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
-                    index.save(using=db_name, update_fields=update_fields)
+                    index.save(update_fields=update_fields)
 
                 CommCareCaseIndexSQL.objects.using(db_name).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
-                    attachment.save(using=db_name)
+                    attachment.save()
 
                 CaseAttachmentSQL.objects.using(db_name).filter(id__in=attachment_ids_to_delete).delete()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
@@ -1169,9 +1165,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
                 with transaction.atomic(using=db_name, savepoint=False):
-                    ledger_value.save(using=db_name)
+                    ledger_value.save()
                     for trans in transactions_to_save:
-                        trans.save(using=db_name)
+                        trans.save()
 
                 ledger_value.clear_tracked_models()
         except InternalError as e:
