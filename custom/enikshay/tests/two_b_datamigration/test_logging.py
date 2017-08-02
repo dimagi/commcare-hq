@@ -79,9 +79,9 @@ class TestLogCreation(SimpleTestCase, ImportDRTBTestMixin):
             # Confirm that the valid row in our input sheet results in all case_ids being logged
             self.assertEqual(
                 len(result_rows[0].get("case_ids", "").split(",")),
-                # A person, occurrence, episode, and secondary_owner case, plus one drug_resistance case for
+                # A person, occurrence, episode, and two secondary_owner cases, plus one drug_resistance case for
                 # each drug
-                4 + len(ALL_DRUGS)
+                5 + len(ALL_DRUGS)
             )
             self.assertIsNone(result_rows[0]['exception'])
 
@@ -111,9 +111,10 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
             csv_file.seek(0)
 
             # Confirm that the outcome contains all the expected case ids
+            self.assertNotIn("Traceback", output, "Expected list of case ids, but output was: {}".format(output))
             self.assertEqual(
                 len(output.split()),
-                4 + len(ALL_DRUGS)
+                5 + len(ALL_DRUGS)
             )
 
             output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)

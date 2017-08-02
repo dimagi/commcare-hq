@@ -441,7 +441,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
-        domain, city_constants, person_case_properties['dto_id'], occurrence_case_properties['occurrence_id'])
+        domain, city_constants, person_case_properties['dto_id'])
 
     # We do this as a separate step because we don't want to generate ids if there is going to be an exception
     # raised while generating the other properties.
@@ -463,7 +463,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
         for props in test_case_properties
     ]
-    secondary_owner_case_structure = [
+    secondary_owner_case_structures = [
         get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure)
         for props in secondary_owner_case_properties
     ]
@@ -472,8 +472,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         person_case_structure,
         occurrence_case_structure,
         episode_case_structure,
-        secondary_owner_case_structure
-    ] + drug_resistance_case_structures + test_case_structures
+    ] + secondary_owner_case_structures + drug_resistance_case_structures + test_case_structures
 
 
 def update_cases_with_readable_ids(commit, person_case_properties, occurrence_case_properties,
@@ -491,7 +490,8 @@ def update_cases_with_readable_ids(commit, person_case_properties, occurrence_ca
     occurrence_case_properties["name"] = occurrence_id
     episode_case_properties['episode_id'] = episode_id
     episode_case_properties['name'] = episode_id
-    secondary_owner_case_properties['name'] = secondary_owner_name
+    for secondary_owner in secondary_owner_case_properties:
+        secondary_owner['name'] = occurrence_id + secondary_owner['secondary_owner_type']
 
 
 def get_case_structure(case_type, properties, migration_identifier, host=None):
@@ -763,7 +763,7 @@ def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
         # treatment status contains an outcome
         outcomes.append(mumbai_treatment_status_value)
 
-    outcome_column_value = column_mapping.get_value("treatment_outcome")
+    outcome_column_value = column_mapping.get_value("treatment_outcome", row)
     if outcome_column_value:
         outcomes.append(outcome_column_value)
 
@@ -1332,7 +1332,7 @@ def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initi
         return str(int(round((date_tested - treatment_initiation_date).days / 30.4)))
 
 
-def get_secondary_owner_case_properties(domain, city_constants, district_id, occurrence_id):
+def get_secondary_owner_case_properties(domain, city_constants, district_id):
     name, loc_id = get_drtb_hiv_location(domain, district_id)
     return [
         {
@@ -1344,7 +1344,6 @@ def get_secondary_owner_case_properties(domain, city_constants, district_id, occ
             "secondary_owner_name": name,
             "secondary_owner_type": "drtb-hiv",
             "owner_id": loc_id,
-            "name": occurrence_id + "drtb-hiv",
         }
     ]
 
