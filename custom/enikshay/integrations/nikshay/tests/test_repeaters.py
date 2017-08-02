@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 from mock import patch
 from collections import namedtuple
 from datetime import datetime
@@ -45,6 +46,9 @@ DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
 MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation')
 MockNikshayRegisterPrivatePatientRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
+
+
+WSDL_URL = os.path.join(os.path.dirname(__file__), 'nikshay.wsdl')
 
 
 class MockResponse(object):
@@ -1094,7 +1098,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
 
         self.repeater = NikshayRegisterPrivatePatientRepeater(
             domain=self.domain,
-            url='case-repeater-url?wsdl',
+            url=WSDL_URL,
             username='test-user'
         )
         self.repeater.white_listed_case_types = ['episode']
@@ -1195,7 +1199,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
 
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
-                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                url=WSDL_URL,
                 operation='InsertHFIDPatient_UATBC')
         )
 
@@ -1217,9 +1221,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
 
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
-                # using the actual WSDL link to fetch the xml structure for dummy response parsing.
-                # No data request is sent
-                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                url=WSDL_URL,
                 operation='InsertHFIDPatient_UATBC')
         )
 
