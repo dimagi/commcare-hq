@@ -335,7 +335,7 @@ def get_account_name_from_default_name(default_name):
         return default_name
     else:
         matching_regex_count = BillingAccount.objects.filter(
-            name__iregex=r'^(%s) ()' % default_name,
+            name__iregex=r'^%s \(\d+\)$' % default_name,
         ).count()
         return '%s (%d)' % (
             default_name,
