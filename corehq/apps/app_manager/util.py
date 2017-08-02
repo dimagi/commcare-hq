@@ -133,12 +133,24 @@ def save_xform(app, form, xml):
         pass
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
+        # we assume form.get_unique_id() is unique across all of HQ and
+        # therefore is suitable to create an XMLNS that will not confict
+        # with any other form
+        uid = form.get_unique_id()
         tag_xmlns = xform.data_node.tag_xmlns
-        form_xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
+        new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
-            xml = change_xmlns(xform, GENERIC_XMLNS, form_xmlns)
-        elif tag_xmlns != form_xmlns:
-            xml = change_xmlns(xform, tag_xmlns, form_xmlns)
+            xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+        else:
+            forms = [form_
+                for form_ in app.get_xmlns_map().get(tag_xmlns, [])
+                if form_.form_type != 'shadow_form']
+            if len(forms) > 1 or (len(forms) == 1 and forms[0] is not form):
+                if new_xmlns == tag_xmlns:
+                    new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
+                # form most likely created by app.copy_form(...)
+                # or form is being updated with source copied from other form
+                xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
     form.source = xml
 
