@@ -10,7 +10,7 @@ from corehq.sql_db.operations import HqRunSQL
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0051_merge_20170724_1255'),
+        ('sql_accessors', '0052_save_ledgers_fix'),
     ]
 
     operations = [
