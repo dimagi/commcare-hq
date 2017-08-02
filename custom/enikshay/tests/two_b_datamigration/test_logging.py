@@ -29,8 +29,10 @@ IMPORT_ROWS = [
 
 class ImportDRTBTestMixin(object):
 
+    domain = "fake-domain"
+
     @contextmanager
-    def drtb_import(self, import_rows, format):
+    def drtb_import(self, import_rows, format, commit=False):
         """
         Return a context manager that yields the file handle and rows of the csv log file created by running the
         drtb case import on the given import_rows. format is the format parameter passed to import_drtb_cases.
@@ -49,7 +51,19 @@ class ImportDRTBTestMixin(object):
                 open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
                 with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
                     try:
-                        call_command('import_drtb_cases', 'fake-domain', "fake-excel-file-path.xlsx", format)
+
+                        extra_args = []
+                        if commit:
+                            extra_args.append("--commit")
+                        call_command(
+                            'import_drtb_cases',
+                            self.domain,
+                            "fake-excel-file-path.xlsx",
+                            format,
+                            *extra_args
+                        )
+
+
                         with open("drtb-import-foo.csv", "r") as log_csv:
                             reader = csv.DictReader(log_csv)
                             lines = [line for line in reader]
