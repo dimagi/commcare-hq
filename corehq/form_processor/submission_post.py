@@ -214,12 +214,9 @@ class SubmissionPost(object):
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _get_openrosa_response(self, instance, errors, known_submission_error):
-        if not errors:
-            if instance.is_normal:
-                response = self.get_success_response()
-            elif instance.is_duplicate:
-                response = self.get_failure_response(instance.problem)
-        elif not self.is_openrosa_version3():
+        if not errors or not instance.is_duplicate:
+            response = self.get_success_response()
+        elif instance.is_duplicate or not self.is_openrosa_version3():
             # return 201 with error message for older openrosa
             response = self.get_failure_response(instance.problem)
         elif known_submission_error:
