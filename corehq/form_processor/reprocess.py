@@ -22,6 +22,10 @@ ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
 logger = logging.getLogger('reprocess')
 
 
+class ReprocessingError(Exception):
+    pass
+
+
 def reprocess_unfinished_stub(stub, save=True):
     if stub.saved:
         # ignore for now
@@ -60,10 +64,10 @@ def reprocess_xform_error(form):
     :param form_id: ID of the error form to process
     """
     if not form:
-        raise Exception('Form with ID {} not found'.format(form.form_id))
+        raise ReprocessingError('Form with ID {} not found'.format(form.form_id))
 
     if not form.is_error:
-        raise Exception('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
+        raise ReprocessingError('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
 
     return _reprocess_form(form).form
 
@@ -71,7 +75,7 @@ def reprocess_xform_error(form):
 def reprocess_xform_error_by_id(form_id, domain=None):
     form = _get_form(form_id)
     if domain and form.domain != domain:
-        raise Exception('Form not found')
+        raise ReprocessingError('Form not found')
     return reprocess_xform_error(form)
 
 
