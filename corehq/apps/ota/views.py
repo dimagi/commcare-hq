@@ -1,7 +1,7 @@
 from distutils.version import LooseVersion
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -375,24 +375,24 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, app_id):
+def heartbeat(request, domain, hq_app_id):
     """
     An endpoint for CommCare mobile to get latest CommCare APK and app version
         info. (Should serve from cache as it's going to be busy view)
 
-    'app_id' (that comes from URL) can be id of any version of the app
+    'hq_app_id' (that comes from URL) can be id of any version of the app
     'app_id' (urlparam) is usually id of an app that is not a copy
-        mobile simply wants it to be resent back in the JSON, and doesn't
-        need any validation.
+        mobile simply needs it to be resent back in the JSON, and doesn't
+        need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     url_param_app_id = request.GET.get('app_id', '')
     info = {"app_id": url_param_app_id}
     try:
         # mobile will send brief_app_id
         info.update(LatestAppInfo(url_param_app_id, domain).get_info())
-    except:
+    except (Http404, AssertionError):
         # if it's not a valid 'brief' app id, find it by talking to couch
-        app = get_app(domain, app_id)
+        app = get_app(domain, hq_app_id)
         brief_app_id = app.copy_of or app.id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
