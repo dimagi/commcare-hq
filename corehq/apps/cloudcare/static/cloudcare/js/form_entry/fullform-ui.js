@@ -253,8 +253,6 @@ function Form(json) {
     });
 
     self.submitForm = function(form) {
-        window.analytics.workflow("[app-preview] User submitted a form");
-        window.analytics.usage("[app-preview] User submitted a form");
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
 
