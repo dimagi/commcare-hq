@@ -1715,7 +1715,7 @@ class Command(BaseCommand):
                     import_log_writer.writerow(["row", "case_ids", "exception"])
 
                     for i, row in enumerate(workbook.worksheets[0].iter_rows()):
-                        if i < 1:
+                        if i < import_format.header_rows:
                             # Skip the headers rows
                             if i == 0:
                                 extra_cols = ["original import row number", "error message"]
@@ -1771,16 +1771,19 @@ class Command(BaseCommand):
             return ImportFormat(
                 Mehsana2016ColumnMapping,
                 MehsanaConstants,
+                1,
             )
         elif format_string == cls.MEHSANA_2017:
             return ImportFormat(
                 Mehsana2017ColumnMapping,
                 MehsanaConstants,
+                1,
             )
         elif format_string == cls.MUMBAI:
             return ImportFormat(
                 MumbaiColumnMapping,
                 MumbaiConstants,
+                1,
             )
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
