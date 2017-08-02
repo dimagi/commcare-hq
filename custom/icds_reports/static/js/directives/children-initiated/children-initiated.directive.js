@@ -52,7 +52,10 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.templatePopup = function(loc, row) {
         var total = $filter('indiaNumbers')(row ? row.total : 0);
         var children = $filter('indiaNumbers')(row ? row.children : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div><div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
+            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -169,7 +172,6 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.</span>";
 
                     return tooltip_content;
                 });
