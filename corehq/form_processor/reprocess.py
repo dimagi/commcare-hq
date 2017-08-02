@@ -45,7 +45,7 @@ def reprocess_unfinished_stub(stub, save=True):
         return
 
     assert form.is_normal
-    result = _reprocess_form(form)
+    result = _reprocess_form(form, save)
     save and stub.delete()
     return result
 
