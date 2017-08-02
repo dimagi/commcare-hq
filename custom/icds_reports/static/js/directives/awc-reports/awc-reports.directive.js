@@ -851,7 +851,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.data = null;
-    vm.filters = [];
+    vm.filters = ['gender', 'age'];
     vm.dtOptions = DTOptionsBuilder.newOptions().withOption('scrollX', '100%');
     vm.showTable = true;
     vm.showBeneficiary = false;

@@ -23,7 +23,7 @@
                     <div class="row kpi-percents">
                         <p>
                             <span class="white" ng-show="cell.percent !== null">
-                                <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
+                                <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>&nbsp;
                                 <span class="white" ng-bind="cell.percent | number:2"></span>% from the previous {$ cell.frequency $}
                             </span>
                             <span class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>

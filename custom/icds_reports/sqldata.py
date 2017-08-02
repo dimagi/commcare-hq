@@ -736,15 +736,6 @@ class AggAWCMonthlyDataSource(SqlData):
                 slug='medicine_kits'
             ),
             AggregateColumn(
-                '% AWCs with Flat Scale',
-                percent_num,
-                [
-                    SumColumn('infra_flat_weighing_scale'),
-                    AliasColumn('awcs')
-                ],
-                slug='flat_weighing_scale'
-            ),
-            AggregateColumn(
                 '% AWCs with Adult Scale',
                 percent_num,
                 [
@@ -757,7 +748,7 @@ class AggAWCMonthlyDataSource(SqlData):
                 '% AWCs with Baby Scale',
                 percent_num,
                 [
-                    SumColumn('infra_baby_weighing_scale'),
+                    SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('awcs')
                 ],
                 slug='baby_weighing_scale'
@@ -1590,61 +1581,61 @@ class ProgressReport(object):
                 'section_title': 'Nutrition Status of Children',
                 'rows_config': [
                     {
-                        'header': '% Weighing efficiency (Children <5 weighed)',
+                        'header': 'Weighing Efficiency (Children <5 weighed)',
                         'slug': 'status_weighed',
                         'average': []
                     },
                     {
-                        'header': 'Total number Unweighed',
+                        'header': 'Total number of unweighed children',
                         'slug': 'nutrition_status_unweighed'
                     },
                     {
-                        'header': '% Children severely underweight (weight for age)',
+                        'header': 'Children from 0 - 5 years who are severely underweight (weight-for-age)',
                         'slug': 'severely_underweight',
                         'average': []
                     },
                     {
-                        'header': '% Children moderately underweight (weight for age)',
+                        'header': 'Children from 0-5 years who are moderately underweight (weight-for-age)',
                         'slug': 'moderately_underweight',
                         'average': []
                     },
                     {
-                        'header': '% Children normal (weight for age)',
+                        'header': 'Children from 0-5 years who are at normal weight-for-age',
                         'slug': 'status_normal',
                         'average': []
                     },
                     {
-                        'header': '% Percent children with severe acute malnutrition (weight-for-height)',
+                        'header': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)',
                         'slug': 'wasting_severe',
                         'average': []
                     },
                     {
-                        'header': '% Percent children with moderate acute malnutrition (weight-for-height)',
+                        'header': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)',
                         'slug': 'wasting_moderate',
                         'average': []
                     },
                     {
-                        'header': '% children normal (weight-for-age)',
+                        'header': 'Children from 6 - 60 months with normal weight-for-height',
                         'slug': 'wasting_normal',
                         'average': []
                     },
                     {
-                        'header': '% children with severe stunting (height for age)',
+                        'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
                         'slug': 'stunting_severe',
                         'average': []
                     },
                     {
-                        'header': '% children with moderate stunting (height for age)',
+                        'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                         'slug': 'stunting_moderate',
                         'average': []
                     },
                     {
-                        'header': '% children with normal (height for age)',
+                        'header': 'Children from 6 - 60 months with normal height-for-age',
                         'slug': 'stunting_normal',
                         'average': []
                     },
                     {
-                        'header': '% children immunized with 1st year immunizations',
+                        'header': 'Children 1 year+ who have recieved complete immunization required by age 1.',
                         'slug': 'fully_immunized',
                         'average': []
                     }
@@ -1654,37 +1645,40 @@ class ProgressReport(object):
                 'section_title': 'Child Feeding Indicators',
                 'rows_config': [
                     {
-                        'header': '% children breastfed at birth',
+                        'header': 'Children who were put to the breast within one hour of birth.',
                         'slug': 'breastfed_at_birth',
                         'average': []
                     },
                     {
-                        'header': '% children exclusively breastfed',
+                        'header': 'Infants 0-6 months of age who are fed exclusively with breast milk.',
                         'slug': 'exclusively_breastfed',
                         'average': []
                     },
                     {
-                        'header': '% children initiated appropriate complementary feeding',
+                        'header': (
+                            "Children between 6 - 8 months given timely introduction to solid, "
+                            "semi-solid or soft food."
+                        ),
                         'slug': 'cf_initiation',
                         'average': []
                     },
                     {
-                        'header': '% children complementary feeding',
+                        'header': 'Children from 6 - 24 months complementary feeding',
                         'slug': 'complementary_feeding',
                         'average': []
                     },
                     {
-                        'header': '% children consuming at least 4 food groups',
+                        'header': 'Children from 6 - 24 months consuming at least 4 food groups',
                         'slug': 'diet_diversity',
                         'average': []
                     },
                     {
-                        'header': '% children consuming adequate food',
+                        'header': 'Children from 6 - 24 months consuming adequate food',
                         'slug': 'diet_quantity',
                         'average': []
                     },
                     {
-                        'header': '% children whose mothers handwash before feeding',
+                        'header': 'Children from 6 - 24 months whose mothers handwash before feeding',
                         'slug': 'handwashing',
                         'average': []
                     }
@@ -1694,47 +1688,50 @@ class ProgressReport(object):
                 'section_title': 'Nutrition Status of Pregnant Woment',
                 'rows_config': [
                     {
-                        'header': '% severe anemic',
+                        'header': 'Pregnant women who are anemic',
                         'slug': 'severe_anemic',
                         'average': []
                     },
                     {
-                        'header': '% tetanus complete',
+                        'header': 'Pregnant women with tetanus completed',
                         'slug': 'tetanus_complete',
                         'average': []
                     },
                     {
-                        'header': '% women ANC 1 received by delivery',
+                        'header': 'Pregnant women who received ANC 1 by delivery',
                         'slug': 'anc_1',
                         'average': []
                     },
                     {
-                        'header': '% women ANC 2 received by delivery',
+                        'header': 'Pregnant women who received ANC 2 by delivery',
                         'slug': 'anc_2',
                         'average': []
                     },
                     {
-                        'header': '% women ANC 3 received by delivery',
+                        'header': 'Pregnant women who received ANC 3 by delivery',
                         'slug': 'anc_3',
                         'average': []
                     },
                     {
-                        'header': '% women ANC 4 received by delivery',
+                        'header': 'Pregnant women who received ANC 4 by delivery',
                         'slug': 'anc_4',
                         'average': []
                     },
                     {
-                        'header': '% women Resting during pregnancy',
+                        'header': 'Women resting during pregnancy',
                         'slug': 'resting',
                         'average': []
                     },
                     {
-                        'header': '% eating extra meal during pregnancy',
+                        'header': 'Women eating an extra meal during pregnancy',
                         'slug': 'extra_meal',
                         'average': []
                     },
                     {
-                        'header': '% trimester 3 women Counselled on immediate EBF during home visit',
+                        'header': (
+                            "Pregnant women in 3rd trimester counselled on immediate and exclusive "
+                            "breastfeeding during home visit"
+                        ),
                         'slug': 'trimester',
                         'average': []
                     }
@@ -1763,76 +1760,71 @@ class ProgressReport(object):
                     {'header': 'Number of Households', 'slug': 'cases_household'},
                     {'header': 'Total Number of Household Members', 'slug': 'cases_person_all'},
                     {
-                        'header': 'Total Number of Members Enrolled for Services for services at AWC',
+                        'header': 'Total number of members enrolled at AWC',
                         'slug': 'cases_person'
                     },
-                    {'header': 'Percentage of Beneficiaries with Aadhar', 'slug': 'aadhar', 'format': 'percent'},
-                    {'header': 'Total Pregnant women', 'slug': 'cases_ccs_pregnant_all'},
-                    {'header': 'Total Pregnant Women Enrolled for services at AWC', 'slug': 'cases_ccs_pregnant'},
-                    {'header': 'Total Lactating women', 'slug': 'cases_ccs_lactating_all'},
+                    {'header': 'Adhaar seeded beneficiaries', 'slug': 'aadhar', 'format': 'percent'},
+                    {'header': 'Total pregnant women ', 'slug': 'cases_ccs_pregnant_all'},
+                    {'header': 'Total pregnant women enrolled for servics at AWC', 'slug': 'cases_ccs_pregnant'},
+                    {'header': 'Total lactating women', 'slug': 'cases_ccs_lactating_all'},
                     {
-                        'header': 'Total Lactating women registered for services at AWC',
+                        'header': 'Total lactating women registered for services at AWC',
                         'slug': 'cases_ccs_lactating'
                     },
-                    {'header': 'Total Children (0-6 years', 'slug': 'cases_child_health_all'},
+                    {'header': 'Total children (0-6 years)', 'slug': 'cases_child_health_all'},
                     {
-                        'header': 'Total Chldren (0-6 years) registered for service at AWC',
+                        'header': 'Total chldren (0-6 years) enrolled for ICDS services',
                         'slug': 'cases_child_health'
                     },
-                    {'header': 'Children (0 - 28 Days) Seeking Services', 'slug': 'zero'},
-                    {'header': 'Children (28 Days - 6 mo) Seeking Services', 'slug': 'one'},
-                    {'header': 'Children (6 mo - 1 year) Seeking Services', 'slug': 'two'},
-                    {'header': 'Children (1 year - 3 years) Seeking Services', 'slug': 'three'},
-                    {'header': 'Children (3 years - 6 years) Seeking Services', 'slug': 'four'},
+                    {'header': 'Children (0-28 days)  enrolled for ICDS services', 'slug': 'zero'},
+                    {'header': 'Children (28 days - 6 months)  enrolled for ICDS services', 'slug': 'one'},
+                    {'header': 'Children (6 months - 1 year)  enrolled for ICDS services', 'slug': 'two'},
+                    {'header': 'Children (1 year - 3 years)  enrolled for ICDS services', 'slug': 'three'},
+                    {'header': 'Children (3 years - 6 years)  enrolled for ICDS services', 'slug': 'four'},
                     {
                         'header': 'Adolescent girls (11-14 years)',
                         'slug': 'cases_person_adolescent_girls_11_14_all'
                     },
+                    # {
+                    #     'header': 'Adolescent girls (15-18 years)',
+                    #     'slug': 'cases_person_adolescent_girls_15_18_all'
+                    # },
                     {
-                        'header': 'Adolescent girls (15-18 years)',
-                        'slug': 'cases_person_adolescent_girls_15_18_all'
-                    },
-                    {
-                        'header': 'Adolescent girls (11-14 years) Seeking Services',
+                        'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
                         'slug': 'cases_person_adolescent_girls_11_14'
                     },
-                    {
-                        'header': 'Adolescent girls (15-18 years) Seeking Services',
-                        'slug': 'cases_person_adolescent_girls_15_18'
-                    }
+                    # {
+                    #     'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
+                    #     'slug': 'cases_person_adolescent_girls_15_18'
+                    # }
                 ]
             },
             {
                 'section_title': 'AWC Infrastructure',
                 'rows_config': [
                     {
-                        'header': '% AWCs with Clean Drinking Water',
+                        'header': 'AWCs with clean drinking water',
                         'slug': 'clean_water',
                         'average': []
                     },
                     {
-                        'header': '% AWCs with functional toilet',
+                        'header': 'AWCs with functional toilet',
                         'slug': 'functional_toilet',
                         'average': []
                     },
                     {
-                        'header': '% AWCs with Medicine Kit',
+                        'header': 'AWCs with medicine kit',
                         'slug': 'medicine_kits',
                         'average': []
                     },
                     {
-                        'header': '% AWCs with Flat Scale',
-                        'slug': 'flat_weighing_scale',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Adult Scale',
-                        'slug': 'adult_weighing_scale',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Baby Scale',
+                        'header': 'AWCs with weighing scale for infants',
                         'slug': 'baby_weighing_scale',
+                        'average': []
+                    },
+                    {
+                        'header': 'AWCs with weighing scale for mother and child',
+                        'slug': 'adult_weighing_scale',
                         'average': []
                     },
                 ]

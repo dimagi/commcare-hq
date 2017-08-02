@@ -60,7 +60,6 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children with height measured in given month: <strong>' + measured + '</strong></div>' +
             '<div>% Severely stunted: <strong>' + sever + '</strong></div>' +
@@ -160,7 +159,6 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>% children with moderate or severely stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
                 });
