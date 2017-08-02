@@ -1,7 +1,7 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,11 +10,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "% Immunization coverage (at age 1 year)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/immunization_coverage/map', label: 'Map'},
+        'chart': {route: '/immunization_coverage/chart', label: 'Chart'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -26,7 +26,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.loaded = false;
     vm.filters = [];
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -52,10 +52,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div><div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -68,7 +65,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
 
 
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        maternalChildService.getImmunizationCoverageData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -170,8 +167,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.</span>";
 
                     return tooltip_content;
                 });
@@ -185,9 +183,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('immunizationCoverage', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -195,7 +193,7 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         scope: {
             data: '=',
         },
-        controller: ChildrenInitiatedController,
+        controller: ImmunizationCoverageController,
         controllerAs: '$ctrl',
     };
 });

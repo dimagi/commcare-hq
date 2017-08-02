@@ -1,7 +1,7 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,11 +10,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "% Institutional deliveries";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/institutional_deliveries/map', label: 'Map'},
+        'chart': {route: '/institutional_deliveries/chart', label: 'Chart'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -26,7 +26,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.loaded = false;
     vm.filters = [];
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Percentage of pregant women who delivered in a public or private medical facility in the last month.',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -51,11 +51,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+        var children =row ? $filter('indiaNumbers')(row.children) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of pregnant women who delivered in the last month: <strong>' + total + '</strong></div><div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>' + children + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -68,7 +65,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
 
 
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        maternalChildService.getInstitutionalDeliveriesData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -170,8 +167,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of pregnant women who delivered in the last month: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of pregant women who delivered in a public or private medical facility in the last month.</span>";
 
                     return tooltip_content;
                 });
@@ -185,9 +183,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+InstitutionalDeliveriesController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('institutionalDeliveries', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -195,7 +193,7 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         scope: {
             data: '=',
         },
-        controller: ChildrenInitiatedController,
+        controller: InstitutionalDeliveriesController,
         controllerAs: '$ctrl',
     };
 });

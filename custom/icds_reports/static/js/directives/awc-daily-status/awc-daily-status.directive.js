@@ -1,7 +1,7 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,14 +10,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "AWC Daily Status";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/awc_daily_status/map', label: 'Map'},
+        'chart': {route: '/awc_daily_status/chart', label: 'Chart'},
     };
     vm.data = {
-        legendTitle: 'Percentage Children',
+        legendTitle: 'Percentage AWCs',
     };
     vm.chartData = null;
     vm.top_three = [];
@@ -26,7 +26,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.loaded = false;
     vm.filters = [];
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Percentage of Angwanwadi Centers that were open yesterday',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -51,11 +51,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+        var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div><div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -68,7 +65,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
 
 
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -145,12 +142,13 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
+                    return d3.time.format('%m/%d/%y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
                 },
                 axisLabelDistance: -100,
+                rotateLabels: -45,
             },
 
             yAxis: {
@@ -165,13 +163,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.</span>";
 
                     return tooltip_content;
                 });
@@ -185,9 +184,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('awcDailyStatus', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -195,7 +194,7 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         scope: {
             data: '=',
         },
-        controller: ChildrenInitiatedController,
+        controller: AWCDailyStatusController,
         controllerAs: '$ctrl',
     };
 });

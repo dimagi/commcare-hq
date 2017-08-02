@@ -1,7 +1,6 @@
-/* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,14 +9,13 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "AWC Covered";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/awcs_covered/map', label: 'Map'},
     };
     vm.data = {
-        legendTitle: 'Percentage Children',
+        legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
     vm.chartData = null;
     vm.top_three = [];
@@ -26,7 +24,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.loaded = false;
     vm.filters = [];
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Total AWCs that have launched ICDS CAS',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -50,12 +48,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+        var districts = row ? $filter('indiaNumbers')(row.districts) : 'N/A';
+        var blocks = row ? $filter('indiaNumbers')(row.blocks) : 'N/A';
+        var supervisors = row ? $filter('indiaNumbers')(row.supervisors) : 'N/A';
+        var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Number of Districts Launched: <strong>' + districts + '</strong></div><div>Number of Blocks Launched: <strong>' + blocks + '</strong></div><div>Number of Sectors Launched: <strong>' + supervisors + '</strong></div><div>Number of AWSs Launched: <strong>' + awcs + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -67,8 +64,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             vm.steps['map'].label = 'Map';
         }
 
-
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -124,70 +120,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
     };
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
-                    };
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
-                });
-                return chart;
-            },
-        },
-    };
-
     vm.showNational = function () {
         return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('awcsCovered', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -195,7 +135,7 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         scope: {
             data: '=',
         },
-        controller: ChildrenInitiatedController,
+        controller: AWCSCoveredController,
         controllerAs: '$ctrl',
     };
 });

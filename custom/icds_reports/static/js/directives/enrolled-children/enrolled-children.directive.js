@@ -1,7 +1,7 @@
-/* global d3 */
+/* global d3*/
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
+function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -10,14 +10,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "Children (0-6 years) who are enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/enrolled_children/map', label: 'Map'},
+        'chart': {route: '/enrolled_children/chart', label: 'Chart'},
     };
     vm.data = {
-        legendTitle: 'Percentage Children',
+        legendTitle: 'Number of Children',
     };
     vm.chartData = null;
     vm.top_three = [];
@@ -25,9 +25,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
+
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
     };
+
     vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
@@ -50,12 +52,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+        var valid = $filter('indiaNumbers')(row ? row.valid : 0);
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -67,8 +65,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             vm.steps['map'].label = 'Map';
         }
 
-
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
+        demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -84,7 +81,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     var init = function() {
         var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -102,14 +99,46 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         vm.loadData();
     });
 
-    vm.getDisableIndex = function () {
-        var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
-                i = value;
-            }
-        });
-        return i;
+
+    vm.chartOptions = {
+        chart: {
+            type: 'multiBarChart',
+            height: 450,
+            width: 1100,
+            margin : {
+                top: 20,
+                right: 60,
+                bottom: 60,
+                left: 80,
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            color: d3.scale.category10().range(),
+            useInteractiveGuideline: false,
+            tooltip: function (key, x) {
+                var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
+
+                var content = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(data.all) + "</strong></p>";
+                content += "<p>% of children " + x + ": <strong>" + d3.format(".2%")(data.y / data.all) + "</strong></p>";
+                return content;
+            },
+            clipVoronoi: false,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+                tickValues: function() {
+                    return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
+                },
+            },
+
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function(d){
+                    return d3.format(",")(d);
+                },
+                axisLabelDistance: 20,
+            },
+        },
     };
 
     vm.moveToLocation = function(loc, index) {
@@ -124,70 +153,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         }
     };
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
-                    };
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
-                });
-                return chart;
-            },
-        },
-    };
-
     vm.showNational = function () {
         return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -195,7 +168,7 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         scope: {
             data: '=',
         },
-        controller: ChildrenInitiatedController,
+        controller: EnrolledChildrenController,
         controllerAs: '$ctrl',
     };
 });
