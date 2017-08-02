@@ -15,7 +15,7 @@ from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGe
     ShortFormRepeaterJsonPayloadGenerator, AppStructureGenerator, UserPayloadGenerator, LocationPayloadGenerator
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import *
@@ -52,6 +52,14 @@ def log_repeater_timeout_in_datadog(domain):
 
 def log_repeater_error_in_datadog(domain, status_code, repeater_type):
     datadog_counter(REPEATER_ERROR_COUNT, tags=[
+        u'domain:{}'.format(domain),
+        u'status_code:{}'.format(status_code),
+        u'repeater_type:{}'.format(repeater_type),
+    ])
+
+
+def log_repeater_success_in_datadog(domain, status_code, repeater_type):
+    datadog_counter(REPEATER_SUCCESS_COUNT, tags=[
         u'domain:{}'.format(domain),
         u'status_code:{}'.format(status_code),
         u'repeater_type:{}'.format(repeater_type),
@@ -600,6 +608,11 @@ class RepeatRecord(Document):
         """Do something with the response if the repeater succeeds
         """
         now = datetime.utcnow()
+        log_repeater_success_in_datadog(
+            self.domain,
+            response.status_code if response else None,
+            self.repeater_type
+        )
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
