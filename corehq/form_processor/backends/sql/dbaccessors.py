@@ -586,7 +586,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL.save_new_form(form)
 
     @staticmethod
-    @transaction.atomic
     def update_form(form):
         from corehq.form_processor.change_publishers import publish_form_saved
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
