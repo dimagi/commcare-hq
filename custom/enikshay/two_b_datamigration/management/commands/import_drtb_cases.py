@@ -15,6 +15,7 @@ from django.db import models
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.utils import update_device_id
 from corehq.util.workbook_reading import open_any_workbook
@@ -446,7 +447,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     # We do this as a separate step because we don't want to generate ids if there is going to be an exception
     # raised while generating the other properties.
     update_cases_with_readable_ids(
-        commit, person_case_properties, occurrence_case_properties, episode_case_properties,
+        domain, commit, person_case_properties, occurrence_case_properties, episode_case_properties,
         secondary_owner_case_properties
     )
 
@@ -475,10 +476,10 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     ] + secondary_owner_case_structures + drug_resistance_case_structures + test_case_structures
 
 
-def update_cases_with_readable_ids(commit, person_case_properties, occurrence_case_properties,
+def update_cases_with_readable_ids(domain, commit, person_case_properties, occurrence_case_properties,
                                    episode_case_properties, secondary_owner_case_properties):
     phi_id = person_case_properties['owner_id']
-    person_id_flat = PersonIdGenerator.generate_person_id_flat(phi_id, commit)
+    person_id_flat = PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
     person_id = PersonIdGenerator.get_person_id(person_id_flat)
     occurrence_id = person_id + "O1"
     episode_id = person_id + "E1"
@@ -1637,9 +1638,12 @@ class PersonIdGenerator(object):
         return id_issuer_body
 
     @classmethod
-    def get_user(cls, phi_id):
-        # TODO: (WAITING) Figure out how to get this from related users
-        raise NotImplementedError
+    def get_user(cls, domain, phi_id):
+        users = get_users_by_location_id(domain, phi_id)
+        for user in sorted(users, lambda u: u.username):
+            if user.user_data['id_issuer_body']:
+                return user
+        raise Exception("No suitable user found at location {}".format(phi_id))
 
     @classmethod
     def id_device_body(cls, user, commit):
@@ -1651,8 +1655,8 @@ class PersonIdGenerator(object):
         return compress_nikshay_id(index + 1, 0)
 
     @classmethod
-    def generate_person_id_flat(cls, phi_id, commit):
-        user = cls.get_user(phi_id)
+    def generate_person_id_flat(cls, domain, phi_id, commit):
+        user = cls.get_user(domain, phi_id)
         return (
             cls.get_id_issuer_body(user) +
             cls.id_device_body(user, commit) +
