@@ -5,6 +5,8 @@ import traceback
 import uuid
 
 import re
+from collections import namedtuple
+
 from dateutil.parser import parse
 from django.core.management import (
     BaseCommand,
@@ -1666,6 +1668,9 @@ class PersonIdGenerator(object):
         ])
 
 
+ImportFormat = namedtuple("ImportFormat", "column_mapping constants header_rows")
+
+
 class Command(BaseCommand):
 
     MEHSANA_2017 = "mehsana2017"
@@ -1695,8 +1700,7 @@ class Command(BaseCommand):
     def handle(self, domain, excel_file_path, format, **options):
         migration_id = self.generate_id()
         self.log_meta_info(migration_id, options['commit'])
-        column_mapping = self.get_column_mapping(format)
-        city_constants = self.get_city_constants(format)
+        import_format = self.get_import_format(format)
         case_factory = CaseFactory(domain)
 
         import_log_file_name = "drtb-import-{}.csv".format(migration_id)
@@ -1725,9 +1729,10 @@ class Command(BaseCommand):
                             continue
 
                         try:
-                            column_mapping.check_for_required_fields(row)
+                            import_format.column_mapping.check_for_required_fields(row)
                             case_structures = get_case_structures_from_row(
-                                options['commit'], domain, migration_id, column_mapping, city_constants, row
+                                options['commit'], domain, migration_id, import_format.column_mapping,
+                                import_format.constants, row
                             )
                             import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
                             logger.info("Creating cases for row {}".format(i))
@@ -1748,7 +1753,7 @@ class Command(BaseCommand):
 
     def generate_id(self):
         now = datetime.datetime.now()
-        # YYYY-MM-DD-HHMMSS
+        # YYYY-MM-DD_HHMMSS
         format = "%Y-%m-%d_%H%M%S"
         return now.strftime(format)
 
@@ -1761,21 +1766,22 @@ class Command(BaseCommand):
             logger.info("This is a dry run")
 
     @classmethod
-    def get_column_mapping(cls, format):
-        if format == cls.MEHSANA_2016:
-            return Mehsana2016ColumnMapping
-        elif format == cls.MEHSANA_2017:
-            return Mehsana2017ColumnMapping
-        elif format == cls.MUMBAI:
-            return MumbaiColumnMapping
+    def get_import_format(cls, format_string):
+        if format_string == cls.MEHSANA_2016:
+            return ImportFormat(
+                Mehsana2016ColumnMapping,
+                MehsanaConstants,
+            )
+        elif format_string == cls.MEHSANA_2017:
+            return ImportFormat(
+                Mehsana2017ColumnMapping,
+                MehsanaConstants,
+            )
+        elif format_string == cls.MUMBAI:
+            return ImportFormat(
+                MumbaiColumnMapping,
+                MumbaiConstants,
+            )
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
 
-    @classmethod
-    def get_city_constants(cls, format):
-        if format in (cls.MEHSANA_2016, cls.MEHSANA_2017):
-            return MehsanaConstants
-        elif format == cls.MUMBAI:
-            return MumbaiConstants
-        else:
-            raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
