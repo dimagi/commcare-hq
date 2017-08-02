@@ -837,32 +837,10 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
         return {}
-    valid_drugs = {
-        "Levo",
-        "Ethio",
-        "Cyclo",
-        "Etham",
-        "PZA",
-        "Kana",
-        "Capr",
-        "Moxi",
-        "High dose Moxi",
-        "Clofa",
-        "Line",
-        "INH",
-        "High dose INH",
-        "Na - Pas",
-        "Oflox",
-        "Streptomycin",
-        "Clarithromycin",
-        "Rif",
-        "Amoxyclav",
-        "Amikacin",
-    }
     drugs = result.split(",")
     for drug in drugs:
         drug = drug.strip()
-        if drug not in valid_drugs:
+        if drug not in DRUG_NAME_TO_ID_MAPPING.keys():
             raise FieldValidationFailure(result, "SLPA result")
     properties = {
         "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
