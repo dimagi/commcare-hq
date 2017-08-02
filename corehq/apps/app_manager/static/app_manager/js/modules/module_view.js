@@ -113,8 +113,8 @@ $(function () {
             self.caseListForm = ko.observable(originalFormId);
             self.postFormWorkflow = ko.observable(postFormWorkflow);
             self.endOfRegistrationOptions = [
-                {value: 'case_list', label: 'Go back to case list'},
-                {value: 'default', label: 'Proceed with registered case'},
+                {value: 'case_list', label: gettext('Go back to case list')},
+                {value: 'default', label: gettext('Proceed with registered case')},
             ];
 
             self.formMissing = ko.computed(function() {
