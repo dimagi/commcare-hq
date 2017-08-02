@@ -670,7 +670,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-
 ####### Pillow Retry Queue Settings #######
 
 # Setting this to False no pillowtop errors will get processed.
