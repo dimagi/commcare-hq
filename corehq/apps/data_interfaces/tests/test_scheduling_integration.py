@@ -29,6 +29,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
+from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from datetime import datetime, date, time
 from django.db.models import Q
@@ -90,19 +91,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         for instance in run_query_across_partitioned_databases(CaseTimedScheduleInstance, Q(domain=self.domain)):
             delete_case_schedule_instance(instance)
 
-        for schedule in AlertSchedule.objects.filter(domain=self.domain):
-            for event in schedule.memoized_events:
-                event.content.delete()
-                event.delete()
-
-            schedule.delete()
-
-        for schedule in TimedSchedule.objects.filter(domain=self.domain):
-            for event in schedule.memoized_events:
-                event.content.delete()
-                event.delete()
-
-            schedule.delete()
+        delete_alert_schedules(self.domain)
+        delete_timed_schedules(self.domain)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
