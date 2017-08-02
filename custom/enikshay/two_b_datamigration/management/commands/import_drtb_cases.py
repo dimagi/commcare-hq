@@ -1349,13 +1349,14 @@ def get_secondary_owner_case_properties(domain, city_constants, district_id):
 
 
 def clean_diabetes_status(xlsx_value):
-    if xlsx_value is None:
-        return "unknown"
-    return {
-        "no": "non_diabetic",
-        "yes": "diabetic",
-        "unknown": "unknown",
-    }[xlsx_value.lower()]
+    if xlsx_value not in [
+        "non_diabetic",
+        "diabetic",
+        "unknown",
+        None
+    ]:
+        raise FieldValidationFailure(xlsx_value, "diabetes status")
+    return xlsx_value
 
 
 def clean_weight_band(value):
