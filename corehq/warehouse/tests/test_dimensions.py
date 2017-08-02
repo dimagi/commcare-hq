@@ -203,14 +203,14 @@ class TestLocationDim(BaseWarehouseTestCase):
         home_location = LocationDim.objects.filter(name='Home').first()
 
         self.assertEqual(
-            home_location.location_level_2,
+            home_location.location_level_0,
             LocationDim.objects.filter(name='Illinois').first().sql_location_id,
         )
         self.assertEqual(
             home_location.location_level_1,
             LocationDim.objects.filter(name='Naperville').first().sql_location_id,
         )
-        self.assertEqual(home_location.location_level_0, home_location.sql_location_id)
+        self.assertEqual(home_location.location_level_2, home_location.sql_location_id)
 
         self.assertEqual(home_location.level, 2)
         self.assertEqual(home_location.location_type_name, 'home')
