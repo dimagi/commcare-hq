@@ -1084,19 +1084,20 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
+        var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
+        if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "enum-image", label: gettext('Icon') + gettext(' (Preview!)')}
+                {value: "enum-image", label: gettext('Icon')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+        if (addOns.conditional_enum) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "conditional-enum", label: gettext('Conditional ID Mapping') + gettext(' (Preview!)')}
+                {value: "conditional-enum", label: gettext('Conditional ID Mapping')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
+        if (addOns.calc_xpaths) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: gettext('Calculate') + gettext(' (Preview!)')}
+                {value: "calculate", label: gettext('Calculate')}
             );
         }
 

@@ -54,7 +54,13 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div><div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.low_birth / row.in_month) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
+            '<div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
+            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -66,7 +72,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

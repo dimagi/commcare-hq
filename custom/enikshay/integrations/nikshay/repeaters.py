@@ -6,7 +6,6 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
@@ -20,8 +19,8 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+    DSTB_EPISODE_TYPE,
 )
-from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.nikshay.repeater_generator import \
     NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
     NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
@@ -66,10 +65,10 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
             except ENikshayCaseNotFound:
                 return False
-
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
+                episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
@@ -179,7 +178,9 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
-                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
+                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
+                    test_case_properties.get('rft_general') in ['diagnosis_dstb', 'diagnosis_drtb'] or
+                    test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case)
@@ -217,6 +218,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
+            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)

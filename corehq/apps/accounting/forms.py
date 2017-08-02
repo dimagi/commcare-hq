@@ -648,6 +648,10 @@ class SubscriptionForm(forms.Form):
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
             acct = BillingAccount.objects.get(id=transfer_account)
+            CreditLine.objects.filter(
+                account=self.subscription.account,  # TODO - add this constraint to postgres
+                subscription=self.subscription,
+            ).update(account=acct)
             self.subscription.account = acct
             self.subscription.save()
 

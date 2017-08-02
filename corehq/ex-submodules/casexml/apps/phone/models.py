@@ -255,6 +255,7 @@ class SyncLogAssertionError(AssertionError):
 
 LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
+LOG_FORMAT_LIVEQUERY = 'livequery'
 
 
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
@@ -1160,6 +1161,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         Migrate from the old SyncLog format to this one.
         """
+        if other_sync_log.log_format == LOG_FORMAT_LIVEQUERY:
+            raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+                other_sync_log.log_format, LOG_FORMAT_SIMPLIFIED
+            ))
         if isinstance(other_sync_log, SyncLog):
             previous_log_footprint = set(other_sync_log.get_footprint_of_cases_on_phone())
 
@@ -1233,6 +1238,7 @@ def get_sync_log_class_by_format(format):
     return {
         LOG_FORMAT_LEGACY: SyncLog,
         LOG_FORMAT_SIMPLIFIED: SimplifiedSyncLog,
+        LOG_FORMAT_LIVEQUERY: SimplifiedSyncLog,
     }.get(format, SyncLog)
 
 

@@ -15,7 +15,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -33,8 +33,9 @@ from custom.enikshay.const import (
 from corehq.apps.users.models import CommCareUser
 
 
-def get_person_case_structure(case_id, user_id, extra_update=None):
+def get_person_case_structure(case_id, user_id, extra_update=None, owner_id=None):
     extra_update = extra_update or {}
+    owner_id = owner_id or uuid.uuid4().hex
     update = {
         'name': u"Peregrine เՇร ค Շгคק",
         PERSON_FIRST_NAME: u"Peregrine",
@@ -58,7 +59,7 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
             "case_type": "person",
             "user_id": user_id,
             "create": True,
-            "owner_id": uuid.uuid4().hex,
+            "owner_id": owner_id,
             "update": update
         },
     )
@@ -237,6 +238,26 @@ def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
             CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
+def get_trail_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_TRAIL,
+            "create": True,
+            "update": extra_update,
+        },
+        # Prior to 2017-08-01, the parent is a person or referral case
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='parent',
+            relationship=CASE_INDEX_CHILD,
             related_type='occurrence',
         )],
         walk_related=False,
@@ -457,6 +478,7 @@ class ENikshayLocationStructureMixin(object):
         self.pcp.metadata = {
             'nikshay_code': '1234567',
             'is_test': 'no',
+            'nikshay_tu_id': '1',
         }
         self.pcp.save()
 

@@ -21,7 +21,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,281 +29,170 @@
+@@ -25,277 +29,165 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -58,11 +58,13 @@
              </a>
 -        </li>
 +          </h2>
++          {% if not intro_only %}
 +          <div id="js-publish-status"
 +               class="appnav-name-publish"
 +               style="display: none;">
 +            {% trans "Updates Available to Publish" %}
 +          </div>
++          {% endif %}
 +      </div>
  
 -        {% if show_live_preview and can_preview_form %}
@@ -226,7 +228,7 @@
 -                                      method="post" class="hide">{% csrf_token %}
 -                                    <input type="hidden" name="form_type">
 -                                </form>
--                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+-                                {% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 -                                    {% if show_shadow_forms and module.doc_type == "AdvancedModule" %}
 -                                        <li class="sort-disabled dropdown">
 -                                            <a href="#" data-toggle="dropdown">
@@ -263,7 +265,7 @@
 -                          method="post" class="hide">{% csrf_token %}
 -                    <input id="new-module-type" type="hidden" name="module_type" />
 -                </form>
--                {% if show_care_plan or show_advanced or show_report_modules or show_shadow_modules %}
+-                {% if show_advanced or show_report_modules or show_shadow_modules %}
 -                    <li class="sort-disabled dropdown">
 -                        <a href="#" data-toggle="dropdown">
 -                            <i class="new-module-icon fa fa-plus icon-blue"></i>
@@ -271,9 +273,6 @@
 -                        </a>
 -                        <ul class="dropdown-menu" role="menu">
 -                            <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
--                            {% if show_care_plan %}
--                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
--                            {% endif %}
 -                            {% if show_advanced %}
 -                            <li>
 -                                <a href="#" class="new-module" data-type="advanced">
@@ -297,7 +296,6 @@
 -                            {% endif %}
 -                        </ul>
 -                    </li>
--                    {% include "app_manager/v1/partials/new_careplan_module.html" %}
 -                {% else %}
 -                <li class="sort-disabled">
 -                    <a href="#" class="new-module" data-type="case">
@@ -344,6 +342,8 @@
      {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
      {% initial_page_data 'app_subset' app_subset %}
      {% initial_page_data 'formdesigner' formdesigner %}
++    {% initial_page_data 'add_ons' add_ons %}
++    {% initial_page_data 'add_ons_layout' add_ons_layout %}
 +    {% initial_page_data 'current_app_version_url' current_app_version_url %}
 +    {% registerurl "new_form" domain app.id "---" %}
 +    {% registerurl "toggle_app_manager_v2" %}
@@ -388,15 +388,6 @@
 +            <button type="button" class="popover-additem-option new-module" data-type="shadow">
 +              <i class="fa fa-moon-o"></i> {% trans "Shadow Menu" %}
 +              <p>{% blocktrans %}Mimic another menu.{% endblocktrans %}</p>
-+            </button>
-+          </div>
-+        {% endif %}
-+        {% if show_care_plan %}
-+          <div class="pull-left">
-+            <button type="button" class="popover-additem-option new-module"
-+                    data-toggle="modal" data-stopsubmit="yes" href="#careplan-module-modal">
-+              <i class="fa fa-clipboard"></i> {% trans "Care Plan" %}
-+              <p>{% blocktrans %}Tasks and goals.{% endblocktrans %}</p>
 +            </button>
 +          </div>
 +        {% endif %}

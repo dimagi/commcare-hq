@@ -31,6 +31,8 @@ class ENikshayRepeaterFilter(RepeaterFilter):
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     name = 'eNikshay Forwarder Report'
+    base_template = 'reports/base_template.html'
+    asynchronous = True
     section_name = 'Custom Reports'
     slug = 'enikshay_repeater_report'
     dispatcher = CustomProjectReportDispatcher
@@ -56,16 +58,13 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Attempts')),
-            DataTablesColumn(_('Payload')),
         ]
+        if not self.is_rendered_as_email:
+            columns.append(DataTablesColumn(_('Payload')))
 
         return DataTablesHeader(*columns)
 
     def _make_row(self, record):
-        try:
-            payload = record.get_payload()
-        except Exception as error:
-            payload = u"Error: {}".format(error)
         attempt_messages = [
             escape("{date}: {message}".format(
                 date=self._format_date(attempt.datetime),
@@ -78,8 +77,13 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             ",<br />".join(attempt_messages),
-            payload,
         ]
+        if not self.is_rendered_as_email:
+            try:
+                payload = record.get_payload()
+            except Exception as error:
+                payload = u"Error: {}".format(error)
+            row.append(payload)
         return row
 
     def _get_person_id_link(self, record):

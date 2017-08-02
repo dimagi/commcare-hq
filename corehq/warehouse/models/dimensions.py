@@ -186,6 +186,7 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
 
     Grain: user_id, location_id
     '''
+    # TODO: Write Update SQL Query
     slug = USER_LOCATION_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)

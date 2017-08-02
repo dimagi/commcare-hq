@@ -30,8 +30,8 @@
             </div>
         </div>
     </div>
-    <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.message" style="margin-top: 30px;">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
+        <div class="alert alert-info" ng-show="$ctrl.message && !$ctrl.myPromise" style="margin-top: 30px;">
             <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
         </div>
         <div ng-show="$ctrl.data">
@@ -46,7 +46,6 @@
                 <div class="row no-margin">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
-{#                    <indie-map legend-title="Percentage Children" data="$ctrl.data.map.data" bubbles="$ctrl.data.map.bubbles"></indie-map>#}
                 </div>
                 <div class="row no-margin">
                     <h2 class="center">PSE Photo Submissions</h2>
@@ -64,7 +63,7 @@
                 <kpi data="$ctrl.data.kpi"></kpi>
             </div>
             <div class="row" ng-show="$ctrl.step === 'demographics'">
-                <div class="row no-margin black">
+                <div class="row no-margin black break">
                     <h2 class="center">{$ $ctrl.data.chart[0].key $}</h2>
                     <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
                 </div>
@@ -92,10 +91,10 @@
                     </thead>
                     <tbody>
                         <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
-                            <td><span class="pointer" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.last_month].case_id)">{$ row[$ctrl.data.last_month].person_name $}</span></td>
-                            <td>{$ row[$ctrl.data.last_month].dob $}</td>
-                            <td>{$ row[$ctrl.data.last_month].age $}</td>
-                            <td>{$ row[$ctrl.data.last_month].fully_immunized_date $}</td>
+                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.month_with_data].case_id)"><span>{$ row[$ctrl.data.month_with_data].person_name $}</span></td>
+                            <td>{$ row[$ctrl.data.month_with_data].dob $}</td>
+                            <td>{$ row[$ctrl.data.month_with_data].age $}</td>
+                            <td>{$ row[$ctrl.data.month_with_data].fully_immunized_date $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
                                 <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
                                     {$ row[month].nutrition_status $}

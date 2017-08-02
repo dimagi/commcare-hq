@@ -39,6 +39,14 @@ def get_latest_released_app_doc(domain, app_id):
     return app['doc'] if app else None
 
 
+def get_latest_released_app(domain, app_id):
+    app = get_latest_released_app_doc(domain, app_id)
+    if app:
+        return wrap_app(app)
+
+    return None
+
+
 def _get_latest_build_view(domain, app_id, include_docs):
     from .models import Application
     return Application.get_db().view(

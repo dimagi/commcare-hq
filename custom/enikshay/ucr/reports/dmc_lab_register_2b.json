@@ -1,0 +1,499 @@
+{
+    "domains": [
+        "enikshay",
+        "enikshay-reports-qa"
+    ],
+    "server_environment": [
+        "softlayer"
+    ],
+    "data_source_table": "test_2b",
+    "report_id": "dmc_lab_register_2b",
+    "config": {
+        "description": "",
+        "title": "DMC Lab Register (2b)",
+        "sort_expression": [],
+        "visible": true,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Test Result Update",
+                "field": "date_reported",
+                "type": "date",
+                "slug": "date_reported"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "testing_facility_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "order_by_hierarchy": true,
+                    "show_full_path": true
+                },
+                "display": "Location"
+            },
+            {
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
+            },
+            {
+                "pre_value": 1,
+                "datatype": "integer",
+                "display": null,
+                "field": "has_date_reported",
+                "type": "pre",
+                "slug": "date_reported_pre"
+            },
+            {
+                "pre_value": 1,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_microscopy",
+                "type": "pre",
+                "slug": "is_microscopy"
+            }
+        ],
+        "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "aggregation": "simple",
+                "column_id": "lab_serial_number",
+                "field": "lab_serial_number",
+                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lab serial Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Testing Facility Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "aggregation": "simple",
+                "column_id": "sample_receipt_date",
+                "field": "sample_receipt_date",
+                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of collection of first specimen"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Name in full"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_sex",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Sex (M/F/TG)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_age",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Age"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_current_address",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Complete Address"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "refugee": "Refugee",
+                        "tribal_population": "Tribal population",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "other": "Other",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "prison_inmate": "Prison inmate"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "key_populations",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Key population"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "referring_facility_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Name of Referring health facility"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "tu_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "TU Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "district_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "District Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "state_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "State Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "phi": "PHI",
+                        "dmc": "DMC",
+                        "art": "ART",
+                        "private_others": "Private Others",
+                        "drtb_centre": "DRTB Centre",
+                        "medical_college": "Medical College",
+                        "ictc": "ICTC"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "referring_facility_type_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Type of Referring health facility"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "presumptive_tb": "Presumptive TB",
+                        "repeat_exam_for_diagnosis": "RE",
+                        "presumptive_ntm": "Presumptive NTM",
+                        "private_referral": "Private Referral"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "diagnostic_test_reason",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Presumptive TB /RE/  Presumptive NTM"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "predominant_system",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Predominant symptom"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "predominant_system_duration",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Predominant duration"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "yes": "Yes",
+                        "no": "No"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "history_of_att",
+                "calculate_total": false,
+                "type": "field",
+                "display": "History of > 1 month ATT (Yes/No)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "follow_up_nikshay_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Nikshay ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "follow_up_regimen",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up regimen - New (N) / Previously treated (PT)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "month_display"
+                },
+                "aggregation": "simple",
+                "field": "follow_up_treatment_initiation_date_month",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up month"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "other": "Other",
+                        "sputum": "Sputum"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "specimen_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Type of specimen"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "blood_stained": "Blood stained",
+                        "saliva": "Saliva",
+                        "mucupurulent": "Mucopurulent"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "sputum_visual_appearance",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Visual appearance - Test Results"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "negative_not_seen": "Negative / Not seen",
+                        "2plus": "2+",
+                        "3plus": "3+"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "sample_a_result",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Results - Sample A"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "negative_not_seen": "Negative / Not seen",
+                        "2plus": "2+",
+                        "3plus": "3+"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "sample_b_result",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Results - Sample B"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "date_reported",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of result"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "reactive": "Reactive",
+                        "non_reactive": "Non-Reactive",
+                        "unknown": "Unknown"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "hiv_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "HIV Status (Reactive/ Non reactive/ Unknown)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "unknown": "Unknown",
+                        "non_diabetic": "Non-Diabetic",
+                        "diabetic": "Diabetic"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "diabetes_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "rif_resistance_result",
+                "calculate_total": false,
+                "type": "field",
+                "display": "DST result"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "nikshay_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Nikshay ID (notification no.)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_initiation_details",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Initiation details/Referral for treatment"
+            }
+        ]
+    }
+}

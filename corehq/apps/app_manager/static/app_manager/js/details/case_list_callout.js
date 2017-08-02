@@ -1,4 +1,3 @@
-/* globals alert_user */
 hqDefine("app_manager/js/details/case_list_callout.js", function() {
     var caseListLookupViewModel = function($el, state, lang, saveButton) {
         'use strict';
@@ -142,6 +141,7 @@ hqDefine("app_manager/js/details/case_list_callout.js", function() {
             }
 
             if (errors.length) {
+                var alert_user = hqImport("style/js/alert_user.js").alert_user;
                 _.each(errors, function(error){
                     alert_user(error, "danger");
                 });

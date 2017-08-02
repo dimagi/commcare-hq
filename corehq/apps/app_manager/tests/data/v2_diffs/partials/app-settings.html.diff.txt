@@ -125,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -133,158 +134,155 @@
+@@ -133,158 +134,175 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -163,30 +163,6 @@
 -                <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
 -                <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
 -                <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
--            </div>
--        </div>
--    </aside>
--</script>
--
--<inline-edit params="
--    value: '{{ app.name|escapejs }}',
--    readOnlyClass: 'h3',
--    url: '{% url "edit_app_attr" domain app.id 'name' %}',
--    placeholder: '{% trans "Untitled App"|escapejs %}',
--    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
--    rows: 1,
--    saveValueName: 'name',
--"></inline-edit>
--<br />
--<inline-edit params="
--    value: '{{ app.short_comment|escapejs }}',
--    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
--    placeholder: '{% trans "Enter app description here"|escapejs %}',
--    saveValueName: 'comment',
--    cols: 50,
--"></inline-edit>
--
--<div class="tab-pane" id="commcare-settings">
 +    <div id="custom-keys-example" style="display: none;">
 +      <h6>Example:</h6>
 +      <div class="row">
@@ -205,46 +181,34 @@
 +  </aside>
 +</script>
 +
++{% if request|ui_notify_enabled:"APP_BUILDER_ADD_ONS" %}
++<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-no-arrow fade in"
++     data-slug="{{ "APP_BUILDER_ADD_ONS"|ui_notify_slug }}"
++     role="alert">
++    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
++        <span aria-hidden="true">&times;</span>
++    </button>
++    <p class="lead">{% trans 'New Add-ons tab' %}</p>
++    <p>
++        Intermediate functionality, such as child cases, can now be enabled or disabled using the
++        <strong>Add-Ons</strong> tab below. Several feature previews, such as icons in the case list,
++        are also now accessible in this tab.
++    </p>
++</div>
++{% endif %}
++
 +<div class="tabbable">
 +    <ul class="nav nav-tabs">
-     {% if app.get_doc_type == 'LinkedApplication' %}
--        <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
--        <a class="btn btn-primary"
--            href="{% url 'pull_master_app' domain app.id %}">
--            {% trans 'Update from Master App' %}
--        </a>
--
++    {% if app.get_doc_type == 'LinkedApplication' %}
 +        <li class="active"><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
 +        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-     {% else %}
--    <br />
--    <form class="form-horizontal">
--        <div class="clearfix">
--            <div class="pull-right">
--                <div id="settings-save-btn"></div>
--            </div>
--        </div>
--        <div data-bind="foreach: sections">
--            <fieldset data-bind="visible: notEmpty">
--                <legend>
--                    <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
--                        <i class="fa fa-angle-double-down"></i>
--                        <span data-bind="text: title"></span>
--                    </a>
--                </legend>
--                <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
--                    <div class="form-group" data-bind="
--                        visible: visible,
--                        css: {error: hasError()}
--                    ">
--                        <div class="col-sm-2 control-label">
--                            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
--                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
++    {% else %}
 +        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
 +        {% if app.get_doc_type == 'Application' %}
 +            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
 +        {% endif %}
 +        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++        <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
 +        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
 +    {% endif %}
 +    </ul>
@@ -269,12 +233,65 @@
 +                    <button class="btn btn-default"
 +                            data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
 +                </div>
-+            </div>
+             </div>
+-        </div>
+-    </aside>
+-</script>
+-
+-<inline-edit params="
+-    value: '{{ app.name|escapejs }}',
+-    readOnlyClass: 'h3',
+-    url: '{% url "edit_app_attr" domain app.id 'name' %}',
+-    placeholder: '{% trans "Untitled App"|escapejs %}',
+-    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
+-    rows: 1,
+-    saveValueName: 'name',
+-"></inline-edit>
+-<br />
+-<inline-edit params="
+-    value: '{{ app.short_comment|escapejs }}',
+-    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+-    placeholder: '{% trans "Enter app description here"|escapejs %}',
+-    saveValueName: 'comment',
+-    cols: 50,
+-"></inline-edit>
+-
+-<div class="tab-pane" id="commcare-settings">
+-    {% if app.get_doc_type == 'LinkedApplication' %}
+-        <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+-        <a class="btn btn-primary"
+-            href="{% url 'pull_master_app' domain app.id %}">
+-            {% trans 'Update from Master App' %}
+-        </a>
+-
+-    {% else %}
+-    <br />
+-    <form class="form-horizontal">
+-        <div class="clearfix">
+-            <div class="pull-right">
+-                <div id="settings-save-btn"></div>
 +        {% endif %}
 +        {% if app.get_doc_type != 'LinkedApplication' %}
 +            <div class="tab-pane active" id="languages">
 +                {% include 'app_manager/v2/languages.html' %}
-+            </div>
+             </div>
+-        </div>
+-        <div data-bind="foreach: sections">
+-            <fieldset data-bind="visible: notEmpty">
+-                <legend>
+-                    <a data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}">
+-                        <i class="fa fa-angle-double-down"></i>
+-                        <span data-bind="text: title"></span>
+-                    </a>
+-                </legend>
+-                <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
+-                    <div class="form-group" data-bind="
+-                        visible: visible,
+-                        css: {error: hasError()}
+-                    ">
+-                        <div class="col-sm-2 control-label">
+-                            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
+-                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
 +        {% endif %}
 +        <div class="tab-pane" id="actions">
 +            {% if app.get_doc_type != 'LinkedApplication' %}
@@ -391,11 +408,6 @@
 -                    <i class="fa fa-plus"></i>
 -                    {% trans "Add Custom Property" %}
 -                </button>
--            </div>
--        </fieldset>
--        {% endif %}
--    </form>
--    {% endif %}
 +                        </form>
 +                    </div>
 +                {% endif %}
@@ -411,7 +423,14 @@
 +                        </button>
 +                    </div>
 +                </form>
-+            </div>
+             </div>
+-        </fieldset>
+-        {% endif %}
+-    </form>
+-    {% endif %}
++        </div>
++        <div class="tab-pane" id="add-ons">
++            {% include 'app_manager/v2/partials/add_ons.html' %}
 +        </div>
 +        <div class="tab-pane" id="commcare-settings">
 +            {% include 'app_manager/v2/partials/commcare_settings.html' %}
