@@ -277,10 +277,12 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     response = restore_config.get_response()
     timing = restore_config.timing_context
     if timing.duration > 20 or response.status_code == 412:
-        sync_log_id = restore_config.restore_state.current_sync_log._id
+        sync_log_id = None
+        if restore_config.restore_state.current_sync_log:
+            sync_log_id = restore_config.restore_state.current_sync_log._id
         log = logging.getLogger(__name__)
         log.info("restore %s: domain=%s status=%s duration=%.3f",
-            sync_log_id, domain, response.status_code, timing.duration)
+                 sync_log_id, domain, response.status_code, timing.duration)
     return response, timing
 
 
