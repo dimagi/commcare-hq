@@ -60,7 +60,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
             '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
@@ -160,7 +159,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM) or Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with weight-for-height below -2 standard deviations (moderate acute malnutrition) or -3 standard deviations (severe acute malnutrition) of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
                 });

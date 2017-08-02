@@ -581,6 +581,15 @@ def get_cas_reach_data(yesterday, config):
         'records': [
             [
                 {
+                    'label': _('AWCs covered'),
+                    'help_text': _('Total AWCs that have launched ICDS CAS'),
+                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
+                    'value': get_value(awc_this_month_data, 'awcs'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'month'
+                },
+                {
                     'label': _('Number of AWCs Open yesterday'),
                     'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                                     "by the AWW or the AWW helper")),
@@ -589,35 +598,6 @@ def get_cas_reach_data(yesterday, config):
                     'all': get_value(daily_yesterday, 'awcs'),
                     'format': 'div',
                     'frequency': 'day'
-                },
-                {
-                    'label': _('States/UTs covered'),
-                    'help_text': _('Total States that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'states'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month'
-                }
-            ],
-            [
-                {
-                    'label': _('Blocks covered'),
-                    'help_text': _('Total Blocks that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'blocks'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('Districts covered'),
-                    'help_text': _('Total Districts that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'districts'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month'
                 }
             ],
             [
@@ -631,10 +611,32 @@ def get_cas_reach_data(yesterday, config):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('AWCs covered'),
-                    'help_text': _('Total AWCs that have launched ICDS CAS'),
-                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
-                    'value': get_value(awc_this_month_data, 'awcs'),
+                    'label': _('Blocks covered'),
+                    'help_text': _('Total Blocks that have launched ICDS CAS'),
+                    'percent': None,
+                    'value': get_value(awc_this_month_data, 'blocks'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'month'
+                },
+            ],
+            [
+
+                {
+                    'label': _('Districts covered'),
+                    'help_text': _('Total Districts that have launched ICDS CAS'),
+                    'percent': None,
+                    'value': get_value(awc_this_month_data, 'districts'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'month'
+                }
+                ,
+                {
+                    'label': _('States/UTs covered'),
+                    'help_text': _('Total States that have launched ICDS CAS'),
+                    'percent': None,
+                    'value': get_value(awc_this_month_data, 'states'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month'
@@ -1019,14 +1021,14 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         elif 20 <= value < 35:
             row_values.update({'fillKey': '20%-34%'})
         elif value >= 35:
-            row_values.update({'fillKey': '35%-100%'})
+            row_values.update({'fillKey': '>35%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-19%': GREEN})
     fills.update({'20%-34%': YELLOW})
-    fills.update({'35%-100%': RED})
+    fills.update({'>35%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -1088,12 +1090,9 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        underweight = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
+        underweight = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
 
-        if location in best_worst:
-            best_worst[location].append(underweight)
-        else:
-            best_worst[location] = [underweight]
+        best_worst[location] = underweight
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -1103,7 +1102,7 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -1194,11 +1193,11 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
 
-        if value <= 20.0:
+        if value < 20.0:
             loc_data['green'] += 1
-        elif 20.0 <= value <= 35.0:
+        elif 20.0 <= value < 35.0:
             loc_data['orange'] += 1
-        elif value > 35.0:
+        elif value >= 35.0:
             loc_data['red'] += 1
 
         tmp_name = name
@@ -1212,21 +1211,21 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-20%",
+                "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
                 "values": chart_data['orange'],
-                "key": "11%-35%",
+                "key": "20%-34%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "36%-100%",
+                "key": ">35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -1436,25 +1435,6 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Immunization coverage (at age 1 year)'),
-                    'help_text': _((
-                        "Percentage of children 1 year+ who have recieved complete immunization as per "
-                        "National Immunization Schedule of India required by age 1"
-                    )),
-                    'percent': percent_diff(
-                        'immunized',
-                        this_month_data,
-                        prev_month_data,
-                        'eligible'
-                    ),
-                    'value': get_value(this_month_data, 'immunized'),
-                    'all': get_value(this_month_data, 'eligible'),
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-            ],
-            [
-                {
                     'label': _('% Wasting (weight-for-height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
@@ -1473,6 +1453,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
+            ],
+            [
                 {
                     'label': _('% Stunting (height-for-age)'),
                     'help_text': _((
@@ -1492,8 +1474,6 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
-            ],
-            [
                 {
                     'label': _('% Newborns with Low Birth Weight'),
                     'help_text': None,
@@ -1508,6 +1488,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
+            ],
+            [
                 {
                     'label': _('% Early Initiation of Breastfeeding'),
                     'help_text': None,
@@ -1522,8 +1504,6 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
-            ],
-            [
                 {
                     'label': _('% Exclusive breastfeeding'),
                     'help_text': None,
@@ -1538,6 +1518,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
+            ],
+            [
                 {
                     'label': _('% Children initiated appropriate complementary feeding'),
                     'help_text': None,
@@ -1549,6 +1531,23 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'month_cf'),
                     'all': get_value(this_month_data, 'cf'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('% Immunization coverage (at age 1 year)'),
+                    'help_text': _((
+                        "Percentage of children 1 year+ who have recieved complete immunization as per "
+                        "National Immunization Schedule of India required by age 1"
+                    )),
+                    'percent': percent_diff(
+                        'immunized',
+                        this_month_data,
+                        prev_month_data,
+                        'eligible'
+                    ),
+                    'value': get_value(this_month_data, 'immunized'),
+                    'all': get_value(this_month_data, 'eligible'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -1808,14 +1807,14 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         elif 5 <= value <= 7:
             row_values.update({'fillKey': '5%-7%'})
         elif value > 7:
-            row_values.update({'fillKey': '8%-100%'})
+            row_values.update({'fillKey': '>8%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-4%': GREEN})
     fills.update({'5%-7%': YELLOW})
-    fills.update({'8%-100%%': RED})
+    fills.update({'>8%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -1877,10 +1876,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
         underweight = (moderate or 0) + (severe or 0)
 
-        if location in best_worst:
-            best_worst[location].append(underweight / float(valid or 1))
-        else:
-            best_worst[location] = [underweight / float(valid or 1)]
+        best_worst[location] = underweight * 100 / float(valid or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -1888,7 +1884,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -1998,7 +1994,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
             },
             {
                 "values": chart_data['red'],
-                "key": "8%-100%",
+                "key": ">8%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2048,14 +2044,14 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         elif 25 <= value < 38:
             row_values.update({'fillKey': '25%-37%'})
         elif value >= 38:
-            row_values.update({'fillKey': '38%-100%'})
+            row_values.update({'fillKey': '>38%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': GREEN})
     fills.update({'25%-37%': YELLOW})
-    fills.update({'38%-100%': RED})
+    fills.update({'>38%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2116,10 +2112,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
 
         underweight = (moderate or 0) + (severe or 0)
 
-        if location in best_worst:
-            best_worst[location].append(underweight / (valid or 1))
-        else:
-            best_worst[location] = [underweight / (valid or 1)]
+        best_worst[location] = underweight * 100 / float(valid or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -2127,7 +2120,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2223,21 +2216,21 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-25%",
+                "key": "0%-24%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-38%",
+                "key": "25%-37%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "38%-100%",
+                "key": ">38%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2278,14 +2271,14 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
         elif 20 <= value < 60:
             row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
+            row_values.update({'fillKey': '>60%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-19%': GREEN})
     fills.update({'20%-59%': YELLOW})
-    fills.update({'60%-100%': RED})
+    fills.update({'>60%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2344,12 +2337,9 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
         location = row['%s_name' % loc_level]
         low_birth = row['low_birth']
 
-        value = (low_birth or 0) * 100 / (in_month or 1)
+        value = (low_birth or 0) * 100 / float(in_month or 1)
 
-        if location in best_worst:
-            best_worst[location].append(value)
-        else:
-            best_worst[location] = [value]
+        best_worst[location] = value
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -2357,7 +2347,7 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
         data['red'][date_in_miliseconds]['y'] += low_birth
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
+        [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2465,21 +2455,21 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-20%",
+                "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-60%",
+                "key": "20%-59%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "60%-100%",
+                "key": ">60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2520,14 +2510,14 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
         elif 20 < value < 60:
             row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
+            row_values.update({'fillKey': '>60%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-19%': RED})
     fills.update({'20%-59%': YELLOW})
-    fills.update({'60%-100%': GREEN})
+    fills.update({'>60%': GREEN})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2586,12 +2576,9 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
 
         birth = row['birth']
 
-        value = (birth or 0) * 100 / (in_month or 1)
+        value = (birth or 0) * 100 / float(in_month or 1)
 
-        if location in best_worst:
-            best_worst[location].append(value)
-        else:
-            best_worst[location] = [value]
+        best_worst[location] = value
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -2599,7 +2586,7 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
         data['blue'][date_in_miliseconds]['y'] += in_month
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
+        [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2705,26 +2692,27 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
 
     return {
         "chart_data": [
+
             {
-                "values": chart_data['green'],
-                "key": "60%-100%",
+                "values": chart_data['red'],
+                "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-60%",
+                "key": "20%-59%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
-                "values": chart_data['red'],
-                "key": "0%-20%",
+                "values": chart_data['green'],
+                "key": ">60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": GREEN
             }
         ]
     }
@@ -2762,14 +2750,14 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
         elif 20 <= value < 60:
             row_values.update({'fillKey': '20%-59%'})
         elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
+            row_values.update({'fillKey': '>60%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-19%': RED})
     fills.update({'20%-59%': YELLOW})
-    fills.update({'60%-100%': GREEN})
+    fills.update({'>60%': GREEN})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2827,10 +2815,7 @@ def get_exclusive_breastfeeding_data_chart(config, loc_level):
         location = row['%s_name' % loc_level]
         valid = row['eligible']
 
-        if location in best_worst:
-            best_worst[location].append(in_month / (valid or 1))
-        else:
-            best_worst[location] = [in_month / (valid or 1)]
+        best_worst[location] = in_month * 100 / float(valid or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -2838,7 +2823,7 @@ def get_exclusive_breastfeeding_data_chart(config, loc_level):
         data['blue'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2945,21 +2930,21 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-20%",
+                "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-60%",
+                "key": "20%-59%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "60%-100%",
+                "key": ">60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN

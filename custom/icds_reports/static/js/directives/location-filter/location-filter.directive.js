@@ -11,7 +11,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
-            return locationType.name;
+            return locationType.name.charAt(0).toUpperCase() + locationType.name.slice(1);
         }).join(', ');
     };
 
