@@ -108,6 +108,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
 
     location_id = models.CharField(max_length=100)
     sql_location_id = models.IntegerField()
+    sql_parent_location_id = models.IntegerField(null=True)
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True)
@@ -128,7 +129,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     # location_level_0 = Montreal.sql_location_id
     # location_level_1 = Quebec.sql_location_id
     # location_level_2 = Canada.sql_location_id
-    location_level_0 = models.IntegerField(db_index=True)
+    location_level_0 = models.IntegerField(db_index=True, null=True)
     location_level_1 = models.IntegerField(db_index=True, null=True)
     location_level_2 = models.IntegerField(db_index=True, null=True)
     location_level_3 = models.IntegerField(db_index=True, null=True)
