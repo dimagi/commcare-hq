@@ -2,38 +2,38 @@ from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.models import (
     FeatureType,
-    SoftwarePlanEdition as Edition,
+    SoftwarePlanEdition
 )
 
 DESC_BY_EDITION = {
-    Edition.COMMUNITY: {
+    SoftwarePlanEdition.COMMUNITY: {
         'name': _("Community"),
         'description': _("For projects in a pilot phase with a small group (up to %d) of "
                          "mobile users that only need very basic CommCare features."),
     },
-    Edition.STANDARD: {
+    SoftwarePlanEdition.STANDARD: {
         'name': _("Standard"),
         'description': _("For projects with a medium set (up to %d) of mobile users that want to "
                          "build in limited SMS workflows and have increased data security needs."),
     },
-    Edition.PRO: {
+    SoftwarePlanEdition.PRO: {
         'name': _("Pro"),
         'description': _("For projects with a large group (up to %d) of mobile users that want to "
                          "build in comprehensive SMS workflows and have increased reporting needs."),
     },
-    Edition.ADVANCED: {
+    SoftwarePlanEdition.ADVANCED: {
         'name': _("Advanced"),
         'description': _("For projects scaling to an even larger group (up to %d) of mobile users "
                          "that want the full CommCare feature set and dedicated support from Dimagi "
                          "staff.")
     },
-    Edition.ENTERPRISE: {
+    SoftwarePlanEdition.ENTERPRISE: {
         'name': _("Enterprise"),
         'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
                          "the full CommCare feature set. Your organization will receive discounted "
                          "pricing and dedicated enterprise-level support from Dimagi.")
     },
-    Edition.RESELLER: {
+    SoftwarePlanEdition.RESELLER: {
         'name': _("Reseller"),
         'description': _("Reseller")
     },
