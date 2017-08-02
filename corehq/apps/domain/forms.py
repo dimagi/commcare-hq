@@ -61,6 +61,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
+    get_account_name_from_default_name,
     get_privileges,
     log_accounting_error,
 )
@@ -1798,7 +1799,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             account = matching_accounts[0]
         else:
             account = BillingAccount(
-                name=self.account_name,
+                name=get_account_name_from_default_name(self.account_name),
                 created_by=self.web_user,
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
