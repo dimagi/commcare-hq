@@ -204,6 +204,28 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    # keep track to avoid refetching to check whether value is updated
+    __original_form_id = None
+
+    def __init__(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        self.__original_form_id = self.form_id
+
+    def form_id_updated(self):
+        return self.__original_form_id != self.form_id
+
+    @property
+    @memoized
+    def original_attachments(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.__original_form_id)
+
+    @property
+    @memoized
+    def original_operations(self):
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form_operations(self.__original_form_id)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
