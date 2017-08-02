@@ -21,7 +21,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
         /*
           in singleAppMode we want to avoid calling the server when we switch users because
           1. it is unnecessary, since there's only one app regardless of restoreAs user
-          2. the backend ?options=apps endpoint is not defined for single-app pages
+          2. the backend ?option=apps endpoint is not defined for single-app pages
        */
         return predefinedAppsPromise;
     }
