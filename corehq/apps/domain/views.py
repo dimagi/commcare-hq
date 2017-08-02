@@ -642,10 +642,6 @@ class DomainAccountingSettings(BaseProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    def product(self):
-        return SoftwareProductType.COMMCARE
-
-    @property
     @memoized
     def account(self):
         return BillingAccount.get_account_by_domain(self.domain)
