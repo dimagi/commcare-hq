@@ -1,13 +1,15 @@
+import uuid
 from django.test import TestCase
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import TimedSchedule, SMSContent
+from corehq.messaging.scheduling.models import TimedSchedule, SMSContent, Content
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from datetime import time
@@ -136,3 +138,25 @@ class SchedulingRecipientTest(TestCase):
             self.user_ids(instance.expand_recipients()),
             [self.mobile_user.get_id]
         )
+
+    @run_with_all_backends
+    def test_user_case_phone_number(self):
+        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        self.addCleanup(user.delete)
+
+        self.assertIsNone(user.get_usercase())
+        self.assertIsNone(Content.get_one_way_phone_number(user))
+
+        create_case_kwargs = {
+            'external_id': user.get_id,
+            'update': {'hq_user_id': user.get_id},
+        }
+        with create_case(self.domain, 'commcare-user', **create_case_kwargs) as case:
+            self.assertIsNotNone(user.get_usercase())
+            self.assertIsNone(Content.get_one_way_phone_number(user))
+
+            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
+            self.assertEqual(Content.get_one_way_phone_number(user), '12345678')
+
+            user.add_phone_number('87654321')
+            self.assertEqual(Content.get_one_way_phone_number(user), '87654321')
