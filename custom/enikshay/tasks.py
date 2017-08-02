@@ -1,8 +1,7 @@
 import datetime
 from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter
-
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import pytz
 
 from celery.task import periodic_task
@@ -29,6 +28,7 @@ from .case_utils import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
+    DOSE_MISSED,
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
     DAILY_SCHEDULE_ID,
@@ -42,6 +42,8 @@ from .data_store import AdherenceDatastore
 
 
 logger = get_task_logger(__name__)
+
+DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
 
 
 @periodic_task(
@@ -226,64 +228,6 @@ class EpisodeAdherenceUpdate(object):
             self.episode.case_id
         )
 
-    @staticmethod
-    def calculate_doses_taken_by_day(adherence_cases):
-        """Args:
-            adherence_cases: list of 'adherence' case dicts that come from elasticsearch
-
-        Returns: dict indexed by date part of 'adherence_date' and the source
-            of the adherence datapoint on that day, or False.
-
-        """
-        cases_by_date = defaultdict(list)
-        for case in adherence_cases:
-            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-            cases_by_date[adherence_date].append(case)
-
-        # calculate whether adherence is taken on each day
-        dose_source_by_date = defaultdict(bool)
-        for d, cases in cases_by_date.iteritems():
-            dose_source_by_date[d] = EpisodeAdherenceUpdate._get_dose_source(cases)
-
-        return dose_source_by_date
-
-    @staticmethod
-    def _get_dose_source(cases):
-        """Returns the source of a dose, or False if there is no dose
-
-        If there are multiple cases on one day filter to a single case as per below
-        1. Find most relevant case
-            if only non-enikshay source cases
-                consider the case with latest_modified - irrespective of case is closed/open
-
-            if only enikshay source cases
-                filter by '(closed and closure_reason == HISTORICAL_CLOSURE_REASON) or open'
-                consider the case with latest modified after above filter
-
-            if mix of enikshay and non-enikshay source cases
-                ignore non-enikshay and apply above enikshay only condition
-        2. Check if 'adherence_value' of most relevent case is one of DOSE_TAKEN_INDICATORS
-        """
-        sources = set(map(lambda x: x["adherence_source"], cases))
-        if 'enikshay' not in sources:
-            valid_cases = cases
-        else:
-            valid_cases = filter(
-                lambda case: (
-                    case.get('adherence_source') == 'enikshay' and
-                    (not case['closed'] or (case['closed'] and
-                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-                ),
-                cases
-            )
-        if valid_cases:
-            by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
-            latest_case = by_modified_on[-1]
-            if latest_case['adherence_value'] in DOSE_TAKEN_INDICATORS:
-                return latest_case.get('adherence_report_source') or latest_case.get('adherence_source')
-            return False
-        return False
-
     def get_adherence_schedule_start_date(self):
         # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
         raw_date = self.get_property('adherence_schedule_date_start')
@@ -301,10 +245,10 @@ class EpisodeAdherenceUpdate(object):
             return None
 
     @staticmethod
-    def count_doses_taken(dose_taken_by_date, start_date=None, end_date=None):
+    def count_doses_taken(dose_status_by_date, start_date=None, end_date=None):
         """
         Args:
-            dose_taken_by_date: result of self.calculate_doses_taken_by_day
+            dose_status_by_date: result of self.calculate_dose_status_by_day
         Returns:
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
@@ -313,27 +257,27 @@ class EpisodeAdherenceUpdate(object):
             raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
         if not start_date:
-            return len([dose_taken for dose_taken in dose_taken_by_date.values() if dose_taken])
+            return len([status for status in dose_status_by_date.values() if status.taken])
         else:
             return len([
-                is_taken
-                for date, is_taken in dose_taken_by_date.iteritems()
-                if start_date <= date <= end_date and is_taken
+                status
+                for date, status in dose_status_by_date.iteritems()
+                if start_date <= date <= end_date and status.taken
             ])
 
     @staticmethod
-    def count_doses_taken_by_source(doses_taken_by_date, start_date=None, end_date=None):
+    def count_doses_taken_by_source(dose_status_by_date, start_date=None, end_date=None):
         """Count all sources of adherence and return the count within the desired timeframe
 
         {'99DOTS': 1, 'MERM': 1, 'treatment_supervisor': 0, ... }
         """
         counts = defaultdict(int)
-        for date, source in doses_taken_by_date.iteritems():
-            if source in VALID_ADHERENCE_SOURCES:
+        for date, status in dose_status_by_date.iteritems():
+            if status.source in VALID_ADHERENCE_SOURCES:
                 if start_date and end_date and start_date <= date <= end_date:
-                    counts[source] += 1
+                    counts[status.source] += 1
                 elif not start_date and not end_date:
-                    counts[source] += 1
+                    counts[status.source] += 1
         return counts
 
     def update_json(self):
@@ -365,14 +309,14 @@ class EpisodeAdherenceUpdate(object):
             })
 
         adherence_cases = self.get_valid_adherence_cases()
-        dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+        dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
         update = self.get_aggregated_scores(
-            latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date)
-        update.update(self.get_adherence_scores(dose_taken_by_date))
+            latest_adherence_date, adherence_schedule_date_start, dose_status_by_date)
+        update.update(self.get_adherence_scores(dose_status_by_date))
 
         return self.check_and_return(update)
 
-    def get_adherence_scores(self, doses_taken_by_date):
+    def get_adherence_scores(self, dose_status_by_date):
         """
         https://docs.google.com/document/d/1lTGiz28REKKgAP4yPe7jKHEEd0y8wldjfYONVH_Uli0/edit#
         https://docs.google.com/document/d/1TG9YWSdccgKeKj0mVIAsoq9LthcZfw5_OebSrkYCF3A/edit#
@@ -390,12 +334,12 @@ class EpisodeAdherenceUpdate(object):
         for num_days, day_name in readable_day_names.iteritems():
             if today - datetime.timedelta(days=num_days) >= start_date:
                 score_count_taken = self.count_doses_taken(
-                    doses_taken_by_date,
+                    dose_status_by_date,
                     start_date=today - datetime.timedelta(days=num_days),
                     end_date=today,
                 )
                 doses_taken_by_source = self.count_doses_taken_by_source(
-                    doses_taken_by_date,
+                    dose_status_by_date,
                     start_date=today - datetime.timedelta(days=num_days),
                     end_date=today,
                 )
@@ -415,7 +359,7 @@ class EpisodeAdherenceUpdate(object):
     def _percentage_score(self, score, num_days):
         return round(score / float(num_days) * 100, 2)
 
-    def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date):
+    def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_status_by_date):
         """
         Evaluates adherence calculations on the 'episode' case and returns dict of values
 
@@ -438,10 +382,10 @@ class EpisodeAdherenceUpdate(object):
             update["aggregated_score_date_calculated"] = self.purge_date
 
         # calculate 'adherence_total_doses_taken'
-        update["adherence_total_doses_taken"] = self.count_doses_taken(dose_taken_by_date)
+        update["adherence_total_doses_taken"] = self.count_doses_taken(dose_status_by_date)
         # calculate 'aggregated_score_count_taken'
         update["aggregated_score_count_taken"] = self.count_doses_taken(
-            dose_taken_by_date,
+            dose_status_by_date,
             start_date=adherence_schedule_date_start,
             end_date=update["aggregated_score_date_calculated"]
         )
@@ -638,3 +582,63 @@ class EpisodeTestUpdate(object):
                 diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
         else:
             return diagnostic_test.get_case_property('investigation_type_name')
+
+
+def calculate_dose_status_by_day(adherence_cases):
+    """
+    adherence_cases: list of 'adherence' case dicts that come from elasticsearch
+    Returns: {day: DoseStatus(taken, missed, unknown, source)}
+    """
+
+    adherence_cases_by_date = defaultdict(list)
+    for case in adherence_cases:
+        adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+        adherence_cases_by_date[adherence_date].append(case)
+
+    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
+    for d, cases in adherence_cases_by_date.iteritems():
+        case = _get_relevent_case(cases)
+        if not case:
+            pass  # unknown
+        elif case.get('adherence_value') in DOSE_TAKEN_INDICATORS:
+            source = case.get('adherence_report_source') or case.get('adherence_source')
+            status_by_day[d] = DoseStatus(taken=True, missed=False, unknown=False, source=source)
+        elif case.get('adherence_value') == DOSE_MISSED:
+            status_by_day[d] = DoseStatus(taken=False, missed=True, unknown=False, source=False)
+        else:
+            pass  # unknown
+    return status_by_day
+
+
+def _get_relevent_case(cases):
+    """
+    If there are multiple cases on one day filter to a single case as per below
+    1. Find most relevant case
+        if only non-enikshay source cases
+            consider the case with latest_modified - irrespective of case is closed/open
+
+        if only enikshay source cases
+            filter by '(closed and closure_reason == HISTORICAL_CLOSURE_REASON) or open'
+            consider the case with latest modified after above filter
+
+        if mix of enikshay and non-enikshay source cases
+            ignore non-enikshay and apply above enikshay only condition
+    2. Check if 'adherence_value' of most relevent case is one of DOSE_TAKEN_INDICATORS
+    """
+    sources = set(map(lambda x: x["adherence_source"], cases))
+    if 'enikshay' not in sources:
+        valid_cases = cases
+    else:
+        valid_cases = filter(
+            lambda case: (
+                case.get('adherence_source') == 'enikshay' and
+                (not case['closed'] or (case['closed'] and
+                    case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
+            ),
+            cases
+        )
+    if valid_cases:
+        by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
+        latest_case = by_modified_on[-1]
+        return latest_case
+    return None

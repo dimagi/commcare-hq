@@ -20,7 +20,7 @@ from custom.enikshay.const import (
     HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
+from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate, calculate_dose_status_by_day
 from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
@@ -533,14 +533,14 @@ class TestAdherenceUpdater(TestCase):
 
         updater = EpisodeAdherenceUpdate(self.domain, episode)
         updater.purge_date = datetime.date(2017, 8, 10),
-        doses_taken_by_day = updater.calculate_doses_taken_by_day(updater.get_valid_adherence_cases())
+        dose_status_by_day = calculate_dose_status_by_day(updater.get_valid_adherence_cases())
         self.assertDictEqual(
             {
                 '99DOTS': 2,
                 'MERM': 1,
                 'treatment_supervisor': 1,
             },
-            EpisodeAdherenceUpdate.count_doses_taken_by_source(doses_taken_by_day)
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(dose_status_by_day)
         )
 
         self.assertDictEqual(
@@ -549,7 +549,7 @@ class TestAdherenceUpdater(TestCase):
                 'MERM': 1,
             },
             EpisodeAdherenceUpdate.count_doses_taken_by_source(
-                doses_taken_by_day,
+                dose_status_by_day,
                 start_date=datetime.date(2017, 8, 17),
                 end_date=datetime.date(2017, 8, 18)
             )
@@ -564,10 +564,10 @@ class TestAdherenceUpdater(TestCase):
         episode_update = EpisodeAdherenceUpdate(self.domain, episode)
         episode_update.purge_date = datetime.date(2016, 1, 20)
 
-        def dose_taken_by_day(cases):
+        def dose_source_by_day(cases, day):
             # cases a list of tuples
             # (case_id, adherence_date, modified_on, adherence_value, source, closed, closure_reason)
-            return episode_update.calculate_doses_taken_by_day(
+            return calculate_dose_status_by_day(
                 [
                     {
                         'adherence_source': source,
@@ -579,134 +579,134 @@ class TestAdherenceUpdater(TestCase):
                     }
                     for (_, dose_date, modified_on, dose_value, source, closed, closure_reason) in cases
                 ]
-            )
+            )[day].source
 
         ## test enikshay only source, open cases
         # not-taken - latest_modified_on case says no dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
                 ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 21): False}
+            ], datetime.date(2016, 1, 21)),
+            False
         )
         # taken - latest_modified_on case says dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', False, None),
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 22): 'enikshay'}
+            ], datetime.date(2016, 1, 22)),
+            'enikshay'
         )
 
         ## test enikshay only source, closed/closure_reason cases
         # not taken - as 1st case is not relevant because closed, closure_reason. 2nd case says no dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, None),
                 ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 23): False}
+            ], datetime.date(2016, 1, 23)),
+            False
         )
         # taken - as 1st case is not relevant because closed, closure_reason. 2nd case says dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, None),
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 24): 'enikshay'}
+            ], datetime.date(2016, 1, 24)),
+            'enikshay'
         )
         # not taken - as 1st case is relevent case with latest_modified_on and says dose not taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 25): False}
+            ], datetime.date(2016, 1, 25)),
+            False
         )
         # taken - as 1st case is relevent case with latest_modified_on and says dose is taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 26): 'enikshay'}
+            ], datetime.date(2016, 1, 26)),
+            'enikshay'
         )
 
         ## test non-enikshay source only cases
         # not taken - non-enikshay source, so consider latest_modified_on
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'non-enikshay', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 21),
                  DTIndicators[0], '99dots', False, None),
-            ]),
-            {datetime.date(2016, 1, 27): False}
+            ], datetime.date(2016, 1, 27)),
+            False
         )
         # taken - non-enikshay source, so consider latest_modified_on
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99DOTS', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, '99DOTS', False, None),
-            ]),
-            {datetime.date(2016, 1, 28): '99DOTS'}
+            ], datetime.date(2016, 1, 28)),
+            '99DOTS'
         )
 
         ## test mix of enikshay, non-enikshay sources
         # taken - as enikshay source case says taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 29): 'enikshay'}
+            ], datetime.date(2016, 1, 29)),
+            'enikshay'
         )
         # not taken - as enikshay source case says not taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 1): False}
+            ], datetime.date(2016, 1, 1)),
+            False
         )
         # not taken - as the only enikshay source case is closed without valid-reason
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, None),
-            ]),
-            {datetime.date(2016, 1, 2): False}
+            ], datetime.date(2016, 1, 2)),
+            False
         )
         # taken - as the only enikshay source case is closed with right closure_reason
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
-            ]),
-            {datetime.date(2016, 1, 3): 'enikshay'}
+            ], datetime.date(2016, 1, 3)),
+            'enikshay'
         )
 
     def test_update_by_person(self):
