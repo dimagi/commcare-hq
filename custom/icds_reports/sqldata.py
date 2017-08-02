@@ -1610,7 +1610,9 @@ class ProgressReport(object):
                         'average': []
                     },
                     {
-                        'header': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)',
+                        'header': (
+                            'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'
+                        ),
                         'slug': 'wasting_moderate',
                         'average': []
                     },
