@@ -13,7 +13,6 @@ from corehq.messaging.scheduling.models import TimedSchedule, SMSContent, Conten
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from datetime import time
-from mock import patch
 
 
 class SchedulingRecipientTest(TestCase):
@@ -25,7 +24,7 @@ class SchedulingRecipientTest(TestCase):
 
         cls.domain_obj = create_domain(cls.domain)
 
-        cls.location_types = setup_location_types(cls.domain, ['country', 'state',  'city'])
+        cls.location_types = setup_location_types(cls.domain, ['country', 'state', 'city'])
         cls.state_location = make_loc('ma', domain=cls.domain, type='state')
         cls.city_location = make_loc('boston', domain=cls.domain, type='city', parent=cls.state_location)
 
