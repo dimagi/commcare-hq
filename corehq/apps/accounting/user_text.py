@@ -57,11 +57,7 @@ def get_feature_name(feature_type, product):
     if feature_type not in [f[0] for f in FeatureType.CHOICES]:
         raise ValueError("Unsupported Feature")
     return {
-        FeatureType.USER: {
-            Product.COMMCARE: _("Mobile Users"),
-            Product.COMMCONNECT: _("Mobile Users"),
-            Product.COMMTRACK: _("Facilities"),
-        }[product],
+        FeatureType.USER: _("Mobile Users"),
         FeatureType.SMS: _("SMS"),
     }[feature_type]
 
