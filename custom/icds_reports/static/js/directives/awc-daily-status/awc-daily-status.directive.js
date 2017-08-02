@@ -24,7 +24,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
         info: 'Percentage of Angwanwadi Centers that were open yesterday',
     };

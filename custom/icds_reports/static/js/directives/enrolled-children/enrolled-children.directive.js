@@ -24,7 +24,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month'];
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',

@@ -24,7 +24,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of pregant women who delivered in a public or private medical facility in the last month.',
     };

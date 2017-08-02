@@ -24,7 +24,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
     };
