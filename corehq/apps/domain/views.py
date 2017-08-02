@@ -4,7 +4,6 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
-import sys
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -13,7 +12,6 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
-from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
 from django.views.generic import View
@@ -25,9 +23,9 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect, render, render_to_response
+from django.shortcuts import redirect, render
 from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm, password_reset
+from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
