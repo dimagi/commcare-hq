@@ -180,9 +180,10 @@ class TestAdherenceUpdater(TestCase):
 
     def _assert_properties_equal(self, update_json, output):
 
-        self.assertDictEqual(
+        self.assertDictContainsSubset(
+            # convert values to strings
+            {key: str(val) for key, val in output.iteritems()},
             {key: str(update_json[key]) for key in output},
-            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
 
     def _get_updated_episode(self):
