@@ -162,14 +162,8 @@ def _filter_already_processed_cases(form, cases):
         case.case_id: case
         for case in cases
     }
-    case_dbs = defaultdict(list)
-    for case in cases:
-        db_name = get_db_alias_for_partitioned_doc(case.case_id)
-        case_dbs[db_name].append(case.case_id)
-    for db_name, case_ids in case_dbs.items():
-        transactions = CaseTransaction.objects.using(db_name).filter(case_id__in=case_ids, form_id=form.form_id)
-        for trans in transactions:
-            del cases_by_id[trans.case_id]
+    for trans in CaseAccessorSQL.get_case_transactions_for_form(form.form_id, cases_by_id.keys()):
+        del cases_by_id[trans.case_id]
     return cases_by_id.values()
 
 
@@ -179,14 +173,9 @@ def _filter_already_processed_ledgers(form, ledgers):
         ledger.ledger_reference: ledger
         for ledger in ledgers
     }
-    ledger_dbs = defaultdict(list)
-    for ledger in ledgers_by_id.values():
-        db_name = get_db_alias_for_partitioned_doc(ledger.case_id)
-        ledger_dbs[db_name].append(ledger.case_id)
-    for db_name, case_ids in ledger_dbs.items():
-        transactions = LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids, form_id=form.form_id)
-        for trans in transactions:
-            del ledgers_by_id[trans.ledger_reference]
+    case_ids = [ledger.case_id for ledger in ledgers]
+    for trans in LedgerAccessorSQL.get_ledger_transactions_for_form(form.form_id, case_ids):
+        del ledgers_by_id[trans.ledger_reference]
     return ledgers_by_id.values()
 
 

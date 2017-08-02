@@ -1085,6 +1085,15 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         return owner_ids
 
+    @staticmethod
+    def get_case_transactions_for_form(form_id, limit_to_cases):
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases).items():
+            resultset = CaseTransaction.objects.using(db_name).filter(
+                case_id__in=case_ids, form_id=form_id
+            )
+            for transaction in resultset:
+                yield transaction
+
 
 class LedgerReindexAccessor(ReindexAccessor):
     @property
@@ -1262,6 +1271,15 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 return sum([result.deleted_count for result in results])
         except InternalError as e:
             raise LedgerSaveError(e)
+
+    @staticmethod
+    def get_ledger_transactions_for_form(form_id, limit_to_cases):
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases).items():
+            resultset = LedgerTransaction.objects.using(db_name).filter(
+                case_id__in=case_ids, form_id=form_id
+            )
+            for transaction in resultset:
+                yield transaction
 
 
 def _sort_with_id_list(object_list, id_list, id_property):
