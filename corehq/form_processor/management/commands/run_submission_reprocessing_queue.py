@@ -4,9 +4,15 @@ from django.conf import settings
 from django.db.models import F
 from django.db.models import Q
 
+from corehq.util.datadog.gauges import datadog_gauge
 from couchforms.models import UnfinishedSubmissionStub
 from hqscripts.generic_queue import GenericEnqueuingOperation
 from corehq.form_processor.tasks import reprocess_submission
+
+
+def _record_datadog_metrics():
+    count = UnfinishedSubmissionStub.objects.count()
+    datadog_gauge('commcare.submission_reprocessing.queue_size', count)
 
 
 class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
@@ -20,6 +26,7 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
 
     @classmethod
     def get_items_to_be_processed(cls, utcnow):
+        _record_datadog_metrics()
         day_ago = utcnow - timedelta(days=1)
         queue_filter = Q(saved=False) & (Q(date_queued__isnull=True) | Q(date_queued__lte=day_ago))
         stub_ids = UnfinishedSubmissionStub.objects.filter(queue_filter).values_list('id', flat=True)[:1000]
