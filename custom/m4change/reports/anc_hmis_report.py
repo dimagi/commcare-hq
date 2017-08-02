@@ -32,7 +32,7 @@ class AncHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
     slug = "facility_anc_hmis_report"
     default_rows = 25
     base_template = "m4change/report.html"
-    report_template_path = "m4change/report_content.html"
+    report_template_path = "m4change/anc_hmis_report_content.html"
 
     fields = [
         RestrictedAsyncLocationFilter,
