@@ -54,7 +54,7 @@ branches:
   - sk/sessions # sk 7/26
   - jls/v2-embed-video # Jenny 7/28
   - es/products-fixture  # Ethan 7/27
-  - np/billing/unique-account-name # Nick P 8/1
+  - np/billing/remove-obsolete-product # Nick P 8/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
