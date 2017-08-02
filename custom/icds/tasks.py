@@ -22,7 +22,6 @@ from custom.icds.const import (
     JHARKHAND_SITE_CODE,
     RAJASTHAN_SITE_CODE,
     UTTAR_PRADESH_SITE_CODE,
-    ENGLISH,
     HINDI,
     TELUGU,
     MARATHI,
