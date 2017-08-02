@@ -92,7 +92,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, FeatureType,
+    EntryPoint, WireInvoice,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )
@@ -1156,24 +1156,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     @staticmethod
     def _get_items(request):
-        features = [{'type': get_feature_name(feature_type[0]),
-                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
-                    for feature_type in FeatureType.CHOICES
-                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
-        products = [{'type': pt[0],
-                     'amount': Decimal(request.POST.get(pt[0], 0))}
-                    for pt in SoftwareProductType.CHOICES
-                    if Decimal(request.POST.get(pt[0], 0)) > 0]
-
-        items = products + features
-
         if Decimal(request.POST.get('general_credit', 0)) > 0:
-            items.append({
+            return [{
                 'type': 'General Credits',
                 'amount': Decimal(request.POST.get('general_credit', 0))
-            })
+            }]
 
-        return items
+        return []
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
