@@ -5,19 +5,39 @@
  */
 
 FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) {
-
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
+    var predefinedAppsPromise;
+
+    function fetchAllApps(restoreAs) {
+        var appsPromise = appsPromiseByRestoreAs[restoreAs];
+        if (!appsPromise || appsPromise.state() === 'rejected') {
+            appsPromise = appsPromiseByRestoreAs[restoreAs] = $.getJSON('?option=apps');
+        }
+        return appsPromise;
+    }
+
+    function fetchPredefinedApps() {
+        /*
+          in singleAppMode we want to avoid calling the server when we switch users because
+          1. it is unnecessary, since there's only one app regardless of restoreAs user
+          2. the backend ?options=apps endpoint is not defined for single-app pages
+       */
+        return predefinedAppsPromise;
+    }
 
     Apps.API = {
         primeApps: function (restoreAs, apps) {
-            appsPromiseByRestoreAs[restoreAs] = $.Deferred().resolve(apps);
+            appsPromiseByRestoreAs[restoreAs] = predefinedAppsPromise = $.Deferred().resolve(apps);
         },
         getAppEntities: function () {
-            var restoreAs = FormplayerFrontend.request('currentUser').restoreAs;
-            var appsPromise = appsPromiseByRestoreAs[FormplayerFrontend.request('currentUser').restoreAs];
-            if (!appsPromise || appsPromise.state() === 'rejected') {
-                appsPromise = appsPromiseByRestoreAs[restoreAs] = $.getJSON('?option=apps');
+            var appsPromise,
+                restoreAs = FormplayerFrontend.request('currentUser').restoreAs,
+                singleAppMode = FormplayerFrontend.request('currentUser').displayOptions.singleAppMode;
+            if (singleAppMode) {
+                appsPromise = fetchPredefinedApps();
+            } else {
+                appsPromise = fetchAllApps(restoreAs);
             }
             return appsPromise.pipe(function (apps) {
                 appsByRestoreAs[restoreAs] = apps;
