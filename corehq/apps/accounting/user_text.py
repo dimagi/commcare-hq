@@ -3,7 +3,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition as Edition,
-    SoftwareProductType as Product,
 )
 
 DESC_BY_EDITION = {
@@ -46,14 +45,7 @@ FEATURE_TYPE_TO_NAME = {
 }
 
 
-# This exists here specifically so that text can be translated
-def ensure_product(product):
-    if product not in [s[0] for s in Product.CHOICES]:
-        raise ValueError("Unsupported Product")
-
-
-def get_feature_name(feature_type, product):
-    ensure_product(product)
+def get_feature_name(feature_type):
     if feature_type not in [f[0] for f in FeatureType.CHOICES]:
         raise ValueError("Unsupported Feature")
     return {

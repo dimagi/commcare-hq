@@ -788,7 +788,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)
             return {
-                'name': get_feature_name(feature_type, self.product),
+                'name': get_feature_name(feature_type),
                 'usage': usage,
                 'limit': limit,
                 'remaining': remaining,
@@ -1162,7 +1162,7 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     @staticmethod
     def _get_items(request):
-        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
+        features = [{'type': get_feature_name(feature_type[0]),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
                     if Decimal(request.POST.get(feature_type[0], 0)) > 0]
