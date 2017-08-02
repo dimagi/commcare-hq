@@ -52,7 +52,12 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.templatePopup = function(loc, row) {
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var all = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between ages 0 - 6 months: <strong>' + all + '</strong></div><div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>' + children + '</strong></div><div>Percentage of children between 0 - 6 months exclusively breastfed.</div></ul>';
+        var percent = row ? d3.format('.2%')(row.children / row.all) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of children between ages 0 - 6 months: <strong>' + all + '</strong></div>' +
+            '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>' + children + '</strong></div>' +
+            '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -169,7 +174,6 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total number of children between ages 0 - 6 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 0 - 6 months exclusively breastfed.</span>";
 
                     return tooltip_content;
                 });

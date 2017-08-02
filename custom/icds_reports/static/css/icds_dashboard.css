@@ -169,6 +169,14 @@ nvd3 > svg {
     color: #d60000;
 }
 
+.link {
+    color: #0b3e6f;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
 .green {
     color: #009811;
 }
@@ -495,7 +503,7 @@ h4 {
 }
 
 .text-center > div {
-    height: 300px !important;
+    height: 200px !important;
 }
 
 circle {

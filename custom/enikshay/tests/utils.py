@@ -33,8 +33,9 @@ from custom.enikshay.const import (
 from corehq.apps.users.models import CommCareUser
 
 
-def get_person_case_structure(case_id, user_id, extra_update=None):
+def get_person_case_structure(case_id, user_id, extra_update=None, owner_id=None):
     extra_update = extra_update or {}
+    owner_id = owner_id or uuid.uuid4().hex
     update = {
         'name': u"Peregrine เՇร ค Շгคק",
         PERSON_FIRST_NAME: u"Peregrine",
@@ -58,7 +59,7 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
             "case_type": "person",
             "user_id": user_id,
             "create": True,
-            "owner_id": uuid.uuid4().hex,
+            "owner_id": owner_id,
             "update": update
         },
     )

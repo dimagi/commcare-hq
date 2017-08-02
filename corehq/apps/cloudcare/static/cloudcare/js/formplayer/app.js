@@ -142,6 +142,10 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                window.analytics.workflow("[app-preview] User submitted a form");
+                window.analytics.usage("[app-preview] User submitted a form");
+            }
 
             // After end of form nav, we want to clear everything except app and sesson id
             var urlObject = Util.currentUrlToObject();

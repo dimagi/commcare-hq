@@ -52,10 +52,9 @@ branches:
   - br/kill-old-cloucare  # Danny 7/21
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
-#  - jls/v2-embed-video # Jenny 7/28
-  - template-apps-in-v2 # Jenny 7/31
+  - jls/v2-embed-video # Jenny 7/28
   - es/products-fixture  # Ethan 7/27
-  - np/billing/fix-empty-select2 # Nick P 7/31
+  - np/billing/remove-obsolete-product # Nick P 8/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

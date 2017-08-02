@@ -1984,9 +1984,8 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
-        app_id = request.GET.get('app_id')
 
-        schema = self.get_export_schema(self.domain, app_id, case_type)
+        schema = self.get_export_schema(self.domain, None, case_type)
         self.export_instance = self.create_new_export_instance(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)

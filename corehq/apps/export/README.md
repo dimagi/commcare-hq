@@ -139,4 +139,3 @@ This is because when parsing the export 83b6fbfadc1fe0a43bc084fadb456a3f, it cou
 ### Caveats and edge cases
 
 - Unknown deleted questions: It is possible to have an export where there lists properties that do not have any data associated with them. This case can arise when adding a question, `q1`, to the current application (without making a build), opening an export (to kick off the processing of the current application), then deleting `q1` before making a build. `q1` will now always be in the schema but will be shown as deleted.
-- Case changes not immediately updated: When opening a case export, only the application that was chosen for the case type will be processed for the _current_ version. This means that if there exists another application that differs from the previous saved build and uses the same case type as another application, those updates will not show up until a build is made.
