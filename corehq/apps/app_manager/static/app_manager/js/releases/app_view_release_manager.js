@@ -19,6 +19,10 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
         el.koApplyBindings(releasesMain);
     }
 
+    $("#onboarding-video").click(function() {
+        analytics.workflow('Clicked onboarding video link');
+    });
+
     // View changes / app diff
     var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
     $('#recent-changes-btn').on('click', function () {
