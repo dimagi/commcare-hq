@@ -33,6 +33,7 @@
       Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
     </p>
   {% endblocktrans %}
+  {% if show_video %}
     <div class="alert alert-info">
         <i class="fa fa-question-circle"></i>
         Need a hand? The videos below will walk you through your first application.
@@ -40,6 +41,7 @@
     <a target="_blank" href="https://www.youtube.com/watch?v=ng4zGf1PGxM&list=PLVmwIEfrcKqkZsRuWVXL-Djsj2JlROvpU">
         <img src="{% static 'hqwebapp/images/onboarding_video.png' %}" style="max-width: 250px; border-radius: 4px; margin-bottom: 7px;" />
     </a>
+  {% endif %}
   </div>
   <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 290px;">
   {% blocktrans %}
