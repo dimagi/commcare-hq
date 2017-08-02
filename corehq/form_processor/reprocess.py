@@ -1,4 +1,6 @@
-from collections import defaultdict, namedtuple
+import logging
+from collections import namedtuple
+from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 
@@ -8,13 +10,10 @@ from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, Case
 from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction, FormReprocessRebuild
+from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from couchforms.models import XFormInstance
-
-import logging
 
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
@@ -101,7 +100,7 @@ def _reprocess_form(form, save=True):
         ledgers = []
         if should_use_sql_backend(form.domain):
             cases = _filter_already_processed_cases(form, cases)
-            cases_updated = {case.case_id for case in cases if case.is_saved()}
+            cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
             if save:
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
@@ -119,7 +118,7 @@ def _reprocess_form(form, save=True):
 
             # rebuild cases and ledgers that were affected
             for case in cases:
-                if case.case_id in cases_updated:
+                if case.case_id in cases_needing_rebuild:
                     logger.info('Rebuilding case: %s', case.case_id)
                     if save:
                         # only rebuild cases that were updated
@@ -154,6 +153,19 @@ def _log_changes(slug, cases, stock_updates, stock_deletes):
             "%s changes:\n\tcases: %s\n\tstock changes%s\n\tstock deletes%s",
             slug, case_ids, stock_updates, stock_deletes
         )
+
+
+def _get_case_ids_needing_rebuild(form, cases):
+    """Return a set of case IDs for cases that have been modified since the form was
+    originally submitted i.e. are needing to be rebuilt"""
+
+    # exclude any cases that didn't already exist
+    case_ids = [case.case_id for case in cases if case.is_saved()]
+    modified_dates = CaseAccessorSQL.get_last_modified_dates(form.domain, case_ids)
+    return {
+        case_id for case_id in case_ids
+        if modified_dates.get(case_id, datetime.max) > form.received_on
+    }
 
 
 def _filter_already_processed_cases(form, cases):
