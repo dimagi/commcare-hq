@@ -225,12 +225,12 @@ MUMBAI_MAP = {
     "Mfx (2.0)": 71,  # High dose Moxi
     "Cfz": 72,  # Clofa
     "Lzd": 73,  # Line
-    # "INH": 74,  # TODO: (WAITING) unknown drug mapping
+    "H (0.4)": 74,
     "H (0.1)": 75,  # High dose INH
     "PAS": 76,  # Na-Pas
     # "Oflox": 77,  # TODO: (WAITING) unknown drug mapping
-    # "Streptomycin": 78,  # TODO: (WAITING) unknown drug mapping
-    # "Clarithromycin": 79,  # TODO: (WAITING) unknown drug mapping
+    "S": 78,
+    "Clr": 79,
     "R": 80,  # Rif
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
     # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
@@ -310,8 +310,8 @@ DRUG_NAME_TO_ID_MAPPING = {
     "High dose INH": "h_inha",
     "Na-Pas": "pas",
     "Oflox": None,  # TODO: (Waiting)
-    "Streptomycin": None,  # TODO: (Waiting)
-    "Clarithromycin": None,  # TODO: (Waiting)
+    "Streptomycin": "s",
+    "Clarithromycin": "clr",
     "Rif": "r",
     "Amoxyclav": None,  # TODO: (Waiting)
     "Amikacin": None,  # TODO: (Waiting)
