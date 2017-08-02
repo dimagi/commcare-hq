@@ -14,9 +14,12 @@ MISSING_APP_ID = '_MISSING_APP_ID'
 
 OPENROSA_VERSION_1 = "1.0"
 OPENROSA_VERSION_2 = "2.0"
+OPENROSA_VERSION_2_1 = "2.1"
 OPENROSA_DEFAULT_VERSION = OPENROSA_VERSION_1
 OPENROSA_VERSION_MAP = {
     'ASYNC_RESTORE': OPENROSA_VERSION_2,
+    # Indexed fixture also applies when OR version not specified
+    'INDEXED_PRODUCTS_FIXTURE': OPENROSA_VERSION_2_1,
 }
 
 GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'

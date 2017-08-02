@@ -1,4 +1,5 @@
 from casexml.apps.phone.fixtures import FixtureProvider
+from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.fixtures.utils import get_index_schema_node
@@ -59,7 +60,8 @@ class ProductFixturesProvider(FixtureProvider):
         if not fixture_nodes:
             return []
 
-        if restore_state.params.openrosa_version and restore_state.params.openrosa_version < '2.1':
+        if (restore_state.params.openrosa_version
+                and restore_state.params.openrosa_version < OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE']):
             # Don't include index schema when openrosa version is specified and below 2.1
             return fixture_nodes
         else:
