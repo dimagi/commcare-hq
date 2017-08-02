@@ -39,3 +39,17 @@ def get_fields_without_attributes(fields):
     for fixture_field in fields:
         fields_without_attributes.append(fixture_field.field_name)
     return fields_without_attributes
+
+
+def get_index_schema_node(fixture_id, attrs_to_index):
+    """
+    Assemble a schema node to tell mobile how to index a fixture.
+    """
+    indices_node = ElementTree.Element('indices')
+    for index_attr in sorted(attrs_to_index):  # sorted only for tests
+        element = ElementTree.Element('index')
+        element.text = index_attr
+        indices_node.append(element)
+    node = ElementTree.Element('schema', {'id': fixture_id})
+    node.append(indices_node)
+    return node

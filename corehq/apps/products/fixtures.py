@@ -1,6 +1,8 @@
 from casexml.apps.phone.fixtures import FixtureProvider
+from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
+from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 
@@ -52,8 +54,20 @@ class ProductFixturesProvider(FixtureProvider):
                 key=lambda product: product.code
             )
 
-        return simple_fixture_generator(
+        fixture_nodes = simple_fixture_generator(
             restore_user, self.id, "product", PRODUCT_FIELDS, get_products, restore_state.last_sync_log
         )
+        if not fixture_nodes:
+            return []
+
+        if (restore_state.params.openrosa_version
+                and restore_state.params.openrosa_version < OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE']):
+            # Don't include index schema when openrosa version is specified and below 2.1
+            return fixture_nodes
+        else:
+            schema_node = get_index_schema_node(self.id, ['@id', 'code', 'program_id', 'category'])
+            fixture_nodes[0].attrib['indexed'] = 'true'
+            return [schema_node] + fixture_nodes
+
 
 product_fixture_generator = ProductFixturesProvider()
