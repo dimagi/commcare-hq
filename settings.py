@@ -698,6 +698,8 @@ PILLOW_RETRY_BACKOFF_FACTOR = 2
 # getting fixed
 PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
+SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
+
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
