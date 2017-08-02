@@ -58,7 +58,8 @@ class TestDeleteCommand(TestCase, ImportDRTBTestMixin):
             with self.drtb_import(IMPORT_ROWS, "mumbai", commit=True) as (_, result_rows):
                 for row in result_rows:
                     case_ids = row.get("case_ids", "")
-                    self.assertTrue(case_ids, "No case ids, got this error instead: {}".format(row.get("exception")))
+                    self.assertTrue(
+                        case_ids, "No case ids, got this error instead: {}".format(row.get("exception")))
                     all_case_ids.extend([x for x in case_ids.split(",") if x])
 
             # Create a case unrelated to this import
@@ -74,7 +75,7 @@ class TestDeleteCommand(TestCase, ImportDRTBTestMixin):
             self._refersh_es(all_case_ids)
 
             # Confirm that cases are in ES
-            self.assertEqual(case_query.count(), 54+1)
+            self.assertEqual(case_query.count(), 54 + 1)
 
             # Run the deletion script
             call_command('delete_imported_drtb_cases', self.domain, "foo", "--commit")

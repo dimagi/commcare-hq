@@ -482,7 +482,6 @@ def update_cases_with_readable_ids(commit, person_case_properties, occurrence_ca
     person_id = PersonIdGenerator.get_person_id(person_id_flat)
     occurrence_id = person_id + "O1"
     episode_id = person_id + "E1"
-    secondary_owner_name = occurrence_id + "drtb"
 
     person_case_properties['person_id'] = person_id
     person_case_properties['person_id_flat'] = person_id_flat
@@ -701,7 +700,8 @@ def get_diagnosis_properties(column_mapping, domain, row):
     has_cbnaat_result = bool(column_mapping.get_value("cbnaat_result", row))
     if has_cbnaat_result:
         properties = {}
-        cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
+        cbnaat_lab_name, cbnaat_lab_id = match_location(
+            domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
         if cbnaat_lab_name:
             properties.update({
                 "diagnosing_facility_name": cbnaat_lab_name,
@@ -857,7 +857,6 @@ def get_cbnaat_resistance(column_mapping, row):
     if value not in ["sensitive", "resistant"]:
         FieldValidationFailure(value, "cbnaat result")
     return value == "resistant"
-
 
 
 def clean_mumbai_lpa_resistance_value(value):
@@ -1574,7 +1573,9 @@ def match_location(domain, xlsx_name, location_type=None):
         kwargs.update(default_query_kwargs)
         location = SQLLocation.active_objects.get(**kwargs)
     except SQLLocation.DoesNotExist:
-        possible_matches = SQLLocation.active_objects.filter(**default_query_kwargs).filter(models.Q(name__icontains=xlsx_name))
+        possible_matches = (SQLLocation.active_objects
+                            .filter(**default_query_kwargs)
+                            .filter(models.Q(name__icontains=xlsx_name)))
         if len(possible_matches) == 1:
             location = possible_matches[0]
         elif len(possible_matches) > 1:

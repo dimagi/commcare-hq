@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.chunked import chunked
 from django.core.management import BaseCommand
 
-# TODO: Test me
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
