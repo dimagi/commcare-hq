@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from dimagi.utils.post import parse_SOAP_response
 from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
@@ -223,6 +224,25 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
+
+    def handle_response(self, result, repeat_record):
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+            return attempt
+
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            result,
+        )
+        if isinstance(message, basestring) and message.isdigit():
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        return attempt
 
 
 def person_hiv_status_changed(case):

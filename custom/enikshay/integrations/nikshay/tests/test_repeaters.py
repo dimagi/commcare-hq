@@ -65,6 +65,7 @@ class MockSoapResponse(object):
         self.status_code = status_code
         self.content = content
         self.headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        self.reason = "hooray!"
 
 FAILURE_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
@@ -1156,6 +1157,23 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(1, len(self.repeat_records().all()))
+
+    def test_handle_response(self):
+        self.repeater.operation = 'InsertHFIDPatient_UATBC'
+        self.repeater.save()
+        self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.pcp.location_id)
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+
+        record = list(self.repeat_records())[0]
+        with patch.object(NikshayRegisterPrivatePatientPayloadGenerator, 'handle_success') as success:
+            self.repeater.handle_response(MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE), record)
+            assert success.called
+
+        with patch.object(NikshayRegisterPrivatePatientPayloadGenerator, 'handle_failure') as failure:
+            self.repeater.handle_response(MockSoapResponse(200, FAILURE_RESPONSE), record)
+            assert failure.called
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
