@@ -230,7 +230,10 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
             return attempt
-
+        # A successful response returns a Nikshay ID like 00001
+        # Failures also return with status code 200 and some message like
+        # Dublicate Entry or Invalid data format
+        # (Dublicate is not a typo)
         message = parse_SOAP_response(
             repeat_record.repeater.url,
             repeat_record.repeater.operation,

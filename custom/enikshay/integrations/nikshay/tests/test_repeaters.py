@@ -1243,7 +1243,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
                 operation='InsertHFIDPatient_UATBC')
         )
 
-        payload_generator.handle_success(
+        payload_generator.handle_failure(
             MockSoapResponse(200, FAILURE_RESPONSE),
             self.cases[self.episode_id],
             repeat_record,
