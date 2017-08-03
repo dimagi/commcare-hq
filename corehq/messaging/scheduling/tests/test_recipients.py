@@ -166,5 +166,5 @@ class SchedulingRecipientTest(TestCase):
             self.assertIsNotNone(user3.memoized_usercase)
             self.assertEqual(Content.get_one_way_phone_number(user3), '12345678')
 
-            user.add_phone_number('87654321')
+            user3.add_phone_number('87654321')
             self.assertEqual(Content.get_one_way_phone_number(user3), '87654321')
