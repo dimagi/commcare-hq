@@ -37,8 +37,9 @@ def force_update_cleanliness_flags():
 def get_async_restore_payload(restore_config):
     """Process an async restore
     """
-    with restore_config.timing_context:
-        response = restore_config.generate_payload(async_task=current_task)
+    restore_config.timing_context.stop()  # wait_for_task_to_start
+    response = restore_config.generate_payload(async_task=current_task)
+    restore_config.timing_context.stop()  # root timer
     record_restore_timing(restore_config, 'async')
 
     # delete the task id from the task, since the payload can now be fetched from the cache

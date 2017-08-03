@@ -738,6 +738,11 @@ class RestoreConfig(object):
 
         if not task_exists:
             # start a new task
+            # NOTE this starts the root timer and also starts a nested
+            # timer (wait_for_task_to_start). Both need to be stopped
+            # when the task completes.
+            self.timing_context.start()
+            self.timing_context("wait_for_task_to_start").start()
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache

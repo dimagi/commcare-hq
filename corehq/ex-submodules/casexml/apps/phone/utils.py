@@ -53,6 +53,7 @@ def record_restore_timing(restore_config, status):
 
 
 RESTORE_SEGMENTS = {
+    "wait_for_task_to_start": "waiting",
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
