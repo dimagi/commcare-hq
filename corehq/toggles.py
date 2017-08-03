@@ -458,6 +458,14 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+REPORT_BUILDER_V2 = StaticToggle(
+    "report_builder_v2",
+    "Report builder V2",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    description='Enables the "new" report builder. Note that the "Report Builde" feature flag must also be enabled'
+)
+
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
     'Generate restore response in an asynchronous task to prevent timeouts',
