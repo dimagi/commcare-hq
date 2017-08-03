@@ -61,7 +61,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

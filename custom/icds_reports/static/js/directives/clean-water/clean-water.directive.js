@@ -64,7 +64,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
             vm.steps['map'].label = 'Map';
         }
 
-        infrastructureService.getCleanWaterData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = infrastructureService.getCleanWaterData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

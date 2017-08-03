@@ -63,7 +63,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {
             vm.data.mapData = response.data.report_data;
         });
     };

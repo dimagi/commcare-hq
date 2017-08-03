@@ -64,7 +64,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
             vm.steps['map'].label = 'Map';
         }
 
-        icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

@@ -137,13 +137,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         var loc_name = $location.search()['location_name'] || "National";
                         var period = this.options.rightLegend['period'] || 'Monthly';
                         var html = '<table style="width: 250px;">';
-                        if (this.options.rightLegend['average']) {
+                        if (this.options.rightLegend['average'] !== void(0)) {
                             html += '<tr>';
                             html += '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
                             if (this.options.rightLegend['average_format'] === 'number') {
                                 html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
                             } else {
-                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + this.options.rightLegend['average'] + '%</td>';
+                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
                             }
                             html += '<tr/>';
                         }

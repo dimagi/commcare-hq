@@ -65,7 +65,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

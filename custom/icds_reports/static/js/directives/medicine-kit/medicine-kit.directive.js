@@ -64,7 +64,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
             vm.steps['map'].label = 'Map';
         }
 
-        infrastructureService.getMedicineKitData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = infrastructureService.getMedicineKitData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

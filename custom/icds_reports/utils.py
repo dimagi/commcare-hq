@@ -37,11 +37,10 @@ OPERATORS = {
     "in": operator.contains,
 }
 
-RED = '#d60000'
-YELLOW = '#f2ed00'
-ORANGE = '#df7400'
+RED = '#de2d26'
+ORANGE = '#fc9272'
 BLUE = '#006fdf'
-GREEN = '#009811'
+PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
@@ -387,6 +386,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'valid'
                     ),
+                    'color': 'red' if percent_diff(
+                        'underweight',
+                        this_month_data,
+                        prev_month_data,
+                        'valid'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
@@ -394,7 +399,7 @@ def get_maternal_child_data(config):
                     'redirect': 'underweight_children'
                 },
                 {
-                    'label': _('% Wasting (weight-for-height)'),
+                    'label': _('Wasting (weight-for-height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -408,6 +413,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'height_eli'
                     ),
+                    'color': 'red' if percent_diff(
+                        'wasting',
+                        this_month_data,
+                        prev_month_data,
+                        'height_eli'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
@@ -417,7 +428,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('% Stunting (height-for-age)'),
+                    'label': _('Stunting (height-for-age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
                         "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
@@ -429,6 +440,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'height_eli'
                     ),
+                    'color': 'red' if percent_diff(
+                        'stunting',
+                        this_month_data,
+                        prev_month_data,
+                        'height_eli'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
@@ -436,7 +453,7 @@ def get_maternal_child_data(config):
                     'redirect': 'stunning'
                 },
                 {
-                    'label': _('% Newborns with Low Birth Weight'),
+                    'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
                         "Percentage of newborns with born with birth weight less than 2500 grams. Newborns with"
                         " Low Birth Weight are closely associated with foetal and neonatal mortality and "
@@ -448,6 +465,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'born'
                     ),
+                    'color': 'red' if percent_diff(
+                        'low_birth_weight',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth_weight'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -457,7 +480,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('% Early Initiation of Breastfeeding'),
+                    'label': _('Early Initiation of Breastfeeding'),
                     'help_text': _((
                         "Percentage of children breastfed within an hour of birth. Early initiation of "
                         "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
@@ -469,6 +492,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'born'
                     ),
+                    'color': 'green' if percent_diff(
+                        'bf_birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'bf_birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
@@ -476,7 +505,7 @@ def get_maternal_child_data(config):
                     'redirect': 'early_initiation'
                 },
                 {
-                    'label': _('% Exclusive breastfeeding'),
+                    'label': _('Exclusive breastfeeding'),
                     'help_text': _((
                         "Percentage of children between 0 - 6 months exclusively breastfed. An infant is "
                         "exclusively breastfed if they recieve only breastmilk with no additional food, "
@@ -488,6 +517,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'ebf_eli'
                     ),
+                    'color': 'green' if percent_diff(
+                        'ebf',
+                        this_month_data,
+                        prev_month_data,
+                        'ebf_eli'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'ebf'),
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
@@ -497,7 +532,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('% Children initiated appropriate complementary feeding'),
+                    'label': _('Children initiated appropriate complementary feeding'),
                     'help_text': _((
                         "Percentage of children between 6 - 8 months given timely introduction to solid or "
                         "semi-solid food. Timely intiation of complementary feeding in addition to "
@@ -509,6 +544,12 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'cf_initiation_eli'
                     ),
+                    'color': 'green' if percent_diff(
+                        'cf_initiation',
+                        this_month_data,
+                        prev_month_data,
+                        'cf_initiation_eli'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'cf_initiation'),
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
@@ -516,7 +557,7 @@ def get_maternal_child_data(config):
                     'redirect': 'children_initiated'
                 },
                 {
-                    'label': _('% Institutional deliveries'),
+                    'label': _('Institutional deliveries'),
                     'help_text': _((
                         "Percentage of pregant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
@@ -528,6 +569,12 @@ def get_maternal_child_data(config):
                         deliveries_prev_month,
                         'delivered'
                     ),
+                    'color': 'green' if percent_diff(
+                        'institutional_delivery',
+                        deliveries_this_month,
+                        deliveries_prev_month,
+                        'delivered'
+                    ) > 0 else 'red',
                     'value': get_value(deliveries_this_month, 'institutional_delivery'),
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',
@@ -585,6 +632,10 @@ def get_cas_reach_data(yesterday, config):
                     'label': _('AWCs covered'),
                     'help_text': _('Total AWCs that have launched ICDS CAS'),
                     'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
+                    'color': 'green' if percent_increase(
+                        'awcs',
+                        awc_this_month_data,
+                        awc_prev_month_data) > 0 else 'red',
                     'value': get_value(awc_this_month_data, 'awcs'),
                     'all': None,
                     'format': 'number',
@@ -680,6 +731,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
                     'percent': percent_increase('household', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'household',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'household'),
                     'all': None,
                     'format': 'number',
@@ -689,6 +744,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
                     'percent': percent_increase('child_health_all', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'child_health_all',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'child_health_all'),
                     'all': None,
                     'format': 'number',
@@ -703,6 +762,10 @@ def get_demographics_data(yesterday, config):
                         "and enrolled for ICDS services"
                     )),
                     'percent': percent_increase('child_health', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'child_health',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'child_health'),
                     'all': None,
                     'format': 'number',
@@ -712,6 +775,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Pregnant Women'),
                     'help_text': _('Total number of pregnant women registered'),
                     'percent': percent_increase('ccs_pregnant_all', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'ccs_pregnant_all',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
@@ -722,6 +789,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Pregnant Women enrolled for ICDS services'),
                     'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
                     'percent': percent_increase('ccs_pregnant', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'ccs_pregnant',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number',
@@ -731,6 +802,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Lactating Women'),
                     'help_text': _('Total number of lactating women registered'),
                     'percent': percent_increase('css_lactating_all', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'css_lactating_all',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
@@ -741,6 +816,10 @@ def get_demographics_data(yesterday, config):
                     'label': _('Lactating Women enrolled for ICDS services'),
                     'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
                     'percent': percent_increase('css_lactating', yesterday_data, two_days_ago_data),
+                    'color': 'green' if percent_increase(
+                        'css_lactating',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'css_lactating'),
                     'all': None,
                     'format': 'number',
@@ -754,6 +833,10 @@ def get_demographics_data(yesterday, config):
                         yesterday_data,
                         two_days_ago_data
                     ),
+                    'color': 'green' if percent_increase(
+                        'person_adolescent_all',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
@@ -771,6 +854,10 @@ def get_demographics_data(yesterday, config):
                         yesterday_data,
                         two_days_ago_data
                     ),
+                    'color': 'green' if percent_increase(
+                        'person_adolescent',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
@@ -787,6 +874,10 @@ def get_demographics_data(yesterday, config):
                         two_days_ago_data,
                         'all_persons'
                     ),
+                    'color': 'green' if percent_increase(
+                        'person_aadhaar',
+                        yesterday_data,
+                        two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
                     'format': 'number',
@@ -824,7 +915,7 @@ def get_awc_infrastructure_data(config):
         'records': [
             [
                 {
-                    'label': _('% AWCs with Clean Drinking Water'),
+                    'label': _('AWCs with Clean Drinking Water'),
                     'help_text': _('Percentage of AWCs with a source of clean drinking water'),
                     'percent': percent_diff(
                         'clean_water',
@@ -832,22 +923,32 @@ def get_awc_infrastructure_data(config):
                         prev_month_data,
                         'awcs'
                     ),
+                    'color': 'green' if percent_diff(
+                        'clean_water',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
                 {
-                    'label': _((
-                        "% AWCs with Functional Toilet")
-                    ),
-                    'help_text': _('% AWCs with functional toilet'),
+                    'label': _("AWCs with Functional Toilet"),
+                    'help_text': _('AWCs with functional toilet'),
                     'percent': percent_diff(
                         'functional_toilet',
                         this_month_data,
                         prev_month_data,
                         'awcs'
                     ),
+                    'color': 'green' if percent_diff(
+                        'functional_toilet',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
@@ -856,7 +957,7 @@ def get_awc_infrastructure_data(config):
             ],
             [
                 {
-                    'label': _('% AWCs with Electricity'),
+                    'label': _('AWCs with Electricity'),
                     'help_text': _('Percentage of AWCs with access to electricity'),
                     'percent': 0,
                     'value': 0,
@@ -865,7 +966,7 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% AWCs with Medicine Kit'),
+                    'label': _('AWCs with Medicine Kit'),
                     'help_text': _('Percentage of AWCs with a Medicine Kit'),
                     'percent': percent_diff(
                         'medicine_kits',
@@ -873,6 +974,12 @@ def get_awc_infrastructure_data(config):
                         prev_month_data,
                         'awcs'
                     ),
+                    'color': 'green' if percent_diff(
+                        'medicine_kits',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
@@ -881,7 +988,7 @@ def get_awc_infrastructure_data(config):
             ],
             [
                 {
-                    'label': _('% AWCs with Weighing Scale: Infants'),
+                    'label': _('AWCs with Weighing Scale: Infants'),
                     'help_text': _('Percentage of AWCs with weighing scale for infants'),
                     'percent': percent_diff(
                         'infant_scale',
@@ -889,13 +996,19 @@ def get_awc_infrastructure_data(config):
                         prev_month_data,
                         'awcs'
                     ),
+                    'color': 'green' if percent_diff(
+                        'infant_scale',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'infant_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
                     'help_text': _('Percentage of AWCs with weighing scale for mother and child'),
                     'percent': percent_diff(
                         'adult_scale',
@@ -903,6 +1016,12 @@ def get_awc_infrastructure_data(config):
                         prev_month_data,
                         'awcs'
                     ),
+                    'color': 'green' if percent_diff(
+                        'adult_scale',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
@@ -911,7 +1030,7 @@ def get_awc_infrastructure_data(config):
             ],
             [
                 {
-                    'label': _('% AWCs with infantometer'),
+                    'label': _('AWCs with infantometer'),
                     'help_text': _('Percentage of AWCs with an Infantometer'),
                     'percent': 0,
                     'value': 0,
@@ -920,7 +1039,7 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% AWCs with Stadiometer'),
+                    'label': _('AWCs with Stadiometer'),
                     'help_text': _('Percentage of AWCs with a Stadiometer'),
                     'percent': 0,
                     'value': 0,
@@ -969,8 +1088,8 @@ def get_awc_opened_data(filters):
                 "label": "Awc Opened yesterday",
                 "fills": {
                     '0%-50%': RED,
-                    '51%-75%': YELLOW,
-                    '75%-100%': GREEN,
+                    '51%-75%': ORANGE,
+                    '75%-100%': PINK,
                     'defaultFill': GREY,
                 },
                 "rightLegend": {
@@ -1027,8 +1146,8 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': GREEN})
-    fills.update({'20%-34%': YELLOW})
+    fills.update({'0%-19%': PINK})
+    fills.update({'20%-34%': ORANGE})
     fills.update({'>35%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -1038,7 +1157,7 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
@@ -1215,7 +1334,7 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
                 "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": chart_data['orange'],
@@ -1813,8 +1932,8 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-4%': GREEN})
-    fills.update({'5%-7%': YELLOW})
+    fills.update({'0%-4%': PINK})
+    fills.update({'5%-7%': ORANGE})
     fills.update({'>8%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -1984,7 +2103,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
                 "key": "0%-4%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": chart_data['orange'],
@@ -2050,8 +2169,8 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': GREEN})
-    fills.update({'25%-37%': YELLOW})
+    fills.update({'0%-24%': PINK})
+    fills.update({'25%-37%': ORANGE})
     fills.update({'>38%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2220,7 +2339,7 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
                 "key": "0%-24%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": chart_data['orange'],
@@ -2277,8 +2396,8 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': GREEN})
-    fills.update({'20%-59%': YELLOW})
+    fills.update({'0%-19%': PINK})
+    fills.update({'20%-59%': ORANGE})
     fills.update({'>60%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2288,7 +2407,7 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of newborns with born with birth weight less than 2500 grams."
                     "<br/><br/>"
@@ -2459,7 +2578,7 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
                 "key": "0%-19%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": chart_data['orange'],
@@ -2517,8 +2636,8 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': YELLOW})
-    fills.update({'>60%': GREEN})
+    fills.update({'20%-59%': ORANGE})
+    fills.update({'>60%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2527,7 +2646,7 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of children who were put to the breast within one hour of birth."
                     "<br/><br/>"
@@ -2605,7 +2724,7 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
                 "key": "Children breastfed within one hour of birth",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -2713,7 +2832,7 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
                 "key": ">60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -2757,8 +2876,8 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': YELLOW})
-    fills.update({'>60%': GREEN})
+    fills.update({'20%-59%': ORANGE})
+    fills.update({'>60%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -2767,7 +2886,7 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
                     "<br/><br/>"
@@ -2842,7 +2961,7 @@ def get_exclusive_breastfeeding_data_chart(config, loc_level):
                 "key": "Total children exclusively breastfed",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -2948,7 +3067,7 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
                 "key": ">60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -2992,8 +3111,8 @@ def get_children_initiated_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': YELLOW})
-    fills.update({'60%-100%': GREEN})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -3002,7 +3121,7 @@ def get_children_initiated_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food."
@@ -3078,7 +3197,7 @@ def get_children_initiated_data_chart(config, loc_level):
                 "key": "Children began complementary feeding",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -3184,7 +3303,7 @@ def get_children_initiated_sector_data(config, loc_level):
                 "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -3228,8 +3347,8 @@ def get_institutional_deliveries_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': YELLOW})
-    fills.update({'60%-100%': GREEN})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -3238,7 +3357,7 @@ def get_institutional_deliveries_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of pregant women who delivered in a public or private medical facility "
                     "in the last month. "
@@ -3316,7 +3435,7 @@ def get_institutional_deliveries_data_chart(config, loc_level):
                 "key": "Deliveries in public/private medical facility",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -3422,7 +3541,7 @@ def get_institutional_deliveries_sector_data(config, loc_level):
                 "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -3466,8 +3585,8 @@ def get_immunization_coverage_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': YELLOW})
-    fills.update({'60%-100%': GREEN})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -3476,7 +3595,7 @@ def get_immunization_coverage_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of children 1 year+ who have recieved complete immunization as per National "
                     "Immunization Schedule of India required by age 1."
@@ -3552,7 +3671,7 @@ def get_immunization_coverage_data_chart(config, loc_level):
                 "key": "Children received complete immunizations by 1 year",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -3658,7 +3777,7 @@ def get_immunization_coverage_sector_data(config, loc_level):
                 "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -3703,8 +3822,8 @@ def get_awc_daily_status_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-50%': RED})
-    fills.update({'50%-75%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'50%-75%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -3713,7 +3832,7 @@ def get_awc_daily_status_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
@@ -3756,7 +3875,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
     best_worst = {}
     for row in chart_data:
         date = row['date']
-        in_day = row['in_day']
+        in_day = row['in_day'] or 0
         location = row['%s_name' % loc_level]
         valid = row['all']
 
@@ -3789,7 +3908,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -3896,7 +4015,7 @@ def get_awc_daily_status_sector_data(config, loc_level):
                 "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -3936,12 +4055,12 @@ def get_awcs_covered_data_map(config, loc_level):
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'Launched': GREEN})
+    fills.update({'Launched': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
-            "slug": "awc_daily_statuses",
+            "slug": "awcc_covered",
             "label": "",
             "fills": fills,
             "rightLegend": {
@@ -4006,7 +4125,7 @@ def get_awcs_covered_sector_data(config, loc_level):
                 "key": "Blocks",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": chart_data['orange'],
@@ -4061,7 +4180,7 @@ def get_registered_household_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _("Total number of households registered"),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
@@ -4145,7 +4264,7 @@ def get_enrolled_children_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
                     "Total number of pregnant women who are enrolled for ICDS services"
@@ -4159,8 +4278,6 @@ def get_enrolled_children_data_map(config, loc_level):
 
 def get_enrolled_children_data_chart(config, loc_level):
     config['month'] = datetime(*config['month'])
-
-    del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(
         **config
@@ -4323,7 +4440,7 @@ def get_enrolled_women_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
                     "Total number of pregnant women who are enrolled for ICDS services."
@@ -4425,7 +4542,7 @@ def get_lactating_enrolled_women_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
                     "Lactating Mothers enrolled for ICDS services."
@@ -4527,7 +4644,7 @@ def get_adolescent_girls_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
                     "Total number of adolescent girls who are enrolled for ICDS services"
@@ -4631,8 +4748,8 @@ def get_adhaar_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-49%': YELLOW})
-    fills.update({'50%-100%': GREEN})
+    fills.update({'25%-49%': ORANGE})
+    fills.update({'50%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -4641,7 +4758,7 @@ def get_adhaar_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage number of ICDS beneficiaries whose Adhaar identification has been captured"
                 )),
@@ -4716,7 +4833,7 @@ def get_adhaar_data_chart(config, loc_level):
                 "key": "Number of beneficiaries with Adhaar numbers",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -4822,7 +4939,7 @@ def get_adhaar_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -4866,8 +4983,8 @@ def get_clean_water_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'25%-74%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -4876,7 +4993,7 @@ def get_clean_water_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of AWCs with a source of clean drinking water"
                 )),
@@ -4951,7 +5068,7 @@ def get_clean_water_data_chart(config, loc_level):
                 "key": "Number of AWCs with a source of clean drinking water",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -5057,7 +5174,7 @@ def get_clean_water_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -5101,8 +5218,8 @@ def get_functional_toilet_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'25%-74%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5111,7 +5228,7 @@ def get_functional_toilet_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of AWCs with a functional toilet"
                 )),
@@ -5186,7 +5303,7 @@ def get_functional_toilet_data_chart(config, loc_level):
                 "key": "Number of AWCs with a functional toilet.",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -5292,7 +5409,7 @@ def get_functional_toilet_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -5336,8 +5453,8 @@ def get_medicine_kit_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'25%-74%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5346,7 +5463,7 @@ def get_medicine_kit_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of AWCs with a Medicine Kit"
                 )),
@@ -5421,7 +5538,7 @@ def get_medicine_kit_data_chart(config, loc_level):
                 "key": "Number of AWCs with a Medicine Kit.",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -5527,7 +5644,7 @@ def get_medicine_kit_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -5571,8 +5688,8 @@ def get_infants_weight_scale_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'25%-74%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5581,7 +5698,7 @@ def get_infants_weight_scale_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for infants"
                 )),
@@ -5656,7 +5773,7 @@ def get_infants_weight_scale_data_chart(config, loc_level):
                 "key": "Number of AWCs with a weighing scale for infants.",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -5762,7 +5879,7 @@ def get_infants_weight_scale_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }
@@ -5806,8 +5923,8 @@ def get_adult_weight_scale_data_map(config, loc_level):
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': YELLOW})
-    fills.update({'75%-100%': GREEN})
+    fills.update({'25%-74%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5816,7 +5933,7 @@ def get_adult_weight_scale_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": sum(average) / float(len(average) or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for mother and child"
                 )),
@@ -5891,7 +6008,7 @@ def get_adult_weight_scale_data_chart(config, loc_level):
                 "key": "Number of AWCs with a weighing scale for mother and child",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             },
             {
                 "values": [
@@ -5997,7 +6114,7 @@ def get_adult_weight_scale_sector_data(config, loc_level):
                 "key": "50%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": PINK
             }
         ]
     }

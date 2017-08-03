@@ -148,16 +148,16 @@
                     <div class="col-sm-9">{% trans "Tabular Reports" %}</div>
                 </div>
             </li>
-            <li ng-click="goto('{% url 'custom_project_report_dispatcher' domain 'mpr_report' %}')">
-                <div class="row pointer">
+            <li>
+                <div class="row">
                     <div class="col-sm-1"><img src="{% static 'hqstyle/images/commcare-flower.png' %}" style=" vertical-align: middle;width:16px;height:16px;"/></div>
-                    <div class="col-sm-9">{% trans "MPR Block Report" %}</div>
+                    <div class="col-sm-9"><a class="no-decoration" href="{% url 'custom_project_report_dispatcher' domain 'mpr_report' %}">{% trans "MPR Block Report" %}</a></div>
                 </div>
             </li>
-            <li ng-click="goto('{% url 'custom_project_report_dispatcher' domain 'asr_report' %}')">
-                <div class="row pointer">
+            <li>
+                <div class="row">
                     <div class="col-sm-1"><img src="{% static 'hqstyle/images/commcare-flower.png' %}" style=" vertical-align: middle;width:16px;height:16px;"/></div>
-                    <div class="col-sm-9">{% trans "ASR Block Report" %}</div>
+                    <div class="col-sm-9"><a class="no-decoration" href="{% url 'custom_project_report_dispatcher' domain 'asr_report' %}">{% trans "ASR Block Report" %}</a></div>
                 </div>
             </li>
         </ul>

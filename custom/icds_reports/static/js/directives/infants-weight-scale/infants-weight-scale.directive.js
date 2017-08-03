@@ -64,7 +64,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
             vm.steps['map'].label = 'Map';
         }
 
-        infrastructureService.getInfantsWeightScaleData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = infrastructureService.getInfantsWeightScaleData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
