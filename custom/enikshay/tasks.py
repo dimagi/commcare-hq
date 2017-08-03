@@ -625,7 +625,10 @@ class EpisodeTestUpdate(object):
     @property
     @memoized
     def diagnostic_tests(self):
-        return get_private_diagnostic_test_cases_from_episode(self.domain, self.episode.case_id)
+        try:
+            return get_private_diagnostic_test_cases_from_episode(self.domain, self.episode.case_id)
+        except ENikshayCaseNotFound:
+            return None
 
     def update_json(self):
         if self.diagnostic_tests:
