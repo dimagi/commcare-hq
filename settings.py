@@ -670,7 +670,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-
 ####### Pillow Retry Queue Settings #######
 
 # Setting this to False no pillowtop errors will get processed.
@@ -697,6 +696,8 @@ PILLOW_RETRY_BACKOFF_FACTOR = 2
 # once after being reset. This is to prevent numerous retries of errors that aren't
 # getting fixed
 PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
+
+SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
