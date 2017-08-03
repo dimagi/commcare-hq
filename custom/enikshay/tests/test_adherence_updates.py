@@ -176,14 +176,14 @@ class TestAdherenceUpdater(TestCase):
         if date_today_in_india is not None:
             updater.date_today_in_india = date_today_in_india
 
-        return self._assert_properties_equal(updater.update_json(), output)
+        return self.assert_properties_equal(output, updater.update_json())
 
-    def _assert_properties_equal(self, update_json, output):
+    def assert_properties_equal(self, expected, actual):
 
         self.assertDictContainsSubset(
             # convert values to strings
-            {key: str(val) for key, val in output.iteritems()},
-            {key: str(update_json[key]) for key in output},
+            {key: str(val) for key, val in expected.iteritems()},
+            {key: str(actual[key]) for key in expected},
         )
 
     def _get_updated_episode(self):
@@ -861,4 +861,4 @@ class TestAdherenceUpdater(TestCase):
             'month_adherence_score_treatment_supervisor': 0.0,
         }
 
-        self._assert_properties_equal(updater.update_json(), expected)
+        self.assert_properties_equal(expected, updater.update_json())
