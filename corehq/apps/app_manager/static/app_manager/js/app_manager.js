@@ -339,7 +339,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
         function resetIndexes($sortable) {
             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
-                 var $sortables = $sortable.children.get(),
+                var $sortables = $sortable.children.get(),
                     i;
                 for (i in $sortables) {
                     if ($sortables.hasOwnProperty(i)) {
