@@ -14,7 +14,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
-from corehq.apps.userreports.reports.builder.columns import \
+from corehq.apps.userreports.reports.builder.v1.columns import \
     QuestionColumnOption, ColumnOption, CountColumn, MultiselectQuestionColumnOption
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
