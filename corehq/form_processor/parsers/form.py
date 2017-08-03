@@ -214,7 +214,7 @@ def apply_deprecation(existing_xform, new_xform, interface=None):
     #  - Save the new instance to the previous document to preserve the ID
 
     interface = interface or FormProcessorInterface(existing_xform.domain)
-
+    interface.copy_attachments(existing_xform, new_xform)
     if existing_xform.persistent_blobs:
         for name, meta in existing_xform.persistent_blobs.items():
             with existing_xform.fetch_attachment(name, stream=True) as content:
