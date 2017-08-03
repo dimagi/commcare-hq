@@ -236,7 +236,7 @@ MUMBAI_MAP = {
     "Clr": 79,
     "R": 80,  # Rif
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
-    # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
+    "Am": 82,
     "dst_result_date": 83,
     "treatment_initiation_date": 89,
     "drtb_type": 92,
@@ -317,7 +317,7 @@ DRUG_NAME_TO_ID_MAPPING = {
     "Clarithromycin": "clr",
     "Rif": "r",
     "Amoxyclav": None,  # TODO: (Waiting)
-    "Amikacin": None,  # TODO: (Waiting)
+    "Amikacin": "am",
 }
 
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
