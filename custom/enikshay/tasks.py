@@ -67,7 +67,7 @@ class Timer:
 
     def __exit__(self, *args):
         self.end = datetime.datetime.now()
-        self.interval = (self.end - self.start).seconds
+        self.interval = (self.end - self.start)
 
 
 class EpisodeUpdater(object):
@@ -98,9 +98,10 @@ class EpisodeUpdater(object):
                     try:
                         update_json.update(updater(self.domain, episode).update_json())
                     except Exception as e:
-                        errors.append(
-                            [episode.case_id, updater.__class__, e]
-                        )
+                        error = [episode.case_id, updater.__name__, e]
+                        errors.append(error)
+                        logger.error("{}: {} - {}".format(*error))
+
                 if update_json:
                     updates.append((episode.case_id, update_json, False))
                     update_count += 1
@@ -119,6 +120,7 @@ class EpisodeUpdater(object):
                 domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
                 noupdates=noupdate_count)
         )
+        logger.info(summary)
         self.send_final_email(summary, errors)
 
     def send_final_email(self, message, errors):
