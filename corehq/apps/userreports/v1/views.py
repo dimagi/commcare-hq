@@ -81,7 +81,7 @@ from corehq.apps.userreports.models import (
     report_config_id_is_static,
     id_is_static,
 )
-from corehq.apps.userreports.reports.builder.forms import (
+from corehq.apps.userreports.reports.builder.v1.forms import (
     ConfigurePieChartReportForm,
     ConfigureTableReportForm,
     DataSourceForm,
