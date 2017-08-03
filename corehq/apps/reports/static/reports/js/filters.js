@@ -104,7 +104,7 @@ hqDefine("reports/js/filters.js", function() {
                             page: page,
                             handler: $filter.data('handler'),
                             action: $filter.data('action'),
-                        }
+                        };
                     },
                     results: function (data, page) {
                         if (data.success) {
@@ -112,21 +112,21 @@ hqDefine("reports/js/filters.js", function() {
                             var hasMore = (page * limit) < data.total;
                             return {
                                 results: data.items,
-                                more: hasMore
+                                more: hasMore,
                             };
                         } else {
                             console.log(data.error);
                         }
-                    }
+                    },
                 },
                 allowClear: true,
                 initSelection: function (elem, callback) {
                     var val = $(elem).val();
                     callback({
                         id: val,
-                        text: val
+                        text: val,
                     });
-                }
+                },
             });
         });
 
