@@ -127,9 +127,8 @@ class Content(models.Model):
         phone_number = get_one_way_number_for_recipient(recipient)
 
         if not phone_number and isinstance(recipient, CommCareUser):
-            usercase = recipient.get_usercase()
-            if usercase:
-                phone_number = get_one_way_number_for_recipient(usercase)
+            if recipient.memoized_usercase:
+                phone_number = get_one_way_number_for_recipient(recipient.memoized_usercase)
 
         if not phone_number or len(phone_number) <= 3:
             # Avoid processing phone numbers that are obviously fake to

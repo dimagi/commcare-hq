@@ -739,6 +739,26 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
     @run_with_all_backends
+    def test_case_property_has_no_value(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='result',
+            match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': 'x'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, case.case_id, case_properties={'result': ''})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
+
+    @run_with_all_backends
     def test_date_case_property_before(self):
         rule1 = _create_empty_rule(self.domain)
         rule1.add_criteria(
