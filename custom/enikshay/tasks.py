@@ -253,16 +253,21 @@ class EpisodeAdherenceUpdate(object):
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
         """
+        return EpisodeAdherenceUpdate.count_doses_of_status('taken', dose_status_by_date, start_date, end_date)
+
+    @staticmethod
+    def count_doses_of_status(status, dose_status_by_date, start_date=None, end_date=None):
+        """status should be 'taken', 'unknown', or 'missed'"""
         if bool(start_date) != bool(end_date):
             raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
         if not start_date:
-            return len([status for status in dose_status_by_date.values() if status.taken])
+            return len([ds for ds in dose_status_by_date.values() if getattr(ds, status)])
         else:
             return len([
-                status
-                for date, status in dose_status_by_date.iteritems()
-                if start_date <= date <= end_date and status.taken
+                ds
+                for date, ds in dose_status_by_date.iteritems()
+                if start_date <= date <= end_date and getattr(ds, status)
             ])
 
     @staticmethod
@@ -333,15 +338,17 @@ class EpisodeAdherenceUpdate(object):
         properties = {}
         for num_days, day_name in readable_day_names.iteritems():
             if today - datetime.timedelta(days=num_days) >= start_date:
+                start = today - datetime.timedelta(days=num_days)
+                end = today
                 score_count_taken = self.count_doses_taken(
                     dose_status_by_date,
-                    start_date=today - datetime.timedelta(days=num_days),
-                    end_date=today,
+                    start_date=start,
+                    end_date=end,
                 )
                 doses_taken_by_source = self.count_doses_taken_by_source(
                     dose_status_by_date,
-                    start_date=today - datetime.timedelta(days=num_days),
-                    end_date=today,
+                    start_date=start,
+                    end_date=end,
                 )
             else:
                 score_count_taken = 0
