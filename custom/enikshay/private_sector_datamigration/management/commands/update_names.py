@@ -32,7 +32,7 @@ class Command(BaseCommand):
             location_user.first_name = user_detail.firstName
             location_user.last_name = user_detail.lastName
             location_user.save()
-            split_loc_name = loc.name.split()
+            split_loc_name = loc.name.split(' - ')
             if len(split_loc_name) == 2 and split_loc_name[1] == private_sector_agency_id:
                 loc.name = split_loc_name[0]
                 loc.save()
