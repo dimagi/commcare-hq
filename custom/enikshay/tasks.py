@@ -17,6 +17,7 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -43,18 +44,25 @@ from .data_store import AdherenceDatastore
 
 logger = get_task_logger(__name__)
 
+CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
+cache = get_redis_client()
+
 
 @periodic_task(
+    bind=True,
     run_every=crontab(hour=0, minute=0),  # every day at midnight
     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
-def enikshay_task():
+def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
+    task_id = self.request.id
+    cache.set(CACHE_KEY, task_id)
+
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
         try:
-            updater = EpisodeUpdater(domain)
+            updater = EpisodeUpdater(domain, task_id=task_id)
             updater.run()
         except Exception as e:
             logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
@@ -63,11 +71,18 @@ def enikshay_task():
 class Timer:
     def __enter__(self):
         self.start = datetime.datetime.now()
+        self.end = None
         return self
+
+    @property
+    def interval(self):
+        if self.end is None:
+            return datetime.datetime.now() - self.start
+        else:
+            return self.end - self.start
 
     def __exit__(self, *args):
         self.end = datetime.datetime.now()
-        self.interval = (self.end - self.start)
 
 
 class EpisodeUpdater(object):
@@ -76,31 +91,58 @@ class EpisodeUpdater(object):
     This is applicable to various enikshay domains. The domain can be specified in __init__ method
     """
 
-    def __init__(self, domain):
+    def __init__(self, domain, task_id=None):
         self.domain = domain
+        self.task_id = task_id
         self.updaters = [
             EpisodeAdherenceUpdate,
             EpisodeVoucherUpdate,
             EpisodeTestUpdate,
         ]
 
+    def update_status(self, t, success, fail, total, batches, errors):
+        if self.task_id is None:
+            return
+        enikshay_task.update_state(state="PROGRESS", meta={
+            'success': success,
+            'fail': fail,
+            'total': total,
+            'batches': batches,
+            'errors': errors,
+            'time_elapsed': t.interval,
+        })
+
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
         update_count = 0
         noupdate_count = 0
+        error_count = 0
+        success_count = 0
+        batches_processed = 0
+
         errors = []
+        case_ids = self._get_case_ids()
+        total_count = len(case_ids)
+
         with Timer() as t:
+            self.update_status(t, 0, 0, total_count, 0, errors)
             batch_size = 100
             updates = []
-            for episode in self._get_open_episode_cases():
+            for episode in self._get_open_episode_cases(case_ids):
+                did_error = False
                 update_json = {}
                 for updater in self.updaters:
                     try:
                         update_json.update(updater(self.domain, episode).update_json())
                     except Exception as e:
-                        error = [episode.case_id, updater.__name__, e]
+                        did_error = True
+                        error = [episode.case_id, episode.domain, updater.__name__, e]
                         errors.append(error)
                         logger.error("{}: {} - {}".format(*error))
+                if did_error:
+                    error_count += 1
+                else:
+                    success_count += 1
 
                 if update_json:
                     updates.append((episode.case_id, update_json, False))
@@ -110,6 +152,10 @@ class EpisodeUpdater(object):
                 if len(updates) >= batch_size:
                     bulk_update_cases(self.domain, updates)
                     updates = []
+                    batches_processed += 1
+
+                self.update_status(t, success_count, error_count, total_count, batches_processed, errors)
+
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
 
@@ -130,7 +176,7 @@ class EpisodeUpdater(object):
 
         csv_file = StringIO()
         writer = UnicodeWriter(csv_file)
-        writer.writerow(['Episode ID', 'Updater Class', 'Error'])
+        writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
         writer.writerows(errors)
 
         attachment = {
@@ -149,11 +195,14 @@ class EpisodeUpdater(object):
         if update_json:
             update_case(self.domain, episode_case.case_id, update_json)
 
-    def _get_open_episode_cases(self):
+    def _get_case_ids(self):
         case_accessor = CaseAccessors(self.domain)
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        episode_cases = case_accessor.iter_cases(case_ids)
+        return case_ids
 
+    def _get_open_episode_cases(self, case_ids):
+        case_accessor = CaseAccessors(self.domain)
+        episode_cases = case_accessor.iter_cases(case_ids)
         for episode_case in episode_cases:
             # if this episode is part of a deleted or archived person, don't update
             try:
