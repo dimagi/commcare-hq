@@ -471,7 +471,7 @@ class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
-    template_name = 'userreports/reportbuilder/data_source_select.html'
+    template_name = 'userreports/reportbuilder/v1/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
 
     @property
