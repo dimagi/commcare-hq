@@ -907,14 +907,36 @@ class TestAdherenceUpdater(TestCase):
             'two_week_missed_count': 1,
             'month_missed_count': 2,
 
-            # 'three_day_unknown_score': 0,
-            # 'one_week_unknown_score': 0,
-            # 'two_week_unknown_score': 0,
-            # 'month_unknown_score': 0,
+            'three_day_unknown_score': 33.33,
+            'one_week_unknown_score': 57.14,
+            'two_week_unknown_score': 71.43,
+            'month_unknown_score': 80.0,
 
-            # 'three_day_missed_score': 0,
-            # 'one_week_missed_score': 0,
-            # 'two_week_missed_score': 0,
-            # 'month_missed_score': 0,
+            'three_day_missed_score': 33.33,
+            'one_week_missed_score': 14.29,
+            'two_week_missed_score': 7.14,
+            'month_missed_score': 6.67,
         }
-        self.assert_properties_equal(expected, updater.update_json())
+        actual = updater.update_json()
+        self.assert_properties_equal(expected, actual)
+
+        readable_day_names = {
+            3: 'three_day',
+            7: 'one_week',
+            14: 'two_week',
+            30: 'month',
+        }
+        for days, period in readable_day_names.items():
+            self.assertEqual(
+                days,
+                (actual["{}_score_count_taken".format(period)]
+                 + actual["{}_unknown_count".format(period)]
+                 + actual["{}_missed_count".format(period)])
+            )
+            self.assertAlmostEqual(
+                100,
+                (actual["{}_adherence_score".format(period)]
+                 + actual["{}_unknown_score".format(period)]
+                 + actual["{}_missed_score".format(period)]),
+                places=1
+            )
