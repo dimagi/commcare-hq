@@ -87,12 +87,17 @@ class Command(BaseCommand):
             metavar='owner_organisation_id',
             nargs='+',
         )
-
         parser.add_argument(
             '--owner-suborganisation-ids',
             default=None,
             metavar='owner_suborganisation_id',
             nargs='+',
+        )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            default=False,
+            dest='dry_run',
         )
 
     @mock_ownership_cleanliness_checks()
@@ -119,6 +124,7 @@ class Command(BaseCommand):
             'owner_state_id',
             'skip_adherence',
             'start',
+            'dry_run',
         ]:
             logger.info('%s=%s' % (arg, str(options[arg])))
 
@@ -154,7 +160,7 @@ class Command(BaseCommand):
 
         migrate_to_enikshay(
             domain, migration_comment, beneficiaries, skip_adherence, chunk_size,
-            location_owner, default_location_owner
+            location_owner, default_location_owner, options['dry_run']
         )
 
 
@@ -222,13 +228,18 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
 
 
 def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence, chunk_size,
-                        location_owner, default_location_owner):
+                        location_owner, default_location_owner, dry_run):
     total = beneficiaries.count()
     counter = 0
     num_succeeded = 0
     num_failed = 0
     num_failed_chunks = 0
     logger.info('Starting migration of %d patients in domain %s.' % (total, domain))
+
+    if dry_run:
+        logger.info('Dry run, exiting...')
+        return
+
     factory = CaseFactory(domain=domain)
     case_structures = []
 
