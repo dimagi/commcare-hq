@@ -131,6 +131,8 @@ class Command(BaseCommand):
             'owner_state_id',
             'skip_adherence',
             'start',
+            'default_location_owner_id',
+            'location_owner_id',
             'dry_run',
             'incremental_migration',
         ]:
