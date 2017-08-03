@@ -603,9 +603,11 @@
         {% include 'style/includes/modal_report_issue.html' %}
 
         {# Remote modals (EULA and CDA) #}
+        {% if not request.use_requirejs %}
         {% compress js %}
             <script src="{% static 'style/js/remote-modals.js' %}"></script>
         {% endcompress %}
+        {% endif %}
 
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
