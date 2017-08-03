@@ -38,7 +38,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
-from casexml.apps.phone.utils import record_restore_timing
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
@@ -232,7 +231,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     )
     response = restore_config.get_response()
     if not async_restore_enabled:
-        record_restore_timing(restore_config, response.status_code)
+        restore_config.record_timing(response.status_code)
     return response, restore_config.timing_context
 
 
