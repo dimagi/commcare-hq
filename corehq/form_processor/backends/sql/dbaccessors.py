@@ -1068,7 +1068,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_case_transactions_for_form(form_id, limit_to_cases):
-        for db_name, case_ids in split_list_by_db_partition(limit_to_cases).items():
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
             resultset = CaseTransaction.objects.using(db_name).filter(
                 case_id__in=case_ids, form_id=form_id
             )
@@ -1254,7 +1254,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_transactions_for_form(form_id, limit_to_cases):
-        for db_name, case_ids in split_list_by_db_partition(limit_to_cases).items():
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
             resultset = LedgerTransaction.objects.using(db_name).filter(
                 case_id__in=case_ids, form_id=form_id
             )
