@@ -138,24 +138,33 @@ class SchedulingRecipientTest(TestCase):
             [self.mobile_user.get_id]
         )
 
-    @run_with_all_backends
-    def test_user_case_phone_number(self):
-        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        self.addCleanup(user.delete)
-
-        self.assertIsNone(user.get_usercase())
-        self.assertIsNone(Content.get_one_way_phone_number(user))
-
+    def create_user_case(self, user):
         create_case_kwargs = {
             'external_id': user.get_id,
             'update': {'hq_user_id': user.get_id},
         }
-        with create_case(self.domain, 'commcare-user', **create_case_kwargs) as case:
-            self.assertIsNotNone(user.get_usercase())
-            self.assertIsNone(Content.get_one_way_phone_number(user))
+        return create_case(self.domain, 'commcare-user', **create_case_kwargs)
 
+    @run_with_all_backends
+    def test_user_case_phone_number(self):
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        self.addCleanup(user1.delete)
+        self.addCleanup(user2.delete)
+        self.addCleanup(user3.delete)
+
+        self.assertIsNone(user1.memoized_usercase)
+        self.assertIsNone(Content.get_one_way_phone_number(user1))
+
+        with self.create_user_case(user2) as case:
+            self.assertIsNotNone(user2.memoized_usercase)
+            self.assertIsNone(Content.get_one_way_phone_number(user2))
+
+        with self.create_user_case(user3) as case:
             update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-            self.assertEqual(Content.get_one_way_phone_number(user), '12345678')
+            self.assertIsNotNone(user3.memoized_usercase)
+            self.assertEqual(Content.get_one_way_phone_number(user3), '12345678')
 
             user.add_phone_number('87654321')
-            self.assertEqual(Content.get_one_way_phone_number(user), '87654321')
+            self.assertEqual(Content.get_one_way_phone_number(user3), '87654321')
