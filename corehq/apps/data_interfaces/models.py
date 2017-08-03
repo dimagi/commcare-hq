@@ -440,6 +440,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
+    MATCH_HAS_NO_VALUE = 'HAS_NO_VALUE'
 
     MATCH_CHOICES = (
         MATCH_DAYS_BEFORE,
@@ -447,6 +448,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         MATCH_EQUAL,
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
+        MATCH_HAS_NO_VALUE,
     )
 
     property_name = models.CharField(max_length=126)
@@ -520,6 +522,9 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
         return False
 
+    def check_has_no_value(self, case, now):
+        return not self.check_has_value(case, now)
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_BEFORE: self.check_days_before,
@@ -527,6 +532,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
+            self.MATCH_HAS_NO_VALUE: self.check_has_no_value,
         }.get(self.match_type)(case, now)
 
 
