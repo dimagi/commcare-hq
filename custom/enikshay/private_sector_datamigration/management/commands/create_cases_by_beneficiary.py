@@ -251,7 +251,7 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
         )
 
     if incremental_migration:
-        beneficiaries_query.exclude(caseId__in=Beneficiary_Jul7.objects.values('caseId'))
+        beneficiaries_query = beneficiaries_query.exclude(caseId__in=Beneficiary_Jul7.objects.values('caseId'))
 
     _assert_always_null(beneficiaries_query)
 
