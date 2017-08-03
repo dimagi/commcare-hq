@@ -10,6 +10,7 @@ from cStringIO import StringIO
 from uuid import uuid4
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from distutils.version import LooseVersion
 
 from couchdbkit import ResourceNotFound
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
@@ -24,10 +25,11 @@ from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
-    SyncLog,
     get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
+    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -409,13 +411,16 @@ class RestoreParams(object):
             state_hash='',
             include_item_count=False,
             device_id=None,
-            app=None):
+            app=None,
+            openrosa_version=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
         self.device_id = device_id
+        self.openrosa_version = (LooseVersion(openrosa_version)
+            if isinstance(openrosa_version, basestring) else openrosa_version)
 
     @property
     def app_id(self):
@@ -476,11 +481,15 @@ class RestoreState(object):
                 case_sync = DEFAULT_CASE_SYNC
         if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
             raise ValueError("unknown case sync algorithm: %s" % case_sync)
+        self._case_sync = case_sync
         self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
+            if (self._case_sync == CLEAN_OWNERS and
+                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
+                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -599,6 +608,8 @@ class RestoreState(object):
             previous_log_rev=previous_log_rev,
             extensions_checked=True,
         )
+        if self.is_livequery:
+            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
     @property

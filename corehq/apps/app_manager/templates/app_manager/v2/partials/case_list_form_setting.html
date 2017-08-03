@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% if app.advanced_app_builder or module.case_list_form.form_id %}
+{% if add_ons.register_from_case_list %}
 
   <div id="case-list-form">
       <div class="form-group">
@@ -53,6 +53,19 @@
           <div class="col-sm-4">
               {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
           </div>
+      </div>
+      <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
+          <label class="col-sm-2 control-label">
+              {% trans "End of Registration action" %}
+          </label>
+          <div class="col-sm-4">
+              <select class="form-control" name="case_list_post_form_workflow" data-bind="
+                             options: endOfRegistrationOptions,
+                             optionsValue: 'value',
+                             optionsText: 'label',
+                             value:postFormWorkflow"></select>
+          </div>
+
       </div>
   </div>
   <div id="case_list_media">

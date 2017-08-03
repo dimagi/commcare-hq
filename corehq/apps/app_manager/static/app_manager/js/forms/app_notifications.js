@@ -1,4 +1,4 @@
-/* globals hqDefine moment alert_user */
+/* globals hqDefine moment */
 hqDefine('app_manager/js/forms/app_notifications.js', function () {
     function NotifyFunction(userId) {
         return function(msg) {
@@ -6,7 +6,7 @@ hqDefine('app_manager/js/forms/app_notifications.js', function () {
             // only show notifcations from other users
             if (msgObj.user_id !== userId) {
                 var message = moment(msgObj.timestamp).format('h:mm:ss a') + ': ' + msgObj.text;
-                alert_user(message, 'info', true);
+                hqImport("style/js/alert_user.js").alert_user(message, 'info', true);
             }
         };
     }

@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -389,6 +390,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
         "display_separately": None,
@@ -478,6 +480,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_post_form_workflow'):
+        module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
     if should_edit('case_list_form_media_image'):
         new_path = process_media_attribute(
             'case_list_form_media_image',
@@ -549,6 +553,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
 
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
+    _init_module_case_type(module)
     module_id = module.id
     app.new_form(module_id, _("Untitled Form"), lang)
 
@@ -916,27 +921,26 @@ def new_module(request, domain, app_id):
         if toggles.APP_MANAGER_V1.enabled(request.user.username):
             app.new_form(module_id, "Untitled Form", lang)
         else:
+            unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
-                # registration form
-                register = app.new_form(module_id, _("Register"), lang)
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                register.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
+                if not unstructured:
+                    form_id = 0
 
-                # one followup form
-                followup = app.new_form(module_id, _("Followup"), lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+                    # registration form
+                    register = app.new_form(module_id, _("Registration Form"), lang)
+                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                    register.actions.update_case = UpdateCaseAction(
+                        condition=FormActionCondition(type='always'))
 
-                # make case type unique across app
-                app_case_types = [m.case_type for m in app.modules if m.case_type]
-                if len(app_case_types):
-                    module.case_type = app_case_types[0]
-                else:
-                    module.case_type = 'case'
+                    # one followup form
+                    followup = app.new_form(module_id, _("Followup Form"), lang)
+                    followup.requires = "case"
+                    followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+                _init_module_case_type(module)
             else:
+                form_id = 0
                 app.new_form(module_id, _("Survey"), lang)
-            form_id = 0
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
@@ -955,6 +959,16 @@ def new_module(request, domain, app_id):
     else:
         logger.error('Unexpected module type for new module: "%s"' % module_type)
         return back_to_main(request, domain, app_id=app_id)
+
+
+# Set initial module case type, copying from another module in the same app
+def _init_module_case_type(module):
+    app = module.get_app()
+    app_case_types = [m.case_type for m in app.modules if m.case_type]
+    if len(app_case_types):
+        module.case_type = app_case_types[0]
+    else:
+        module.case_type = 'case'
 
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):

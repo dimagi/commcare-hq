@@ -7,7 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
-from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.tasks import rebuild_indicators
 
@@ -205,6 +205,33 @@ class TestAdherenceUpdater(TestCase):
         # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
+
+    def test_invalid_cases(self):
+        """Invalid cases shouldn't be triggered
+        """
+        person = get_person_case_structure(self.person_id, self.user.user_id)
+
+        occurrence = get_occurrence_case_structure(self.occurrence_id, person)
+
+        episode_structure = get_episode_case_structure(self.episode_id, occurrence)
+        self.factory.create_or_update_case(episode_structure)
+
+        archived_person = get_person_case_structure("person_2", self.user.user_id, owner_id="_archive_")
+        occurrence = get_occurrence_case_structure('occurrence_2', archived_person)
+        invalid_episode_structure = get_episode_case_structure('episode_2', occurrence)
+        self.factory.create_or_update_case(invalid_episode_structure)
+
+        closed_person = get_person_case_structure("person_3", self.user.user_id)
+        occurrence = get_occurrence_case_structure('occurrence_3', closed_person)
+        closed_episode_structure = get_episode_case_structure('episode_3', occurrence)
+        self.factory.create_or_update_case(closed_episode_structure)
+        self.factory.create_or_update_case(CaseStructure(
+            case_id="person_3",
+            attrs={'close': True}
+        ))
+
+        episode_ids = [episode.case_id for episode in self.case_updater._get_open_episode_cases()]
+        self.assertEqual(episode_ids, [self.episode_id])
 
     def test_adherence_schedule_date_start_late(self):
         self.assert_update(

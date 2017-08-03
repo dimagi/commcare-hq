@@ -4,6 +4,7 @@ from xml.etree.ElementTree import Element
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
@@ -111,9 +112,10 @@ class FlatLocationSerializer(object):
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
-        attrs_to_index = location_type_attrs + ['id', 'type']
+        attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
+        attrs_to_index.extend(['@id', '@type'])
 
-        return [self._get_schema_node(fixture_id, attrs_to_index),
+        return [get_index_schema_node(fixture_id, attrs_to_index),
                 self._get_fixture_node(fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields)]
 
     def _get_fixture_node(self, fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields):
@@ -153,16 +155,6 @@ class FlatLocationSerializer(object):
             outer_node.append(location_node)
 
         return root_node
-
-    def _get_schema_node(self, fixture_id, attrs_to_index):
-        indices_node = Element('indices')
-        for index_attr in sorted(attrs_to_index):  # sorted only for tests
-            element = Element('index')
-            element.text = '@{}'.format(index_attr)
-            indices_node.append(element)
-        node = Element('schema', {'id': fixture_id})
-        node.append(indices_node)
-        return node
 
 
 def should_sync_hierarchical_fixture(project):

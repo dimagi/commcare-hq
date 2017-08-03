@@ -319,7 +319,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -385,7 +385,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -414,7 +414,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -516,7 +516,7 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -651,7 +651,7 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options',
+    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -660,7 +660,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -746,7 +746,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -1060,6 +1060,13 @@ APP_MANAGER_V1 = StaticToggle(
     [NAMESPACE_USER]
 )
 
+APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
+    'app_manager_v2_template_apps',
+    'Experiment with template apps in app builder v2',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1241,5 +1248,12 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'Used for ICDS emergencies when UCR sync is killing the DB',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

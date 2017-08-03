@@ -23,7 +23,8 @@ from custom.icds.messaging.indicators import (
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
-from custom.icds.tasks import run_indicator, ENGLISH, HINDI, TELUGU, MARATHI
+from custom.icds.const import ENGLISH, HINDI, TELUGU, MARATHI
+from custom.icds.tasks import run_indicator
 
 
 class IndicatorTestForm(forms.Form):

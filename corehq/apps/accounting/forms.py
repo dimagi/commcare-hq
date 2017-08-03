@@ -68,6 +68,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
+    get_account_name_from_default_name,
     get_money_str,
     has_subscription_already_ended,
     make_anchor_tag,
@@ -260,7 +261,7 @@ class BillingAccountBasicForm(forms.Form):
             code=self.cleaned_data['currency']
         )
         account = BillingAccount(
-            name=name,
+            name=get_account_name_from_default_name(name),
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
@@ -648,6 +649,10 @@ class SubscriptionForm(forms.Form):
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
             acct = BillingAccount.objects.get(id=transfer_account)
+            CreditLine.objects.filter(
+                account=self.subscription.account,  # TODO - add this constraint to postgres
+                subscription=self.subscription,
+            ).update(account=acct)
             self.subscription.account = acct
             self.subscription.save()
 

@@ -15,10 +15,6 @@ djcelery.setup_loader()
 
 DEBUG = True
 LESS_DEBUG = DEBUG
-# Enable LESS_WATCH if you want less.js to constantly recompile.
-# Useful if you're making changes to the less files and don't want to refresh
-# your page.
-LESS_WATCH = False
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -674,7 +670,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-
 ####### Pillow Retry Queue Settings #######
 
 # Setting this to False no pillowtop errors will get processed.
@@ -701,6 +696,8 @@ PILLOW_RETRY_BACKOFF_FACTOR = 2
 # once after being reset. This is to prevent numerous retries of errors that aren't
 # getting fixed
 PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
+
+SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -1582,7 +1579,10 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.mother_person_case_from_child_health_case',
-         "ICDS: Mother person case from child_health case"]
+         "ICDS: Mother person case from child_health case"],
+    'ICDS_SUPERVISOR_FROM_AWC_OWNER':
+        ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
+         "ICDS: Supervisor Location from AWC Owner"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
@@ -1955,8 +1955,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
@@ -2164,7 +2165,6 @@ COMPRESS_OFFLINE_CONTEXT = {
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
     'less_debug': LESS_DEBUG,
-    'less_watch': LESS_WATCH,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'

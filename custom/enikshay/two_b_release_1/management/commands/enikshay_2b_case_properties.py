@@ -170,7 +170,8 @@ class ENikshay2BMigrator(object):
 
             referrals_and_occurrences_to_person = {}
             type_to_bucket = {CASE_TYPE_OCCURRENCE: 'occurrences',
-                              CASE_TYPE_REFERRAL: 'referrals'}
+                              CASE_TYPE_REFERRAL: 'referrals',
+                              CASE_TYPE_TRAIL: 'trails'}
             for case in self.accessor.get_reverse_indexed_cases(
                     [person_id for person_id in all_persons]):
                 bucket = type_to_bucket.get(case.type, None)
@@ -178,7 +179,8 @@ class ENikshay2BMigrator(object):
                     for index in case.indices:
                         if index.referenced_id in all_persons:
                             getattr(all_persons[index.referenced_id], bucket).append(case)
-                            referrals_and_occurrences_to_person[case.case_id] = index.referenced_id
+                            if bucket != 'trails':
+                                referrals_and_occurrences_to_person[case.case_id] = index.referenced_id
                             break
 
             type_to_bucket = {CASE_TYPE_EPISODE: 'episodes',
@@ -244,6 +246,7 @@ class ENikshay2BMigrator(object):
             episode = None
 
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'enrolled_in_private': 'false',
             'case_version': '20',
             'area': person.get_case_property('phi_area'),
@@ -305,6 +308,7 @@ class ENikshay2BMigrator(object):
         episode = max(episodes)[1]  # Most recently opened episode for the occurrence
 
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'current_episode_type': episode.get_case_property('episode_type'),
             'disease_classification': episode.get_case_property('disease_classification'),
             'site_choice': episode.get_case_property('site_choice'),
@@ -330,15 +334,17 @@ class ENikshay2BMigrator(object):
         occurrence_ids = [index.referenced_id for index in indices
                           if index.referenced_type == CASE_TYPE_OCCURRENCE]
         occurrence_id = occurrence_ids[0] if occurrence_ids else None
-        return max((case.opened_on, case.case_id) for case in episodes
-                   if is_episode_of_occurrence(case, occurrence_id))[1]
+        episodes = [(case.opened_on, case.case_id) for case in episodes
+                    if is_episode_of_occurrence(case, occurrence_id)]
+        return max(episodes)[1] if episodes else None
 
     def migrate_episode(self, episode, episodes):
-        self.total_episodes += 0
+        self.total_episodes += 1
 
         latest_episode_id = self._get_last_episode_id(episode.indices, episodes)
         test_type = episode.get_case_property('test_confirming_diagnosis')
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'is_active': 'yes' if episode.case_id == latest_episode_id and not episode.closed else 'no',
             'dosage_display': episode.get_case_property('full_dosage'),
             'dosage_summary': episode.get_case_property('full_dosage'),
@@ -377,6 +383,7 @@ class ENikshay2BMigrator(object):
     def migrate_test(self, test, person, episodes):
         self.total_tests += 1
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'is_direct_test_entry': 'no',
             'rft_drtb_diagnosis': test.get_case_property('diagnostic_drtb_test_reason'),
             'dataset': person.get_case_property('dataset'),
@@ -395,11 +402,27 @@ class ENikshay2BMigrator(object):
             props['rft_general'] = {
                 'diagnostic': 'diagnosis_dstb',
                 'diagnosis_dstb': 'diagnosis_dstb',
-                'follow_up_dstb': 'follow_up_dstb',
+                'follow_up': 'follow_up_dstb',
+                "follow_up_dstb": "follow_up_dstb",
                 'diagnosis_drtb': 'diagnosis_drtb',
             }.get(test.get_case_property('purpose_of_testing'), "")
             props['rft_dstb_diagnosis'] = test.get_case_property('diagnostic_test_reason')
             props['rft_dstb_followup'] = test.get_case_property('follow_up_test_reason')
+
+        if test.get_case_property('result') == 'tb_detected':
+            detected = 'TB Detected'
+        elif test.get_case_property('result') == 'tb_not_detected':
+            detected = 'TB Not Detected'
+        else:
+            detected = None
+        bacilli_count = test.get_case_property('max_bacilli_count')
+
+        props['result_summary_display'] = '\n'.join(filter(None, [
+            detected,
+            test.get_case_property('result_grade'),
+            'Count of bacilli: {}'.format(bacilli_count) if bacilli_count else None,
+            test.get_case_property('clinical_remarks'),
+        ]))
 
         return CaseStructure(
             case_id=test.case_id,
@@ -414,6 +437,7 @@ class ENikshay2BMigrator(object):
         self.total_referrals += 1
         prop = referral.get_case_property
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'referral_initiated_date': (prop('referral_date') or prop('date_of_referral')),
             'referred_to_name': prop('referred_to_location_name'),
             'referred_by_name': prop('referred_by'),
@@ -460,7 +484,7 @@ class ENikshay2BMigrator(object):
             walk_related=False,
             attrs={
                 "create": False,
-                "update": {},
+                "update": {'updated_by_migration': 'enikshay_2b_case_properties'},
             },
             **index_kwargs
         )
@@ -481,6 +505,7 @@ class ENikshay2BMigrator(object):
 
         location = self.locations.get(person.owner_id)
         props = {
+            'updated_by_migration': 'enikshay_2b_case_properties',
             'secondary_owner_type': 'drtb-hiv',
             'secondary_owner_name': location.name if location else "",
         }

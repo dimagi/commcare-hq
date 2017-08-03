@@ -215,16 +215,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
-        if change.deleted:
-            # we don't currently support hard-deletions at all.
-            # we may want to change this at some later date but seem ok for now.
-            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
-            return
 
         domain = change.metadata.domain
         if not domain or domain not in self.table_adapters_by_domain:
             # if no domain we won't save to any UCR table
             return
+
+        if change.deleted:
+            adapters = list(self.table_adapters_by_domain[domain])
+            for table in adapters:
+                table.delete({'_id': change.metadata.document_id})
 
         async_tables = []
         doc = change.get_document()
