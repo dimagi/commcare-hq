@@ -170,6 +170,11 @@ class EpisodeUpdater(object):
             yield episode_case
 
 
+@memoized
+def get_datastore(domain):
+    return AdherenceDatastore(domain)
+
+
 class EpisodeAdherenceUpdate(object):
     """
     Class to capture adherence related calculations specific to an 'episode' case
@@ -178,7 +183,7 @@ class EpisodeAdherenceUpdate(object):
     def __init__(self, domain, episode_case):
         self.domain = domain
         self.episode = episode_case
-        self.adherence_data_store = AdherenceDatastore(self.domain)
+        self.adherence_data_store = get_datastore(self.domain)
         # set purge_date to 30 days back
         self.purge_date = datetime.datetime.now(
             pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
