@@ -10,7 +10,6 @@ from corehq.apps.userreports.reports.view import (
 )
 from corehq.apps.userreports.views import (
     ConfigureReport,
-    ConfigureMapReport,
     EditReportInBuilder,
     ReportBuilderDataSourceSelect,
     ReportBuilderPaywallPricing,

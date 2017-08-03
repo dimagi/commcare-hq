@@ -940,12 +940,6 @@ class ReportPreview(BaseDomainView):
         return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
-class ConfigureMapReport(ConfigureReport):
-    urlname = 'configure_map_report'
-    report_title = ugettext_lazy("Map Report: {}")
-    report_type = 'map'
-
-
 def _assert_report_delete_privileges(request):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
             or toggle_enabled(request, toggles.REPORT_BUILDER)
