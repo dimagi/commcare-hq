@@ -1552,6 +1552,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
         "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+    "ICDS_MISSED_CF_VISIT_TO_AWW":
+        "custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+    "ICDS_MISSED_CF_VISIT_TO_LS":
+        "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+    "ICDS_MISSED_PNC_VISIT_TO_LS":
+        "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
 }
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
