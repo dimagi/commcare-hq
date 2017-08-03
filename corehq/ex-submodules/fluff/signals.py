@@ -10,6 +10,7 @@ from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 import sqlalchemy
 
+from corehq.util.soft_assert import soft_assert
 from fluff.util import metadata as fluff_metadata
 
 logger = logging.getLogger('fluff')
@@ -185,8 +186,12 @@ def apply_index_changes(engine, raw_diffs, table_names):
     with engine.begin() as conn:
         for index in add_indexes:
             index.create(conn)
-        for index in remove_indexes:
-            index.drop(conn)
+
+    # don't remove indexes automatically because we want to be able to add them
+    # concurrently without the code removing them
+    _assert = soft_assert(to="@".join(["jemord", "dimagi.com"]))
+    for index in remove_indexes:
+        _assert(False, "Index {} can be removed".format(index.name))
 
 
 def rebuild_table(engine, pillow, indicator_doc):

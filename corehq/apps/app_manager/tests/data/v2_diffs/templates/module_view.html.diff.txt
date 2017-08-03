@@ -6,17 +6,28 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -24,7 +24,7 @@
+@@ -6,6 +6,10 @@
+ {% block head %}{{ block.super }}
+     {% include 'analytics/fullstory.html' %}
+ {% endblock %}
++
++
++{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Module Settings' %}{% endblock %}
++
+ {% block stylesheets %}{{ block.super }}
+     <style>
+         /* Prevent help icons from disturbing horizontal alignment of table headers */
+@@ -24,7 +28,7 @@
      {% endif %}
-     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
-     <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
  {% endblock %}
  {% block js-inline %}{{ block.super }}
      {% include 'hqmedia/partials/multimedia_js.html' %}
-@@ -36,90 +36,92 @@
-     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
+@@ -38,90 +42,92 @@
+     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
  
      {% include 'style/partials/key_value_mapping.html' %}
 -    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
@@ -60,7 +71,7 @@
 +  {% initial_page_data 'js_options' js_options %}
 +  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
 +  {% initial_page_data 'case_list_form_options' case_list_form_options %}
-+  {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
++  {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
 +  {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
 +  {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
 +  {% initial_page_data 'parent_modules' parent_modules %}
@@ -93,7 +104,7 @@
 +              </li>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details and app.advanced_app_builder and app|get_available_modules_for_case_list_configuration:module %}
++          {% if add_ons.case_detail_overwrite and details and app|get_available_modules_for_case_list_configuration:module %}
 +              <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
 +          {% endif %}
 +        {% endblock %}{# endblock tab-headers #}
@@ -142,7 +153,7 @@
 +              </div>
 +            {% endif %}
 +          {% endfor %}
-+          {% if details and app.advanced_app_builder%}
++          {% if add_ons.case_detail_overwrite and details %}
 +            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
 +            {% if available_modules %}
 +            <div class="tab-pane" id="module-actions">
@@ -186,7 +197,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -133,7 +135,7 @@
+@@ -135,7 +141,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -195,7 +206,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -143,5 +145,5 @@
+@@ -145,5 +151,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}

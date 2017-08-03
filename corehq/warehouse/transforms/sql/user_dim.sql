@@ -14,7 +14,8 @@ INSERT INTO {{ user_dim }} (
     date_joined,
     deleted,
     dim_last_modified,
-    dim_created_on
+    dim_created_on,
+    batch_id
 )
 SELECT
     domain,
@@ -42,5 +43,6 @@ SELECT
         WHEN 'CouchUser-Deleted' THEN true
     END,
     now(),
-    now()
+    now(),
+    '{{ batch_id }}'
 FROM {{ user_staging }}

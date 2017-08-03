@@ -95,3 +95,16 @@ def get_forms_by_last_modified(start_datetime, end_datetime):
         yield form
 
     # TODO Couch forms
+
+
+def get_application_ids_by_last_modified(start_datetime, end_datetime):
+    '''
+    Returns all application ids that have been modified within a time range. The start date is
+    exclusive while the end date is inclusive (start_datetime, end_datetime].
+    '''
+    from corehq.apps.app_manager.models import Application
+    doc_types = [
+        'ApplicationBase',
+        'ApplicationBase{}'.format(DELETED_SUFFIX),
+    ]
+    return _get_ids_by_last_modified(Application, doc_types, start_datetime, end_datetime)

@@ -22,7 +22,6 @@ import stripe
 
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -47,6 +46,7 @@ from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     EXCHANGE_RATE_DECIMAL_PLACES,
     fmt_dollar_amount,
+    get_account_name_from_default_name,
     get_address_from_invoice,
     get_change_status,
     get_dimagi_from_email,
@@ -338,7 +338,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
     """
-    name = models.CharField(max_length=200, db_index=True)
+    name = models.CharField(max_length=200, db_index=True, unique=True)
     salesforce_account_id = models.CharField(
         db_index=True,
         max_length=80,
@@ -401,8 +401,10 @@ class BillingAccount(ValidateModelMixin, models.Model):
             entry_point = entry_point or EntryPoint.NOT_SET
             last_payment_method = last_payment_method or LastPayment.NONE
             pre_or_post_pay = pre_or_post_pay or PreOrPostPay.POSTPAY
+            default_name = DEFAULT_ACCOUNT_FORMAT % domain
+            name = get_account_name_from_default_name(default_name)
             account = BillingAccount(
-                name=DEFAULT_ACCOUNT_FORMAT % domain,
+                name=name,
                 created_by=created_by,
                 created_by_domain=domain,
                 currency=Currency.get_default(),
@@ -2497,16 +2499,7 @@ class InvoicePdf(SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        obj = CachedObject('%s:InvoicePdf' % self._id)
-        if not obj.is_cached():
-            data = self.fetch_attachment(self.get_filename(invoice), True).read()
-            metadata = {'content_type': 'application/pdf'}
-            buff = StringIO(data)
-            obj.cache_put(buff, metadata, timeout=None)
-        else:
-            buff = obj.get()[1]
-            data = buff.getvalue()
-        return data
+        return self.fetch_attachment(self.get_filename(invoice), True).read()
 
 
 class LineItemManager(models.Manager):
@@ -2698,7 +2691,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription).filter(
-            Q(product_type=SoftwareProductType.ANY) |
+            Q(product_type__isnull=False) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 

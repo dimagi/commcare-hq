@@ -388,7 +388,7 @@ def toggle_demo_mode(request, domain, user_id):
 
     if demo_mode:
         download = DownloadBase()
-        res = turn_on_demo_mode_task.delay(user, domain)
+        res = turn_on_demo_mode_task.delay(user.get_id, domain)
         download.set_task(res)
         return HttpResponseRedirect(
             reverse(
@@ -397,7 +397,16 @@ def toggle_demo_mode(request, domain, user_id):
             )
         )
     else:
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
+            get_practice_mode_configured_apps
+        # if the user is being used as practice user on any apps, check/ask for confirmation
+        apps = get_practice_mode_configured_apps(domain)
+        confirm_turn_off = True if (request.POST.get('confirm_turn_off', 'no')) == 'yes' else False
+        if apps and not confirm_turn_off:
+            return HttpResponseRedirect(reverse(ConfirmTurnOffDemoModeView.urlname, args=[domain, user_id]))
+
         turn_off_demo_mode(user)
+        unset_practice_mode_configured_apps(domain, user.get_id)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(edit_user_url)
 
@@ -414,6 +423,26 @@ class BaseManageCommCareUserView(BaseUserSettingsView):
             'title': MobileWorkerListView.page_title,
             'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
         }]
+
+
+class ConfirmTurnOffDemoModeView(BaseManageCommCareUserView):
+    template_name = 'users/confirm_turn_off_demo_mode.html'
+    urlname = 'confirm_turn_off_demo_mode'
+    page_title = ugettext_noop("Turn off Demo mode")
+
+    @property
+    def page_context(self):
+        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        user_id = self.kwargs.pop('couch_user_id')
+        user = CommCareUser.get_by_user_id(user_id, self.domain)
+        practice_apps = get_practice_mode_configured_apps(self.domain, user_id)
+        return {
+            'commcare_user': user,
+            'practice_apps': practice_apps,
+        }
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 class DemoRestoreStatusView(BaseManageCommCareUserView):
@@ -467,7 +496,7 @@ def reset_demo_user_restore(request, domain, user_id):
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
     download = DownloadBase()
-    res = reset_demo_user_restore_task.delay(user, domain)
+    res = reset_demo_user_restore_task.delay(user.get_id, domain)
     download.set_task(res)
 
     return HttpResponseRedirect(
@@ -703,6 +732,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if '@' in username:
             return {
                 'error': _(u'Username {} cannot contain "@".').format(username)
+            }
+        if '&' in username:
+            return {
+                'error': _(u'Username {} cannot contain "&".').format(username)
             }
         if ' ' in username:
             return {

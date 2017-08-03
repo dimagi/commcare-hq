@@ -238,8 +238,7 @@
         "transform": {},
         "is_nullable": false,
         "type": "expression",
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": null,
@@ -259,8 +258,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": null,
@@ -1026,7 +1024,7 @@
             "expression": {
               "datatype": null,
               "type": "property_name",
-              "property_name": "server_modified_on"
+              "property_name": "modified_on"
             },
             "type": "root_doc"
           },
@@ -2583,9 +2581,13 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "sql_column_indexes": [
+      {
+        "column_ids": ["awc_id", "month"]
+      },
+      {
+        "column_ids": ["supervisor_id", "month"]
+      }
+    ]
   }
 }

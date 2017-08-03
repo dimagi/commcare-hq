@@ -155,8 +155,7 @@
             "property_name": "owner_id"
           }
         },
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": null,
@@ -176,8 +175,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": null,
@@ -1306,80 +1304,87 @@
         "column_id": "pse_16_days_female_minority"
       },
       {
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "operator": "gte",
-              "expression": {
-                "type": "named",
-                "name": "pse_days"
-              },
-              "type": "boolean_expression",
-              "property_value": 16
-            },
-            {
-              "type": "named",
-              "name": "pse_eligible"
-            }
-          ]
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "pse_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "pse_days"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
         },
         "display_name": null,
-        "type": "boolean",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
         "column_id": "pse_daily_attendance"
       },
       {
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "female"
-            },
-            {
-              "type": "named",
-              "name": "pse_eligible"
-            },
-            {
-              "operator": "gte",
-              "expression": {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "and",
+            "filters": [
+              {
                 "type": "named",
-                "name": "pse_days"
+                "name": "female"
               },
-              "type": "boolean_expression",
-              "property_value": 16
-            }
-          ]
+              {
+                "type": "named",
+                "name": "pse_eligible"
+              }
+            ]
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "pse_days"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
         },
         "display_name": null,
-        "type": "boolean",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
         "column_id": "pse_daily_attendance_female"
       },
       {
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "male"
-            },
-            {
-              "type": "named",
-              "name": "pse_eligible"
-            },
-            {
-              "operator": "gte",
-              "expression": {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "and",
+            "filters": [
+              {
                 "type": "named",
-                "name": "pse_days"
+                "name": "male"
               },
-              "type": "boolean_expression",
-              "property_value": 16
-            }
-          ]
+              {
+                "type": "named",
+                "name": "pse_eligible"
+              }
+            ]
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "pse_days"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
         },
         "display_name": null,
-        "type": "boolean",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
         "column_id": "pse_daily_attendance_male"
       },
       {
@@ -1561,7 +1566,7 @@
             "expression": {
               "datatype": null,
               "type": "property_name",
-              "property_name": "server_modified_on"
+              "property_name": "modified_on"
             },
             "type": "root_doc"
           },
@@ -3190,9 +3195,25 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "sql_column_indexes": [
+      {
+        "column_ids": ["awc_id", "month"]
+      },
+      {
+        "column_ids": ["district_id", "month"]
+      },
+      {
+        "column_ids": ["supervisor_id", "month"]
+      },
+      {
+        "column_ids": ["block_id", "age_in_months"]
+      },
+      {
+        "column_ids": ["supervisor_id", "age_in_months"]
+      },
+      {
+        "column_ids": ["awc_id", "age_in_months"]
+      }
+    ]
   }
 }

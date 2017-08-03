@@ -6,6 +6,7 @@ PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
+ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 
@@ -20,6 +21,16 @@ class PartitionRouter(object):
 
     def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
+
+    def allow_relation(self, obj1, obj2, **hints):
+        from corehq.sql_db.models import PartitionedModel
+        obj1_partitioned = isinstance(obj1, PartitionedModel)
+        obj2_partitioned = isinstance(obj2, PartitionedModel)
+        if obj1_partitioned and obj2_partitioned:
+            return obj1.db == obj2.db
+        elif not obj1_partitioned and not obj2_partitioned:
+            return True
+        return False
 
 
 class MonolithRouter(object):
@@ -61,5 +72,9 @@ def db_for_read_write(model):
         error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
         assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == ICDS_MODEL:
+        assert hasattr(settings, "ICDS_UCR_TEST_DATABASE_ALIAS")
+        return settings.ICDS_UCR_TEST_DATABASE_ALIAS
+
     else:
         return partition_config.get_main_db()

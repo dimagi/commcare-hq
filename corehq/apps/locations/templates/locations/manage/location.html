@@ -7,7 +7,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'locations/js/location_drilldown.async.js' %}"></script>
     <script src="{% static 'locations/js/location.js' %}"></script>
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    {% include 'style/includes/ui_element_js.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

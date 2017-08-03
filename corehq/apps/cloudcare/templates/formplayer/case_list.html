@@ -163,6 +163,8 @@
         background-color: transparent;
         color: #685c53;
         justify-items: left;
+        padding-left: 20px;
+        padding-top: 10px;
     }
 </script>
 
@@ -174,7 +176,7 @@
                 <thead>
                 <tr>
                     <% _.each(headers, function(header, index) { %>
-                    <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
+                    <% if (!(styles[index].widthHint === 0)) { %>
                     <th class="module-caselist-header"> <%= header %></th>
                     <% } %>
                     <% }); %>

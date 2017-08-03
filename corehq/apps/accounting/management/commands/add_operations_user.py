@@ -11,11 +11,11 @@ class Command(BaseCommand):
     help = 'Grants the user(s) specified the DIMAGI_OPERATIONS_TEAM privilege'
 
     def add_arguments(self, parser):
-        parser.add_arguments(
+        parser.add_argument(
             'usernames',
             nargs="*",
         )
-        parser.add_arguments(
+        parser.add_argument(
             '--remove-user',
             action='store_true',
             default=False,

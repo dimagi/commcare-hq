@@ -44,7 +44,6 @@
         "is_primary_key": false,
         "is_nullable": false,
         "column_id": "awc_id",
-        "create_index": true,
         "expression": {
           "type": "root_doc",
           "expression": {
@@ -72,7 +71,6 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "supervisor_id",
-        "create_index": true,
         "type": "expression"
       },
       {
@@ -335,9 +333,9 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "date_turns_one_yr"]},
+      {"column_ids": ["supervisor_id", "dob"]}
+    ]
   }
 }

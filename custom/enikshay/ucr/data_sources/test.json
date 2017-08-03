@@ -1235,37 +1235,39 @@
                     "statement": "(1 if str(a) != 'None' and str(a) != '' else 0) + (1 if str(b) != 'None' and str(b) != '' else 0)",
                     "context_variables": {
                         "a": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_update_form"
-                            },
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
-                            }
-                        },
-                        "b": {
+                                ]
+                            },
                             "type": "nested",
                             "argument_expression": {
                                 "type": "named",
                                 "name": "test_update_form"
-                            },
+                            }
+                        },
+                        "b": {
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                ]
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
                             }
                         }
                     }
@@ -1275,42 +1277,45 @@
                 "type": "expression",
                 "datatype": "integer",
                 "column_id": "positive_slides",
-                "expression": {
+                "expression":  {
+                    "datatype": null,
                     "type": "evaluator",
                     "statement": "(1 if a >= 0 else 0) + (1 if b >= 0 else 0)",
                     "context_variables": {
                         "a": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_update_form"
-                            },
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
-                            }
-                        },
-                        "b": {
+                                ]
+                            },
                             "type": "nested",
                             "argument_expression": {
                                 "type": "named",
                                 "name": "test_update_form"
-                            },
+                            }
+                        },
+                        "b": {
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                ]
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
                             }
                         }
                     }
@@ -1321,41 +1326,44 @@
                 "datatype": "integer",
                 "column_id": "negative_slides",
                 "expression": {
+                    "datatype": null,
                     "type": "evaluator",
                     "statement": "(1 if a == -1 else 0) + (1 if b == -1 else 0)",
                     "context_variables": {
                         "a": {
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "test_update_form"
-                            },
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
-                            }
-                        },
-                        "b": {
+                                ]
+                            },
                             "type": "nested",
                             "argument_expression": {
                                 "type": "named",
                                 "name": "test_update_form"
-                            },
+                            }
+                        },
+                        "b": {
                             "value_expression": {
+                                "datatype": "integer",
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
+                                    "update_test_result",
                                     "microscopy",
                                     "ql_result",
                                     "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                ]
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
                             }
                         }
                     }

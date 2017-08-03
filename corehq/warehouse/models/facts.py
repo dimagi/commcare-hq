@@ -20,10 +20,16 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 class BaseFact(models.Model, WarehouseTable):
 
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.PROTECT,
+    )
+
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch):
         with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(start_datetime, end_datetime)
+            cls.load(batch)
+        return True
 
     class Meta:
         abstract = True
@@ -40,6 +46,7 @@ class FormFact(BaseFact, CustomSQLETLMixin):
 
     Grain: form_id
     '''
+    # TODO: Write Update SQL Query
     slug = FORM_FACT_SLUG
 
     form_id = models.CharField(max_length=255, unique=True)
@@ -71,6 +78,7 @@ class FormFact(BaseFact, CustomSQLETLMixin):
             FORM_STAGING_SLUG,
         ]
 
+# TODO: Write SyncLogFact
 
 class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     '''
@@ -78,6 +86,7 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
 
     Grain: app_id, user_id
     '''
+    # TODO: Write Update SQL Query (currently there exists a placeholder)
     slug = APP_STATUS_FACT_SLUG
 
     # TODO: Add app dimension

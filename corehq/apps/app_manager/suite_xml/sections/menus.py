@@ -74,7 +74,7 @@ class MenuContributor(SuiteContributorByModule):
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus(supports_module_filter=supports_module_filter):
                 menus.append(menu)
-        elif module.module_type != 'careplan':
+        else:
             from corehq.apps.app_manager.models import ShadowModule
             id_modules = [module]
             root_modules = []

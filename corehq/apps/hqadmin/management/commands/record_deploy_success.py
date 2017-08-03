@@ -93,6 +93,8 @@ class Command(BaseCommand):
             link = diff_link(STYLE_SLACK, compare_url)
             if options['environment'] == 'staging':
                 channel = '#staging'
+            elif options['environment'] == 'icds':
+                channel = '#nic-server-standup'
             else:
                 channel = '#hq-ops'
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({

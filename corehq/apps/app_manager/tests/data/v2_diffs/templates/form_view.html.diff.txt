@@ -1,41 +1,51 @@
 --- 
 +++ 
-@@ -1,4 +1,4 @@
+@@ -1,10 +1,10 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -57,7 +57,7 @@
-         <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-     {% endif %}
+ {% load i18n %}
+ 
+-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
++{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
+ 
+ {% block stylesheets %}{{ block.super }}
+     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
+@@ -53,7 +53,7 @@
+ 
+     <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
  
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -68,6 +68,38 @@
+@@ -64,6 +64,41 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
      {% endif %}
 +{% endblock %}
 +
 +{% block pre_form_content %}
-+    {% if can_preview_form %}
 +    <div class="appmanager-page-actions">
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
++        {% include 'app_manager/v2/partials/app_summary_button.html' %}
++        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
++            <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
++        </a>
 +    </div>
-+    {% endif %}
 +
 +    <div class="appmanager-edit-title">
++      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
 +      {% if form.get_action_type == 'open' %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
 +      {% elif form.requires_case %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
 +      {% else %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave %}
 +      {% endif %}
++      {% endwith %}
 +    </div>
 +
 +    <div class="appmanager-edit-description">
@@ -54,7 +64,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -104,80 +136,21 @@
+@@ -100,79 +135,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -65,7 +75,6 @@
 -    {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
 -    {% initial_page_data 'can_preview_form' can_preview_form %}
 -    {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
--    {% registerurl "cloudcare_main" domain '' %}
 -    {% registerurl "formplayer_single_app" domain app.id %}
 -
 -    <div id="build_errors"></div>
@@ -144,7 +153,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -185,35 +158,36 @@
+@@ -180,35 +157,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -198,7 +207,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -225,77 +199,72 @@
+@@ -220,75 +198,70 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -226,9 +235,6 @@
                              {% initial_page_data 'schedule_options' schedule_options %}
 -                            {% include 'app_manager/v1/partials/case_config_advanced.html' %}
 +                            {% include 'app_manager/v2/partials/case_config_advanced.html' %}
-                         {% elif module.doc_type == 'CareplanModule' %}
--                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
-+                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                          {% else %}
 -                            {% include 'app_manager/v1/partials/case_config.html' %}
 +                            {% include 'app_manager/v2/partials/case_config.html' %}
@@ -326,7 +332,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -304,14 +273,15 @@
+@@ -297,14 +270,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -344,7 +350,7 @@
              {% endif %}
          </div>
      </div>
-@@ -319,12 +289,13 @@
+@@ -312,12 +286,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

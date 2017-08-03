@@ -195,15 +195,19 @@
                 "aggregation": "simple"
             },
             {
-                "field": "treating_provider_name",
-                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "person_owner_id",
                 "calculate_total": false,
+                "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name",
-                "aggregation": "simple"
+                "display": "Treating Provider Name"
             },
             {
                 "field": "person_owner_id",
@@ -359,7 +363,7 @@
                 "aggregation": "simple"
             },
             {
-                "field": "date_of_diagnosis2",
+                "field": "date_of_diagnosis",
                 "transform": {},
                 "sortable": false,
                 "description": null,

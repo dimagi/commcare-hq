@@ -7,7 +7,7 @@
     "server_environment": [
         "softlayer"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "episode_drtb",
     "report_id": "rntcp_pmdt_treatment_register",
     "config": {
         "description": "",
@@ -19,12 +19,12 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "datetime",
                 "required": false,
+                "datatype": "datetime",
+                "show_all": true,
                 "display": "Date of Treatment Initiation",
                 "field": "treatment_initiation_date",
                 "type": "date",
-                "show_all": true,
                 "slug": "treatment_initiation_date"
             },
             {
@@ -32,8 +32,9 @@
                 "datatype": "string",
                 "fields": [
                     "person_owner_id",
-                    "treatment_initiating_facility_id",
-                    "secondary_owner_owner_id"
+                    "treatment_initiating_drtb_center",
+                    "first_secondary_owner_owner_id",
+                    "second_secondary_owner_owner_id"
                 ],
                 "display": "Location",
                 "field": "person_owner_id",
@@ -53,6 +54,22 @@
                 "field": "treatment_public",
                 "type": "pre",
                 "slug": "treatment_public"
+            },
+            {
+                "pre_value": "confirmed_drtb",
+                "datatype": "string",
+                "display": null,
+                "field": "episode_type",
+                "type": "pre",
+                "slug": "episode_type"
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_enrolled_in_private",
+                "type": "pre",
+                "slug": "is_enrolled_in_private"
             }
         ],
         "columns": [
@@ -106,7 +123,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "age",
+                "field": "age_entered",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Age in Years"
@@ -121,6 +138,28 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address and Mobile Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "height",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Height"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "weight",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Weight"
             },
             {
                 "sortable": false,
@@ -176,7 +215,19 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "extra_pulmonary, abdominal": " Extra Pulmonary, Abdominal",
+                        "extra_pulmonary, lymph_node": " Extra Pulmonary, Lymph Node",
+                        "extra_pulmonary, spine": "Extra Pulmonary, Spine",
+                        "extra_pulmonary": "Extra Pulmonary",
+                        "extra_pulmonary_brain": "Extra Pulmonary, Brain",
+                        "extra_pulmonary, other": "Extra Pulmonary, Other",
+                        "pulmonary": "Pulmonary",
+                        "extra_pulmonary, pleural_effusion": "Extra Pulmonary, Pleural Effusion"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "site_of_disease",
                 "calculate_total": false,
@@ -187,18 +238,37 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "new": "New",
+                        "recurrent": "Recurrent",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Lost to Follow Up",
+                        "other_previously_treated": "Other Previously Treated"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
-                "field": "patient_type_private_app",
+                "field": "patient_type",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Type (New, Recurrent, TALFU, Failure, Other)"
+                "display": "Patient Type"
             },
             {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "follow_up_sm_ve_ip": "Follow Up Sm+ve at end IP",
+                        "extended_dst": "Extended DST",
+                        "discordance_resolution": "Discordance Resolution",
+                        " private_referral": "Private Referral",
+                        "mdr_at_diagnosis": "MDR TB at Diagnosis",
+                        "contact_of_mdr_rr": "Contact of MDR/RR TB"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "rft_drtb_diagnosis",
                 "calculate_total": false,
@@ -385,18 +455,42 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "mdr": "Multi Drug Resistant",
+                        "mr": "Mono Drug Resistance",
+                        "pdr": "Poly Drug Resistance",
+                        "rr": "Rif Resistant",
+                        "xdr": "Extensive Drug Resistance"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "type_of_drtb_patient",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Type of DRTB patient ( RRTB/MDRTB/ XDRTB)"
+                "display": "Type of DRTB patient"
             },
             {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "new_drug_mdr_rr_fq_sli": "Regimen with New Drug for MDR-TB Regimen + FQ/SLI Resistance",
+                        "inh_poly_mono": "Regimen for INH mono/poly resistant TB",
+                        "mdr_rr_fq_sli": "Modified Regimen for MDR/RR-TB + FQ/SLI Resistance",
+                        "new_mixed_pattern": "Regimen with New Drug for mixed pattern resistance",
+                        "xdr": "Regimen for XDR TB",
+                        "new_fail_mdr": " Regimen with New Drug for failures of regimen for MDR TB",
+                        "new_fail_xdr": "Regimen with New Drug for failures of regimen for XDR-TB",
+                        "mixed_pattern": "Modified Regimen for Mixed Pattern Resistance",
+                        "mdr_rr": "Regimen for MDR/RR TB",
+                        "new_xdr": "Regimen with New Drug for XDR-TB",
+                        "short_regimen": "Shorter Regimen"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "treatment_regimen",
                 "calculate_total": false,
@@ -420,10 +514,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "culture_at_0_months",
+                "field": "culture_at_1_6_months",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Culture at 0 Months"
+                "display": "Follow up Culture Results Months 1-6"
             },
             {
                 "sortable": false,
@@ -431,10 +525,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "sputum_at_3_months",
+                "field": "culture_at_7_12_months",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Sputum at 3 Months"
+                "display": "Follow up Culture Results Months 7-12"
             },
             {
                 "sortable": false,
@@ -442,10 +536,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "culture_at_3_months",
+                "field": "culture_at_13_20_months",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Culture at 3 Months"
+                "display": "Follow up Culture Results Months 13-20"
             },
             {
                 "sortable": false,
@@ -453,10 +547,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "sputum_at_4_months",
+                "field": "culture_at_21_30_months",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Sputum at 4 Months"
+                "display": "Follow up Culture Results Months 21-30"
             },
             {
                 "sortable": false,
@@ -464,230 +558,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "culture_at_4_months",
+                "field": "sputum_at_1_6_months",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Culture at 4 months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "sputum_at_5_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Sputum at 5 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_5_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 5 months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "sputum_at_6_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Sputum at 6 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_6_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 6 months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_7_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 7 months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_9_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 9 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_12_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 12 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_15_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 15 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_16_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 16 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_17_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 17 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_18_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 18 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_19_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 19 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_20_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 20 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_21_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 21 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_22_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 22 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_23_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 23 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_24_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 24 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_25_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 25 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_26_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 26 Months"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "culture_at_27_months",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Culture at 27 Months"
+                "display": "Follow up Sputum Results Months 1-6"
             },
             {
                 "sortable": false,
@@ -715,7 +589,14 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "translations": {
+                        "reactive": "Reactive",
+                        "unknown": "Unknown",
+                        "non_reactive": "Non Reactive"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "hiv_status",
                 "calculate_total": false,
@@ -748,12 +629,68 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "translations": {
+                        "unknown": "Unknown",
+                        "non_diabetic": "Non Diabetic",
+                        "diabetic": "Diabetic"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "diabetes_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activities) Diabetes Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
                 "transform": {},
+                "aggregation": "simple",
+                "field": "adr_history",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Adverse Drug Reactions"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "treatment_failure_culture_non_reversion": "Treatment Failure - Culture Non Reversion",
+                        "cured": "Cured",
+                        "treatment_complete": "Treatment Complete",
+                        "treatment_failure_culture_reversion": "Treatment Failure - Culture Reversion",
+                        "treatment_failure_adverse_drug_reaction": "Treatment Failure - Adverse Drug Reaction",
+                        "not_evaluated": "Not Evaluated",
+                        "regimen_changed": "Regimen Changed",
+                        "pediatric_failure_to_respond": "Pediatric failure to respond",
+                        "treatment_failure_additional_drug_resistance": "Treatment Failure - Additional Drug Resistance",
+                        "invalid_registration": "Invalid Registration",
+                        "loss_to_follow_up": "Loss to follow up",
+                        "died": "Patient Died"
+                    },
+                    "type": "translation"
+                },
                 "aggregation": "simple",
                 "field": "treatment_outcome",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Final Treatment Outcome"
+                "display": "Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_outcome_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Outcome Date"
             },
             {
                 "sortable": false,

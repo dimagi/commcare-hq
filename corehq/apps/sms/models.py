@@ -26,7 +26,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -237,6 +236,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     fri_message_bank_message_id = models.CharField(max_length=126, null=True)
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
+
+    # Holds any custom metadata for this SMS
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
 
     class Meta:
         abstract = True

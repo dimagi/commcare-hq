@@ -6,12 +6,15 @@ from corehq.apps.app_manager.exceptions import MediaResourceError
 from corehq.apps.app_manager.suite_xml.post_process.menu import GridMenuHelper
 from corehq.apps.app_manager.suite_xml.sections.details import DetailContributor
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
-from corehq.apps.app_manager.suite_xml.features.careplan import CareplanMenuContributor
 from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtureContributor
 from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
-from corehq.apps.app_manager.suite_xml.sections.resources import FormResourceContributor, LocaleResourceContributor
+from corehq.apps.app_manager.suite_xml.sections.resources import(
+    FormResourceContributor,
+    LocaleResourceContributor,
+    PracticeUserRestoreContributor,
+)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
@@ -45,17 +48,18 @@ class SuiteGenerator(object):
             DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
         ])
 
+        if self.app.supports_practice_users and self.app.get_practice_user(self.build_profile_id):
+            self._add_sections([
+                PracticeUserRestoreContributor(self.suite, self.app, self.modules, self.build_profile_id)
+            ])
+
         # by module
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
-        careplan_menus = CareplanMenuContributor(self.suite, self.app, self.modules)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
         for module in self.modules:
             self.suite.entries.extend(entries.get_module_contributions(module))
 
-            self.suite.menus.extend(
-                careplan_menus.get_module_contributions(module)
-            )
             self.suite.menus.extend(
                 menus.get_module_contributions(module)
             )

@@ -128,7 +128,7 @@ class Command(BaseCommand):
         # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         self.exclude_dbs = (
             # these have data we don't want to copy
-            'receiverwrapper', 'auditcare', 'fluff-bihar', 'fluff-opm',
+            'receiverwrapper', 'auditcare', 'fluff-bihar',
             'fluff-mc', 'fluff-cvsu', 'mvp-indicators', 'm4change',
             # todo: missing domain/docs, but probably want to add back
             'meta',

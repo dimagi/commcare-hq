@@ -56,18 +56,20 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
             report = ReportFactory().from_spec(report_config)
             filter_values = get_filter_values(
                 report_config.ui_filters,
-                {slug: self.sto.location_id},
+                {slug: self.cto.location_id},
                 user=MagicMock(),
             )
             report.set_filter_values(filter_values)
 
         expected_filter_vals = {
-            '{}_ctd'.format(slug): self.ctd.location_id,
-            '{}_below_sto'.format(slug): self.sto.location_id,
+            '{}_sto'.format(slug): self.sto.location_id,
+            '{}_cto'.format(slug): self.cto.location_id,
+            '{}_below_cto'.format(slug): self.cto.location_id,
         }
         expected_filter = OR([
-            EQ("ctd", "{}_ctd".format(slug)),
-            EQ("below_sto", "{}_below_sto".format(slug))
+            EQ("sto", "{}_sto".format(slug)),
+            EQ("cto", "{}_cto".format(slug)),
+            EQ("below_cto", "{}_below_cto".format(slug))
         ])
 
         self.assertEqual(len(report.data_source.filters), 1)

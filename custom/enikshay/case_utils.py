@@ -28,6 +28,8 @@ CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
+CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
+CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -328,13 +330,8 @@ def _get_private_locations(person_case):
         )
 
     try:
-        tu_id = person_case.dynamic_case_properties().get('tu_choice')
-        tu_location = SQLLocation.active_objects.get(
-            domain=person_case.domain,
-            location_id=tu_id,
-        )
-        tu_location_nikshay_code = tu_location.metadata['nikshay_code']
-    except (SQLLocation.DoesNotExist, KeyError, AttributeError):
+        tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
+    except KeyError:
         tu_location_nikshay_code = None
 
     try:

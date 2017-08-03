@@ -7,7 +7,7 @@ from django.db import transaction
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str
+from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
@@ -179,23 +179,33 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def get_or_create_wrapped(self, verify_unchanged=None):
         checkpoints = self._get_checkpoints()
         ret = {}
-        timestamp = checkpoints[0].last_modified
-        for checkpoint in checkpoints:
-            ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
-            if checkpoint.last_modified > timestamp:
-                timestamp = checkpoint.last_modified
+        if checkpoints:
+            timestamp = checkpoints[0].last_modified
+            for checkpoint in checkpoints:
+                ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+                if checkpoint.last_modified > timestamp:
+                    timestamp = checkpoint.last_modified
+        else:
+            timestamp = datetime.fromtimestamp(0)
 
         return WrappedCheckpoint(ret, timestamp)
 
-    def get_current_sequence_id(self):
+    def get_current_sequence_as_dict(self):
         return {
             (checkpoint.topic, checkpoint.partition): checkpoint.offset
             for checkpoint in self._get_checkpoints()
         }
 
+    def get_current_sequence_id(self):
+        return kafka_seq_to_str(self.get_current_sequence_as_dict())
+
     def update_to(self, seq):
-        kafka_seq = seq
-        seq = kafka_seq_to_str(seq)
+        if isinstance(seq, basestring):
+            kafka_seq = str_to_kafka_seq(seq)
+        else:
+            kafka_seq = seq
+            seq = kafka_seq_to_str(seq)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
@@ -211,6 +221,9 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
 
     def touch(self, min_interval):
         return False
+
+    def reset(self):
+        KafkaCheckpoint.objects.filter(checkpoint_id=self.checkpoint_id).delete()
 
 
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):

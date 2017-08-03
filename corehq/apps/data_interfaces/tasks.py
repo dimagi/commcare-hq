@@ -126,9 +126,10 @@ def run_case_update_rules_for_domain(domain, now=None):
         for case_ids in case_id_chunks:
             for case in CaseAccessors(domain).iter_cases(case_ids):
                 time_elapsed = datetime.utcnow() - start_run
+                max_updates = 50000 if domain == 'enikshay' else settings.MAX_RULE_UPDATES_IN_ONE_RUN
                 if (
                     time_elapsed.seconds > HALT_AFTER or
-                    case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN
+                    case_update_result.total_updates >= max_updates
                 ):
                     run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
                     notify_error("Halting rule run for domain %s." % domain)

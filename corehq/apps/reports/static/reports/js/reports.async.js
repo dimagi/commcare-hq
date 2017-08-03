@@ -1,3 +1,5 @@
+/* globals COMMCAREHQ */
+// This file depends on reports/js/filters.js
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
@@ -30,11 +32,11 @@ var HQAsyncReport = function (o) {
         504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
     };
 
-
     var loadFilters = function (data) {
         self.filterRequest = null;
         try {
             $('#hq-report-filters').html(data.filters);
+            hqImport("reports/js/filters.js").init();
         } catch (e) {
             console.log(e);
         }

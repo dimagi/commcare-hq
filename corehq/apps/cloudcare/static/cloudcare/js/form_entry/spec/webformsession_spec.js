@@ -73,16 +73,21 @@ describe('WebForm', function() {
                 onLoadingComplete: sinon.spy(),
                 resourceMap: sinon.spy(),
                 session_data: {},
-                xform_url: 'http://xform.url/'
+                xform_url: 'http://xform.url/',
+                action: 'dummy',
             };
 
             // Setup fake server
             server = sinon.fakeServer.create();
             server.respondWith(
-                params.xform_url,
-                [200,
-                { 'Content-Type': 'application/json' },
-                '{ "status": "success", "session_id": "my-session" }']);
+                'POST',
+                new RegExp(params.xform_url + '.*'),
+                [
+                    200,
+                    { 'Content-Type': 'application/json' },
+                    '{ "status": "success", "session_id": "my-session" }',
+                ]
+            );
 
             // Setup server constants
             window.XFORM_URL = 'dummy';

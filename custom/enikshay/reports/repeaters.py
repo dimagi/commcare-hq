@@ -3,9 +3,9 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
-from corehq.apps.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
-from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
@@ -31,12 +31,16 @@ class ENikshayRepeaterFilter(RepeaterFilter):
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     name = 'eNikshay Forwarder Report'
+    base_template = 'reports/base_template.html'
+    asynchronous = True
     section_name = 'Custom Reports'
     slug = 'enikshay_repeater_report'
     dispatcher = CustomProjectReportDispatcher
     fields = (ENikshayRepeaterFilter, RepeatRecordStateFilter)
     exportable = True
     exportable_all = True
+
+    emailable = True
 
     @property
     def get_all_rows(self):
@@ -53,26 +57,33 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             DataTablesColumn(_('Person Case')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
-            DataTablesColumn(_('Failure Reason')),
-            DataTablesColumn(_('Payload')),
+            DataTablesColumn(_('Attempts')),
         ]
+        if not self.is_rendered_as_email:
+            columns.append(DataTablesColumn(_('Payload')))
 
         return DataTablesHeader(*columns)
 
     def _make_row(self, record):
-        try:
-            payload = record.get_payload()
-        except ENikshayException as error:
-            payload = u"Error: {}".format(error)
+        attempt_messages = [
+            escape("{date}: {message}".format(
+                date=self._format_date(attempt.datetime),
+                message=attempt.message))
+            for attempt in record.attempts]
         row = [
             record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
-            escape(record.failure_reason) if not record.succeeded else None,
-            payload,
+            ",<br />".join(attempt_messages),
         ]
+        if not self.is_rendered_as_email:
+            try:
+                payload = record.get_payload()
+            except Exception as error:
+                payload = u"Error: {}".format(error)
+            row.append(payload)
         return row
 
     def _get_person_id_link(self, record):

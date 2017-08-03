@@ -5,8 +5,6 @@ from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata, FormProcessorInterface
 
-_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
-
 
 def _get_id_for_case(case):
     if isinstance(case, dict):
@@ -152,17 +150,21 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case is None:
             if xform.metadata and xform.metadata.commcare_version:
                 from distutils.version import LooseVersion
-                if xform.metadata and xform.metadata.commcare_version:
-                    commcare_version = xform.metadata.commcare_version
-                    _soft_assert(
-                        case_update.creates_case() or commcare_version < LooseVersion("2.35"),
-                        "Case created without create block in CC version >= 2.35", {
-                            'xform_id': xform.form_id,
-                            'case_id': case_update.id,
-                            'domain': xform.domain,
-                            'version': str(commcare_version)
-                        }
-                    )
+                commcare_version = xform.metadata.commcare_version
+                message = "Case created without create block"
+                send_to = None
+                if commcare_version >= LooseVersion("2.35"):
+                    send_to = "{}@{}.com".format('skelly', 'dimagi')
+                    message += " in CC version >= 2.35"
+                soft_assert(to=send_to)(
+                    case_update.creates_case(),
+                    message, {
+                        'xform_id': xform.form_id,
+                        'case_id': case_update.id,
+                        'domain': xform.domain,
+                        'version': str(commcare_version)
+                    }
+                )
             case = self.case_update_strategy.case_from_case_update(case_update, xform)
             self.set(case.case_id, case)
             return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None)
@@ -184,3 +186,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         """
         # This is only used by ledger actions currently
         self.case_update_strategy(case).apply_action_intents(primary_intent, deprecation_intent)
+
+    @abstractmethod
+    def filter_closed_extensions(self, extensions_to_close):
+        pass

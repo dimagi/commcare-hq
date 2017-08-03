@@ -84,7 +84,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-            and was_domain_created_after(item, domain_enabled_after)):
+                and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -307,12 +307,6 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-APP_BUILDER_CAREPLAN = StaticToggle(
-    'careplan',
-    'Careplan module',
-    TAG_EXPERIMENTAL
-)
-
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -325,7 +319,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -378,11 +372,20 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DATA_FILE_DOWNLOAD = StaticToggle(
+    'data_file_download',
+    'Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    # TODO: Create Confluence docs and add help link
+)
+
+
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -411,7 +414,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -496,14 +499,31 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
+
+
+ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
+    'role_webapps_permissions',
+    'Toggle which webapps to see based on role',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+LIVEQUERY_SYNC = StaticToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -631,7 +651,7 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options',
+    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -640,7 +660,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -715,13 +735,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-INSTANCE_VIEWER = StaticToggle(
-    'instance_viewer',
-    'CloudCare Form Debugging Tool',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
@@ -733,7 +746,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -755,6 +768,13 @@ CUSTOM_MENU_BAR = StaticToggle(
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+DASHBOARD_ICDS_REPORT = StaticToggle(
+    'dashboard_icds_reports',
+    'Enable access to the dashboard reports for ICDS',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -789,6 +809,13 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+OPENMRS_INTEGRATION = StaticToggle(
+    'openmrs_integration',
+    'Enable OpenMRS integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -818,9 +845,9 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-USE_OLD_CLOUDCARE = StaticToggle(
-    'use_old_cloudcare',
-    'Use Old CloudCare',
+FORMPLAYER_USE_LIVEQUERY = StaticToggle(
+    'formplayer_use_livequery',
+    'Use LiveQuery on Web Apps',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
@@ -1012,14 +1039,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EDIT_FORMPLAYER = PredictablyRandomToggle(
-    'edit_formplayer',
-    'Edit forms on Formplayer',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
@@ -1034,12 +1053,18 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V2 = StaticToggle(
-    'app_manager_v2',
-    'Prototype for case management onboarding (App Manager V2)',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER],
-    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
+APP_MANAGER_V1 = StaticToggle(
+    'app_manager_v1',
+    'Turn OFF prototype for case management onboarding (App Manager V2)',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
+
+APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
+    'app_manager_v2_template_apps',
+    'Experiment with template apps in app builder v2',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1073,6 +1098,7 @@ ENIKSHAY = StaticToggle(
     "Enable custom enikshay functionality: additional user and location validation",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1085,13 +1111,6 @@ DATA_DICTIONARY = StaticToggle(
 LINKED_APPS = StaticToggle(
     'linked_apps',
     'Allows master and linked apps',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -1204,10 +1223,37 @@ MOTECH = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENTERPRISE_OPTIMIZATIONS = StaticToggle(
-    'enterprise_optimizations',
-    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
+DISPLAY_CONDITION_ON_TABS = StaticToggle(
+    'display_condition_on_nodeset',
+    'Show Display Condition on Case Detail Tabs',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
+    [NAMESPACE_DOMAIN]
+)
+
+PHONE_HEARTBEAT = StaticToggle(
+    'phone_apk_heartbeat',
+    'Expose phone apk heartbeat URL and add it profile.xml',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_REMOVE_INDICES = StaticToggle(
+    'skip_remove_indices',
+    'Make _remove_indices_from_deleted_cases_task into a no-op.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+PREVENT_MOBILE_UCR_SYNC = StaticToggle(
+    'prevent_mobile_ucr_sync',
+    'Used for ICDS emergencies when UCR sync is killing the DB',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
 )

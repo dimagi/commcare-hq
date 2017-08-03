@@ -1,4 +1,7 @@
 import datetime
+from cStringIO import StringIO
+from dimagi.utils.csv import UnicodeWriter
+
 from collections import defaultdict
 import pytz
 
@@ -14,12 +17,15 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .case_utils import (
     CASE_TYPE_EPISODE,
     get_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
+    get_person_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -34,22 +40,24 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
-from .model_migration_sets import EpisodeFacilityIDMigration
 
 logger = get_task_logger(__name__)
 
 
 @periodic_task(
     run_every=crontab(hour=0, minute=0),  # every day at midnight
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task():
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
-        updater = EpisodeUpdater(domain)
-        updater.run()
+        try:
+            updater = EpisodeUpdater(domain)
+            updater.run()
+        except Exception as e:
+            logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
 
 
 class Timer:
@@ -70,68 +78,116 @@ class EpisodeUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
-        # set purge_date to 30 days back
-        self.purge_date = datetime.datetime.now(
-            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
-        self.adherence_data_store = AdherenceDatastore(domain)
+        self.updaters = [
+            EpisodeAdherenceUpdate,
+            EpisodeVoucherUpdate,
+            EpisodeTestUpdate,
+        ]
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
         update_count = 0
         noupdate_count = 0
-        error_count = 0
+        errors = []
         with Timer() as t:
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases():
-                adherence_update = EpisodeAdherenceUpdate(episode, self)
-                voucher_update = EpisodeVoucherUpdate(self.domain, episode)
-                test_update = EpisodeTestUpdate(self.domain, episode)
-                episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
-                try:
-                    update_json = adherence_update.update_json()
-                    update_json.update(voucher_update.update_json())
-                    update_json.update(test_update.update_json())
-                    update_json.update(episode_facility_id_migration.update_json())
-                    if update_json:
-                        updates.append((episode.case_id, update_json, False))
-                        update_count += 1
-                    else:
-                        noupdate_count += 1
-                    if len(updates) == batch_size:
-                        bulk_update_cases(self.domain, updates)
-                        updates = []
-                except Exception, e:
-                    error_count += 1
-                    logger.error(
-                        "Error calculating updates for episode case_id({}): {}".format(
-                            episode.case_id,
-                            e
+                update_json = {}
+                for updater in self.updaters:
+                    try:
+                        update_json.update(updater(self.domain, episode).update_json())
+                    except Exception as e:
+                        errors.append(
+                            [episode.case_id, updater.__class__, e]
                         )
-                    )
+                if update_json:
+                    updates.append((episode.case_id, update_json, False))
+                    update_count += 1
+                else:
+                    noupdate_count += 1
+                if len(updates) >= batch_size:
+                    bulk_update_cases(self.domain, updates)
+                    updates = []
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
-        logger.info(
+
+        summary = (
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
             "cases didn't need update. ".format(
-                domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
+                domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
                 noupdates=noupdate_count)
+        )
+        self.send_final_email(summary, errors)
+
+    def send_final_email(self, message, errors):
+        subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
+        recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
+        cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
+
+        csv_file = StringIO()
+        writer = UnicodeWriter(csv_file)
+        writer.writerow(['Episode ID', 'Updater Class', 'Error'])
+        writer.writerows(errors)
+
+        attachment = {
+            'title': "failed_episodes_{}.csv".format(datetime.date.today()),
+            'mimetype': 'text/csv',
+            'file_obj': csv_file,
+        }
+        send_html_email_async.delay(
+            subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
         )
 
     def update_single_case(self, episode_case):
         # updates a single episode_case.
         assert episode_case.domain == self.domain
-        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()
+        update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
         if update_json:
             update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
-        # return all open 'episode' cases
         case_accessor = CaseAccessors(self.domain)
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        return case_accessor.iter_cases(case_ids)
+        episode_cases = case_accessor.iter_cases(case_ids)
+
+        for episode_case in episode_cases:
+            # if this episode is part of a deleted or archived person, don't update
+            try:
+                person_case = get_person_case_from_episode(self.domain, episode_case.case_id)
+            except ENikshayCaseNotFound:
+                continue
+
+            if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+                continue
+
+            if person_case.closed:
+                continue
+
+            yield episode_case
+
+
+class EpisodeAdherenceUpdate(object):
+    """
+    Class to capture adherence related calculations specific to an 'episode' case
+    per the spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
+    """
+    def __init__(self, domain, episode_case):
+        self.domain = domain
+        self.episode = episode_case
+        self.adherence_data_store = AdherenceDatastore(self.domain)
+        # set purge_date to 30 days back
+        self.purge_date = datetime.datetime.now(
+            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
+        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+
+        self._cache_dose_taken_by_date = False
+
+    @property
+    @memoized
+    def case_properties(self):
+        return self.episode.dynamic_case_properties()
 
     @memoized
     def get_doses_data(self):
@@ -143,27 +199,6 @@ class EpisodeUpdater(object):
             doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
             doses_per_week_by_schedule_id[schedule_id] = doses_per_week
         return doses_per_week_by_schedule_id
-
-
-class EpisodeAdherenceUpdate(object):
-    """
-    Class to capture adherence related calculations specific to an 'episode' case
-    per the spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
-    """
-    def __init__(self, episode_case, case_updater):
-        """
-        Args:
-            episode_case: An 'episode' case object
-            case_updater: EpisodeUpdater object
-        """
-        self.episode = episode_case
-        self.case_updater = case_updater
-        self._cache_dose_taken_by_date = False
-
-    @property
-    @memoized
-    def case_properties(self):
-        return self.episode.dynamic_case_properties()
 
     def get_property(self, property):
         """
@@ -178,7 +213,7 @@ class EpisodeAdherenceUpdate(object):
     @memoized
     def get_valid_adherence_cases(self):
         # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
-        return self.case_updater.adherence_data_store.dose_known_adherences(
+        return self.adherence_data_store.dose_known_adherences(
             self.episode.case_id
         )
 
@@ -187,7 +222,7 @@ class EpisodeAdherenceUpdate(object):
         return open case of type 'adherence' reverse-indexed to episode that
             has the latest 'adherence_date' property of all
         """
-        return self.case_updater.adherence_data_store.latest_adherence_date(
+        return self.adherence_data_store.latest_adherence_date(
             self.episode.case_id
         )
 
@@ -305,7 +340,7 @@ class EpisodeAdherenceUpdate(object):
         debug_data = []
         adherence_schedule_date_start = self.get_adherence_schedule_start_date()
         debug_data.append("adherence_schedule_date_start: {}".format(adherence_schedule_date_start))
-        debug_data.append("purge_date: {}".format(self.case_updater.purge_date))
+        debug_data.append("purge_date: {}".format(self.purge_date))
 
         if not adherence_schedule_date_start:
             # adherence schedule hasn't been selected, so no update necessary
@@ -314,7 +349,7 @@ class EpisodeAdherenceUpdate(object):
         latest_adherence_date = self.get_latest_adherence_date()
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
-        if (adherence_schedule_date_start > self.case_updater.purge_date) or not latest_adherence_date:
+        if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
             return self.check_and_return({
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
@@ -348,7 +383,7 @@ class EpisodeAdherenceUpdate(object):
             14: 'two_week',
             30: 'month',
         }
-        today = self.case_updater.date_today_in_india
+        today = self.date_today_in_india
         start_date = self.get_adherence_schedule_start_date()
 
         properties = {}
@@ -397,10 +432,10 @@ class EpisodeAdherenceUpdate(object):
         update = {}
 
         update["adherence_latest_date_recorded"] = latest_adherence_date
-        if latest_adherence_date < self.case_updater.purge_date:
+        if latest_adherence_date < self.purge_date:
             update["aggregated_score_date_calculated"] = latest_adherence_date
         else:
-            update["aggregated_score_date_calculated"] = self.case_updater.purge_date
+            update["aggregated_score_date_calculated"] = self.purge_date
 
         # calculate 'adherence_total_doses_taken'
         update["adherence_total_doses_taken"] = self.count_doses_taken(dose_taken_by_date)
@@ -412,7 +447,7 @@ class EpisodeAdherenceUpdate(object):
         )
 
         # calculate 'expected_doses_taken' score
-        dose_data = self.case_updater.get_doses_data()
+        dose_data = self.get_doses_data()
         adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
         if doses_per_week:
@@ -544,9 +579,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
-            'voucher_length': voucher_length,
-            'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
+            u'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
+            u'voucher_length': voucher_length,
+            u'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
         }
 
     def get_first_voucher_details(self):
@@ -567,9 +602,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
-            'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
-            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
+            u'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
+            u'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
+            u'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }
 
@@ -588,9 +623,9 @@ class EpisodeTestUpdate(object):
     def update_json(self):
         if self.diagnostic_tests:
             return {
-                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
+                u'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
                                                for diagnostic_test in self.diagnostic_tests]),
-                'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
+                u'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
                                                       for diagnostic_test in self.diagnostic_tests])
             }
         else:
@@ -599,7 +634,7 @@ class EpisodeTestUpdate(object):
     def _get_diagnostic_test_name(self, diagnostic_test):
         site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
         if site_specimen_name:
-            return "{}: {}".format(
+            return u"{}: {}".format(
                 diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
         else:
             return diagnostic_test.get_case_property('investigation_type_name')

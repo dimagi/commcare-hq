@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     OpenCaseAction,
     PreloadAction,
     WORKFLOW_MODULE,
+    WORKFLOW_CASE_LIST,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -112,6 +113,13 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             'en': 'Register another Dugong'
         }
         self.assertXmlEqual(self.get_xml('case-list-form-advanced-autoload'), factory.app.create_suite())
+
+    def test_case_list_registration_form_return_to_case_list(self):
+        factory = self._prep_case_list_form_app()
+        app = factory.app
+        case_module = app.get_module(0)
+        case_module.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
+        self.assertXmlEqual(self.get_xml('case_list_form_end_of_form_case_list'), app.create_suite())
 
     def test_case_list_form_parent_child_advanced(self):
         # * Register house (case type = house, basic)

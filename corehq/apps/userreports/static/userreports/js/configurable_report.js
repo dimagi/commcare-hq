@@ -58,12 +58,12 @@ hqDefine("userreports/js/configurable_report.js", function() {
             filterSet: initial_page_data('filter_set'),
             needsFilters: initial_page_data('needs_filters'),
             isExportable: initial_page_data('is_exportable'),
-            checkExportSize: true,
             isExportAll: initial_page_data('is_export_all'),
             isEmailable: initial_page_data('is_emailable'),
             emailDefaultSubject: initial_page_data('title'),
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+            checkExportSize: true,
             getReportRenderUrl: function(renderType, additionalParams) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;

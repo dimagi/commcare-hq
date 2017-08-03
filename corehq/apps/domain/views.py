@@ -1,14 +1,12 @@
 import copy
 import datetime
-import re
-from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
 import cStringIO
-import pytz
 import sys
 
+import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
@@ -18,7 +16,7 @@ from django.core.validators import validate_email
 from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
-from django.views.generic import DetailView, ListView, View
+from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -46,17 +44,12 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm
-from corehq.apps.dhis2.models import JsonApiLog, DataSetMap, DataValueMap
-from corehq.apps.dhis2.tasks import send_datasets
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.repeaters.models import BASIC_AUTH, DIGEST_AUTH
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator
-
+from corehq.motech.repeaters.models import BASIC_AUTH, DIGEST_AUTH
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
@@ -81,7 +74,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -108,7 +101,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
     get_feature_name,
-    PricingTable,
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
@@ -135,14 +127,14 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, RepeatRecord
-from corehq.apps.repeaters.dbaccessors import (
+from corehq.motech.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types
-from corehq.apps.repeaters.const import (
+from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
@@ -641,13 +633,6 @@ def logo(request, domain):
         raise Http404()
 
     return HttpResponse(logo[0], content_type=logo[1])
-
-
-@require_POST
-@domain_admin_required
-def send_dhis2_data(request, domain):
-    send_datasets.delay(domain, send_now=True)
-    return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
 
 
 class DomainAccountingSettings(BaseProjectSettingsView):
@@ -1441,7 +1426,6 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
-            'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -2936,13 +2920,17 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        exclude_previews = []
+        if not toggles.APP_MANAGER_V1.enabled_for_request(self.request):
+            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
-            'features': self.features(),
+            'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }
 
     def post(self, request, *args, **kwargs):
         for feature, enabled in self.features():
             self.update_feature(feature, enabled, feature.slug in request.POST)
+        feature_previews.previews_dict.clear(self.domain)
 
         return redirect('feature_previews', domain=self.domain)
 
@@ -2954,14 +2942,14 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class FeatureFlagsView(BaseAdminProjectSettingsView):
-    urlname = 'domain_feature_flags'
-    page_title = ugettext_lazy("Feature Flags")
-    template_name = 'domain/admin/feature_flags.html'
+class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'feature_flags_and_privileges'
+    page_title = ugettext_lazy("Feature Flags and Privileges")
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     @memoized
     def enabled_flags(self):
@@ -2973,11 +2961,19 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
             key=_sort_key,
         )
 
+    def _get_privileges(self):
+        return sorted([
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda (name, has): (not has, name))
+
     @property
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
-            'use_sql_backend': self.domain_object.use_sql_backend
+            'use_sql_backend': self.domain_object.use_sql_backend,
+            'privileges': self._get_privileges(),
         }
 
 
@@ -3117,145 +3113,6 @@ class DeactivateTransferDomainView(View):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
-
-
-class Dhis2ConnectionView(BaseAdminProjectSettingsView):
-    urlname = 'dhis2_connection_view'
-    page_title = ugettext_lazy("DHIS2 Connection Settings")
-    template_name = 'domain/admin/dhis2/connection_settings.html'
-
-    @method_decorator(domain_admin_required)
-    def post(self, request, *args, **kwargs):
-        form = self.dhis2_connection_form
-        if form.is_valid():
-            form.save(self.domain)
-            get_dhis2_connection.clear(request.domain)
-            return HttpResponseRedirect(self.page_url)
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(Dhis2ConnectionView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def dhis2_connection_form(self):
-        dhis2_conn = get_dhis2_connection(self.request.domain)
-        initial = dict(dhis2_conn) if dhis2_conn else {}
-        if self.request.method == 'POST':
-            return Dhis2ConnectionForm(self.request.POST, initial=initial)
-        return Dhis2ConnectionForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {'dhis2_connection_form': self.dhis2_connection_form}
-
-
-class DataSetMapView(BaseAdminProjectSettingsView):
-    urlname = 'dataset_map_view'
-    page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'domain/admin/dhis2/dataset_map.html'
-
-    @method_decorator(domain_admin_required)
-    def post(self, request, *args, **kwargs):
-
-        def update_dataset_map(instance, dict_):
-            for key, value in dict_.items():
-                if key == 'datavalue_maps':
-                    value = [DataValueMap(**v) for v in value]
-                instance[key] = value
-
-        try:
-            new_dataset_maps = json.loads(request.POST['dataset_maps'])
-            current_dataset_maps = get_dataset_maps(request.domain)
-            i = -1
-            for i, dataset_map in enumerate(current_dataset_maps):
-                if i < len(new_dataset_maps):
-                    # Update current dataset maps
-                    update_dataset_map(dataset_map, new_dataset_maps[i])
-                    dataset_map.save()
-                else:
-                    # Delete removed dataset maps
-                    dataset_map.delete()
-            if i + 1 < len(new_dataset_maps):
-                # Insert new dataset maps
-                for j in range(i + 1, len(new_dataset_maps)):
-                    dataset_map = DataSetMap(domain=request.domain)
-                    update_dataset_map(dataset_map, new_dataset_maps[j])
-                    dataset_map.save()
-            get_dataset_maps.clear(request.domain)
-            return json_response({'success': _('DHIS2 DataSet Maps saved')})
-        except Exception as err:
-            return json_response({'error': str(err)}, status_code=500)
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(DataSetMapView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
-        return {
-            'dataset_maps': dataset_maps,
-            'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
-        }
-
-
-class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
-    urlname = 'dhis2_log_list_view'
-    page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'domain/admin/dhis2/logs.html'
-    context_object_name = 'logs'
-    paginate_by = 100
-
-    def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
-            'timestamp',
-            'request_method',
-            'request_url',
-            'response_status',
-        )
-
-    @property
-    def object_list(self):
-        return self.get_queryset()
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(Dhis2LogListView, self).dispatch(request, *args, **kwargs)
-
-
-class Dhis2LogDetailView(BaseAdminProjectSettingsView, DetailView):
-    urlname = 'dhis2_log_detail_view'
-    page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'domain/admin/dhis2/log_detail.html'
-    context_object_name = 'log'
-
-    def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain)
-
-    @property
-    def object(self):
-        return self.get_object()
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(Dhis2LogDetailView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def page_url(self):
-        pk = self.kwargs['pk']
-        return reverse(self.urlname, args=[self.domain, pk])
 
 
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
@@ -3408,25 +3265,3 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
-
-
-def exception_safe_password_reset(request, *args, **kwargs):
-    """
-    Django's password reset function raises SMTP errors if there's any
-    problem with the mailserver. Catch that more elegantly with a simple wrapper.
-    """
-    # Django docs on password reset are weak. See these links instead:
-    #
-    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
-    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
-    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
-    try:
-        return password_reset(request, *args, **kwargs)
-    except None:
-        vals = {
-            'current_page': {'page_name': _('Oops!')},
-            'error_msg': 'There was a problem with your request',
-            'error_details': sys.exc_info(),
-            'show_homepage_link': 1,
-        }
-        return render_to_response('error.html', vals, context_instance=RequestContext(request))
