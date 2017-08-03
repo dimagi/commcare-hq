@@ -350,12 +350,18 @@ class EpisodeAdherenceUpdate(object):
                     start_date=start,
                     end_date=end,
                 )
+                missed_count = self.count_doses_of_status('missed', dose_status_by_date, start, end)
+                unknown_count = num_days - missed_count - score_count_taken
             else:
                 score_count_taken = 0
                 doses_taken_by_source = {source: 0 for source in VALID_ADHERENCE_SOURCES}
+                missed_count = 0
+                unknown_count = 0
 
             properties["{}_score_count_taken".format(day_name)] = score_count_taken
             properties["{}_adherence_score".format(day_name)] = self._percentage_score(score_count_taken, num_days)
+            properties["{}_missed_count".format(day_name)] = missed_count
+            properties["{}_unknown_count".format(day_name)] = unknown_count
             for source in VALID_ADHERENCE_SOURCES:
                 properties["{}_score_count_taken_{}".format(day_name, source)] = doses_taken_by_source[source]
                 properties["{}_adherence_score_{}".format(day_name, source)] = self._percentage_score(

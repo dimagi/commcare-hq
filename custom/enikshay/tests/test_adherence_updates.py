@@ -862,3 +862,59 @@ class TestAdherenceUpdater(TestCase):
         }
 
         self.assert_properties_equal(expected, updater.update_json())
+
+    def test_missed_and_unknown_doses(self):
+        adherence_cases = [{
+            "name": str(i),
+            "adherence_source": "enikshay",
+            "adherence_value": adherence_value,
+            "adherence_date": date,
+        } for i, (adherence_value, date) in enumerate([
+            # one month
+            (DOSE_MISSED, datetime.date(2016, 1, 13)),
+            ('unobserved_dose', datetime.date(2016, 1, 15)),
+            # two weeks
+            ('directly_observed_dose', datetime.date(2016, 1, 17)),
+            (DOSE_UNKNOWN, datetime.date(2016, 1, 18)),
+            # one week
+            ('directly_observed_dose', datetime.date(2016, 1, 26)),
+            # three days
+            ('directly_observed_dose', datetime.date(2016, 1, 29)),
+            (DOSE_MISSED, datetime.date(2016, 1, 31)),
+            ('', datetime.date(2016, 1, 30)),  # blank should be treated as unknown
+        ])]
+
+        episode = self.create_episode_case(
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        updater = EpisodeAdherenceUpdate(self.domain, episode)
+        updater.date_today_in_india = datetime.date(2016, 1, 31)
+        expected = {
+            'three_day_score_count_taken': 1,
+            'one_week_score_count_taken': 2,
+            'two_week_score_count_taken': 3,
+            'month_score_count_taken': 4,
+
+            'three_day_unknown_count': 3 - 2,
+            'one_week_unknown_count': 7 - 3,
+            'two_week_unknown_count': 14 - 4,
+            'month_unknown_count': 30 - 6,
+
+            'three_day_missed_count': 1,
+            'one_week_missed_count': 1,
+            'two_week_missed_count': 1,
+            'month_missed_count': 2,
+
+            # 'three_day_unknown_score': 0,
+            # 'one_week_unknown_score': 0,
+            # 'two_week_unknown_score': 0,
+            # 'month_unknown_score': 0,
+
+            # 'three_day_missed_score': 0,
+            # 'one_week_missed_score': 0,
+            # 'two_week_missed_score': 0,
+            # 'month_missed_score': 0,
+        }
+        self.assert_properties_equal(expected, updater.update_json())
