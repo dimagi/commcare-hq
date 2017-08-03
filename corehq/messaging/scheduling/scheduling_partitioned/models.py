@@ -259,14 +259,19 @@ class CaseScheduleInstanceMixin(object):
 
     @property
     @memoized
+    def case_owner(self):
+        if self.case:
+            return get_wrapped_owner(get_owner_id(self.case))
+
+        return None
+
+    @property
+    @memoized
     def recipient(self):
         if self.recipient_type == 'Self':
             return self.case
         elif self.recipient_type == 'Owner':
-            if self.case:
-                return get_wrapped_owner(get_owner_id(self.case))
-
-            return None
+            return self.case_owner
         if self.recipient_type == 'LastSubmittingUser':
             return None
         elif self.recipient_type == 'ParentCase':
