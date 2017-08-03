@@ -2096,6 +2096,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self=self
         ))
 
+    @property
+    @memoized
+    def memoized_usercase(self):
+        return self.get_usercase()
+
     def get_usercase(self):
         return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
 
