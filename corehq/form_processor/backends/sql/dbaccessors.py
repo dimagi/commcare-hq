@@ -392,7 +392,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
             # cascade should delete the attachments and operations
             _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
-                domain=domain, form_id__in=form_ids
+                domain=domain, form_id__in=split_form_ids
             ).delete()
             deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
 
