@@ -515,7 +515,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                     raise XFormSaveError(
                         'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
                     )
-                unsaved_attachment.form = form
+                unsaved_attachment.form_id = form.form_id
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
@@ -523,7 +523,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 raise XFormSaveError(
                     'XFormOperationSQL {} has already been saved'.format(operation.id)
                 )
-            operation.form = form
+            operation.form_id = form.form_id
 
         try:
             with transaction.atomic(using=form.db, savepoint=False):

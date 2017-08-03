@@ -30,6 +30,7 @@ class PartitionRouter(object):
             return obj1.db == obj2.db
         elif not obj1_partitioned and not obj2_partitioned:
             return True
+        return False
 
 
 class MonolithRouter(object):
