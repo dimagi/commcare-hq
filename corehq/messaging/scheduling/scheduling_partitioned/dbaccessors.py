@@ -1,9 +1,5 @@
 from corehq.sql_db.util import (
-    get_object_from_partitioned_database,
-    save_object_to_partitioned_database,
-    delete_object_from_partitioned_database,
     run_query_across_partitioned_databases,
-    get_db_alias_for_partitioned_doc,
 )
 from django.db.models import Q
 from uuid import UUID
@@ -25,24 +21,14 @@ def get_alert_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        AlertScheduleInstance,
-        schedule_instance_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return AlertScheduleInstance.objects.partitioned_get(schedule_instance_id)
 
 
 def get_timed_schedule_instance(schedule_instance_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        TimedScheduleInstance,
-        schedule_instance_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return TimedScheduleInstance.objects.partitioned_get(schedule_instance_id)
 
 
 def save_alert_schedule_instance(instance):
@@ -50,7 +36,7 @@ def save_alert_schedule_instance(instance):
 
     _validate_class(instance, AlertScheduleInstance)
     _validate_uuid(instance.schedule_instance_id)
-    save_object_to_partitioned_database(instance, instance.schedule_instance_id)
+    instance.save()
 
 
 def save_timed_schedule_instance(instance):
@@ -58,7 +44,7 @@ def save_timed_schedule_instance(instance):
 
     _validate_class(instance, TimedScheduleInstance)
     _validate_uuid(instance.schedule_instance_id)
-    save_object_to_partitioned_database(instance, instance.schedule_instance_id)
+    instance.save()
 
 
 def delete_alert_schedule_instance(instance):
@@ -66,7 +52,7 @@ def delete_alert_schedule_instance(instance):
 
     _validate_class(instance, AlertScheduleInstance)
     _validate_uuid(instance.schedule_instance_id)
-    delete_object_from_partitioned_database(instance, instance.schedule_instance_id)
+    instance.delete()
 
 
 def delete_timed_schedule_instance(instance):
@@ -74,7 +60,7 @@ def delete_timed_schedule_instance(instance):
 
     _validate_class(instance, TimedScheduleInstance)
     _validate_uuid(instance.schedule_instance_id)
-    delete_object_from_partitioned_database(instance, instance.schedule_instance_id)
+    instance.delete()
 
 
 def get_active_schedule_instance_ids(cls, due_before, due_after=None):
@@ -155,9 +141,7 @@ def get_timed_schedule_instances_for_schedule(schedule):
 
 def get_case_alert_schedule_instances_for_schedule_id(case_id, schedule_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import CaseAlertScheduleInstance
-
-    db_name = get_db_alias_for_partitioned_doc(case_id)
-    return CaseAlertScheduleInstance.objects.using(db_name).filter(
+    return CaseAlertScheduleInstance.objects.partitioned_query(case_id).filter(
         case_id=case_id,
         alert_schedule_id=schedule_id
     )
@@ -165,9 +149,7 @@ def get_case_alert_schedule_instances_for_schedule_id(case_id, schedule_id):
 
 def get_case_timed_schedule_instances_for_schedule_id(case_id, schedule_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
-
-    db_name = get_db_alias_for_partitioned_doc(case_id)
-    return CaseTimedScheduleInstance.objects.using(db_name).filter(
+    return CaseTimedScheduleInstance.objects.partitioned_query(case_id).filter(
         case_id=case_id,
         timed_schedule_id=schedule_id
     )
@@ -197,12 +179,7 @@ def get_case_schedule_instance(cls, case_id, schedule_instance_id):
         raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
 
     _validate_uuid(schedule_instance_id)
-    return get_object_from_partitioned_database(
-        cls,
-        case_id,
-        'schedule_instance_id',
-        schedule_instance_id
-    )
+    return cls.objects.partitioned_get(case_id, schedule_instance_id=schedule_instance_id)
 
 
 def save_case_schedule_instance(instance):
@@ -213,7 +190,7 @@ def save_case_schedule_instance(instance):
 
     _validate_class(instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance))
     _validate_uuid(instance.schedule_instance_id)
-    save_object_to_partitioned_database(instance, instance.case_id)
+    instance.save()
 
 
 def delete_case_schedule_instance(instance):
@@ -223,4 +200,4 @@ def delete_case_schedule_instance(instance):
     )
 
     _validate_class(instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance))
-    delete_object_from_partitioned_database(instance, instance.case_id)
+    instance.delete()

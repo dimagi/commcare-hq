@@ -1,4 +1,6 @@
-from collections import defaultdict, namedtuple
+import logging
+from collections import namedtuple
+from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 
@@ -8,13 +10,10 @@ from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, Case
 from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction, FormReprocessRebuild
+from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from couchforms.models import XFormInstance
-
-import logging
 
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
@@ -49,7 +48,7 @@ def reprocess_unfinished_stub(stub, save=True):
         return
 
     assert form.is_normal
-    result = _reprocess_form(form)
+    result = _reprocess_form(form, save)
     save and stub.delete()
     return result
 
@@ -105,7 +104,7 @@ def _reprocess_form(form, save=True):
         ledgers = []
         if should_use_sql_backend(form.domain):
             cases = _filter_already_processed_cases(form, cases)
-            cases_updated = {case.case_id for case in cases if case.is_saved()}
+            cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
             if save:
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
@@ -123,7 +122,7 @@ def _reprocess_form(form, save=True):
 
             # rebuild cases and ledgers that were affected
             for case in cases:
-                if case.case_id in cases_updated:
+                if case.case_id in cases_needing_rebuild:
                     logger.info('Rebuilding case: %s', case.case_id)
                     if save:
                         # only rebuild cases that were updated
@@ -160,20 +159,27 @@ def _log_changes(slug, cases, stock_updates, stock_deletes):
         )
 
 
+def _get_case_ids_needing_rebuild(form, cases):
+    """Return a set of case IDs for cases that have been modified since the form was
+    originally submitted i.e. are needing to be rebuilt"""
+
+    # exclude any cases that didn't already exist
+    case_ids = [case.case_id for case in cases if case.is_saved()]
+    modified_dates = CaseAccessorSQL.get_last_modified_dates(form.domain, case_ids)
+    return {
+        case_id for case_id in case_ids
+        if modified_dates.get(case_id, datetime.max) > form.received_on
+    }
+
+
 def _filter_already_processed_cases(form, cases):
     """Remove any cases that already have a case transaction for this form"""
     cases_by_id = {
         case.case_id: case
         for case in cases
     }
-    case_dbs = defaultdict(list)
-    for case in cases:
-        db_name = get_db_alias_for_partitioned_doc(case.case_id)
-        case_dbs[db_name].append(case.case_id)
-    for db_name, case_ids in case_dbs.items():
-        transactions = CaseTransaction.objects.using(db_name).filter(case_id__in=case_ids, form_id=form.form_id)
-        for trans in transactions:
-            del cases_by_id[trans.case_id]
+    for trans in CaseAccessorSQL.get_case_transactions_for_form(form.form_id, cases_by_id.keys()):
+        del cases_by_id[trans.case_id]
     return cases_by_id.values()
 
 
@@ -183,14 +189,9 @@ def _filter_already_processed_ledgers(form, ledgers):
         ledger.ledger_reference: ledger
         for ledger in ledgers
     }
-    ledger_dbs = defaultdict(list)
-    for ledger in ledgers_by_id.values():
-        db_name = get_db_alias_for_partitioned_doc(ledger.case_id)
-        ledger_dbs[db_name].append(ledger.case_id)
-    for db_name, case_ids in ledger_dbs.items():
-        transactions = LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids, form_id=form.form_id)
-        for trans in transactions:
-            del ledgers_by_id[trans.ledger_reference]
+    case_ids = [ledger.case_id for ledger in ledgers]
+    for trans in LedgerAccessorSQL.get_ledger_transactions_for_form(form.form_id, case_ids):
+        del ledgers_by_id[trans.ledger_reference]
     return ledgers_by_id.values()
 
 
