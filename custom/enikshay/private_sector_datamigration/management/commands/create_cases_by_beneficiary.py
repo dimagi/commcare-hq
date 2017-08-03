@@ -106,6 +106,16 @@ class Command(BaseCommand):
             default=False,
             dest='incremental_migration',
         )
+        parser.add_argument(
+            '--beneficiary-org-id',
+            default=None,
+            type=int,
+        )
+        parser.add_argument(
+            '--beneficiary-suborg-id',
+            default=None,
+            type=int,
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, migration_comment, **options):
@@ -135,6 +145,8 @@ class Command(BaseCommand):
             'location_owner_id',
             'dry_run',
             'incremental_migration',
+            'beneficiary_org_id',
+            'beneficiary_suborg_id',
         ]:
             logger.info('%s=%s' % (arg, str(options[arg])))
 
@@ -165,7 +177,9 @@ class Command(BaseCommand):
 
         beneficiaries = get_beneficiaries(
             start, limit, case_ids, owner_state_id, owner_district_id,
-            owner_organisation_ids, owner_suborganisation_ids, options['incremental_migration']
+            owner_organisation_ids, owner_suborganisation_ids,
+            options['beneficiary_org_id'], options['beneficiary_suborg_id'],
+            options['incremental_migration']
         )
 
         migrate_to_enikshay(
@@ -195,8 +209,15 @@ def get_beneficiaries_in_date_range():
 
 
 def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
-                      owner_organisation_ids, owner_suborganisation_ids, incremental_migration):
+                      owner_organisation_ids, owner_suborganisation_ids,
+                      beneficiary_org_id, beneficiary_suborg_id, incremental_migration):
     beneficiaries_query = get_beneficiaries_in_date_range()
+
+    if beneficiary_org_id is not None:
+        beneficiaries_query = beneficiaries_query.filter(organisationId=beneficiary_org_id)
+
+    if beneficiary_suborg_id is not None:
+        beneficiaries_query = beneficiaries_query.filter(subOrganizationId=beneficiary_suborg_id)
 
     if case_ids:
         beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
