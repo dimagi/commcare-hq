@@ -122,7 +122,7 @@
     <script>
 
         {% if report_table and report_table.datatables %}
-            var reportTables = hqImport('reports/js/config.dataTables.bootstrap.js').HQReportDataTables({
+            var reportTables = hqImport("reports/js/config.dataTables.bootstrap.js").HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},

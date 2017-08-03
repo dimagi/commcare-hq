@@ -50,8 +50,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.total : 0);
-        var children = $filter('indiaNumbers')(row ? row.children : 0);
+        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
@@ -170,8 +170,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -187,7 +187,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
 ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
+window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),

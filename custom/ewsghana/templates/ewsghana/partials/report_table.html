@@ -69,7 +69,7 @@
         var datatable;
 
         {% if report_table.slug != 'product_selection_pane' and rendered_as != 'print' %}
-            var reportTables = hqImport('reports/js/config.dataTables.bootstrap.js').HQReportDataTables({
+            var reportTables = hqImport("reports/js/config.dataTables.bootstrap.js").HQReportDataTables({
                 dataTableElem: '#report_table_{{ report_table.slug }}',
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},

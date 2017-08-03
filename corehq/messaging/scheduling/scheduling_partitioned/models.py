@@ -4,7 +4,9 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling import util
@@ -13,6 +15,7 @@ from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
+from couchdbkit.exceptions import ResourceNotFound
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
@@ -233,12 +236,14 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):
+    partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_alertscheduleinstance'
 
 
 class TimedScheduleInstance(AbstractTimedScheduleInstance):
+    partition_attr = 'schedule_instance_id'
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_timedscheduleinstance'
@@ -248,10 +253,21 @@ class CaseScheduleInstanceMixin(object):
 
     @property
     @memoized
+    def case(self):
+        try:
+            return CaseAccessors(self.domain).get_case(self.case_id)
+        except (CaseNotFound, ResourceNotFound):
+            return None
+
+    @property
+    @memoized
     def recipient(self):
         if self.recipient_type == 'Self':
-            return CaseAccessors(self.domain).get_case(self.case_id)
+            return self.case
         elif self.recipient_type == 'Owner':
+            if self.case:
+                return get_wrapped_owner(get_owner_id(self.case))
+
             return None
         if self.recipient_type == 'LastSubmittingUser':
             return None
@@ -270,6 +286,7 @@ class CaseScheduleInstanceMixin(object):
 
 class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
+    partition_attr = 'case_id'
     case_id = models.CharField(max_length=255)
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance
@@ -290,6 +307,7 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
 
 class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
+    partition_attr = 'case_id'
     case_id = models.CharField(max_length=255)
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance

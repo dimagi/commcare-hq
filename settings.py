@@ -670,7 +670,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-
 ####### Pillow Retry Queue Settings #######
 
 # Setting this to False no pillowtop errors will get processed.
@@ -697,6 +696,8 @@ PILLOW_RETRY_BACKOFF_FACTOR = 2
 # once after being reset. This is to prevent numerous retries of errors that aren't
 # getting fixed
 PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
+
+SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
@@ -1578,7 +1579,10 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.mother_person_case_from_child_health_case',
-         "ICDS: Mother person case from child_health case"]
+         "ICDS: Mother person case from child_health case"],
+    'ICDS_SUPERVISOR_FROM_AWC_OWNER':
+        ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
+         "ICDS: Supervisor Location from AWC Owner"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
