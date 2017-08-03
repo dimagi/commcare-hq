@@ -75,19 +75,16 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-
-        db_names = {get_db_alias_for_partitioned_doc(processed_forms.submitted.form_id)}
+        db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
-            db_names |= {get_db_alias_for_partitioned_doc(processed_forms.deprecated.form_id)}
+            db_names |= {processed_forms.deprecated.db}
 
         if cases:
-            db_names |= {get_db_alias_for_partitioned_doc(case.case_id) for case in cases}
+            db_names |= {case.db for case in cases}
 
         if stock_result:
             db_names |= {
-                get_db_alias_for_partitioned_doc(ledger_value.case_id)
-                for ledger_value in stock_result.models_to_save
+                ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
         with ExitStack() as stack:

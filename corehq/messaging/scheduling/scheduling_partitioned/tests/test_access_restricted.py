@@ -7,12 +7,6 @@ class TestAccessRestricted(TestCase):
 
     def test_access_restricted(self):
         with self.assertRaises(AccessRestricted):
-            AlertScheduleInstance().save()
-
-        with self.assertRaises(AccessRestricted):
-            AlertScheduleInstance().delete()
-
-        with self.assertRaises(AccessRestricted):
             [obj for obj in AlertScheduleInstance.objects.all()]
 
         with self.assertRaises(AccessRestricted):

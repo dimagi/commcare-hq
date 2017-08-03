@@ -29,7 +29,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def test_get_case_by_id(self):
         case = _create_case()
-        with self.assertNumQueries(1, using=db_for_read_write(CommCareCaseSQL)):
+        with self.assertNumQueries(1, using=case.db):
             case = CaseAccessorSQL.get_case(case.case_id)
         self.assertIsNotNone(case)
         self.assertIsInstance(case, CommCareCaseSQL)
