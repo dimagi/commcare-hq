@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from contextlib2 import ExitStack
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 
@@ -92,8 +93,13 @@ class FormAccessorTestsSQL(TestCase):
         with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)), \
-                self.assertNumQueries(1, using=form.db):
+        with ExitStack() as stack:
+            if settings.USE_PARTITIONED_DATABASE:
+                proxy_queries = 1
+                stack.enter_context(self.assertNumQueries(1, using=form.db))
+            else:
+                proxy_queries = 2
+            stack.enter_context(self.assertNumQueries(proxy_queries, using=db_for_read_write(XFormAttachmentSQL)))
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)
