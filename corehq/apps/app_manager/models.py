@@ -164,12 +164,6 @@ ALL_WORKFLOWS = [
 # allow all options as fallback except the one for form linking
 WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
-WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
-REGISTRATION_FORM_WORFLOWS = [
-    WORKFLOW_DEFAULT,
-    WORKFLOW_CASE_LIST,
-]
-
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -2226,10 +2220,6 @@ class DetailPair(DocumentSchema):
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
-    post_form_workflow = StringProperty(
-        default=WORKFLOW_DEFAULT,
-        choices=REGISTRATION_FORM_WORFLOWS,
-    )
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
