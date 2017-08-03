@@ -10,6 +10,8 @@ $(function () {
         reportTables.render();
     }
 
+    hqImport("reports/js/filters.js").init();
+
     $(function() {
         $('.header-popover').popover({
             trigger: 'hover',
