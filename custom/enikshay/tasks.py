@@ -138,7 +138,7 @@ class EpisodeUpdater(object):
             'mimetype': 'text/csv',
             'file_obj': csv_file,
         }
-        send_html_email_async.delay(
+        send_html_email_async(
             subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
         )
 
