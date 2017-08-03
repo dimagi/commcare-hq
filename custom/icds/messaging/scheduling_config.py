@@ -3,6 +3,7 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
 )
+from corehq.messaging.scheduling.const import VISIT_WINDOW_END
 from corehq.messaging.scheduling.models import TimedSchedule, SMSContent, CustomContent
 from datetime import time
 from django.db import transaction
@@ -82,3 +83,135 @@ def create_beneficiary_indicator_2(domain):
             recipients=(('CustomRecipient', 'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'),),
             reset_case_property_name='static_negative_growth_time',
         )
+
+
+def create_aww_indicator_3(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_AWW'),
+            total_iterations=1,
+            start_offset=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_3'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #3: Missed CF #1",
+            case_type='ccs_record',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='cf1_date',
+            match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+            scheduler_module_info=CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+                enabled=True,
+                app_id='48cc1709b7f62ffea24cc6634a004745',
+                form_unique_id='84ea09b6aa5aba125ec82bf2bb8dfa44cc5ea150',
+                visit_number=0,
+                window_position=VISIT_WINDOW_END,
+            ),
+        )
+
+
+def create_ls_indicator_3(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_LS'),
+            total_iterations=1,
+            start_offset=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'ls_3'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="LS #3: Missed CF #1",
+            case_type='ccs_record',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='cf1_date',
+            match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
+            scheduler_module_info=CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+                enabled=True,
+                app_id='48cc1709b7f62ffea24cc6634a004745',
+                form_unique_id='84ea09b6aa5aba125ec82bf2bb8dfa44cc5ea150',
+                visit_number=0,
+                window_position=VISIT_WINDOW_END,
+            ),
+        )
+
+
+def _create_ls_indicator_5(domain, visit_num):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_MISSED_PNC_VISIT_TO_LS'),
+            total_iterations=1,
+            start_offset=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'ls_5'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="LS #5: Missed PNC #%s" % visit_num,
+            case_type='ccs_record',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='pnc%s_date' % visit_num,
+            match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
+            scheduler_module_info=CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+                enabled=True,
+                app_id='48cc1709b7f62ffea24cc6634a004745',
+                form_unique_id='f55da33c32fb41489d5082b7b3acfe43c739e988',
+                visit_number=visit_num - 1,
+                window_position=VISIT_WINDOW_END,
+            ),
+        )
+
+
+def create_ls_indicator_5(domain):
+    _create_ls_indicator_5(domain, 1)
+    _create_ls_indicator_5(domain, 2)
+    _create_ls_indicator_5(domain, 3)
