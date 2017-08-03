@@ -11,6 +11,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.messaging.custom_recipients import mother_person_case_from_ccs_record_case
 from django.test import TestCase
 from xml.etree import ElementTree
 
@@ -39,6 +40,13 @@ class CustomRecipientTest(TestCase):
             'extension'
         )
         cls.lone_child_health_extension_case = cls.create_case('child_health')
+        cls.ccs_record_case = cls.create_case(
+            'ccs_record',
+            cls.mother_person_case.case_id,
+            cls.mother_person_case.type,
+            'parent',
+            'child'
+        )
 
         cls.location_types = setup_location_types(cls.domain,
             [SUPERVISOR_LOCATION_TYPE_CODE, AWC_LOCATION_TYPE_CODE])
@@ -56,6 +64,7 @@ class CustomRecipientTest(TestCase):
                 cls.child_person_case.case_id,
                 cls.child_health_extension_case.case_id,
                 cls.lone_child_health_extension_case.case_id,
+                cls.ccs_record_case.case_id,
             ]
         )
         cls.domain_obj.delete()
@@ -130,3 +139,20 @@ class CustomRecipientTest(TestCase):
                         recipient_id='ICDS_SUPERVISOR_FROM_AWC_OWNER'
                     ).recipient
                 )
+
+    def test_mother_person_case_from_ccs_record_case(self):
+        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+            self.assertEqual(
+                mother_person_case_from_ccs_record_case(cls(
+                    domain=self.domain,
+                    case_id=self.ccs_record_case.case_id,
+                )).case_id,
+                self.mother_person_case.case_id
+            )
+
+            self.assertIsNone(
+                mother_person_case_from_ccs_record_case(cls(
+                    domain=self.domain,
+                    case_id=self.child_health_extension_case.case_id,
+                ))
+            )

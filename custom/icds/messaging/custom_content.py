@@ -104,7 +104,7 @@ def render_content_for_user(user, template, context):
     return render_message(language_code, template, context)
 
 
-def render_missed_visit_message(recipient, case_schedule_instance, template)
+def render_missed_visit_message(recipient, case_schedule_instance, template):
     if not isinstance(recipient, CommCareUser):
         return []
 
