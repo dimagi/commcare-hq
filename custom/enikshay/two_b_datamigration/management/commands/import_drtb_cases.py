@@ -882,15 +882,18 @@ def clean_sex(value):
         "transgender": "transgender"
     }[value.lower()]
 
+
 def clean_age_entered(value):
     if not isinstance(value, (int, float, decimal.Decimal)):
         raise FieldValidationFailure(value, "age")
     return value
 
+
 def calculate_dob(value):
     age = clean_age_entered(value)
     dob = datetime.date.today() - datetime.timedelta(days=age * 365)
     return str(dob)
+
 
 def get_mehsana_resistance_properties(column_mapping, row):
     property_map = {
