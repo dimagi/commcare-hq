@@ -16,6 +16,7 @@ from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCase
 from custom.enikshay.private_sector_datamigration.models import (
     Agency,
     Beneficiary,
+    Beneficiary_Jul7,
     Episode,
     UserDetail,
 )
@@ -99,6 +100,12 @@ class Command(BaseCommand):
             default=False,
             dest='dry_run',
         )
+        parser.add_argument(
+            '--incremental-migration',
+            action='store_true',
+            default=False,
+            dest='incremental_migration',
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, migration_comment, **options):
@@ -125,6 +132,7 @@ class Command(BaseCommand):
             'skip_adherence',
             'start',
             'dry_run',
+            'incremental_migration',
         ]:
             logger.info('%s=%s' % (arg, str(options[arg])))
 
@@ -155,7 +163,7 @@ class Command(BaseCommand):
 
         beneficiaries = get_beneficiaries(
             start, limit, case_ids, owner_state_id, owner_district_id,
-            owner_organisation_ids, owner_suborganisation_ids
+            owner_organisation_ids, owner_suborganisation_ids, options['incremental_migration']
         )
 
         migrate_to_enikshay(
@@ -185,7 +193,7 @@ def get_beneficiaries_in_date_range():
 
 
 def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
-                      owner_organisation_ids, owner_suborganisation_ids):
+                      owner_organisation_ids, owner_suborganisation_ids, incremental_migration):
     beneficiaries_query = get_beneficiaries_in_date_range()
 
     if case_ids:
@@ -218,6 +226,9 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
             Q(caseId__in=bene_ids_treating)
             | ((~Q(caseId__in=bene_ids_treating_away)) & Q(caseId__in=bene_ids_from_referred))
         )
+
+    if incremental_migration:
+        beneficiaries_query.exclude(caseId__in=Beneficiary_Jul7.objects.values('caseId'))
 
     _assert_always_null(beneficiaries_query)
 
