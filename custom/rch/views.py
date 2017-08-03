@@ -234,7 +234,7 @@ class BeneficiaryView(TemplateView):
         # 1. order the details according to detail name
         # 2. if its not a list i.e if corr. value for cas has not been added then
         #    add "N/A"
-        for detail in sorted(beneficiary_details.iter()):
+        for detail in sorted(beneficiary_details.iterkeys()):
             detail_value = beneficiary_details[detail]
             if not isinstance(detail_value, list):
                 detail_value = [(detail_value, 'N/A')]
