@@ -1,7 +1,7 @@
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.log import with_progress_bar
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
