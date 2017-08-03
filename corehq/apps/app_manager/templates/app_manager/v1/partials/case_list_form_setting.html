@@ -52,19 +52,6 @@
               {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
           </div>
       </div>
-      <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
-          <label class="col-sm-2 control-label">
-              {% trans "End of Registration action" %}
-          </label>
-          <div class="col-sm-4">
-              <select class="form-control" name="case_list_post_form_workflow" data-bind="
-                             options: endOfRegistrationOptions,
-                             optionsValue: 'value',
-                             optionsText: 'label',
-                             value:postFormWorkflow"></select>
-          </div>
-
-      </div>
   </div>
   <div id="case_list_media">
       {% include "app_manager/v1/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
