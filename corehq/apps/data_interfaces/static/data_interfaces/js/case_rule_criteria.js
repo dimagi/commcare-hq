@@ -211,7 +211,7 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
             return (
                 self.match_type() !== criteria_model.constants.MATCH_HAS_VALUE &&
                 self.match_type() !== criteria_model.constants.MATCH_HAS_NO_VALUE
-            )
+            );
         });
     };
 
