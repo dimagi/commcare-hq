@@ -1091,8 +1091,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             resultset = CaseTransaction.objects.using(db_name).filter(
                 case_id__in=case_ids, form_id=form_id
             )
-            for transaction in resultset:
-                yield transaction
+            for trans in resultset:
+                yield trans
 
 
 class LedgerReindexAccessor(ReindexAccessor):
@@ -1278,8 +1278,8 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             resultset = LedgerTransaction.objects.using(db_name).filter(
                 case_id__in=case_ids, form_id=form_id
             )
-            for transaction in resultset:
-                yield transaction
+            for trans in resultset:
+                yield trans
 
 
 def _sort_with_id_list(object_list, id_list, id_property):
