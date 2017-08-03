@@ -21,6 +21,10 @@
     <script src="{% static 'fixtures/js/view-table.js' %}"></script>
 {% endblock %}
 
+{% block requirejs_entry %}
+    requirejs(["{% static 'fixtures/js/lookup-view.js' %}"]);
+{% endblock requirejs_entry %}
+
 {% block page_content %}
     {% initial_page_data 'renderReportTables' 1 %}
     {% initial_page_data 'dataTablesOptions' data_tables_options %}

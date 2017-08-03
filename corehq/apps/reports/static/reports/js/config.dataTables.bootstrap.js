@@ -1,6 +1,7 @@
-// datatable configuration.
+/* global hqDefine, jQuery */
+hqDefine("reports/javascripts/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
 
-function HQReportDataTables(options) {
+var HQReportDataTables = function(options) {
     var self = this;
     self.dataTableElem = options.dataTableElem || '.datatable';
     self.paginationType = options.paginationType || 'bs_normal';
@@ -320,3 +321,10 @@ jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sor
 jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
 
 jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
+
+
+return {
+    HQReportDataTables: function(options) { return new HQReportDataTables(options); },
+};
+
+});

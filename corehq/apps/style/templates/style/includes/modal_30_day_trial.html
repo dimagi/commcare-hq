@@ -55,7 +55,12 @@
         </div>
     </div>
     <script>
-        $(window).on('load', function(){
+    {# TODO: something similar with remote-modals.js? #}
+    {% if request.use_requirejs %}
+        requirejs(['jquery', 'bootstrap'], function($) {
+    {% else %}
+       $(window).on('load', function(){
+    {% endif %}
             $('#modalTrial30Day').modal('show');
         });
     </script>

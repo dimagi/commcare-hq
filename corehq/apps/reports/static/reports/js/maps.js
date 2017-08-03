@@ -127,7 +127,7 @@ function initTable(data, config) {
         }
     );
     var table;
-    table = new HQReportDataTables({
+    table = hqImport('reports/js/config.dataTables.bootstrap.js').HQReportDataTables({
         aoColumns: colSorting,
     });
 

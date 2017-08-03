@@ -1,3 +1,4 @@
+/* global define, jQuery, ko */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
@@ -38,14 +39,42 @@
 
 var COMMCAREHQ_MODULES = {};
 
-function hqDefine(path, moduleAccessor) {
-    if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
-        throw new Error("The module '" + path + "' has already been defined elsewhere.");
+function hqDefine(path, dependencies, moduleAccessor) {
+    if (arguments.length === 2) {
+        return hqDefine(path, [], dependencies);
     }
-    COMMCAREHQ_MODULES[path] = moduleAccessor();
+    path = path.replace(/\.js$/, "");
+
+    (function(factory) {
+        if (typeof define === 'function' && define.amd) {
+            define(path, dependencies, factory);
+        } else {
+            path = path + ".js";
+            if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
+                throw new Error("The module '" + path + "' has already been defined elsewhere.");
+            }
+            COMMCAREHQ_MODULES[path] = factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
+        }
+    }(moduleAccessor));
+}
+
+// Stopgap for modules that are sometimes used by RequireJS and sometimes not, but
+// which have not yet been converted to hqDefine. When not on a RequireJS page,
+// moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+function hqGlobal(path, dependencies, moduleAccessor) {
+    (function(factory) {
+        if (typeof define === 'function' && define.amd) {
+            define(path, dependencies, factory);
+        } else {
+            factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), (typeof _ === 'undefined' ? undefined :
+_));
+        }
+    }(moduleAccessor));
 }
 
 function hqImport(path) {
+    path = path.replace(/\.js$/, "");
+    path = path + ".js";
     if (typeof COMMCAREHQ_MODULES[path] === 'undefined') {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
             'Did you include <script src="' + path + '"></script> on your html page?');

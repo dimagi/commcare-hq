@@ -1,6 +1,17 @@
-var somethingWentWrong = $("#FailText").text();
-$(function () {
+/* global define */
+/**
+ *  Handles fixtures' "Manage Tables" page.
+ */
+define([
+    "jquery",
+    "knockout",
+    "style/js/hq.helpers",
+], function(
+    $,
+    ko
+) {
     "use strict";
+    var somethingWentWrong = $("#FailText").text();
     function log (x) {
         return x;
     }

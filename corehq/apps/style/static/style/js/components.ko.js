@@ -1,4 +1,6 @@
+/* global hqGlobal, jQuery */
 (function () {
+    hqGlobal("style/js/components.ko.js", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var components = {
         'inline-edit': 'style/js/components/inline_edit.js',
     };
@@ -16,5 +18,6 @@
                 }
             });
         });
+    });
     });
 }());
