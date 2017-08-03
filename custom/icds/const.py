@@ -8,6 +8,7 @@ THR_REPORT_ID = 'static-icds-cas-static-ls_thr_30_days'
 
 AWC_LOCATION_TYPE_CODE = 'awc'
 SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'
+STATE_TYPE_CODE = 'state'
 
 ANDHRA_PRADESH_SITE_CODE = '28'
 MAHARASHTRA_SITE_CODE = ''
