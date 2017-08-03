@@ -1,4 +1,5 @@
 import csv
+import decimal
 import logging
 import datetime
 import traceback
@@ -534,8 +535,9 @@ def get_person_case_properties(domain, column_mapping, row):
         "manual_nikshay_id": "yes",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
-        "sex": column_mapping.get_value("sex", row),
-        "age_entered": column_mapping.get_value("age_entered", row),
+        "sex": clean_sex(column_mapping.get_value("sex", row)),
+        "age_entered": clean_age_entered(column_mapping.get_value("age_entered", row)),
+        "dob": calculate_dob(column_mapping.get_value("age_entered", row)),
         "current_address": column_mapping.get_value("address", row),
         "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
         "phi_name": phi_name,
@@ -880,6 +882,15 @@ def clean_sex(value):
         "transgender": "transgender"
     }[value.lower()]
 
+def clean_age_entered(value):
+    if not isinstance(value, (int, float, decimal.Decimal)):
+        raise FieldValidationFailure(value, "age")
+    return value
+
+def calculate_dob(value):
+    age = clean_age_entered(value)
+    dob = datetime.date.today() - datetime.timedelta(days=age * 365)
+    return str(dob)
 
 def get_mehsana_resistance_properties(column_mapping, row):
     property_map = {
