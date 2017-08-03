@@ -48,4 +48,3 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
 
 class Command(SubmissionReprocessingEnqueuingOperation):
     pass
-
