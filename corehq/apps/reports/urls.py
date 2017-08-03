@@ -17,7 +17,6 @@ from corehq.apps.userreports.views import (
     ReportPreview,
 )
 
-# TODO: Add this file 
 from corehq.apps.userreports.v1.views import (
     ReportBuilderDataSourceSelect as ReportBuilderDataSourceSelectV1,
     ReportBuilderTypeSelect,
@@ -27,6 +26,7 @@ from corehq.apps.userreports.v1.views import (
     ConfigureWorkerReport,
     ConfigureMapReport,
 )
+# TODO: Gotta update all the refs that need versioning in v1
 
 from .dispatcher import (
     BasicReportDispatcher,
