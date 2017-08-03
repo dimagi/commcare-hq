@@ -229,10 +229,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         async=async_restore_enabled,
         case_sync=case_sync,
     )
-    response = restore_config.get_response()
-    if not async_restore_enabled:
-        restore_config.record_timing(response.status_code)
-    return response, restore_config.timing_context
+    return restore_config.get_response(), restore_config.timing_context
 
 
 class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):

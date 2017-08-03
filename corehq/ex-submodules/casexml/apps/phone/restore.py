@@ -715,10 +715,15 @@ class RestoreConfig(object):
         return response
 
     def generate_payload(self, async_task=None):
+        if self.async:
+            self.timing_context.stop()  # wait_for_task_to_start
         self.restore_state.start_sync()
         response = self._generate_restore_response(async_task=async_task)
         self.restore_state.finish_sync()
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+        if self.async:
+            self.timing_context.stop()  # root timer
+            self._record_timing('async')
         return response
 
     def get_cached_response(self):
@@ -739,8 +744,8 @@ class RestoreConfig(object):
         if not task_exists:
             # start a new task
             # NOTE this starts the root timer and also starts a nested
-            # timer (wait_for_task_to_start). Both need to be stopped
-            # when the task completes.
+            # timer (wait_for_task_to_start). Both are stopped by
+            # self.generate_payload for async tasks.
             self.timing_context.start()
             self.timing_context("wait_for_task_to_start").start()
             task = get_async_restore_payload.delay(self)
@@ -794,7 +799,7 @@ class RestoreConfig(object):
         try:
             with self.timing_context:
                 payload = self.get_payload()
-            return payload.get_http_response()
+            response = payload.get_http_response()
         except RestoreException as e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
@@ -802,8 +807,11 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml; charset=utf-8",
-                                status=412)  # precondition failed
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
+                                    status=412)  # precondition failed
+        if not self.async:
+            self._record_timing(response.status_code)
+        return response
 
     def set_cached_payload_if_necessary(self, resp, duration):
         cache_payload_path = resp.get_filename()
@@ -820,7 +828,7 @@ class RestoreConfig(object):
         if self.overwrite_cache and self.cache.get(self._restore_cache_key):
             self.cache.delete(self._restore_cache_key)
 
-    def record_timing(self, status):
+    def _record_timing(self, status):
         timing = self.timing_context
         username = self.restore_user.username
         duration = timing.duration if timing is not None else -1
