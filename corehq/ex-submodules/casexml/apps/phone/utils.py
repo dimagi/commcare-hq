@@ -24,14 +24,15 @@ def delete_sync_logs(before_date, limit=1000):
 
 def record_restore_timing(restore_config, status):
     domain = restore_config.domain
+    username = restore_config.restore_user.username
     timing = restore_config.timing_context
     sync_log = restore_config.restore_state.current_sync_log
     duration = timing.duration if timing is not None else -1
     if duration > 20 or status == 412:
         sync_log_id = sync_log._id if sync_log else None
         log = logging.getLogger(__name__)
-        log.info("restore %s: domain=%s status=%s duration=%.3f",
-                 sync_log_id, domain, status, duration)
+        log.info("restore %s: user=%s domain=%s status=%s duration=%.3f",
+                 sync_log_id, username, domain, status, duration)
     tags = [
         u'status_code:{}'.format(status),
     ]
