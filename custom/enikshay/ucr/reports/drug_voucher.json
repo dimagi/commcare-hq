@@ -97,7 +97,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "fo",
                 "calculate_total": false,
