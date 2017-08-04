@@ -874,6 +874,8 @@ def clean_mumbai_lpa_resistance_value(value):
 
 
 def clean_sex(value):
+    if not value:
+        return None
     return {
         "female": "female",
         "male": "male",
