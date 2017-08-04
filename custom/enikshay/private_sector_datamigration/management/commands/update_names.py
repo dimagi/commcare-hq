@@ -2,7 +2,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from custom.enikshay.private_sector_datamigration.models import UserDetail
+from custom.enikshay.private_sector_datamigration.models import UserDetail, Agency
 
 
 class Command(BaseCommand):
@@ -11,7 +11,7 @@ class Command(BaseCommand):
         parser.add_argument('domain')
 
     def handle(self, domain, **options):
-        for loc in SQLLocation.active_objects.filter(
+        locs_matching_type = SQLLocation.active_objects.filter(
             domain=domain,
             location_type__code__in=[
                 'pac',
@@ -19,21 +19,37 @@ class Command(BaseCommand):
                 'plc',
                 'ps-fieldstaff',
             ],
-        ):
+        )
+
+        total_to_process = locs_matching_type.count()
+
+        for i, loc in enumerate(locs_matching_type):
             private_sector_agency_id = loc.metadata.get('private_sector_agency_id', '')
             if not private_sector_agency_id.isdigit():
                 continue
             agency_id = int(private_sector_agency_id)
             try:
+                agency = Agency.objects.get(agencyId=agency_id)
+            except Agency.DoesNotExist:
+                continue
+            loc.name = "%s - %d" % (agency.agencyName, agency_id)
+            loc.save()
+            try:
                 user_detail = UserDetail.objects.get(agencyId=agency_id)
             except UserDetail.DoesNotExist:
-                continue
+                user_detail = None
             location_user = CommCareUser.get_by_user_id(loc.user_id)
-            location_user.first_name = user_detail.firstName
-            location_user.last_name = user_detail.lastName
+
+            if user_detail is None or user_detail.firstName in ['dummy', 'DUMMY', 'Not Available']:
+                agency_name_split = agency.agencyName.split()
+                if len(agency_name_split) == 1:
+                    location_user.first_name = agency_name_split[0]
+                    location_user.last_name = ''
+                else:
+                    location_user.first_name = agency_name_split[:-1]
+                    location_user.last_name = agency_name_split[-1]
+            else:
+                location_user.first_name = user_detail.firstName
+                location_user.last_name = user_detail.lastName
             location_user.save()
-            split_loc_name = loc.name.split(' - ')
-            if len(split_loc_name) == 2 and split_loc_name[1] == private_sector_agency_id:
-                loc.name = split_loc_name[0]
-                loc.save()
-            print 'processed agency %d' % agency_id
+            print 'processed agency %d, %d of %d' % (agency_id, i, total_to_process)
