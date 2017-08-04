@@ -1426,6 +1426,16 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
+            'editions': [
+                (edition.lower(), DESC_BY_EDITION[edition])
+                for edition in [
+                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
