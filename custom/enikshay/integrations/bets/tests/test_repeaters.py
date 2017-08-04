@@ -795,7 +795,10 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
 
         # Create real case
         real_person = self.create_person_case(self.real_location.location_id)
-        self.assertEqual(1, len(self.repeat_records().all()))
+        records = self.repeat_records().all()
+        self.assertEqual(1, len(records))
+        payload = json.loads(records[0].get_payload())
+        self.assertEqual(self.real_location.location_id, payload['properties']['owner_id'])
         # Update real case
         update_case(self.domain, real_person.case_id, {important_case_property: "7"})
         self.assertEqual(2, len(self.repeat_records().all()))

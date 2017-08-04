@@ -18,7 +18,7 @@
            </label>
            <div class="col-sm-4">
                {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
-@@ -67,5 +69,7 @@
+@@ -54,5 +56,7 @@
        </div>
    </div>
    <div id="case_list_media">

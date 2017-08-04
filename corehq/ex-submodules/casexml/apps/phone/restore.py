@@ -622,7 +622,7 @@ class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
 
-    :param domain:          The domain object. An instance of `Domain`.
+    :param project:         The domain object. An instance of `Domain`.
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).

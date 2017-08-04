@@ -99,7 +99,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas if meta is not None])
+        frames = filter(None, [meta.to_frame() for meta in frame_metas])
         if not frames:
             return
 
@@ -360,8 +360,7 @@ class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_create
 
     def add_children(self, children):
         for child in children:
-            if self.case_created:
-                self.case_created.add_child(child)
+            self.case_created.add_child(child)
             if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
                 # add all children to the 'case not created' block unless it's the datum of the
                 # case that was supposed to be created by the form
@@ -370,10 +369,7 @@ class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_create
     @property
     def ids_on_stack(self):
         """All ID's that are already part the stack block"""
-        if self.case_created:
-            return {child.id for child in self.case_created.children}
-        else:
-            return set()
+        return {child.id for child in self.case_created.children}
 
 
 class CaseListFormWorkflow(object):
@@ -430,25 +426,16 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datum from the case list form
         :return: CaseListFormStackFrames object
         """
-        from corehq.apps.app_manager.models import WORKFLOW_CASE_LIST
         source_session_var = self._get_source_session_var(form, target_module.case_type)
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
         target_command = id_strings.menu_id(target_module)
-
-        if target_module.case_list_form.post_form_workflow == WORKFLOW_CASE_LIST:
-            frame_case_created = None
-            frame_case_not_created = StackFrameMeta(
-                self.get_if_clause(None, target_command), current_session=source_form_datums
-            )
-        else:
-            frame_case_created = StackFrameMeta(
-                self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
-            )
-            frame_case_not_created = StackFrameMeta(
-                self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
-            )
-
+        frame_case_created = StackFrameMeta(
+            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
+        )
+        frame_case_not_created = StackFrameMeta(
+            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
+        )
         stack_frames = CaseListFormStackFrames(
             case_created=frame_case_created, case_not_created=frame_case_not_created
         )
@@ -485,13 +472,11 @@ class CaseListFormWorkflow(object):
     @staticmethod
     def get_if_clause(case_count_xpath, target_command):
         return_to = session_var(RETURN_TO)
-        args = [
+        return XPath.and_(
             return_to.count().eq(1),
             return_to.eq(XPath.string(target_command)),
-        ]
-        if case_count_xpath:
-            args.append(case_count_xpath)
-        return XPath.and_(*args)
+            case_count_xpath
+        )
 
     @staticmethod
     def get_case_type_created_by_form(form, target_module):

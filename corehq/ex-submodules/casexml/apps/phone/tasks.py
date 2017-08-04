@@ -5,7 +5,7 @@ from celery.task import periodic_task, task
 from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
-from casexml.apps.phone.utils import delete_sync_logs
+from casexml.apps.phone.utils import delete_sync_logs, record_restore_timing
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -37,7 +37,9 @@ def force_update_cleanliness_flags():
 def get_async_restore_payload(restore_config):
     """Process an async restore
     """
-    response = restore_config.generate_payload(async_task=current_task)
+    with restore_config.timing_context:
+        response = restore_config.generate_payload(async_task=current_task)
+    record_restore_timing(restore_config, 'async')
 
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.cache.delete(restore_config.async_cache_key)

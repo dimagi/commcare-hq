@@ -81,6 +81,55 @@ hqDefine("reports/js/filters.js", function() {
             });
         });
 
+        // Single selects
+        $('.report-filter-single-option').each(function() {
+            var $filter = $(this);
+            $filter.parent().koApplyBindings({
+                select_params: $filter.data("selectOptions"),
+                current_selection: ko.observable($filter.data("selected")),
+            });
+            $filter.select2();
+        });
+        $('.report-filter-single-option-paginated').each(function() {
+            var $filter = $(this);
+            $filter.select2({
+                ajax: {
+                    url: $filter.data('url'),
+                    type: 'POST',
+                    dataType: 'json',
+                    quietMills: 250,
+                    data: function (term, page) {
+                        return {
+                            q: term,
+                            page: page,
+                            handler: $filter.data('handler'),
+                            action: $filter.data('action'),
+                        };
+                    },
+                    results: function (data, page) {
+                        if (data.success) {
+                            var limit = data.limit;
+                            var hasMore = (page * limit) < data.total;
+                            return {
+                                results: data.items,
+                                more: hasMore,
+                            };
+                        } else {
+                            console.log(data.error);
+                        }
+                    },
+                },
+                allowClear: true,
+                initSelection: function (elem, callback) {
+                    var val = $(elem).val();
+                    callback({
+                        id: val,
+                        text: val,
+                    });
+                },
+            });
+        });
+
         // Submission type (Raw Forms, Errors, & Duplicates)
         $('.report-filter-button-group').each(function() {
             linkButtonGroup(this);
