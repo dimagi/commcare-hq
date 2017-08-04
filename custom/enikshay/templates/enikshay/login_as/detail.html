@@ -1,0 +1,27 @@
+{% load i18n %}
+<tr>
+    <th>{% trans "Name" %}</th>
+    <td><%= user.first_name + ' ' + user.last_name %></td>
+</tr>
+<% if (user.location) { %>
+<tr>
+    <th>{% trans "Organization" %}</th>
+    <td><%= user.location.name %></td>
+</tr>
+<tr>
+    <th>{% trans "Organization Type" %}</th>
+    <td><%= user.location.location_type %></td>
+</tr>
+<% } %>
+<tr>
+    <th>{% trans "Date Registered" %}</th>
+    <td><%= user.dateRegistered %></td>
+</tr>
+<% _.each(user.customFields, function(value, key) { %>
+<% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
+<tr>
+    <th><%= key %></th>
+    <td><%= value %></td>
+</tr>
+<% } %>
+<% }) %>
