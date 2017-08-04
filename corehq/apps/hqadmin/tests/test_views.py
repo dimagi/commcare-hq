@@ -47,10 +47,10 @@ class AdminRestoreViewTests(SimpleTestCase):
             })
 
 
-class SessionDetailsView(TestCase):
+class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(SessionDetailsView, cls).setUpClass()
+        super(SessionDetailsViewTest, cls).setUpClass()
         cls.user = create_user('bunkey', '123')
 
         client = Client()
@@ -65,7 +65,7 @@ class SessionDetailsView(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        super(SessionDetailsView, cls).tearDownClass()
+        super(SessionDetailsViewTest, cls).tearDownClass()
 
     @override_settings(DEBUG=True)
     @softer_assert()
