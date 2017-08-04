@@ -99,16 +99,24 @@ class TimingContext(object):
     def peek(self):
         return self.stack[-1]
 
+    def is_finished(self):
+        return not self.stack
+
     def start(self):
         timer = self.peek()
         if timer.beginning is not None:
             raise TimerError("timer already started")
         timer.start()
 
-    def stop(self):
+    def stop(self, name=None):
+        if name is None:
+            name = self.root.name
         timer = self.peek()
+        if timer.name != name:
+            raise TimerError("stopping wrong timer: {} (expected {})".format(
+                             timer.name, name))
         if timer.beginning is None:
-            raise TimerError("timer not started started")
+            raise TimerError("timer not started")
         assert timer.end is None, "timer already ended"
         self.stack.pop().stop()
 
@@ -117,7 +125,7 @@ class TimingContext(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
+        self.stop(self.peek().name)
 
     def to_dict(self):
         """Get timing data as a recursive dictionary of the format:
