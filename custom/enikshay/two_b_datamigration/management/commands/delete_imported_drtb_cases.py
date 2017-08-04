@@ -45,6 +45,5 @@ class Command(BaseCommand):
         if options['commit']:
             print "Deleting cases"
             for ids in chunked(case_ids, 100):
-                print "here"
                 CaseAccessors(domain).soft_delete_cases(list(ids))
             print "Deletion finished"
