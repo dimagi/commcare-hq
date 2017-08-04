@@ -1,0 +1,35 @@
+{% load i18n %}
+<tr>
+    <th>{% trans "Name" %}</th>
+    <td><%= user.first_name + ' ' + user.last_name %></td>
+</tr>
+<% if (user.location) { %>
+<tr>
+    <th>{% trans "Organization" %}</th>
+    <td><%= user.location.name %></td>
+</tr>
+<tr>
+    <th>{% trans "Organization Type" %}</th>
+    <td><%= user.location.location_type %></td>
+</tr>
+<% } %>
+<tr>
+    <th>User Type</th>
+    <td><%= user.enikshay.usertype_display %></td>
+</tr>
+<tr>
+    <th>District / Suborganization</th>
+    <td><%= user.enikshay.district ? user.enikshay.district.name : '' %></td>
+</tr>
+<tr>
+    <th>Agency ID</th>
+    <td><%= user.customFields.id_issuer_body %></td>
+</tr>
+<tr>
+    <th>UATBC ID</th>
+    <td><%= user.customFields.agency_id_legacy %></td>
+</tr>
+<tr>
+    <th>Phone number</th>
+    <td><%= user.customFields.contact_phone_number %></td>
+</tr>
