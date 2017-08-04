@@ -54,6 +54,7 @@ branches:
   - sk/sessions # sk 7/26
   - jls/v2-embed-video # Jenny 7/28
   - es/products-fixture  # Ethan 7/27
+  - np/billing/fix-js # Nick P 8/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
