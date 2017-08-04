@@ -186,7 +186,10 @@ def get_all_case_properties(app):
 
 def get_usercase_properties(app):
     if is_usercase_in_use(app.domain):
-        return get_case_properties(app, [USERCASE_TYPE])
+        default_properties = {'first_name', 'last_name'}
+        case_properties = get_case_properties(app, [USERCASE_TYPE])
+        case_properties[USERCASE_TYPE] = list(set(case_properties[USERCASE_TYPE]) | default_properties)
+        return case_properties
     return {USERCASE_TYPE: []}
 
 
