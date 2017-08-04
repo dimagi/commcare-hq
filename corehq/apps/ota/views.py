@@ -391,7 +391,8 @@ def heartbeat(request, domain, hq_app_id):
         # mobile will send brief_app_id
         info.update(LatestAppInfo(url_param_app_id, domain).get_info())
     except (Http404, AssertionError):
-        # if it's not a valid 'brief' app id, find it by talking to couch
+        # If it's not a valid 'brief' app id, find it by talking to couch
+        notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app(domain, hq_app_id)
         brief_app_id = app.copy_of or app.id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
