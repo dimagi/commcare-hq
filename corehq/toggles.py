@@ -413,7 +413,7 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH,
+    TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
