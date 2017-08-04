@@ -35,7 +35,8 @@ class Command(BaseCommand):
         print "Wrote to {}".format(filename)
 
     def add_user(self, user, writer):
-        if user.user_data.get('usertype', None) not in ['pcp', 'pcc-chemist', 'plc', 'pac']:
+        if (user.user_data.get('usertype', None) not in ['pcp', 'pcc-chemist', 'plc', 'pac']
+                or user.user_data.get('user_level', None) != 'real'):
             return
 
         virtual_location_id = user.user_location_id,
@@ -52,6 +53,7 @@ class Command(BaseCommand):
             user.username,
             user.first_name,
             user.last_name,
+            # We expect this to ALWAYS be set
             virtual_location_id,
             assigned_location_id,
             location_id,
