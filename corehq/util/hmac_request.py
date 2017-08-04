@@ -11,7 +11,7 @@ from corehq.util.soft_assert.api import soft_assert
 _soft_assert = soft_assert(notify_admins=True)
 
 
-def validate_request_hmac(setting_name):
+def validate_request_hmac(setting_name, ignore_if_debug=False):
     """
     Decorator to validate request sender using a shared secret
     to compare the HMAC of the request body with
@@ -23,12 +23,16 @@ def validate_request_hmac(setting_name):
         requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
 
     :param setting_name: The name of the Django setting that holds the secret key
+    :param ignore_if_debug: If set to True this is completely ignored if settings.DEBUG is True
     """
     shared_key = getattr(settings, setting_name, None)
 
     def _outer(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
+            if ignore_if_debug and settings.DEBUG:
+                return fn(request, *args, **kwargs)
+
             _soft_assert(shared_key, 'Missing shared auth setting: {}'.format(setting_name))
             expected_digest = request.META.get('HTTP_X_MAC_DIGEST', None)
             if not expected_digest or not shared_key:

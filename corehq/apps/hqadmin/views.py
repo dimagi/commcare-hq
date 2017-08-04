@@ -1140,7 +1140,7 @@ class WebUserDataView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY'), name='dispatch')
+@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True), name='dispatch')
 class SessionDetialsView(View):
     """
     Internal API to allow formplayer to get the Django user ID
