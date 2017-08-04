@@ -576,6 +576,10 @@ def _save_sql_case(doc):
 
 
 class RebuildTableTest(TestCase):
+    """This test is pretty fragile because in UCRs we have a global metadata
+    object that sqlalchemy uses to keep track of tables and indexes. I've attempted
+    to work around it here, but it feels a little nasty
+    """
 
     def tearDown(self):
         self.adapter.drop_table()
@@ -604,6 +608,7 @@ class RebuildTableTest(TestCase):
 
         # add the index to the config
         config = self._get_config('add_index')
+        self.addCleanup(config.delete)
         config.configured_indicators[0]['create_index'] = True
         config.save()
         adapter = get_indicator_adapter(config)
@@ -629,6 +634,7 @@ class RebuildTableTest(TestCase):
 
         # add the column to the config
         config = self._get_config('add_non_nullable_col')
+        self.addCleanup(config.delete)
         config.configured_indicators.append({
             "column_id": "new_date",
             "type": "raw",
@@ -672,6 +678,7 @@ class RebuildTableTest(TestCase):
 
         # add the column to the config
         config = self._get_config('add_nullable_col')
+        self.addCleanup(config.delete)
         config.configured_indicators.append({
             "column_id": "new_date",
             "type": "raw",
