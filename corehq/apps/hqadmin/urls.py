@@ -73,6 +73,6 @@ urlpatterns = {
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
-    url(r'^session_details/(?P<session_id>[\w]*)/', SessionDetialsView.as_view(), name=SessionDetialsView.urlname),
+    url(r'^session_details/', SessionDetialsView.as_view(), name=SessionDetialsView.urlname),
     AdminReportDispatcher.url_pattern(),
 }

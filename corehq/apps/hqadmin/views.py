@@ -26,6 +26,7 @@ from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
@@ -68,6 +69,7 @@ from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, 
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
+from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
     SupervisorException,
@@ -1137,12 +1139,31 @@ class WebUserDataView(View):
             return HttpResponse('Only web users can access this endpoint', status=400)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY'), name='dispatch')
 class SessionDetialsView(View):
-    urlname = 'session_details'
+    """
+    Internal API to allow formplayer to get the Django user ID
+    from the session key.
 
-    def get(self, request, session_id, *args, **kwargs):
+    Authentication is done by HMAC signing of the request body:
+
+        secret = settings.FORMPLAYER_INTERNAL_AUTH_KEY
+        data = '{"session_id": "123"}'
+        digest = base64.b64encode(hmac.new(secret, data, hashlib.sha256).digest())
+        requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
+    """
+    urlname = 'session_details'
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        if not data or not isinstance(data, dict):
+            return HttpResponseBadRequest()
+
+        session_id = data.get('session_id', None)
         if not session_id:
-            raise Http404
+            return HttpResponseBadRequest()
 
         engine = import_module(settings.SESSION_ENGINE)
         session = engine.SessionStore(session_id)
@@ -1152,7 +1173,11 @@ class SessionDetialsView(View):
         except AttributeError:
             raise Http404
 
-        user_id = get_user_model()._meta.pk.to_python(session[SESSION_KEY])
+        user_id = session.get(SESSION_KEY, None)
+        if not user_id:
+            raise Http404
+
+        user_id = get_user_model()._meta.pk.to_python(user_id)
         return JsonResponse({
             'user_id': user_id
         })
