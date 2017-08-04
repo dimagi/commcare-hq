@@ -463,7 +463,7 @@ REPORT_BUILDER_V2 = StaticToggle(
     "Report builder V2",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    description='Enables the "new" report builder. Note that the "Report Builde" feature flag must also be enabled'
+    description='Enables the "new" report builder. Note that the "Report Builder" feature flag must also be enabled'
 )
 
 ASYNC_RESTORE = StaticToggle(
