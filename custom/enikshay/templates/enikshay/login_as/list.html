@@ -2,13 +2,13 @@
 <h3>
     <b><%= username %></b>
     <span><%= first_name + ' ' + last_name %></span>
-    <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
+    <i><small><%= enikshay.district ? enikshay.district.name : ''%></small></i>
 </h3>
 <div class="row">
     <div class="col-sm-3 col-xs-6">
-      {% trans "Phone Number: " %}<%= phoneNumbers.length ? phoneNumbers[0] : '' %>
+      {% trans "Phone Number: " %}<%= customFields.contact_phone_number %>
     </div>
     <div class="col-sm-3 col-xs-6">
-      {% trans "Agency ID: " %}<%= customFields ? customFields.id_issuer_body : '' %>
+      {% trans "Agency ID: " %}<%= customFields.id_issuer_body %>
     </div>
 </div>

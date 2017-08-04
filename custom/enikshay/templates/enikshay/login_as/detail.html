@@ -14,14 +14,22 @@
 </tr>
 <% } %>
 <tr>
-    <th>{% trans "Date Registered" %}</th>
-    <td><%= user.dateRegistered %></td>
+    <th>User Type</th>
+    <td><%= user.enikshay.usertype_display %></td>
 </tr>
-<% _.each(user.customFields, function(value, key) { %>
-<% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
 <tr>
-    <th><%= key %></th>
-    <td><%= value %></td>
+    <th>District / Suborganization</th>
+    <td><%= user.enikshay.district ? user.enikshay.district.name : '' %></td>
 </tr>
-<% } %>
-<% }) %>
+<tr>
+    <th>Agency ID</th>
+    <td><%= user.customFields.id_issuer_body %></td>
+</tr>
+<tr>
+    <th>UATBC ID</th>
+    <td><%= user.customFields.agency_id_legacy %></td>
+</tr>
+<tr>
+    <th>Phone number</th>
+    <td><%= user.customFields.contact_phone_number %></td>
+</tr>
