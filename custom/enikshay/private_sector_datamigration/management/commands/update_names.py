@@ -17,7 +17,8 @@ class Command(BaseCommand):
                 'pac',
                 'pcp',
                 'plc',
-                'ps-fieldstaff',
+                'fo',
+                'pcc',
             ],
         )
 
