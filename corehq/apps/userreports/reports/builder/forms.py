@@ -698,6 +698,7 @@ class DataSourceForm(forms.Form):
 
         return cleaned_data
 
+
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
 UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
 DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",

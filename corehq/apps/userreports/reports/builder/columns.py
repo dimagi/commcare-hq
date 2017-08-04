@@ -122,7 +122,9 @@ class QuestionColumnOption(ColumnOption):
         column_id = get_column_name(self._property.strip("/"))
         if data_type:
             column_id += ("_" + data_type)
-        return make_form_question_indicator(self._question_source, column_id, data_type, root_doc=is_multiselect_chart_report)
+        return make_form_question_indicator(
+            self._question_source, column_id, data_type, root_doc=is_multiselect_chart_report
+        )
 
 
 class FormMetaColumnOption(ColumnOption):
@@ -143,7 +145,9 @@ class FormMetaColumnOption(ColumnOption):
             identifier = [identifier]
         identifier = "/".join(identifier)
         column_id = get_column_name(identifier.strip("/"))
-        return make_form_meta_block_indicator(self._meta_property_spec, column_id, root_doc=is_multiselect_chart_report)
+        return make_form_meta_block_indicator(
+            self._meta_property_spec, column_id, root_doc=is_multiselect_chart_report
+        )
 
 
 class MultiselectQuestionColumnOption(QuestionColumnOption):
@@ -154,7 +158,9 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
     LABEL_DIVIDER = " - "
 
     def __init__(self, property, default_display, question_source):
-        super(MultiselectQuestionColumnOption, self).__init__(property, ["string"], default_display, question_source)
+        super(MultiselectQuestionColumnOption, self).__init__(
+            property, ["string"], default_display, question_source
+        )
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         assert aggregation in [COUNT_PER_CHOICE, "simple"]
@@ -188,7 +194,8 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         Return the data source indicator that will be used for displaying this question in the report (but not
         filtering or aggregation)
         """
-        column_id = get_column_name(self._property.strip("/"))  # TODO: Is it a problem that this is the same as the filter/agg indicator id?
+        # TODO: Is it a problem that this is the same as the filter/agg indicator id?
+        column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
     def get_indicators(self, aggregation, is_multiselect_chart_report=False):

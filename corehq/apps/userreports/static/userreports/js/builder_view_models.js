@@ -1,4 +1,4 @@
-/* global django, ReportBuilder */
+/* global django */
 hqDefine('userreports/js/builder_view_models.js', function () {
     'use strict';
 
