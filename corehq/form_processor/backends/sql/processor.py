@@ -47,6 +47,21 @@ class FormProcessorSQL(object):
         xform.unsaved_attachments = xform_attachments
 
     @classmethod
+    def copy_attachments(cls, from_form, to_form):
+        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        for att in from_form.get_attachments():
+            if att.name != 'form.xml':
+                to_form.unsaved_attachments.append(XFormAttachmentSQL(
+                    name=att.name,
+                    attachment_id=uuid.uuid4(),
+                    content_type=att.content_type,
+                    properties=att.properties,
+                    blob_id=att.blob_id,
+                    blob_bucket=att.blob_bucket,
+                    md5=att.md5,
+                ))
+
+    @classmethod
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 
