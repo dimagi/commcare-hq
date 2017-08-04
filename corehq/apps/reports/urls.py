@@ -26,7 +26,6 @@ from corehq.apps.userreports.v1.views import (
     ConfigureWorkerReport,
     ConfigureMapReport,
 )
-# TODO: Gotta update all the refs that need versioning in v1
 
 from .dispatcher import (
     BasicReportDispatcher,

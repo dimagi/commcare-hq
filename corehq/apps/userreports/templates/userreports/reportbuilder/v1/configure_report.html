@@ -6,7 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+    <script src="{% static 'userreports/js/v1/builder_view_models.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}
@@ -35,7 +35,7 @@
         var isGroupByRequired = {{ is_group_by_required|JSON }};
         var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
 
-        var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
+        var ConfigForm = hqImport('userreports/js/v1/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
             new ConfigForm(
                 reportType,
