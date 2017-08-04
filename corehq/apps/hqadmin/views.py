@@ -1157,7 +1157,11 @@ class SessionDetialsView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return HttpResponseBadRequest()
+
         if not data or not isinstance(data, dict):
             return HttpResponseBadRequest()
 
