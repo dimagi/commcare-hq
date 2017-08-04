@@ -3,9 +3,9 @@ import hashlib
 import hmac
 from functools import wraps
 
+from django.conf import settings
 from django.http import HttpResponse
 
-import settings
 from corehq.util.soft_assert.api import soft_assert
 
 _soft_assert = soft_assert(notify_admins=True)
