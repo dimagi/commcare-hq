@@ -87,7 +87,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_provider=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -100,7 +100,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.build_table()
-        iteratively_build_table(config, in_place=True)
+        iteratively_build_table(config, in_place=True, doc_id_provider=doc_id_provider)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -120,13 +120,24 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             iteratively_build_table(config, last_id, resume_helper)
 
 
-def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def recalculate_indicators(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    adapter = get_indicator_adapter(config)
+    doc_id_provider = adapter.get_distinct_values('doc_id', 10000)[0]
+    rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
+
+
+def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False, doc_id_provider=None):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
     relevant_ids = []
     document_store = get_document_store(config.domain, config.referenced_doc_type)
-    for relevant_id in document_store.iter_document_ids(last_id):
+    if not doc_id_provider:
+        doc_id_provider = document_store.iter_document_ids(last_id)
+
+    for relevant_id in doc_id_provider:
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
             resume_helper.set_ids_to_resume_from(relevant_ids)
