@@ -482,6 +482,44 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertEqual(host.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
+    def test_extension_of_parent(self):
+        # child case owned by owner
+        # parent case not owned
+        # parent has extension also not owned
+        other_owner = uuid.uuid4().hex
+        parent = CaseStructure(
+            case_id='parent_owned_by_other_owner',
+            attrs={'create': True, 'owner_id': other_owner}
+        )
+
+        child = CaseStructure(
+            case_id='child_owned_by_owner',
+            attrs={'create': True, 'owner_id': self.owner_id},
+            indices=[
+                CaseIndex(
+                    parent,
+                    identifier="retainer",
+                ),
+            ]
+        )
+        extension = CaseStructure(
+            case_id="extension_owned_by_other_owner",
+            attrs={'owner_id': other_owner},
+            indices=[
+                CaseIndex(
+                    parent,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host_1",
+                ),
+            ]
+        )
+        self.factory.create_or_update_case(extension)
+        self.factory.create_or_update_case(child)
+        self.assert_owner_dirty()
+        self.assertTrue(self._owner_cleanliness_for_id(other_owner).is_clean)
+        self.assertEqual(child.case_id, self.owner_cleanliness.hint)
+        self._verify_set_cleanliness_flags()
+
 
 @use_sql_backend
 class OwnerCleanlinessTestSQL(OwnerCleanlinessTest):
