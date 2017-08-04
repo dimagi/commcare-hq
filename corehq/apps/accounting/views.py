@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from datetime import date
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.http import (
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     Http404,
@@ -16,11 +18,13 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
+from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.style.decorators import (
     use_select2,
     use_jquery_ui,
     use_multiselect,
 )
+from corehq.util.translation import localize
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -58,9 +62,10 @@ from corehq.apps.accounting.async_handlers import (
     SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
-    Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
+    SoftwareProductType, Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
     SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan,
 )
+from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
@@ -705,6 +710,30 @@ class TestRenewalEmailView(AccountingSectionView):
             messages.success(request, "Sent the Reminder emails!")
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
+
+
+def pricing_table_json(request, product, locale):
+    if product not in [c[0] for c in SoftwareProductType.CHOICES]:
+        return HttpResponseBadRequest("Not a valid product")
+    if locale not in [l[0] for l in settings.LANGUAGES]:
+        return HttpResponseBadRequest("Not a supported language.")
+    with localize(locale):
+        table = PricingTable.get_table_by_product(product)
+        table_json = json.dumps(table, cls=LazyEncoder)
+
+    # This is necessary for responding to requests from Internet Explorer.
+    # IE you can FOAD.
+    callback = request.GET.get('callback') or request.POST.get('callback')
+    if callback is not None:
+        table_json = "%s(%s)" % (callback, table_json)
+
+    response = HttpResponse(table_json,
+                            content_type='application/json; charset=UTF-8')
+    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response["Access-Control-Max-Age"] = "1000"
+    response["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 class InvoiceSummaryViewBase(AccountingSectionView):
