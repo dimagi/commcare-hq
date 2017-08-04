@@ -68,12 +68,12 @@
         </div>
     </td>
     <td class="module-column module-column-name">
+        {% if request|toggle_enabled:"ENIKSHAY"%}
         <h3>
             <b><%= username %></b>
             <span><%= first_name + ' ' + last_name %></span>
             <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
         </h3>
-        {% if request|toggle_enabled:"ENIKSHAY"%}
         <div class="row">
             <div class="col-sm-3 col-xs-6">
               {% trans "Phone Number: " %}<%= phoneNumbers.length ? phoneNumbers[0] : '' %>
@@ -82,6 +82,12 @@
               {% trans "Agency ID: " %}<%= customFields ? customFields.id_issuer_body : '' %>
             </div>
         </div>
+        {% else %}
+        <h3>
+            <b><%= username %></b>
+            <span><%= first_name + ' ' + last_name %></span>
+            <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
+        </h3>
         {% endif %}
     </td>
 </script>
@@ -89,6 +95,7 @@
 <script type="text/template" id="user-data-template">
     <table class="table module-table module-table-casedetail">
         <tbody>
+        {% if request|toggle_enabled:"ENIKSHAY"%}
             <tr>
                 <th>{% trans "Name" %}</th>
                 <td><%= user.first_name + ' ' + user.last_name %></td>
@@ -115,6 +122,34 @@
             </tr>
             <% } %>
         <% }) %>
+        {% else %}
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <td><%= user.first_name + ' ' + user.last_name %></td>
+            </tr>
+            <% if (user.location) { %>
+            <tr>
+                <th>{% trans "Organization" %}</th>
+                <td><%= user.location.name %></td>
+            </tr>
+            <tr>
+                <th>{% trans "Organization Type" %}</th>
+                <td><%= user.location.location_type %></td>
+            </tr>
+            <% } %>
+            <tr>
+                <th>{% trans "Date Registered" %}</th>
+                <td><%= user.dateRegistered %></td>
+            </tr>
+        <% _.each(user.customFields, function(value, key) { %>
+            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
+            <tr>
+                <th><%= key %></th>
+                <td><%= value %></td>
+            </tr>
+            <% } %>
+        <% }) %>
+        {% endif %}
         </tbody>
     </table>
 
