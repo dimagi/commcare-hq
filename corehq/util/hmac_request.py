@@ -25,9 +25,9 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
     :param setting_name: The name of the Django setting that holds the secret key
     :param ignore_if_debug: If set to True this is completely ignored if settings.DEBUG is True
     """
-    shared_key = getattr(settings, setting_name, None)
-
     def _outer(fn):
+        shared_key = getattr(settings, setting_name, None)
+
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             if ignore_if_debug and settings.DEBUG:
