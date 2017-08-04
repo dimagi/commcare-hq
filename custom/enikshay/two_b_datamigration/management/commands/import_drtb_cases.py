@@ -448,7 +448,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     # We do this as a separate step because we don't want to generate ids if there is going to be an exception
     # raised while generating the other properties.
     update_cases_with_readable_ids(
-        domain, commit, person_case_properties, occurrence_case_properties, episode_case_properties,
+        commit, domain, person_case_properties, occurrence_case_properties, episode_case_properties,
         secondary_owner_case_properties
     )
 
@@ -477,7 +477,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     ] + secondary_owner_case_structures + drug_resistance_case_structures + test_case_structures
 
 
-def update_cases_with_readable_ids(domain, commit, person_case_properties, occurrence_case_properties,
+def update_cases_with_readable_ids(commit, domain, person_case_properties, occurrence_case_properties,
                                    episode_case_properties, secondary_owner_case_properties):
     phi_id = person_case_properties['owner_id']
     person_id_flat = PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
