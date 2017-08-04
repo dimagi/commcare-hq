@@ -36,7 +36,7 @@ class Command(BaseCommand):
             loc.name = "%s - %d" % (agency.agencyName, agency_id)
             loc.save()
             try:
-                user_detail = UserDetail.objects.get(agencyId=agency_id)
+                user_detail = UserDetail.objects.get(agencyId=agency_id, isPrimary=True)
             except UserDetail.DoesNotExist:
                 user_detail = None
             location_user = CommCareUser.get_by_user_id(loc.user_id)
