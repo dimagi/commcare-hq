@@ -610,7 +610,24 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
+                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
+                    from corehq.apps.userreports.v1.views import (
+                        ConfigureChartReport,
+                        ConfigureListReport,
+                        ConfigureMapReport,
+                        ConfigureWorkerReport,
+                        ConfigureTableReport,
+                    )
+                    view_class = {
+                        'chart': ConfigureChartReport,
+                        'list': ConfigureListReport,
+                        'worker': ConfigureWorkerReport,
+                        'table': ConfigureTableReport,
+                        'map': ConfigureMapReport,
+                    }[report.report_meta.builder_report_type]
+                    return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+                else:
+                    return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
