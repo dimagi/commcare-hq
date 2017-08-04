@@ -1726,47 +1726,48 @@ class Command(BaseCommand):
         bad_rows_file_name = "{}-bad-rows.csv".format(migration_id)
         rows_with_unknown_exceptions = 0
 
-        with open_any_workbook(excel_file_path) as workbook:
-            with open(bad_rows_file_name, "w") as bad_rows_file:
-                with open(import_log_file_name, "w") as import_log_file:
-                    import_log_writer = csv.writer(import_log_file)
-                    bad_rows_file_writer = csv.writer(bad_rows_file)
-                    import_log_writer.writerow(["row", "case_ids", "exception"])
+        with open_any_workbook(excel_file_path) as workbook, \
+                open(bad_rows_file_name, "w") as bad_rows_file, \
+                open(import_log_file_name, "w") as import_log_file:
 
-                    for i, row in enumerate(workbook.worksheets[0].iter_rows()):
-                        if i < import_format.header_rows:
-                            # Skip the headers rows
-                            if i == 0:
-                                extra_cols = ["original import row number", "error message"]
-                            else:
-                                extra_cols = [None, None]
-                            bad_rows_file_writer.writerow(extra_cols + [c.value for c in row])
-                            continue
+            import_log_writer = csv.writer(import_log_file)
+            bad_rows_file_writer = csv.writer(bad_rows_file)
+            import_log_writer.writerow(["row", "case_ids", "exception"])
 
-                        row_contains_data = any(cell.value for cell in row)
-                        if not row_contains_data:
-                            continue
+            for i, row in enumerate(workbook.worksheets[0].iter_rows()):
+                if i < import_format.header_rows:
+                    # Skip the headers rows
+                    if i == 0:
+                        extra_cols = ["original import row number", "error message"]
+                    else:
+                        extra_cols = [None, None]
+                    bad_rows_file_writer.writerow(extra_cols + [c.value for c in row])
+                    continue
 
-                        try:
-                            import_format.column_mapping.check_for_required_fields(row)
-                            case_structures = get_case_structures_from_row(
-                                options['commit'], domain, migration_id, import_format.column_mapping,
-                                import_format.constants, row
-                            )
-                            import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
-                            logger.info("Creating cases for row {}".format(i))
+                row_contains_data = any(cell.value for cell in row)
+                if not row_contains_data:
+                    continue
 
-                            if options['commit']:
-                                case_factory.create_or_update_cases(case_structures)
-                        except Exception as e:
-                            logger.info("Creating case structures for row {} failed".format(i))
-                            if isinstance(e, ValidationFailure):
-                                exception_as_string = e.message
-                            else:
-                                rows_with_unknown_exceptions += 1
-                                exception_as_string = traceback.format_exc()
-                            import_log_writer.writerow([i, "", exception_as_string])
-                            bad_rows_file_writer.writerow([i, exception_as_string] + [c.value for c in row])
+                try:
+                    import_format.column_mapping.check_for_required_fields(row)
+                    case_structures = get_case_structures_from_row(
+                        options['commit'], domain, migration_id, import_format.column_mapping,
+                        import_format.constants, row
+                    )
+                    import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
+                    logger.info("Creating cases for row {}".format(i))
+
+                    if options['commit']:
+                        case_factory.create_or_update_cases(case_structures)
+                except Exception as e:
+                    logger.info("Creating case structures for row {} failed".format(i))
+                    if isinstance(e, ValidationFailure):
+                        exception_as_string = e.message
+                    else:
+                        rows_with_unknown_exceptions += 1
+                        exception_as_string = traceback.format_exc()
+                    import_log_writer.writerow([i, "", exception_as_string])
+                    bad_rows_file_writer.writerow([i, exception_as_string] + [c.value for c in row])
 
         print "{} rows with unknown exceptions".format(rows_with_unknown_exceptions)
 
