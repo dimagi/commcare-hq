@@ -16,6 +16,7 @@ DECLARE
         CASE WHEN loc_7 IS NULL THEN 0 ELSE 1 END
     );
 BEGIN
+  -- Note that lists in plpgsql are 1 indexed not 0 indexed
   RETURN CASE WHEN level >= loc_level THEN NULL ELSE ids[loc_level - level] END;
 END;
 $$ LANGUAGE plpgsql;
