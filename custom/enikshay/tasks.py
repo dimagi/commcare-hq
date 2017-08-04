@@ -253,21 +253,21 @@ class EpisodeAdherenceUpdate(object):
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
         """
-        return EpisodeAdherenceUpdate.count_doses_of_status('taken', dose_status_by_date, start_date, end_date)
+        return EpisodeAdherenceUpdate.count_doses_of_type('taken', dose_status_by_date, start_date, end_date)
 
     @staticmethod
-    def count_doses_of_status(status, dose_status_by_date, start_date=None, end_date=None):
-        """status should be 'taken', 'unknown', or 'missed'"""
+    def count_doses_of_type(dose_type, dose_status_by_date, start_date=None, end_date=None):
+        """dose_type should be 'taken', 'unknown', or 'missed'"""
         if bool(start_date) != bool(end_date):
             raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
         if not start_date:
-            return len([ds for ds in dose_status_by_date.values() if getattr(ds, status)])
+            return len([status for status in dose_status_by_date.values() if getattr(status, dose_type)])
         else:
             return len([
-                ds
-                for date, ds in dose_status_by_date.iteritems()
-                if start_date <= date <= end_date and getattr(ds, status)
+                status
+                for date, status in dose_status_by_date.iteritems()
+                if start_date <= date <= end_date and getattr(status, dose_type)
             ])
 
     @staticmethod
@@ -350,7 +350,7 @@ class EpisodeAdherenceUpdate(object):
                     start_date=start,
                     end_date=end,
                 )
-                missed_count = self.count_doses_of_status('missed', dose_status_by_date, start, end)
+                missed_count = self.count_doses_of_type('missed', dose_status_by_date, start, end)
                 unknown_count = num_days - missed_count - score_count_taken
             else:
                 score_count_taken = 0
@@ -611,15 +611,15 @@ def calculate_dose_status_by_day(adherence_cases):
         adherence_cases_by_date[adherence_date].append(case)
 
     status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
-    for d, cases in adherence_cases_by_date.iteritems():
+    for day, cases in adherence_cases_by_date.iteritems():
         case = _get_relevent_case(cases)
         if not case:
             pass  # unknown
         elif case.get('adherence_value') in DOSE_TAKEN_INDICATORS:
             source = case.get('adherence_report_source') or case.get('adherence_source')
-            status_by_day[d] = DoseStatus(taken=True, missed=False, unknown=False, source=source)
+            status_by_day[day] = DoseStatus(taken=True, missed=False, unknown=False, source=source)
         elif case.get('adherence_value') == DOSE_MISSED:
-            status_by_day[d] = DoseStatus(taken=False, missed=True, unknown=False, source=False)
+            status_by_day[day] = DoseStatus(taken=False, missed=True, unknown=False, source=False)
         else:
             pass  # unknown
     return status_by_day
@@ -632,15 +632,12 @@ def _get_relevent_case(cases):
         if only non-enikshay source cases
             consider the case with latest_modified - irrespective of case is closed/open
 
-        if only enikshay source cases
+        if only enikshay source cases or if mix of enikshay and non-enikshay source cases
+            consider only enikshay cases
             filter by '(closed and closure_reason == HISTORICAL_CLOSURE_REASON) or open'
             consider the case with latest modified after above filter
-
-        if mix of enikshay and non-enikshay source cases
-            ignore non-enikshay and apply above enikshay only condition
-    2. Check if 'adherence_value' of most relevent case is one of DOSE_TAKEN_INDICATORS
     """
-    sources = set(map(lambda x: x["adherence_source"], cases))
+    sources = {case["adherence_source"] for case in cases}
     if 'enikshay' not in sources:
         valid_cases = cases
     else:
