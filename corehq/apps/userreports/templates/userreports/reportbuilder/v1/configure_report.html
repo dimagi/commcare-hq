@@ -5,7 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
-    <script src="{% static 'userreports/js/constants.js' %}"></script>
+    <script src="{% static 'userreports/js/v1/constants.js' %}"></script>
     <script src="{% static 'userreports/js/v1/builder_view_models.js' %}"></script>
 {% endblock %}
 
@@ -19,7 +19,7 @@
 <script>
 
     var ReportBuilder = {
-        Constants: hqImport('userreports/js/constants.js')
+        Constants: hqImport('userreports/js/v1/constants.js')
     };
 
     (function () {
