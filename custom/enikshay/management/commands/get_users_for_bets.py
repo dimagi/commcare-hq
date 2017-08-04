@@ -78,5 +78,5 @@ class Command(BaseCommand):
             user.email,
             user.language,
         ] + [
-            user.user_data.get(field, '') for field in self.data_fields
+            user.user_data.get(field.slug, '') for field in self.data_fields
         ])
