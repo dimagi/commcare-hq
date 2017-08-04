@@ -118,7 +118,11 @@
             <div class="panel-collapse collapse in" id="report-config-columns">
               <div class="panel-body">
                 <div data-bind="with: columnList">
-                  {% include "userreports/partials/column_list_configuration.html" %}
+                  {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                      {% include "userreports/partials/column_list_configuration.html" with parent="userreports/partials/property_list_configuration.html" %}
+                  {% else %}
+                      {% include "userreports/partials/column_list_configuration.html" with parent="userreports/partials/v1/property_list_configuration.html" %}
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -145,7 +149,11 @@
                     These filters will be displayed at the top of your report.
                   {% endblocktrans %}
                 </p>
-                {% include 'userreports/partials/property_list_configuration.html' %}
+                {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                    {% include 'userreports/partials/property_list_configuration.html' %}
+                {% else %}
+                    {% include 'userreports/partials/v1/property_list_configuration.html' %}
+                {% endif %}
               </div>
             </div>
           </div>
@@ -170,7 +178,11 @@
                     These filters are not displayed to report viewers and are always applied to the data.
                   {% endblocktrans %}
                 </p>
-                {% include 'userreports/partials/property_list_configuration.html' %}
+                {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                  {% include 'userreports/partials/property_list_configuration.html' %}
+                {% else %}
+                  {% include 'userreports/partials/v1/property_list_configuration.html' %}
+                {% endif %}
               </div>
             </div>
           </div>
