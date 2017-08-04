@@ -738,49 +738,49 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
     warning_fr: "Problème signalé : {msg}"
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
-  - question: [A, A_G_1, Q_1, q1_action]
+  - question: [q1_action]
     flag_name: "Mask usage?"
     flag_name_por: "Uso da máscara?"
     flag_name_fr: "Utiliser les masques ?"
     warning: "Problem reported: Personnel entered the pesticide storage area without proper PPE."
     warning_por: "Problema relatado: O pessoal entrou na área de armazenamento de insecticida sem o EPI adequado."
     warning_fr: "Problème signalé : Le personnel est entré dans l’aire de stockage des pesticides sans porter d’EPI approprié."
-  - question: [A, A_G_1, Q_2, q2_action]
+  - question: [q2_action]
     flag_name: "PPE to handle pesticides"
     flag_name_por: "EPI para lidar com o insecticida"
     flag_name_fr: "EPI à manipuler les pesticides"
     warning: "Problem reported: Personnel handling pesticides without wearing masks, gloves, boots, and overalls."
     warning_por: "Problema relatado: manuseio pessoal de insectica sem usar máscaras, luvas, botas e macacão."
     warning_fr: "Problème signalé : Le personnel manipule les pesticides sans porter de masques, gants, bottes et salopettes."
-  - question: [A, A_G_1, Q_3, q3_action]
+  - question: [q3_action]
     flag_name: "Eating in the warehouse?"
     flag_name_por: "Comem nos armazéns?"
     flag_name_fr: "Manger dans l'entrepôt ?"
     warning: "Problem reported: Workers eating inside warehouse while IRS pesticides are in stock."
     warning_por: "Problema relatado: Os trabalhadores comem no interior do armazém, enquanto o insecticida estão armazenados"
     warning_fr: "Problème signalé : Les travailleurs mangent dans l’entrepôt lorsque les pesticides PID sont en stock."
-  - question: [A, A_G_2, Q_4, q4_action]
+  - question: [q4_action]
     flag_name: "Soap and basin available?"
     flag_name_por: "Sabão e bacia disponíveis?"
     flag_name_fr: "Savon et lavabo disponibles ?"
     warning: "Problem reported:  Water basins not provided in storeroom for washing hands."
     warning_por: "Problema relatado: bacias com água não são fornecidas no armazém para lavar as mãos"
     warning_fr: "Problème signalé :  Pas de bassines d’eau fournies dans la salle de stockage pour se laver les mains."
-  - question: [A, A_G_2, Q_5, q5_action]
+  - question: [q5_action]
     flag_name: "Current MSDS posted?"
     flag_name_por: "MSDS actuais publicadas?"
     flag_name_fr: "FDS actuels affichés ?"
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
     warning_por: "Problema relatado: Ficha de Segurança do Material para o insecticida (s) actual não publicada"
     warning_fr: "Problème signalé : La ou les fiches de données de sécurité (FDS) du ou des pesticides actuels ne sont pas affichées"
-  - question: [A, A_G_2, Q_6, q6_action]
+  - question: [q6_action]
     flag_name: "Thermometer in storeroom?"
     flag_name_por: "Termómetro na sala de armazenamento?"
     flag_name_fr: "Thermomètre dans cellier ?"
     warning: "Problem reported: Thermometer needed in storeroom."
     warning_por: "Problema relatado: Termómetro necessário na sala de armazenamento"
     warning_fr: "Problème signalé : Un thermomètre est requis pour la salle de stockage."
-  - question: [A, A_G_3, Q_7, q7]
+  - question: [q7]
     flag_name: "First aid kit stocked?"
     flag_name_por: "Kit de primeiros socorros abastecido?"
     flag_name_fr: " Trousse de secours stocké ?"
@@ -790,7 +790,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
     warning_por: "Problema relatado: itens de primeiros socorros são necessários para esta instalação. Faltando: {msg}"
     warning_fr: "Problème signalé : Un ou des articles de soins de premiers secours sont requis pour cet établissement. Article(s) manquant(s) : {msg}"
-  - question: [A, A_G_3, Q_8, q8]
+  - question: [q8]
     flag_name: "Spill kit and fire extinquisher?"
     flag_name_por: "Kit de derramamento e extintor de incêndio?"
     flag_name_fr: "Kit en cas de déversement et d'incendie extinquisher ?"
@@ -800,245 +800,245 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: Storeroom missing {msg}."
     warning_por: "Problema relatado: Sala de armazenamento faltando {msg}."
     warning_fr: "Problème signalé : Article(s) manquant(s) dans la salle de stockage {msg}."
-  - question: [A, A_G_3, Q_9, q9_action]
+  - question: [q9_action]
     flag_name: "Storekeeper familiar with poisoning symptoms?"
     flag_name_por: "Fiel de Armanez familiarizado com os sintomas envenenamento?"
     flag_name_fr: "Magasinier familiariser avec symptômes d'empoisonnement ?"
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
     warning_por: "Problema relatado: Os fieis de armazen não estão familiarizados com os sintomas de envenenamento por insecticida (s) atuais."
     warning_fr: "Problème signalé : Les magasiniers ne sont pas au courant des symptômes de l’empoisonnement pour le ou les pesticides actuels."
-  - question: [A, A_G_4, Q_10, q10_action]
+  - question: [q10_action]
     flag_name: "Knowledge of nearest health facility?"
     flag_name_por: "Conhecimento da unidade sanitaria mais próxima?"
     flag_name_fr: "La connaissance de l'établissement de santé le plus proche?"
     warning: "Problem reported: Storekeeper does not know location of  nearest health facility."
     warning_por: "Problema relatado: O fiel de armazen não conhece a localidade  da unidade sanitaria mais próxima."
     warning_fr: "Problème signalé : Les magasiniers ne savent pas où se trouve l’établissement médical le plus proche."
-  - question: [A, A_G_4, Q_11, q11_action]
+  - question: [q11_action]
     flag_name: "Antidotes at nearest health facility?"
     flag_name_por: "Antídotos na unidade de saúde mais próxima?"
     flag_name_fr: "Antidotes au centre de santé le plus proche ?"
     warning: "Problem reported: Antidotes may not be available in the nearest health facility."
     warning_por: "Problema relatado: Os antídotos podem não estar disponíveis na unidade sanitaria mais próxima."
     warning_fr: "Problème signalé : Des antidotes sont susceptibles de ne pas être disponibles dans l’établissement médical le plus proche."
-  - question: [A, A_G_4, Q_12, q12_action]
+  - question: [q12_action]
     flag_name: "Pregnancy testing records available?"
     flag_name_por: "Registos do teste de gravidez disponível?"
     flag_name_fr: "Dossiers de tests de grossesse disponibles ?"
     warning: "Problem reported: Records for pregnancy not available."
     warning_por: "Problema relatado: Registos para a gravidez não disponível."
     warning_fr: "Problème signalé : Les dossiers de grossesse ne sont pas disponibles."
-  - question: [A, A_G_5, Q_13, q13_action]
+  - question: [q13_action]
     flag_name: "Pesticide leakage evidence?"
     flag_name_por: "Evidências de vazamentos de insecticidas?"
     flag_name_fr: "Pesticide fuites preuves ?"
     warning: "Problem reported: Pesticide leak discovered in storeroom. "
     warning_por: "Problema relatado: vazamento de insecticida descoberto na sala de armazenamento"
     warning_fr: "Problème signalé : Fuite de pesticides découverte dans la salle de stockage."
-  - question: [A, A_G_5, Q_14, q14_action]
+  - question: [q14_action]
     flag_name: "Proper elevation and stack height? "
     flag_name_por: "Elevação adequada e altura da pilha?"
     flag_name_fr: "Bonne hauteur et la hauteur de la pile ?"
     warning: "Problem reported: Improper pesticide storage: Skids and/or stacking height."
     warning_por: "Problema relatado: armazenação de insecticida inadequada: Derrapagens e / ou altura de empilhamento."
     warning_fr: "Problème signalé : Stockage de pesticides inapproprié : en ce qui concerne les palettes et/ou la hauteur d’empilage."
-  - question: [A, A_G_5, Q_15, q15_action]
+  - question: [q15_action]
     flag_name: "Water storage?"
     flag_name_por: "Armazenamento de água?"
     flag_name_fr: "Stockage de l'eau ?"
     warning: "Problem reported: Deficient pesticide and contaminated waste storage procedures."
     warning_por: "Problema relatado: Insecticida deficiente e procedimentos de armazenamento de resíduos solidos."
     warning_fr: "Problème signalé : Procédures insatisfaisantes relatives au stockage du ou des pesticides et des déchets contaminés."
-  - question: [A, A_G_6, Q_16, q16_action]
+  - question: [q16_action]
     flag_name: "Proper pesticide record-keeping"
     flag_name_por: "Conservação de registos de pesticida adequada"
     flag_name_fr: "Pesticides bonne tenue de dossiers ?"
     warning: "Problem reported: Deficient pesticide record-keeping."
     warning_por: "Problema relatado: conservação de registos de insecticida deficiente."
     warning_fr: "Problème signalé : Tenue des documents liés aux pesticides insatisfaisante."
-  - question: [A, A_G_6, Q_17, q17_action]
+  - question: [q17_action]
     flag_name: "Stock card recording system?"
     flag_name_por: "Sistema de registo da ficha de stock?"
     flag_name_fr: "Stock carte de système d'enregistrement ?"
     warning: "Problem reported: Deficient stock record-keeping: No system for recording stock cards."
     warning_por: "Problema relatado: Deficiente de stock : Nenhum sistema de fichas de stock."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
-  - question: [A, A_G_6, Q_18, q18_action]
+  - question: [q18_action]
     flag_name: "Up to date stock cards?"
     flag_name_por: "Fichas de Stock actualizadas"
     flag_name_fr: "Jusqu'à ce jour, les cartes d'achat d'actions ?"
     warning: "Problem reported: Deficient stock record-keeping: Stock cards not up-to-date."
     warning_por: "Problema relatado: Deficiente de stock: fichas de stock não actualizadas."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
-  - question: [A, A_G_7, Q_19, q19_action]
+  - question: [q19_action]
     flag_name: "Waste stock recorded?"
     flag_name_por: "Reserva de resíduos registada?"
     flag_name_fr: "Stock de déchets enregistré ?"
     warning: "Problem reported: Deficient stock record-keeping: waste stock."
     warning_por: "Problema relatado: Deficiente conservação de fichas de Stock: residous solidos."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante : stock de déchets."
-  - question: [A, A_G_7, Q_20, q20_action]
+  - question: [q20_action]
     flag_name: "Adequate filing system?"
     flag_name_por: "Sistema de preenchimento adequado?"
     flag_name_fr: "Système de classement adéquat ?"
     warning: "Problem reported: Deficient record-keeping: filing: Filing system."
     warning_por: "Problema relatado: Deficiente Fichas de Sotck: sistema de preenchimento."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : classement."
-  - question: [A, A_G_7, Q_21, q21_action]
+  - question: [q21_action]
     flag_name: "Quantity and age of stock known? "
     flag_name_por: "Quantidade e idade da reserva conhecida?"
     flag_name_fr: "Quantité et l'âge de stock connu ?"
     warning: "Problem reported: Deficient record-keeping; inventory."
     warning_por: "Problema relatado: Deficiente conservação de registos da reserva; inventário."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : inventaire."
-  - question: [A, A_G_8, Q_22, q22_action]
+  - question: [q22_action]
     flag_name: "Quantity of used stock known?"
     flag_name_por: "Quantidade de stock utilizado conhecido?"
     flag_name_fr: "Quantité de stock utilisé connue ?"
     warning: "Problem reported: Deficient record-keeping: usage."
     warning_por: "Problema relatado: Deficiente registo da reserva: o uso."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : utilisation."
-  - question: [A, A_G_8, Q_23, q23_action]
+  - question: [q23_action]
     flag_name: "Shelving and labeling?"
     flag_name_por: "Estantes e rotulagem?"
     flag_name_fr: "Rayonnages et de l'étiquetage ?"
     warning: "Problem reported: Deficient storage (no shelving) and/or labeling."
     warning_por: "Problema relatado: deficiência de armazenamento (sem prateleiras) e / ou rotulagem."
     warning_fr: "Problème signalé : Stockage (absence d’étagères) et/ou étiquetage insatisfaisant(s)."
-  - question: [A, A_G_9, Q_24, q24_action]
+  - question: [q24_action]
     flag_name: "Pesticides labeled?"
     flag_name_por: "Insecticidas rotulados?"
     flag_name_fr: "Pesticides étiquetés?"
     warning: "Problem reported: Deficient pesticide labeling."
     warning_por: "Problema relatado: rotulagem de pesticidas deficiente."
     warning_fr: "Problème signalé : Étiquetage de pesticides insatisfaisant."
-  - question: [A, A_G_9, Q_25, q25_action]
+  - question: [q25_action]
     flag_name: "FEFO system?"
     flag_name_por: "Sistema FEFO?"
     flag_name_fr: "PPPS système ?"
     warning: "Problem reported: Not using FEFO inventory system."
     warning_por: "Problema do Alerta: Não usa o sistema de inventário FEFO."
     warning_fr: "Problème signalé : Non-utilisation du système d’inventaire PPPS."
-  - question: [A, A_G_10, Q_26, q26_action]
+  - question: [q26_action]
     flag_name: "Expired Insecticides?"
     flag_name_por: "Inseticidas fora do prazo?"
     flag_name_fr: "Insecticides expiré ?"
     warning: "Problem reported: Expired pesticides in storeroom."
     warning_por: "Problema relatado: Pesticidas fora do prazo na sala de armazenação."
     warning_fr: "Problème signalé : Présence de pesticides expirés dans la salle de stockage."
-  - question: [A, A_G_10, Q_27, q27_action]
+  - question: [q27_action]
     flag_name: "Waste containers labeled?"
     flag_name_por: "Contentores de lixo rotulados?"
     flag_name_fr: "Les conteneurs à déchets étiquetés?"
     warning: "Problem reported: Deficient storage and/or labeling of hazardous waste."
     warning_por: "Problema relatado: armazenamento deficiente e / ou rotulagem de resíduos perigosos."
     warning_fr: "Problème signalé : Stockage et/ou étiquetage des déchets dangereux insatisfaisant(s)."
-  - question: [B, B_G_1, Q_28, q28_action]
+  - question: [q28_action]
     flag_name: "Waste packaging stored?"
     flag_name_por: "Embalagem de lixo armazenado?"
     flag_name_fr: "Déchets d'emballage stockées ?"
     warning: "Problem reported: Deficient storage and/or labeling of empty sachets."
     warning_por: "Problema relatado: armazenamento deficiente e / ou rotulagem de sacos vazios."
     warning_fr: "Problème signalé : Stockage et/ou étiquetage des sachets vides insatisfaisant(s)."
-  - question: [B, B_G_1, Q_29, q29_action]
+  - question: [q29_action]
     flag_name: "Pesticide usage inventory?"
     flag_name_por: "Inventário do uso de pesticidas?"
     flag_name_fr: "Pesticide inventaire d'utilisation?"
     warning: "Problem reported: Pesticide packaging waste inventory does not balance."
     warning_por: "Problema relatado: inventário dos resíduos de embalagens de pesticidas Não equilibra."
     warning_fr: "Problème signalé : L’inventaire du ou des pesticides ne s’équilibre pas."
-  - question: [B, B_G_1, Q_30, q30_action]
+  - question: [q30_action]
     flag_name: "Old waste stored?"
     flag_name_por: "Resíduos antigos armazenados?"
     flag_name_fr: "Old déchets stockés ?"
     warning: "Problem reported: More than one season of accumulated solid waste in store."
     warning_por: "Problema relatado: Mais do que uma estação de resíduos sólidos acumulados no armazém."
     warning_fr: "Problème signalé : Pesticides excédentaires dans l’inventaire."
-  - question: [B, B_G_2, Q_31, q31_action]
+  - question: [q31_action]
     flag_name: "Waste Management plan?"
     flag_name_por: "Plano de gestão de resíduos?"
     flag_name_fr: "Plan de gestion des déchets ?"
     warning: "Problem reported: Deficient waste management planning."
     warning_por: "Problema relatado: Deficiente planeamento da gestão de resíduos."
     warning_fr: "Problème signalé : Planification de la gestion des déchets insatisfaisante."
-  - question: [B, B_G_2, Q_32, q32_action]
+  - question: [q32_action]
     flag_name: "Waste disposal issue?"
     flag_name_por: "Problema de eliminação de resíduos?"
     flag_name_fr: "Élimination problème des déchets ?"
     warning: "Problem reported: problems in identifying waste disposal system."
     warning_por: "Problema relatado: Identificar os problemas no sistema de eliminação de resíduos."
     warning_fr: "Problème signalé : problèmes liés à la planification de la gestion des déchets."
-  - question: [B, B_G_3, Q_36, q36_action]
+  - question: [q36_action]
     flag_name: "Spray Tracking Sheet use?"
     flag_name_por: "Uso da Folha de acompanhamento da pulverização?"
     flag_name_fr: "Vaporiser Fiche de suivi d'utilisation?"
     warning: "Problem reported: Spray Performance Tracking Sheet not displayed and correctly filled out."
     warning_por: "Problema relatado: Folha de Acompanhamento do desempenho do Roceador não apresentados correctamente preenchidos."
     warning_fr: "Problème signalé : La feuille de suivi de la performance des pulvérisations n’est pas affichée et n’est pas remplie correctement."
-  - question: [B, B_G_4, Q_37, q37_action]
+  - question: [q37_action]
     flag_name: "Updated ledger book?"
     flag_name_por: "Livro de contabilidade actualizado?"
     flag_name_fr: "Mise à jour grand livre ?"
     warning: "Problem reported: The store ledger book is not fully updated."
     warning_por: "Problema relatado: O livro de contabilidade da reserva não está totalmente actualizado."
     warning_fr: "Problème signalé : Le grand livre du magasin n’est pas entièrement mis à jour."
-  - question: [B, B_G_4, Q_38, q38_action]
+  - question: [q38_action]
     flag_name: "Updated Stock cards?"
     flag_name_por: "Cartões de reserva atualizados?"
     flag_name_fr: "Les fiches de stock mis à jour?"
     warning: "Problem reported: The stock cards for all the stock items are not fully updated."
     warning_por: "Problema relatado: Os cartões de reserva para todos os artigos de reserva não estão totalmente actualizados."
     warning_fr: "Problème signalé : Les fiches de stock de tous les articles du stock ne sont pas entièrement mises à jour."
-  - question: [B, B_G_4, Q_39, q39_action]
+  - question: [q39_action]
     flag_name: "Stock card and ledger balances match?"
     flag_name_por: "Os cartões de reserva e os saldos contabilísticos  conscidem?"
     flag_name_fr: "Carte de Stock et soldes du grand livre match?"
     warning: "Problem reported: The balance in the store ledger book does not match the balance on the stock card for all stock items."
     warning_por: "Problema relatado: O saldo no livro de contabilidade não coincide com o saldo no cartão de reserva para todos os artigos em reserva."
     warning_fr: "Problème signalé : Le solde du grand livre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles qui sont en stock."
-  - question: [B, B_G_5, Q_40, q40_action]
+  - question: [q40_action]
     flag_name: "Stock card balance matches   physical count?"
     flag_name_por: "O saldo do cartão da reserva coincide com a contagem física?"
     flag_name_fr: "Stock équilibre de la carte correspond décompte physique ?"
     warning: "Problem reported: The balance on the stock card does not equal the result of a physical stock count for all items."
     warning_por: "Problema relatado: O saldo no cartão de reserva não é igual ao resultado de uma contagem da reserva física para todos os artigos."
     warning_fr: "Problème signalé : Le solde de la fiche de stock ne correspond pas au résultat d’un comptage de stock physique pour tous les articles."
-  - question: [B, B_G_5, Q_41, q41_action]
+  - question: [q41_action]
     flag_name: "Stock and Performance Tracking Sheet?"
     flag_name_por: "Folha de rastreamento da reserva e do desempenho?"
     flag_name_fr: "Stock et Performance Feuille de suivi ?"
     warning: "Problem reported: The stock balance on the Spray Performance Tracking Sheet does not equal the physical stock count."
     warning_por: "Problema relatado: O saldo da reserva na Folha de Acompanhamento de desempenho da pulverização não iguala a contagem da reserva física."
     warning_fr: "Problème signalé : Le solde du stock de la feuille de suivi de la performance des pulvérisations ne correspond pas au comptage de stock physique."
-  - question: [B, B_G_5, Q_42, q42_action]
+  - question: [q42_action]
     flag_name: "Insecticide Tracking Sheet use?"
     flag_name_por: "Uso da folha de acompanhamento do inseticida?"
     flag_name_fr: "Fiche de suivi Utiliser les insecticides ?"
     warning: "Problem reported: The Insecticide Tracking Sheet is not completed daily."
     warning_por: "Problema relatado: A Folha de Acompanhamento de insecticida não é preenchido diariamente."
     warning_fr: "Problème signalé : La feuille de suivi du ou des insecticides n’est pas remplie chaque jour."
-  - question: [B, B_G_6, Q_43, q43_action]
+  - question: [q43_action]
     flag_name: "Insecticide Tracking Sheet and ledger? "
     flag_name_por: "Folha de Acompanhamento de inseticida e contabilidade?"
     flag_name_fr: "Insecticide feuille de suivi et le grand livre ?"
     warning: "Problem reported: The stock balance on the Insecticide Tracking Sheet does not match the balances in the store ledger and on the stock car."
     warning_por: "Problema relatado: O saldo da reserva na Folha de acompanhemento do inseticida não coincide com o saldo da contabilidade e no cartão de reservas."
     warning_fr: "Problème signalé : Le solde du stock de la feuille de suivi du ou des insecticides ne correspond pas aux soldes du grand livre et de la fiche de stock du magasin."
-  - question: [B, B_G_6, Q_44, q44_action]
+  - question: [q44_action]
     flag_name: "Pesticide tock reconciles?"
     flag_name_por: "A reseva de Pesticida reconcilia?"
     flag_name_fr: "Pesticide tac réconcilie ?"
     warning: "Problem reported: The stock balance records of pesticides does not reconcile."
     warning_por: "Problema relatado: Os registos do saldo da reserva de pesticidas não reconcilia."
     warning_fr: "Problème signalé : Les documents concernant le solde du stock de pesticides ne peuvent pas être rapprochés."
-  - question: [B, B_G_6, Q_45, q45_action]
+  - question: [q45_action]
     flag_name: "Mask stock reconciles?"
     flag_name_por: "A reserva das máscara reconcilia?"
     flag_name_fr: "Masque actions réconcilie ?"
     warning: "Problem reported: The stock balance records of dust masks does not reconcile."
     warning_por: "Problema relatado: Os registos do saldo da reserva de máscaras contra poeira não reconcilia."
     warning_fr: "Problème signalé : Les documents concernant le solde du stock de masques anti-poussière ne peuvent pas être rapprochés."
-# Form 6
+ # Form 6
 http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
   - question: [q1_action]
     flag_name: "PPE use to wash area?"
