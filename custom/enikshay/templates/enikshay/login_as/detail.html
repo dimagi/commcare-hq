@@ -3,14 +3,14 @@
     <th>{% trans "Name" %}</th>
     <td><%= user.first_name + ' ' + user.last_name %></td>
 </tr>
-<% if (user.location) { %>
+<% if (user.enikshay.linked_location) { %>
 <tr>
     <th>{% trans "Organization" %}</th>
-    <td><%= user.location.name %></td>
+    <td><%= user.enikshay.linked_location.name %></td>
 </tr>
 <tr>
     <th>{% trans "Organization Type" %}</th>
-    <td><%= user.location.location_type %></td>
+    <td><%= user.enikshay.linked_location.location_type %></td>
 </tr>
 <% } %>
 <tr>
