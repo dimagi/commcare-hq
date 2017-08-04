@@ -4787,16 +4787,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         default="roman"
     )
 
-    # these let mobile prompt updates for application and APK
-    latest_app_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-    latest_apk_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-
     # The following properties should only appear on saved builds
     # built_with stores a record of CommCare build used in a saved app
     built_with = SchemaProperty(BuildRecord)
@@ -4921,6 +4911,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.save()
 
         return self
+
+    @property
+    @memoized
+    def global_app_config(self):
+        return GlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -5375,10 +5370,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-
-        brief_app_id = self.copy_of or self.id
-        if brief_app_id:
-            LatestAppInfo(brief_app_id, self.domain).clear_caches()
 
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -6600,6 +6591,44 @@ class CareplanConfig(Document):
             result = None
 
         return result
+
+
+class GlobalAppConfig(Document):
+    # Todo: handle domain-deletion
+    # this should be the master id of master app (not a versioned copy)
+    app_id = StringProperty()
+    domain = StringProperty()
+
+    # these let mobile prompt updates for application and APK
+    app_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+    apk_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+
+    @classmethod
+    def for_app(cls, app):
+        app_id = app.copy_of or app.id
+
+        res = cls.get_db().view(
+            "app_manager/config_by_app_id",
+            key=[app_id, app.domain],
+            reduce=False,
+            include_docs=True,
+        ).one()
+
+        if res:
+            return cls(res['doc'])
+        else:
+            # return default config
+            return cls(app_id=app_id, domain=app.domain)
+
+    def save(self, *args, **kwargs):
+        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
 # backwards compatibility with suite-1.0.xml

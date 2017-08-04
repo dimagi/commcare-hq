@@ -617,40 +617,38 @@ class LatestAppInfo(object):
     @property
     @memoized
     def app(self):
-        app = get_app(self.domain, self.app_id)
+        app = get_app(self.domain, self.app_id, latest=True, target='release')
         # quickache based on a copy app_id will have to be updated too fast
-        assert not app.copy_of, "this class doesn't handle copy app ids"
+        is_app_id_brief = self.app_id == (app.copy_of or app.id)
+        assert is_app_id_brief, "this class doesn't handle copy app ids"
         return app
 
     def clear_caches(self):
-        self.get_latest_apk_version.clear(self)
-        self.get_latest_app_version.clear(self)
+        self.get_info.clear(self)
 
-    @quickcache(vary_on=['self.app_id'])
     def get_latest_apk_version(self):
         from corehq.apps.builds.utils import get_default_build_spec
-        if self.app.latest_apk_prompt == "off":
+        if self.app.global_app_config.apk_prompt == "off":
             return {}
         else:
             value = get_default_build_spec().version
-            if self.app.latest_apk_prompt == "on":
+            if self.app.global_app_config.apk_prompt == "on":
                 return {"value": value, "force": False}
-            elif self.app.latest_apk_prompt == "forced":
+            elif self.app.global_app_config.apk_prompt == "forced":
                 return {"value": value, "force": True}
 
-    @quickcache(vary_on=['self.app_id'])
     def get_latest_app_version(self):
-        if self.app.latest_app_prompt == "off":
+        if self.app.global_app_config.app_prompt == "off":
             return {}
         else:
-            latest_app = self.app.get_latest_app(released_only=True)
-            if not latest_app or not latest_app.is_released:
+            if not self.app or not self.app.is_released:
                 return {}
-            if self.app.latest_app_prompt == "on":
-                return {"value": latest_app.version, "force": False}
-            elif self.app.latest_app_prompt == "forced":
-                return {"value": latest_app.version, "force": True}
+            if self.app.global_app_config.app_prompt == "on":
+                return {"value": self.app.version, "force": False}
+            elif self.app.global_app_config.app_prompt == "forced":
+                return {"value": self.app.version, "force": True}
 
+    @quickcache(vary_on=['self.app_id'])
     def get_info(self):
         return {
             "latest_apk_version": self.get_latest_apk_version(),

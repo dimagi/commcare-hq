@@ -97,8 +97,9 @@ class TestLatestAppInfo(TestCase):
             ('forced', {'value': latest_apk, 'force': True}),
         ]
         for config, response in test_cases:
-            self.app.latest_apk_prompt = config
-            self.app.save()
+            app_config = self.app.global_app_config
+            app_config.apk_prompt = config
+            app_config.save()
             latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_apk_version(),
@@ -112,8 +113,9 @@ class TestLatestAppInfo(TestCase):
             ('forced', {'value': self.v2_build.version, 'force': True}),
         ]
         for config, response in test_cases:
-            self.app.latest_app_prompt = config
-            self.app.save()
+            app_config = self.app.global_app_config
+            app_config.app_prompt = config
+            app_config.save()
             latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_app_version(),
