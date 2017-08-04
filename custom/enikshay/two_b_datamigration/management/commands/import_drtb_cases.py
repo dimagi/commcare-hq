@@ -480,8 +480,8 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
 def update_cases_with_readable_ids(commit, domain, person_case_properties, occurrence_case_properties,
                                    episode_case_properties, secondary_owner_case_properties):
     phi_id = person_case_properties['owner_id']
-    person_id_flat = PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
-    person_id = PersonIdGenerator.get_person_id(person_id_flat)
+    person_id_flat = _PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
+    person_id = _PersonIdGenerator.get_person_id(person_id_flat)
     occurrence_id = person_id + "O1"
     episode_id = person_id + "E1"
 
@@ -1630,7 +1630,7 @@ def get_drtb_hiv_location(domain, district_id):
     return drtb_hiv.name, drtb_hiv.location_id
 
 
-class PersonIdGenerator(object):
+class _PersonIdGenerator(object):
 
     dry_run_counter = 0
 
