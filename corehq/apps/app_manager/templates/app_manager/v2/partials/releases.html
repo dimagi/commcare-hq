@@ -299,14 +299,14 @@
     <script type="text/html" id="deploy-build-modal-template">
         {% include 'app_manager/v2/partials/releases_deploy_modal.html' %}
     </script>
-            </div>
+            </div><!-- #releases-table -->
 {% if build_profile_access %}
-        </div>
+        </div><!-- #versions-tab -->
         <div id="profiles-tab" class="tab-pane">
             {% include 'app_manager/v2/partials/build_profiles.html' %}
         </div>
-     </div>
-</div>
+     </div><!-- .tab-content -->
+</div><!-- .tabbable -->
 {% endif %}
 {% endif %}
 
