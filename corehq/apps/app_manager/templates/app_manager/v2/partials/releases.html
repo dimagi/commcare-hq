@@ -46,27 +46,28 @@
  </div>
  {% endif %}
 
-{% if not intro_only and build_profile_access %}
-
-<div class="tabbable">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-        <li><a href="#prompt-settings-tab" data-toggle="tab">{% trans "Force Update Settings" %}</a></li>
-        <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
-    </ul>
-    <div class="spacer"></div>
-    <div class="tab-content">
-        <div id="versions-tab" class="tab-pane active">
-{% endif %}
+{% if not build_profile_access %}
     {% include 'app_manager/v2/partials/releases_table.html' %}
-{% if build_profile_access %}
-        </div><!-- #versions-tab -->
-        <div id="profiles-tab" class="tab-pane">
-            {% include 'app_manager/v2/partials/build_profiles.html' %}
-        </div>
-     </div><!-- .tab-content -->
-</div><!-- .tabbable -->
-{% endif %}
+{% else%}
+    <div class="tabbable">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
+            <li><a href="#prompt-settings-tab" data-toggle="tab">{% trans "Force Update Settings" %}</a></li>
+            <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
+        </ul>
+        <div class="spacer"></div>
+        <div class="tab-content">
+            <div id="versions-tab" class="tab-pane active">
+            {% include 'app_manager/v2/partials/releases_table.html' %}
+            </div><!-- #versions-tab -->
+            <div id="profiles-tab" class="tab-pane">
+                {% include 'app_manager/v2/partials/build_profiles.html' %}
+            </div>
+        </div><!-- .tab-content -->
+    </div><!-- .tabbable -->
+{% endif%}
+
+
 {% endif %}
 
 {% include 'app_manager/v2/partials/app_diff_modal.html' %}
