@@ -41,6 +41,9 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureOwnership']),
     DocTypeIDProvider(['FixtureDataType']),
     DocTypeIDProvider(['FixtureDataItem']),
+    DocTypeIDProvider(['Repeater']),
+    DocTypeIDProvider(['RepeatRecord']),
+    DocTypeIDProvider(['RepeatRecordAttempt']),
     SyncLogIDProvider(),
 }
 
