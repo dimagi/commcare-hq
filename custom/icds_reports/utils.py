@@ -4060,7 +4060,7 @@ def get_awcs_covered_data_map(config, loc_level):
 
     return [
         {
-            "slug": "awcc_covered",
+            "slug": "awc_covered",
             "label": "",
             "fills": fills,
             "rightLegend": {
