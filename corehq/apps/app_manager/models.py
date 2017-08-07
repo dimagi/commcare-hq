@@ -5371,6 +5371,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
 
+        LatestAppInfo(self.copy_of or self.id, self.domain).clear_caches()
+
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
@@ -5782,6 +5784,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return (
             self.supports_practice_users and
             domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
+    @property
+    @memoized
+    def enable_update_prompts(self):
+        return (
+            self.supports_update_prompts and
+            toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized

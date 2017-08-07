@@ -1,10 +1,15 @@
 import json
 from collections import defaultdict
 
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
+from django.views.generic.edit import FormView
 
 from corehq import toggles
+from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
 
 from dimagi.utils.web import json_response
@@ -66,3 +71,30 @@ def edit_commcare_profile(request, domain, app_id):
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
     return json_response(response_json)
+
+
+class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
+    form_class = PromptUpdateSettingsForm
+    urlname = 'update_prompt_settings'
+
+    @property
+    def success_url(self):
+        return reverse('release_manager', args=[self.domain, self.app_id])
+
+    @method_decorator(no_conflict_require_POST)
+    @method_decorator(require_can_edit_apps)
+    def dispatch(self, *args, **kwargs):
+        return super(PromptSettingsUpdateView, self).dispatch(*args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(PromptSettingsUpdateView, self).get_form_kwargs()
+        kwargs.update({'domain': self.domain})
+        kwargs.update({'app_id': self.app_id})
+        return kwargs
+
+    def form_valid(self, form):
+        config = self.app.global_app_config
+        config.app_prompt = form.cleaned_data['app_prompt']
+        config.apk_prompt = form.cleaned_data['apk_prompt']
+        config.save()
+        return super(PromptSettingsUpdateView, self).form_valid(form)

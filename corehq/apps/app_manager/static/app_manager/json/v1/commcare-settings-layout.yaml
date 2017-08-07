@@ -18,8 +18,6 @@
   collapse: true
   settings:
     - hq.build_spec  # CommCare Version
-    - hq.latest_app_prompt  # Prompt Updates to Latest Released App Version
-    - hq.latest_apk_prompt  # Prompt Updates to Latest CommCare Version
     - hq.practice_mobile_worker_id # Practice Mobile Worker
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit

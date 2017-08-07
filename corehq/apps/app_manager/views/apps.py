@@ -663,7 +663,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'admin_password',
         'comment',
         'use_j2me_endpoint',
-        'latest_app_prompt', 'latest_apk_prompt',
         # Application only
         'cloudcare_enabled',
         'anonymous_cloudcare_enabled',
@@ -710,8 +709,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
         ('mobile_ucr_sync_interval', parse_sync_interval),
-        ('latest_app_prompt', None),
-        ('latest_apk_prompt', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
