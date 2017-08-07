@@ -3,7 +3,6 @@ from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
@@ -36,8 +35,6 @@ class Command(BaseCommand):
                 'username',
                 'first_name',
                 'last_name',
-                'virtual_location_id',
-                'assigned_location_id',
                 'location_id',
                 'location_name',
                 'phone_number',
@@ -55,13 +52,10 @@ class Command(BaseCommand):
                 or user.user_data.get('user_level', None) != 'real'):
             return
 
-        virtual_location_id = user.user_location_id
-        assigned_location_id = user.location_id
-
-        location_id = virtual_location_id or assigned_location_id
+        location_id = user.user_location_id
         location = self.locations_by_id.get(location_id, None) if location_id else None
         if not location:
-            print "user {} {} has no location".format(user.username, user._id)
+            print "user {} {} has no virtual location".format(user.username, user._id)
             return
 
         writer.writerow([
@@ -69,9 +63,6 @@ class Command(BaseCommand):
             user.raw_username,
             user.first_name,
             user.last_name,
-            # We expect this to ALWAYS be set
-            virtual_location_id,
-            assigned_location_id,
             location_id,
             location.name,
             user.phone_number,
