@@ -428,13 +428,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
             })
         return response
 
-    def get_email_context(self):
-        context = super(CreditStripePaymentHandler, self).get_email_context()
-        context.update({
-            'items': self._humanized_products() + self._humanized_features()
-        })
-        return context
-
 
 class AutoPayInvoicePaymentHandler(object):
 
