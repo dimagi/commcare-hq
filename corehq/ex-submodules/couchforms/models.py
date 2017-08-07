@@ -343,7 +343,7 @@ class XFormError(XFormInstance):
     orig_id = StringProperty()
 
     @classmethod
-    def from_xform_instance(cls, instance, error_message, replace_form_id=False):
+    def from_xform_instance(cls, instance, error_message, replace_form_id=True):
         instance.__class__ = XFormError
         instance.doc_type = 'XFormError'
         instance.problem = error_message
