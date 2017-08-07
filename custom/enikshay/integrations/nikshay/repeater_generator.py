@@ -397,7 +397,8 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
             "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
-            "age": person_case_properties.get('age', ''),
+            # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+            "age": person_case_properties.get('age', '') or person_case_properties.get('age_entered', ''),
             "gender": person_case_properties.get('sex', '').capitalize(),
             # API for Address with char ',' returns Invalid data format error
             "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
