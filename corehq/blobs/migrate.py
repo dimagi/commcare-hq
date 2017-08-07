@@ -623,7 +623,7 @@ class SqlModelMigrator(Migrator):
     def by_domain(self, domain):
         self.domain = domain
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None,  **options):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None, **options):
         from corehq.apps.dump_reload.sql.dump import get_all_model_querysets_for_domain
 
         if not self.domain:
