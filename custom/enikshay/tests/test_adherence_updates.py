@@ -19,8 +19,12 @@ from custom.enikshay.const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
-from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate, get_datastore
+from custom.enikshay.tasks import (
+    EpisodeUpdater,
+    EpisodeAdherenceUpdate,
+    calculate_dose_status_by_day,
+    get_datastore,
+)
 from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
@@ -176,13 +180,14 @@ class TestAdherenceUpdater(TestCase):
         if date_today_in_india is not None:
             updater.date_today_in_india = date_today_in_india
 
-        return self._assert_properties_equal(updater.update_json(), output)
+        return self.assert_properties_equal(output, updater.update_json())
 
-    def _assert_properties_equal(self, update_json, output):
+    def assert_properties_equal(self, expected, actual):
 
-        self.assertDictEqual(
-            {key: str(update_json[key]) for key in output},
-            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
+        self.assertDictContainsSubset(
+            # convert values to strings
+            {key: str(val) for key, val in expected.iteritems()},
+            {key: str(actual[key]) for key in expected},
         )
 
     def _get_updated_episode(self):
@@ -533,14 +538,14 @@ class TestAdherenceUpdater(TestCase):
 
         updater = EpisodeAdherenceUpdate(self.domain, episode)
         updater.purge_date = datetime.date(2017, 8, 10),
-        doses_taken_by_day = updater.calculate_doses_taken_by_day(updater.get_valid_adherence_cases())
+        dose_status_by_day = calculate_dose_status_by_day(updater.get_valid_adherence_cases())
         self.assertDictEqual(
             {
                 '99DOTS': 2,
                 'MERM': 1,
                 'treatment_supervisor': 1,
             },
-            EpisodeAdherenceUpdate.count_doses_taken_by_source(doses_taken_by_day)
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(dose_status_by_day)
         )
 
         self.assertDictEqual(
@@ -549,7 +554,7 @@ class TestAdherenceUpdater(TestCase):
                 'MERM': 1,
             },
             EpisodeAdherenceUpdate.count_doses_taken_by_source(
-                doses_taken_by_day,
+                dose_status_by_day,
                 start_date=datetime.date(2017, 8, 17),
                 end_date=datetime.date(2017, 8, 18)
             )
@@ -564,10 +569,10 @@ class TestAdherenceUpdater(TestCase):
         episode_update = EpisodeAdherenceUpdate(self.domain, episode)
         episode_update.purge_date = datetime.date(2016, 1, 20)
 
-        def dose_taken_by_day(cases):
+        def dose_source_by_day(cases, day):
             # cases a list of tuples
             # (case_id, adherence_date, modified_on, adherence_value, source, closed, closure_reason)
-            return episode_update.calculate_doses_taken_by_day(
+            return calculate_dose_status_by_day(
                 [
                     {
                         'adherence_source': source,
@@ -579,134 +584,134 @@ class TestAdherenceUpdater(TestCase):
                     }
                     for (_, dose_date, modified_on, dose_value, source, closed, closure_reason) in cases
                 ]
-            )
+            )[day].source
 
         ## test enikshay only source, open cases
         # not-taken - latest_modified_on case says no dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
                 ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 21): False}
+            ], datetime.date(2016, 1, 21)),
+            False
         )
         # taken - latest_modified_on case says dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', False, None),
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 22): 'enikshay'}
+            ], datetime.date(2016, 1, 22)),
+            'enikshay'
         )
 
         ## test enikshay only source, closed/closure_reason cases
         # not taken - as 1st case is not relevant because closed, closure_reason. 2nd case says no dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, None),
                 ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 23): False}
+            ], datetime.date(2016, 1, 23)),
+            False
         )
         # taken - as 1st case is not relevant because closed, closure_reason. 2nd case says dose taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, None),
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 24): 'enikshay'}
+            ], datetime.date(2016, 1, 24)),
+            'enikshay'
         )
         # not taken - as 1st case is relevent case with latest_modified_on and says dose not taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 25): False}
+            ], datetime.date(2016, 1, 25)),
+            False
         )
         # taken - as 1st case is relevent case with latest_modified_on and says dose is taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 26): 'enikshay'}
+            ], datetime.date(2016, 1, 26)),
+            'enikshay'
         )
 
         ## test non-enikshay source only cases
         # not taken - non-enikshay source, so consider latest_modified_on
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'non-enikshay', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 21),
                  DTIndicators[0], '99dots', False, None),
-            ]),
-            {datetime.date(2016, 1, 27): False}
+            ], datetime.date(2016, 1, 27)),
+            False
         )
         # taken - non-enikshay source, so consider latest_modified_on
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99DOTS', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, '99DOTS', False, None),
-            ]),
-            {datetime.date(2016, 1, 28): '99DOTS'}
+            ], datetime.date(2016, 1, 28)),
+            '99DOTS'
         )
 
         ## test mix of enikshay, non-enikshay sources
         # taken - as enikshay source case says taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 29): 'enikshay'}
+            ], datetime.date(2016, 1, 29)),
+            'enikshay'
         )
         # not taken - as enikshay source case says not taken
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
-            ]),
-            {datetime.date(2016, 1, 1): False}
+            ], datetime.date(2016, 1, 1)),
+            False
         )
         # not taken - as the only enikshay source case is closed without valid-reason
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, None),
-            ]),
-            {datetime.date(2016, 1, 2): False}
+            ], datetime.date(2016, 1, 2)),
+            False
         )
         # taken - as the only enikshay source case is closed with right closure_reason
-        self.assertDictEqual(
-            dose_taken_by_day([
+        self.assertEqual(
+            dose_source_by_day([
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, '99', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
-            ]),
-            {datetime.date(2016, 1, 3): 'enikshay'}
+            ], datetime.date(2016, 1, 3)),
+            'enikshay'
         )
 
     def test_update_by_person(self):
@@ -861,4 +866,82 @@ class TestAdherenceUpdater(TestCase):
             'month_adherence_score_treatment_supervisor': 0.0,
         }
 
-        self._assert_properties_equal(updater.update_json(), expected)
+        self.assert_properties_equal(expected, updater.update_json())
+
+    def test_missed_and_unknown_doses(self):
+        adherence_cases = [{
+            "name": str(i),
+            "adherence_source": "enikshay",
+            "adherence_value": adherence_value,
+            "adherence_date": date,
+        } for i, (adherence_value, date) in enumerate([
+            # one month
+            (DOSE_MISSED, datetime.date(2016, 1, 13)),
+            ('unobserved_dose', datetime.date(2016, 1, 15)),
+            # two weeks
+            ('directly_observed_dose', datetime.date(2016, 1, 17)),
+            (DOSE_UNKNOWN, datetime.date(2016, 1, 18)),
+            # one week
+            ('directly_observed_dose', datetime.date(2016, 1, 26)),
+            # three days
+            ('directly_observed_dose', datetime.date(2016, 1, 29)),
+            (DOSE_MISSED, datetime.date(2016, 1, 31)),
+            ('', datetime.date(2016, 1, 30)),  # blank should be treated as unknown
+        ])]
+
+        episode = self.create_episode_case(
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        updater = EpisodeAdherenceUpdate(self.domain, episode)
+        updater.date_today_in_india = datetime.date(2016, 1, 31)
+        expected = {
+            'three_day_score_count_taken': 1,
+            'one_week_score_count_taken': 2,
+            'two_week_score_count_taken': 3,
+            'month_score_count_taken': 4,
+
+            'three_day_unknown_count': 3 - 2,
+            'one_week_unknown_count': 7 - 3,
+            'two_week_unknown_count': 14 - 4,
+            'month_unknown_count': 30 - 6,
+
+            'three_day_missed_count': 1,
+            'one_week_missed_count': 1,
+            'two_week_missed_count': 1,
+            'month_missed_count': 2,
+
+            'three_day_unknown_score': 33.33,
+            'one_week_unknown_score': 57.14,
+            'two_week_unknown_score': 71.43,
+            'month_unknown_score': 80.0,
+
+            'three_day_missed_score': 33.33,
+            'one_week_missed_score': 14.29,
+            'two_week_missed_score': 7.14,
+            'month_missed_score': 6.67,
+        }
+        actual = updater.update_json()
+        self.assert_properties_equal(expected, actual)
+
+        readable_day_names = {
+            3: 'three_day',
+            7: 'one_week',
+            14: 'two_week',
+            30: 'month',
+        }
+        for days, period in readable_day_names.items():
+            self.assertEqual(
+                days,
+                (actual["{}_score_count_taken".format(period)]
+                 + actual["{}_unknown_count".format(period)]
+                 + actual["{}_missed_count".format(period)])
+            )
+            self.assertAlmostEqual(
+                100,
+                (actual["{}_adherence_score".format(period)]
+                 + actual["{}_unknown_score".format(period)]
+                 + actual["{}_missed_score".format(period)]),
+                places=1
+            )
