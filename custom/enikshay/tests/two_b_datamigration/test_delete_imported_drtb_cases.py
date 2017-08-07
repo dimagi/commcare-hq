@@ -20,9 +20,9 @@ from pillowtop.es_utils import initialize_index_and_mapping
 IMPORT_ROWS = [
     # A minimal valid row
     ["1", None, None, None, "XX-XXX-0-X-00-00001", None, None, datetime.date(2017, 1, 1), "John Doe", None,
-     "50", "123 fake st", "91-123-456-7890"] + ([None] * 9) + ["some district", None, None, "some phi"],
+     50, "123 fake st", "91-123-456-7890"] + ([None] * 9) + ["some district", None, None, "some phi"],
     ["2", None, None, None, "XX-XXX-0-X-00-00002", None, None, datetime.date(2017, 1, 1), "Jane Doe", None,
-     "50", "123 fake st", "91-123-456-7890"] + ([None] * 9) + ["some district", None, None, "some phi"],
+     50, "123 fake st", "91-123-456-7890"] + ([None] * 9) + ["some district", None, None, "some phi"],
 ]
 
 
