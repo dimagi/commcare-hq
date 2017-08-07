@@ -70,6 +70,6 @@ class Command(BaseCommand):
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.write_row('episode_id', 'error')
+                writer.write_row(['episode_id', 'error'])
                 for error in errors:
                     writer.write_row(errors)
