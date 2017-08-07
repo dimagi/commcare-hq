@@ -158,7 +158,7 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
 class MockDevice(object):
 
     def __init__(self, project, user, restore_options,
-            sync=False, default_case_type="case"):
+            sync=False, default_case_type="case", default_owner_id=None):
         self.project = project
         self.user = user
         self.user_id = user.user_id
@@ -167,7 +167,7 @@ class MockDevice(object):
         self.case_factory = CaseFactory(
             case_defaults={
                 'user_id': self.user_id,
-                'owner_id': self.user_id,
+                'owner_id': default_owner_id or self.user_id,
                 'case_type': default_case_type,
             },
         )

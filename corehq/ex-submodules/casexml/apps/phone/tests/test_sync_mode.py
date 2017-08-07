@@ -116,12 +116,6 @@ class SyncBaseTest(TestCase):
             [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
         )
 
-    def _postWithSyncToken(self, filename, token_id):
-        file_path = os.path.join(os.path.dirname(__file__), "data", filename)
-        with open(file_path, "rb") as f:
-            xml_data = f.read()
-        return submit_form_locally(xml_data, 'test-domain', last_sync_token=token_id).xform
-
     def get_device(self, **kw):
         kw.setdefault("project", self.project)
         kw.setdefault("user", self.user)
@@ -1399,8 +1393,6 @@ class MultiUserSyncTest(SyncBaseTest):
             cls.project.name,
             username=OTHER_USERNAME,
         )
-        cls.other_user_id = cls.other_user.user_id
-
         cls.shared_group = Group(
             domain=cls.project.name,
             name='shared_group',
@@ -1411,318 +1403,258 @@ class MultiUserSyncTest(SyncBaseTest):
 
     def setUp(self):
         super(MultiUserSyncTest, self).setUp()
-        # this creates the initial blank sync token in the database
-        self.other_sync_log = self.get_next_sync_log(user=self.other_user)
-
-        self.sync_log = self.get_next_sync_log()
-        # since we got a new sync log, have to update the factory as well
-        self.factory.form_extras = {'last_sync_token': self.sync_log._id}
-        self.factory.case_defaults.update({'owner_id': self.shared_group._id})
-
-        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(self.other_user_id in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
-        self.assertTrue(self.user_id in self.sync_log.owner_ids_on_phone)
+        self.guy = self.get_device(
+            default_owner_id=self.shared_group._id,
+            sync=True,
+        )
+        self.ferrel = self.get_device(
+            user=self.other_user,
+            default_owner_id=self.shared_group._id,
+            sync=True,
+        )
+        glog = self.guy.last_sync.log
+        self.assertIn(self.shared_group._id, glog.owner_ids_on_phone)
+        self.assertIn(self.guy.user_id, glog.owner_ids_on_phone)
+        flog = self.ferrel.last_sync.log
+        self.assertIn(self.shared_group._id, flog.owner_ids_on_phone)
+        self.assertIn(self.ferrel.user_id, flog.owner_ids_on_phone)
 
     def testSharedCase(self):
         # create a case by one user
         case_id = "shared_case"
-        self._createCaseStubs([case_id], owner_id=self.shared_group._id)
+        self.guy.post_changes(case_id=case_id, create=True)
         # should sync to the other owner
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        self.assertIn(case_id, self.ferrel.sync().cases)
 
     def testOtherUserEdits(self):
         # create a case by one user
         case_id = "other_user_edits"
-        self._createCaseStubs(
-            [case_id],
-            owner_id=self.shared_group._id
-        )
+        self.guy.post_changes(case_id=case_id, create=True)
 
         # sync to the other's phone to be able to edit
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
+        self.assertIn(case_id, self.ferrel.sync().cases)
 
-        latest_sync = SyncLog.last_for_user(self.other_user_id)
         # update from another
-        self._postFakeWithSyncToken(
-            CaseBlock(create=False, case_id=case_id, user_id=self.other_user_id,
-                      update={'greeting': "Hello!"}
-        ).as_xml(), latest_sync.get_id)
+        self.ferrel.post_changes(case_id=case_id, update={'greeting': "Hello!"})
 
         # original user syncs again
+        gsync = self.guy.sync()
         # make sure updates take
-        _, match = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-        self.assertTrue("Hello!" in match.to_string())
+        self.assertEqual(gsync.cases[case_id].update, {"greeting": "Hello!"})
 
     def testOtherUserAddsIndex(self):
         time = datetime.utcnow()
-
-        # create a case from one user
         case_id = "other_user_adds_index"
-        self._createCaseStubs(
-            [case_id],
-            owner_id=self.shared_group._id,
-        )
-
-        # sync to the other's phone to be able to edit
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
-
-        latest_sync = SyncLog.last_for_user(self.other_user_id)
         mother_id = "other_user_adds_index_mother"
 
-        parent_case = CaseBlock(
-            create=True,
-            date_modified=time,
-            case_id=mother_id,
-            user_id=self.other_user_id,
-            case_type=PARENT_TYPE,
-        ).as_xml()
+        # create a case from one user
+        self.guy.post_changes(case_id=case_id, create=True)
 
-        self._postFakeWithSyncToken(
-            parent_case,
-            latest_sync.get_id
-        )
+        # sync to the other's phone to be able to edit
+        self.assertIn(case_id, self.ferrel.sync().cases)
+
+        self.ferrel.post_changes(CaseBlock(
+            create=True,
+            case_id=mother_id,
+            date_modified=time,
+            user_id=self.ferrel.user_id,
+            case_type=PARENT_TYPE,
+        ))
+
         # the original user should not get the parent case
-        assert_user_doesnt_have_case(self, self.user, mother_id, restore_id=self.sync_log.get_id)
+        self.assertNotIn(mother_id, self.guy.sync().cases)
 
         # update the original case from another, adding an indexed case
-        self._postFakeWithSyncToken(
-            CaseBlock(
-                create=False,
-                case_id=case_id,
-                user_id=self.other_user_id,
-                owner_id=self.user_id,
-                index={'mother': ('mother', mother_id)}
-            ).as_xml(),
-            latest_sync.get_id
-        )
+        self.ferrel.post_changes(CaseBlock(
+            case_id=case_id,
+            user_id=self.ferrel.user_id,
+            owner_id=self.guy.user_id,
+            index={'mother': ('mother', mother_id)}
+        ))
 
         # original user syncs again
+        gsync = self.guy.sync()
         # make sure index updates take and indexed case also syncs
-        expected_parent_case = CaseBlock(
-            create=True,
-            date_modified=time,
-            case_id=mother_id,
-            user_id=self.other_user_id,
-            case_type=PARENT_TYPE,
-            owner_id=self.other_user_id,
-        ).as_xml()
-
-        check_user_has_case(self, self.user, expected_parent_case,
-                            restore_id=self.sync_log.get_id, purge_restore_cache=True)
-        _, orig = assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
-        self.assertTrue("index" in orig.to_string())
+        mother = gsync.cases[mother_id]
+        self.assertEqual(mother.case_type, PARENT_TYPE)
+        self.assertEqual(mother.date_modified, time)
+        self.assertEqual(mother.user_id, self.ferrel.user_id)
+        self.assertEqual(mother.owner_id, self.ferrel.user_id)
+        self.assertEqual(gsync.cases[case_id].index["mother"].case_id, mother_id)
 
     def testMultiUserEdits(self):
         time = datetime.utcnow()
+        case_id = "multi_user_edits"
 
         # create a case from one user
-        case_id = "multi_user_edits"
-        self._createCaseStubs(
-            [case_id],
+        self.guy.change_cases(
+            create=True,
+            case_id=case_id,
             owner_id=self.shared_group._id,
             user_id=self.user.user_id,
             date_modified=time
         )
 
         # both users syncs
-        main_sync_log = self.get_next_sync_log()
-        self.other_sync_log = self.get_next_sync_log(user=self.other_user)
+        self.guy.sync()
+        self.ferrel.sync()
 
         # update case from same user
-        my_change = CaseBlock(
-            create=False,
+        self.guy.post_changes(CaseBlock(
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
             update={'greeting': 'hello'}
-        ).as_xml()
-        self._postFakeWithSyncToken(
-            my_change,
-            main_sync_log.get_id
-        )
+        ))
 
         # update from another user
-        their_change = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
             update={'greeting_2': 'hello'}
-        ).as_xml()
-        self._postFakeWithSyncToken(
-            their_change,
-            self.other_sync_log.get_id
-        )
+        ))
 
-        # original user syncs again
-        # make sure updates both appear (and merge?)
-        joint_change = CaseBlock(
-            create=False,
-            date_modified=time,
-            case_id=case_id,
-            user_id=self.user_id,
-            date_opened=time.date(),
-            update={
-                'greeting': 'hello',
-                'greeting_2': 'hello'
-            },
-            owner_id=self.shared_group._id,
-            case_name='',
-            case_type='mother',
-        ).as_xml()
-
-        check_user_has_case(self, self.user, joint_change, restore_id=main_sync_log.get_id)
-        check_user_has_case(self, self.other_user, joint_change, restore_id=self.other_sync_log.get_id)
+        # make sure updates both appear
+        joint_change = {
+            'greeting': 'hello',
+            'greeting_2': 'hello',
+        }
+        self.assertEqual(self.guy.sync().cases[case_id].update, joint_change)
+        self.assertEqual(self.ferrel.sync().cases[case_id].update, joint_change)
 
     def testOtherUserCloses(self):
         # create a case from one user
         case_id = "other_user_closes"
-        self._createCaseStubs([case_id], owner_id=self.shared_group._id)
+        self.guy.post_changes(create=True, case_id=case_id)
 
         # sync then close case from another user
-        other_sync_log = self.get_next_sync_log(user=self.other_user)
-        close_block = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             case_id=case_id,
             user_id=self.user_id,
             close=True
-        ).as_xml()
-        self._postFakeWithSyncToken(
-            close_block,
-            other_sync_log.get_id
-        )
+        ))
 
-        # original user syncs again
-        # make sure close block appears
-        assert_user_has_case(self, self.user, case_id, restore_id=self.sync_log._id)
+        # original user syncs again; make sure close block appears
+        self.assertIn(case_id, self.guy.sync().cases)
 
         # make sure closed cases don't show up in the next sync log
-        next_synclog = self.get_next_sync_log(restore_id=self.sync_log._id)
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=next_synclog.get_id)
+        self.assertNotIn(case_id, self.guy.sync().cases)
 
     def testOtherUserUpdatesUnowned(self):
         # create a case from one user and assign ownership elsewhere
         case_id = "other_user_updates_unowned"
-        self._createCaseStubs([case_id], owner_id=self.other_user_id)
-
-        # sync and update from another user
-        assert_user_has_case(self, self.other_user, case_id, restore_id=self.other_sync_log.get_id)
-
-        self.other_sync_log = SyncLog.last_for_user(self.other_user_id)
-        update = CaseBlock(
-            create=False,
+        self.guy.post_changes(
+            create=True,
             case_id=case_id,
-            user_id=self.other_user_id,
-            update={'greeting': 'hello'}
-        ).as_xml()
-        self._postFakeWithSyncToken(
-            update,
-            self.other_sync_log.get_id
+            owner_id=self.ferrel.user_id,
         )
 
-        # original user syncs again
-        # make sure there are no new changes
-        assert_user_doesnt_have_case(self, self.user, case_id, restore_id=self.sync_log.get_id)
+        # sync and update from another user
+        fsync = self.ferrel.sync()
+        self.assertIn(case_id, fsync.cases)
+
+        self.ferrel.post_changes(CaseBlock(
+            case_id=case_id,
+            user_id=self.ferrel.user_id,
+            update={'greeting': 'hello'},
+        ))
+
+        # original user syncs again; make sure there are no new changes
+        self.assertNotIn(case_id, self.guy.sync().cases)
 
     def testIndexesSync(self):
         # create a parent and child case (with index) from one user
         parent_id = "indexes_sync_parent"
         case_id = "indexes_sync"
-        self._createCaseStubs([parent_id], owner_id=self.user_id)
-        child = CaseBlock(
+        self.guy.change_cases(
+            create=True,
+            case_id=parent_id,
+            owner_id=self.user_id,
+        )
+        self.guy.post_changes(CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user_id,
             owner_id=self.user_id,
             index={'mother': ('mother', parent_id)}
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
+        ))
 
         # make sure the second user doesn't get either
-        assert_user_doesnt_have_cases(
-            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id
-        )
+        fsync = self.ferrel.sync()
+        self.assertNotIn(case_id, fsync.cases)
+        self.assertNotIn(parent_id, fsync.cases)
 
         # assign just the child case to a second user
-        child_update = CaseBlock(
+        self.guy.post_changes(CaseBlock(
             create=False,
             case_id=case_id,
             user_id=self.user_id,
-            owner_id=self.other_user_id,
+            owner_id=self.ferrel.user_id,
             update={"greeting": "hello"}
-        ).as_xml()
-        self._postFakeWithSyncToken(child_update, self.sync_log.get_id)
-        # second user syncs
-        # make sure both cases restore
-        assert_user_has_cases(
-            self, self.other_user, [case_id, parent_id], restore_id=self.other_sync_log.get_id,
-            purge_restore_cache=True
-        )
+        ))
+
+        # second user syncs; make sure both cases restore
+        fsync = self.ferrel.sync()
+        self.assertIn(case_id, fsync.cases)
+        self.assertIn(parent_id, fsync.cases)
 
     def testOtherUserUpdatesIndex(self):
         # create a parent and child case (with index) from one user
         parent_id = "other_updates_index_parent"
         case_id = "other_updates_index_child"
-        self._createCaseStubs([parent_id], owner_id=self.shared_group._id)
+        self.guy.change_cases(case_id=parent_id, create=True)
+        self.guy.sync()
 
-        child = CaseBlock(
+        self.guy.change_cases(CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user_id,
             owner_id=self.user_id,
             index={'mother': ('mother', parent_id)}
-        ).as_xml()
-        self._postFakeWithSyncToken(child, self.sync_log.get_id)
-
-        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=self.sync_log.get_id)
+        ))
+        gsync = self.guy.sync()
+        self.assertNotIn(case_id, gsync.cases)
+        self.assertNotIn(parent_id, gsync.cases)
 
         # assign the parent case away from same user
-        parent_update = CaseBlock(
-            create=False,
+        self.guy.change_cases(CaseBlock(
             case_id=parent_id,
             user_id=self.user_id,
-            owner_id=self.other_user_id,
-            update={"greeting": "hello"}).as_xml()
-        self._postFakeWithSyncToken(parent_update, self.sync_log.get_id)
-
-        main_sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
+            owner_id=self.ferrel.user_id,
+            update={"greeting": "hello"}
+        ))
+        gsync = self.guy.sync()
 
         # these tests added to debug another issue revealed by this test
-        self.assertTrue(main_sync_log.phone_is_holding_case(case_id))
-        self.assertTrue(main_sync_log.phone_is_holding_case(parent_id))
+        self.assertIn(case_id, gsync.log.case_ids_on_phone)
+        self.assertIn(parent_id, gsync.log.case_ids_on_phone)
 
         # make sure the other user gets the reassigned case
-        assert_user_has_case(self, self.other_user, parent_id, restore_id=self.other_sync_log.get_id,
-                             purge_restore_cache=True)
+        self.assertIn(parent_id, self.ferrel.sync().cases)
         # update the parent case from another user
-        self.other_sync_log = SyncLog.last_for_user(self.other_user_id)
-        other_parent_update = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             case_id=parent_id,
-            user_id=self.other_user_id,
+            user_id=self.ferrel.user_id,
             update={"greeting2": "hi"},
-        ).as_xml()
-        self._postFakeWithSyncToken(other_parent_update, self.other_sync_log.get_id)
+        ))
 
         # make sure the indexed case syncs again
-        latest_sync_log = SyncLog.last_for_user(self.user_id)
-        assert_user_has_case(self, self.user, parent_id, restore_id=latest_sync_log.get_id,
-                             purge_restore_cache=True)
+        self.assertIn(parent_id, self.guy.sync().cases)
 
     def testOtherUserReassignsIndexed(self):
         # create a parent and child case (with index) from one user
         # assign the parent case away from the same user
         parent_id = "other_reassigns_index_parent"
         case_id = "other_reassigns_index_child"
-        self.factory.create_or_update_cases([
+        self.device.post_changes([
             CaseStructure(
                 case_id=case_id,
                 attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={
                         'create': True,
-                        'owner_id': self.other_user_id,
+                        'owner_id': self.ferrel.user_id,
                         'update': {"greeting": "hello"},
                     }),
                     relationship=CHILD_RELATIONSHIP,
@@ -1730,118 +1662,89 @@ class MultiUserSyncTest(SyncBaseTest):
                 )],
             )
         ])
-
         # sync cases to second user
-        other_sync_log = self.get_next_sync_log(user=self.other_user)
+        self.ferrel.sync()
+        gsync = self.guy.sync()
+        self.assertIn(case_id, gsync.cases)
+        self.assertIn(parent_id, gsync.cases)
 
         # change the child's owner from another user
         # also change the parent from the second user
         child_reassignment = CaseBlock(
-            create=False,
             case_id=case_id,
-            user_id=self.other_user_id,
-            owner_id=self.other_user_id,
+            user_id=self.ferrel.user_id,
+            owner_id=self.ferrel.user_id,
             update={"childgreeting": "hi!"},
-        ).as_xml()
+        )
         other_parent_update = CaseBlock(
-            create=False,
             case_id=parent_id,
-            user_id=self.other_user_id,
-            owner_id=self.other_user_id,
-            update={"other_greeting": "something new"}).as_xml()
-        self._postFakeWithSyncToken([child_reassignment, other_parent_update], other_sync_log.get_id)
+            user_id=self.ferrel.user_id,
+            owner_id=self.ferrel.user_id,
+            update={"other_greeting": "something new"},
+        )
+        self.ferrel.post_changes([child_reassignment, other_parent_update])
 
-        latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        self.assertEqual(latest_sync_log._id, self.sync_log._id)
-
-        # at this point both cases are assigned to the other user so the original user
-        # should not have them. however, the first sync should send them down (with new ownership)
-        # so that they can be purged.
+        # at this point both cases are assigned to the other user so the
+        # original user should not have them. however, the first sync should
+        # send them down (with new ownership) so that they can be purged.
 
         # original user syncs again
-        payload = generate_restore_payload(
-            self.project, self.user, latest_sync_log.get_id, version=V2,
-            **self.restore_options
-        )
-        check_payload_has_case_ids(
-            self,
-            username=self.user.username,
-            payload_string=payload,
-            case_ids=[case_id, parent_id],
-        )
-        # hacky
-        self.assertTrue("something new" in payload)
-        self.assertTrue("hi!" in payload)
+        gsync = self.guy.sync()
+        self.assertEqual(gsync.cases[parent_id].update["other_greeting"], "something new")
+        self.assertEqual(gsync.cases[case_id].update, {"childgreeting": "hi!"})
         # also check that they are not sent to the phone on next sync
-        next_sync_log = self.get_next_sync_log(restore_id=latest_sync_log.get_id, version=V2)
-        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id],
-            restore_id=next_sync_log.get_id)
+        gsync = self.guy.sync()
+        self.assertNotIn(case_id, gsync.cases)
+        self.assertNotIn(parent_id, gsync.cases)
 
         # change the parent again from the second user
-        other_parent_update = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             case_id=parent_id,
-            user_id=self.other_user_id,
-            owner_id=self.other_user_id,
-            update={"other_greeting": "something different"}).as_xml()
-        self._postFakeWithSyncToken(other_parent_update, other_sync_log.get_id)
+            user_id=self.ferrel.user_id,
+            owner_id=self.ferrel.user_id,
+            update={"other_greeting": "something different"},
+        ))
 
-        # original user syncs again
-        latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        # should be no changes
-        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
+        # original user syncs again; should be no changes
+        self.assertFalse(self.guy.sync().cases)
 
         # change the child again from the second user
-        other_child_update = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             case_id=case_id,
-            user_id=self.other_user_id,
-            owner_id=self.other_user_id,
+            user_id=self.ferrel.user_id,
+            owner_id=self.ferrel.user_id,
             update={"childgreeting": "hi changed!"},
-        ).as_xml()
-        self._postFakeWithSyncToken(other_child_update, other_sync_log.get_id)
+        ))
 
-        # original user syncs again
-        latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        # should be no changes
-        assert_user_doesnt_have_cases(self, self.user, [case_id, parent_id], restore_id=latest_sync_log.get_id)
+        # original user syncs again; should be no changes
+        self.assertFalse(self.guy.sync().cases)
 
         # change owner of child back to orginal user from second user
-        child_reassignment = CaseBlock(
-            create=False,
+        self.ferrel.post_changes(CaseBlock(
             case_id=case_id,
-            user_id=self.other_user_id,
+            user_id=self.ferrel.user_id,
             owner_id=self.user.user_id,
-        ).as_xml()
-        self._postFakeWithSyncToken(child_reassignment, other_sync_log.get_id)
+        ))
 
         # original user syncs again
-        latest_sync_log = SyncLog.last_for_user(self.user.user_id)
-        payload = generate_restore_payload(
-            self.project, self.user, latest_sync_log.get_id, version=V2,
-            **self.restore_options
-        )
-        # both cases should now sync
-        check_payload_has_case_ids(
-            self,
-            payload_string=payload,
-            username=self.user.username,
-            case_ids=[case_id, parent_id]
-        )
-        # hacky
-        self.assertTrue("something different" in payload)
-        self.assertTrue("hi changed!" in payload)
+        gsync = self.guy.sync()
+        self.assertEqual(gsync.cases[parent_id].update["other_greeting"], "something different")
+        self.assertEqual(gsync.cases[case_id].update, {"childgreeting": "hi changed!"})
 
     def testComplicatedGatesBug(self):
         # found this bug in the wild, used the real (test) forms to fix it
         # just running through this test used to fail hard, even though there
         # are no asserts
-        folder_path = os.path.join("bugs", "dependent_case_conflicts")
-        files = ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]
-        for f in files:
-            form = self._postWithSyncToken(os.path.join(folder_path, f), self.sync_log.get_id)
+        folder_path = os.path.join(os.path.dirname(__file__),
+            "data", "bugs", "dependent_case_conflicts")
+        token = self.guy.sync().log._id
+        for f in ["reg1.xml", "reg2.xml", "cf.xml", "close.xml"]:
+            with open(os.path.join(folder_path, f), "rb") as fh:
+                xml_data = fh.read()
+            form = submit_form_locally(
+                xml_data, 'test-domain', last_sync_token=token).xform
             self.assertFalse(hasattr(form, "problem") and form.problem)
-            self.get_next_sync_log(version="2.0")
+            token = self.guy.sync().log._id
 
     def test_dependent_case_becomes_relevant_at_sync_time(self):
         """
@@ -1851,12 +1754,15 @@ class MultiUserSyncTest(SyncBaseTest):
         """
         # create a parent and child case (with index) from one user
         parent_id, child_id = [uuid.uuid4().hex for i in range(2)]
-        self.factory.create_or_update_cases([
+        self.guy.post_changes([
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
                 indices=[CaseIndex(
-                    CaseStructure(case_id=parent_id, attrs={'create': True, 'owner_id': uuid.uuid4().hex}),
+                    CaseStructure(
+                        case_id=parent_id,
+                        attrs={'create': True, 'owner_id': uuid.uuid4().hex},
+                    ),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                     identifier=PARENT_TYPE,
@@ -1868,20 +1774,13 @@ class MultiUserSyncTest(SyncBaseTest):
                                       referenced_id=parent_id)
 
         # sanity check that we are in the right state
-        self._testUpdate(self.sync_log._id, {child_id: [index_ref]}, {parent_id: []})
+        sync_log = self.guy.last_sync.get_log()
+        self._testUpdate(sync_log._id, {child_id: [index_ref]}, {parent_id: []})
 
         # have another user modify the owner ID of the dependent case to be the shared ID
-        self.factory.create_or_update_cases(
-            [
-                CaseStructure(
-                    case_id=parent_id,
-                    attrs={'owner_id': self.shared_group._id},
-                )
-            ],
-            form_extras={'last_sync_token': None}
-        )
-        latest_sync_log = self.get_next_sync_log(restore_id=self.sync_log._id)
-        self._testUpdate(latest_sync_log._id, {child_id: [index_ref], parent_id: []})
+        self.ferrel.post_changes(case_id=parent_id)
+        gsync = self.guy.sync()
+        self._testUpdate(gsync.log._id, {child_id: [index_ref], parent_id: []})
 
     def test_index_tree_conflict_handling(self):
         """
@@ -1890,7 +1789,7 @@ class MultiUserSyncTest(SyncBaseTest):
         """
         # create a parent and child case (with index) from one user
         mom_id, dad_id, child_id = [uuid.uuid4().hex for i in range(3)]
-        self.factory.create_or_update_cases([
+        self.guy.post_changes([
             CaseStructure(
                 case_id=child_id,
                 attrs={'create': True},
@@ -1914,30 +1813,33 @@ class MultiUserSyncTest(SyncBaseTest):
         mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
         dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
         # sanity check that we are in the right state
-        self._testUpdate(self.sync_log._id, {child_id: [mom_ref, dad_ref], mom_id: [], dad_id: []})
+        self._testUpdate(self.guy.last_sync.log._id, {
+            child_id: [mom_ref, dad_ref],
+            mom_id: [],
+            dad_id: [],
+        })
 
         # have another user modify the index ID of one of the cases
         new_mom_id = uuid.uuid4().hex
-        self.factory.create_or_update_cases(
-            [
-                CaseStructure(
-                    case_id=child_id,
-                    indices=[
-                        CaseIndex(
-                            CaseStructure(case_id=new_mom_id, attrs={'create': True}),
-                            relationship=CHILD_RELATIONSHIP,
-                            related_type='mom',
-                            identifier='mom',
-                        ),
-                    ]
-                )
-            ],
-            form_extras={'last_sync_token': None}
+        self.ferrel.post_changes(
+            CaseStructure(
+                case_id=child_id,
+                indices=[
+                    CaseIndex(
+                        CaseStructure(case_id=new_mom_id, attrs={'create': True}),
+                        relationship=CHILD_RELATIONSHIP,
+                        related_type='mom',
+                        identifier='mom',
+                    ),
+                ]
+            )
         )
-        latest_sync_log = self.get_next_sync_log(restore_id=self.sync_log._id)
         new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
-        self._testUpdate(latest_sync_log._id, {
-            child_id: [new_mom_ref, dad_ref], mom_id: [], dad_id: [], new_mom_id: []
+        self._testUpdate(self.guy.sync().log._id, {
+            child_id: [new_mom_ref, dad_ref],
+            mom_id: [],
+            dad_id: [],
+            new_mom_id: [],
         })
 
     def test_incremental_sync_with_close_and_create(self):
@@ -1970,7 +1872,7 @@ class MultiUserSyncTest(SyncBaseTest):
                     ),
                 ],
             )
-            self.factory.create_or_update_cases([episode])
+            self.device.post_changes([episode])
             return person, occurrence, episode
 
         p1, o1, e1 = create_case_graph(1)
