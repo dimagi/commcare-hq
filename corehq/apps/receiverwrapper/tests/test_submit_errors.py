@@ -69,7 +69,7 @@ class SubmissionErrorTest(TestCase):
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
-    def testSubmissionError(self):
+    def _SubmissionError(self, open_rosa_header=None):
         evil_laugh = "mwa ha ha!"
 
         def fail(sender, xform, **kwargs):
@@ -78,10 +78,8 @@ class SubmissionErrorTest(TestCase):
         successful_form_received.connect(fail)
 
         try:
-            file, res = self._submit("simple_form.xml")
+            file, res = self._submit("simple_form.xml", open_rosa_header=open_rosa_header)
             self.assertEqual(201, res.status_code)
-            _, res_openrosa3 = self._submit("simple_form.xml", open_rosa_header=OPENROSA_VERSION_3)
-            self.assertEqual(201, res_openrosa3.status_code)
             self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it
@@ -91,9 +89,15 @@ class SubmissionErrorTest(TestCase):
             self.assertIn(evil_laugh, log.problem)
             with open(file) as f:
                 self.assertEqual(f.read(), log.get_xml())
-        
+
         finally:
             successful_form_received.disconnect(fail)
+
+    def testSubmissionErrorOpenrosaOld(self):
+        self._SubmissionError()
+
+    def testSubmissionErrorOpenrosa3(self):
+        self._SubmissionError(open_rosa_header=OPENROSA_VERSION_3)
 
     def testSubmitBadXML(self):
         f, path = tmpfile()
