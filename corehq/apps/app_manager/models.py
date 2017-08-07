@@ -6604,8 +6604,7 @@ class CareplanConfig(Document):
 
 
 class GlobalAppConfig(Document):
-    # Todo: handle domain-deletion
-    # this should be the master id of master app (not a versioned copy)
+    # this should be the unique id of the app (not of a versioned copy)
     app_id = StringProperty()
     domain = StringProperty()
 
@@ -6621,6 +6620,10 @@ class GlobalAppConfig(Document):
 
     @classmethod
     def for_app(cls, app):
+        """
+        Returns the actual config object for the app or an unsaved
+            default object
+        """
         app_id = app.copy_of or app.id
 
         res = cls.get_db().view(
