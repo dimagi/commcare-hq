@@ -492,7 +492,8 @@ def _get_person_case_properties(person_case, person_case_properties):
     person_properties = {
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
-        "page": person_case_properties.get('age', ''),
+        # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+        "page": person_case_properties.get('age', '') or person_case_properties.get('age_entered', ''),
         "paddress": person_case_properties.get('current_address', ''),
         "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
