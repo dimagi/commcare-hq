@@ -375,7 +375,6 @@ def get_maternal_child_data(config):
             [
                 {
                     'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
-                    'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                         "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
