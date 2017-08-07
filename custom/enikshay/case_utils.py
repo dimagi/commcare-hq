@@ -199,6 +199,15 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
+
+    # Also check for trails on the occurrence
+    occurrence_case_ids = [
+        case.case_id for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_OCCURRENCE and not case.closed
+    ]
+    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
+    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+
     trails_with_server_opened_on = []
     for trail in trail_cases:
         server_opened_on = trail.actions[0].server_date
