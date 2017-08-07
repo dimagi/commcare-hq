@@ -5,7 +5,6 @@ hqDefine('accounting/js/subscriptions.js', function () {
         new_plan_version.init();
         new_plan_version.getAdditionalData = function () {
             return {
-                'product': $('#id_new_plan_product').val(),
                 'edition': $('#id_new_plan_edition').val(),
                 'current_version': hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
             }
@@ -16,7 +15,6 @@ hqDefine('accounting/js/subscriptions.js', function () {
             $planVer.val('');
             $planVer.select2('val', '');
         };
-        $('#id_new_plan_product').change(deselectPlanVersion);
         $('#id_new_plan_edition').change(deselectPlanVersion);
     });
 });
