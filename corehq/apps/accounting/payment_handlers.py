@@ -324,14 +324,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        credit_types = [six.text_type(product['type']) for product in self._humanized_products()]
-        credit_types += [six.text_type(feature['type']) for feature in self._humanized_features()]
-        return _("Credits: {credit_types} for {sub_or_account}").format(
-            credit_types=", ".join(credit_types),
-            sub_or_account=("Subscription %s" % self.subscription
-                            if self.subscription is None
-                            else "Account %s" % self.account.id)
-        )
+        return str(self.subscription)
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
