@@ -2,8 +2,10 @@ from corehq.apps.locations.models import SQLLocation
 
 
 def get_enikshay_login_as_context(user):
+    location = get_linked_location(user)
     return {
-        'district': get_district(user),
+        'linked_location': location,
+        'district': get_district(location),
         'usertype_display': get_usertype_display(user.user_data.get('usertype')),
     }
 
@@ -18,7 +20,7 @@ def get_usertype_display(usertype):
     }.get(usertype, usertype)
 
 
-def get_district(user):
+def get_linked_location(user):
     location = None
     linked_location_id = user.user_data.get('linked_location_id')
     if linked_location_id:
@@ -29,6 +31,10 @@ def get_district(user):
     if not location:
         location = user.sql_location
 
+    return location
+
+
+def get_district(location):
     if location:
         return get_closest_dto_above_location(location)
 
