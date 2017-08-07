@@ -9,7 +9,8 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, g
 
 class Command(BaseCommand):
     help = """
-    Output a CSV file of voucher cases that were sent to BETS in repeater <repeater_id>.
+    Output 2 CSV files of voucher cases that were sent to BETS in repeater <repeater_id>.
+    The second file contains a list of duplicate voucher ids which should be handled manually.
 
     This should be run twice, once for Chemist vouchers, and once for Lab vouchers.
     """
@@ -36,6 +37,8 @@ class Command(BaseCommand):
                             # Include this so they don't re-pay people.
         ]
 
+        seen_voucher_ids = set()
+        duplicate_voucher_ids = set()
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(row_names)
@@ -43,5 +46,19 @@ class Command(BaseCommand):
             for record in with_progress_bar(records, length=record_count):
                 payload = json.loads(record.get_payload())['voucher_details'][0]
                 payload['succeeded'] = record.succeeded
+                voucher_id = payload['VoucherID']
+                if voucher_id in seen_voucher_ids:
+                    duplicate_voucher_ids.add(voucher_id)
+                else:
+                    seen_voucher_ids.add(voucher_id)
                 row = [payload.get(name) for name in row_names]
                 writer.writerow(row)
+
+        print "{} duplicates found".format(len(duplicate_voucher_ids))
+        if len(duplicate_voucher_ids) == 0:
+            return
+
+        with open('duplicates_{}'.format(filename), 'w') as f:
+            writer = csv.writer(f)
+            for duplicate_id in duplicate_voucher_ids:
+                writer.write_row([duplicate_id])
