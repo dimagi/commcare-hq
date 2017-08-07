@@ -218,12 +218,20 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     @memoized
     def original_attachments(self):
+        """
+        Returns attachments based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         return FormAccessorSQL.get_attachments(self.__original_form_id)
 
     @property
     @memoized
     def original_operations(self):
+        """
+        Returns operations based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         return FormAccessorSQL.get_form_operations(self.__original_form_id)
 

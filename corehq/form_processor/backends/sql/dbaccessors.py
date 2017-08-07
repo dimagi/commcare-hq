@@ -575,7 +575,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         assert form.is_saved(), "this method doesn't support creating unsaved forms"
 
-        db_name = get_db_alias_for_partitioned_doc(form.form_id)
+        db_name = form.db
         if form.orig_id:
             old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
             assert old_db_name == db_name, "this method doesn't support moving the form to new db"
@@ -584,15 +584,15 @@ class FormAccessorSQL(AbstractFormAccessor):
             attachments = form.original_attachments
             operations = form.original_operations
             with transaction.atomic(db_name):
-                form.save(using=db_name)
+                form.save()
                 for a in attachments:
                     a.form = form
-                    a.save(using=db_name)
+                    a.save()
                 for op in operations:
                     op.form = form
-                    op.save(using=db_name)
+                    op.save()
         else:
-            form.save(using=db_name)
+            form.save()
         publish_form_saved(form)
 
     @staticmethod
