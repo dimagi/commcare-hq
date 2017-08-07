@@ -9,8 +9,9 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, g
 
 class Command(BaseCommand):
     help = """
-    Output 2 CSV files of voucher cases that were sent to BETS in repeater <repeater_id>.
+    Output 3 CSV files of voucher cases that were sent to BETS in repeater <repeater_id>.
     The second file contains a list of duplicate voucher ids which should be handled manually.
+    The third file contains a list of errored cases.
 
     This should be run twice, once for Chemist vouchers, and once for Lab vouchers.
     """
@@ -39,14 +40,18 @@ class Command(BaseCommand):
 
         seen_voucher_ids = set()
         duplicate_voucher_ids = set()
+        errors = []
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(row_names)
 
             for record in with_progress_bar(records, length=record_count):
-                payload = json.loads(record.get_payload())['voucher_details'][0]
-                payload['succeeded'] = record.succeeded
-                voucher_id = payload['VoucherID']
+                try:
+                    payload = json.loads(record.get_payload())['voucher_details'][0]
+                    payload['succeeded'] = record.succeeded
+                    voucher_id = payload['VoucherID']
+                except Exception as e:
+                    errors.append([record.payload_id, unicode(e)])
                 if voucher_id in seen_voucher_ids:
                     duplicate_voucher_ids.add(voucher_id)
                 else:
@@ -55,10 +60,16 @@ class Command(BaseCommand):
                 writer.writerow(row)
 
         print "{} duplicates found".format(len(duplicate_voucher_ids))
-        if len(duplicate_voucher_ids) == 0:
-            return
+        if duplicate_voucher_ids:
+            with open('duplicates_{}'.format(filename), 'w') as f:
+                writer = csv.writer(f)
+                for duplicate_id in duplicate_voucher_ids:
+                    writer.write_row([duplicate_id])
 
-        with open('duplicates_{}'.format(filename), 'w') as f:
-            writer = csv.writer(f)
-            for duplicate_id in duplicate_voucher_ids:
-                writer.write_row([duplicate_id])
+        print "{} errors".format(len(errors))
+        if errors:
+            with open('errors_{}'.format(filename), 'w') as f:
+                writer = csv.writer(f)
+                writer.write_row('episode_id', 'error')
+                for error in errors:
+                    writer.write_row(errors)
