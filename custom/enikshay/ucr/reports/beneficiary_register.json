@@ -54,7 +54,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "external_id",
+                "field": "person_id_property",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary ID"
