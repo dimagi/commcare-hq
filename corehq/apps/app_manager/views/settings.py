@@ -73,6 +73,8 @@ def edit_commcare_profile(request, domain, app_id):
     return json_response(response_json)
 
 
+@method_decorator(no_conflict_require_POST, name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
 class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
     form_class = PromptUpdateSettingsForm
     urlname = 'update_prompt_settings'
@@ -80,11 +82,6 @@ class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
     @property
     def success_url(self):
         return reverse('release_manager', args=[self.domain, self.app_id])
-
-    @method_decorator(no_conflict_require_POST)
-    @method_decorator(require_can_edit_apps)
-    def dispatch(self, *args, **kwargs):
-        return super(PromptSettingsUpdateView, self).dispatch(*args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super(PromptSettingsUpdateView, self).get_form_kwargs()
