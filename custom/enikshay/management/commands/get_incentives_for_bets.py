@@ -50,6 +50,7 @@ class Command(BaseCommand):
                     payload = json.loads(record.get_payload())['incentive_details'][0]
                 except Exception as e:
                     errors.append([record.payload_id, unicode(e)])
+                    continue
                 payload['succeeded'] = record.succeeded
                 row = [payload.get(name) for name in row_names]
                 writer.writerow(row)

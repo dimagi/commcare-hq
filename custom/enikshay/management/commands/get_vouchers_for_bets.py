@@ -52,6 +52,7 @@ class Command(BaseCommand):
                     voucher_id = payload['VoucherID']
                 except Exception as e:
                     errors.append([record.payload_id, unicode(e)])
+                    continue
                 if voucher_id in seen_voucher_ids:
                     duplicate_voucher_ids.add(voucher_id)
                 else:
