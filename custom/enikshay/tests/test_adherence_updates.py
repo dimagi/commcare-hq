@@ -20,7 +20,7 @@ from custom.enikshay.const import (
     HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
+from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate, get_datastore
 from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
@@ -46,7 +46,6 @@ class TestAdherenceUpdater(TestCase):
             "123",
         )
         cls.setupFixtureData()
-        cls.data_store = AdherenceDatastore(cls.domain)
 
     def setUp(self):
         super(TestAdherenceUpdater, self).setUp()
@@ -55,6 +54,7 @@ class TestAdherenceUpdater(TestCase):
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
         self.case_updater = EpisodeUpdater(self.domain)
+        self.data_store = get_datastore(self.domain)
 
     @classmethod
     def setupFixtureData(cls):
@@ -112,11 +112,11 @@ class TestAdherenceUpdater(TestCase):
         cls.data_type.delete()
         for data_item in cls.data_items:
             data_item.delete()
-        cls.data_store.adapter.drop_table()
         super(TestAdherenceUpdater, cls).tearDownClass()
         cls._call_center_domain_mock.stop()
 
     def tearDown(self):
+        get_datastore.reset_cache()
         self.data_store.adapter.clear_table()
         FormProcessorTestUtils.delete_all_cases()
 
@@ -230,7 +230,8 @@ class TestAdherenceUpdater(TestCase):
             attrs={'close': True}
         ))
 
-        episode_ids = [episode.case_id for episode in self.case_updater._get_open_episode_cases()]
+        episode_ids = [episode.case_id
+                       for episode in self.case_updater._get_open_episode_cases(self.case_updater._get_case_ids())]
         self.assertEqual(episode_ids, [self.episode_id])
 
     def test_adherence_schedule_date_start_late(self):
