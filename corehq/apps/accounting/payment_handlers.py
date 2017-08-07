@@ -333,16 +333,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                             else "Account %s" % self.account.id)
         )
 
-    def _humanized_features(self):
-        return [{'type': get_feature_name(feature['type']),
-                 'amount': fmt_dollar_amount(feature['amount'])}
-                for feature in self.features]
-
-    def _humanized_products(self):
-        return [{'type': product['type'],
-                 'amount': fmt_dollar_amount(product['amount'])}
-                for product in self.products]
-
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
 
