@@ -302,14 +302,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def __init__(self, payment_method, domain, account, subscription=None, post_data=None):
         super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
-        self.features = [{'type': feature_type[0],
-                          'amount': Decimal(post_data.get(feature_type[0], 0))}
-                         for feature_type in FeatureType.CHOICES
-                         if Decimal(post_data.get(feature_type[0], 0)) > 0]
-        self.products = [{'type': product_type[0],
-                          'amount': Decimal(post_data.get(product_type[0], 0))}
-                         for product_type in SoftwareProductType.CHOICES
-                         if Decimal(post_data.get(product_type[0], 0)) > 0]
         if Decimal(post_data.get('general_credit', 0)) > 0:
             self.general_credits = {
                 'type': 'general_credit',
@@ -344,45 +336,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         account.save()
 
     def update_credits(self, payment_record):
-        for feature in self.features:
-            feature_amount = feature['amount']
-            if feature_amount >= 0.5:
-                self.credit_lines.append(CreditLine.add_credit(
-                    feature_amount,
-                    account=self.account,
-                    subscription=self.subscription,
-                    feature_type=feature['type'],
-                    payment_record=payment_record,
-                ))
-            else:
-                log_accounting_error(
-                    "{account} tried to make a payment for {feature} for less than $0.5."
-                    "You should follow up with them."
-                    .format(
-                        account=self.account,
-                        feature=feature['type']
-                    )
-                )
-        for product in self.products:
-            plan_amount = product['amount']
-            if plan_amount >= 0.5:
-                self.credit_lines.append(CreditLine.add_credit(
-                    plan_amount,
-                    account=self.account,
-                    subscription=self.subscription,
-                    product_type=SoftwareProductType.ANY,
-                    payment_record=payment_record,
-                ))
-            else:
-                log_accounting_error(
-                    "{account} tried to make a payment for {product} for less than $0.5."
-                    "You should follow up with them."
-                    .format(
-                        account=self.account,
-                        product=product['type']
-                    )
-                )
-
         if self.general_credits:
             amount = self.general_credits['amount']
             if amount >= 0.5:
