@@ -482,8 +482,8 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
     phi_id = person_case_properties['owner_id']
     person_id_flat = _PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
     person_id = _PersonIdGenerator.get_person_id(person_id_flat)
-    occurrence_id = person_id + "O1"
-    episode_id = person_id + "E1"
+    occurrence_id = person_id + "-O1"
+    episode_id = person_id + "-E1"
 
     person_case_properties['person_id'] = person_id
     person_case_properties['person_id_flat'] = person_id_flat
