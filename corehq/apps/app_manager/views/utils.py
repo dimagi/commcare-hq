@@ -10,7 +10,9 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
-from corehq.apps.app_manager.models import Application, ReportModule
+from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary
+
+from corehq.apps.app_manager.util import update_unique_ids
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -128,7 +130,7 @@ def get_blank_form_xml(form_name):
     })
 
 
-def overwrite_app(app, master_build, report_map=None):
+def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
     excluded_fields = set(Application._meta_fields).union(
         ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
     )
@@ -148,8 +150,36 @@ def overwrite_app(app, master_build, report_map=None):
                         raise AppEditingError('Dynamic UCR used in linked app')
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
+    if maintain_ids:
+        id_map = _get_form_id_map(app)
+        wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     wrapped_app.copy_attachments(master_build)
+    enable_usercase_if_necessary(wrapped_app)
     wrapped_app.save(increment_version=False)
+
+
+def _get_form_id_map(app):
+    id_map = {}
+    for module in app['modules']:
+        for form in module['forms']:
+            id_map[form['xmlns']] = form['unique_id']
+    return id_map
+
+
+def _update_form_ids(app, master_app, id_map):
+
+    _attachments = master_app.get_attachments()
+
+    app_source = app.to_json()
+    app_source.pop('external_blobs')
+    app_source['_attachments'] = _attachments
+
+    updated_source = update_unique_ids(app_source, id_map)
+
+    attachments = app_source.pop('_attachments')
+    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = new_wrapped_app.save_attachments(attachments)
+    return new_wrapped_app
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):

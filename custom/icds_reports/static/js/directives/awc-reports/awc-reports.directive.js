@@ -851,7 +851,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.data = null;
-    vm.filters = [];
+    vm.filters = ['gender', 'age'];
     vm.dtOptions = DTOptionsBuilder.newOptions().withOption('scrollX', '100%');
     vm.showTable = true;
     vm.showBeneficiary = false;
@@ -875,7 +875,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
         if (parseInt(vm.selectedLocationLevel) === 4) {
-            $http({
+            vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
                 params: $location.search(),
@@ -921,6 +921,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             chart: {
                 type: 'multiBarChart',
                 height: 450,
+                width: 1100,
                 margin: {
                     top: 20,
                     right: 20,
@@ -1000,14 +1001,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         params['case_id'] = case_id;
         var highest_age = 0;
 
-        $http({
+        vm.myPromise = $http({
             method: "GET",
             url: get_url,
             params: params,
         }).then(
             function (response) {
                 vm.beneficiary = response.data;
-                highest_age = vm.beneficiary.age
+                highest_age = vm.beneficiary.age * 12;
                 vm.lineChartOneData = vm.beneficiary.weight;
                 vm.lineChartTwoData = vm.beneficiary.height;
 
@@ -1096,7 +1097,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.steps ={
         // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
         pse: { route: "/awc_reports/pse", label: "Pre School Education"},
-        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal & Child Health"},
+        maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
     };

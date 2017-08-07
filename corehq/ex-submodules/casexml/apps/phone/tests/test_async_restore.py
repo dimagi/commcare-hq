@@ -132,12 +132,18 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         cache_id = restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
         restore_config = self._restore_config(async=True)
         restore_config.cache.set(cache_id, 'im going to be deleted by the next command')
+        restore_config.timing_context.start()
+        restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
+        self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNone(restore_config.cache.get(cache_id))
 
     def test_completed_task_creates_sync_log(self):
         restore_config = self._restore_config(async=True)
+        restore_config.timing_context.start()
+        restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
+        self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNotNone(restore_config.restore_state.current_sync_log)
 
     def test_force_cache_on_async(self):

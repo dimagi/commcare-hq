@@ -1,5 +1,5 @@
 # coding=utf-8
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 import json
 import logging
 from lxml import etree
@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -20,13 +21,10 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
-from corehq import toggles, feature_previews
+from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL,
-    CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
 from corehq.apps.app_manager.util import (
@@ -45,7 +43,6 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
-    CareplanModule,
     CaseSearch,
     CaseSearchProperty,
     DeleteModuleRecord,
@@ -70,13 +67,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_module_template(user, module):
-    if isinstance(module, CareplanModule):
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view_careplan.html",
-            "app_manager/v2/module_view_careplan.html",
-        )
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         return get_app_manager_template(
             user,
             "app_manager/v1/module_view_advanced.html",
@@ -111,10 +102,7 @@ def get_module_view_context(app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    if isinstance(module, CareplanModule):
-        module_brief.update({'parent_select': module.parent_select})
-        context.update(_get_careplan_module_view_context(app, module, case_property_builder))
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         module_brief.update({
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,
@@ -177,41 +165,6 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'print_media_info': print_template,
         })
     return context
-
-
-def _get_careplan_module_view_context(app, module, case_property_builder):
-    subcase_types = list(app.get_subcase_types(module.case_type))
-    return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder,
-                                             CAREPLAN_GOAL),
-        'details': [
-            {
-                'label': gettext_lazy('Goal List'),
-                'detail_label': gettext_lazy('Goal Detail'),
-                'type': 'careplan_goal',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_GOAL)),
-                'sort_elements': module.goal_details.short.sort_elements,
-                'short': module.goal_details.short,
-                'long': module.goal_details.long,
-                'subcase_types': subcase_types,
-            },
-            {
-                'label': gettext_lazy('Task List'),
-                'detail_label': gettext_lazy('Task Detail'),
-                'type': 'careplan_task',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_TASK)),
-                'sort_elements': module.task_details.short.sort_elements,
-                'short': module.task_details.short,
-                'long': module.task_details.long,
-                'subcase_types': subcase_types,
-            },
-        ],
-    }
 
 
 def _get_advanced_module_view_context(app, module):
@@ -484,22 +437,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module["case_type"] = case_type
 
             # rename other reference to the old case type
-            other_careplan_modules = []
             all_advanced_modules = []
             modules_with_old_case_type_exist = False
             for mod in app.modules:
-                if mod.unique_id != module_id:
-                    if isinstance(mod, CareplanModule):
-                        other_careplan_modules.append(mod)
-
                 if isinstance(mod, AdvancedModule):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
-            for cp_mod in other_careplan_modules:
-                if cp_mod.parent_select.module_id == module_id:
-                    cp_mod.case_type = case_type
 
             for mod in all_advanced_modules:
                 for form in mod.forms:
@@ -606,6 +550,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
 
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
+    _init_module_case_type(module)
     module_id = module.id
     app.new_form(module_id, _("Untitled Form"), lang)
 
@@ -771,10 +716,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     if detail_type == 'case':
         detail = module.case_details
-    elif detail_type == CAREPLAN_GOAL:
-        detail = module.goal_details
-    elif detail_type == CAREPLAN_TASK:
-        detail = module.task_details
     else:
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
@@ -977,27 +918,26 @@ def new_module(request, domain, app_id):
         if toggles.APP_MANAGER_V1.enabled(request.user.username):
             app.new_form(module_id, "Untitled Form", lang)
         else:
+            unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
-                # registration form
-                register = app.new_form(module_id, _("Register"), lang)
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                register.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
+                if not unstructured:
+                    form_id = 0
 
-                # one followup form
-                followup = app.new_form(module_id, _("Followup"), lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+                    # registration form
+                    register = app.new_form(module_id, _("Registration Form"), lang)
+                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                    register.actions.update_case = UpdateCaseAction(
+                        condition=FormActionCondition(type='always'))
 
-                # make case type unique across app
-                app_case_types = [m.case_type for m in app.modules if m.case_type]
-                if len(app_case_types):
-                    module.case_type = app_case_types[0]
-                else:
-                    module.case_type = 'case'
+                    # one followup form
+                    followup = app.new_form(module_id, _("Followup Form"), lang)
+                    followup.requires = "case"
+                    followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+                _init_module_case_type(module)
             else:
+                form_id = 0
                 app.new_form(module_id, _("Survey"), lang)
-            form_id = 0
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
@@ -1018,20 +958,14 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
-def _new_careplan_module(request, domain, app, name, lang):
-    from corehq.apps.app_manager.util import new_careplan_module
-    target_module_index = request.POST.get('target_module_id')
-    target_module = app.get_module(target_module_index)
-    if not target_module.case_type:
-        name = target_module.name[lang]
-        messages.error(request, _("Please set the case type for the target module '{name}'.".format(name=name)))
-        return back_to_main(request, domain, app_id=app.id)
-    module = new_careplan_module(app, name, lang, target_module)
-    app.save()
-    response = back_to_main(request, domain, app_id=app.id, module_id=module.id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Care Plan modules are a labs feature'))
-    return response
+# Set initial module case type, copying from another module in the same app
+def _init_module_case_type(module):
+    app = module.get_app()
+    app_case_types = [m.case_type for m in app.modules if m.case_type]
+    if len(app_case_types):
+        module.case_type = app_case_types[0]
+    else:
+        module.case_type = 'case'
 
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
@@ -1058,13 +992,6 @@ def view_module(request, domain, app_id, module_id):
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
-    'careplan': {
-        FN: _new_careplan_module,
-        VALIDATIONS: [
-            (lambda app: app.has_careplan_module,
-             _('This application already has a Careplan module'))
-        ]
-    },
     'advanced': {
         FN: _new_advanced_module,
         VALIDATIONS: []

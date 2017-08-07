@@ -1,6 +1,7 @@
+import csv
 import logging
-
 import datetime
+import traceback
 import uuid
 
 import re
@@ -76,7 +77,6 @@ MEHSANA_2017_MAP = {
     "Eto": 25,
     "Clr": 26,
     "Azi": 27,
-    "treatment_initiation_center": 34,
     "treatment_status": 35,
     "drtb_number": 36,
     "treatment_initiation_date": 37,
@@ -153,52 +153,85 @@ MEHSANA_2016_MAP = {
 # A map of column identifier to column index in the Mumbai excel sheet.
 MUMBAI_MAP = {
     "drtb_number": 3,
+    "nikshay_id": 5,
     "registration_date": 7,
     "person_name": 8,
     "sex": 9,
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
-    "initial_home_visit_date": 14,
-    "aadhaar_number": 15,
-    "social_scheme": 16,
-    "district_name": 18,
-    "phi_name": 21,
-    "site_of_disease": 24,
-    "type_of_patient": 25,  # TODO: Map this value to case properties
-    "weight": 26,
-    "weight_band": 27,
-    "height": 28,
-    "hiv_status": 29,
-    "hiv_test_date": 30,
-    "hiv_program_id": 31,
-    "cpt_initiation_date": 32,
-    "art_initiation_date": 33,
-    "diabetes": 34,
-    "cbnaat_lab": 35,  # This is similar to testing_facility, but slightly different
-    "cbnaat_sample_date": 36,
-    "cbnaat_result": 37,
-    "cbnaat_result_date": 38,
-    "lpa_lab": 39,
-    "lpa_sample_date": 40,
-    "lpa_rif_result": 41,
-    "lpa_inh_result": 42,
-    "lpa_result_date": 43,
-    "sl_lpa_lab": 44,
-    "sl_lpa_sample_date": 45,
-    "sl_lpa_result": 46,
-    "sl_lpa_result_date": 47,
-    "culture_lab": 48,
-    "culture_sample_date": 49,
-    "culture_type": 50,
-    "culture_result": 51,
-    "culture_result_date": 52,
-    # TODO: Finish me
+    "initial_home_visit_date": 18,
+    "aadhaar_number": 19,
+    "social_scheme": 20,
+    "district_name": 22,
+    "phi_name": 25,
+    "reason_for_testing": 27,
+    "site_of_disease": 28,
+    "type_of_patient": 29,  # TODO: (WAITING) Map this value to case properties
+    "weight": 30,
+    "weight_band": 31,
+    "height": 32,
+    "hiv_status": 33,
+    "hiv_test_date": 34,
+    "hiv_program_id": 35,
+    "cpt_initiation_date": 36,
+    "art_initiation_date": 37,
+    "diabetes": 38,
+    "cbnaat_lab": 39,  # This is similar to testing_facility, but slightly different
+    "cbnaat_sample_date": 41,
+    "cbnaat_result": 42,
+    "cbnaat_result_date": 43,
+    "lpa_lab": 44,
+    "lpa_sample_date": 46,
+    "lpa_rif_result": 47,
+    "lpa_inh_result": 48,
+    "lpa_result_date": 49,
+    "sl_lpa_lab": 51,
+    "sl_lpa_sample_date": 52,
+    "sl_lpa_result": 53,
+    "sl_lpa_result_date": 54,
+    "culture_lab": 55,
+    "culture_sample_date": 57,
+    "culture_type": 58,
+    "culture_result": 59,
+    "culture_result_date": 60,
+    "dst_sample_date": 61,
+    "dst_type": 62,
+    "Lfx": 63,  # Levo
+    "Eto": 64,  # Ethio
+    # "Cyclo": 65,  # TODO: (WAITING) unknown drug mapping
+    "E": 66,  # Etham
+    "Z": 67,  # PZA
+    "Km": 68,  # Kana
+    "Cm": 69,  # Capr
+    "Mfx (0.5)": 70,  # Moxi
+    "Mfx (2.0)": 71,  # High dose Moxi
+    "Cfz": 72,  # Clofa
+    "Lzd": 73,  # Line
+    # "INH": 74,  # TODO: (WAITING) unknown drug mapping
+    "H (0.1)": 75,  # High dose INH
+    "PAS": 76,  # Na-Pas
+    # "Oflox": 77,  # TODO: (WAITING) unknown drug mapping
+    # "Streptomycin": 78,  # TODO: (WAITING) unknown drug mapping
+    # "Clarithromycin": 79,  # TODO: (WAITING) unknown drug mapping
+    "R": 80,  # Rif
+    # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
+    # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
+    # TODO: (WAITING) not sure how this maps
+    "bdq_eligible": 89,
+    "treatment_initiation_date": 90,
+    "drtb_type": 93,
+    # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
+    # "treatment_status": 94,
+    "treatment_regimen": 95,
+    "ip_to_cp_date": 98,
+    "treatment_outcome": 181,
+    "date_of_treatment_outcome": 182,
 }
 
 
 # A map of column identifier to the corresponding app drug id
-DRUG_MAP = {
+DRUG_COLUMN_TO_APP_ID_MAP = {
     "S": "s",
     "H (0.1)": "h_inha",
     "H (0.4)": "h_katg",
@@ -219,12 +252,38 @@ DRUG_MAP = {
     "Azi": "azi",
 }
 
+# This is a copy of part of the "resistance_drug" fixture
+ALL_DRUGS = {
+    "r": "01",
+    "h_inha": "02",
+    "h_katg": "03",
+    "s": "04",
+    "e": "05",
+    "z": "06",
+    "slid_class": "07",
+    "km": "08",
+    "cm": "09",
+    "am": "10",
+    "fq_class": "11",
+    "lfx": "12",
+    "mfx_05": "14",
+    "mfx_20": "15",
+    "eto": "16",
+    "pas": "17",
+    "lzd": "18",
+    "cfz": "19",
+    "clr": "20",
+    "azi": "21",
+    "bdq": "22",
+    "dlm": "23",
+}
 
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
 
 class ColumnMapping(object):
     mapping_dict = None
+    required_fields = []
 
     @classmethod
     def get_value(cls, normalized_column_name, row):
@@ -246,32 +305,81 @@ class ColumnMapping(object):
         if exists_in_some_mapping:
             return None
         else:
-            raise KeyError("Invalid normalized_column_name passed to ColumnMapping.get_value()")
+            raise KeyError(
+                "Invalid normalized_column_name '{}' passed to ColumnMapping.get_value()".format(
+                    normalized_column_name
+                )
+            )
+
+    @classmethod
+    def check_for_required_fields(cls, row):
+        """Raise an exception if row is missing a required field"""
+        for key in cls.required_fields:
+            val = cls.get_value(key, row)
+            if not val:
+                raise Exception("{} is required".format(key))
 
 
 class Mehsana2017ColumnMapping(ColumnMapping):
     mapping_dict = MEHSANA_2017_MAP
+    required_fields = (
+        "person_name",
+        "district_name",
+    )
 
 
 class Mehsana2016ColumnMapping(ColumnMapping):
     mapping_dict = MEHSANA_2016_MAP
+    required_fields = (
+        "person_name",
+        "district_name",
+    )
 
 
 class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
+    required_fields = (
+        "registration_date",
+        "person_name",
+        "district_name",
+        "phi_name",
+        # The phi must also be valid, but this is checked in the match_phi function.
+    )
+    follow_up_culture_index_start = 109
+    follow_up_culture_month_start = 3
 
     @classmethod
-    def get_value(cls, normalized_column_name, row):
-        value = super(MumbaiColumnMapping, cls).get_value(normalized_column_name, row)
-        # Make cbnaat_result required
-        if value is None and normalized_column_name == "cbnaat_result":
-            raise Exception("All mumbai rows must contain cbnaat result")
-        return value
+    def get_follow_up_culture_result(cls, month, row):
+        index = cls._get_follow_up_start_index(month)
+        try:
+            return row[index].value
+        except IndexError:
+            return None
+
+    @classmethod
+    def get_follow_up_culture_date(cls, month, row):
+        index = cls._get_follow_up_start_index(month) + 1
+        try:
+            return row[index].value
+        except IndexError:
+            return None
+
+    @classmethod
+    def _get_follow_up_start_index(cls, month):
+        if month == 36:
+            # For some reason the sheet jumps from 33 to 36, so just special casing it.
+            index = 171
+        else:
+            assert month >= 3 and month <= 33
+            offset = (month - 3) * 2
+            index = cls.follow_up_culture_index_start + offset
+        return index
 
 
 class MumbaiConstants(object):
     """A collection of Mumbai specific constants"""
-    # TODO: (WAITING) find out these values
+    # TODO: (WAITING) Fill in these values
+    # This is waiting on upload of the locations. It looks like for mumbai these might not be constants
     drtb_center_name = None
     drtb_center_id = None
 
@@ -279,6 +387,7 @@ class MumbaiConstants(object):
 class MehsanaConstants(object):
     """A collection of Mehsana specific constants"""
     # TODO: (WAITING) Fill in these values
+    # This is waiting on upload of the locations
     drtb_center_name = None
     drtb_center_id = None
 
@@ -349,8 +458,8 @@ def get_person_case_properties(domain, column_mapping, row):
 
     properties = {
         "name": person_name,
-        "district_name": district_name,
-        "district_id": district_id,
+        "dto_name": district_name,
+        "dto_id": district_id,
         "owner_id": phi_id or "-",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
@@ -366,7 +475,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "hiv_program_id": column_mapping.get_value("hiv_program_id", row),
         "cpt_initiation_date": clean_date(column_mapping.get_value("cpt_initiation_date", row)),
         "art_initiation_date": clean_date(column_mapping.get_value("art_initiation_date", row)),
-        "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row))
+        "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row)),
+        "language_code": "hin",
     }
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
@@ -376,15 +486,15 @@ def get_person_case_properties(domain, column_mapping, row):
     if properties["art_initiation_date"]:
         properties["art_initiated"] = "yes"
 
-    phone_number = column_mapping.get_value("phone_number", row),
+    phone_number = column_mapping.get_value("phone_number", row)
     if phone_number:
-        properties['contact_phone_number'] = clean_phone_number(phone_number, 12)
-        properties['phone_number'] = clean_phone_number(phone_number, 10)
-        properties['language_code'] = "hin"
+        clean_number = clean_phone_number(phone_number)
+        contact_number = clean_contact_phone_number(clean_number)
+        properties['contact_phone_number'] = contact_number
+        properties['phone_number'] = clean_number
 
     social_scheme = column_mapping.get_value("social_scheme", row)
-    if social_scheme:
-        raise Exception("has social scheme: {}".format(social_scheme))
+    properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
 
     return properties
 
@@ -395,8 +505,13 @@ def get_occurrence_case_properties(column_mapping, row):
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status":
             "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
+        "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
+
+        'name': 'Occurrence #1',
+        'occurrence_episode_count': 1,
     }
     properties.update(get_disease_site_properties(column_mapping, row))
+
     return properties
 
 
@@ -424,17 +539,15 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_card_completed_date": treatment_card_completed_date,
         "regimen_change_history": get_episode_regimen_change_history(
             column_mapping, row, treatment_initiation_date),
-        "treatment_initiating_facility_id": match_facility(
-            domain, column_mapping.get_value("treatment_initiation_center", row)
-        )[1],
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
         "treatment_outcome": convert_treatment_outcome(column_mapping.get_value("treatment_outcome", row)),
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
-        "height": column_mapping.get_value("height", row),  # TODO: Do I need to clean this?
-        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row))
+        "height": clean_height(column_mapping.get_value("height", row)),
+        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
+        "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
     }
 
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
@@ -448,25 +561,82 @@ def get_episode_case_properties(domain, column_mapping, row):
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
 
-    cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
-    if cbnaat_lab_name:
-        properties.update({
-            "diagnosing_facility_name": cbnaat_lab_name,
-            "diagnosing_facility_id": cbnaat_lab_id,
-            "diagnosis_test_type_label": "CBNAAT",
-            "diagnosis_test_type_value": "cbnaat",
-        })
-    if get_cbnaat_resistance(column_mapping, row):
-        properties["diagnosis_test_drug_resistance_list"] = "r"
+    properties.update(get_diagnosis_properties(column_mapping, domain, row))
 
-    cbnaat_result_date = column_mapping.get_value("cbnaat_result_date", row)
-    if cbnaat_result_date:
+    properties.update(get_reason_for_test_properties(column_mapping, row))
+
+    ip_to_cp_date = clean_date(column_mapping.get_value("ip_to_cp_date", row))
+    if ip_to_cp_date:
         properties.update({
-            "diagnosis_test_result_date": clean_date(cbnaat_result_date),
-            "date_of_diagnosis": clean_date(cbnaat_result_date),
+            "cp_initiated": "yes",
+            "cp_initiation_date": ip_to_cp_date,
         })
 
     return properties
+
+
+def get_reason_for_test_properties(column_mapping, row):
+    test_reason_map = {
+        # TODO: there is yellow in the mapping sheet. Was sheel waiting on these?
+        # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=704385575
+        "1-Failure": (None, "extended_dst", "mdr_rr_failure"),
+        "1. Presumptive TB	diagnosis_dstb": ("presumptive_tb", None, None),
+        "2-Re-treatment case S+at 4th month": (None, "extended_dst", "4mo_culture_positive"),
+        "3-Contact of known MDR TB case": (None, None, None),
+        "4-S+ at diagnosis, re-treatment case": (None, None, None),
+        "4. Presumptive MDRTB, at diagnosis": (None, "mdr_at_diagnosis", None),
+        "5-Any Follow-up S+": (None, None, None),
+        "5. Contact of MDR/RR TB": (None, "contact_of_mdr_rr", None),
+        "6-S-at Diagnosis re-treatment case": (None, None, None),
+        "6. Follow up Sm+ve at end IP": (None, "follow_up_sm_ve_ip", None),
+        "7-HIV TB Case": (None, None, None),
+        "7. Private Referral-Presumptive MDRTB": (None, "private_referral", None),
+        "8. Discordance resolution": (None, "discordance_resolution", None),
+        "10. MDR/RR TB at diagnosis": (None, "extended_dst", "mdr_rr_diagnosis"),
+        "13. Culture reversion": (None, "extended_dst", "culture_reversion"),
+        "14. Failure of MDR/RR TB regimen": (None, "extended_dst", "mdr_rr_failure"),
+        "15. Recurrent case of second line treatment": (None, "extended_dst", "recurrent_second_line_treatment"),
+        "Private": (None, None, None),
+    }
+    value = column_mapping.get_value("reason_for_testing", row)
+    if not value:
+        return {}
+    if value not in test_reason_map:
+        raise Exception("Unexpected test reason: {}".format(value))
+    rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = test_reason_map[value]
+    return {
+        "rft_general": "diagnosis_drtb",
+        "rft_dstb_diagnosis": rft_dstb_diagnosis,
+        "rft_drtb_diagnosis": rft_drtb_diagnosis,
+        "rft_drtb_diagnosis_ext_dst": rft_drtb_diagnosis_ext_dst,
+    }
+
+
+def get_diagnosis_properties(column_mapping, domain, row):
+    has_cbnaat_result = bool(column_mapping.get_value("cbnaat_result", row))
+    if has_cbnaat_result:
+        properties = {}
+        cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
+        if cbnaat_lab_name:
+            properties.update({
+                "diagnosing_facility_name": cbnaat_lab_name,
+                "diagnosing_facility_id": cbnaat_lab_id,
+                "diagnosis_test_type_label": "CBNAAT",
+                "diagnosis_test_type_value": "cbnaat",
+            })
+        if get_cbnaat_resistance(column_mapping, row):
+            properties["diagnosis_test_drug_resistance_list"] = "r"
+
+        cbnaat_result_date = column_mapping.get_value("cbnaat_result_date", row)
+        if cbnaat_result_date:
+            properties.update({
+                "diagnosis_test_result_date": clean_date(cbnaat_result_date),
+                "date_of_diagnosis": clean_date(cbnaat_result_date),
+            })
+        return properties
+    else:
+        # TODO: (WAITING) figure out how to set these properties based on other info
+        return {}
 
 
 def get_disease_site_properties(column_mapping, row):
@@ -474,8 +644,15 @@ def get_disease_site_properties(column_mapping, row):
     if not xlsx_value:
         return {}
     if xlsx_value.split()[0] in ("EP", "Extrapulmonary"):
-        return {"disease_classification": "extra_pulmonary"}
-    # TODO: (WAITING) Best guess at mapping is here:
+        return {
+            "disease_classification": "extra_pulmonary",
+            "site_choice": None,
+            "site_detail": xlsx_value,
+        }
+    return {
+        "site_detail": xlsx_value,
+    }
+    # TODO: (WAITING) waiting for EY to explain the mapping
     # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=1748484835
 
 
@@ -489,6 +666,7 @@ def convert_treatment_outcome(xlsx_value):
         "DIED": "died",
         None: None
     }[xlsx_value]
+    # TODO: (WAITING) waiting on mumbai mapping values
 
 
 def get_selection_criteria_properties(column_mapping, row):
@@ -529,6 +707,12 @@ def get_lpa_test_resistance_properties(column_mapping, row):
     }
 
 
+def lpa_detected_tb(column_mapping, row):
+    rif = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))
+    inha = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))
+    return (rif is not None) or (inha is not None)
+
+
 def get_sl_lpa_test_resistance_properties(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
@@ -546,7 +730,7 @@ def get_cbnaat_resistance(column_mapping, row):
 def clean_mumbai_test_resistance_value(value):
     if value is None:
         return None
-    if value.startswith("R ") or value == "R":
+    if value.startswith("R ") or value in ("R", "R\n R", "RR"):
         resistant = True
     elif value == "S":
         resistant = False
@@ -592,12 +776,15 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
     elif column_mapping.get_value("testing_facility", row):
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
 
-    if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
+    if column_mapping.get_value("lpa_rif_result", row) or column_mapping.get_value("lpa_inh_result", row):
         test_cases.append(get_lpa_test_case_properties(domain, column_mapping, row))
     if column_mapping.get_value("sl_lpa_result", row):
         test_cases.append(get_sl_lpa_test_case_properties(domain, column_mapping, row))
     if column_mapping.get_value("culture_result", row):
         test_cases.append(get_culture_test_case_properties(domain, column_mapping, row))
+    dst_test_case_properties = get_dst_test_case_properties(column_mapping, row)
+    if dst_test_case_properties:
+        test_cases.append(dst_test_case_properties)
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
     return test_cases
@@ -626,10 +813,12 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
         "testing_facility_id": cbnaat_lab_id,
         "test_type_label": "CBNAAT",
         "test_type_value": "cbnaat",
-        "date_tested": clean_date(column_mapping.get_value("cbnaat_sample_date", row))
+        "date_tested": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
+    if get_cbnaat_resistance(column_mapping, row) is not None:
+        properties['result'] = "tb_detected"
     return properties
 
 
@@ -642,10 +831,12 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "FL LPA",
         "test_type_value": "fl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": column_mapping.get_value("lpa_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
+    if lpa_detected_tb(column_mapping, row):
+        properties['result'] = "tb_detected"
     return properties
 
 
@@ -658,7 +849,8 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "SL LPA",
         "test_type_value": "sl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": column_mapping.get_value("lpa_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
+        # TODO: Should this have a "result"?
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
@@ -675,11 +867,44 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "test_type_label": "Culture",
         "test_type_value": "culture",
         "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
-        "date_reported": column_mapping.get_value("culture_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("culture_result_date", row)),
         # NEEDED: Culture type
         # NEEDED: Result
     }
     return properties
+
+
+def get_dst_test_case_properties(column_mapping, row):
+    resistance_props = get_dst_test_resistance_properties(column_mapping, row)
+    if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
+        properties = {
+            "owner_id": "-",
+            "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
+            "date_reported": column_mapping.get_value("culture_result_date", row),
+            "dst_test_type": column_mapping.get_value("dst_type", row),
+        }
+        properties.update(resistance_props)
+        return properties
+    return None
+
+
+def get_dst_test_resistance_properties(column_mapping, row):
+    resistant_drugs = []
+    sensitive_drugs = []
+    for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
+        value = column_mapping.get_value(drug_column_key, row)
+        if value:
+            sensitivity = convert_sensitivity(value)
+            if sensitivity == "sensitive":
+                sensitive_drugs.append(drug_id)
+            elif sensitivity == "resistant":
+                resistant_drugs.append(drug_id)
+
+    return {
+        "drug_resistant_list": " ".join(resistant_drugs),
+        "drug_sensitive_list": " ".join(sensitive_drugs),
+    }
+
 
 def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
@@ -693,20 +918,37 @@ def get_drug_resistance_case_properties(column_mapping, row):
     additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
     for drug in additional_drug_case_properties:
         resistant_drugs[drug['drug_id']] = drug
-    return resistant_drugs.values()
+    unknown_cases = generate_unknown_cases(resistant_drugs.keys())
+    return resistant_drugs.values() + unknown_cases
+
+
+def generate_unknown_cases(known_drugs):
+    unknown_drugs = set(ALL_DRUGS.keys()) - set(known_drugs)
+    return [
+        {
+            "name": drug_id,
+            "owner_id": "-",
+            "drug_id": drug_id,
+            "sort_order": ALL_DRUGS[drug_id],
+            "sensitivity": "unknown",
+        }
+        for drug_id in unknown_drugs
+    ]
 
 
 def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
     case_properties = []
-    for drug_column_key, drug_id in DRUG_MAP.iteritems():
+    for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
         value = column_mapping.get_value(drug_column_key, row)
-        properties = {
-            "name": drug_id,
-            "owner_id": "-",
-            "sensitivity": convert_sensitivity(value),
-            "drug_id": drug_id,
-        }
-        case_properties.append(properties)
+        if value:
+            properties = {
+                "name": drug_id,
+                "owner_id": "-",
+                "sensitivity": convert_sensitivity(value),
+                "drug_id": drug_id,
+                "sort_order": ALL_DRUGS[drug_id],
+            }
+            case_properties.append(properties)
     return case_properties
 
 
@@ -739,7 +981,10 @@ def convert_treatment_status(status_in_xlsx):
 
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
-    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", "").split(" ")
+
+    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
+    if drugs:
+        drugs = drugs.split(" ")
     case_properties = []
     for drug in drugs:
         properties = {
@@ -747,6 +992,7 @@ def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
             "owner_id": "-",
             "sensitivity": "resistant",
             "drug_id": drug,
+            "sort_order": ALL_DRUGS[drug],
         }
         case_properties.append(properties)
     return case_properties
@@ -762,6 +1008,7 @@ def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
                 "name": "r",
                 "owner_id": "-",
                 "drug_id": "r",
+                "sort_order": ALL_DRUGS["r"],
                 "specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
                 "result_date": column_mapping.get_value("cbnaat_result_date", row),
                 "test_type": "cbnaat",
@@ -785,6 +1032,7 @@ def get_drug_resistances_from_lpa(column_mapping, row):
                 "name": drug,
                 "owner_id": "-",
                 "drug_id": drug,
+                "sort_order": ALL_DRUGS[drug],
                 "specimen_date": clean_date(column_mapping.get_value("lpa_sample_date", row)),
                 "result_date": column_mapping.get_value("lpa_result_date", row),
                 "test_type": "fl_line_probe_assay",
@@ -803,6 +1051,8 @@ def get_drug_resistances_from_sl_lpa(column_mapping, row):
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
+
+    # Mehsana
     for follow_up in (3, 4, 5, 6, 9, 12, "end"):
         if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
@@ -814,7 +1064,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 "result": clean_result(
                     column_mapping.get_value("month_{}_follow_up_result".format(follow_up), row)),
                 "test_type_value": "culture",
-                "test_type_label": "culture",
+                "test_type_label": "Culture",
                 "rft_general": "follow_up_drtb",
             }
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
@@ -823,6 +1073,30 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
             properties["result_summary_label"] = result_label(properties['result'])
 
             properties_list.append(properties)
+
+    # Mumbai
+    if hasattr(column_mapping, "follow_up_culture_month_start"):
+        month = column_mapping.follow_up_culture_month_start
+        while month <= 36:
+            if month == 34 or month == 35:
+                pass
+            else:
+                result = column_mapping.get_follow_up_culture_result(month, row)
+                if result:
+                    date_tested = clean_date(column_mapping.get_follow_up_culture_date(month, row))
+                    properties = {
+                        "owner_id": "-",
+                        "test_type": "culture",
+                        "test_type_label": "Culture",
+                        "rft_general": "follow_up_drtb",
+                        "rft_drtb_follow_up_treatment_month": month,
+                        "date_tested": date_tested,
+                        "result": clean_result(result),
+                    }
+                    properties["result_summary_label"] = result_label(properties['result'])
+                    properties_list.append(properties)
+            month += 1
+
     return properties_list
 
 
@@ -842,39 +1116,82 @@ def get_secondary_owner_case_properties(city_constants):
 
 
 def clean_diabetes_status(xlsx_value):
+    if xlsx_value is None:
+        return "unknown"
     return {
-        "No": "non_diabetic",
-        "Yes": "diabetic",
-        None: "unknown",
-    }[xlsx_value]
+        "no": "non_diabetic",
+        "yes": "diabetic",
+    }[xlsx_value.lower()]
 
 
 def clean_weight_band(value):
     pass
-    # TODO: Finish me
+    # TODO: (WAITING) Not sure what the valid values are
 
 
-def clean_phone_number(value, digits):
+def clean_height(value):
+    if value is None:
+        return None
+    if re.match("[0-9]*", str(value)):
+        return value
+    raise Exception("Invalid height: {}".format(value))
+
+
+def clean_treatment_regimen(value):
+    if value is None:
+        return None
+    return {
+        "Regimen for MDR/RR TB": "mdr_rr",
+        "Regimen for XDR TB": "xdr",
+        "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
+    }[value]
+
+
+def clean_phone_number(value):
     """
-    Phone numbers should be "91" followed by 10 digits. No symbols allowed.
+    Convert the phone number to the 10 digit format if possible, else return the misformated number
     """
     if not value:
         return None
-    assert digits in (10, 12)
-    exception = Exception("Unexpected phone number format: {}".format(value))
-    cleaned = re.sub('[^0-9]', '', value)
+
+    if not isinstance(value, (basestring, int)):
+        raise Exception("Unexpected type for phone number {}".format(value))
+
+    try:
+        values = value.split("/")
+        value = values[0]
+    except AttributeError:
+        # This exception will be raised if value is an int.
+        pass
+
+    cleaned = re.sub('[^0-9]', '', str(value))
+
     if len(cleaned) == 12 and cleaned[:2] == "91":
-        if digits == 12:
-            return cleaned
-        else:
-            return cleaned[2:]
-    elif len(cleaned) == 10:
-        if digits == 10:
-            return cleaned
-        else:
-            return "91" + cleaned
+        return cleaned[2:]
+    elif len(cleaned) == 11 and cleaned[0] == "0":
+        return cleaned[1:]
     else:
-        raise exception
+        return cleaned
+
+
+def clean_contact_phone_number(clean_phone_number):
+    """
+    :param clean_phone_number: A string returned by clean_phone_number()
+    :return: The phone number in 12 digit format if clean_phone_number was 10 digits, otherwise None.
+    """
+    if not clean_phone_number:
+        return None
+    elif len(clean_phone_number) == 10:
+        return "91" + clean_phone_number
+    else:
+        return None
+
+
+def _starts_with_any(value, strings):
+    for s in strings:
+        if value.startswith(s):
+            return True
+    return False
 
 
 def clean_hiv_status(value):
@@ -882,14 +1199,26 @@ def clean_hiv_status(value):
     REACTIVE = "reactive"
     if not value:
         return None
-    if value.startswith("Non Reactive") or value.startswith("NR") or value.startswith("Nr"):
+    if _starts_with_any(value, ["Non Reactive", "NR", "Nr", "NON REACTIVE"]):
         return NON_REACTIVE
-    if value.startswith("R ") or value.startswith("Reactive") or value.startswith("Ractive"):
+    if _starts_with_any(value, ["R ", "Reactive", "Ractive"]) or value == "R":
         return REACTIVE
     return {
-        "Pos": REACTIVE,  # TODO: (WAITING) is this right?
-        "Positive": REACTIVE,  # TODO: (WAITING) is this right?
+        # TODO: (WAITING) Have we mapped pos/neg to reactive/non-reactive correctly?
+        "Pos": REACTIVE,
+        "Positive": REACTIVE,
+        "Negative": NON_REACTIVE,
+        "Neg": NON_REACTIVE,
     }[value]
+
+
+def clean_socioeconomic_status(value):
+    if value is None:
+        return "unknown"
+    return {
+        "bpl": "bpl",
+        "apl": "apl",
+    }[value.lower()]
 
 
 def clean_result(value):
@@ -898,13 +1227,30 @@ def clean_result(value):
         "conta": NO_RESULT,
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
+        "Contaminated": NO_RESULT,
         "NA": NO_RESULT,
         "Neg": NO_RESULT,
         "NEG": NOT_DETECTED,
         "Negative": NOT_DETECTED,
+        "Negetive": NOT_DETECTED,
         "negative": NOT_DETECTED,
         "pos": DETECTED,
         "Positive": DETECTED,
+        "QNS": NO_RESULT,  # TODO: (WAITING) what should this really be?
+    }[value]
+
+
+def clean_drtb_type(value):
+    if value is None:
+        return "unknown"
+    return {
+        "MDR": "mdr",
+        "XDR": "xdr",
+        "Modified MDR": "mdr",  # TODO: (WAITING) confirm this value
+        "RR TB": "rr",
+        "MDR TB": "mdr",
+        "XDR TB": "xdr",
+        "RRTB": "rr",
     }[value]
 
 
@@ -923,10 +1269,13 @@ def clean_date(messy_date_string):
     if messy_date_string:
         if isinstance(messy_date_string, datetime.date):
             return messy_date_string
-        # TODO: Might be safer to assume a format and raise an exception if its in a different format
-        # parse("") returns today, which we don't want.
-        cleaned_datetime = parse(messy_date_string)
-        return cleaned_datetime.date()
+
+        # The excel library we use should actually import dates correctly if the column format is date.
+        raise Exception("Got a date like {}".format(messy_date_string))
+
+        # I think some columns are month/day/year and some are day/month/year
+        # cleaned_datetime = parse(messy_date_string, dayfirst=False)
+        # return cleaned_datetime.date()
 
 
 def match_district(domain, xlsx_district_name):
@@ -968,7 +1317,10 @@ def match_facility(domain, xlsx_facility_name):
 
 
 def match_phi(domain, xlsx_phi_name):
-    return match_location(domain, xlsx_phi_name, "phi")
+    location_name, location_id = match_location(domain, xlsx_phi_name, "phi")
+    if not location_id:
+        raise Exception("A valid phi is required")
+    return location_name, location_id
 
 
 def get_tu(domain, phi_id):
@@ -1006,29 +1358,47 @@ class Command(BaseCommand):
 
     def handle(self, domain, excel_file_path, format, **options):
 
-        migration_id = str(datetime.datetime.now())
+        migration_id = self.generate_id()
         self.log_meta_info(migration_id, options['commit'])
         column_mapping = self.get_column_mapping(format)
         city_constants = self.get_city_constants(format)
         case_factory = CaseFactory(domain)
 
+        import_log_file_name = "drtb-import-{}.csv".format(migration_id)
+
         with open_any_workbook(excel_file_path) as workbook:
-            for i, row in enumerate(workbook.worksheets[0].iter_rows()):
-                if i == 0:
-                    # Skip the headers row
-                    continue
-                try:
-                    case_structures = get_case_structures_from_row(
-                        domain, migration_id, column_mapping, city_constants, row
-                    )
-                    logger.info("Creating cases for row {}. Case ids are: {}".format(
-                        i, ", ".join([x.case_id for x in case_structures])
-                    ))
-                    if options['commit']:
-                        case_factory.create_or_update_cases(case_structures)
-                except Exception as e:
-                    logger.info("Creating case structures for row {} failed".format(i))
-                    raise e
+            with open(import_log_file_name, "w") as import_log_file:
+                import_log_writer = csv.writer(import_log_file)
+                import_log_writer.writerow(["row", "case_ids", "exception"])
+
+                for i, row in enumerate(workbook.worksheets[0].iter_rows()):
+                    if i == 0:
+                        # Skip the headers row
+                        continue
+
+                    row_contains_data = any(cell.value for cell in row)
+                    if not row_contains_data:
+                        continue
+
+                    try:
+                        column_mapping.check_for_required_fields(row)
+                        case_structures = get_case_structures_from_row(
+                            domain, migration_id, column_mapping, city_constants, row
+                        )
+                        import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
+                        logger.info("Creating cases for row {}".format(i))
+
+                        if options['commit']:
+                            case_factory.create_or_update_cases(case_structures)
+                    except Exception:
+                        logger.info("Creating case structures for row {} failed".format(i))
+                        exception_as_string = traceback.format_exc()
+                        import_log_writer.writerow([i, "", exception_as_string])
+
+    def generate_id(self):
+        now = datetime.datetime.now()
+        seconds_since_epoch = (now - datetime.datetime(1970, 1, 1)).total_seconds()
+        return str(seconds_since_epoch)
 
     @staticmethod
     def log_meta_info(migration_id, commit):
@@ -1054,6 +1424,6 @@ class Command(BaseCommand):
         if format in (cls.MEHSANA_2016, cls.MEHSANA_2017):
             return MehsanaConstants
         elif format == cls.MUMBAI:
-            return MumbaiColumnMapping
+            return MumbaiConstants
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))

@@ -10,21 +10,21 @@
                 </div>
                 <div class="col-md-11 center kpi-content">
                     <div class="row crop">
-                        <span class="title" ng-bind="cell.label"></span>
+                        <span class="title white" ng-bind="cell.label"></span>
                     </div>
                     <div class="row kpi-numbers">
-                        <span class="number" ng-if="cell.format == 'div'"><span ng-bind="cell.value | indiaNumbers"></span>/<span ng-bind="cell.all | indiaNumbers"></span></span>
-                        <span class="number" ng-if="cell.format == 'number'" ng-bind="cell.value | indiaNumbers"></span>
+                        <span class="number white" ng-if="cell.format == 'div'"><span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span class="white" ng-bind="cell.all | indiaNumbers"></span></span>
+                        <span class="number white" ng-if="cell.format == 'number'" ng-bind="cell.value | indiaNumbers"></span>
                         <div ng-if="cell.format == 'percent_and_div'">
-                            <div class="number"><span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
-                            <div class="second_number">(<span ng-bind="cell.value | indiaNumbers"></span>/<span ng-bind="cell.all | indiaNumbers"></span>)</div>
+                            <div class="number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
+                            <div class="second_number white">(<span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span  class="white" ng-bind="cell.all | indiaNumbers"></span>)</div>
                         </div>
                     </div>
                     <div class="row kpi-percents">
                         <p>
-                            <span ng-show="cell.percent !== null">
-                                <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                <span ng-bind="cell.percent | number:2"></span>% from the previous {$ cell.frequency $}
+                            <span class="white" ng-show="cell.percent !== null">
+                                <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>&nbsp;
+                                <span class="white" ng-bind="cell.percent | number:2"></span>% from the previous {$ cell.frequency $}
                             </span>
                             <span class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
                         </p>

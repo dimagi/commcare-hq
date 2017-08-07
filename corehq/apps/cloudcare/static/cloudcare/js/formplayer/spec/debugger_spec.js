@@ -62,5 +62,26 @@ describe('Debugger', function() {
         });
 
     });
-});
 
+    describe('Format Result', function () {
+        var evalXPath = new EvaluateXPath();
+        it('Should handle single values correctly', function () {
+            assert.equal(
+                evalXPath.formatResult("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<result>fun</result>\n"),
+                'fun'
+            );
+        });
+        it('Should handle the empty string value correctly', function () {
+            assert.equal(
+                evalXPath.formatResult("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<result/>\n"),
+                ''
+            );
+        });
+        it('Should handle nested xml correctly', function () {
+            assert.equal(
+                evalXPath.formatResult("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<result>\n  <session>\n    <data/>\n    <context>\n      <deviceid>Formplayer</deviceid>\n      <appversion>Formplayer Version: 2.36</appversion>\n      <username>droberts@dimagi.com</username>\n      <userid>9393007a6921eecd4a9f20eefb5c7a8e</userid>\n    </context>\n    <user>\n      <data>\n        <commcare_first_name/>\n        <commcare_phone_number/>\n        <commcare_last_name/>\n        <commcare_project>openmrs-test</commcare_project>\n        <user_type>standard</user_type>\n      </data>\n    </user>\n  </session>\n</result>\n"),
+                '  <session>\n    <data/>\n    <context>\n      <deviceid>Formplayer</deviceid>\n      <appversion>Formplayer Version: 2.36</appversion>\n      <username>droberts@dimagi.com</username>\n      <userid>9393007a6921eecd4a9f20eefb5c7a8e</userid>\n    </context>\n    <user>\n      <data>\n        <commcare_first_name/>\n        <commcare_phone_number/>\n        <commcare_last_name/>\n        <commcare_project>openmrs-test</commcare_project>\n        <user_type>standard</user_type>\n      </data>\n    </user>\n  </session>'
+            );
+        });
+    });
+});

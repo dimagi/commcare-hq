@@ -186,7 +186,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                             // this is sending back a full html page, likely login, so no error message.
                             customError = null;
                         }
-                        alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                        hqImport("style/js/alert_user.js").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);

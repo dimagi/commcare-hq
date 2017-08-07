@@ -7,12 +7,13 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * :param: {String} restoreAsUsername - The username to restore as. Does not include
          *      `@<domain>.commcarehq.org` suffix
          * Logs a user in by setting the property on the current user and
-         * setting it in localStorage
+         * setting it in a cookie
          */
         logInAsUser: function(restoreAsUsername) {
             var currentUser = FormplayerFrontend.request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
-            window.localStorage.setItem(
+
+            $.cookie(
                 Utils.Users.restoreAsKey(
                     currentUser.domain,
                     currentUser.username
@@ -21,7 +22,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
             );
         },
         restoreAsKey: function(domain, username) {
-            return domain + ':' + username;
+            return 'restoreAs:' + domain + ':' + username;
         },
         /**
          * getRestoreAsUser
@@ -29,12 +30,10 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * :param: {String} domain
          * :param: {String} username - username of the current user
          *
-         * Returns the restore as user from localstorage or null if it doesn't exist
+         * Returns the restore as user from the cookies or null if it doesn't exist
          */
         getRestoreAsUser: function(domain, username) {
-            return window.localStorage.getItem(
-                Utils.Users.restoreAsKey(domain, username)
-            ) || null;
+            return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
         },
 
         /**
@@ -43,13 +42,10 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * :param: {String} domain
          * :param: {String} username - username of the current user
          *
-         * Clears the restore as user from localstorage with an empty string
+         * Clears the restore as user from the cookies
          */
         clearRestoreAsUser: function(domain, username) {
-            return window.localStorage.setItem(
-                Utils.Users.restoreAsKey(domain, username),
-                ''
-            );
+            return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
 });

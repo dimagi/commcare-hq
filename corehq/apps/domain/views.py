@@ -101,7 +101,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
     get_feature_name,
-    PricingTable,
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
@@ -1427,7 +1426,16 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
-            'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
+            'editions': [
+                (edition.lower(), DESC_BY_EDITION[edition])
+                for edition in [
+                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -2922,13 +2930,17 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        exclude_previews = []
+        if not toggles.APP_MANAGER_V1.enabled_for_request(self.request):
+            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
-            'features': self.features(),
+            'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }
 
     def post(self, request, *args, **kwargs):
         for feature, enabled in self.features():
             self.update_feature(feature, enabled, feature.slug in request.POST)
+        feature_previews.previews_dict.clear(self.domain)
 
         return redirect('feature_previews', domain=self.domain)
 

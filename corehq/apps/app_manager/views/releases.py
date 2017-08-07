@@ -136,8 +136,13 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_form': prompt_settings_form,
     })
     if not app.is_remote_app():
-        if not toggles.APP_MANAGER_V1.enabled(request.user.username) and len(app.modules) == 0:
-            context.update({'intro_only': True})
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
+            if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
+                if app.version <= 2:
+                    context.update({'intro_only': True})
+            else:
+                if len(app.modules) == 0:
+                    context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()

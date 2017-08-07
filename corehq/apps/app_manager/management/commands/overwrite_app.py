@@ -25,7 +25,7 @@ class Command(BaseCommand):
         self.to_domain = to_domain
         app = get_current_app_doc(self.to_domain, to_app_id)
         latest_master_build = get_app(None, from_app_id, latest=True)
-        overwrite_app(app, latest_master_build, self.report_map)
+        overwrite_app(app, latest_master_build, self.report_map, maintain_ids=True)
 
     @property
     def report_map(self):

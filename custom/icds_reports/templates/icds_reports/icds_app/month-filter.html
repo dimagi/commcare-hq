@@ -3,14 +3,8 @@
         <h3 class="modal-title" id="modal-title">Select Month and Year<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
     </div>
     <div class="modal-body" id="modal-body">
-        <div class="form-group" style="margin: 20px 50px;">
-            <label for="email">Day (For Testing):</label>
-            <ui-select ng-model="$ctrl.selectedDay" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
-                <ui-select-match placeholder="Day"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                  <ui-select-choices repeat="day.id as day in $ctrl.days | propsFilter: {name: $select.search}">
-                    <div ng-bind-html="day.name | highlight: $select.search"></div>
-                  </ui-select-choices>
-            </ui-select>
+        <div class="alert alert-info">
+          <strong>Info!</strong> Please select a date that is not in the future.
         </div>
         <div class="form-group" style="margin: 20px 50px;">
             <label for="email">Month:</label>

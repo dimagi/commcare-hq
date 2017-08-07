@@ -55,10 +55,16 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? $filter('indiaNumbers')(row.severe) : 'N/A';
-        var moderate = row ? $filter('indiaNumbers')(row.moderate) : 'N/A';
-        var normal = row ? $filter('indiaNumbers')(row.normal) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
+        var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
+        var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
+            '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
+            '<div>% Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div>' +
+            '<div>% Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -70,7 +76,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             vm.steps['map'].label = 'Map';
         }
 
-        maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -110,6 +116,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,
@@ -152,7 +159,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM) or Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with weight-for-height below -2 standard deviations (moderate acute malnutrition) or -3 standard deviations (severe acute malnutrition) of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
                 });

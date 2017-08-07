@@ -11,7 +11,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
-            return locationType.name;
+            return locationType.name.charAt(0).toUpperCase() + locationType.name.slice(1);
         }).join(', ');
     };
 
@@ -254,7 +254,6 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             vm.selectedLocations = selectedLocations;
             vm.currentLevel = selectedLocationIndex();
             vm.selectedLocation = vm.selectedLocations[selectedLocationIndex()];
-
 
             if (selectedLocationIndex() >= 0) {
                 vm.selectedLocationId = vm.selectedLocation.location_id;

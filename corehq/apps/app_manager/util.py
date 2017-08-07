@@ -121,37 +121,44 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
-    def change_xmlns(xform, replacing):
+
+    def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render()
-        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-        data = data.replace(replacing, xmlns, 1)
+        data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
-        xml = xform.render()
-        return xform, xml
+        return xform.render()
 
     try:
         xform = XForm(xml)
     except XFormException:
         pass
     else:
-        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-        for duplicate in duplicates:
-            if form == duplicate:
-                continue
-            else:
-                xform, xml = change_xmlns(xform, xform.data_node.tag_xmlns)
-                break
-
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
-            xform, xml = change_xmlns(xform, GENERIC_XMLNS)
+        # we assume form.get_unique_id() is unique across all of HQ and
+        # therefore is suitable to create an XMLNS that will not confict
+        # with any other form
+        uid = form.get_unique_id()
+        tag_xmlns = xform.data_node.tag_xmlns
+        new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
+        if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
+            xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+        else:
+            forms = [form_
+                for form_ in app.get_xmlns_map().get(tag_xmlns, [])
+                if form_.form_type != 'shadow_form']
+            if len(forms) > 1 or (len(forms) == 1 and forms[0] is not form):
+                if new_xmlns == tag_xmlns:
+                    new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
+                # form most likely created by app.copy_form(...)
+                # or form is being updated with source copied from other form
+                xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
     form.source = xml
 
-    # For registration forms, assume that the first question is the case name
-    # unless something else has been specified
     if form.is_registration_form():
+        # For registration forms, assume that the first question is the
+        # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
             path = form.actions.open_case.name_path
@@ -161,6 +168,8 @@ def save_xform(app, form, xml):
                     path = None
             if not path and len(questions):
                 form.actions.open_case.name_path = questions[0]['value']
+
+    return xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -282,27 +291,6 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
-def new_careplan_module(app, name, lang, target_module):
-    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
-    module = app.add_module(CareplanModule.new_module(
-        name,
-        lang,
-        target_module.unique_id,
-        target_module.case_type
-    ))
-
-    forms = [form_class.new_form(lang, name, mode)
-                for form_class in [CareplanGoalForm, CareplanTaskForm]
-                for mode in ['create', 'update']]
-
-    for form, source in forms:
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = source
-
-    return module
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
@@ -403,14 +391,14 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_unique_ids(app_source):
+def update_unique_ids(app_source, id_map=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 
-    def change_form_unique_id(form):
+    def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = random_hex()
+        new_unique_id = map.get(form['xmlns'], random_hex())
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -422,10 +410,12 @@ def update_unique_ids(app_source):
         del app_source['user_registration']
 
     id_changes = {}
+    if id_map is None:
+        id_map = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f])
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
             id_changes[old_id] = new_id
 
     for reference_path in form_id_references:

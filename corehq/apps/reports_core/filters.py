@@ -29,6 +29,10 @@ class BaseFilter(object):
     location_filter = False
 
     def __init__(self, name, params=None):
+        """
+        kwargs:
+            params: List of FilterParam objects
+        """
         self.name = name
         self.params = params or []
 

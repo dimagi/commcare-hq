@@ -14,13 +14,14 @@ from corehq.apps.app_manager.app_schemas.session_schema import get_session_schem
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
 from corehq.apps.app_manager.exceptions import AppManagerException
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
-from corehq import toggles, privileges, feature_previews
+from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -45,9 +46,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
-from corehq.apps.tour import tours
-from corehq.apps.analytics import ab_tests
-from corehq.apps.domain.models import Domain
 from corehq.util.context_processors import websockets_override
 
 
@@ -105,9 +103,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
-    vellum_features = toggles.toggles_dict(username=request.user.username,
-                                           domain=domain)
-    vellum_features.update(feature_previews.previews_dict(domain))
+    vellum_features = toggles.toggles_dict(username=request.user.username, domain=domain)
+    vellum_features.update({'advanced_itemsets': add_ons.show("advanced_itemsets", request, app)})
     include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
@@ -148,7 +145,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': should_show_preview_app(
             request,

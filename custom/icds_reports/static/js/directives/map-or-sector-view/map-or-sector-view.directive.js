@@ -2,12 +2,13 @@
 
 function MapOrSectorController() {
     var vm = this;
-    vm.height = 650;
+    vm.height = vm.location && vm.location.location_type === 'block' ? 700 : 2000;
 
     vm.chartOptions = {
         chart: {
             type: 'multiBarHorizontalChart',
             height: vm.height,
+            width: 1000,
             margin: {
                 bottom: 120,
                 left: 200,
@@ -19,7 +20,7 @@ function MapOrSectorController() {
                 return d[1];
             },
             showControls: false,
-            showValues: true,
+            showValues: false,
             duration: 500,
             xAxis: {
                 showMaxMin: false,
@@ -44,6 +45,7 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
             mode: '@',
             data: '=',
             templatePopup: '&',
+            location: '=',
         },
         templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
         bindToController: true,

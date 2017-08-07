@@ -3,6 +3,7 @@ import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
+from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
     UnknownContentType,
@@ -121,8 +122,13 @@ class Content(models.Model):
     class Meta:
         abstract = True
 
-    def get_one_way_phone_number(self, recipient):
+    @classmethod
+    def get_one_way_phone_number(cls, recipient):
         phone_number = get_one_way_number_for_recipient(recipient)
+
+        if not phone_number and isinstance(recipient, CommCareUser):
+            if recipient.memoized_usercase:
+                phone_number = get_one_way_number_for_recipient(recipient.memoized_usercase)
 
         if not phone_number or len(phone_number) <= 3:
             # Avoid processing phone numbers that are obviously fake to

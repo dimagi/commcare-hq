@@ -140,7 +140,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "current_address_ward",
                 "calculate_total": false,
@@ -198,7 +201,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "episode_treating_hospital",
                 "calculate_total": false,
@@ -258,9 +264,12 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
-                "field": "episode_fo",
+                "field": "fo",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Assigned FO"
@@ -280,7 +289,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "registered_by",
                 "calculate_total": false,
@@ -417,7 +429,13 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "F": "Initiated on Treatment",
+                        "N": "Not Initiated on Treatment"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "treatment_initiation_status",
                 "calculate_total": false,

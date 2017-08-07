@@ -31,7 +31,7 @@
 -        <div class='col-sm-9 wide-select2s'>
 -            <div class="panel panel-default case-properties"
 -                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-+    {% if app.advanced_app_builder or form.actions.open_case.condition.type == 'if' %}
++    {% if add_ons.conditional_form_actions %}
 +    <div class="panel panel-appmanager" data-bind="visible: allow.condition()">
 +        <div class="panel-heading">
 +            <h4 class="panel-title panel-title-nolink">
@@ -80,7 +80,7 @@
 +                <input type="checkbox" data-bind="checked: close_case"/>
 +                {% trans "Close this case when the form is complete" %}
 +            </label>
-+            {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
++            {% if add_ons.conditional_form_actions %}
 +            <div data-bind="template: {
 +                name: 'case-config:condition',
 +                data: {condition: $data.close_condition, config: $data},
@@ -98,20 +98,6 @@
 +    <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
      <div data-bind="saveButton: saveButton"></div>
 -    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
-+
-+    <p class="lead">
-+        {% if not app.advanced_app_builder %}
-+            {% if form.get_action_type == 'open' %}
-+                This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form. Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
-+            {% else %}
-+                This is a <strong><i class="fcc fcc-app-updateform"></i> Followup</strong> form. Use Followup forms to update cases in your <strong><i class="fa fa-bars"></i> Case List</strong>.
-+            {% endif %}
-+            <br />
-+        {% endif %}
-+        {% blocktrans %}
-+            <strong>Cases</strong> give you a way to track patients, farms, and other entities over time.
-+        {% endblocktrans %}
-+    </p>
 +
      <div data-bind="with: caseConfigViewModel">
 -        <div class="form-inline container-fluid">
@@ -133,17 +119,32 @@
 -        <div data-bind="if: actionType() === 'update'">
 -            <div class="container-fluid"
 -                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
-+        {% if app.advanced_app_builder or form.actions.subcases %}
++
 +        <div class="panel panel-appmanager">
 +            <div class="panel-heading">
 +                <h4 class="panel-title panel-title-nolink">
-+                    {% trans "Case Registration" %}
++                    {% trans "Cases" %}
 +                </h4>
 +            </div>
 +            <div class="panel-body">
 +                <div class="container-fluid">
-+                    {% trans "This form registers a new case" as registers_case %}
-+                    {% trans "This form loads a case and may then update or close it" as updates_case %}
++                    <p class="lead">
++                        {% blocktrans %}
++                        <span data-bind="visible: showLeadRegistration">
++                            This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form.
++                            Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
++                        </span>
++                        <span data-bind="visible: showLeadFollowup">
++                            This is a <strong><i class="fcc fcc-app-updateform"></i> Followup</strong> form.
++                            Use Followup forms to update cases in your <strong><i class="fa fa-bars"></i> Case List</strong>.
++                        </span>
++                        <br />
++                        <span><strong>Cases</strong> give you a way to track patients, farms, and other entities over time.</span>
++                        {% endblocktrans %}
++                    </p>
++
++                    {% trans "Registration: This form opens a new case" as registers_case %}
++                    {% trans "Followup: This form loads a case and may then update or close it" as updates_case %}
 +                    <select class="form-control" id="case-action-select" data-bind="
 +                        optstr: [{value: 'open', label: '{{ registers_case|escapejs }}'},
 +                                 {value: 'update', label: '{{ updates_case|escapejs }}'}],
@@ -187,7 +188,6 @@
 -                <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">
 -                    <i class="fa fa-trash"></i>
 -                    {% trans "Remove case" %}
-+        {% endif %}
 +        {% if form.source %}
 +            <!--ko if: actionType() === 'update' -->
 +            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}"></div>
@@ -195,7 +195,7 @@
 +            <!--ko if: actionType() === 'open' -->
 +            <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}"></div>
 +            <!--/ko-->
-+            {% if app.advanced_app_builder or form.actions.subcases %}
++            {% if add_ons.subcases %}
 +                <!--ko if: actionType() !== 'none'-->
 +                <hr />
 +                <p class="lead">

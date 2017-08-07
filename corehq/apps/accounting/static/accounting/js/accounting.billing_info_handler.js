@@ -106,6 +106,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
             var handler = new EmailSelect2Handler($(input).attr("name"));
             handler.init();
         });
+        $(".ko-email-select2").removeAttr('required');
 
         _.each($(".ko-async-select2"), function(input) {
             var handler = new AsyncSelect2Handler($(input).attr("name"));
