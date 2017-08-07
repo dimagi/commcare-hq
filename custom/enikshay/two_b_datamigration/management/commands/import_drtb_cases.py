@@ -42,7 +42,7 @@ class FieldValidationFailure(ValidationFailure):
     def __init__(self, value, column_name, *args, **kwargs):
         self.value = value
         self.column_name = column_name
-        msg = "Unexpected value in {} column: {}".format(value, column_name)
+        msg = "Unexpected value in {} column: {}".format(column_name, value)
         super(FieldValidationFailure, self).__init__(msg, *args, **kwargs)
 
 
