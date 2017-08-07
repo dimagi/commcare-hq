@@ -56,32 +56,32 @@ class ImportDRTBTestMixin(object):
 
         with patch(match_location_path, return_value=(None, None)),\
                 patch(match_phi_path, return_value=(None, None)),\
-                patch(get_users_path, return_value=[mock_user]):
-            with patch(open_any_workbook_path) as open_any_workbook_mock:
-                rows = [[]] + import_rows  # Add headers to the row list
-                open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
-                with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
-                    try:
+                patch(get_users_path, return_value=[mock_user]), \
+                patch(open_any_workbook_path) as open_any_workbook_mock:
+            rows = [[]] + import_rows  # Add headers to the row list
+            open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
+            with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
+                try:
 
-                        extra_args = []
-                        if commit:
-                            extra_args.append("--commit")
-                        call_command(
-                            'import_drtb_cases',
-                            self.domain,
-                            "fake-excel-file-path.xlsx",
-                            format,
-                            *extra_args
-                        )
+                    extra_args = []
+                    if commit:
+                        extra_args.append("--commit")
+                    call_command(
+                        'import_drtb_cases',
+                        self.domain,
+                        "fake-excel-file-path.xlsx",
+                        format,
+                        *extra_args
+                    )
 
 
-                        with open("drtb-import-foo.csv", "r") as log_csv:
-                            reader = csv.DictReader(log_csv)
-                            lines = [line for line in reader]
-                            log_csv.seek(0)
-                            yield log_csv, lines
-                    finally:
-                        os.remove("drtb-import-foo.csv")
+                    with open("drtb-import-foo.csv", "r") as log_csv:
+                        reader = csv.DictReader(log_csv)
+                        lines = [line for line in reader]
+                        log_csv.seek(0)
+                        yield log_csv, lines
+                finally:
+                    os.remove("drtb-import-foo.csv")
 
     def _create_workbook(self, rows):
         """
