@@ -2,6 +2,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+from corehq.util.log import with_progress_bar
 from custom.enikshay.private_sector_datamigration.models import UserDetail, Agency
 
 
@@ -22,26 +23,26 @@ class Command(BaseCommand):
             ],
         )
 
-        total_to_process = locs_matching_type.count()
+        user_ids_updated = []
 
-        for i, loc in enumerate(locs_matching_type):
+        for i, loc in enumerate(with_progress_bar(locs_matching_type)):
             private_sector_agency_id = loc.metadata.get('private_sector_agency_id', '')
             if not private_sector_agency_id.isdigit():
                 continue
             agency_id = int(private_sector_agency_id)
+
             try:
                 agency = Agency.objects.get(agencyId=agency_id)
             except Agency.DoesNotExist:
                 continue
-            loc.name = "%s - %d" % (agency.agencyName, agency_id)
-            loc.save()
+
             try:
                 user_detail = UserDetail.objects.get(agencyId=agency_id, isPrimary=True)
             except UserDetail.DoesNotExist:
                 user_detail = None
             location_user = CommCareUser.get_by_user_id(loc.user_id)
 
-            if user_detail is None or user_detail.firstName in ['dummy', 'DUMMY', 'Not Available']:
+            if user_detail is None or user_detail.firstName.lower() in ['dummy', 'not available', 'na']:
                 agency_name_split = agency.agencyName.split()
                 if len(agency_name_split) == 1:
                     location_user.first_name = agency_name_split[0]
@@ -49,8 +50,8 @@ class Command(BaseCommand):
                 else:
                     location_user.first_name = ' '.join(agency_name_split[:-1])
                     location_user.last_name = agency_name_split[-1]
-            else:
-                location_user.first_name = user_detail.firstName
-                location_user.last_name = user_detail.lastName
-            location_user.save()
-            print 'processed agency %d, %d of %d' % (agency_id, i, total_to_process)
+                location_user.save()
+                user_ids_updated.append(location_user._id)
+
+        print user_ids_updated
+        print "Updated {} users".format(len(user_ids_updated))
