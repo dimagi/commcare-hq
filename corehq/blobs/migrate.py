@@ -517,7 +517,7 @@ class Migrator(object):
         sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
         self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **options):
         processor = DocumentProcessorController(
             self._get_document_provider(),
             self._get_doc_migrator(filename),
@@ -591,7 +591,7 @@ class ExportByDomain(Migrator):
         self.domain = domain
         self.iteration_key = self.iteration_key + '/domain=' + self.domain
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **options):
         if not self.domain:
             raise MigrationError("Must specify domain")
 
@@ -623,7 +623,7 @@ class SqlModelMigrator(Migrator):
     def by_domain(self, domain):
         self.domain = domain
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None,  **options):
         from corehq.apps.dump_reload.sql.dump import get_all_model_querysets_for_domain
 
         if not self.domain:
@@ -638,7 +638,8 @@ class SqlModelMigrator(Migrator):
         migrator = self.migrator_class(self.slug, self.domain)
 
         with migrator:
-            for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
+            querysets = get_all_model_querysets_for_domain(self.model_class, self.domain, limit_to_db)
+            for model_class, queryset in querysets:
                 for obj in queryset.iterator():
                     migrator.process_object(obj)
                     if migrator.total_blobs % chunk_size == 0:

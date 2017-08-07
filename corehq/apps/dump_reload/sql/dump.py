@@ -96,12 +96,18 @@ def get_querysets_to_dump(domain, excludes):
             yield model_class, queryset
 
 
-def get_all_model_querysets_for_domain(model_class, domain):
+def get_all_model_querysets_for_domain(model_class, domain, limit_to_db=None):
     using = router.db_for_read(model_class)
     if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
         using = partition_config.get_form_processing_dbs()
     else:
         using = [using]
+
+    if limit_to_db:
+        if limit_to_db not in using:
+            raise DomainDumpError('DB specified is not valide for '
+                                  'model class: {} not in {}'.format(limit_to_db, using))
+        using = [limit_to_db]
 
     for db_alias in using:
         if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
