@@ -21,7 +21,7 @@
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
                     <li ng-class="{'active': $location.path().indexOf('/underweight_children') !== -1}">
-                        <a href="{$ goToStep('underweight_children', $location.search()) $}" class="fa">{% trans "Prevalence of Undernutrition (Weight-for-Age)" %}
+                        <a href="{$ goToStep('underweight_children', $location.search()) $}" class="fa">{% trans "Prevalence of Underweight (Weight-for-Age)" %}
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/wasting') !== -1}">
@@ -139,7 +139,7 @@
             <li ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
                 <div class="row pointer" ng-click="$location.path('/progress_report'); healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-file-text-o" aria-hidden="true"></i></div>
-                    <div class="col-sm-9">{% trans "Progress Report" %}</div>
+                    <div class="col-sm-9">{% trans "ICDS-CAS Fact Sheet" %}</div>
                 </div>
             </li>
             <li ng-class="{'active': $location.path().indexOf('/download') !== -1}">

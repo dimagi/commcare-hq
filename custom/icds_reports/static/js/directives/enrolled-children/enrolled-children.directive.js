@@ -53,7 +53,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div>';
     };
 
     vm.loadData = function () {

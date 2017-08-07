@@ -52,7 +52,12 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div><div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div>' +
+            '<div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div>' +
+            '<div>% of AWCs open yesterday: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -150,7 +155,6 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 axisLabelDistance: -100,
                 rotateLabels: -45,
             },
-
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
@@ -167,10 +171,13 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                         return d3.format(",")(day['y']);
                     };
 
+                    var total = findValue(vm.chartData[1].values, d.value);
+                    var value = findValue(vm.chartData[0].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.</span>";
+                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
+                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>% of AWCs open yesterday: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });

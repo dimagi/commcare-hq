@@ -51,8 +51,11 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var percent = row ? d3.format('.2%')(row.in_month / row.all) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of AWCs with a functional toilet: <strong>' + total + '</strong></div><div>% of AWCs with a functional toilet: <strong>' + percent + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of AWCs with a functional toilet: <strong>' + total + '</strong></div>' +
+            '<div>% of AWCs with a functional toilet: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -166,7 +169,6 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total number of AWCs with a functional toilet: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
                     tooltip_content += "<p>% of AWCs with a functional toilet: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
-                    tooltip_content += "<br/><p>Percentage of AWCs with a functional toilet</p>";
 
                     return tooltip_content;
                 });

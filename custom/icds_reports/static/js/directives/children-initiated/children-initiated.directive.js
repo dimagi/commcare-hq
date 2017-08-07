@@ -52,10 +52,12 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
+        var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>';
+            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>' +
+            '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -169,9 +171,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                         return d3.format(",")(day['y']);
                     };
 
+                    var total = findValue(vm.chartData[1].values, d.value);
+                    var value = findValue(vm.chartData[0].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + total + "</strong></p>";
+                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + value + "</strong></p>";
+                    tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<br/><p>Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.</p>"
 
                     return tooltip_content;
                 });

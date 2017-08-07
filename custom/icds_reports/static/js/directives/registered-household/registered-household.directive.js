@@ -49,7 +49,10 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of household registered: <strong>' + household + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Total number of household registered: <strong>' + household + '</strong></div>';
     };
 
     vm.loadData = function () {

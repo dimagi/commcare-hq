@@ -52,7 +52,12 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div><div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div>' +
+            '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div>' +
+            '<div>% of children who have recieved complete immunizations required by age 1: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -166,10 +171,13 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                         return d3.format(",")(day['y']);
                     };
 
+                    var total = findValue(vm.chartData[1].values, d.value);
+                    var value = findValue(vm.chartData[0].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.</span>";
+                    tooltip_content += "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });

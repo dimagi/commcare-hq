@@ -374,7 +374,8 @@ def get_maternal_child_data(config):
         'records': [
             [
                 {
-                    'label': _('Prevalence of Underweight (Weight-for-Age)'),
+                    'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
+                    'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                         "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
@@ -715,8 +716,8 @@ def get_demographics_data(yesterday, config):
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
-            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
             all_persons=Sum('cases_person')
         )
@@ -826,8 +827,8 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
+                    'label': _('Adolescent Girls (11-14 years)'),
+                    'help_text': _('Total number of adolescent girls (11 - 14 years) who are registered'),
                     'percent': percent_increase(
                         'person_adolescent_all',
                         yesterday_data,
@@ -844,9 +845,9 @@ def get_demographics_data(yesterday, config):
                 }
             ], [
                 {
-                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
+                    'label': _('Adolescent Girls (11-14 years) enrolled for ICDS services'),
                     'help_text': _((
-                        "Total number of adolescent girls (11 - 18 years) "
+                        "Total number of adolescent girls (11 - 14 years) "
                         "who are registered and enrolled for ICDS services"
                     )),
                     'percent': percent_increase(
@@ -1323,9 +1324,9 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         tmp_name = name
         rows_for_location += 1
 
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+    chart_data['green'].append([tmp_name, loc_data['green']])
+    chart_data['orange'].append([tmp_name, loc_data['orange']])
+    chart_data['red'].append([tmp_name, loc_data['red']])
 
     return {
         "chart_data": [
