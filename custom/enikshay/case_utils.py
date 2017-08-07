@@ -182,6 +182,15 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
     if not open_referral_cases:
         return None
     if len(open_referral_cases) == 1:
