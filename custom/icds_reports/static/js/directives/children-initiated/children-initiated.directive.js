@@ -178,7 +178,6 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + total + "</strong></p>";
                     tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + value + "</strong></p>";
                     tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
-                    tooltip_content += "<br/><p>Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.</p>"
 
                     return tooltip_content;
                 });
