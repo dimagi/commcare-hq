@@ -5,9 +5,11 @@ from contextlib import contextmanager
 
 from django.core.management import call_command
 from django.test import SimpleTestCase
-from mock import patch
+from mock import patch, MagicMock
 from openpyxl import Workbook
 
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import DeviceIdLastUsed
 from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     Command as ImportDRTBCasesCommand,
@@ -43,9 +45,18 @@ class ImportDRTBTestMixin(object):
             "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.match_location"
         open_any_workbook_path = \
             "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.open_any_workbook"
+        get_users_path = \
+            "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.get_users_by_location_id"
+        mock_user = MagicMock(
+            devices=[DeviceIdLastUsed(device_id="drtb-case-import-script")],
+            is_demo_user=False,
+            user_data={"id_issuer_body": "FOO"},
+            spec=CommCareUser,
+        )
 
         with patch(match_location_path, return_value=(None, None)),\
-                patch(match_phi_path, return_value=(None, None)):
+                patch(match_phi_path, return_value=(None, None)),\
+                patch(get_users_path, return_value=[mock_user]):
             with patch(open_any_workbook_path) as open_any_workbook_mock:
                 rows = [[]] + import_rows  # Add headers to the row list
                 open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
