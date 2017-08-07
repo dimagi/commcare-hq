@@ -25,7 +25,6 @@ VERSIONED_DIRS = [
 RELATIVE_DIFF_STORAGE = 'tests/data/report_builder_v2_diffs/'
 
 
-
 def get_diff_filename(v2_dir, filename):
     dir_part = ".".join([x for x in v2_dir.split("/") if x and x != ".."])
     if dir_part:
@@ -65,7 +64,6 @@ class Command(BaseCommand):
                 (dir, v2_relative, f) for f in filecmp.dircmp(v1_full, v2_full).common_files
                 if not f.endswith(".pyc")
             ])
-
 
         print("Computing diffs...")
         for v1_dir, v2_dir, tracked_file in common_files:
