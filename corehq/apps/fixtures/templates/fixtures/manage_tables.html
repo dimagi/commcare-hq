@@ -4,10 +4,11 @@
 {% load i18n %}
 
 {% block js-inline %}
-    {% registerurl 'download_fixtures' domain %}
-    {% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
-    {% registerurl 'fixture_data_types' domain %}
-    {% registerurl 'update_lookup_tables' domain %}
+    {# TODO: fix urllib.js #}
+    {#% registerurl 'download_fixtures' domain %#}
+    {#% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %#}
+    {#% registerurl 'fixture_data_types' domain %#}
+    {#% registerurl 'update_lookup_tables' domain %#}
 {% endblock %}
 
 {% block page_title %}
