@@ -4,6 +4,7 @@ from collections import namedtuple
 import six
 from StringIO import StringIO
 
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
@@ -293,6 +294,8 @@ class CaseAccessors(object):
             return CaseAccessorCouch
 
     def get_case(self, case_id):
+        if not case_id:
+            raise CaseNotFound
         return self.db_accessor.get_case(case_id)
 
     def get_cases(self, case_ids, ordered=False, prefetched_indices=None):

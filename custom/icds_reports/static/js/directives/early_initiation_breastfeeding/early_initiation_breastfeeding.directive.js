@@ -54,7 +54,12 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div><div>Total Number of Children who were put to the breast within one hour of birth: <strong>' + birth + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.birth / row.in_month) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div>' +
+            '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>' + birth + '</strong></div>' +
+            '<div>% children who were put to the breast within one hour of birth: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -149,7 +154,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total Number of Children born in the given month:<strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>Total Number of Children who were put to the breast within one hour of birth:  <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children who were put to the breast within one hour of birth</span>";
 
                     return tooltip_content;
                 });

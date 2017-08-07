@@ -1,4 +1,7 @@
 import datetime
+from cStringIO import StringIO
+from dimagi.utils.csv import UnicodeWriter
+
 from collections import defaultdict
 import pytz
 
@@ -14,12 +17,15 @@ from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 from .case_utils import (
     CASE_TYPE_EPISODE,
     get_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
+    get_person_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -34,7 +40,6 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
-from .model_migration_sets import EpisodeFacilityIDMigration
 
 logger = get_task_logger(__name__)
 
@@ -73,50 +78,66 @@ class EpisodeUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
+        self.updaters = [
+            EpisodeAdherenceUpdate,
+            EpisodeVoucherUpdate,
+            EpisodeTestUpdate,
+        ]
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
         update_count = 0
         noupdate_count = 0
-        error_count = 0
+        errors = []
         with Timer() as t:
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases():
-                try:
-                    adherence_update = EpisodeAdherenceUpdate(self.domain, episode)
-                    voucher_update = EpisodeVoucherUpdate(self.domain, episode)
-                    test_update = EpisodeTestUpdate(self.domain, episode)
-                    episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
-
-                    update_json = adherence_update.update_json()
-                    update_json.update(voucher_update.update_json())
-                    update_json.update(test_update.update_json())
-                    update_json.update(episode_facility_id_migration.update_json())
-                    if update_json:
-                        updates.append((episode.case_id, update_json, False))
-                        update_count += 1
-                    else:
-                        noupdate_count += 1
-                    if len(updates) == batch_size:
-                        bulk_update_cases(self.domain, updates)
-                        updates = []
-                except Exception, e:
-                    error_count += 1
-                    logger.error(
-                        "Error calculating updates for episode case_id({}): {}".format(
-                            episode.case_id,
-                            e
+                update_json = {}
+                for updater in self.updaters:
+                    try:
+                        update_json.update(updater(self.domain, episode).update_json())
+                    except Exception as e:
+                        errors.append(
+                            [episode.case_id, updater.__class__, e]
                         )
-                    )
+                if update_json:
+                    updates.append((episode.case_id, update_json, False))
+                    update_count += 1
+                else:
+                    noupdate_count += 1
+                if len(updates) >= batch_size:
+                    bulk_update_cases(self.domain, updates)
+                    updates = []
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates)
-        logger.info(
+
+        summary = (
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
             "cases didn't need update. ".format(
-                domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
+                domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
                 noupdates=noupdate_count)
+        )
+        self.send_final_email(summary, errors)
+
+    def send_final_email(self, message, errors):
+        subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
+        recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
+        cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
+
+        csv_file = StringIO()
+        writer = UnicodeWriter(csv_file)
+        writer.writerow(['Episode ID', 'Updater Class', 'Error'])
+        writer.writerows(errors)
+
+        attachment = {
+            'title': "failed_episodes_{}.csv".format(datetime.date.today()),
+            'mimetype': 'text/csv',
+            'file_obj': csv_file,
+        }
+        send_html_email_async.delay(
+            subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
         )
 
     def update_single_case(self, episode_case):
@@ -127,10 +148,24 @@ class EpisodeUpdater(object):
             update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
-        # return all open 'episode' cases
         case_accessor = CaseAccessors(self.domain)
         case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        return case_accessor.iter_cases(case_ids)
+        episode_cases = case_accessor.iter_cases(case_ids)
+
+        for episode_case in episode_cases:
+            # if this episode is part of a deleted or archived person, don't update
+            try:
+                person_case = get_person_case_from_episode(self.domain, episode_case.case_id)
+            except ENikshayCaseNotFound:
+                continue
+
+            if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+                continue
+
+            if person_case.closed:
+                continue
+
+            yield episode_case
 
 
 class EpisodeAdherenceUpdate(object):

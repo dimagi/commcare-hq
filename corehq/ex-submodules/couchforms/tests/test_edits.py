@@ -3,6 +3,7 @@ import os
 import uuid
 
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 from mock import patch
 from couchdbkit import RequestFailed
@@ -70,6 +71,54 @@ class EditFormTest(TestCase, TestFileMixin):
             original_xml
         )
         self.assertEqual(xform.get_xml(), edit_xml)
+
+    def test_edit_form_with_attachments(self):
+        attachment_source = './corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'
+        attachment_file = open(attachment_source, 'rb')
+        attachments = {
+            'fruity_file': UploadedFile(attachment_file, 'fruity_file', content_type='image/jpeg')
+        }
+
+        def _get_xml(date, form_id):
+            return """<?xml version='1.0' ?>
+               <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+                   <name>fgg</name>
+                   <date>2011-06-07</date>
+                   <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                       <n1:deviceID>354957031935664</n1:deviceID>
+                       <n1:timeStart>{date}</n1:timeStart>
+                       <n1:timeEnd>{date}</n1:timeEnd>
+                       <n1:username>bcdemo</n1:username>
+                       <n1:userID>user-abc</n1:userID>
+                       <n1:instanceID>{form_id}</n1:instanceID>
+                   </n1:meta>
+               </data>""".format(
+                date=date,
+                attachment_source=attachment_source,
+                form_id=form_id
+            )
+        form_id = uuid.uuid4().hex
+        original_xml = _get_xml('2016-03-01T12:04:16Z', form_id)
+        submit_form_locally(
+            original_xml,
+            self.domain,
+            attachments=attachments,
+        )
+        form = self.formdb.get_form(form_id)
+        self.assertIn('fruity_file', form.attachments)
+        self.assertIn(original_xml, form.get_xml())
+
+        # edit form
+        edit_xml = _get_xml('2016-04-01T12:04:16Z', form_id)
+        submit_form_locally(
+            edit_xml,
+            self.domain,
+        )
+        form = self.formdb.get_form(form_id)
+        self.assertIsNotNone(form.edited_on)
+        self.assertIsNotNone(form.deprecated_form_id)
+        self.assertIn('fruity_file', form.attachments)
+        self.assertIn(edit_xml, form.get_xml())
 
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex

@@ -95,18 +95,26 @@ def get_filter_values(filters, request_dict, user=None):
         raise UserReportsFilterError(unicode(e))
 
 
-def query_dict_to_dict(query_dict, domain):
+def query_dict_to_dict(query_dict, domain, string_type_params):
     """
     Transform the given QueryDict to a normal dict where each value has been
-    converted from a string to a dict (if the value is JSON).
+    converted from a string to a dict (if the value is JSON). params with values 'true'
+    or 'false' or numbers are casted to respective datatypes, unless the key is specified in string_type_params
     Also add the domain to the dict.
 
     :param query_dict: a QueryDict
     :param domain:
+    :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
-    request_dict = json_request(query_dict, booleans_as_strings=True)
+    request_dict = json_request(query_dict)
     request_dict['domain'] = domain
+
+    # json.loads casts strings 'true'/'false' to booleans, so undo it
+    for key in string_type_params:
+        u_key = unicode(key)  # QueryDict's key/values are unicode strings
+        if u_key in query_dict:
+            request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
 
 
@@ -199,10 +207,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def request_dict(self):
+        string_type_params = [
+            filter.name
+            for filter in self.filters
+            if getattr(filter, 'datatype', 'string') == "string"
+        ]
         if self.request.method == 'GET':
-            return query_dict_to_dict(self.request.GET, self.domain)
+            return query_dict_to_dict(self.request.GET, self.domain, string_type_params)
         elif self.request.method == 'POST':
-            return query_dict_to_dict(self.request.POST, self.domain)
+            return query_dict_to_dict(self.request.POST, self.domain, string_type_params)
 
     @property
     @memoized
@@ -516,12 +529,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             })
 
         raw_rows = list(data.get_data())
-        headers = [column.header for column in self.data_source.columns if column.data_tables_column.visible]
+
+        headers = [
+            column.header
+            for column in self.data_source.inner_columns if column.data_tables_column.visible
+        ]
 
         column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
-            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+            if column.visible:
+                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []

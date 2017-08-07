@@ -97,15 +97,35 @@ class TimingContext(object):
         return self
 
     def peek(self):
-        return self.stack[len(self.stack) - 1]
+        return self.stack[-1]
+
+    def is_finished(self):
+        return not self.stack
+
+    def start(self):
+        timer = self.peek()
+        if timer.beginning is not None:
+            raise TimerError("timer already started")
+        timer.start()
+
+    def stop(self, name=None):
+        if name is None:
+            name = self.root.name
+        timer = self.peek()
+        if timer.name != name:
+            raise TimerError("stopping wrong timer: {} (expected {})".format(
+                             timer.name, name))
+        if timer.beginning is None:
+            raise TimerError("timer not started")
+        assert timer.end is None, "timer already ended"
+        self.stack.pop().stop()
 
     def __enter__(self):
-        self.peek().start()
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        timer = self.stack.pop()
-        timer.stop()
+        self.stop(self.peek().name)
 
     def to_dict(self):
         """Get timing data as a recursive dictionary of the format:
@@ -134,3 +154,7 @@ class TimingContext(object):
     def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
         return self.root.to_list(exclude_root)
+
+
+class TimerError(Exception):
+    pass

@@ -18,7 +18,6 @@ from corehq.apps.app_manager.views.apps import (
     copy_app,
     default_new_app,
     delete_app,
-    delete_app_lang,
     drop_user_case,
     edit_app_attr,
     edit_app_langs,

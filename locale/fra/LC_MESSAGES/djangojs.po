@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-31 18:32+0000\n"
+"POT-Creation-Date: 2017-08-01 19:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -22,6 +22,18 @@ msgstr ""
 #: corehq/apps/domain/static/domain/js/pro-bono.js:25
 msgid "Please enter a valid email."
 msgstr "Veuillez entrer une adresse e-mail valide"
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
+#: corehq/apps/locations/static/locations/js/location_types.js:350
+#: corehq/apps/reminders/static/reminders/js/reminders.js:12
+msgid "You have unsaved changes."
+msgstr "Vous avez des modifications non sauvegardées."
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:24
+#, fuzzy
+#| msgid "There was an error saving"
+msgid "There was an error saving."
+msgstr "Une erreur est survenue au cours de l'enregistrement"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:210
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
@@ -191,25 +203,19 @@ msgstr "Image"
 msgid "Audio"
 msgstr "Audio"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1090
 msgid "Icon"
 msgstr "Icône"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
-msgid " (Preview!)"
-msgstr "(Aperçu!)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1095
 msgid "Conditional ID Mapping"
 msgstr "Mappage d'identifiant conditionnel"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1100
 msgid "Calculate"
 msgstr "Calculer"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1103
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1104
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -232,19 +238,19 @@ msgstr "Vous avez des paramètres de dossier non sauvegardées"
 msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:680
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:687
 msgid "Property updated by two questions"
 msgstr "La propriété a été mise à jour par deux questions"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:684
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:691
 msgid "Inside the wrong repeat!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:689
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:696
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu<strong>"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:716
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:723
 msgid "Two properties load to the same question"
 msgstr "Deux propriétés chargent la même question"
 
@@ -2069,7 +2075,7 @@ msgstr "Formulaire XML. "
 msgid "Evaluate XPath"
 msgstr "Évaluez le XPath."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:250
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:258
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2363,11 +2369,6 @@ msgstr ""
 #: corehq/apps/locations/static/locations/js/location.js:41
 msgid "Error saving user"
 msgstr ""
-
-#: corehq/apps/locations/static/locations/js/location_types.js:350
-#: corehq/apps/reminders/static/reminders/js/reminders.js:12
-msgid "You have unsaved changes."
-msgstr "Vous avez des modifications non sauvegardées."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:89
 msgid "Please enter your name."
@@ -2903,3 +2904,6 @@ msgstr ""
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
 msgstr ""
+
+#~ msgid " (Preview!)"
+#~ msgstr "(Aperçu!)"

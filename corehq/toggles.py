@@ -413,7 +413,7 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH,
+    TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
@@ -1058,6 +1058,13 @@ APP_MANAGER_V1 = StaticToggle(
     'Turn OFF prototype for case management onboarding (App Manager V2)',
     TAG_ONE_OFF,
     [NAMESPACE_USER]
+)
+
+APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
+    'app_manager_v2_template_apps',
+    'Experiment with template apps in app builder v2',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(

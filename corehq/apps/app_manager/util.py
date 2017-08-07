@@ -133,10 +133,24 @@ def save_xform(app, form, xml):
         pass
     else:
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
+        # we assume form.get_unique_id() is unique across all of HQ and
+        # therefore is suitable to create an XMLNS that will not confict
+        # with any other form
+        uid = form.get_unique_id()
         tag_xmlns = xform.data_node.tag_xmlns
+        new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
         if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
-            xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-            xml = change_xmlns(xform, GENERIC_XMLNS, xmlns)
+            xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+        else:
+            forms = [form_
+                for form_ in app.get_xmlns_map().get(tag_xmlns, [])
+                if form_.form_type != 'shadow_form']
+            if len(forms) > 1 or (len(forms) == 1 and forms[0] is not form):
+                if new_xmlns == tag_xmlns:
+                    new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
+                # form most likely created by app.copy_form(...)
+                # or form is being updated with source copied from other form
+                xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
     form.source = xml
 
@@ -375,14 +389,14 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_unique_ids(app_source):
+def update_unique_ids(app_source, id_map=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 
-    def change_form_unique_id(form):
+    def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = random_hex()
+        new_unique_id = map.get(form['xmlns'], random_hex())
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -394,10 +408,12 @@ def update_unique_ids(app_source):
         del app_source['user_registration']
 
     id_changes = {}
+    if id_map is None:
+        id_map = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f])
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
             id_changes[old_id] = new_id
 
     for reference_path in form_id_references:

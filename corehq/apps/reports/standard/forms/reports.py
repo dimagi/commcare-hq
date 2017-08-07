@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -161,7 +162,7 @@ class ReprocessXFormErrorView(View):
 
         try:
             reprocess_xform_error_by_id(form_id, domain=domain)
-        except Exception as e:
+        except ReprocessingError as e:
             return json_response({
                 'success': False,
                 'failure_reason': str(e),

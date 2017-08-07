@@ -33,6 +33,18 @@ class FormProcessorCouch(object):
             )
 
     @classmethod
+    def copy_attachments(cls, from_form, to_form):
+        for name, meta in from_form.blobs.items():
+            if name != 'form.xml':
+                with from_form.fetch_attachment(name, stream=True) as content:
+                    to_form.deferred_put_attachment(
+                        content,
+                        name=name,
+                        content_type=meta.content_type,
+                        content_length=meta.content_length,
+                    )
+
+    @classmethod
     def new_xform(cls, form_data):
         _id = extract_meta_instance_id(form_data) or uuid.uuid4().hex
         assert _id

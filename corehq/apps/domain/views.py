@@ -101,7 +101,6 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
     get_feature_name,
-    PricingTable,
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
@@ -1427,7 +1426,16 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
-            'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
+            'editions': [
+                (edition.lower(), DESC_BY_EDITION[edition])
+                for edition in [
+                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
