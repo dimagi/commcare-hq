@@ -19,6 +19,7 @@ from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
 from corehq.apps.users.util import format_username
+from custom.enikshay.login_as_context import get_enikshay_login_as_context
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
@@ -347,7 +348,7 @@ class LoginAsUsers(View):
 
     def _format_user(self, user_json):
         user = CouchUser.wrap_correctly(user_json)
-        return {
+        formatted_user = {
             'username': user.raw_username,
             'customFields': user.user_data,
             'first_name': user.first_name,
@@ -356,6 +357,11 @@ class LoginAsUsers(View):
             'user_id': user.user_id,
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
+        if toggles.ENIKSHAY.enabled(self.domain):
+            formatted_user.update({
+                'enikshay': get_enikshay_login_as_context(user)
+            })
+        return formatted_user
 
 
 @login_and_domain_required

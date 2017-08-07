@@ -111,17 +111,15 @@ class PartitionedModel(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        if kwargs.get('using'):
-            assert kwargs['using'] == self.db
-        else:
-            kwargs['using'] = self.db
-
+        self._add_routing(kwargs)
         return super(PartitionedModel, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if kwargs.get('using'):
+        self._add_routing(kwargs)
+        return super(PartitionedModel, self).delete(*args, **kwargs)
+
+    def _add_routing(self, kwargs):
+        if 'using' in kwargs:
             assert kwargs['using'] == self.db
         else:
             kwargs['using'] = self.db
-
-        return super(PartitionedModel, self).delete(*args, **kwargs)

@@ -529,12 +529,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             })
 
         raw_rows = list(data.get_data())
-        headers = [column.header for column in self.data_source.columns if column.data_tables_column.visible]
+
+        headers = [
+            column.header
+            for column in self.data_source.inner_columns if column.data_tables_column.visible
+        ]
 
         column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
-            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+            if column.visible:
+                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []

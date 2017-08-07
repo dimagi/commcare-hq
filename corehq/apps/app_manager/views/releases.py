@@ -301,7 +301,7 @@ def odk_install(request, domain, app_id, with_media=False):
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
-    profile_url = app.odk_profile_display_url if not with_media else app.odk_media_profile_display_url
+    profile_url = app.odk_profile_url if not with_media else app.odk_media_profile_url
     if build_profile_id is not None:
         profile_url += '?profile={profile}'.format(profile=build_profile_id)
     context = {

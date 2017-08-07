@@ -4918,14 +4918,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    @property
-    def odk_profile_display_url(self):
-        return self.short_odk_url or self.odk_profile_url
-
-    @property
-    def odk_media_profile_display_url(self):
-        return self.short_odk_media_url or self.odk_media_profile_url
-
     def get_odk_qr_code(self, with_media=False, build_profile_id=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:

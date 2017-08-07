@@ -102,6 +102,10 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
+    def copy_attachments(self, from_form, to_form):
+        """Copy attachments from one for to another (exlucding form.xml)"""
+        self.processor.copy_attachments(from_form, to_form)
+
     def is_duplicate(self, xform_id, domain=None):
         """
         Check if there is already a form with the given ID. If domain is specified only check for
