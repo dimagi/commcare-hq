@@ -81,7 +81,7 @@ class SubmissionErrorTest(TestCase):
             file, res = self._submit("simple_form.xml")
             self.assertEqual(201, res.status_code)
             _, res_openrosa3 = self._submit("simple_form.xml", open_rosa_header=OPENROSA_VERSION_3)
-            self.assertEqual(422, res_openrosa3.status_code)
+            self.assertEqual(201, res_openrosa3.status_code)
             self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it

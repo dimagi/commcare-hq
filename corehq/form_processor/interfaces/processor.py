@@ -124,10 +124,10 @@ class FormProcessorInterface(object):
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
 
-    def xformerror_from_xform_instance(self, instance, error_message):
+    def xformerror_from_xform_instance(self, instance, error_message, replace_form_id=True):
         # Set error info on the instance and replace the form_id
         # Returns the updated instance
-        return self.processor.xformerror_from_xform_instance(instance, error_message)
+        return self.processor.xformerror_from_xform_instance(instance, error_message, replace_form_id=replace_form_id)
 
     def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)

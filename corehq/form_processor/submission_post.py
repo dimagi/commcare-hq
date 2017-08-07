@@ -207,17 +207,16 @@ class SubmissionPost(object):
                 elif instance.is_error:
                     submission_type = 'error'
 
-            errors = self.process_signals(instance)
+            signal_errors = self.process_signals(instance)
             response = self._get_openrosa_response(
-                instance, errors, known_submission_error
+                instance, signal_errors, known_submission_error
             )
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
-    def _get_openrosa_response(self, instance, errors, known_submission_error):
-        if not errors or not instance.is_duplicate:
+    def _get_openrosa_response(self, instance, signal_errors, known_submission_error):
+        if not signal_errors and not instance.is_duplicate and not known_submission_error:
             response = self.get_success_response()
-        elif instance.is_duplicate or not self.is_openrosa_version3():
-            # return 201 with error message for older openrosa
+        elif instance.is_duplicate or not self.is_openrosa_version3() or signal_errors:
             response = self.get_failure_response(instance.problem)
         elif known_submission_error:
             # return 422 asking mobile to retry for newer openrosa
@@ -315,7 +314,7 @@ class SubmissionPost(object):
                 ) % (func, instance.form_id, type(resp).__name__, error_message))
                 errors.append(error_message)
         if errors:
-            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
+            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors), replace_form_id=False)
             self.formdb.update_form(instance)
         return errors
 
