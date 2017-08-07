@@ -53,7 +53,7 @@ define([
         }
         self.view_link = ko.computed(function(){
             // TODO: fix urllib.js
-            return "/a/bosco/fixtures/view_lookup_tables/";
+            return "/a/bosco/fixtures/view_lookup_tables/" + "?table_id=" + self._id();
             //return hqImport('hqwebapp/js/urllib.js').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
         }, self);
         self.aboutToDelete = ko.observable(false);
