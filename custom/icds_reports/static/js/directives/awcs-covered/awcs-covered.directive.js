@@ -22,7 +22,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };
@@ -52,7 +52,13 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         var blocks = row ? $filter('indiaNumbers')(row.blocks) : 'N/A';
         var supervisors = row ? $filter('indiaNumbers')(row.supervisors) : 'N/A';
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Number of Districts Launched: <strong>' + districts + '</strong></div><div>Number of Blocks Launched: <strong>' + blocks + '</strong></div><div>Number of Sectors Launched: <strong>' + supervisors + '</strong></div><div>Number of AWSs Launched: <strong>' + awcs + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Number of Districts Launched: <strong>' + districts + '</strong></div>' +
+            '<div>Number of Blocks Launched: <strong>' + blocks + '</strong></div>' +
+            '<div>Number of Sectors Launched: <strong>' + supervisors + '</strong></div>' +
+            '<div>Number of AWSs Launched: <strong>' + awcs + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -64,7 +70,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
             vm.steps['map'].label = 'Map';
         }
 
-        icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

@@ -15,7 +15,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
 
     vm.getDataForStep = function(step) {
         var get_url = url('program_summary', step);
-        $http({
+        vm.myPromise = $http({
             method: "GET",
             url: get_url,
             params: $location.search(),

@@ -743,6 +743,14 @@ class ChildrenInitiatedView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -773,6 +781,11 @@ class InstitutionalDeliveriesView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        if gender:
+            config.update({'gender': gender})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -824,14 +837,10 @@ class ImmunizationCoverageView(View):
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
-        test_date = datetime(year, month, day)
+        now = datetime.utcnow() - relativedelta(day=1)
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(now.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -855,10 +864,7 @@ class AWCDailyStatusView(View):
 class AWCsCoveredView(View):
     def get(self, request, *args, **kwargs):
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
-
+        test_date = datetime(now.year, now.month, 1)
         config = {
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
@@ -880,9 +886,7 @@ class AWCsCoveredView(View):
 class RegisteredHouseholdView(View):
     def get(self, request, *args, **kwargs):
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -906,14 +910,20 @@ class EnrolledChildrenView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -935,14 +945,17 @@ class EnrolledChildrenView(View):
 class EnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+
+        age = self.request.GET.get('age', None)
+        if age:
+            config.update({'age_tranche': age})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -960,9 +973,7 @@ class EnrolledWomenView(View):
 class LactatingEnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -985,9 +996,7 @@ class LactatingEnrolledWomenView(View):
 class AdolescentGirlsView(View):
     def get(self, request, *args, **kwargs):
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1011,9 +1020,7 @@ class AdhaarBeneficiariesView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1041,9 +1048,7 @@ class CleanWaterView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1071,9 +1076,7 @@ class FunctionalToiletView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1101,9 +1104,7 @@ class MedicineKitView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1131,9 +1132,7 @@ class InfantsWeightScaleView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -1161,9 +1160,7 @@ class AdultWeightScaleView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        test_date = datetime(now.year, now.month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],

@@ -10,7 +10,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Undernutrition (Weight-for-Age)";
+    vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/underweight_children/map', label: 'Map'},
@@ -51,9 +51,9 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
-        var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / row.total) : 'N/A';
-        var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / row.total) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
+        var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / (row.total || 1)) : 'N/A';
+        var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
