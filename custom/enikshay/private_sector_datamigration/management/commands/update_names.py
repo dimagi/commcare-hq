@@ -47,7 +47,7 @@ class Command(BaseCommand):
                     location_user.first_name = agency_name_split[0]
                     location_user.last_name = ''
                 else:
-                    location_user.first_name = ' '.join(agency_name_split[:-1)
+                    location_user.first_name = ' '.join(agency_name_split[:-1])
                     location_user.last_name = agency_name_split[-1]
             else:
                 location_user.first_name = user_detail.firstName
