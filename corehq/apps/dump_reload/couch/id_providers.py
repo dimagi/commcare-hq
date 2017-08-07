@@ -27,6 +27,31 @@ class DocTypeIDProvider(BaseIDProvider):
             yield doc_class, doc_ids
 
 
+class ViewKeyGenerator(object):
+    def __call__(self, doc_type, domain):
+        self.get_key_args(doc_type, domain)
+
+    def get_key_args(self, doc_type, domain):
+        raise NotImplementedError
+
+
+class DomainKeyGenerator(ViewKeyGenerator):
+    def get_key_args(self, doc_type, domain):
+        return domain
+
+
+class DomainInListKeyGenerator(ViewKeyGenerator):
+    def __init__(self, static_key_items=None):
+        self.static_key_items = static_key_items or []
+
+    def get_key_args(self, doc_type, domain):
+        startkey = [domain] + self.static_key_items
+        return {
+            'startkey': startkey,
+            'endkey': startkey + [{}],
+        }
+
+
 class ViewIDProvider(BaseIDProvider):
     """ID provider that gets ID's from view rows
     :param doc_type: Doc Type of returned docs
@@ -35,17 +60,17 @@ class ViewIDProvider(BaseIDProvider):
                           Arguments passed are ``doc_type`` and ``domain_name``.
                           If not provided the key will be just the domain_name.
     """
-    def __init__(self, doc_type, view_name, key_generator=None):
+    def __init__(self, doc_type, view_name, key_generator):
         self.doc_type = doc_type
         self.view_name = view_name
         self.key_generator = key_generator
 
     def get_doc_ids(self, domain):
         doc_class = get_document_class_by_doc_type(self.doc_type)
-        key = self.key_generator(self.doc_type, domain) if self.key_generator else domain
+        key_kwargs = self.key_generator(self.doc_type, domain)
         doc_ids = [
             row['id']
-            for row in doc_class.get_db().view(self.view_name, key=key, include_docs=False)
+            for row in doc_class.get_db().view(self.view_name, include_docs=False, **key_kwargs)
         ]
         return [(doc_class, doc_ids)]
 
