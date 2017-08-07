@@ -74,7 +74,6 @@ class ImportDRTBTestMixin(object):
                         *extra_args
                     )
 
-
                     with open("drtb-import-foo.csv", "r") as log_csv:
                         reader = csv.DictReader(log_csv)
                         lines = [line for line in reader]
