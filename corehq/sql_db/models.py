@@ -111,7 +111,7 @@ class PartitionedModel(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        if kwargs.get('using'):
+        if 'using' in kwargs:
             assert kwargs['using'] == self.db
         else:
             kwargs['using'] = self.db
@@ -119,7 +119,7 @@ class PartitionedModel(models.Model):
         return super(PartitionedModel, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if kwargs.get('using'):
+        if 'using' in kwargs:
             assert kwargs['using'] == self.db
         else:
             kwargs['using'] = self.db
