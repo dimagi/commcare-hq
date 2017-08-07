@@ -12,8 +12,8 @@ from django.test.utils import override_settings
 from django.urls.base import reverse
 from mock import patch, Mock
 
-from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.hqadmin.views import AdminRestoreView
+from corehq.apps.users.models import CommCareUser
 from corehq.util.test_utils import softer_assert
 
 
@@ -51,7 +51,8 @@ class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(SessionDetailsViewTest, cls).setUpClass()
-        cls.user = create_user('bunkey', '123')
+        cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123')
+        cls.sql_user = cls.couch_user.get_django_user()
 
         client = Client()
         client.login(username='bunkey', password='123')
@@ -62,9 +63,14 @@ class SessionDetailsViewTest(TestCase):
 
         cls.url = reverse('session_details')
 
+        cls.expected_response = json.dumps({
+            'sql_user_id': cls.sql_user.pk,
+            'couch_user_id': cls.couch_user._id
+        })
+
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.couch_user.delete()
         super(SessionDetailsViewTest, cls).tearDownClass()
 
     @override_settings(DEBUG=True)
@@ -73,7 +79,7 @@ class SessionDetailsViewTest(TestCase):
         data = json.dumps({'session_id': self.session_key})
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual(json.dumps({'user_id': self.user.id}), response.content)
+        self.assertEqual(self.expected_response, response.content)
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):
@@ -82,7 +88,7 @@ class SessionDetailsViewTest(TestCase):
         header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
         response = Client().post(self.url, data, content_type="application/json", HTTP_X_MAC_DIGEST=header_value)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(json.dumps({'user_id': self.user.id}), response.content)
+        self.assertEqual(self.expected_response, response.content)
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing_fail(self):

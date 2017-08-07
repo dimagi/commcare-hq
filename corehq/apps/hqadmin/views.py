@@ -4,13 +4,12 @@ import socket
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
 from datetime import timedelta, date
-from importlib import import_module
 
 import dateutil
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, SESSION_KEY, get_user_model
+from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -56,6 +55,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
+from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import parse_args_for_es, run_query, ES_META
@@ -97,7 +97,7 @@ from .forms import (
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
-from .utils import get_celery_stats
+from .utils import get_celery_stats, get_django_user_from_session_key
 
 
 @require_superuser
@@ -1169,19 +1169,15 @@ class SessionDetialsView(View):
         if not session_id:
             return HttpResponseBadRequest()
 
-        engine = import_module(settings.SESSION_ENGINE)
-        session = engine.SessionStore(session_id)
-        try:
-            if session.is_empty():
-                raise Http404
-        except AttributeError:
+        user = get_django_user_from_session_key(session_id)
+        if not user:
             raise Http404
 
-        user_id = session.get(SESSION_KEY, None)
-        if not user_id:
+        couch_user_id = get_user_id_by_username(user.username)
+        if not couch_user_id:
             raise Http404
 
-        user_id = get_user_model()._meta.pk.to_python(user_id)
         return JsonResponse({
-            'user_id': user_id
+            'sql_user_id': user.pk,
+            'couch_user_id': couch_user_id
         })
