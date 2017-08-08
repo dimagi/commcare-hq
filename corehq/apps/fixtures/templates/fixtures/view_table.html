@@ -19,11 +19,10 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'reports/js/filters.js' %}"></script>
-    <script src="{% static 'fixtures/js/view-table.js' %}"></script>
 {% endblock %}
 
 {% block requirejs_entry %}
-    requirejs(["{% static 'fixtures/js/lookup-view.js' %}"]);
+    requirejs(["{% static 'fixtures/js/view-table.js' %}"]);
 {% endblock requirejs_entry %}
 
 {% block page_content %}
