@@ -7,6 +7,8 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
+from corehq.apps.analytics import ab_tests
+from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
 from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
@@ -46,6 +48,7 @@ from corehq.apps.app_manager.exceptions import ModuleIdMissingException, Practic
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
+from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
 
@@ -114,6 +117,7 @@ def get_releases_context(request, domain, app_id):
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
+    prompt_settings_form = PromptUpdateSettingsForm.from_app(app)
 
     context.update({
         'release_manager': True,
@@ -128,9 +132,14 @@ def get_releases_context(request, domain, app_id):
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
+        'enable_update_prompts': app.enable_update_prompts,
+        'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
+        'prompt_settings_form': prompt_settings_form,
     })
     if not app.is_remote_app():
         if not toggles.APP_MANAGER_V1.enabled(request.user.username):
+            if ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request).version == ab_tests.APP_BUILDER_VIDEO_ON:
+                context.update({'show_video': True})
             if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
                 if app.version <= 2:
                     context.update({'intro_only': True})

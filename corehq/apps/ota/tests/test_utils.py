@@ -1,6 +1,5 @@
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 
-from corehq.util.test_utils import generate_cases
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
@@ -8,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 
-from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user, _restoring_as_yourself
+from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
 
 
 class RestorePermissionsTest(LocationHierarchyTestCase):

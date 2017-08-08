@@ -1,9 +1,10 @@
+from crispy_forms import layout as crispy
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Fieldset, Hidden, Layout
 from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
 from corehq.toggles import LINKED_APPS
@@ -40,12 +41,12 @@ class CopyApplicationForm(forms.Form):
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = Layout(
-            Fieldset(
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
                 _('Copy Application'),
                 *fields
             ),
-            Hidden('app', app.get_id),
+            crispy.Hidden('app', app.get_id),
             hqcrispy.FormActions(
                 StrictButton(_('Copy'), type='button', css_class='btn-primary')
             )
@@ -63,3 +64,76 @@ class CopyApplicationForm(forms.Form):
         if self.cleaned_data.get('linked'):
             if not LINKED_APPS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+
+
+class PromptUpdateSettingsForm(forms.Form):
+    app_prompt = forms.ChoiceField(
+        label=ugettext_lazy("Prompt Updates to Latest Released App Version"),
+        choices=(
+            ('off', ugettext_lazy('Off')),
+            ('on', ugettext_lazy('On')),
+            ('forced', ugettext_lazy('Forced')),
+        ),
+        help_text=ugettext_lazy(
+            "If enabled, users will receive in-app prompts to update "
+            "to the latest released version of the app, if they are not "
+            "already on it. (Selecting 'Forced' will make it so that users "
+            "cannot continue to use CommCare until they update)"
+        )
+    )
+
+    apk_prompt = forms.ChoiceField(
+        label=ugettext_lazy("Prompt Updates to Latest CommCare Version"),
+        choices=(
+            ('off', ugettext_lazy('Off')),
+            ('on', ugettext_lazy('On')),
+            ('forced', ugettext_lazy('Forced')),
+        ),
+        help_text=ugettext_lazy(
+            "If enabled, users will receive in-app prompts to update "
+            "to the latest version of CommCare, if they are not already "
+            "on it. Selecting 'Forced' will make it so that users cannot "
+            "continue to use CommCare until they upgrade."
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        domain = kwargs.pop('domain')
+        app_id = kwargs.pop('app_id')
+        super(PromptUpdateSettingsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse(
+            'update_prompt_settings',
+            args=[domain, app_id])
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_text_inline = True
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Manage Update Settings"),
+                crispy.Field('app_prompt'),
+                crispy.Field('apk_prompt'),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            ),
+        )
+
+    @classmethod
+    def from_app(cls, app):
+        if not app.enable_update_prompts:
+            return None
+        app_config = app.global_app_config
+        return cls(domain=app.domain, app_id=app.id, initial={
+            'app_prompt': app_config.app_prompt,
+            'apk_prompt': app_config.apk_prompt,
+        })

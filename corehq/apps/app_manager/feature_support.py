@@ -142,3 +142,10 @@ class CommCareFeatureSupportMixin(object):
         Enable sorted itemsets in the form builder.
         """
         return self._require_minimum_version('2.38')
+
+    @property
+    def supports_update_prompts(self):
+        """
+        Ability to configure apk/app update checks
+        """
+        return self._require_minimum_version('2.26')

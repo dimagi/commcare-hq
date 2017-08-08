@@ -1242,7 +1242,8 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
 
 PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
-    'Expose phone apk heartbeat URL and add it profile.xml',
+    "Ability to configure a mobile feature to prompt "
+    "users to update to latest CommCare app and apk",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
