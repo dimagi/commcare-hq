@@ -7,8 +7,10 @@ from django.db import router
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
-from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter, FilteredModelIteratorBuilder, \
+from corehq.apps.dump_reload.sql.filters import (
+    SimpleFilter, UsernameFilter, UserIDFilter, FilteredModelIteratorBuilder,
     UniqueFilteredModelIteratorBuilder
+)
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.config import partition_config
@@ -31,12 +33,18 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleAction', SimpleFilter('rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleCriteria', SimpleFilter('rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
-    UniqueFilteredModelIteratorBuilder('data_interfaces.ClosedParentDefinition', SimpleFilter('caserulecriteria__rule__domain')),
-    UniqueFilteredModelIteratorBuilder('data_interfaces.CustomMatchDefinition', SimpleFilter('caserulecriteria__rule__domain')),
-    UniqueFilteredModelIteratorBuilder('data_interfaces.MatchPropertyDefinition', SimpleFilter('caserulecriteria__rule__domain')),
-    UniqueFilteredModelIteratorBuilder('data_interfaces.CustomActionDefinition', SimpleFilter('caseruleaction__rule__domain')),
-    UniqueFilteredModelIteratorBuilder('data_interfaces.UpdateCaseDefinition', SimpleFilter('caseruleaction__rule__domain')),
-    FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition', SimpleFilter('caseruleaction__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.ClosedParentDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.CustomMatchDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.MatchPropertyDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.CustomActionDefinition',
+                                       SimpleFilter('caseruleaction__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.UpdateCaseDefinition',
+                                       SimpleFilter('caseruleaction__rule__domain')),
+    FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition',
+                                 SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
@@ -63,10 +71,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('timedevent__schedule__domain')),
-    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent', SimpleFilter('alertevent__schedule__domain')),
-    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent', SimpleFilter('timedevent__schedule__domain')),
-    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent', SimpleFilter('alertevent__schedule__domain')),
-    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent', SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
+                                       SimpleFilter('alertevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
+                                       SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent', SimpleFilter('timedevent__schedule__domain')),
     FilteredModelIteratorBuilder('sms.SMS', SimpleFilter('domain')),

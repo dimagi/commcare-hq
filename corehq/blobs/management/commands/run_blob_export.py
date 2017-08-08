@@ -21,9 +21,9 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_export [options] domain
 
     Dump XForms in parallel:
-        ./manage.py run_blob_export -e sql_xforms --liimit-to-db p0 domain
+        ./manage.py run_blob_export -e sql_xforms --limit-to-db p0 domain
          ...
-        ./manage.py run_blob_export -e sql_xforms --liimit-to-db pN domain
+        ./manage.py run_blob_export -e sql_xforms --limit-to-db pN domain
     """
     help = USAGE
 
