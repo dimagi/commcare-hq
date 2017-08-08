@@ -43,6 +43,11 @@ function hqDefine(path, dependencies, moduleAccessor) {
     if (arguments.length === 2) {
         return hqDefine(path, [], dependencies);
     }
+
+    // RequireJS assumes that modules names with a trailing .js should
+    // be treated as absolute url, relative to the document, rather than
+    // as a path relative to baseUrl. To avoid this, strip the path.
+    // Might be a good idea at some point to remove .js from all of our module definitions.
     path = path.replace(/\.js$/, "");
 
     (function(factory) {
