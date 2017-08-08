@@ -1186,6 +1186,6 @@ class SessionDetialsView(View):
             'username': user.username,
             'sql_user_id': user.pk,
             'couch_user_id': couch_user_id,
-            'is_super_user': user.is_superuser
-            'auth_token': auth_token
+            'is_super_user': user.is_superuser,
+            'auth_token': auth_token,
         })
