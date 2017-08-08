@@ -72,7 +72,9 @@ class ViewIDProvider(BaseIDProvider):
         key_kwargs = self.key_generator(self.doc_type, domain)
         doc_ids = [
             row['id']
-            for row in doc_class.get_db().view(self.view_name, include_docs=False, **key_kwargs)
+            for row in doc_class.get_db().view(
+                self.view_name, include_docs=False, reduce=False,
+                **key_kwargs)
         ]
         return [(doc_class, doc_ids)]
 
