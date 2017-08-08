@@ -29,7 +29,7 @@ class DocTypeIDProvider(BaseIDProvider):
 
 class ViewKeyGenerator(object):
     def __call__(self, doc_type, domain):
-        self.get_key_args(doc_type, domain)
+        return self.get_key_args(doc_type, domain)
 
     def get_key_args(self, doc_type, domain):
         raise NotImplementedError
