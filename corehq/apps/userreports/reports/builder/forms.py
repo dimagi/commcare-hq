@@ -271,7 +271,6 @@ class DataSourceProperty(object):
             })
         return filter
 
-
     def to_report_filter_indicator(self, configuration):
         """
         Return the indicator that would correspond to the given filter configuration
@@ -738,7 +737,7 @@ class ConfigureNewReportBase(forms.Form):
         self.report_column_options = self.ds_builder.report_column_options
 
         self.data_source_properties = self.ds_builder.data_source_properties
-        
+
         self._report_columns_by_column_id = {}
         for column in self.report_column_options.values():
             for agg in column.aggregation_options:
@@ -1269,7 +1268,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     ColumnViewModel(
                         display_text=display,
                         exists_in_current_version=exists,
-                        property=self._get_column_option_by_indicator_id(indicator_id).get_property() if exists else None,
+                        property=(
+                            self._get_column_option_by_indicator_id(indicator_id).get_property()
+                            if exists else None
+                        ),
                         data_source_field=indicator_id if not exists else None,
                         calculation=reverse_agg_map.get(c.get('aggregation'), COUNT_PER_CHOICE)
                     )
@@ -1290,14 +1292,20 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text="Name",
             exists_in_current_version=True,
             property="name",
-            data_source_field=self.data_source_properties['name'].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+            data_source_field=(
+                self.data_source_properties['name']
+                    .to_report_column_option()
+                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
             calculation=COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
             exists_in_current_version=True,
             property=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            data_source_field=self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
+            data_source_field=(
+                self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
+                    .to_report_column_option()
+                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
             calculation=COUNT_PER_CHOICE
         ))
         case_props_found = 0
@@ -1348,7 +1356,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
-                self.ds_builder.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple")
+                self.ds_builder.report_column_options[conf['property']].to_column_dicts(
+                    i, conf['display_text'], "simple"
+                )
             )
         return columns
 
@@ -1418,7 +1428,9 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     "type": "multibar",
                     "x_axis_column": "column_agg_0",
                     # TODO: Possibly use more columns?
-                    "y_axis_columns": [{"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()],
+                    "y_axis_columns": [
+                        {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
+                    ],
                 }]
             elif self.cleaned_data['chart'] == "pie":
                 return [{
@@ -1468,7 +1480,9 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             if agg_field not in existing_columns:
                 column = self.ds_builder.report_column_options[agg_field]
                 agg_field_text = column.get_default_display()
-                extra_cols += column.to_column_dicts("agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True)
+                extra_cols += column.to_column_dicts(
+                    "agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True
+                )
         columns = extra_cols + columns
 
         # Don't expand the aggregation columns

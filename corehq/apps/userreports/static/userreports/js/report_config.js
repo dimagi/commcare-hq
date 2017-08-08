@@ -1,5 +1,5 @@
 /* global _, $, COMMCAREHQ, django */
-var reportBuilder = function () {
+var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
     var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
@@ -17,9 +17,9 @@ var reportBuilder = function () {
                 self.calculation(value);
                 if (window._bindingsApplied){
                     //reorderColumns();
-                };
+                }
             },
-            owner: this
+            owner: this,
         });
     };
     ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
@@ -73,7 +73,7 @@ var reportBuilder = function () {
                 if (index(first) !== index(second)) {
                     return index(first) < index(second) ? -1 : 1;
                 }
-                return 0
+                return 0;
             };
             this.columns.sort(compare);
         }
@@ -111,10 +111,6 @@ var reportBuilder = function () {
                     if (index === 0) {
                         val.calculation(constants.GROUP_BY);
                     } else {
-                        if (val.property() === "deviceID") {
-                            console.log(val.property());
-                            console.log(val.getDefaultCalculation());
-                        }
                         val.calculation(val.getDefaultCalculation());
                     }
                 });
@@ -310,7 +306,7 @@ var reportBuilder = function () {
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 if (aaData.length > 25) {
                     $("#chart-warning").removeClass("hide");
-                    charts.clear($("#chart-container"))
+                    charts.clear($("#chart-container"));
                 } else {
                     $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, aaData, $("#chart"));

@@ -166,7 +166,7 @@ hqDefine('reports_core/js/charts.js', function() {
                 if (config.title) {
                     var el = '<h2 />';
                     if (config.titleClass) {
-                        el = '<div class="' + config.titleClass + '"/>'
+                        el = '<div class="' + config.titleClass + '"/>';
                     }
                     $(el).text(config.title).appendTo(chartContainer);
                 }

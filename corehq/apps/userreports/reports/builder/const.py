@@ -6,4 +6,3 @@ COUNT_PER_CHOICE = "Count per Choice"
 PROPERTY_TYPE_META = "meta"
 PROPERTY_TYPE_CASE_PROP = "case_property"
 PROPERTY_TYPE_QUESTION = "question"
-

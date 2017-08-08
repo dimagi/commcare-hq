@@ -834,7 +834,7 @@ class ConfigureReport(ReportBuilderView):
         _munge_report_data(report_data)
 
         bound_form = self._get_bound_form(report_data)
-        
+
         if bound_form.is_valid():
             if self.existing_report:
                 report_configuration = bound_form.update_report()

@@ -79,7 +79,7 @@
      """
      A container class for information about data source properties
  
-@@ -158,15 +169,116 @@
+@@ -158,15 +169,115 @@
      source -- For questions, this is a dict representing the question as returned
          by Xform.get_questions(), for case properties and form metadata it is just
          the name of the property.
@@ -193,7 +193,6 @@
 +            })
 +        return filter
 +
-+
 +    def to_report_filter_indicator(self, configuration):
 +        """
 +        Return the indicator that would correspond to the given filter configuration
@@ -204,7 +203,7 @@
  
  
  class DataSourceBuilder(object):
-@@ -231,8 +343,8 @@
+@@ -231,8 +342,8 @@
              assert multiselect_field, "multiselect_field is required if is_multiselect_chart_report is True"
  
              property = self.data_source_properties[multiselect_field]
@@ -215,7 +214,7 @@
  
              def sub_doc(path):
                  if not path:
-@@ -272,51 +384,52 @@
+@@ -272,51 +383,52 @@
                  "map_expression": sub_doc(path)
              }
  
@@ -313,7 +312,7 @@
  
      @property
      @memoized
-@@ -334,7 +447,6 @@
+@@ -334,7 +446,6 @@
                  type="question",
                  id="/data/question1",
                  text="Enter the child's name",
@@ -321,7 +320,7 @@
                  source={
                      'repeat': None,
                      'group': None,
-@@ -343,15 +455,14 @@
+@@ -343,15 +454,14 @@
                      'tag': 'input',
                      'type': 'Text'
                  },
@@ -339,7 +338,7 @@
              )
          }
          """
-@@ -370,27 +481,23 @@
+@@ -370,27 +480,23 @@
              'owner_name': _('Case Owner'),
              'mobile worker': _('Mobile Worker Last Updating Case'),
          }
@@ -376,7 +375,7 @@
          return properties
  
      @staticmethod
-@@ -399,12 +506,11 @@
+@@ -399,12 +505,11 @@
          # the report builder will create a related_doc indicator based
          # on the owner_id of the case.
          return DataSourceProperty(
@@ -393,7 +392,7 @@
          )
  
      @staticmethod
-@@ -413,12 +519,11 @@
+@@ -413,12 +518,11 @@
          # the report builder will create a related_doc indicator based on the
          # user_id of the case
          return DataSourceProperty(
@@ -410,7 +409,7 @@
          )
  
      @staticmethod
-@@ -432,33 +537,55 @@
+@@ -432,33 +536,55 @@
          properties = OrderedDict()
          questions = form_xml.get_questions([])
          for prop in FORM_METADATA_PROPERTIES:
@@ -475,7 +474,7 @@
  
      @property
      @memoized
-@@ -481,19 +608,13 @@
+@@ -481,19 +607,13 @@
  
  class DataSourceForm(forms.Form):
      report_name = forms.CharField()
@@ -498,12 +497,13 @@
          self.app_source_helper = ApplicationDataSourceUIHelper()
          self.app_source_helper.source_type_field.label = _('Forms or Cases')
          self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
-@@ -501,13 +622,14 @@
-         self.app_source_helper.bootstrap(self.domain)
+@@ -502,15 +622,13 @@
          report_source_fields = self.app_source_helper.get_fields()
          report_source_help_texts = {
--            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
-+            "source_type": _(
+             "source_type": _(
+-                "<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display "
+-                "data from your cases. You must be using case management for this option."
+-            ),
 +                "<strong>Form</strong>: Display data from form submissions.<br/>"
 +                "<strong>Case</strong>: Display data from your cases. You must be using case management for this "
 +                "option."),
@@ -516,7 +516,7 @@
  
          self.helper = FormHelper()
          self.helper.form_class = "form form-horizontal"
-@@ -515,15 +637,6 @@
+@@ -518,15 +636,6 @@
          self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
          self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
  
@@ -532,7 +532,7 @@
          report_source_crispy_fields = []
          for k in report_source_fields.keys():
              if k in report_source_help_texts:
-@@ -533,22 +646,16 @@
+@@ -536,22 +645,16 @@
              else:
                  report_source_crispy_fields.append(k)
  
@@ -563,7 +563,7 @@
              ),
              crispy.Fieldset(
                  _('Data'), *report_source_crispy_fields
-@@ -578,11 +685,13 @@
+@@ -581,11 +684,13 @@
  
          existing_reports = ReportConfiguration.by_domain(self.domain)
          builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
@@ -579,7 +579,7 @@
                  "limit is {number}. "
                  "To continue, delete another report and try again. "
              ).format(number=self.max_allowed_reports))
-@@ -600,6 +709,8 @@
+@@ -603,6 +708,8 @@
  class ConfigureNewReportBase(forms.Form):
      user_filters = FilterField(required=False)
      default_filters = FilterField(required=False)
@@ -588,7 +588,7 @@
      button_text = ugettext_noop('Done')
  
      def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-@@ -624,10 +735,17 @@
+@@ -627,10 +734,17 @@
          self.ds_builder = DataSourceBuilder(
              self.domain, self.app, self.source_type, self.report_source_id
          )
@@ -598,7 +598,7 @@
 -        self._properties_by_column = {
 -            p.column_id: p for p in self.data_source_properties.values()
 -        }
-+        
++
 +        self._report_columns_by_column_id = {}
 +        for column in self.report_column_options.values():
 +            for agg in column.aggregation_options:
@@ -609,7 +609,7 @@
  
          # NOTE: The corresponding knockout view model is defined in:
          #       templates/userreports/reportbuilder/configure_report.html
-@@ -646,35 +764,6 @@
+@@ -649,35 +763,6 @@
              )
          ]
          # Add a back button if we aren't editing an existing report
@@ -645,7 +645,7 @@
          self.helper.layout = crispy.Layout(
              self.container_fieldset,
              hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
-@@ -701,24 +790,8 @@
+@@ -704,24 +789,8 @@
              ))
  
      @property
@@ -671,7 +671,7 @@
  
      @property
      def container_fieldset(self):
-@@ -777,17 +850,49 @@
+@@ -780,17 +849,49 @@
              crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
          )
  
@@ -723,7 +723,7 @@
              ),
              base_item_expression=base_item_expression,
              meta=DataSourceMeta(build=DataSourceBuildInformation(
-@@ -819,7 +924,11 @@
+@@ -822,7 +923,11 @@
              data_source_config_id = self._build_data_source()
              self.existing_report.config_id = data_source_config_id
          else:
@@ -736,7 +736,7 @@
              if data_source.configured_indicators != indicators:
                  for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
                      setattr(data_source, property_name, value)
-@@ -830,6 +939,8 @@
+@@ -833,6 +938,8 @@
          self.existing_report.columns = self._report_columns
          self.existing_report.filters = self._report_filters
          self.existing_report.configured_charts = self._report_charts
@@ -745,7 +745,7 @@
          self.existing_report.validate()
          self.existing_report.save()
          return self.existing_report
-@@ -844,6 +955,32 @@
+@@ -847,6 +954,32 @@
          report = ReportConfiguration(
              domain=self.domain,
              config_id=data_source_config_id,
@@ -778,7 +778,7 @@
              title=self.report_name,
              aggregation_columns=self._report_aggregation_cols,
              columns=self._report_columns,
-@@ -851,6 +988,7 @@
+@@ -854,6 +987,7 @@
              configured_charts=self._report_charts,
              report_meta=ReportMeta(
                  created_by_builder=True,
@@ -786,7 +786,7 @@
                  builder_report_type=self.report_type
              )
          )
-@@ -887,7 +1025,7 @@
+@@ -890,7 +1024,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -795,7 +795,7 @@
                  data_source_field=None,
                  display_text=_('Case Owner'),
                  format='Choice',
-@@ -913,7 +1051,7 @@
+@@ -916,7 +1050,7 @@
          the knockout view model representing this filter in the report builder.
  
          """
@@ -804,7 +804,7 @@
          if filter['type'] == 'pre':
              return DefaultFilterViewModel(
                  exists_in_current_version=exists,
-@@ -950,9 +1088,7 @@
+@@ -953,9 +1087,7 @@
              indicator configuration.
          :return: The corresponding ColumnOption
          """
@@ -815,7 +815,7 @@
  
      def _get_property_id_by_indicator_id(self, indicator_column_id):
          """
-@@ -962,9 +1098,9 @@
+@@ -965,9 +1097,9 @@
              configuration dictionary
          :return: A DataSourceProperty property id, e.g. "/data/question1"
          """
@@ -828,7 +828,7 @@
  
      def _column_exists(self, column_id):
          """
-@@ -976,16 +1112,18 @@
+@@ -979,16 +1111,18 @@
  
          column_id is a string like "data_date_q_d1b3693e"
          """
@@ -857,7 +857,7 @@
  
      def _get_multiselect_indicator_id(self, column_field, indicators):
          """
-@@ -1009,11 +1147,6 @@
+@@ -1012,11 +1146,6 @@
          return []
  
      @property
@@ -869,7 +869,7 @@
      def _is_multiselect_chart_report(self):
          return False
  
-@@ -1025,37 +1158,7 @@
+@@ -1028,37 +1157,7 @@
          """
          def _make_report_filter(conf, index):
              property = self.data_source_properties[conf["property"]]
@@ -908,7 +908,7 @@
  
          user_filter_configs = self.cleaned_data['user_filters']
          default_filter_configs = self.cleaned_data['default_filters']
-@@ -1081,170 +1184,17 @@
+@@ -1084,170 +1183,17 @@
          return []
  
  
@@ -1082,7 +1082,7 @@
      )
  
      @property
-@@ -1286,9 +1236,10 @@
+@@ -1289,9 +1235,10 @@
      def initial_columns(self):
          if self.existing_report:
              reverse_agg_map = {
@@ -1094,7 +1094,7 @@
              }
              added_multiselect_columns = set()
              cols = []
-@@ -1299,6 +1250,11 @@
+@@ -1302,6 +1249,11 @@
                  indicator_id = mselect_indicator_id or c['field']
                  display = c['display']
                  exists = self._column_exists(indicator_id)
@@ -1106,12 +1106,15 @@
  
                  if mselect_indicator_id:
                      if mselect_indicator_id not in added_multiselect_columns:
-@@ -1313,26 +1269,86 @@
+@@ -1316,26 +1268,97 @@
                      ColumnViewModel(
                          display_text=display,
                          exists_in_current_version=exists,
 -                        property=self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
-+                        property=self._get_column_option_by_indicator_id(indicator_id).get_property() if exists else None,
++                        property=(
++                            self._get_column_option_by_indicator_id(indicator_id).get_property()
++                            if exists else None
++                        ),
                          data_source_field=indicator_id if not exists else None,
 -                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
 +                        calculation=reverse_agg_map.get(c.get('aggregation'), COUNT_PER_CHOICE)
@@ -1139,14 +1142,20 @@
 -            calculation=_('Count per Choice')
 -        )]
 +            property="name",
-+            data_source_field=self.data_source_properties['name'].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
++            data_source_field=(
++                self.data_source_properties['name']
++                    .to_report_column_option()
++                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
 +            calculation=COUNT_PER_CHOICE
 +        ))
 +        cols.append(ColumnViewModel(
 +            display_text="Owner",
 +            exists_in_current_version=True,
 +            property=COMPUTED_OWNER_NAME_PROPERTY_ID,
-+            data_source_field=self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID].to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
++            data_source_field=(
++                self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
++                    .to_report_column_option()
++                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
 +            calculation=COUNT_PER_CHOICE
 +        ))
 +        case_props_found = 0
@@ -1198,24 +1207,27 @@
          for i, conf in enumerate(self.cleaned_data['columns']):
              columns.extend(
 -                self.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple")
-+                self.ds_builder.report_column_options[conf['property']].to_column_dicts(i, conf['display_text'], "simple")
++                self.ds_builder.report_column_options[conf['property']].to_column_dicts(
++                    i, conf['display_text'], "simple"
++                )
              )
          return columns
  
-@@ -1341,10 +1357,25 @@
+@@ -1344,14 +1367,25 @@
          return ['doc_id']
  
  
 -class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
 +class ConfigureTableReportForm(ConfigureListReportForm):
      report_type = 'table'
--    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
--    group_by = forms.ChoiceField(label=_("Show one row for each"), required=False)
-+    column_legend_fine_print = ugettext_noop(
+     column_legend_fine_print = ugettext_noop(
+-        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+-        u'that property.  For example, if you add a column for a yes or no question, the report will show a '
 +        u'Add columns for this report to aggregate. Each property you add will create a column for every value '
 +        u'of that property.  For example, if you add a column for a yes or no question, the report will show a '
-+        u'column for "yes" and a column for "no."'
-+    )
+         u'column for "yes" and a column for "no."'
+     )
+-    group_by = forms.ChoiceField(label=_("Show one row for each"), required=False)
 +    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
 +    chart = forms.CharField(widget=forms.HiddenInput)
 +
@@ -1231,20 +1243,18 @@
  
      @property
      def container_fieldset(self):
-@@ -1353,7 +1384,11 @@
-             crispy.Fieldset(
-                 _legend(
+@@ -1362,8 +1396,8 @@
                      _("Rows"),
--                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
-+                    _(
-+                        'Choose which property this report will group its results by. Each value of this property'
+                     _(
+                         'Choose which property this report will group its results by. Each value of this property'
+-                        ' will be a row in the table. For example, if you choose a yes or no question, the report'
+-                        ' will show a row for "yes" and a row for "no."'
 +                        ' will be a row in the table. For example, if you choose a yes or no question, the report '
 +                        'will show a row for "yes" and a row for "no."'
-+                    ),
+                     ),
                  ),
                  crispy.Field(
-                     'group_by'
-@@ -1374,82 +1409,96 @@
+@@ -1385,76 +1419,90 @@
  
      @property
      def _report_charts(self):
@@ -1258,7 +1268,9 @@
 +                    "type": "multibar",
 +                    "x_axis_column": "column_agg_0",
 +                    # TODO: Possibly use more columns?
-+                    "y_axis_columns": [{"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()],
++                    "y_axis_columns": [
++                        {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
++                    ],
 +                }]
 +            elif self.cleaned_data['chart'] == "pie":
 +                return [{
@@ -1349,7 +1361,9 @@
 +            if agg_field not in existing_columns:
 +                column = self.ds_builder.report_column_options[agg_field]
 +                agg_field_text = column.get_default_display()
-+                extra_cols += column.to_column_dicts("agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True)
++                extra_cols += column.to_column_dicts(
++                    "agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True
++                )
 +        columns = extra_cols + columns
 +
 +        # Don't expand the aggregation columns
@@ -1375,18 +1389,18 @@
  
  
  class ConfigureWorkerReportForm(ConfigureTableReportForm):
-     # This is a ConfigureTableReportForm, but with a predetermined aggregation
+@@ -1462,8 +1510,8 @@
      report_type = 'worker'
--    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
-+    column_legend_fine_print = ugettext_noop(
-+        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+     column_legend_fine_print = ugettext_noop(
+         u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+-        u'that property. For example, if you add a column for a yes or no question, the report will show a '
+-        u'column for "yes" and a column for "no".'
 +        u'that property. For example, if you add a column for a yes or no question, the report will show a column '
 +        u'for "yes" and a column for "no".'
-+    )
+     )
  
      def __init__(self, *args, **kwargs):
-         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
-@@ -1460,7 +1509,7 @@
+@@ -1475,7 +1523,7 @@
          if self.source_type == "form":
              return "username"
          if self.source_type == "case":
@@ -1395,7 +1409,7 @@
  
      @property
      @memoized
-@@ -1475,7 +1524,7 @@
+@@ -1490,7 +1538,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -1404,7 +1418,7 @@
                  data_source_field=None,
                  display_text='user name',
                  format='Choice',
-@@ -1525,7 +1574,7 @@
+@@ -1540,7 +1588,7 @@
  
      @property
      def _location_choices(self):
@@ -1413,7 +1427,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1571,19 +1620,28 @@
+@@ -1586,19 +1634,28 @@
  
      @property
      def _report_columns(self):

@@ -41,7 +41,7 @@
                 var isReportBuilderReport = {{ report.spec.report_meta.created_by_builder|JSON }};
                 if (data.iTotalRecords > 25 && isReportBuilderReport) {
                     $("#chart-warning").removeClass("hide");
-                    charts.clear($("#chart-container"))
+                    charts.clear($("#chart-container"));
                 } else {
                     $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, data.aaData, $("#chart-container"));

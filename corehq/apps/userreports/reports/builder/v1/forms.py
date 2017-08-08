@@ -501,7 +501,10 @@ class DataSourceForm(forms.Form):
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
         report_source_help_texts = {
-            "source_type": _("<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display data from your cases. You must be using case management for this option."),
+            "source_type": _(
+                "<strong>Form</strong>: display data from form submissions.<br/><strong>Case</strong>: display "
+                "data from your cases. You must be using case management for this option."
+            ),
             "application": _("Which application should the data come from?"),
             "source": _("Choose the case type or form from which to retrieve data for this report."),
         }
@@ -1343,7 +1346,11 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
-    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
+    column_legend_fine_print = ugettext_noop(
+        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+        u'that property.  For example, if you add a column for a yes or no question, the report will show a '
+        u'column for "yes" and a column for "no."'
+    )
     group_by = forms.ChoiceField(label=_("Show one row for each"), required=False)
 
     @property
@@ -1353,7 +1360,11 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
-                    _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
+                    _(
+                        'Choose which property this report will group its results by. Each value of this property'
+                        ' will be a row in the table. For example, if you choose a yes or no question, the report'
+                        ' will show a row for "yes" and a row for "no."'
+                    ),
                 ),
                 crispy.Field(
                     'group_by'
@@ -1449,7 +1460,11 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
-    column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property. For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no".')
+    column_legend_fine_print = ugettext_noop(
+        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+        u'that property. For example, if you add a column for a yes or no question, the report will show a '
+        u'column for "yes" and a column for "no".'
+    )
 
     def __init__(self, *args, **kwargs):
         super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)

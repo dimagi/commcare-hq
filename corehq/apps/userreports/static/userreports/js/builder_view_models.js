@@ -115,7 +115,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             write: function (value) {
                 self.calculation(value);
             },
-            owner: this
+            owner: this,
         });
 
         // for default filters, the value to filter by
