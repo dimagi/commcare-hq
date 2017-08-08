@@ -418,7 +418,7 @@
              track_workflow(
                  request.user.email,
                  "Successfully submitted the first part of the Report Builder "
-@@ -374,37 +589,124 @@
+@@ -374,71 +589,198 @@
                  app_source.source_type,
              ])
  
@@ -525,8 +525,6 @@
          if self.existing_report:
 -            title = self.existing_report.title
 -        return _(self.report_title).format(title)
--
--    @property
 +            return self.existing_report.description or None
 +        return None
 +
@@ -555,15 +553,6 @@
 +            return data_soruce_id
 +        else:
 +            return self.request.GET['data_source']
-+
-     def page_context(self):
-         try:
-             report_form = self.report_form
-@@ -420,25 +722,81 @@
-                     'is_static': self.existing_report.is_static,
-                 })
-             return self._handle_exception(error_response, e)
--        field_names = report_form.fields.keys()
 +
 +    def _get_existing_report_type(self):
 +        if self.existing_report:
@@ -610,9 +599,24 @@
 +                options[key].append(option)
 +            else:
 +                options[key] = [option]
-+
-+    @property
-+    def page_context(self):
+ 
+     @property
+     def page_context(self):
+-        try:
+-            report_form = self.report_form
+-        except Exception as e:
+-            self.template_name = 'userreports/report_error.html'
+-            error_response = {
+-                'error_message': '',
+-                'details': six.text_type(e)
+-            }
+-            if self.existing_report is not None:
+-                error_response.update({
+-                    'report_id': self.existing_report.get_id,
+-                    'is_static': self.existing_report.is_static,
+-                })
+-            return self._handle_exception(error_response, e)
+-        field_names = report_form.fields.keys()
 +        form_type = _get_form_type(self._get_existing_report_type())
 +        report_form = form_type(
 +            self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
@@ -657,7 +661,7 @@
          }
  
      def _handle_exception(self, response, exception):
-@@ -468,107 +826,58 @@
+@@ -468,107 +810,58 @@
          else:
              raise
  
@@ -809,7 +813,7 @@
  
      def _confirm_report_limit(self):
          """
-@@ -583,42 +892,712 @@
+@@ -583,41 +876,712 @@
              raise Http404()
  
  
@@ -1183,7 +1187,6 @@
 -    @memoized
 -    def configuration_form_class(self):
 -        return ConfigureMapReportForm
--
 +    def edit_form(self):
 +        if self.request.method == 'POST':
 +            return ConfigurableDataSourceEditForm(
