@@ -82,6 +82,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     # FilteredModelIteratorBuilder('smsbillables.SmsUsageFeeCriteria', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackend', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('enikshay.IssuerId', SimpleFilter('domain')),
 ])
 
 
