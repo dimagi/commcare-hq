@@ -517,7 +517,13 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble('chart_type', help_bubble_text=_("<strong>Bar</strong> shows one vertical bar for each value in your case or form. <strong>Pie</strong> shows what percentage of the total each value is."))
+            chart_type_crispy_field = FieldWithHelpBubble(
+                'chart_type',
+                help_bubble_text=_(
+                    "<strong>Bar</strong> shows one vertical bar for each value in your case or form. "
+                    "<strong>Pie</strong> shows what percentage of the total each value is."
+                )
+            )
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
@@ -530,7 +536,11 @@ class DataSourceForm(forms.Form):
         top_fields = [
             FieldWithHelpBubble(
                 'report_name',
-                help_bubble_text=_('Web users will see this name in the "Reports" section of CommCareHQ and can click to view the report'))
+                help_bubble_text=_(
+                    'Web users will see this name in the "Reports" section of CommCareHQ and can click to view '
+                    'the report'
+                )
+            )
         ]
         if chart_type_crispy_field:
             top_fields.append(chart_type_crispy_field)
@@ -578,6 +588,7 @@ class DataSourceForm(forms.Form):
             ).format(number=self.max_allowed_reports))
 
         return cleaned_data
+
 
 _shared_properties = ['exists_in_current_version', 'display_text', 'property', 'data_source_field']
 UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
@@ -1231,7 +1242,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         widget=forms.HiddenInput,
         error_messages={"required": ugettext_lazy("At least one column is required")},
     )
-    column_legend_fine_print = ugettext_noop(u"Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
+    column_legend_fine_print = ugettext_noop(
+        u"Add columns to your report to display information from cases or form submissions. You may rearrange "
+        u"the order of the columns by dragging the arrows next to the column."
+    )
 
     @property
     def container_fieldset(self):
@@ -1306,12 +1320,12 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 )
             return cols
         return [ColumnViewModel(
-                    display_text='',
-                    exists_in_current_version=True,
-                    property=None,
-                    data_source_field=None,
-                    calculation=_('Count per Choice')
-                )]
+            display_text='',
+            exists_in_current_version=True,
+            property=None,
+            data_source_field=None,
+            calculation=_('Count per Choice')
+        )]
 
     @property
     def _report_columns(self):

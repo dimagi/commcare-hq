@@ -621,4 +621,3 @@ class ConfigureMapReport(ConfigureChartReport):
     @memoized
     def configuration_form_class(self):
         return ConfigureMapReportForm
-

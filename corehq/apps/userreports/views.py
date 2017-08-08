@@ -707,7 +707,6 @@ class ConfigureReport(ReportBuilderView):
         else:
             return self.request.GET['data_source']
 
-
     def _get_existing_report_type(self):
         if self.existing_report:
             type_ = "list"
