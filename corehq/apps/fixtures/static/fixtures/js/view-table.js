@@ -1,6 +1,7 @@
 /* global hqImport, standardHQReport, HQReportDataTables */
 define([
     "jquery",
+    "django",
     "hqwebapp/js/initial_page_data",
     "reports/js/filters",
     "reports/js/standard_hq_report",
@@ -8,19 +9,19 @@ define([
     "style/js/hq.helpers",
 ], function(
     $,
+    django,
     initialPageData,
     filters,
     standardHQReport,
     datatablesConfig
 ) {
     if (initialPageData.get('renderReportTables')) {
-        // TODO: deal with this (breaks because of gettext)
-        /*var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
+        var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
             standardHQReport = standardHQReport.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
-        reportTables.render();*/
+        reportTables.render();
     }
 
     filters.init();

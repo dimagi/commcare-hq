@@ -404,6 +404,7 @@
 
         {% if request.use_requirejs %}
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
             <script src="{% static 'hqwebapp/js/lib/require.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
@@ -412,6 +413,7 @@
                         {% include "style/includes/jquery.html" %}
                         {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
+                        "django": "{% static 'hqwebapp/js/django' %}",
                         "knockout": "{% static 'knockout/dist/knockout.debug' %}",
                         "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
                         "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
@@ -443,9 +445,10 @@
                         },
                         {% endif %}
                     },
-                    deps: ['knockout', 'ko.mapping', 'ko.knockout_bindings'],
-                    callback: function (ko, mapping) {
+                    deps: ['django', 'knockout', 'ko.mapping', 'ko.knockout_bindings'],
+                    callback: function (djangoModule, ko, mapping) {
                         ko.mapping = mapping;
+                        djangoModule.gettext = django.gettext;
                     }
                 });
                 {% block requirejs_entry %}{% endblock requirejs_entry %}
