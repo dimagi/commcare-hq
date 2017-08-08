@@ -120,13 +120,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     var html = ['<div style="height: 20px !important">'];
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
-                        html.push('<span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
-                            '</span><span style="padding: 5px;">' + fillKey + '</span>');
+                        html.push('<div><span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
+                            '</span><span style="padding: 5px;">' + fillKey + '</span></div>');
                     }
                     html.push('</div>');
 
                     d3.select(this.options.element).append('div')
-                        .attr('class', 'datamaps-legend text-center')
+                        .attr('class', 'datamaps-legend')
                         .attr('style', 'width: 150px; left 0; top: 5%;')
                         .html(html.join(''));
                 },
