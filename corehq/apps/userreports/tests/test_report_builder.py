@@ -63,7 +63,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -79,7 +79,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -157,7 +157,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation":"Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -180,7 +180,7 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -223,7 +223,7 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
