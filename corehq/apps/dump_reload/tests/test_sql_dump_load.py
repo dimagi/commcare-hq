@@ -253,53 +253,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertTrue(post_config.enabled)
         self.assertEqual(pre_config.fuzzy_properties, post_config.fuzzy_properties)
 
-    def test_auto_case_update_rules(self):
-        from corehq.apps.data_interfaces.models import (
-            AutomaticUpdateRule, AutomaticUpdateRuleCriteria, AutomaticUpdateAction
-        )
-        expected_object_counts = Counter({
-            AutomaticUpdateRule: 1,
-            AutomaticUpdateRuleCriteria: 1,
-            AutomaticUpdateAction: 2,
-        })
-
-        pre_rule = AutomaticUpdateRule(
-            domain=self.domain_name,
-            name='test-rule',
-            case_type='test-case-type',
-            active=True,
-            server_modified_boundary=30,
-        )
-        pre_rule.save()
-        pre_criteria = AutomaticUpdateRuleCriteria.objects.create(
-            property_name='last_visit_date',
-            property_value='30',
-            match_type=AutomaticUpdateRuleCriteria.MATCH_DAYS_AFTER,
-            rule=pre_rule,
-        )
-        pre_action_update = AutomaticUpdateAction.objects.create(
-            action=AutomaticUpdateAction.ACTION_UPDATE,
-            property_name='update_flag',
-            property_value='Y',
-            rule=pre_rule,
-        )
-        pre_action_close = AutomaticUpdateAction.objects.create(
-            action=AutomaticUpdateAction.ACTION_CLOSE,
-            rule=pre_rule,
-        )
-
-        self._dump_and_load(expected_object_counts)
-
-        post_rule = AutomaticUpdateRule.objects.get(pk=pre_rule.pk)
-        post_criteria = AutomaticUpdateRuleCriteria.objects.get(pk=pre_criteria.pk)
-        post_action_update = AutomaticUpdateAction.objects.get(pk=pre_action_update.pk)
-        post_action_close = AutomaticUpdateAction.objects.get(pk=pre_action_close.pk)
-
-        self.assertModelsEqual(
-            [pre_rule, pre_criteria, pre_action_update, pre_action_close],
-            [post_rule, post_criteria, post_action_update, post_action_close]
-        )
-
     def test_users(self):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.users.models import WebUser
