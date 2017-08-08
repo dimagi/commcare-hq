@@ -6,7 +6,7 @@ def get_bets_location_json(location):
     else:
         response['parent_site_code'] = ''
     response['ancestors_by_type'] = {
-        ancestor.location_type.name: ancestor.location_id
+        ancestor.location_type.code: ancestor.location_id
         for ancestor in location.get_ancestors()
     }
     return response
