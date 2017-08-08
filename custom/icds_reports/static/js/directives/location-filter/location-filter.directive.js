@@ -159,7 +159,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 initHierarchy();
 
                 var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type);
+                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
@@ -185,6 +185,15 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     };
 
     init();
+
+    vm.getPlaceholder = function() {
+        var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+        if (!selectedLocation) {
+            return 'Search by Location';
+        } else {
+            return selectedLocation.location_type_name;
+        }
+    };
 
     var resetLevelsBelow = function(level) {
         for (var i = level + 1; i <= vm.maxLevel; i++) {

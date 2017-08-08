@@ -9,8 +9,12 @@ from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
 from pillowtop.utils import get_all_pillow_instances
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop.checkpoints.manager import DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 
+
+DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE = {
+    'text': '0',
+    'json': {}
+}
 
 class Command(BaseCommand):
     help = ("Restores full ES cluster or specific index from snapshot. "
@@ -91,6 +95,6 @@ class Command(BaseCommand):
                                                                     date_updated=date)
                 seq = ast.literal_eval(checkpoint.seq)
             except HistoricalPillowCheckpoint.DoesNotExist:
-                seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE[pillow.checkpoint.sequence_format]
+                seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
 
             pillow.checkpoint.update_to(seq)

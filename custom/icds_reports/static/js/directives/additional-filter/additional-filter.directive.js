@@ -38,6 +38,25 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
 function AdditionalFilterController($scope, $location, $uibModal) {
     var vm = this;
 
+    vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
+    vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
+    var filtersObjects = [{ label: 'Gender', value: vm.selectedGender }, { label: 'Age', value: vm.selectedAge }];
+
+    vm.getPlaceholder = function() {
+        var placeholder = '';
+        filtersObjects.forEach(function(filterObject) {
+            if (filterObject.value) {
+                placeholder += filterObject.label + ': ' + filterObject.value + ' ';
+            }
+        });
+
+        if (!placeholder) {
+            return 'Additional Filter';
+        } else {
+            return placeholder;
+        }
+    };
+
     vm.open = function () {
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
