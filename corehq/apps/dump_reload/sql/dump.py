@@ -72,8 +72,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent', SimpleFilter('timedevent__schedule__domain')),
     FilteredModelIteratorBuilder('sms.SMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.Keyword', SimpleFilter('domain')),
-    # KeywordAction can not be filtered for domain on itself.
-    # FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('keyword__domain')),
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('smsbillables.SmsBillable', SimpleFilter('domain')),
