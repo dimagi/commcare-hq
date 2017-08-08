@@ -4,8 +4,5 @@
 {% load hq_shared_tags %}
 
 {% block page_content %}
-    {% if not has_report_builder_access %}
-        {% include "userreports/partials/preview_warning.html" %}
-    {% endif %}
     {% crispy form %}
 {% endblock %}

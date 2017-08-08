@@ -3,10 +3,8 @@
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
  *
- * Required parameters
- *  - url: The URL to call on save.
- *
  * Optional parameters
+ *  - url: The URL to call on save. If none is given, no ajax call will be made
  *  - value: Text to display and edit
  *  - name: HTML name of input
  *  - id: HTML id of input
