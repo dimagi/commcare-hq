@@ -34,7 +34,7 @@ class Command(BaseCommand):
         record_count = get_repeat_record_count(domain, repeater_id=repeater_id)
 
         row_names = [
-            'EpisodeID'
+            'EpisodeID',
             'EventOccurDate',
             'EventID',
             'BeneficiaryUUID',
@@ -43,6 +43,9 @@ class Command(BaseCommand):
             'DTOLocation',
             'PersonId',
             'AgencyId',
+            'EnikshayApprover',  # will be empty
+            'EnikshayRole',      # will be empty
+            'EnikshayApprovalDate',  # will be empty
             'Succeeded',    # Some records did succeed when we sent them.
                             # Include this so they don't re-pay people.
         ]
@@ -80,14 +83,14 @@ class Command(BaseCommand):
         if duplicate_incentive_ids:
             with open('duplicates_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.write_row(['episode_id', 'event_id'])
+                writer.writerow(['episode_id', 'event_id'])
                 for duplicate_id in duplicate_incentive_ids:
-                    writer.write_row(duplicate_id)
+                    writer.writerow(duplicate_id)
 
         print "{} errors".format(len(errors))
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.write_row(['episode_id', 'error'])
+                writer.writerow(['episode_id', 'error'])
                 for error in errors:
-                    writer.write_row(errors)
+                    writer.writerow(errors)
