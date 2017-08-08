@@ -18,7 +18,7 @@ from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
-from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_querysets_to_dump
+from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_model_iterator_builders_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
@@ -47,10 +47,11 @@ class BaseDumpLoadTest(TestCase):
         super(BaseDumpLoadTest, cls).tearDownClass()
 
     def delete_sql_data(self):
-        for model_class, queryset in get_querysets_to_dump(self.domain_name, []):
-            collector = NestedObjects(using=queryset.db)
-            collector.collect(queryset)
-            collector.delete()
+        for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
+            for queryset in builder.querysets():
+                collector = NestedObjects(using=queryset.db)
+                collector.collect(queryset)
+                collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 

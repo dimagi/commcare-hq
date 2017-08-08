@@ -624,7 +624,7 @@ class SqlModelMigrator(Migrator):
         self.domain = domain
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, limit_to_db=None, **options):
-        from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_for_domain
+        from corehq.apps.dump_reload.sql.dump import get_all_model_iterators_builders_for_domain
 
         if not self.domain:
             raise MigrationError("Must specify domain")
@@ -638,12 +638,13 @@ class SqlModelMigrator(Migrator):
         migrator = self.migrator_class(self.slug, self.domain)
 
         with migrator:
-            iterators = get_all_model_iterators_for_domain(self.model_class, self.domain, limit_to_db)
-            for model_class, iterator in iterators:
-                for obj in iterator:
-                    migrator.process_object(obj)
-                    if migrator.total_blobs % chunk_size == 0:
-                        print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
+            builders = get_all_model_iterators_builders_for_domain(self.model_class, self.domain, limit_to_db)
+            for model_class, builder in builders:
+                for iterator in builder.iterators():
+                    for obj in iterator:
+                        migrator.process_object(obj)
+                        if migrator.total_blobs % chunk_size == 0:
+                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
 
         return migrator.total_blobs, 0
 

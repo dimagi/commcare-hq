@@ -107,16 +107,17 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
     """
     if stats_counter is None:
         stats_counter = Counter()
-    for model_class, iterator in get_querysets_to_dump(domain, excludes):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain, excludes):
         model_label = get_model_label(model_class)
-        for obj in iterator:
-            stats_counter.update([model_label])
-            yield obj
+        for iterator in builder.iterators():
+            for obj in iterator:
+                stats_counter.update([model_label])
+                yield obj
         if stdout:
             stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
-def get_querysets_to_dump(domain, excludes):
+def get_model_iterator_builders_to_dump(domain, excludes):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -131,11 +132,11 @@ def get_querysets_to_dump(domain, excludes):
         if model_class in excluded_models:
             continue
 
-        for model_class, iterator in get_all_model_iterators_for_domain(model_class, domain):
-            yield model_class, iterator
+        for model_class, builder in get_all_model_iterators_builders_for_domain(model_class, domain):
+            yield model_class, builder
 
 
-def get_all_model_iterators_for_domain(model_class, domain, limit_to_db=None):
+def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
     using = router.db_for_read(model_class)
     if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
         using = partition_config.get_form_processing_dbs()
@@ -151,8 +152,7 @@ def get_all_model_iterators_for_domain(model_class, domain, limit_to_db=None):
     for db_alias in using:
         if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
             iterator_builder = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
-            for iterator in iterator_builder.build(domain, model_class, db_alias):
-                yield model_class, iterator
+            yield model_class, iterator_builder.build(domain, model_class, db_alias)
 
 
 def get_excluded_apps_and_models(excludes):

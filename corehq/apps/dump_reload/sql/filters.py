@@ -55,14 +55,28 @@ class UserIDFilter(DomainFilter):
 class UnfilteredModelIteratorBuilder(object):
     def __init__(self, model_label):
         self.model_label = model_label
+        self.domain = self.model_class = self.db_alias = None
 
-    def queryset(self, model_class, db_alias):
-        objects = model_class._default_manager
-        return objects.using(db_alias).order_by(model_class._meta.pk.name)
+    def prepare(self, domain, model_class, db_alias):
+        self.domain = domain
+        self.model_class = model_class
+        self.db_alias = db_alias
+        return self
+
+    def _base_queryset(self):
+        assert self.domain and self.model_class and self.db_alias, "Unprepared IteratorBuilder"
+        objects = self.model_class._default_manager
+        return objects.using(self.db_alias).order_by(self.model_class._meta.pk.name)
+
+    def querysets(self):
+        return self._base_queryset()
+
+    def iterators(self):
+        for queryset in self.querysets():
+            yield queryset.iterator()
 
     def build(self, domain, model_class, db_alias):
-        queryset = self.queryset(model_class, db_alias)
-        return [queryset.iterator()]
+        return self.__class__(self.model_label).prepare(domain, model_class, db_alias)
 
 
 class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
@@ -71,14 +85,17 @@ class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
         self.filter = filter
 
     def build(self, domain, model_class, db_alias):
-        queryset = self.queryset(model_class, db_alias)
-        filters = self.filter.get_filters(domain)
+        return self.__class__(self.model_label, self.filter).prepare(domain, model_class, db_alias)
+
+    def querysets(self):
+        queryset = self._base_queryset()
+        filters = self.filter.get_filters(self.domain)
         for filter in filters:
-            yield queryset.filter(filter).iterator()
+            yield queryset.filter(filter)
 
 
 class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
-    def build(self, domain, model_class, db_alias):
+    def iterators(self):
         def _unique(iterator):
             seen = set()
             for model in iterator:
@@ -86,6 +103,6 @@ class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
                     seen.add(model.pk)
                     yield model
 
-        iterators = super(UniqueFilteredModelIteratorBuilder, self).build(domain, model_class, db_alias)
-        for iterator in iterators:
-            yield _unique(iterator)
+        querysets = self.querysets()
+        for querysets in querysets:
+            yield _unique(querysets)
