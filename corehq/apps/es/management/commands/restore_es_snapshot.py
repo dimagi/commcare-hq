@@ -1,5 +1,8 @@
 from __future__ import print_function
-from django.core.management.base import BaseCommand, CommandError
+
+import ast
+
+from django.core.management.base import BaseCommand
 from datetime import date, timedelta
 from corehq.elastic import get_es_new
 from elasticsearch.client import SnapshotClient, IndicesClient
@@ -86,7 +89,7 @@ class Command(BaseCommand):
             try:
                 checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
                                                                     date_updated=date)
-                seq = checkpoint.seq
+                seq = ast.literal_eval(checkpoint.seq)
             except HistoricalPillowCheckpoint.DoesNotExist:
                 seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE[pillow.checkpoint.sequence_format]
 
