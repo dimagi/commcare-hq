@@ -90,7 +90,7 @@ class SyncBaseTest(TestCase):
             self.restore_options,
             default_case_type=PARENT_TYPE,
         )
-        self.sync_log = self.device.last_sync.log
+        self.sync_log = self.device.sync(overwrite_cache=True, version=V1).log
         self.factory = self.device.case_factory
         # HACK remove once all tests are converted to use self.device
         # NOTE self.device.sync() overrides last_sync_token with the
