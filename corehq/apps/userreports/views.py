@@ -707,21 +707,6 @@ class ConfigureReport(ReportBuilderView):
         else:
             return self.request.GET['data_source']
 
-    def page_context(self):
-        try:
-            report_form = self.report_form
-        except Exception as e:
-            self.template_name = 'userreports/report_error.html'
-            error_response = {
-                'error_message': '',
-                'details': six.text_type(e)
-            }
-            if self.existing_report is not None:
-                error_response.update({
-                    'report_id': self.existing_report.get_id,
-                    'is_static': self.existing_report.is_static,
-                })
-            return self._handle_exception(error_response, e)
 
     def _get_existing_report_type(self):
         if self.existing_report:
