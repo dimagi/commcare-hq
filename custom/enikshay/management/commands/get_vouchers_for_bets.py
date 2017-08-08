@@ -91,12 +91,12 @@ class Command(BaseCommand):
             with open('duplicates_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
                 for duplicate_id in duplicate_voucher_ids:
-                    writer.write_row([duplicate_id])
+                    writer.writerow([duplicate_id])
 
         print "{} errors".format(len(errors))
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.write_row(['episode_id', 'error'])
+                writer.writerow(['episode_id', 'error'])
                 for error in errors:
-                    writer.write_row(errors)
+                    writer.writerow(errors)
