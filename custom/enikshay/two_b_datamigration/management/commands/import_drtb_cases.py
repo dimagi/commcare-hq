@@ -526,6 +526,7 @@ def get_person_case_properties(domain, column_mapping, row):
     district_name, district_id = match_district(domain, xlsx_district_name)
     phi_name, phi_id = match_phi(domain, column_mapping.get_value("phi_name", row))
     tu_name, tu_id = get_tu(domain, phi_id)
+    age = clean_age_entered(column_mapping.get_value("age_entered", row))
 
     properties = {
         "name": person_name,
@@ -536,7 +537,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
         "sex": clean_sex(column_mapping.get_value("sex", row)),
-        "age_entered": clean_age_entered(column_mapping.get_value("age_entered", row)),
+        "age_entered": age,
+        "age": age,
         "dob": calculate_dob(column_mapping.get_value("age_entered", row)),
         "current_address": column_mapping.get_value("address", row),
         "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
