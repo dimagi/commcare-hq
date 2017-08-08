@@ -1,5 +1,5 @@
 /* globals COMMCAREHQ */
-hqDefine("reports/js/filters.js", function() {
+hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko, select2) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.
@@ -68,10 +68,12 @@ hqDefine("reports/js/filters.js", function() {
         }
 
         // Date ranges (used in accounting)
-        $('.date-range').datepicker({
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: 'yy-mm-dd',
+        $('.date-range').each(function() {
+            $(this).datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: 'yy-mm-dd',
+            });
         });
 
         // Optional date ranges, optional month+year (used in accounting)

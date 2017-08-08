@@ -7,8 +7,17 @@
 
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
-hqDefine("reports/js/standard_hq_report.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+hqGlobal("reports/js/standard_hq_report", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'bootstrap'
+], function(
+    $,
+    _,
+    initial_page_data
+) {
+    var initial_page_data = initial_page_data.get
         standardReport = undefined,
         asyncReport = undefined;
 

@@ -1,25 +1,29 @@
 /* global hqImport, standardHQReport, HQReportDataTables */
 define([
     "jquery",
+    "hqwebapp/js/initial_page_data",
     "reports/js/filters",
+    "reports/js/standard_hq_report",
     "reports/js/config.dataTables.bootstrap",
     "style/js/hq.helpers",
 ], function(
     $,
+    initialPageData,
     filters,
+    standardHQReport,
     datatablesConfig
 ) {
-    var data = hqImport('hqwebapp/js/initial_page_data.js').get;
-    if (data('renderReportTables')) {
-        var reportTables = hqImport('reports/js/config.dataTables.bootstrap.js').HQReportDataTables(data('dataTablesOptions')),
-            standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+    if (initialPageData.get('renderReportTables')) {
+        // TODO: deal with this (breaks because of gettext)
+        /*var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
+            standardHQReport = standardHQReport.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
-        reportTables.render();
+        reportTables.render();*/
     }
 
-    hqImport("reports/js/filters.js").init();
+    filters.init();
 
     $(function() {
         $('.header-popover').popover({
