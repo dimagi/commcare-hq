@@ -235,16 +235,15 @@ class MockDevice(object):
             config['restore_id'] = self.last_sync.log._id
         restore_config = get_restore_config(self.project, self.user, **config)
         payload = restore_config.get_payload().as_string()
-        log = synclog_from_restore_payload(payload)
-        self.last_sync = SyncResult(payload, log)
+        self.last_sync = SyncResult(payload)
         return self.last_sync
 
 
 class SyncResult(object):
 
-    def __init__(self, payload, log):
+    def __init__(self, payload):
+        self.payload = payload
         self.xml = ElementTree.fromstring(payload)
-        self.log = log
 
     def get_log(self):
         restore_id = (self.xml
@@ -254,6 +253,14 @@ class SyncResult(object):
 
     @property
     @memoized
+    def log(self):
+        return self.get_log()
+
+    @property
+    @memoized
     def cases(self):
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
+
+    def has_cached_payload(self, *args, **kw):
+        return has_cached_payload(self.log, *args, **kw)

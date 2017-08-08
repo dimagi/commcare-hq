@@ -1212,47 +1212,20 @@ class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
 class SyncTokenCachingTest(SyncBaseTest):
 
     def testCaching(self):
-        self.assertFalse(has_cached_payload(self.sync_log, V2))
+        sync0 = self.device.last_sync
+        self.assertFalse(sync0.has_cached_payload(V2))
         # first request should populate the cache
-        original_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        next_sync_log = synclog_from_restore_payload(original_payload)
-
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        sync1 = self.device.sync(version=V2, restore_id=sync0.log._id)
+        self.assertTrue(sync0.has_cached_payload(V2))
 
         # a second request with the same config should be exactly the same
-        cached_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.assertEqual(original_payload, cached_payload)
+        sync2 = self.device.sync(version=V2, restore_id=sync0.log._id)
+        self.assertEqual(sync1.payload, sync2.payload)
 
         # caching a different version should also produce something new
-        versioned_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V1,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.assertNotEqual(original_payload, versioned_payload)
-        versioned_sync_log = synclog_from_restore_payload(versioned_payload)
-        self.assertNotEqual(next_sync_log._id, versioned_sync_log._id)
+        sync3 = self.device.sync(version=V1, restore_id=sync0.log._id)
+        self.assertNotEqual(sync1.payload, sync3.payload)
+        self.assertNotEqual(sync1.log._id, sync3.log._id)
 
     def test_initial_cache(self):
         restore_config = RestoreConfig(
@@ -1270,55 +1243,30 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertIsInstance(cached_payload, CachedResponse)
 
     def testCacheInvalidation(self):
-        original_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        sync0 = self.device.last_sync
+        sync1 = self.device.sync(version=V2)
+        self.assertTrue(sync0.has_cached_payload(V2))
 
         # posting a case associated with this sync token should invalidate the cache
         case_id = "cache_invalidation"
-        self._createCaseStubs([case_id])
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), V2))
+        self.device.last_sync = sync0
+        self.device.post_changes(case_id=case_id, create=True)
+        self.assertFalse(sync0.has_cached_payload(V2))
 
         # resyncing should recreate the cache
-        next_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
-        self.assertNotEqual(original_payload, next_payload)
-        self.assertFalse(case_id in original_payload)
+        sync2 = self.device.sync(version=V2)
+        self.assertTrue(sync0.has_cached_payload(V2))
+        self.assertNotEqual(sync1.payload, sync2.payload)
+        self.assertNotIn(case_id, sync1.cases)
         # since it was our own update, it shouldn't be in the new payload either
-        self.assertFalse(case_id in next_payload)
+        self.assertNotIn(case_id, sync2.cases)
         # we can be explicit about why this is the case
-        self.assertTrue(self.sync_log.phone_is_holding_case(case_id))
+        self.assertTrue(sync2.log.phone_is_holding_case(case_id))
 
     def testCacheNonInvalidation(self):
-        original_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        sync0 = self.device.last_sync
+        sync1 = self.device.sync(version=V2)
+        self.assertTrue(sync0.has_cached_payload(V2))
 
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
@@ -1330,17 +1278,10 @@ class SyncTokenCachingTest(SyncBaseTest):
             owner_id=self.user.user_id,
             case_type=PARENT_TYPE,
         ).as_xml()])
-        next_payload = RestoreConfig(
-            project=self.project,
-            restore_user=self.user,
-            params=RestoreParams(
-                version=V2,
-                sync_log_id=self.sync_log._id,
-            ),
-            **self.restore_options
-        ).get_payload().as_string()
-        self.assertEqual(original_payload, next_payload)
-        self.assertFalse(case_id in next_payload)
+        self.device.last_sync = sync0
+        sync2 = self.device.sync(version=V2)
+        self.assertEqual(sync1.payload, sync2.payload)
+        self.assertNotIn(case_id, sync2.cases)
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
