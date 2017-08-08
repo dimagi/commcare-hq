@@ -94,7 +94,10 @@ class Command(BaseCommand):
             try:
                 checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
                                                                     date_updated=date)
-                seq = str_to_kafka_seq(checkpoint.seq)
+                if pillow.checkpoint.sequence_format == 'json':
+                    seq = str_to_kafka_seq(checkpoint.seq)
+                else:
+                    seq = checkpoint.seq
             except HistoricalPillowCheckpoint.DoesNotExist:
                 seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
 
