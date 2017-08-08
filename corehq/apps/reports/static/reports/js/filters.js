@@ -1,5 +1,5 @@
-/* globals COMMCAREHQ */
-hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko, select2) {
+/* globals COMMCAREHQ, hqGlobal */
+hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.

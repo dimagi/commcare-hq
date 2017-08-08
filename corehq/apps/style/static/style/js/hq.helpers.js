@@ -1,4 +1,4 @@
-/* global hqGlobal, jQuery */
+/* global hqGlobal */
 hqGlobal("style/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({

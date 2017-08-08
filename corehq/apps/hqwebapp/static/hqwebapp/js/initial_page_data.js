@@ -1,3 +1,4 @@
+/* globals hqGlobal */
 /*
  *  Manage data needed by JavaScript but supplied by server.
  *

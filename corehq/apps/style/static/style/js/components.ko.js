@@ -1,4 +1,4 @@
-/* global hqGlobal, jQuery */
+/* global hqGlobal */
 (function () {
     hqGlobal("style/js/components.ko.js", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var components = {

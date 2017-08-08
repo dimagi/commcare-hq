@@ -1,4 +1,4 @@
-/* global hqImport, standardHQReport, HQReportDataTables */
+/* global define */
 define([
     "jquery",
     "django",
@@ -12,12 +12,12 @@ define([
     django,
     initialPageData,
     filters,
-    standardHQReport,
+    standardHQReportModule,
     datatablesConfig
 ) {
     if (initialPageData.get('renderReportTables')) {
         var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
-            standardHQReport = standardHQReport.getStandardHQReport();
+            standardHQReport = standardHQReportModule.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
