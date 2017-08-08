@@ -38,7 +38,7 @@ class Command(BaseCommand):
                             help='Maximum number of records to read from couch at once.')
         parser.add_argument('--limit-to-db', dest='limit_to_db',
                             help="When specifying a SQL importer use this to restrict "
-                                 "the expoerter to a single database.")
+                                 "the exporter to a single database.")
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
@@ -52,9 +52,9 @@ class Command(BaseCommand):
         if all:
             exporters = list(EXPORTERS)
 
-        migrator_options = {
-            'limit_to_db': limit_to_db
-        }
+        migrator_options = {}
+        if limit_to_db:
+            migrator_options['limit_to_db'] = limit_to_db
 
         for exporter_slug in exporters:
             try:

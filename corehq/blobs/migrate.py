@@ -517,7 +517,7 @@ class Migrator(object):
         sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
         self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **options):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         processor = DocumentProcessorController(
             self._get_document_provider(),
             self._get_doc_migrator(filename),
@@ -591,7 +591,7 @@ class ExportByDomain(Migrator):
         self.domain = domain
         self.iteration_key = self.iteration_key + '/domain=' + self.domain
 
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **options):
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         if not self.domain:
             raise MigrationError("Must specify domain")
 
