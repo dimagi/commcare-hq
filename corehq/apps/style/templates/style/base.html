@@ -426,8 +426,6 @@
                         {% endif %}
                     },
                     shim: {
-                        "bootstrap": { deps: ['jquery'] },
-                        "style/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
                         "ko.mapping": { deps: ['knockout'] },
                         "ko.knockout_bindings": { deps: ['knockout'] },
                         {% if request.use_datatables %}
