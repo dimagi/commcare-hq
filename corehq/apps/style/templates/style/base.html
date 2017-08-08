@@ -215,10 +215,6 @@
         {% endif %}
         {% endif %}
 
-        <script type="text/javascript">
-            window.USE_REQUIREJS = {% if request.use_requirejs %}true{% else %}false{% endif %};
-        </script>
-
         {% if less_debug %}
             <!--
                 This is not inside RequireJS because it has no dependencies
