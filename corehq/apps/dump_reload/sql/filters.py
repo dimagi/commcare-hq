@@ -56,9 +56,12 @@ class UnfilteredModelIteratorBuilder(object):
     def __init__(self, model_label):
         self.model_label = model_label
 
-    def build(self, domain, model_class, db_alias):
+    def queryset(self, model_class, db_alias):
         objects = model_class._default_manager
-        queryset = objects.using(db_alias).order_by(model_class._meta.pk.name)
+        return objects.using(db_alias).order_by(model_class._meta.pk.name)
+
+    def build(self, domain, model_class, db_alias):
+        queryset = self.queryset(model_class, db_alias)
         return [queryset.iterator()]
 
 
@@ -68,7 +71,7 @@ class FilteredModelIteratorBuilder(UnfilteredModelIteratorBuilder):
         self.filter = filter
 
     def build(self, domain, model_class, db_alias):
-        queryset = super(FilteredModelIteratorBuilder, self).build(domain, model_class, db_alias)
+        queryset = self.queryset(model_class, db_alias)
         filters = self.filter.get_filters(domain)
         for filter in filters:
             yield queryset.filter(filter).iterator()
