@@ -37,7 +37,6 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     UniqueFilteredModelIteratorBuilder('data_interfaces.CustomActionDefinition', SimpleFilter('caseruleaction__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.UpdateCaseDefinition', SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition', SimpleFilter('caseruleaction__rule__domain')),
-    # FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition', SimpleFilter('timed_schedule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
@@ -76,11 +75,11 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     # FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('smsbillables.SmsBillable', SimpleFilter('domain')),
-    UnfilteredModelIteratorBuilder('smsbillables.SmsGatewayFee'),
-    UnfilteredModelIteratorBuilder('smsbillables.SmsGatewayFeeCriteria'),
-    FilteredModelIteratorBuilder('smsbillables.SmsUsageFee', SimpleFilter('criteria__domain')),
-    FilteredModelIteratorBuilder('smsbillables.SmsUsageFeeCriteria', SimpleFilter('domain')),
+    # FilteredModelIteratorBuilder('smsbillables.SmsBillable', SimpleFilter('domain')),
+    # UnfilteredModelIteratorBuilder('smsbillables.SmsGatewayFee'),
+    # UnfilteredModelIteratorBuilder('smsbillables.SmsGatewayFeeCriteria'),
+    # FilteredModelIteratorBuilder('smsbillables.SmsUsageFee', SimpleFilter('criteria__domain')),
+    # FilteredModelIteratorBuilder('smsbillables.SmsUsageFeeCriteria', SimpleFilter('domain')),
 ])
 
 
