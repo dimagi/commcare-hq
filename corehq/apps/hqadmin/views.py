@@ -1177,7 +1177,15 @@ class SessionDetialsView(View):
         if not couch_user_id:
             raise Http404
 
+        try:
+            auth_token = user.auth_token.key
+        except User.DoesNotExist:
+            auth_token = None
+
         return JsonResponse({
+            'username': user.username,
             'sql_user_id': user.pk,
-            'couch_user_id': couch_user_id
+            'couch_user_id': couch_user_id,
+            'is_super_user': user.is_superuser
+            'auth_token': auth_token
         })
