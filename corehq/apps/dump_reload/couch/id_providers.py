@@ -37,7 +37,9 @@ class ViewKeyGenerator(object):
 
 class DomainKeyGenerator(ViewKeyGenerator):
     def get_key_args(self, doc_type, domain):
-        return domain
+        return {
+            'key': domain
+        }
 
 
 class DomainInListKeyGenerator(ViewKeyGenerator):
