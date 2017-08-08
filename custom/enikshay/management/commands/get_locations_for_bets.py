@@ -38,7 +38,7 @@ class Command(BaseCommand):
             for loc in (SQLLocation.active_objects
                         .filter(domain=domain, location_type__name__in=loc_types)
                         .prefetch_related('parent', 'location_type')):
-                if loc.metadata.get('is_test') == "yes":
+                if loc.metadata.get('is_test') != "yes":
                     self.add_loc(loc, writer)
         print "Wrote to {}".format(filename)
 
