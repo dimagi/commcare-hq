@@ -5699,10 +5699,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if app_manager_v2:
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
+                        # Definitely a basic module and regular form
                         form.requires = "case"
                         form.actions.update_case = UpdateCaseAction(
                             condition=FormActionCondition(type='always'))
-                    else:
+                    elif not isinstance(form, AdvancedForm):
+                        # Might be an advanced form
                         form.requires = "none"
                         form.actions.update_case = UpdateCaseAction(
                             condition=FormActionCondition(type='never'))
