@@ -247,6 +247,16 @@ class SyncResult(object):
         self.xml = ElementTree.fromstring(payload)
 
     def get_log(self):
+        """Get the latest sync log from the database
+
+        Unlike the `log` property, this method does not cache its
+        result. A sync log is updated when new cases are processed as
+        part of a form submission referencing the sync log. Therefore
+        a sync log returned by this method and the one returned by the
+        `log` property may reference different cases. See
+        `casexml.apps.case.xform.process_cases_with_casedb` and
+        `casexml.apps.case.util.update_sync_log_with_checks`.
+        """
         restore_id = (self.xml
             .findall('{%s}Sync' % SYNC_XMLNS)[0]
             .findall('{%s}restore_id' % SYNC_XMLNS)[0].text)
@@ -255,13 +265,21 @@ class SyncResult(object):
     @property
     @memoized
     def log(self):
+        """Sync log for this sync result
+
+        NOTE the value returned here is cached, so it may not reflect
+        the latest state of the sync log in the database. Use
+        `get_log()` for that.
+        """
         return self.get_log()
 
     @property
     @memoized
     def cases(self):
+        """Dict of cases, keyed by case ID, from the sync body"""
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
 
     def has_cached_payload(self, *args, **kw):
+        """Check if a cached payload exists for this sync result"""
         return has_cached_payload(self.log, *args, **kw)
