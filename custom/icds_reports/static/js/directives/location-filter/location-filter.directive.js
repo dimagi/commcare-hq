@@ -295,14 +295,14 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             return;
         }
         var location = _.filter(vm.getLocationsForLevel(selectedLocationIndex() + 1), function(loc) {
-            return loc.name === $location.search()['location_name'];
+            return loc.location_id === $location.search().location_id;
         });
         if (location.length > 0) {
             var loc_from_map = location[0];
-            if (loc_from_map['name'] === newValue['location_name']) {
+            if (loc_from_map.location_id === newValue.location_id) {
                 vm.selectedLocationId = loc_from_map['location_id'];
                 $location.search('selectedLocationLevel', selectedLocationIndex() + 1);
-                $location.search('location_id', location[0]['location_id']);
+                $location.search('location_id', location[0].location_id);
             }
         }
     }, true);
