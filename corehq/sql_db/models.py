@@ -73,11 +73,16 @@ class RequireDBManager(models.Manager):
                 self.model.partition_attr: partition_value
             }
 
+        db_alias = self.get_db(partition_value)
+
+        def do_get():
+            return self.using(db_alias).get(**kwargs)
+
         try:
-            return self.using(self.get_db(partition_value)).get(**kwargs)
+            return do_get()
         except (Psycopg2InterfaceError, DjangoInterfaceError):
-            close_db_connection(self.get_db(partition_value))
-            return self.using(self.get_db(partition_value)).get(**kwargs)
+            close_db_connection(db_alias)
+            return do_get()
 
     def partitioned_query(self, partition_value):
         """Shortcut to get a queryset for a partitioned database.
