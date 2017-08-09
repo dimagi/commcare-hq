@@ -235,13 +235,14 @@ class MockDevice(object):
             config['restore_id'] = self.last_sync.log._id
         restore_config = get_restore_config(self.project, self.user, **config)
         payload = restore_config.get_payload().as_string()
-        self.last_sync = SyncResult(payload)
+        self.last_sync = SyncResult(restore_config, payload)
         return self.last_sync
 
 
 class SyncResult(object):
 
-    def __init__(self, payload):
+    def __init__(self, config, payload):
+        self.config = config
         self.payload = payload
         self.xml = ElementTree.fromstring(payload)
 

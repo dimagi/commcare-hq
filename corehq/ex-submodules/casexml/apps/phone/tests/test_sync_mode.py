@@ -1088,9 +1088,7 @@ class ExtensionCasesFirstSync(SyncBaseTest):
 
     def setUp(self):
         super(ExtensionCasesFirstSync, self).setUp()
-        self.restore_config = RestoreConfig(
-            project=self.project, restore_user=self.user, **self.restore_options)
-        self.restore_state = self.restore_config.restore_state
+        self.restore_state = self.device.last_sync.config.restore_state
 
     def test_is_first_extension_sync(self):
         """Before any syncs, this should return true when the toggle is enabled, otherwise false"""
@@ -1101,16 +1099,17 @@ class ExtensionCasesFirstSync(SyncBaseTest):
 
     def test_is_first_extension_sync_after_sync(self):
         """After a sync with the extension code in place, this should be false"""
-        self.factory.create_case()
+        self.device.post_changes(create=True, case_id='first')
+        sync0 = self.device.last_sync
         with flag_enabled('EXTENSION_CASES_SYNC_ENABLED'):
             config = get_restore_config(self.project, self.user,
-                restore_id=self.sync_log._id, **self.restore_options)
-            self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
+                restore_id=sync0.log._id, **self.restore_options)
+            self.assertTrue(sync0.get_log().extensions_checked)
             self.assertFalse(config.restore_state.is_first_extension_sync)
 
         config = get_restore_config(self.project, self.user,
-            restore_id=self.sync_log._id, **self.restore_options)
-        self.assertTrue(get_properly_wrapped_sync_log(self.sync_log._id).extensions_checked)
+            restore_id=sync0.log._id, **self.restore_options)
+        self.assertTrue(sync0.get_log().extensions_checked)
         self.assertFalse(config.restore_state.is_first_extension_sync)
 
 
