@@ -468,7 +468,7 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
         "plc_hf_if_nikshay", "usertype", "user_level", "gender",
         "secondary_address_line_1", "secondary_last_name",
         "secondary_address_line_2", "address_line_2", "registration_number",
-        "nikshay_id",
+        "nikshay_id", "contact_phone_number",
     ]
 
     def get_payload(self, repeat_record, user):
