@@ -1,3 +1,32 @@
+/* globals hqDefine */
+hqDefine("style/js/main.js", function() {
+    var eventize = function (that) {
+        'use strict';
+        var events = {};
+        that.on = function (tag, callback) {
+            if (events[tag] === undefined) {
+                events[tag] = [];
+            }
+            events[tag].push(callback);
+            return that;
+        };
+        that.fire = function (tag, e) {
+            var i;
+            if (events[tag] !== undefined) {
+                for (i = 0; i < events[tag].length; i += 1) {
+                    events[tag][i].apply(that, [e]);
+                }
+            }
+            return that;
+        };
+        return that;
+    };
+
+    return {
+        eventize: eventize,
+    };
+});
+
 var COMMCAREHQ = {};
 
 COMMCAREHQ.icons = {
@@ -6,28 +35,6 @@ COMMCAREHQ.icons = {
     COPY:   'icon-copy icon-blue fa fa-copy',
     DELETE: 'icon-remove icon-blue fa fa-remove',
     PAPERCLIP: 'icon-paper-clip fa fa-paperclip'
-};
-
-var eventize = function (that) {
-    'use strict';
-    var events = {};
-    that.on = function (tag, callback) {
-        if (events[tag] === undefined) {
-            events[tag] = [];
-        }
-        events[tag].push(callback);
-        return that;
-    };
-    that.fire = function (tag, e) {
-        var i;
-        if (events[tag] !== undefined) {
-            for (i = 0; i < events[tag].length; i += 1) {
-                events[tag][i].apply(that, [e]);
-            }
-        }
-        return that;
-    };
-    return that;
 };
 
 COMMCAREHQ.makeHqHelp = function (opts, wrap) {
@@ -196,7 +203,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                     }
                 }
             };
-            eventize(button);
+            hqImport("style/js/main.js").eventize(button);
             button.setState('saved');
             button.on('change', function () {
                 this.setStateWhenReady('save');

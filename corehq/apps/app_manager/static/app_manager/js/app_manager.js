@@ -1,7 +1,7 @@
-/* globals hqDefine COMMCAREHQ django hqLayout */
+/* globals hqDefine COMMCAREHQ django hqLayout hqImport */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
-    var module = eventize({});
+    var module = hqImport("style/js/main.js").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";

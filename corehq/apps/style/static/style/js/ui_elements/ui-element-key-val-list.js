@@ -1,4 +1,4 @@
-/* globals hqDefine, $, eventize, _, django */
+/* globals hqDefine, hqImport, $, _, django */
 
 hqDefine('style/js/ui_elements/ui-element-key-val-list.js', function () {
     'use strict';
@@ -6,7 +6,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-list.js', function () {
 
     var KeyValList = function(guid, modal_title) {
         var that = this;
-        eventize(this);
+        hqImport("style/js/main.js").eventize(this);
         this.ui = $('<div class="enum-pairs" />');
         this.value = {};
         this.translated_value = {};

@@ -1,4 +1,4 @@
-/*globals $, _, eventize, COMMCAREHQ, DOMPurify */
+/*globals $, _, COMMCAREHQ, DOMPurify, hqDefine, hqImport */
 
 hqDefine('app_manager/js/details/screen_config.js', function () {
     var module = {},
@@ -283,7 +283,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     column extras: enum, late_flag
                 */
                 var that = this;
-                eventize(this);
+                hqImport("style/js/main.js").eventize(this);
                 this.original = JSON.parse(JSON.stringify(col));
 
                 // Set defaults for normal (non-tab) column attributes
@@ -585,7 +585,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             function Screen(spec, config, options) {
                 var i, column, model, property, header,
                     that = this, columns;
-                eventize(this);
+                hqImport("style/js/main.js").eventize(this);
                 this.type = spec.type;
                 this.saveUrl = options.saveUrl;
                 this.config = config;
