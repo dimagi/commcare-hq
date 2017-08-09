@@ -196,6 +196,9 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
 
         self.assertDictEqual(
@@ -229,6 +232,9 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
 
         self.assertDictEqual(

@@ -9,6 +9,7 @@ from pytz import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
@@ -202,6 +203,9 @@ class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
     Amount = jsonobject.StringProperty(required=False)
+    EnikshayApprover = jsonobject.StringProperty(required=False)
+    EnikshayRole = jsonobject.StringProperty(required=False)
+    EnikshayApprovalDate = jsonobject.StringProperty(required=False)
 
     @classmethod
     def create_voucher_payload(cls, voucher_case):
@@ -220,6 +224,15 @@ class VoucherPayload(BETSPayload):
             related_case_id=voucher_case.case_id
         )
 
+        approver_id = voucher_case.get_case_property('voucher_approved_by_id')
+        if approver_id:
+            approver = CommCareUser.get_by_user_id(approver_id)
+            approver_name = approver.name
+            approver_usertype = approver.user_data.get('usertype')
+        else:
+            approver_name = None
+            approver_usertype = None
+
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
@@ -230,6 +243,9 @@ class VoucherPayload(BETSPayload):
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
+            EnikshayApprover=approver_name,
+            EnikshayRole=approver_usertype,
+            EnikshayApprovalDate=voucher_case.get_case_property('date_approved'),
         )
 
     def payload_json(self):
