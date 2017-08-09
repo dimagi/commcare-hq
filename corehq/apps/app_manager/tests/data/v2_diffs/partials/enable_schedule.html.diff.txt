@@ -9,7 +9,7 @@
                                  {% endblocktrans %}
                              </strong>
                          </div>
-@@ -80,7 +80,7 @@
+@@ -79,7 +79,7 @@
      </script>
  {% else %}
      {% blocktrans %}

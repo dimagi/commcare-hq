@@ -11,7 +11,14 @@
              </fieldset>
          </div>
      </div>
-@@ -60,8 +60,8 @@
+@@ -54,14 +54,14 @@
+                     <tr class="row"
+                         data-bind="attr: {'data-order': _sortableOrder}">
+                         <td>
+-                            <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v" style="cursor: move;"></i>
++                            <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v" style="cursor: move"></i>
+                         </td>
+                         <td>
                              <select class="form-control"
                                      data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                              </select>
@@ -22,3 +29,14 @@
                          </td>
                          <td>
                              <input type="text" class="form-control" data-bind="value: display">
+@@ -94,7 +94,9 @@
+                         <td>
+                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"
+                                class="icon-remove icon-blue fa fa-remove"
+-                               data-bind="click: $root.removeReport"></i>
++                               data-bind="
++                                click: $root.removeReport,
++                            "></i>
+                         </td>
+                     </tr>
+                 </tbody>
