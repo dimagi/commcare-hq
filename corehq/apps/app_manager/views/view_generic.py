@@ -129,7 +129,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
-    if app:
+    if app and not app.is_remote_app():
         context.update({
             'add_ons': add_ons.get_dict(request, app, module, form),
             'add_ons_layout': add_ons.get_layout(request),
