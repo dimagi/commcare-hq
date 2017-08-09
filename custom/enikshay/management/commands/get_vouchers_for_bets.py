@@ -60,10 +60,12 @@ class Command(BaseCommand):
                     payload = json.loads(record.get_payload())['voucher_details'][0]
 
                     voucher_id = record.payload_id
-                    person_case = get_person_case_from_voucher(domain, voucher_id)
                     voucher_case = accessor.get_case(voucher_id)
-                    payload[u'PersonId'] = person_case.case_id
-                    payload[u'AgencyId'] = voucher_case.get_case_property('voucher_fulfilled_by_id')
+                    # Could also be person_case.get_case_property('person_id')
+                    payload[u'PersonID'] = voucher_case.get_case_property('person_enikshay_id')
+                    agency_user = CommCareUser.get_by_user_id(
+                        voucher_case.get_case_property('voucher_fulfilled_by_id'))
+                    payload[u'AgencyId'] = agency_user.raw_username
 
                     approver_id = voucher_case.get_case_property('voucher_approved_by_id')
                     approver = CommCareUser.get_by_user_id(approver_id)
