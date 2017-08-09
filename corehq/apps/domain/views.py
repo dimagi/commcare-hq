@@ -4,7 +4,6 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
-import sys
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -13,7 +12,6 @@ from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
-from django.template import RequestContext
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
 from django.views.generic import View
@@ -25,9 +23,9 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import redirect, render, render_to_response
+from django.shortcuts import redirect, render
 from django.contrib import messages
-from django.contrib.auth.views import password_reset_confirm, password_reset
+from django.contrib.auth.views import password_reset_confirm
 from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -94,14 +92,13 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
-    EntryPoint, WireInvoice, FeatureType,
+    EntryPoint, WireInvoice,
     StripePaymentMethod, LastPayment,
     UNLIMITED_FEATURE_USAGE,
 )
 from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.user_text import (
     get_feature_name,
-    PricingTable,
     DESC_BY_EDITION,
     get_feature_recurring_interval,
 )
@@ -643,10 +640,6 @@ class DomainAccountingSettings(BaseProjectSettingsView):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
     @property
-    def product(self):
-        return SoftwareProductType.COMMCARE
-
-    @property
     @memoized
     def account(self):
         return BillingAccount.get_account_by_domain(self.domain)
@@ -789,7 +782,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 if remaining < 0:
                     remaining = _("%d over limit") % (-1 * remaining)
             return {
-                'name': get_feature_name(feature_type, self.product),
+                'name': get_feature_name(feature_type),
                 'usage': usage,
                 'limit': limit,
                 'remaining': remaining,
@@ -1163,24 +1156,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     @staticmethod
     def _get_items(request):
-        features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
-                     'amount': Decimal(request.POST.get(feature_type[0], 0))}
-                    for feature_type in FeatureType.CHOICES
-                    if Decimal(request.POST.get(feature_type[0], 0)) > 0]
-        products = [{'type': pt[0],
-                     'amount': Decimal(request.POST.get(pt[0], 0))}
-                    for pt in SoftwareProductType.CHOICES
-                    if Decimal(request.POST.get(pt[0], 0)) > 0]
-
-        items = products + features
-
         if Decimal(request.POST.get('general_credit', 0)) > 0:
-            items.append({
+            return [{
                 'type': 'General Credits',
                 'amount': Decimal(request.POST.get('general_credit', 0))
-            })
+            }]
 
-        return items
+        return []
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1427,7 +1409,16 @@ class SelectPlanView(DomainAccountingSettings):
     @property
     def page_context(self):
         return {
-            'pricing_table': PricingTable.get_table_by_product(self.product, domain=self.domain),
+            'editions': [
+                (edition.lower(), DESC_BY_EDITION[edition])
+                for edition in [
+                    SoftwarePlanEdition.COMMUNITY,
+                    SoftwarePlanEdition.STANDARD,
+                    SoftwarePlanEdition.PRO,
+                    SoftwarePlanEdition.ADVANCED,
+                    SoftwarePlanEdition.ENTERPRISE,
+                ]
+            ],
             'current_edition': (self.current_subscription.plan_version.plan.edition.lower()
                                 if self.current_subscription is not None
                                 and not self.current_subscription.is_trial
@@ -2922,13 +2913,17 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        exclude_previews = []
+        if not toggles.APP_MANAGER_V1.enabled_for_request(self.request):
+            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
-            'features': self.features(),
+            'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }
 
     def post(self, request, *args, **kwargs):
         for feature, enabled in self.features():
             self.update_feature(feature, enabled, feature.slug in request.POST)
+        feature_previews.previews_dict.clear(self.domain)
 
         return redirect('feature_previews', domain=self.domain)
 

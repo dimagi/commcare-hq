@@ -33,7 +33,23 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart, \
     get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, \
     get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, \
-    get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart
+    get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart, \
+    get_children_initiated_sector_data, get_children_initiated_data_map, \
+    get_children_initiated_data_chart, get_institutional_deliveries_sector_data, \
+    get_institutional_deliveries_data_map, get_institutional_deliveries_data_chart, \
+    get_immunization_coverage_sector_data, get_immunization_coverage_data_map, \
+    get_immunization_coverage_data_chart, get_awc_daily_status_sector_data, \
+    get_awc_daily_status_data_map, get_awc_daily_status_data_chart, get_awcs_covered_sector_data, \
+    get_awcs_covered_data_map, get_registered_household_sector_data, get_registered_household_data_map, \
+    get_enrolled_children_sector_data, get_enrolled_children_data_map, get_enrolled_children_data_chart, \
+    get_enrolled_women_data_map, get_enrolled_women_sector_data, get_lactating_enrolled_women_sector_data, \
+    get_lactating_enrolled_women_data_map, get_adolescent_girls_sector_data, get_adolescent_girls_data_map, \
+    get_adhaar_sector_data, get_adhaar_data_map, get_adhaar_data_chart, get_clean_water_sector_data, \
+    get_clean_water_data_map, get_clean_water_data_chart, get_functional_toilet_sector_data, \
+    get_functional_toilet_data_map, get_functional_toilet_data_chart, get_medicine_kit_sector_data, \
+    get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
+    get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
+    get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -327,18 +343,30 @@ class LocationView(View):
             )
             return JsonResponse({
                 'name': location.name,
-                'location_type': location.location_type.code
+                'location_type': location.location_type.code,
+                'location_type_name': location.location_type_name
             })
 
         parent_id = request.GET.get('parent_id')
+        name = request.GET.get('name')
+
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
             locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if name:
+            locations = locations.filter(name__iexact=name)
+
         return JsonResponse(data={
             'locations': [
-                {'location_id': loc.location_id, 'name': loc.name, 'parent_id': parent_id}
+                {
+                    'location_id': loc.location_id,
+                    'name': loc.name,
+                    'parent_id': parent_id,
+                    'location_type_name': loc.location_type_name
+                }
                 for loc in locations
             ]
         })
@@ -364,12 +392,13 @@ class LocationAncestorsView(View):
                 {
                     'location_id': location.location_id,
                     'name': location.name,
-                    'parent_id': location.parent.location_id if location.parent else None
+                    'parent_id': location.parent.location_id if location.parent else None,
+                    'location_type_name': location.location_type_name
                 }
                 for location in set(list(locations) + list(parents))
             ],
             'selected_location': {
-                'location_type': selected_location.location_type_name,
+                'location_type_name': selected_location.location_type_name,
                 'location_id': selected_location.location_id,
                 'name': selected_location.name,
                 'parent_id': selected_location.parent.location_id if selected_location.parent else None
@@ -708,6 +737,459 @@ class ExclusiveBreastfeedingView(View):
                 data = get_exclusive_breastfeeding_data_map(config, loc_level)
         elif step == "chart":
             data = get_exclusive_breastfeeding_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ChildrenInitiatedView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_children_initiated_sector_data(config, loc_level)
+            else:
+                data = get_children_initiated_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_children_initiated_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InstitutionalDeliveriesView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+
+        gender = self.request.GET.get('gender', None)
+        if gender:
+            config.update({'gender': gender})
+
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_institutional_deliveries_sector_data(config, loc_level)
+            else:
+                data = get_institutional_deliveries_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_institutional_deliveries_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ImmunizationCoverageView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_immunization_coverage_sector_data(config, loc_level)
+            else:
+                data = get_immunization_coverage_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_immunization_coverage_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AWCDailyStatusView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow() - relativedelta(day=1)
+
+        config = {
+            'month': tuple(now.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_awc_daily_status_sector_data(config, loc_level)
+            else:
+                data = get_awc_daily_status_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_awc_daily_status_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AWCsCoveredView(View):
+    def get(self, request, *args, **kwargs):
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_awcs_covered_sector_data(config, loc_level)
+        else:
+            data = get_awcs_covered_data_map(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class RegisteredHouseholdView(View):
+    def get(self, request, *args, **kwargs):
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_registered_household_sector_data(config, loc_level)
+        else:
+            data = get_registered_household_data_map(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class EnrolledChildrenView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+
+        gender = self.request.GET.get('gender', None)
+        age = self.request.GET.get('age', None)
+        if gender:
+            config.update({'gender': gender})
+        if age:
+            config.update({'age_tranche': age})
+
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_enrolled_children_sector_data(config, loc_level)
+            else:
+                data = get_enrolled_children_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_enrolled_children_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class EnrolledWomenView(View):
+    def get(self, request, *args, **kwargs):
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+
+        age = self.request.GET.get('age', None)
+        if age:
+            config.update({'age_tranche': age})
+
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_enrolled_women_sector_data(config, loc_level)
+        else:
+            data = get_enrolled_women_data_map(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class LactatingEnrolledWomenView(View):
+    def get(self, request, *args, **kwargs):
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_lactating_enrolled_women_sector_data(config, loc_level)
+        else:
+            data = get_lactating_enrolled_women_data_map(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AdolescentGirlsView(View):
+    def get(self, request, *args, **kwargs):
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+            data = get_adolescent_girls_sector_data(config, loc_level)
+        else:
+            data = get_adolescent_girls_data_map(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AdhaarBeneficiariesView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_adhaar_sector_data(config, loc_level)
+            else:
+                data = get_adhaar_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_adhaar_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CleanWaterView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_clean_water_sector_data(config, loc_level)
+            else:
+                data = get_clean_water_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_clean_water_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class FunctionalToiletView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_functional_toilet_sector_data(config, loc_level)
+            else:
+                data = get_functional_toilet_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_functional_toilet_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class MedicineKitView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_medicine_kit_sector_data(config, loc_level)
+            else:
+                data = get_medicine_kit_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_medicine_kit_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InfantsWeightScaleView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_infants_weight_scale_sector_data(config, loc_level)
+            else:
+                data = get_infants_weight_scale_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_infants_weight_scale_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AdultWeightScaleView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        test_date = datetime(now.year, now.month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_adult_weight_scale_sector_data(config, loc_level)
+            else:
+                data = get_adult_weight_scale_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_adult_weight_scale_data_chart(config, loc_level)
 
         return JsonResponse(data={
             'report_data': data,

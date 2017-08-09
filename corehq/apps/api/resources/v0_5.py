@@ -630,9 +630,14 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     def _get_report_data(self, report_config, domain, start, limit, get_params):
         report = ReportFactory.from_spec(report_config)
 
+        string_type_params = [
+            filter.name
+            for filter in report_config.ui_filters
+            if getattr(filter, 'datatype', 'string') == "string"
+        ]
         filter_values = get_filter_values(
             report_config.ui_filters,
-            query_dict_to_dict(get_params, domain)
+            query_dict_to_dict(get_params, domain, string_type_params)
         )
         report.set_filter_values(filter_values)
 

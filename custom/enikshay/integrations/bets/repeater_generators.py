@@ -283,7 +283,7 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
             VoucherID="DUMMY-VOUCHER-ID",
-            Amount=0,
+            Amount="0",
             EventID="DUMMY-EVENT-ID",
             EventOccurDate="2017-01-01",
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
@@ -471,8 +471,8 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         "enrolled_in_private", "external_id", "facility_assigned_to",
         "first_name", "husband_father_name", "id_original_beneficiary_count",
         "id_original_device_number", "id_original_issuer_number",
-        "language_preference", "last_name", "other_id_type", "owner_id",
-        "person_id", "phi", "phone_number", "send_alerts", "sex", "tu_choice",
+        "language_preference", "last_name", "other_id_type", "person_id",
+        "phi", "phone_number", "send_alerts", "sex", "tu_choice",
     ]
 
     @property
@@ -499,4 +499,5 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
             prop: case_properties.get(prop, "")
             for prop in self.case_properties
         }
+        case_json["properties"]["owner_id"] = person_case.owner_id
         return json.dumps(case_json, cls=DjangoJSONEncoder)

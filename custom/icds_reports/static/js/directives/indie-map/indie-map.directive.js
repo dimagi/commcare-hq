@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, storageService) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService) {
     var vm = this;
 
     setTimeout(function() {
@@ -43,6 +43,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
         }
 
         var location_level = parseInt($location.search()['selectedLocationLevel']);
+        var location_id = $location.search().location_id;
         var location = $location.search()['location_name'];
         vm.type = '';
 
@@ -101,10 +102,15 @@ function IndieMapController($scope, $compile, $location, storageService) {
                 return {path: path, projection: projection};
             },
         };
+
         vm.updateMap = function (geography) {
-            $location.search('location_name', geography.id);
-            storageService.setKey('search', $location.search());
-            $scope.$apply();
+            locationsService.getLocationByNameAndParent(geography.id, location_id).then(function(locations) {
+                var location = locations[0];
+                $location.search('location_name', geography.id);
+                $location.search('location_id', location.location_id);
+                storageService.setKey('search', $location.search());
+            });
+
         };
 
         vm.mapPlugins = {
@@ -117,17 +123,16 @@ function IndieMapController($scope, $compile, $location, storageService) {
         if (vm.map.data) {
             _.extend(vm.mapPlugins, {
                 customLegend: function () {
-                    var html = ['<div style="height: 20px !important"><span style="float: left">' + vm.legendTitle + '</span></div>'];
-                    html.push('<div style="height: 20px !important">');
+                    var html = ['<div style="height: 20px !important">'];
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
-                        html.push('<span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
-                            '</span><span style="padding: 5px;">' + fillKey + '</span>');
+                        html.push('<div><span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
+                            '</span><span style="padding: 5px;">' + fillKey + '</span></div>');
                     }
                     html.push('</div>');
 
                     d3.select(this.options.element).append('div')
-                        .attr('class', 'datamaps-legend text-center')
+                        .attr('class', 'datamaps-legend')
                         .attr('style', 'width: 150px; left 0; top: 5%;')
                         .html(html.join(''));
                 },
@@ -136,25 +141,31 @@ function IndieMapController($scope, $compile, $location, storageService) {
                 customTable: function () {
                     if (this.options.rightLegend !== null) {
                         var loc_name = $location.search()['location_name'] || "National";
-                        var html = [
-                            '<table style="width: 250px;">',
-                            '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>',
-                            '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + this.options.rightLegend['average'] + '%</td>',
-                            '<tr/>',
-                            '<tr>',
-                            '<td style="border-right: 1px solid black; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px; padding-bottom: 10px;">' + this.options.rightLegend['info'] + '</td>',
-                            '<tr/>',
-                            '<tr>',
-                            '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: Monthly</td>',
-                            '<tr/>',
-                            '</table>',
-                        ];
+                        var period = this.options.rightLegend['period'] || 'Monthly';
+                        var html = '<table style="width: 250px;">';
+                        if (this.options.rightLegend['average'] !== void(0)) {
+                            html += '<tr>';
+                            html += '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
+                            if (this.options.rightLegend['average_format'] === 'number') {
+                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
+                            } else {
+                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
+                            }
+                            html += '<tr/>';
+                        }
+                        html += '<tr>';
+                        html += '<td style="border-right: 1px solid black; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + this.options.rightLegend['info'] + '</td>';
+                        html += '<tr/>';
+                        html += '<tr>';
+                        html += '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
+                        html += '<tr/>';
+                        html += '</table>';
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
                             .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 0; z-index: -1;')
-                            .html(html.join(''));
+                            .html(html);
                     }
                 },
             });
@@ -186,7 +197,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', 'storageService'];
+IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService'];
 
 window.angular.module('icdsApp').directive('indieMap', function() {
     return {

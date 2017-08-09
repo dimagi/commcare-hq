@@ -18,7 +18,6 @@ from corehq.apps.accounting.views import (
     ViewSoftwarePlanVersionView,
     WireInvoiceSummaryView,
     accounting_default,
-    pricing_table_json,
 )
 
 
@@ -47,6 +46,4 @@ urlpatterns = [
     url(r'^wire_invoices/(\d+)/$', WireInvoiceSummaryView.as_view(), name=WireInvoiceSummaryView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
-    url(r'^pricing_table/(?P<product>[\w-]+)/(?P<locale>[\w-]+)/$', pricing_table_json,
-        name='pricing_table_json'),
 ]

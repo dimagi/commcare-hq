@@ -335,11 +335,11 @@ class FundamentalCaseTests(TestCase):
             submit_form_locally(
                 xml, domain=DOMAIN
             )
-        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.35'):
-            _submit_form_with_cc_version("2.35")
+        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.38'):
+            _submit_form_with_cc_version("2.38")
 
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
-            _submit_form_with_cc_version("2.34")
+            _submit_form_with_cc_version("2.37")
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex

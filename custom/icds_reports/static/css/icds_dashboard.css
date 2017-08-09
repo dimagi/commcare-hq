@@ -169,6 +169,14 @@ nvd3 > svg {
     color: #d60000;
 }
 
+.link {
+    color: #0b3e6f;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
 .green {
     color: #009811;
 }
@@ -321,14 +329,6 @@ h4 {
     text-align: center;
 }
 
-.fa-arrow-down {
-    color: #c61400;
-}
-
-.fa-arrow-up {
-    color: #07c600;
-}
-
 .see-more {
     float: right;
     margin-right: 40px;
@@ -336,6 +336,14 @@ h4 {
 
 .see-more > a {
     color: #ffffff;
+}
+
+.no-decoration {
+    color: #ffffff !important;
+}
+
+.no-decoration:hover {
+    text-decoration: none !important;
 }
 
 .dropdown-menu {
@@ -495,7 +503,7 @@ h4 {
 }
 
 .text-center > div {
-    height: 300px !important;
+    height: 200px !important;
 }
 
 circle {

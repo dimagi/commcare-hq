@@ -81,6 +81,12 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
 
 class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
     default_text = ugettext_noop('Enter a worker')
+    is_paginated = True
+
+    @property
+    def pagination_source(self):
+        from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+        return reverse(MobileWorkersOptionsView.urlname, args=[self.domain])
 
 
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
@@ -173,7 +179,7 @@ class EmwfUtils(object):
         else:
             raise Exception("Unexpcted id: {}".format(id_))
 
-        if owner.is_deleted:
+        if hasattr(owner, 'is_deleted') and owner.is_deleted:
             ret = (ret[0], 'Deleted - ' + ret[1])
 
         return ret

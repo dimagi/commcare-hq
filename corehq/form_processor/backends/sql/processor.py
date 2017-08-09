@@ -47,6 +47,21 @@ class FormProcessorSQL(object):
         xform.unsaved_attachments = xform_attachments
 
     @classmethod
+    def copy_attachments(cls, from_form, to_form):
+        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        for name, att in from_form.attachments.items():
+            to_form.unsaved_attachments.append(XFormAttachmentSQL(
+                name=att.name,
+                attachment_id=uuid.uuid4(),
+                content_type=att.content_type,
+                content_length=att.content_length,
+                properties=att.properties,
+                blob_id=att.blob_id,
+                blob_bucket=att.blobdb_bucket(),
+                md5=att.md5,
+            ))
+
+    @classmethod
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 
@@ -75,19 +90,16 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-
-        db_names = {get_db_alias_for_partitioned_doc(processed_forms.submitted.form_id)}
+        db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
-            db_names |= {get_db_alias_for_partitioned_doc(processed_forms.deprecated.form_id)}
+            db_names |= {processed_forms.deprecated.db}
 
         if cases:
-            db_names |= {get_db_alias_for_partitioned_doc(case.case_id) for case in cases}
+            db_names |= {case.db for case in cases}
 
         if stock_result:
             db_names |= {
-                get_db_alias_for_partitioned_doc(ledger_value.case_id)
-                for ledger_value in stock_result.models_to_save
+                ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
         with ExitStack() as stack:

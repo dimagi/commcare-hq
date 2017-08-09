@@ -182,6 +182,15 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
     if not open_referral_cases:
         return None
     if len(open_referral_cases) == 1:
@@ -199,6 +208,15 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
+
+    # Also check for trails on the occurrence
+    occurrence_case_ids = [
+        case.case_id for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_OCCURRENCE and not case.closed
+    ]
+    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
+    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+
     trails_with_server_opened_on = []
     for trail in trail_cases:
         server_opened_on = trail.actions[0].server_date
@@ -330,13 +348,8 @@ def _get_private_locations(person_case):
         )
 
     try:
-        tu_id = person_case.dynamic_case_properties().get('tu_choice')
-        tu_location = SQLLocation.active_objects.get(
-            domain=person_case.domain,
-            location_id=tu_id,
-        )
-        tu_location_nikshay_code = tu_location.metadata['nikshay_code']
-    except (SQLLocation.DoesNotExist, KeyError, AttributeError):
+        tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
+    except KeyError:
         tu_location_nikshay_code = None
 
     try:

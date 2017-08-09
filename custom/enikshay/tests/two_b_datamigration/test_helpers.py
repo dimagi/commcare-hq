@@ -5,7 +5,7 @@ from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     ColumnMapping,
     clean_phone_number,
-)
+    clean_contact_phone_number)
 
 
 class MockColumnMapping(ColumnMapping):
@@ -14,6 +14,9 @@ class MockColumnMapping(ColumnMapping):
         "col1": 1,
         "col2": 2,
     }
+    required_fields = [
+        "col1",
+    ]
 
 
 class TestMappings(SimpleTestCase):
@@ -48,6 +51,18 @@ class TestMappings(SimpleTestCase):
         value = MockColumnMapping.get_value("col2", row)
         self.assertEqual(value, None)
 
+    def test_required_value_missing(self):
+        row = self.get_row(["0", None, "2"])
+        # col1 is required
+        with self.assertRaises(Exception) as cm:
+            MockColumnMapping.check_for_required_fields(row)
+        self.assertEqual(cm.exception.message, "col1 is required")
+
+    def test_required_value_present(self):
+        row = self.get_row(["0", "1"])
+        # col1 is required
+        MockColumnMapping.check_for_required_fields(row)
+
     def get_row(self, values):
         workbook = Workbook()
         worksheet = workbook.active
@@ -58,20 +73,20 @@ class TestMappings(SimpleTestCase):
         return list(wrapped_worksheet.iter_rows())[0]
 
 
-class TestCleaningFucntions(SimpleTestCase):
+class TestCleaningFunctions(SimpleTestCase):
 
     def test_clean_phone_number(self):
         good_number = "911234567890"
         good_number_with_punc = "+91 123-456-7890"
         good_short_number = "123-456-7890"
 
-        too_short_number = "123-4567"
-        bad_number = "01 123-456-7890"
-
         for number in (good_number, good_number_with_punc, good_short_number):
-            self.assertEqual(clean_phone_number(number, 12), "911234567890")
-            self.assertEqual(clean_phone_number(number, 10), "1234567890")
+            clean_number = clean_phone_number(number)
+            clean_12_number = clean_contact_phone_number(clean_number)
+            self.assertEqual(clean_12_number, "911234567890")
+            self.assertEqual(clean_number, "1234567890")
 
-        for number in (too_short_number, bad_number):
-            with self.assertRaises(Exception):
-                clean_contact_phone_number(number)
+        # Confirm that clean_contact_phone_number returns none for badly formatted numbers
+        self.assertIsNone(clean_contact_phone_number("123"))
+        # Confirm that clean_phone_number returns the number for badly formatted numbers
+        self.assertEqual(clean_phone_number("123"), "123")

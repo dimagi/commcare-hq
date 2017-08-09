@@ -788,8 +788,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         """
         try:
             download = self._get_download_task(in_data)
-        except ExportAsyncException:
-            return format_angular_error(_("There was an error."), log_error=True)
+        except ExportAsyncException as e:
+            return format_angular_error(e.message, log_error=True)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
         return format_angular_success({
@@ -917,6 +917,10 @@ class BulkDownloadFormExportView(DownloadFormExportView):
         filters = super(BulkDownloadFormExportView, self).get_filters(filter_form_data)
         filters &= SerializableFunction(instances)
         return filters
+
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        return False
 
 
 class DownloadCaseExportView(BaseDownloadExportView):
@@ -1980,9 +1984,8 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
     def get(self, request, *args, **kwargs):
         case_type = request.GET.get('export_tag').strip('"')
-        app_id = request.GET.get('app_id')
 
-        schema = self.get_export_schema(self.domain, app_id, case_type)
+        schema = self.get_export_schema(self.domain, None, case_type)
         self.export_instance = self.create_new_export_instance(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)

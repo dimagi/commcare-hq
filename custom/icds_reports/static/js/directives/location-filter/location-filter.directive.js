@@ -11,7 +11,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
-            return locationType.name;
+            return locationType.name.charAt(0).toUpperCase() + locationType.name.slice(1);
         }).join(', ');
     };
 
@@ -159,7 +159,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 initHierarchy();
 
                 var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type);
+                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
@@ -185,6 +185,15 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     };
 
     init();
+
+    vm.getPlaceholder = function() {
+        var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+        if (!selectedLocation) {
+            return 'Search by Location';
+        } else {
+            return selectedLocation.location_type_name;
+        }
+    };
 
     var resetLevelsBelow = function(level) {
         for (var i = level + 1; i <= vm.maxLevel; i++) {
@@ -286,14 +295,14 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             return;
         }
         var location = _.filter(vm.getLocationsForLevel(selectedLocationIndex() + 1), function(loc) {
-            return loc.name === $location.search()['location_name'];
+            return loc.location_id === $location.search().location_id;
         });
         if (location.length > 0) {
             var loc_from_map = location[0];
-            if (loc_from_map['name'] === newValue['location_name']) {
+            if (loc_from_map.location_id === newValue.location_id) {
                 vm.selectedLocationId = loc_from_map['location_id'];
                 $location.search('selectedLocationLevel', selectedLocationIndex() + 1);
-                $location.search('location_id', location[0]['location_id']);
+                $location.search('location_id', location[0].location_id);
             }
         }
     }, true);

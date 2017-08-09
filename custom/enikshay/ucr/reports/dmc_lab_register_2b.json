@@ -150,6 +150,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "person_id_property",
+                "calculate_total": false,
+                "type": "field",
+                "display": "eNikshay ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "person_current_address",
                 "calculate_total": false,
                 "type": "field",

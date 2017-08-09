@@ -5,7 +5,7 @@
  {% load hq_shared_tags %}
  {% load i18n %}
 +
-+{% if app.advanced_app_builder or module.case_list_form.form_id %}
++{% if add_ons.register_from_case_list %}
  
    <div id="case-list-form">
        <div class="form-group">
@@ -18,7 +18,7 @@
            </label>
            <div class="col-sm-4">
                {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
-@@ -54,5 +56,7 @@
+@@ -67,5 +69,7 @@
        </div>
    </div>
    <div id="case_list_media">

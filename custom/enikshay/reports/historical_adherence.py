@@ -22,7 +22,7 @@ from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
 
-from custom.enikshay.tasks import EpisodeAdherenceUpdate
+from custom.enikshay.tasks import EpisodeAdherenceUpdate, calculate_dose_status_by_day
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
@@ -130,7 +130,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         for day, cases in self.get_adherence_cases_dict().iteritems():
             adherence_cases.extend(cases)
 
-        doses_taken_by_date = EpisodeAdherenceUpdate.calculate_doses_taken_by_day(
+        doses_taken_by_date = calculate_dose_status_by_day(
             [c.to_json() for c in adherence_cases]
         )
         return EpisodeAdherenceUpdate.count_doses_taken(doses_taken_by_date)
@@ -282,7 +282,7 @@ class HistoricalAdherenceReport(EnikshayReport):
             None,
             ""
         ):
-            assert_ = soft_assert(to='ncarnahan' + '@' + 'dimagi' + '.com')
+            assert_ = soft_assert(to="{}@dimagi.com".format("cellowitz"))
             assert_(False, "Got an unexpected adherence_value of {} for case {}".format(
                 adherence_value, primary_adherence_case.case_id))
         return adherence_value

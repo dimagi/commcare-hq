@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 from datetime import datetime, date
 
-from django.http import HttpRequest
+from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
+from django.utils.http import urlencode
 from mock import Mock
 
 import settings
@@ -19,7 +20,7 @@ from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue, LocationDrilldownFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReport, query_dict_to_dict
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -764,3 +765,28 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         })
         filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
         self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
+
+
+class QueryDictUtilTest(SimpleTestCase):
+    def test_raw_boolean_strings_are_not_cast(self):
+        request_dict = query_dict_to_dict(QueryDict(urlencode(
+            {'my_string_key': 'true', 'another_string': 'false', 'non_string': 'true',
+             'non_string_2': 'false', 'string_int': '1', 'non_string_int': '2', 'apple': 'orange'})),
+            "some_domain",
+            ['my_string_key', 'another_string', 'string_int']
+        )
+        self.assertDictEqual(
+            request_dict,
+            {
+                # keys marked as string should not be casted to bool
+                'apple': u'orange',
+                'my_string_key': u'true',
+                'another_string': u'false',
+                'string_int': u'1',
+                # keys not marked as string are casted to bool
+                'non_string': True,
+                'non_string_2': False,
+                'domain': 'some_domain',
+                'non_string_int': 2,
+            }
+        )

@@ -15,7 +15,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
 
     vm.getDataForStep = function(step) {
         var get_url = url('program_summary', step);
-        $http({
+        vm.myPromise = $http({
             method: "GET",
             url: get_url,
             params: $location.search(),
@@ -50,7 +50,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
 
     vm.steps = {
         "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
+        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     };

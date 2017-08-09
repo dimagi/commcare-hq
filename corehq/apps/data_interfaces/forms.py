@@ -580,6 +580,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'MATCH_EQUAL': MatchPropertyDefinition.MATCH_EQUAL,
             'MATCH_NOT_EQUAL': MatchPropertyDefinition.MATCH_NOT_EQUAL,
             'MATCH_HAS_VALUE': MatchPropertyDefinition.MATCH_HAS_VALUE,
+            'MATCH_HAS_NO_VALUE': MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
         }
 
     def compute_initial(self, rule):
@@ -749,7 +750,10 @@ class CaseRuleCriteriaForm(forms.Form):
             if match_type not in MatchPropertyDefinition.MATCH_CHOICES:
                 self._json_fail_hard()
 
-            if match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
+            if match_type in (
+                MatchPropertyDefinition.MATCH_HAS_VALUE,
+                MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+            ):
                 result.append({
                     'property_name': property_name,
                     'property_value': None,

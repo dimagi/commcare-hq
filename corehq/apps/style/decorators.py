@@ -287,25 +287,6 @@ def maps_prefer_canvas(view_func):
     return _wrapped
 
 
-def use_blazy(view_func):
-    """Use this decorator to create a blazy watch on the body element
-    for loading images asynchronously by specifying the b-lazy class
-    on an element and adding the path to the image in
-    data-src="{% static 'path/to/image.jpg' %}"
-
-    Example Tag Usage:
-
-    @use_blazy
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_blazy = True
-        return view_func(class_based_view, request, *args, **kwargs)
-    return _wrapped
-
-
 def use_ko_validation(view_func):
     """Use this decorator to use knockout validation in knockout forms
 

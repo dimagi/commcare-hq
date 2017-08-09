@@ -10,6 +10,7 @@ from cStringIO import StringIO
 from uuid import uuid4
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from distutils.version import LooseVersion
 
 from couchdbkit import ResourceNotFound
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
@@ -24,10 +25,11 @@ from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
-    SyncLog,
     get_properly_wrapped_sync_log,
+    LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
+    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -409,13 +411,16 @@ class RestoreParams(object):
             state_hash='',
             include_item_count=False,
             device_id=None,
-            app=None):
+            app=None,
+            openrosa_version=None):
         self.sync_log_id = sync_log_id
         self.version = version
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
         self.device_id = device_id
+        self.openrosa_version = (LooseVersion(openrosa_version)
+            if isinstance(openrosa_version, basestring) else openrosa_version)
 
     @property
     def app_id(self):
@@ -476,11 +481,15 @@ class RestoreState(object):
                 case_sync = DEFAULT_CASE_SYNC
         if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
             raise ValueError("unknown case sync algorithm: %s" % case_sync)
+        self._case_sync = case_sync
         self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
         if self.last_sync_log:
+            if (self._case_sync == CLEAN_OWNERS and
+                    self.last_sync_log.log_format == LOG_FORMAT_LIVEQUERY):
+                raise RestoreException("clean_owners sync after livequery sync")
             if self.params.state_hash:
                 parsed_hash = CaseStateHash.parse(self.params.state_hash)
                 computed_hash = self.last_sync_log.get_state_hash()
@@ -599,6 +608,8 @@ class RestoreState(object):
             previous_log_rev=previous_log_rev,
             extensions_checked=True,
         )
+        if self.is_livequery:
+            new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 
     @property
@@ -611,7 +622,7 @@ class RestoreConfig(object):
     """
     A collection of attributes associated with an OTA restore
 
-    :param domain:          The domain object. An instance of `Domain`.
+    :param project:         The domain object. An instance of `Domain`.
     :param restore_user:    The restore user requesting the restore
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
@@ -704,10 +715,15 @@ class RestoreConfig(object):
         return response
 
     def generate_payload(self, async_task=None):
+        if async_task:
+            self.timing_context.stop("wait_for_task_to_start")
         self.restore_state.start_sync()
         response = self._generate_restore_response(async_task=async_task)
         self.restore_state.finish_sync()
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
+        if async_task:
+            self.timing_context.stop()  # root timer
+            self._record_timing('async')
         return response
 
     def get_cached_response(self):
@@ -727,7 +743,16 @@ class RestoreConfig(object):
 
         if not task_exists:
             # start a new task
-            task = get_async_restore_payload.delay(self)
+            # NOTE this starts a nested timer (wait_for_task_to_start),
+            # which will be stopped by self.generate_payload() in the
+            # asynchronous task. It is expected that
+            # get_async_restore_payload.delay(self) will serialize this
+            # RestoreConfig and it's associated TimingContext before it
+            # returns, and thereby fork the timing context. The timing
+            # context associated with this side of the fork will not be
+            # recorded since it is async (see self.get_response).
+            with self.timing_context("wait_for_task_to_start"):
+                task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
             self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
@@ -775,19 +800,24 @@ class RestoreConfig(object):
             return response
 
     def get_response(self):
+        async = self.async
         try:
             with self.timing_context:
                 payload = self.get_payload()
-            return payload.get_http_response()
+            response = payload.get_http_response()
         except RestoreException as e:
             logging.exception("%s error during restore submitted by %s: %s" %
                               (type(e).__name__, self.restore_user.username, str(e)))
+            async = False
             response = get_simple_response_xml(
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml; charset=utf-8",
-                                status=412)  # precondition failed
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
+                                    status=412)  # precondition failed
+        if not async:
+            self._record_timing(response.status_code)
+        return response
 
     def set_cached_payload_if_necessary(self, resp, duration):
         cache_payload_path = resp.get_filename()
@@ -803,3 +833,60 @@ class RestoreConfig(object):
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.cache.get(self._restore_cache_key):
             self.cache.delete(self._restore_cache_key)
+
+    def _record_timing(self, status):
+        timing = self.timing_context
+        assert timing.is_finished()
+        username = self.restore_user.username
+        duration = timing.duration if timing is not None else -1
+        if duration > 20 or status == 412:
+            sync_log = self.restore_state.current_sync_log
+            sync_log_id = sync_log._id if sync_log else 'N/A'
+            log = logging.getLogger(__name__)
+            log.info("restore %s: user=%s domain=%s status=%s duration=%.3f",
+                     sync_log_id, username, self.domain, status, duration)
+        tags = [
+            u'status_code:{}'.format(status),
+        ]
+        env = settings.SERVER_ENVIRONMENT
+        if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
+            tags.append(u'domain:{}'.format(self.domain))
+        if timing is not None:
+            for timer in timing.to_list(exclude_root=True):
+                if timer.name in RESTORE_SEGMENTS:
+                    segment = RESTORE_SEGMENTS[timer.name]
+                    bucket = _get_time_bucket(timer.duration)
+                    datadog_counter(
+                        'commcare.restores.{}'.format(segment),
+                        tags=tags + ['duration:%s' % bucket],
+                    )
+            tags.append('duration:%s' % _get_time_bucket(timing.duration))
+        datadog_counter('commcare.restores.count', tags=tags)
+
+
+RESTORE_SEGMENTS = {
+    "wait_for_task_to_start": "waiting",
+    "FixtureElementProvider": "fixtures",
+    "CasePayloadProvider": "cases",
+}
+
+
+def _get_time_bucket(duration):
+    """Get time bucket for the given duration
+
+    Bucket restore times because datadog's histogram is too limited
+
+    Basically restore frequency is not high enough to have a meaningful
+    time distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    if duration < 5:
+        return "lt_005s"
+    if duration < 20:
+        return "lt_020s"
+    if duration < 60:
+        return "lt_060s"
+    if duration < 120:
+        return "lt_120s"
+    return "over_120s"

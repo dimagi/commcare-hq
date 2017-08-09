@@ -27,7 +27,7 @@ from corehq.elastic import ESError
 from dimagi.utils.logging import notify_exception
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -123,8 +123,15 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    lang = 'en'
-    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+
+    if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
+        template = load_app_template("case_management")
+        app = import_app_util(template, domain)
+        app.name = "Untitled Application"
+    else:
+        lang = 'en'
+        app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    add_ons.init_app(request, app)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
@@ -254,6 +261,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
@@ -623,21 +631,6 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_app_lang(request, domain, app_id):
-    """
-    DEPRECATED
-    Called when a language (such as 'zh') is to be deleted from app.langs
-
-    """
-    lang_id = int(request.POST['index'])
-    app = get_app(domain, app_id)
-    del app.langs[lang_id]
-    app.save()
-    return back_to_main(request, domain, app_id=app_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -766,6 +759,18 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_add_ons(request, domain, app_id):
+    app = get_app(domain, app_id)
+    current = add_ons.get_dict(request, app)
+    for slug, value in request.POST.iteritems():
+        if slug in current:
+            app.add_ons[slug] = value == 'on'
+    app.save()
+    return HttpResponse(json.dumps({'success': True}))
 
 
 @no_conflict_require_POST

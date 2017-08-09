@@ -247,6 +247,13 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                 return 'update';
             }()));
 
+        self.showLeadRegistration = ko.computed(function() {
+            return self.actionType() === 'open';
+        });
+        self.showLeadFollowup = ko.computed(function() {
+            return self.actionType() === 'update';
+        });
+
         self.actionType.subscribe(function (value) {
             var required;
             if (value === 'open') {

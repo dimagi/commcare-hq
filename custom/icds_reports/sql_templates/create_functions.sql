@@ -1372,7 +1372,7 @@ BEGIN
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
-	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+	'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
 
