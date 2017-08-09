@@ -24,6 +24,7 @@ from custom.enikshay.const import (
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
     INVESTIGATION_TYPE,
+    USERTYPE_DISPLAYS,
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
@@ -228,7 +229,8 @@ class VoucherPayload(BETSPayload):
         if approver_id:
             approver = CommCareUser.get_by_user_id(approver_id)
             approver_name = approver.name
-            approver_usertype = approver.user_data.get('usertype')
+            usertype = approver.user_data.get('usertype')
+            approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
         else:
             approver_name = None
             approver_usertype = None

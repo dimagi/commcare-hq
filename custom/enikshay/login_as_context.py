@@ -1,4 +1,5 @@
 from corehq.apps.locations.models import SQLLocation
+from custom.enikshay.const import USERTYPE_DISPLAYS
 
 
 def get_enikshay_login_as_context(user):
@@ -11,13 +12,7 @@ def get_enikshay_login_as_context(user):
 
 
 def get_usertype_display(usertype):
-    return {
-        'pac': 'AYUSH / Other Provider',
-        'pcp': 'MBBS Provider',
-        'pcc-chemist': 'Chemist',
-        'plc': 'Lab',
-        'ps-fieldstaff': 'Field Staff',
-    }.get(usertype, usertype)
+    return USERTYPE_DISPLAYS.get(usertype, usertype)
 
 
 def get_linked_location(user):
