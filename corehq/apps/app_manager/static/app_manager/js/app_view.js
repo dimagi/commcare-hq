@@ -101,7 +101,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                         state = "loaded";
                         showSpinner = false;
                         $main.html(content);
-                        COMMCAREHQ.initBlock($main);
+                        hqImport("style/js/main.js").initBlock($main);
                         analytics.workflow('Visited the Release Manager');
 
                         // Main releases/versions tab

@@ -48,50 +48,56 @@ hqDefine("style/js/main.js", function() {
         }
     };
 
+    var initBlock = function ($elem) {
+        'use strict';
+
+        // Can delete once APP_MANAGER_V2 is released
+        $('.submit_on_click', $elem).on("click", function (e) {
+            e.preventDefault();
+            if (!$(this).data('clicked')) {
+                $(this).prev('form').submit();
+                $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
+            }
+        });
+
+        $('.submit').click(function (e) {
+            var $form = $(this).closest('.form, form'),
+                data = $form.my_serialize(),
+                action = $form.attr('action') || $form.data('action');
+
+            e.preventDefault();
+            $.postGo(action, $.unparam(data));
+        });
+        $('.post-link').click(function (e) {
+            e.preventDefault();
+            $.postGo($(this).attr('href'), {});
+        });
+
+        $(".button", $elem).button().wrap('<span />');
+        $("input[type='submit']", $elem).button();
+        $("input[type='text'], input[type='password'], textarea", $elem);
+        $('.container', $elem).addClass('ui-widget ui-widget-content');
+        $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+
+        $('.hq-help-template').each(function () {
+            COMMCAREHQ.transformHelpTemplate($(this), true);
+        });
+    };
+
+    $(function () {
+        'use strict';
+        initBlock($("body"));
+    });
+
     return {
         eventize: eventize,
+        initBlock: initBlock,
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
     };
 });
 
 var COMMCAREHQ = {};
-
-COMMCAREHQ.initBlock = function ($elem) {
-    'use strict';
-
-    // Can delete once APP_MANAGER_V2 is released
-    $('.submit_on_click', $elem).on("click", function (e) {
-        e.preventDefault();
-        if (!$(this).data('clicked')) {
-            $(this).prev('form').submit();
-            $(this).data('clicked', 'true').children('i').removeClass().addClass("icon-refresh icon-spin fa fa-refresh fa-spin");
-        }
-    });
-
-    $('.submit').click(function (e) {
-        var $form = $(this).closest('.form, form'),
-            data = $form.my_serialize(),
-            action = $form.attr('action') || $form.data('action');
-
-        e.preventDefault();
-        $.postGo(action, $.unparam(data));
-    });
-    $('.post-link').click(function (e) {
-        e.preventDefault();
-        $.postGo($(this).attr('href'), {});
-    });
-
-    $(".button", $elem).button().wrap('<span />');
-    $("input[type='submit']", $elem).button();
-    $("input[type='text'], input[type='password'], textarea", $elem);
-    $('.container', $elem).addClass('ui-widget ui-widget-content');
-    $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
-
-    $('.hq-help-template').each(function () {
-        COMMCAREHQ.transformHelpTemplate($(this), true);
-    });
-};
 
 COMMCAREHQ.updateDOM = function (update) {
     'use strict';
@@ -280,6 +286,5 @@ COMMCAREHQ.beforeUnloadCallback = function () {
 
 $(function () {
     'use strict';
-    COMMCAREHQ.initBlock($("body"));
     $(window).on('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
