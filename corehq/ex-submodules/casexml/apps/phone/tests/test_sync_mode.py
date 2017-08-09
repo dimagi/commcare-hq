@@ -846,8 +846,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         """
         case_type = 'case'
         index_identifier = 'idx'
-        host = CaseStructure(case_id='host',
-                             attrs={'create': True})
+        host = CaseStructure(case_id='host', attrs={'create': True})
         extension = CaseStructure(
             case_id='extension',
             attrs={'create': True, 'owner_id': '-'},
@@ -859,8 +858,8 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
             )],
         )
 
-        self.factory.create_or_update_cases([extension])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(extension)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.index_tree.indices, {})
         self.assertDictEqual(sync_log.extension_index_tree.indices,
                              {extension.case_id: {index_identifier: host.case_id}})
@@ -871,8 +870,7 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         """creating multiple indices should add to the right tree
         """
         case_type = 'case'
-        host = CaseStructure(case_id='host',
-                             attrs={'create': True})
+        host = CaseStructure(case_id='host', attrs={'create': True})
         extension = CaseStructure(
             case_id='extension',
             attrs={'create': True, 'owner_id': '-'},
@@ -888,9 +886,8 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )],
         )
-
-        self.factory.create_or_update_cases([extension])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(extension)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.index_tree.indices,
                              {extension.case_id: {'child': host.case_id}})
         self.assertDictEqual(sync_log.extension_index_tree.indices,
@@ -922,9 +919,8 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )]
         )
-
-        self.factory.create_or_update_cases([extension_extension])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(extension_extension)
+        sync_log = self.device.last_sync.get_log()
         expected_extension_tree = {extension.case_id: {'host': host.case_id},
                                    extension_extension.case_id: {'host_2': extension.case_id}}
         self.assertDictEqual(sync_log.index_tree.indices, {})
@@ -946,13 +942,12 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )],
         )
-        self.factory.create_or_update_case(extension)
-
         delegated_extension = CaseStructure(case_id=extension.case_id, attrs={'owner_id': 'me'})
-        self.factory.create_or_update_case(delegated_extension)
+        self.device.post_changes(extension)
+        self.device.post_changes(delegated_extension)
 
         expected_extension_tree = {extension.case_id: {'host': host.case_id}}
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.extension_index_tree.indices, expected_extension_tree)
         self.assertEqual(sync_log.dependent_case_ids_on_phone, set([extension.case_id]))
         self.assertEqual(sync_log.case_ids_on_phone, set([extension.case_id, host.case_id]))
@@ -971,10 +966,10 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )],
         )
-        self.factory.create_or_update_case(extension)
+        self.device.post_changes(extension)
 
         expected_extension_tree = {extension.case_id: {'host': host.case_id}}
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.extension_index_tree.indices, expected_extension_tree)
         self.assertEqual(sync_log.case_ids_on_phone, set([host.case_id, extension.case_id]))
 
@@ -995,15 +990,14 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )],
         )
-
-        self.factory.create_or_update_cases([extension])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(extension)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.extension_index_tree.indices,
                              {extension.case_id: {index_identifier: host.case_id}})
 
         closed_host = CaseStructure(case_id=host.case_id, attrs={'close': True})
-        self.factory.create_or_update_case(closed_host)
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes(closed_host)
+        sync_log = self.device.last_sync.get_log()
         self.assertDictEqual(sync_log.extension_index_tree.indices, {})
         self.assertEqual(sync_log.dependent_case_ids_on_phone, set([]))
         self.assertEqual(sync_log.case_ids_on_phone, set([]))
@@ -1060,8 +1054,8 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
                 related_type=case_type,
             )]
         )
-        self.factory.create_or_update_cases([O, E2])
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        self.device.post_changes([O, E2])
+        sync_log = self.device.last_sync.get_log()
 
         expected_dependent_ids = set([C.case_id, E1.case_id, E2.case_id])
         self.assertEqual(sync_log.dependent_case_ids_on_phone, expected_dependent_ids)
