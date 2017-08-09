@@ -56,6 +56,9 @@ class BETSPayload(jsonobject.JsonObject):
     BeneficiaryType = jsonobject.StringProperty(required=True)
     Location = jsonobject.StringProperty(required=True)
     DTOLocation = jsonobject.StringProperty(required=True)
+    EnikshayApprover = jsonobject.StringProperty(required=False)
+    EnikshayRole = jsonobject.StringProperty(required=False)
+    EnikshayApprovalDate = jsonobject.StringProperty(required=False)
 
     @classmethod
     def _get_location(cls, location_id, field_name=None, related_case_type=None, related_case_id=None):
@@ -98,6 +101,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -120,7 +127,11 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location)
+            DTOLocation=_get_district_location(pcp_location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -143,6 +154,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.dynamic_case_properties().get('last_owner'),
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @staticmethod
@@ -170,6 +185,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -194,6 +213,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     def payload_json(self):
@@ -204,9 +227,6 @@ class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
     Amount = jsonobject.StringProperty(required=False)
-    EnikshayApprover = jsonobject.StringProperty(required=False)
-    EnikshayRole = jsonobject.StringProperty(required=False)
-    EnikshayApprovalDate = jsonobject.StringProperty(required=False)
 
     @classmethod
     def create_voucher_payload(cls, voucher_case):

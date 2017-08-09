@@ -260,6 +260,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -282,6 +285,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -302,6 +308,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -323,6 +332,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
             self.assertDictEqual(
@@ -347,6 +359,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pac.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
             self.assertDictEqual(
