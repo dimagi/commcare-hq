@@ -3,6 +3,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.users.models import CommCareUser
 from corehq.util.log import with_progress_bar
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
@@ -43,9 +44,9 @@ class Command(BaseCommand):
             'DTOLocation',
             'PersonId',
             'AgencyId',
-            'EnikshayApprover',  # will be empty
-            'EnikshayRole',      # will be empty
-            'EnikshayApprovalDate',  # will be empty
+            'EnikshayApprover',
+            'EnikshayRole',
+            'EnikshayApprovalDate',
             'Succeeded',    # Some records did succeed when we sent them.
                             # Include this so they don't re-pay people.
         ]
@@ -63,8 +64,10 @@ class Command(BaseCommand):
 
                     episode_case = accessor.get_case(episode_id)
                     person_case = get_person_case_from_episode(domain, episode_id)
-                    payload[u'PersonId'] = person_case.case_id
-                    payload[u'AgencyId'] = episode_case.get_case_property('bets_notifying_provider_user_id')
+                    payload[u'PersonId'] = person_case.get_case_property('person_id')
+                    agency_user = CommCareUser.get_by_user_id(
+                        episode_case.get_case_property('bets_notifying_provider_user_id'))
+                    payload[u'AgencyId'] = agency_user.raw_username
 
                 except Exception as e:
                     errors.append([record.payload_id, unicode(e)])
