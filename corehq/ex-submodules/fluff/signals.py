@@ -243,8 +243,8 @@ def get_tables_to_migrate(diffs, table_names):
 
 
 def migrate_tables(engine, raw_diffs, table_names):
-    apply_index_changes(engine, raw_diffs, table_names)
     add_columns(engine, raw_diffs, table_names)
+    apply_index_changes(engine, raw_diffs, table_names)
 
 
 def rebuild_table(engine, pillow, indicator_doc):
