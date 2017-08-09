@@ -217,7 +217,7 @@ class MockDevice(object):
             self.change_cases(*args, **kw)
         if self.case_blocks:
             # post device case changes
-            token = self.last_sync.log._id
+            token = self.last_sync.log._id if self.last_sync else None
             self.case_factory.post_case_blocks(
                 self.case_blocks,
                 form_extras={"last_sync_token": token},

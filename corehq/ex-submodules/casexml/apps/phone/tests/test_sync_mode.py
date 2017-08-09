@@ -797,30 +797,29 @@ class LiveQuerySyncTokenUpdateTestSQL(LiveQuerySyncTokenUpdateTest):
 class SyncDeletedCasesTest(SyncBaseTest):
 
     def test_deleted_case_doesnt_sync(self):
-        case = self.factory.create_case()
-        case.soft_delete()
-        assert_user_doesnt_have_case(self, self.user, case.case_id)
+        case_id = uuid.uuid4().hex
+        self.device.post_changes(case_id=case_id, create=True)
+        CaseAccessors(self.project.name).get_case(case_id).soft_delete()
+        self.assertNotIn(case_id, self.device.sync().cases)
 
     def test_deleted_parent_doesnt_sync(self):
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
-        self.factory.create_or_update_cases([
+        # post with new device so cases are not on self.device
+        self.get_device().post_changes(
             CaseStructure(
                 case_id=child_id,
-                attrs={
-                    'create': True,
-                },
+                attrs={'create': True},
                 indices=[CaseIndex(
                     CaseStructure(case_id=parent_id, attrs={'create': True}),
                     relationship=CHILD_RELATIONSHIP,
                     related_type=PARENT_TYPE,
                 )],
             )
-        ])
+        )
         CaseAccessors().get_case(parent_id).soft_delete()
-        assert_user_doesnt_have_case(self, self.user, parent_id)
+        self.assertEqual(set(self.device.sync().cases), {child_id})
         # todo: in the future we may also want to purge the child
-        assert_user_has_case(self, self.user, child_id)
 
 
 @use_sql_backend
