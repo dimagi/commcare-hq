@@ -104,7 +104,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
                 # force closing the connection to prevent Django from trying to reuse it.
                 # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
                 for db_name in get_db_aliases():
-                    db.connections[db_name].close()
+                    close_db_connection(db_name)
 
                 # re raise the exception for additional error handling
                 raise
@@ -112,3 +112,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
         return _inner
 
     return _inner2
+
+
+def close_db_connection(db_alias):
+    db.connections[db_alias].close()
