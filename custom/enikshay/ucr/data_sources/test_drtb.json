@@ -256,16 +256,32 @@
                 "is_primary_key": false,
                 "is_nullable": true,
                 "expression": {
-                    "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "age_entered"
+                    "type": "coalesce",
+                    "expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "age_entered"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
+                    "default_expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "age"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     }
                 },
                 "column_id": "age_entered"

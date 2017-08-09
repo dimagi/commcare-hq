@@ -200,17 +200,32 @@
                 "display_name": "person/age",
                 "datatype": "integer",
                 "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "age_entered"
+                    "type": "coalesce",
+                    "expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "age_entered"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
+                    "default_expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "age"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     }
                 },
                 "is_primary_key": false,
@@ -325,17 +340,32 @@
                 "display_name": "person/mobile_number",
                 "datatype": "string",
                 "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "contact_phone_number"
+                    "type": "coalesce",
+                    "expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "contact_phone_number"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
+                    "default_expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "phone_number"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     }
                 },
                 "transform": {},
