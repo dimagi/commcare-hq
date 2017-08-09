@@ -516,6 +516,7 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         "id_original_device_number", "id_original_issuer_number",
         "language_preference", "last_name", "other_id_type", "person_id",
         "phi", "phone_number", "send_alerts", "sex", "tu_choice",
+        "contact_phone_number",
     ]
 
     @property
