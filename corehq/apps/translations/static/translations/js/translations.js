@@ -191,7 +191,7 @@ var mk_translation_ui = function (spec) {
                 },
                 context: this,
                 success: function (data) {
-                    COMMCAREHQ.updateDOM(data.update);
+                    hqImport("style/js/main.js").updateDOM(data.update);
                 }
             });
         }

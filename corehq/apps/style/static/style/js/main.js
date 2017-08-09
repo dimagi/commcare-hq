@@ -80,8 +80,18 @@ hqDefine("style/js/main.js", function() {
         $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
 
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            transformHelpTemplate($(this), true);
         });
+    };
+
+    var updateDOM = function (update) {
+        'use strict';
+        var key;
+        for (key in update) {
+            if (update.hasOwnProperty(key)) {
+                $(key).text(update[key]).val(update[key]);
+            }
+        }
     };
 
     $(function () {
@@ -94,20 +104,11 @@ hqDefine("style/js/main.js", function() {
         initBlock: initBlock,
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
+        updateDOM: updateDOM,
     };
 });
 
 var COMMCAREHQ = {};
-
-COMMCAREHQ.updateDOM = function (update) {
-    'use strict';
-    var key;
-    for (key in update) {
-        if (update.hasOwnProperty(key)) {
-            $(key).text(update[key]).val(update[key]);
-        }
-    }
-};
 
 COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
     'use strict';

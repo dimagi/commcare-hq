@@ -70,7 +70,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        COMMCAREHQ.updateDOM(update);
+        hqImport("style/js/main.js").updateDOM(update);
     };
 
     module.setupValidation = function (validation_url) {
