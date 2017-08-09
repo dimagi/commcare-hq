@@ -14,7 +14,7 @@ types = [
     "feature_flags",
     'fixtures',
     'locations',
-    'types_only'
+    'types_only',
     'products',
     'ucr',
     'apps',
