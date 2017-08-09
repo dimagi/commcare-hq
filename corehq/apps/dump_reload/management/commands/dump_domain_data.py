@@ -29,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
                             help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
 
-    def handle(self, domain_name, all=None, **options):
+    def handle(self, domain_name, **options):
         excludes = options.get('exclude')
         console = options.get('console')
         show_traceback = options.get('traceback')
