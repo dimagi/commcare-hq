@@ -524,6 +524,11 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_payload(self, repeat_record, person_case):
+        case_json = self.serialize(person_case)
+        return json.dumps(case_json, cls=DjangoJSONEncoder)
+
+    @staticmethod
+    def serialize(person_case):
         case_json = {
             "case_id": person_case.case_id,
             "closed": person_case.closed,
@@ -541,7 +546,7 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         case_properties = person_case.dynamic_case_properties()
         case_json["properties"] = {
             prop: case_properties.get(prop, "")
-            for prop in self.case_properties
+            for prop in BETSBeneficiaryPayloadGenerator.case_properties
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
-        return json.dumps(case_json, cls=DjangoJSONEncoder)
+        return case_json
