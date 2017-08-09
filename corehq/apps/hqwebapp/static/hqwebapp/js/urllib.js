@@ -18,23 +18,40 @@ hqDefine('hqwebapp/js/urllib.js', function () {
             }
         }
     };
-    var registerUrl = function(name, url) {
+    /*var registerUrl = function(name, url) {
         COMMCAREHQ_URLS[name] = url;
-    };
+    };*/
     var reverse = function (name) {
         var args = arguments;
         var index = 1;
         if (!COMMCAREHQ_URLS[name]) {
-            throw new Error("URL '" + name + "' not found in registry");
+            gather();
+            if (!COMMCAREHQ_URLS[name]) {
+                throw new Error("URL '" + name + "' not found in registry");
+            }
         }
         return COMMCAREHQ_URLS[name].replace(/---/g, function () {
             return args[index++];
         });
     };
+
+    var gather = function() {
+        $(".commcarehq-urls").each(function() {
+            _.each($(this).children(), function(div) {
+                var $div = $(div),
+                    data = $div.data();
+                COMMCAREHQ_URLS[data.name] = data.value;
+                $div.remove();
+            });
+        });
+    };
+
+    $(gather);
+
     return {
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
-        registerUrl: registerUrl,
+        //registerUrl: registerUrl,
         reverse: reverse,
     };
 });

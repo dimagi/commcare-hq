@@ -635,6 +635,7 @@ def registerurl(parser, token):
     url_name = parse_literal(split_contents[1], parser, tag)
     expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
 
+    '''
     class FakeNode(template.Node):
 
         def render(self, context):
@@ -646,6 +647,21 @@ def registerurl(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'js-inline')
+    '''
+    #name = parse_literal(split_contents[1], parser, tag)
+    #value = parser.compile_filter(split_contents[2])
+
+    class FakeNode(template.Node):
+
+        def render(self, context):
+            args = [expression.resolve(context) for expression in expressions]
+            url = reverse(url_name, args=args)
+            return (u"<div data-name=\"{}\" data-value={}></div>"
+                    .format(url_name, json.dumps(url)))
+
+    nodelist = NodeList([FakeNode()])
+
+    return AddToBlockNode(nodelist, 'registered_urls')
 
 
 @register.simple_tag
