@@ -335,7 +335,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
+        $('.drag_handle').addClass('icon-resize-vertical icon-blue fa fa-arrows-v');
         $('.sortable').each(function () {
             var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
             if ($(this).children().not('.sort-disabled').length < min_elem) {

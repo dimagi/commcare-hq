@@ -326,7 +326,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                 ]).val(this.original.model);
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                   ? COMMCAREHQ.icons.PAPERCLIP : null);
+                   ? 'icon-paper-clip fa fa-paperclip' : null);
                 this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field

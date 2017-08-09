@@ -29,14 +29,6 @@ hqDefine("style/js/main.js", function() {
 
 var COMMCAREHQ = {};
 
-COMMCAREHQ.icons = {
-    GRIP:   'icon-resize-vertical icon-blue fa fa-arrows-v',
-    ADD:    'icon-plus icon-blue fa fa-plus',
-    COPY:   'icon-copy icon-blue fa fa-copy',
-    DELETE: 'icon-remove icon-blue fa fa-remove',
-    PAPERCLIP: 'icon-paper-clip fa fa-paperclip'
-};
-
 COMMCAREHQ.makeHqHelp = function (opts, wrap) {
     'use strict';
     wrap = wrap === undefined ? true : wrap;

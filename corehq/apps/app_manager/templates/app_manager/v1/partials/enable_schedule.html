@@ -53,9 +53,8 @@
     <script id="phase-template" type="text/html">
         <tr class="phase" data-bind="style: {cursor: 'move'}">
             <td>
-                <i class="grip sortable-handle"
-                   data-bind="css: COMMCAREHQ.icons.GRIP,
-                              event: {mousedown: function(){ $(':focus').blur(); }},
+                <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v"
+                   data-bind="event: {mousedown: function(){ $(':focus').blur(); }},
                               visible: $data !== $parent.selectedPhase()"></i>
                 <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
                                   event: { blur: function() { $parent.selectPhase(''); } }"/>
@@ -67,8 +66,8 @@
             <td data-bind="text: form_abbreviations"></td>
             <td>
                 <i style="cursor: pointer;"
-                   data-bind="css: COMMCAREHQ.icons.DELETE,
-                              click: $parent.removePhase,
+                   class="icon-remove icon-blue fa fa-remove"
+                   data-bind="click: $parent.removePhase,
                               visible: forms().length == 0
                               "></i>
                 <i style="cursor: pointer;"

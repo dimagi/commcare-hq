@@ -54,7 +54,7 @@
                     <tr class="row"
                         data-bind="attr: {'data-order': _sortableOrder}">
                         <td>
-                            <i class="grip sortable-handle" data-bind="css: COMMCAREHQ.icons.GRIP, style: {cursor: 'move'}"></i>
+                            <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v" style="cursor: move;"></i>
                         </td>
                         <td>
                             <select class="form-control"
@@ -93,10 +93,8 @@
                         </td>
                         <td>
                             <i title="{% trans 'Delete' %}" style="cursor: pointer;"
-                               data-bind="
-                                click: $root.removeReport,
-                                css: COMMCAREHQ.icons.DELETE
-                            "></i>
+                               class="icon-remove icon-blue fa fa-remove"
+                               data-bind="click: $root.removeReport"></i>
                         </td>
                     </tr>
                 </tbody>

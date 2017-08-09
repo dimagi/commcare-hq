@@ -34,10 +34,9 @@
             ">
                 <td class="text-center col-sm-1">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                    <i class="grip sortable-handle" data-bind="
+                    <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v"
+                       style="cursor: move;" data-bind="
                         if: grip,
-                        css: COMMCAREHQ.icons.GRIP,
-                        style: {cursor: 'move'},
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
                 </td>
@@ -105,11 +104,11 @@
                 <!-- /ko -->
                 <td class="col-sm-1 text-center">
                     <i style="cursor: pointer;"
+                       class="icon-remove icon-blue fa fa-remove"
                        title="{% trans "Delete"|escapejs %}"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
-                        css: COMMCAREHQ.icons.DELETE,
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

@@ -19,12 +19,12 @@ var mk_translation_ui = function (spec) {
                 this.value = hqImport('style/js/ui-element.js').input().val(value);
                 this.solid = true;
 
-                this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(COMMCAREHQ.icons.DELETE).click(function () {
+                this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass('icon-remove icon-blue fa fa-remove').click(function () {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', gettext("Delete Translation"));
 
-                this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(COMMCAREHQ.icons.ADD).click(function () {
+                this.$add = $('<button class="btn btn-default"><i></i></button>').addClass("icon-plus icon-blue fa fa-plus").click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
