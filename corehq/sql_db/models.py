@@ -1,5 +1,8 @@
+from corehq.sql_db.util import close_db_connection
 from corehq.util.exceptions import AccessRestricted
 from django.db import models
+from django.db.utils import InterfaceError as DjangoInterfaceError
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 
 def raise_access_restricted():
@@ -69,7 +72,17 @@ class RequireDBManager(models.Manager):
             kwargs = {
                 self.model.partition_attr: partition_value
             }
-        return self.using(self.get_db(partition_value)).get(**kwargs)
+
+        db_alias = self.get_db(partition_value)
+
+        def do_get():
+            return self.using(db_alias).get(**kwargs)
+
+        try:
+            return do_get()
+        except (Psycopg2InterfaceError, DjangoInterfaceError):
+            close_db_connection(db_alias)
+            return do_get()
 
     def partitioned_query(self, partition_value):
         """Shortcut to get a queryset for a partitioned database.
