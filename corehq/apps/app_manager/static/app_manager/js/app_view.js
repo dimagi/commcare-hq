@@ -65,7 +65,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         if ($('#multimedia-tab').length) {
             var multimediaTab = new MultimediaTab();
             $("#multimedia-tab").koApplyBindings(multimediaTab);
-            var selector = COMMCAREHQ.toggleEnabled('APP_MANAGER_V1') ? '#demand-multimedia' : '[href="#multimedia-tab"]';
+            var selector = hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1') ? '#demand-multimedia' : '[href="#multimedia-tab"]';
             $(selector).on('shown.bs.tab', function () {
                 if (multimediaTab.load_state() === null) {
                     multimediaTab.load_if_necessary();
@@ -74,7 +74,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         }
 
         // Releases content (v1 only)
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),

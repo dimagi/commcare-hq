@@ -615,12 +615,12 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
                 this.showCaseTileColumn = ko.computed(function () {
-                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                    return that.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles.js').toggleEnabled('CASE_LIST_TILE');
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
                 this.customVariablesViewModel = {
-                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    enabled: hqImport('hqwebapp/js/toggles.js').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
                     xml: ko.observable(spec[this.columnKey].custom_variables || ""),
                 };
                 this.customVariablesViewModel.xml.subscribe(function(){
@@ -967,11 +967,11 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             fixtures: _.keys(spec.fixture_columns_by_type),
                             containsSortConfiguration: columnType == "short",
                             containsParentConfiguration: columnType == "short",
-                            containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
+                            containsFixtureConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles.js').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
-                            containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles.js').toggleEnabled('CASE_LIST_LOOKUP')),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                            containsSearchConfiguration: (columnType === "short" && COMMCAREHQ.toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                            containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles.js').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'
@@ -1002,7 +1002,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                         }
                     }
                     this.customXMLViewModel = {
-                        enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML'),
+                        enabled: hqImport('hqwebapp/js/toggles.js').toggleEnabled('CASE_LIST_CUSTOM_XML'),
                         xml: ko.observable(spec.state.short.custom_xml || "")
                     };
                     this.customXMLViewModel.xml.subscribe(function(v){
@@ -1077,7 +1077,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             {value: "distance", label: gettext('Distance from current location')}
         ];
 
-        if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
+        if (hqImport('hqwebapp/js/toggles.js').toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "picture", label: gettext('Picture')},
                 {value: "audio", label: gettext('Audio')}

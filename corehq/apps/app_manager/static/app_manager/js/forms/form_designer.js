@@ -1,7 +1,7 @@
 /* globals COMMCAREHQ, define, require, analytics, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer.js", function() {
     $(function() {
-        var v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1'),
+        var v2 = !hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
             itemset: {

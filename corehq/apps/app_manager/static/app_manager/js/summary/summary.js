@@ -3,7 +3,7 @@ hqDefine("app_manager/js/summary/summary.js", function() {
     $(function() {
         'use strict';
 
-        var v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1');
+        var v2 = !hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1');
         if (v2) {
             hqLayout.utils.setIsAppbuilderResizing(true);
         }

@@ -16,7 +16,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
             // only referenced in v2 template
             self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
         }
@@ -249,7 +249,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
                     return setting.visible();
                 });
             });
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+            if (hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
                 section.reallyCollapse = ko.computed(function () {
                     var el = document.getElementById(section.id);
                     return section.collapse &&
@@ -324,7 +324,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
             hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
         }
 
