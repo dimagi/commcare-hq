@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
+from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
