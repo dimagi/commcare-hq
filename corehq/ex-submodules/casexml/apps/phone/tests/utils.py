@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.decorators.memoized import memoized
-from casexml.apps.case.mock import CaseBlock, CaseFactory
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
@@ -173,12 +173,33 @@ class MockDevice(object):
         self.last_sync = None
         self.sync(overwrite_cache=True)
 
-    def change_cases(self, case_blocks):
-        if isinstance(case_blocks, CaseBlock):
-            self.case_blocks.append(case_blocks.as_xml())
+    def change_cases(self, cases=None, **case_kwargs):
+        """Enqueue case changes to be synced
+
+        Does not post changes to HQ. Use `post_changes()` for that,
+        possibly after enqueuing changes with this method.
+
+        :param cases: A `CaseBlock` or `CaseStructure` or a list of the
+        same (all must have same type). `CaseStructure` objects will be
+        converted to case XML with defaults from this device's case
+        factory. `CaseBlock` objects will be posted as is (no defaults).
+        :param **case_kwargs: Arguments to be passed to
+        `CaseFactory.get_case_block(...)`, which implies using defaults
+        from this device's case factory.
+        """
+        factory = self.case_factory
+        if case_kwargs:
+            assert cases is None, "pass one: cases or kwargs"
+            self.case_blocks.append(factory.get_case_block(**case_kwargs))
+            return
+        if isinstance(cases, (CaseStructure, CaseBlock)):
+            cases = [cases]
+        elif not isinstance(cases, list):
+            raise ValueError(repr(cases))
+        if all(isinstance(s, CaseStructure) for s in cases):
+            self.case_blocks.extend(factory.get_case_blocks(cases))
         else:
-            assert isinstance(case_blocks, list), case_blocks
-            self.case_blocks.extend(b.as_xml() for b in case_blocks)
+            self.case_blocks.extend(b.as_xml() for b in cases)
 
     def sync(self, **config):
         if self.case_blocks:
