@@ -447,20 +447,20 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
         message_v2 = json.dumps([
             {'username': request.user.username},
-            {'flags': [MULTIPLE_APPS_UNLIMITED.slug,ADVANCED_SETTINGS_ACCESS.slug]}
+            {'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug]}
         ]).replace(' ', '')
 
         qrcode_data = json.dumps({
             'username': request.user.username,
             'version': 2,
             'flag': MULTIPLE_APPS_UNLIMITED.slug,
-            'flags': [MULTIPLE_APPS_UNLIMITED.slug,ADVANCED_SETTINGS_ACCESS.slug],
+            'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug],
             'signature': b64encode(sign(message_v1)),
             'multiple_flags_signature': b64encode(sign(message_v2))
         })
-        
+
         qrcode = get_qrcode(qrcode_data)
-        
+
         context = self.get_context_data(**kwargs)
         context['qrcode_64'] = b64encode(qrcode)
         return self.render_to_response(context)
