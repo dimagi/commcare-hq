@@ -253,12 +253,27 @@ hqDefine("style/js/main.js", function() {
         ERROR_SAVING: django.gettext("There was an error deleting")
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
+    var beforeUnload = [];
+    var bindBeforeUnload = function (callback) {
+        beforeUnload.push(callback);
+    };
+    var beforeUnloadCallback = function () {
+        for (var i = 0; i < beforeUnload.length; i++) {
+            var message = beforeUnload[i]();
+            if (message !== null && message !== undefined) {
+                return message;
+            }
+        }
+    };
+
     $(function () {
         'use strict';
+        $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
     });
 
     return {
+        beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
@@ -268,26 +283,4 @@ hqDefine("style/js/main.js", function() {
         transformHelpTemplate: transformHelpTemplate,
         updateDOM: updateDOM,
     };
-});
-
-var COMMCAREHQ = {};
-
-COMMCAREHQ.beforeUnload = [];
-
-COMMCAREHQ.bindBeforeUnload = function (callback) {
-    COMMCAREHQ.beforeUnload.push(callback);
-};
-
-COMMCAREHQ.beforeUnloadCallback = function () {
-    for (var i = 0; i < COMMCAREHQ.beforeUnload.length; i++) {
-        var message = COMMCAREHQ.beforeUnload[i]();
-        if (message !== null && message !== undefined) {
-            return message;
-        }
-    }
-};
-
-$(function () {
-    'use strict';
-    $(window).on('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
