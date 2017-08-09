@@ -1,4 +1,4 @@
-/*globals $, _, COMMCAREHQ, DOMPurify, hqDefine, hqImport */
+/*globals $, _, DOMPurify, hqDefine, hqImport */
 
 hqDefine('app_manager/js/details/screen_config.js', function () {
     var module = {},
@@ -694,7 +694,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     that.initColumnAsColumn(this.columns()[i]);
                 }
 
-                this.saveButton = COMMCAREHQ.SaveButton.init({
+                this.saveButton = hqImport("style/js/main.js").initSaveButton({
                     unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function () {
                         that.save();

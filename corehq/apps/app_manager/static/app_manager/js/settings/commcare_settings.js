@@ -1,4 +1,4 @@
-/* globals Clipboard, COMMCAREHQ */
+/* globals Clipboard */
 hqDefine('app_manager/js/settings/commcare_settings.js', function () {
     function CommcareSettings(options) {
         var app_manager = hqImport('app_manager/js/app_manager.js');
@@ -317,7 +317,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());

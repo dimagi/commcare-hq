@@ -45,7 +45,7 @@ hqDefine('app_manager/js/supported_languages.js', function () {
                 self._seen(true);
             }
         });
-        this.saveButton = COMMCAREHQ.SaveButton.init({
+        this.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your supported languages"),
             save: function () {
                 var message = self.validateGeneral();

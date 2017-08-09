@@ -151,7 +151,7 @@ var mk_translation_ui = function (spec) {
         }
     }
 
-    translation_ui.saveButton = COMMCAREHQ.SaveButton.init({
+    translation_ui.saveButton = hqImport("style/js/main.js").initSaveButton({
         unsavedMessage: gettext("You have unsaved user interface translations."),
         save: function () {
             translation_ui.save()

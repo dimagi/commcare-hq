@@ -1,4 +1,4 @@
-/* globals django, COMMCAREHQ, hqDefine */
+/* globals django, hqDefine, hqImport */
 hqDefine('data_dictionary/js/data_dictionary.js', function () {
 
     var CaseType = function (name) {
@@ -54,7 +54,7 @@ hqDefine('data_dictionary/js/data_dictionary.js', function () {
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
                 var postProperties = [];

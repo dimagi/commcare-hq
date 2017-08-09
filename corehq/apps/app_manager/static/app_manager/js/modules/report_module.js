@@ -302,7 +302,7 @@ hqDefine('app_manager/js/modules/report_module.js', function () {
             return multimedia;
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
                 // validate that all reports have valid data

@@ -51,7 +51,7 @@ hqDefine('toggle_ui/js/edit-flag.js', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: "You have unsaved changes",
             save: function () {
                 var items = _.map(self.items(), function (item) {

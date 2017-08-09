@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqImport */
 hqDefine("app_manager/js/add_ons.js", function() {
     var sectionChanger = hqImport("app_manager/js/section_changer.js");
 
@@ -11,7 +11,7 @@ hqDefine("app_manager/js/add_ons.js", function() {
                 collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
             });
         });
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main.js").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {
                 // Send server map of slug => enabled

@@ -182,7 +182,7 @@ ko.bindingHandlers.saveButton2 = {
             state = valueAccessor(),
             saveButton;
 
-        saveButton = COMMCAREHQ.SaveButton.init({
+        saveButton = hqImport("style/js/main.js").initSaveButton({
             save: function () {
                 saveButton.ajax(saveOptions());
             }
@@ -207,7 +207,7 @@ ko.bindingHandlers.deleteButton = {
             state = valueAccessor(),
             deleteButton;
 
-        deleteButton = COMMCAREHQ.DeleteButton.init({
+        deleteButton = hqImport("style/js/main.js").initDeleteButton({
             save: function () {
                 deleteButton.ajax(saveOptions());
             }

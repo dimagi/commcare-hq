@@ -1,4 +1,4 @@
-/* globals hqDefine COMMCAREHQ django hqLayout hqImport */
+/* globals hqDefine django hqLayout hqImport */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = hqImport("style/js/main.js").eventize({});
@@ -451,7 +451,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = COMMCAREHQ.SaveButton.initForm($form, {
+                button = hqImport("style/js/main.js").initSaveButton($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;

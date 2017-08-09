@@ -42,7 +42,7 @@ hqDefine("style/js/main.js", function() {
     var transformHelpTemplate = function ($template, wrap) {
         'use strict';
         if ($template.data()) {
-            var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+            var $help = makeHqHelp($template.data(), wrap);
             $help.insertAfter($template);
             $template.remove();
         }
@@ -94,6 +94,165 @@ hqDefine("style/js/main.js", function() {
         }
     };
 
+    var makeSaveButton = function(messageStrings, cssClass, barClass) {
+        'use strict';
+        var BAR_STATE = {
+            SAVE: 'savebtn-bar-save',
+            SAVING: 'savebtn-bar-saving',
+            SAVED: 'savebtn-bar-saved',
+            RETRY: 'savebtn-bar-retry',
+        };
+        barClass = barClass || '';
+        var SaveButton = {
+            /*
+             options: {
+             save: "Function to call when the user clicks Save",
+             unsavedMessage: "Message to display when there are unsaved changes and the user leaves the page"
+             }
+             */
+            init: function (options) {
+                var button = {
+                    $save: $('<div/>').text(SaveButton.message.SAVE).click(function () {
+                        button.fire('save');
+                    }).addClass(cssClass),
+                    $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
+                        button.fire('save');
+                    }).addClass(cssClass),
+                    $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
+                    $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
+                    ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
+                    setStateWhenReady: function (state) {
+                        if (this.state === 'saving') {
+                            this.nextState = state;
+                        } else {
+                            this.setState(state);
+                        }
+                    },
+                    setState: function (state) {
+                        if (this.state === state) {
+                            return;
+                        }
+                        this.state = state;
+                        this.$save.detach();
+                        this.$saving.detach();
+                        this.$saved.detach();
+                        this.$retry.detach();
+                        var buttonUi = this.ui;
+                        _.each(BAR_STATE, function (v, k) {
+                            buttonUi.removeClass(v);
+                        });
+                        if (state === 'save') {
+                            this.ui.addClass(BAR_STATE.SAVE);
+                            this.ui.append(this.$save);
+                        } else if (state === 'saving') {
+                            this.ui.addClass(BAR_STATE.SAVING);
+                            this.ui.append(this.$saving);
+                        } else if (state === 'saved') {
+                            this.ui.addClass(BAR_STATE.SAVED);
+                            this.ui.append(this.$saved);
+                        } else if (state === 'retry') {
+                            this.ui.addClass(BAR_STATE.RETRY);
+                            this.ui.append(this.$retry);
+                        }
+                    },
+                    ajax: function (options) {
+                        var beforeSend = options.beforeSend || function () {},
+                            success = options.success || function () {},
+                            error = options.error || function () {},
+                            that = this;
+                        options.beforeSend = function (jqXHR, settings) {
+                            that.setState('saving');
+                            that.nextState = 'saved';
+                            $.ajaxSettings.beforeSend(jqXHR, settings);
+                            beforeSend.apply(this, arguments);
+                        };
+                        options.success = function (data) {
+                            that.setState(that.nextState);
+                            success.apply(this, arguments);
+                        };
+                        options.error = function (data) {
+                            that.nextState = null;
+                            that.setState('retry');
+                            var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
+                            if (customError.indexOf('<head>') > -1) {
+                                // this is sending back a full html page, likely login, so no error message.
+                                customError = null;
+                            }
+                            hqImport("style/js/alert_user.js").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                            error.apply(this, arguments);
+                        };
+                        var jqXHR = $.ajax(options);
+                        if (!jqXHR) {
+                            // request was aborted
+                            that.setState('save');
+                        }
+                    }
+                };
+                hqImport("style/js/main.js").eventize(button);
+                button.setState('saved');
+                button.on('change', function () {
+                    this.setStateWhenReady('save');
+                });
+                if (options.save) {
+                    button.on('save', options.save);
+                }
+                $(window).on('beforeunload', function () {
+                    var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                    if (lastParent) {
+                        var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                        if (button.state !== 'saved' && stillAttached) {
+                            if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
+                            return options.unsavedMessage || "";
+                        }
+                    }
+                });
+                return button;
+            },
+            initForm: function ($form, options) {
+                var url = $form.attr('action'),
+                    button = SaveButton.init({
+                        unsavedMessage: options.unsavedMessage,
+                        save: function () {
+                            this.ajax({
+                                url: url,
+                                type: 'POST',
+                                dataType: 'json',
+                                data: $form.serialize(),
+                                success: options.success
+                            });
+                        }
+                    }),
+                    fireChange = function () {
+                        button.fire('change');
+                    };
+                _.defer(function () {
+                    $form.find('*').change(fireChange);
+                    $form.find('input, textarea').on('textchange', fireChange);
+                });
+                return button;
+            },
+            message: messageStrings
+        };
+
+        return SaveButton;
+    };
+
+    var SaveButton = makeSaveButton({
+        SAVE: django.gettext("Save"),
+        SAVING: django.gettext("Saving..."),
+        SAVED: django.gettext("Saved"),
+        RETRY: django.gettext("Try Again"),
+        ERROR_SAVING: django.gettext("There was an error saving")
+    }, 'btn btn-success');
+
+    var DeleteButton = makeSaveButton({
+        SAVE: django.gettext("Delete"),
+        SAVING: django.gettext("Deleting..."),
+        SAVED: django.gettext("Deleted"),
+        RETRY: django.gettext("Try Again"),
+        ERROR_SAVING: django.gettext("There was an error deleting")
+    }, 'btn btn-danger', 'savebtn-bar-danger');
+
     $(function () {
         'use strict';
         initBlock($("body"));
@@ -102,6 +261,9 @@ hqDefine("style/js/main.js", function() {
     return {
         eventize: eventize,
         initBlock: initBlock,
+        initDeleteButton: DeleteButton.init,
+        initSaveButton: SaveButton.init,
+        initSaveButtonForm: SaveButton.initForm,
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
         updateDOM: updateDOM,
@@ -109,166 +271,6 @@ hqDefine("style/js/main.js", function() {
 });
 
 var COMMCAREHQ = {};
-
-COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
-    'use strict';
-    var BAR_STATE = {
-        SAVE: 'savebtn-bar-save',
-        SAVING: 'savebtn-bar-saving',
-        SAVED: 'savebtn-bar-saved',
-        RETRY: 'savebtn-bar-retry',
-    };
-    barClass = barClass || '';
-    var SaveButton = {
-        /*
-         options: {
-         save: "Function to call when the user clicks Save",
-         unsavedMessage: "Message to display when there are unsaved changes and the user leaves the page"
-         }
-         */
-        init: function (options) {
-            var button = {
-                $save: $('<div/>').text(SaveButton.message.SAVE).click(function () {
-                    button.fire('save');
-                }).addClass(cssClass),
-                $retry: $('<div/>').text(SaveButton.message.RETRY).click(function () {
-                    button.fire('save');
-                }).addClass(cssClass),
-                $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
-                $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
-                ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
-                setStateWhenReady: function (state) {
-                    if (this.state === 'saving') {
-                        this.nextState = state;
-                    } else {
-                        this.setState(state);
-                    }
-                },
-                setState: function (state) {
-                    if (this.state === state) {
-                        return;
-                    }
-                    this.state = state;
-                    this.$save.detach();
-                    this.$saving.detach();
-                    this.$saved.detach();
-                    this.$retry.detach();
-                    var buttonUi = this.ui;
-                    _.each(BAR_STATE, function (v, k) {
-                        buttonUi.removeClass(v);
-                    });
-                    if (state === 'save') {
-                        this.ui.addClass(BAR_STATE.SAVE);
-                        this.ui.append(this.$save);
-                    } else if (state === 'saving') {
-                        this.ui.addClass(BAR_STATE.SAVING);
-                        this.ui.append(this.$saving);
-                    } else if (state === 'saved') {
-                        this.ui.addClass(BAR_STATE.SAVED);
-                        this.ui.append(this.$saved);
-                    } else if (state === 'retry') {
-                        this.ui.addClass(BAR_STATE.RETRY);
-                        this.ui.append(this.$retry);
-                    }
-                },
-                ajax: function (options) {
-                    var beforeSend = options.beforeSend || function () {},
-                        success = options.success || function () {},
-                        error = options.error || function () {},
-                        that = this;
-                    options.beforeSend = function (jqXHR, settings) {
-                        that.setState('saving');
-                        that.nextState = 'saved';
-                        $.ajaxSettings.beforeSend(jqXHR, settings);
-                        beforeSend.apply(this, arguments);
-                    };
-                    options.success = function (data) {
-                        that.setState(that.nextState);
-                        success.apply(this, arguments);
-                    };
-                    options.error = function (data) {
-                        that.nextState = null;
-                        that.setState('retry');
-                        var customError = ((data.responseJSON && data.responseJSON.message) ? data.responseJSON.message : data.responseText);
-                        if (customError.indexOf('<head>') > -1) {
-                            // this is sending back a full html page, likely login, so no error message.
-                            customError = null;
-                        }
-                        hqImport("style/js/alert_user.js").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
-                        error.apply(this, arguments);
-                    };
-                    var jqXHR = $.ajax(options);
-                    if (!jqXHR) {
-                        // request was aborted
-                        that.setState('save');
-                    }
-                }
-            };
-            hqImport("style/js/main.js").eventize(button);
-            button.setState('saved');
-            button.on('change', function () {
-                this.setStateWhenReady('save');
-            });
-            if (options.save) {
-                button.on('save', options.save);
-            }
-            $(window).on('beforeunload', function () {
-                var lastParent = button.ui.parents()[button.ui.parents().length - 1];
-                if (lastParent) {
-                    var stillAttached = lastParent.tagName.toLowerCase() == 'html';
-                    if (button.state !== 'saved' && stillAttached) {
-                        if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
-                        return options.unsavedMessage || "";
-                    }
-                }
-            });
-            return button;
-        },
-        initForm: function ($form, options) {
-            var url = $form.attr('action'),
-                button = SaveButton.init({
-                    unsavedMessage: options.unsavedMessage,
-                    save: function () {
-                        this.ajax({
-                            url: url,
-                            type: 'POST',
-                            dataType: 'json',
-                            data: $form.serialize(),
-                            success: options.success
-                        });
-                    }
-                }),
-                fireChange = function () {
-                    button.fire('change');
-                };
-            _.defer(function () {
-                $form.find('*').change(fireChange);
-                $form.find('input, textarea').on('textchange', fireChange);
-            });
-            return button;
-        },
-        message: messageStrings
-    };
-
-    return SaveButton;
-};
-
-COMMCAREHQ.SaveButton = COMMCAREHQ.makeSaveButton({
-    SAVE: django.gettext("Save"),
-    SAVING: django.gettext("Saving..."),
-    SAVED: django.gettext("Saved"),
-    RETRY: django.gettext("Try Again"),
-    ERROR_SAVING: django.gettext("There was an error saving")
-}, 'btn btn-success');
-
-COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
-    SAVE: django.gettext("Delete"),
-    SAVING: django.gettext("Deleting..."),
-    SAVED: django.gettext("Deleted"),
-    RETRY: django.gettext("Try Again"),
-    ERROR_SAVING: django.gettext("There was an error deleting")
-}, 'btn btn-danger', 'savebtn-bar-danger');
-
 
 COMMCAREHQ.beforeUnload = [];
 
