@@ -348,11 +348,17 @@ class LocationView(View):
             })
 
         parent_id = request.GET.get('parent_id')
+        name = request.GET.get('name')
+
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
             locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if name:
+            locations = locations.filter(name__iexact=name)
+
         return JsonResponse(data={
             'locations': [
                 {
