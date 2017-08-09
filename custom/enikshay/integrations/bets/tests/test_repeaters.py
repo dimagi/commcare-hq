@@ -631,7 +631,10 @@ class UserRepeaterTest(TestCase):
             "davos.shipwright@stannis.gov",
             "123",
             location=location,
+            commit=False,
         )
+        user.user_data['user_level'] = 'real'
+        user.save()
         self.addCleanup(user.delete)
         return user
 

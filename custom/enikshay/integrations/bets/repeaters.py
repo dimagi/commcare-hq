@@ -390,8 +390,9 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
                 and location.location_type.code in self.location_types_to_forward)
 
     def allowed_to_forward(self, user):
-        return any(self._is_relevant_location(loc)
-                   for loc in user.get_sql_locations(self.domain))
+        return (user.user_data.get('user_level', None) == 'real'
+                and any(self._is_relevant_location(loc)
+                        for loc in user.get_sql_locations(self.domain)))
 
 
 class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
