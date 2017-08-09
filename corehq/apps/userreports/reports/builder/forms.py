@@ -406,9 +406,9 @@ class DataSourceBuilder(object):
         indicators_without_dups = []
         seen_indicator_ids = set()
         for i in indicators:
-            if i['column_id'] not in seen_indicator_ids:
+            if (i['column_id'], i['type']) not in seen_indicator_ids:
                 indicators_without_dups.append(i)
-                seen_indicator_ids.add(i['column_id'])
+                seen_indicator_ids.add((i['column_id'], i['type']))
         indicators = indicators_without_dups
 
         return indicators
@@ -1248,6 +1248,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 )
                 indicator_id = mselect_indicator_id or c['field']
                 display = c['display']
+                agg = c.get("aggregation")
                 exists = self._column_exists(indicator_id)
                 if not exists:
                     possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
@@ -1261,6 +1262,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
                             display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
                         )
+                        agg = COUNT_PER_CHOICE
                     else:
                         continue
 
@@ -1273,7 +1275,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                             if exists else None
                         ),
                         data_source_field=indicator_id if not exists else None,
-                        calculation=reverse_agg_map.get(c.get('aggregation'), COUNT_PER_CHOICE)
+                        calculation=reverse_agg_map.get(agg, COUNT_PER_CHOICE)
                     )
                 )
             return cols
@@ -1462,6 +1464,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         )
 
         columns = []
+        aggregated_columns = set(self._report_columns_by_column_id[x] for x in self._report_aggregation_cols)
         for i, conf in enumerate(self.cleaned_data['columns']):
             column = self.ds_builder.report_column_options[conf['property']]
             columns.extend(
@@ -1469,7 +1472,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     i,
                     conf['display_text'],
                     conf['calculation'],
-                    column.get_indicator(conf['calculation'])['column_id'] in agg_fields
+                    conf['property'] in agg_fields
                 )
             )
 

@@ -166,7 +166,15 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         assert aggregation in [COUNT_PER_CHOICE, "simple"]
 
         if is_aggregated_on:
-            return super(MultiselectQuestionColumnOption, self).to_column_dicts(index, aggregation, display_text)
+            return [{
+                "format": "default",
+                "aggregation": self._get_aggregation_config(aggregation),
+                "field": self._get_filter_and_agg_indicator()['column_id'],
+                "column_id": "column_{}".format(index),
+                "type": "field",
+                "display": display_text,
+                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
+            }]
 
         columns = []
         for choice_index, choice in enumerate(self._question_source['options']):
@@ -202,7 +210,13 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        raise Exception("This column option is represented by multiple indicators, use get_indicators() instead")
+        if aggregation == "Group By":
+            return super(MultiselectQuestionColumnOption, self).get_indicator(aggregation, is_multiselect_chart_report)
+        else:
+            raise Exception(
+                "This column option is represented by multiple indicators when not being aggreated by, "
+                "use get_indicators() instead (aggregation was {})".format(aggregation)
+            )
 
 
 class CasePropertyColumnOption(ColumnOption):

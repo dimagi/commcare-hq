@@ -286,9 +286,9 @@
 +        indicators_without_dups = []
 +        seen_indicator_ids = set()
 +        for i in indicators:
-+            if i['column_id'] not in seen_indicator_ids:
++            if (i['column_id'], i['type']) not in seen_indicator_ids:
 +                indicators_without_dups.append(i)
-+                seen_indicator_ids.add(i['column_id'])
++                seen_indicator_ids.add((i['column_id'], i['type']))
 +        indicators = indicators_without_dups
 +
 +        return indicators
@@ -1094,9 +1094,11 @@
              }
              added_multiselect_columns = set()
              cols = []
-@@ -1302,6 +1249,11 @@
+@@ -1301,7 +1248,13 @@
+                 )
                  indicator_id = mselect_indicator_id or c['field']
                  display = c['display']
++                agg = c.get("aggregation")
                  exists = self._column_exists(indicator_id)
 +                if not exists:
 +                    possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
@@ -1106,7 +1108,15 @@
  
                  if mselect_indicator_id:
                      if mselect_indicator_id not in added_multiselect_columns:
-@@ -1316,26 +1268,97 @@
+@@ -1309,6 +1262,7 @@
+                         display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
+                             display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
+                         )
++                        agg = COUNT_PER_CHOICE
+                     else:
+                         continue
+ 
+@@ -1316,26 +1270,97 @@
                      ColumnViewModel(
                          display_text=display,
                          exists_in_current_version=exists,
@@ -1117,7 +1127,7 @@
 +                        ),
                          data_source_field=indicator_id if not exists else None,
 -                        calculation=reverse_agg_map.get(c.get('aggregation'), 'Count per Choice')
-+                        calculation=reverse_agg_map.get(c.get('aggregation'), COUNT_PER_CHOICE)
++                        calculation=reverse_agg_map.get(agg, COUNT_PER_CHOICE)
                      )
                  )
              return cols
@@ -1213,7 +1223,7 @@
              )
          return columns
  
-@@ -1344,14 +1367,25 @@
+@@ -1344,14 +1369,25 @@
          return ['doc_id']
  
  
@@ -1243,7 +1253,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1362,8 +1396,8 @@
+@@ -1362,8 +1398,8 @@
                      _("Rows"),
                      _(
                          'Choose which property this report will group its results by. Each value of this property'
@@ -1254,7 +1264,7 @@
                      ),
                  ),
                  crispy.Field(
-@@ -1385,76 +1419,90 @@
+@@ -1385,76 +1421,91 @@
  
      @property
      def _report_charts(self):
@@ -1312,6 +1322,7 @@
 +        )
  
          columns = []
++        aggregated_columns = set(self._report_columns_by_column_id[x] for x in self._report_aggregation_cols)
          for i, conf in enumerate(self.cleaned_data['columns']):
 +            column = self.ds_builder.report_column_options[conf['property']]
              columns.extend(
@@ -1321,7 +1332,7 @@
                      conf['display_text'],
                      conf['calculation'],
 -                    is_aggregated_on=conf["property"] == self.aggregation_field
-+                    column.get_indicator(conf['calculation'])['column_id'] in agg_fields
++                    conf['property'] in agg_fields
                  )
              )
  
@@ -1389,7 +1400,7 @@
  
  
  class ConfigureWorkerReportForm(ConfigureTableReportForm):
-@@ -1462,8 +1510,8 @@
+@@ -1462,8 +1513,8 @@
      report_type = 'worker'
      column_legend_fine_print = ugettext_noop(
          u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
@@ -1400,7 +1411,7 @@
      )
  
      def __init__(self, *args, **kwargs):
-@@ -1475,7 +1523,7 @@
+@@ -1475,7 +1526,7 @@
          if self.source_type == "form":
              return "username"
          if self.source_type == "case":
@@ -1409,7 +1420,7 @@
  
      @property
      @memoized
-@@ -1490,7 +1538,7 @@
+@@ -1490,7 +1541,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -1418,7 +1429,7 @@
                  data_source_field=None,
                  display_text='user name',
                  format='Choice',
-@@ -1540,7 +1588,7 @@
+@@ -1540,7 +1591,7 @@
  
      @property
      def _location_choices(self):
@@ -1427,7 +1438,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1586,19 +1634,28 @@
+@@ -1586,19 +1637,28 @@
  
      @property
      def _report_columns(self):

@@ -223,7 +223,11 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
+                'columns':
+                    '['
+                        '{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"},'
+                        '{"property": "/data/state", "display_text": "state", "calculation": "Count Per Choice"}'
+                    ']',
             }
         )
         self.assertTrue(builder_form.is_valid())
