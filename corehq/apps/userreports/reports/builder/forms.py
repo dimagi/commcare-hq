@@ -1464,7 +1464,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         )
 
         columns = []
-        aggregated_columns = set(self._report_columns_by_column_id[x] for x in self._report_aggregation_cols)
         for i, conf in enumerate(self.cleaned_data['columns']):
             column = self.ds_builder.report_column_options[conf['property']]
             columns.extend(

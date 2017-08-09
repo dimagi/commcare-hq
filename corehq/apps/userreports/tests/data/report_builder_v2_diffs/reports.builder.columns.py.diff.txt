@@ -122,7 +122,7 @@
              "column_id": "column_{}".format(index),
              "type": "field",
              "display": display_text,
-@@ -45,48 +98,183 @@
+@@ -45,48 +98,184 @@
  
  
  class QuestionColumnOption(ColumnOption):
@@ -255,7 +255,8 @@
 +
 +    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
 +        if aggregation == "Group By":
-+            return super(MultiselectQuestionColumnOption, self).get_indicator(aggregation, is_multiselect_chart_report)
++            return super(MultiselectQuestionColumnOption, self).get_indicator(
++                aggregation, is_multiselect_chart_report)
 +        else:
 +            raise Exception(
 +                "This column option is represented by multiple indicators when not being aggreated by, "
@@ -324,7 +325,7 @@
  
      @property
      @memoized
-@@ -96,9 +284,3 @@
+@@ -96,9 +285,3 @@
          # will make more sense to users than "Sum", which would technically
          # be more accurate.
          return ("Count",)

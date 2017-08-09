@@ -1264,7 +1264,7 @@
                      ),
                  ),
                  crispy.Field(
-@@ -1385,76 +1421,91 @@
+@@ -1385,76 +1421,90 @@
  
      @property
      def _report_charts(self):
@@ -1322,7 +1322,6 @@
 +        )
  
          columns = []
-+        aggregated_columns = set(self._report_columns_by_column_id[x] for x in self._report_aggregation_cols)
          for i, conf in enumerate(self.cleaned_data['columns']):
 +            column = self.ds_builder.report_column_options[conf['property']]
              columns.extend(
@@ -1400,7 +1399,7 @@
  
  
  class ConfigureWorkerReportForm(ConfigureTableReportForm):
-@@ -1462,8 +1513,8 @@
+@@ -1462,8 +1512,8 @@
      report_type = 'worker'
      column_legend_fine_print = ugettext_noop(
          u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
@@ -1411,7 +1410,7 @@
      )
  
      def __init__(self, *args, **kwargs):
-@@ -1475,7 +1526,7 @@
+@@ -1475,7 +1525,7 @@
          if self.source_type == "form":
              return "username"
          if self.source_type == "case":
@@ -1420,7 +1419,7 @@
  
      @property
      @memoized
-@@ -1490,7 +1541,7 @@
+@@ -1490,7 +1540,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -1429,7 +1428,7 @@
                  data_source_field=None,
                  display_text='user name',
                  format='Choice',
-@@ -1540,7 +1591,7 @@
+@@ -1540,7 +1590,7 @@
  
      @property
      def _location_choices(self):
@@ -1438,7 +1437,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1586,19 +1637,28 @@
+@@ -1586,19 +1636,28 @@
  
      @property
      def _report_columns(self):

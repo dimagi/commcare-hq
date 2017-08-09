@@ -63,7 +63,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
+                'columns':
+                    '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -79,7 +80,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
+                'columns':
+                    '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -157,7 +159,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation":"Group By"}]',
+                'columns':
+                    '[{"property": "/data/first_name", "display_text": "first name", "calculation":"Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -180,7 +183,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             data={
                 'user_filters': '[]',
                 'default_filters': '[]',
-                'columns': '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
+                'columns':
+                    '[{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"}]',
             }
         )
         self.assertTrue(builder_form.is_valid())
@@ -225,8 +229,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
                 'default_filters': '[]',
                 'columns':
                     '['
-                        '{"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"},'
-                        '{"property": "/data/state", "display_text": "state", "calculation": "Count Per Choice"}'
+                    '   {"property": "/data/first_name", "display_text": "first name", "calculation": "Group By"},'
+                    '   {"property": "/data/state", "display_text": "state", "calculation": "Count Per Choice"}'
                     ']',
             }
         )

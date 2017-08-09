@@ -211,7 +211,8 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         if aggregation == "Group By":
-            return super(MultiselectQuestionColumnOption, self).get_indicator(aggregation, is_multiselect_chart_report)
+            return super(MultiselectQuestionColumnOption, self).get_indicator(
+                aggregation, is_multiselect_chart_report)
         else:
             raise Exception(
                 "This column option is represented by multiple indicators when not being aggreated by, "
