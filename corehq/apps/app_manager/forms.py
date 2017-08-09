@@ -123,7 +123,7 @@ class PromptUpdateSettingsForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Save"),
                     type="submit",
-                    css_class="btn btn-primary",
+                    css_class="btn btn-success",
                 )
             ),
         )

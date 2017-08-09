@@ -6280,7 +6280,7 @@ class GlobalAppConfig(Document):
         app_id = app.copy_of or app.id
 
         res = cls.get_db().view(
-            "global_config_by_app_id/view",
+            "global_app_config_by_app_id/view",
             key=[app_id, app.domain],
             reduce=False,
             include_docs=True,
