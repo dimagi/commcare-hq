@@ -5475,7 +5475,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @memoized
     def enable_update_prompts(self):
         return (
-            self.supports_update_prompts and
+            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 

@@ -148,4 +148,4 @@ class CommCareFeatureSupportMixin(object):
         """
         Ability to configure apk/app update checks
         """
-        return self._require_minimum_version('2.26')
+        return self._require_minimum_version('2.38')
