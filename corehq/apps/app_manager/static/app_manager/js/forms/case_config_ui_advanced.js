@@ -213,7 +213,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
                 });
 
                 $('.hq-help-template').each(function () {
-                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                    hqImport("style/js/main.js").transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -666,7 +666,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            COMMCAREHQ.transformHelpTemplate($(this), true);
+                            hqImport("style/js/main.js").transformHelpTemplate($(this), true);
                         });
                     });
                 });

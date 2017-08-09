@@ -137,7 +137,7 @@ hqDefine("reports/js/filters.js", function() {
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            hqImport("style/js/main.js").transformHelpTemplate($(this), true);
         });
     };
 

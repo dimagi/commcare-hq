@@ -278,7 +278,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
     
         self.refreshEventsListUI = function () {
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
+                hqImport("style/js/main.js").transformHelpTemplate($(this), true);
             });
             $('[data-timeset="true"]').each(function () {
                 $(this).timepicker({

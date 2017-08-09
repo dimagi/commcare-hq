@@ -22,38 +22,40 @@ hqDefine("style/js/main.js", function() {
         return that;
     };
 
+    var makeHqHelp = function (opts, wrap) {
+        'use strict';
+        wrap = wrap === undefined ? true : wrap;
+        var el = $(
+            '<div class="hq-help">' + 
+                '<a href="#" tabindex="-1">' +
+                    '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
+        );
+        _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
+            $('a', el).data(attr, opts[attr]);
+        });
+        if (wrap) {
+            el.hqHelp();
+        }
+        return el;
+    };
+
+    var transformHelpTemplate = function ($template, wrap) {
+        'use strict';
+        if ($template.data()) {
+            var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
+            $help.insertAfter($template);
+            $template.remove();
+        }
+    };
+
     return {
         eventize: eventize,
+        makeHqHelp: makeHqHelp,
+        transformHelpTemplate: transformHelpTemplate,
     };
 });
 
 var COMMCAREHQ = {};
-
-COMMCAREHQ.makeHqHelp = function (opts, wrap) {
-    'use strict';
-    wrap = wrap === undefined ? true : wrap;
-    var el = $(
-        '<div class="hq-help">' + 
-            '<a href="#" tabindex="-1">' +
-                '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
-    );
-    _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
-        $('a', el).data(attr, opts[attr]);
-    });
-    if (wrap) {
-        el.hqHelp();
-    }
-    return el;
-};
-
-COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
-    'use strict';
-    if ($template.data()) {
-        var $help = COMMCAREHQ.makeHqHelp($template.data(), wrap);
-        $help.insertAfter($template);
-        $template.remove();
-    }
-};
 
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';

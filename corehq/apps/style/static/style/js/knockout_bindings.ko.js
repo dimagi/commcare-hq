@@ -352,7 +352,7 @@ ko.bindingHandlers.makeHqHelp = {
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
         $(element).find('.hq-help').remove();
-        COMMCAREHQ.makeHqHelp({
+        hqImport("style/js/main.js").makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',

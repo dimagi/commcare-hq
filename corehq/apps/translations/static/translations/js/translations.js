@@ -255,7 +255,7 @@ var mk_translation_ui = function (spec) {
             $('.auto-fill-help').attr('data-content', gettext("Autofill is not available in English (en). " +
                 "Please change your language using the dropdown in the top left."));
         }
-        COMMCAREHQ.transformHelpTemplate($('.auto-fill-help'), true);
+        hqImport("style/js/main.js").transformHelpTemplate($('.auto-fill-help'), true);
         translation_ui.appendAdder();
         $home.append($home);
     };
