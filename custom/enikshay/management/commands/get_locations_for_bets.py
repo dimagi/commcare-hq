@@ -2,9 +2,36 @@ import csv
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeaters import BETSLocationRepeater
+from custom.enikshay.integrations.bets.utils import get_bets_location_json
 
 
 class Command(BaseCommand):
+    field_names = [
+        'domain',
+        'parent_site_code',
+        'is_archived',
+        'last_modified',
+        'location_id',
+        'location_type',
+        'location_type_code',
+        'lineage',
+        'doc_type',
+        'name',
+        'site_code',
+        'longitude',
+        'ancestors_by_type.ctd',
+        'ancestors_by_type.sto',
+        'ancestors_by_type.dto',
+        'ancestors_by_type.cto',
+        'latitude',
+        '_id',
+        'external_id',
+        'metadata.is_test',
+        'metadata.tests_available',
+        'metadata.private_sector_org_id',
+        'metadata.nikshay_code',
+        'metadata.enikshay_enabled',
+    ]
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -14,51 +41,24 @@ class Command(BaseCommand):
         filename = 'eNikshay_locations.csv'
         with open(filename, 'w') as f:
             writer = csv.writer(f)
-            writer.writerow([
-                'name',
-                'site_code',
-                'location_id',
-                'doc_type',
-                'domain',
-                'external_id',
-                'is_archived',
-                'last_modified',
-                'latitude',
-                'longitude',
-                # TODO exactly which metadata fields do they want? How do we
-                # serialize the headers, metadata.is_test?
-                # 'metadata',
-                'location_type',
-                'location_type_code',
-                'parent_location_id',
-                'parent_site_code',
-                # They may also want ancestors_by_type, TBD
-            ])
+            writer.writerow(self.field_names)
             loc_types = BETSLocationRepeater.location_types_to_forward
             for loc in (SQLLocation.active_objects
                         .filter(domain=domain, location_type__name__in=loc_types)
                         .prefetch_related('parent', 'location_type')):
-                if loc.metadata.get('is_test') != "yes":
+                if True or loc.metadata.get('is_test') != "yes":
                     self.add_loc(loc, writer)
         print "Wrote to {}".format(filename)
 
     def add_loc(self, location, writer):
-        writer.writerow([
-            location.name,
-            location.site_code,
-            location.location_id,
-            'Location',
-            location.domain,
-            location.external_id,
-            location.is_archived,
-            location.last_modified.isoformat(),
-            float(location.latitude) if location.latitude else None,
-            float(location.longitude) if location.longitude else None,
-            # location.metadata,
-            location.location_type.name,
-            location.location_type.code,
-            location.parent_location_id,
-            location.parent.site_code,
-            # They may also want ancestors_by_type, if so, use
-            # custom.enikshay.integrations.bets.utils.get_bets_location_json
-        ])
+        loc_data = get_bets_location_json(location)
+
+        def get_field(field):
+            if field == 'lineage':
+                return ''
+            elif '.' in field:
+                obj, key = field.split('.')
+                return loc_data[obj].get(key, '')
+            return loc_data[field]
+
+        writer.writerow(map(get_field, self.field_names))
