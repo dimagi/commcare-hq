@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqDefine, hqImport */
 hqDefine("reports/js/filters.js", function() {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters

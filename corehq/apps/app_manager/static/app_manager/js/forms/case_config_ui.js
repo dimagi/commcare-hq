@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, ko, _*/
+/*globals $, hqDefine, hqImport, ko, _*/
 
 hqDefine('app_manager/js/forms/case_config_ui.js', function () {
     "use strict";

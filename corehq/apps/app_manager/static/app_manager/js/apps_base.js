@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ, hqLayout */
+/* globals hqImport, hqLayout */
 
 $(function () {
     var v2 = !hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1');

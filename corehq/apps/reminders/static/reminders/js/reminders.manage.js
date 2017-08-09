@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqImport */
 hqDefine("reminders/js/reminders.manage.js", function() {
     var ManageRemindersViewModel = function (
         initial,

@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqDefine, hqImport */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
 hqDefine("app_manager/js/app_view.js", function() {
     $(function () {
