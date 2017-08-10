@@ -96,7 +96,7 @@ class BaseICDSSMSExportCommand(BaseCommand):
             backend_api=SQLICDSBackend.get_api_id(),
             direction='O',
             processed=True,
-        ):
+        ).order_by('date'):
             recipient_details = self.get_recipient_details(sms)
             location_details = self.get_location_details(recipient_details['location_id'])
             indicator_slug = self.get_indicator_slug(sms)
