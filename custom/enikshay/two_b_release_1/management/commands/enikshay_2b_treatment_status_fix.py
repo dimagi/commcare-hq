@@ -47,32 +47,33 @@ class Command(BaseCommand):
                 diagnosing_facility_id = case_props.get('diagnosing_facility_id')
                 treatment_initiating_facility_id = case_props.get('treatment_initiating_facility_id')
 
-                if diagnosing_facility_id and treatment_initiating_facility_id:
-                    if treatment_initiated == 'yes_phi' and \
-                                    diagnosing_facility_id != treatment_initiating_facility_id:
-                        treatment_status = 'initiated_outside_facility'
-                    elif treatment_initiated == 'yes_phi':
-                        treatment_status = 'initiated_first_line_treatment'
-                    elif treatment_initiated == 'yes_private':
-                        treatment_status = 'initiated_outside_rntcp'
+                if treatment_initiated == 'yes_phi' and \
+                        diagnosing_facility_id and treatment_initiating_facility_id and \
+                        diagnosing_facility_id != treatment_initiating_facility_id:
+                    treatment_status = 'initiated_outside_facility'
+                elif treatment_initiated == 'yes_phi' and \
+                        diagnosing_facility_id and treatment_initiating_facility_id:
+                    treatment_status = 'initiated_first_line_treatment'
+                elif treatment_initiated == 'yes_private':
+                    treatment_status = 'initiated_outside_rntcp'
 
-                    if treatment_status:
-                        case_id = case['_id']
-                        f.write(case_id + "\n")
-                        logger.info(case_id)
+                if treatment_status:
+                    case_id = case['_id']
+                    f.write(case_id + "\n")
+                    logger.info(case_id)
 
-                        case_structure = CaseStructure(
-                            case_id=case_id,
-                            walk_related=False,
-                            attrs={
-                                "create": False,
-                                "update": {
-                                    "treatment_status": treatment_status,
-                                    "updated_by_migration": "enikshay_2b_treatment_status_fix",
-                                },
+                    case_structure = CaseStructure(
+                        case_id=case_id,
+                        walk_related=False,
+                        attrs={
+                            "create": False,
+                            "update": {
+                                "treatment_status": treatment_status,
+                                "updated_by_migration": "enikshay_2b_treatment_status_fix",
                             },
-                        )
+                        },
+                    )
 
-                        if commit:
-                            factory.create_or_update_case(case_structure)
+                    if commit:
+                        factory.create_or_update_case(case_structure)
         logger.info("Migration finished at {}".format(datetime.datetime.utcnow()))
