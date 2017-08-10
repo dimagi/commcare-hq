@@ -1,11 +1,14 @@
+import pytz
 from collections import defaultdict
 from corehq.apps.sms.models import SMS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
-from corehq.util.argparse_types import utc_timestamp
+from corehq.util.argparse_types import date_type
+from corehq.util.timezones.conversions import UserTime
 from couchexport.export import export_raw
+from datetime import datetime, timedelta, time
 from django.core.management.base import BaseCommand
 
 
@@ -14,8 +17,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('start_timestamp', type=utc_timestamp)
-        parser.add_argument('end_timestamp', type=utc_timestamp)
+        parser.add_argument('start_date', type=date_type)
+        parser.add_argument('end_date', type=date_type)
 
     def get_recipient_details(self, sms):
         details = {
@@ -105,9 +108,22 @@ class Command(BaseCommand):
                 location_details['state'].get('location_id'),
             )
 
-    def handle(self, domain, start_timestamp, end_timestamp, **options):
+    def handle(self, domain, start_date, end_date, **options):
         self.recipient_details = {}
         self.location_details = {}
+
+        start_timestamp = UserTime(
+            datetime.combine(start_date, time(0, 0)),
+            pytz.timezone('Asia/Kolkata')
+        ).server_time().done().replace(tzinfo=None)
+
+        end_timestamp = UserTime(
+            datetime.combine(end_date, time(0, 0)),
+            pytz.timezone('Asia/Kolkata')
+        ).server_time().done().replace(tzinfo=None)
+
+        # end_date is inclusive
+        end_timestamp += timedelta(days=1)
 
         with open('icds-sms-export.xlsx', 'wb') as f:
             headers = (

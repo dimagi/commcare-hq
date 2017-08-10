@@ -10,3 +10,13 @@ def utc_timestamp(value):
             "Invalid datetime specified: '%s'. "
             "Expected UTC timestamp in the format: YYYY-MM-DD HH:MM:SS" % value
         )
+
+
+def date_type(value):
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        raise argparse.ArgumentTypeError(
+            "Invalid date specified: '%s'. "
+            "Expected date in the format: YYYY-MM-DD" % value
+        )
