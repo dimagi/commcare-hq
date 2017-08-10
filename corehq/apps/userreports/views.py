@@ -94,7 +94,8 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
-    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place
+    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place,
+    recalculate_indicators
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -1229,6 +1230,27 @@ def build_data_source_in_place(request, domain, config_id):
     )
 
     rebuild_indicators_in_place.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def recalculate_data_source(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being recalculated. New data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    recalculate_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
