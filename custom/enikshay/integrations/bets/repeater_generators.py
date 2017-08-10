@@ -246,14 +246,12 @@ class VoucherPayload(BETSPayload):
         )
 
         approver_id = voucher_case.get_case_property('voucher_approved_by_id')
-        if approver_id:
-            approver = CommCareUser.get_by_user_id(approver_id)
-            approver_name = approver.name
-            usertype = approver.user_data.get('usertype')
-            approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
-        else:
-            approver_name = None
-            approver_usertype = None
+        if not approver_id:
+            raise AssertionError("Voucher does not have an approver")
+        approver = CommCareUser.get_by_user_id(approver_id)
+        approver_name = approver.name
+        usertype = approver.user_data.get('usertype')
+        approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
 
         return cls(
             EventID=event_id,
