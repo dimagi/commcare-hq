@@ -58,13 +58,12 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
         location = SQLLocation.by_location_id(location_id)
         if location:
-            rows = location.get_ancestors(include_self=True).values_list('location_type__code',
-                'location_id', 'name')
-            for row in rows:
-                location_type_code, location_id, name = row
-                result[location_type_code] = {
-                    'location_id': location_id,
-                    'name': name,
+            locs = location.get_ancestors(include_self=True).select_related('location_type')
+            for loc in locs:
+                result[loc.location_type.code] = {
+                    'location_id': loc.location_id,
+                    'name': loc.name,
+                    'site_code': loc.site_code,
                 }
 
         self.location_details[location_id] = result
@@ -76,7 +75,16 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
         return sms.custom_metadata.get('icds_indicator', 'unknown')
 
-    def get_records(self, domain, start_timestamp, end_timestamp):
+    def get_records(self, domain, start_timestamp, end_timestamp, indicator_filter=None, state_filter=None):
+        indicator_filter = indicator_filter or []
+        state_filter = state_filter or []
+
+        if not isinstance(indicator_filter, list):
+            raise TypeError("Expected list for indicator_filter")
+
+        if not isinstance(state_filter, list):
+            raise TypeError("Expected list for state_filter")
+
         for sms in SMS.objects.filter(
             domain=domain,
             date__gt=start_timestamp,
@@ -88,6 +96,13 @@ class BaseICDSSMSExportCommand(BaseCommand):
             recipient_details = self.get_recipient_details(sms)
             location_details = self.get_location_details(recipient_details['location_id'])
             indicator_slug = self.get_indicator_slug(sms)
+
+            if indicator_filter and indicator_slug not in indicator_filter:
+                continue
+
+            if state_filter and location_details['state'].get('site_code') not in state_filter:
+                continue
+
             yield (
                 sms.date.strftime('%Y-%m-%d %H:%M:%S'),
                 indicator_slug,
