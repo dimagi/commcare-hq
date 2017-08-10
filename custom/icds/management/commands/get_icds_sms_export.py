@@ -137,13 +137,7 @@ class BaseICDSSMSExportCommand(BaseCommand):
                 location_details['awc'].get('location_id'),
             )
 
-
-class Command(BaseICDSSMSExportCommand):
-
-    def handle(self, domain, start_date, end_date, **options):
-        self.recipient_details = {}
-        self.location_details = {}
-
+    def get_start_and_end_timestamps(self, start_date, end_date):
         start_timestamp = UserTime(
             datetime.combine(start_date, time(0, 0)),
             self.timezone
@@ -156,6 +150,16 @@ class Command(BaseICDSSMSExportCommand):
 
         # end_date is inclusive
         end_timestamp += timedelta(days=1)
+
+        return start_timestamp, end_timestamp
+
+
+class Command(BaseICDSSMSExportCommand):
+
+    def handle(self, domain, start_date, end_date, **options):
+        self.recipient_details = {}
+        self.location_details = {}
+        start_timestamp, end_timestamp = self.get_start_and_end_timestamps(start_date, end_date)
 
         with open('icds-sms-export.xlsx', 'wb') as f:
             headers = (
