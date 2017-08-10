@@ -383,7 +383,7 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
     friendly_name = _("BETS - Forward Agency Users")
     payload_generator_classes = (BETSUserPayloadGenerator,)
 
-    location_types_to_forward = ['plc', 'pcp', 'pcc', 'pac']
+    location_types_to_forward = ('plc', 'pcp', 'pcc', 'pac')
 
     def _is_relevant_location(self, location):
         return (location.metadata.get('is_test') != "yes"
