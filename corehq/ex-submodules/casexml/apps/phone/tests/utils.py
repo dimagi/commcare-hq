@@ -1,3 +1,4 @@
+from uuid import uuid4
 from xml.etree import ElementTree
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.decorators.memoized import memoized
@@ -192,6 +193,8 @@ class MockDevice(object):
         factory = self.case_factory
         if case_kwargs:
             assert cases is None, "pass one: cases or kwargs"
+            if "case_id" not in case_kwargs:
+                case_kwargs["case_id"] = uuid4().hex
             self.case_blocks.append(factory.get_case_block(**case_kwargs))
             return
         if isinstance(cases, (CaseStructure, CaseBlock)):
@@ -210,23 +213,24 @@ class MockDevice(object):
         for convenience.
 
         This is the first half of a full sync. It does not affect the
-        latest sync log on the device or HQ and can be used when the
-        result of a restore on this device is not important.
+        latest sync log on the device and can be used when the result of
+        a restore on this device is not important.
         """
         if args or kw:
             self.change_cases(*args, **kw)
         if self.case_blocks:
             # post device case changes
             token = self.last_sync.log._id if self.last_sync else None
-            self.case_factory.post_case_blocks(
+            form = self.case_factory.post_case_blocks(
                 self.case_blocks,
                 form_extras={"last_sync_token": token},
-            )
+            )[0]
             self.case_blocks = []
+            return form
 
     def sync(self, **config):
         """Synchronize device with HQ"""
-        self.post_changes()
+        form = self.post_changes()
         # restore
         for name, value in self.restore_options.items():
             config.setdefault(name, value)
@@ -235,15 +239,16 @@ class MockDevice(object):
             config['restore_id'] = self.last_sync.log._id
         restore_config = get_restore_config(self.project, self.user, **config)
         payload = restore_config.get_payload().as_string()
-        self.last_sync = SyncResult(restore_config, payload)
+        self.last_sync = SyncResult(restore_config, payload, form)
         return self.last_sync
 
 
 class SyncResult(object):
 
-    def __init__(self, config, payload):
+    def __init__(self, config, payload, form):
         self.config = config
         self.payload = payload
+        self.form = form
         self.xml = ElementTree.fromstring(payload)
 
     def get_log(self):
