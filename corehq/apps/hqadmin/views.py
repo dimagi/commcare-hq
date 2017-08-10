@@ -1173,8 +1173,8 @@ class SessionDetialsView(View):
         if not user:
             raise Http404
 
-        couch_user_id = get_user_id_by_username(user.username)
-        if not couch_user_id:
+        couch_user = CouchUser.get_by_username(user.username)
+        if not couch_user:
             raise Http404
 
         try:
@@ -1184,8 +1184,8 @@ class SessionDetialsView(View):
 
         return JsonResponse({
             'username': user.username,
-            'sql_user_id': user.pk,
-            'couch_user_id': couch_user_id,
-            'is_super_user': user.is_superuser,
-            'auth_token': auth_token,
+            'djangoUserId': user.pk,
+            'superUser': user.is_superuser,
+            'authToken': auth_token,
+            'domains': couch_user.domains,
         })
