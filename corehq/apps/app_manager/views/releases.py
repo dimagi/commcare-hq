@@ -8,6 +8,7 @@ from django.views.generic import View
 from django.utils.decorators import method_decorator
 
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
+from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
 from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
@@ -137,6 +138,8 @@ def get_releases_context(request, domain, app_id):
     })
     if not app.is_remote_app():
         if not toggles.APP_MANAGER_V1.enabled(request.user.username):
+            if ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request).version == ab_tests.APP_BUILDER_VIDEO_ON:
+                context.update({'show_video': True})
             if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
                 if app.version <= 2:
                     context.update({'intro_only': True})

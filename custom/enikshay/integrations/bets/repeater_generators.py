@@ -434,7 +434,12 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     ]
 
     def get_payload(self, repeat_record, user):
-        location = user.get_sql_location(repeat_record.domain)
+        user_json = self.serialize(repeat_record.domain, user)
+        return json.dumps(user_json, cls=DjangoJSONEncoder)
+
+    @staticmethod
+    def serialize(domain, user):
+        location = user.get_sql_location(domain)
         user_json = {
             "username": user.username,
             "first_name": user.first_name,
@@ -444,14 +449,14 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
             "phone_numbers": user.phone_numbers,
             "email": user.email,
             "dtoLocation": _get_district_location(location),
-            "privateSectorOrgId": location.metadata['private_sector_org_id'],
+            "privateSectorOrgId": location.metadata.get('private_sector_org_id', ''),
             "resource_uri": "",
         }
         user_json['user_data'] = {
             field: user.user_data.get(field, "")
-            for field in self.user_data_fields
+            for field in BETSUserPayloadGenerator.user_data_fields
         }
-        return json.dumps(user_json, cls=DjangoJSONEncoder)
+        return user_json
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):

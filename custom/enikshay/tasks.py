@@ -304,7 +304,7 @@ class EpisodeAdherenceUpdate(object):
     def count_doses_taken(dose_status_by_date, start_date=None, end_date=None):
         """
         Args:
-            dose_status_by_date: result of self.calculate_dose_status_by_day
+            dose_status_by_date: result of calculate_dose_status_by_day
         Returns:
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one

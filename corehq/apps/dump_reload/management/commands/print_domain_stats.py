@@ -9,7 +9,7 @@ from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
-from corehq.apps.dump_reload.sql.dump import get_querysets_to_dump
+from corehq.apps.dump_reload.sql.dump import get_model_iterator_builders_to_dump
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
@@ -93,10 +93,11 @@ def _get_couchdb_counts(domain):
 
 def _get_sql_counts(domain):
     counter = Counter()
-    for model_class, queryset in get_querysets_to_dump(domain, []):
+    for model_class, builder in get_model_iterator_builders_to_dump(domain, []):
         if model_class in (User, XFormInstanceSQL, CommCareCaseSQL):
             continue  # User is very slow, others we want to break out
-        counter[get_model_label(model_class)] += queryset.count()
+        for queryset in builder.querysets():
+            counter[get_model_label(model_class)] += queryset.count()
 
     counter += get_primary_db_form_counts(domain)
     counter += get_primary_db_case_counts(domain)

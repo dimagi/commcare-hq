@@ -343,18 +343,30 @@ class LocationView(View):
             )
             return JsonResponse({
                 'name': location.name,
-                'location_type': location.location_type.code
+                'location_type': location.location_type.code,
+                'location_type_name': location.location_type_name
             })
 
         parent_id = request.GET.get('parent_id')
+        name = request.GET.get('name')
+
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
             locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if name:
+            locations = locations.filter(name__iexact=name)
+
         return JsonResponse(data={
             'locations': [
-                {'location_id': loc.location_id, 'name': loc.name, 'parent_id': parent_id}
+                {
+                    'location_id': loc.location_id,
+                    'name': loc.name,
+                    'parent_id': parent_id,
+                    'location_type_name': loc.location_type_name
+                }
                 for loc in locations
             ]
         })
@@ -380,12 +392,13 @@ class LocationAncestorsView(View):
                 {
                     'location_id': location.location_id,
                     'name': location.name,
-                    'parent_id': location.parent.location_id if location.parent else None
+                    'parent_id': location.parent.location_id if location.parent else None,
+                    'location_type_name': location.location_type_name
                 }
                 for location in set(list(locations) + list(parents))
             ],
             'selected_location': {
-                'location_type': selected_location.location_type_name,
+                'location_type_name': selected_location.location_type_name,
                 'location_id': selected_location.location_id,
                 'name': selected_location.name,
                 'parent_id': selected_location.parent.location_id if selected_location.parent else None

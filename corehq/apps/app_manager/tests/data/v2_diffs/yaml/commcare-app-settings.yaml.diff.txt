@@ -1,8 +1,0 @@
---- 
-+++ 
-@@ -172,4 +172,4 @@
-   toggle: MOBILE_UCR
-   values: ['none', '0', '1', '2', '4', '6', '8', '12', '24']
-   value_names: ['Use project level setting', 'Update on every sync', '1 hour', '2 hours', '4 hours', '6 hours', '8 hours', '12 hours', '24 hours']
--  default: 'none'
-+  default: 'none'

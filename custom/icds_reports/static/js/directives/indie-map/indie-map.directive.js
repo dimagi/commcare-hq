@@ -1,6 +1,6 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location, $filter, storageService) {
+function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService) {
     var vm = this;
 
     setTimeout(function() {
@@ -43,6 +43,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         }
 
         var location_level = parseInt($location.search()['selectedLocationLevel']);
+        var location_id = $location.search().location_id;
         var location = $location.search()['location_name'];
         vm.type = '';
 
@@ -101,10 +102,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 return {path: path, projection: projection};
             },
         };
+
         vm.updateMap = function (geography) {
-            $location.search('location_name', geography.id);
-            storageService.setKey('search', $location.search());
-            $scope.$apply();
+            locationsService.getLocationByNameAndParent(geography.id, location_id).then(function(locations) {
+                var location = locations[0];
+                $location.search('location_name', geography.id);
+                $location.search('location_id', location.location_id);
+                storageService.setKey('search', $location.search());
+            });
+
         };
 
         vm.mapPlugins = {
@@ -120,13 +126,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     var html = ['<div style="height: 20px !important">'];
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
-                        html.push('<span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
-                            '</span><span style="padding: 5px;">' + fillKey + '</span>');
+                        html.push('<div><span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
+                            '</span><span style="padding: 5px;">' + fillKey + '</span></div>');
                     }
                     html.push('</div>');
 
                     d3.select(this.options.element).append('div')
-                        .attr('class', 'datamaps-legend text-center')
+                        .attr('class', 'datamaps-legend')
                         .attr('style', 'width: 150px; left 0; top: 5%;')
                         .html(html.join(''));
                 },
@@ -191,7 +197,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService'];
+IndieMapController.$inject = ['$scope', '$compile', '$location', '$filter', 'storageService', 'locationsService'];
 
 window.angular.module('icdsApp').directive('indieMap', function() {
     return {
