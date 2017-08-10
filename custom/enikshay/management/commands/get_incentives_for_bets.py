@@ -96,4 +96,4 @@ class Command(BaseCommand):
                 writer = csv.writer(f)
                 writer.writerow(['episode_id', 'error'])
                 for error in errors:
-                    writer.writerow(errors)
+                    writer.writerow(error)
