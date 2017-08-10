@@ -130,7 +130,7 @@ class PromptUpdateSettingsForm(forms.Form):
 
     @classmethod
     def from_app(cls, app):
-        if not app.enable_update_prompts:
+        if app.is_remote_app() or not app.enable_update_prompts:
             return None
         app_config = app.global_app_config
         return cls(domain=app.domain, app_id=app.id, initial={

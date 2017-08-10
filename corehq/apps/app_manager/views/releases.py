@@ -132,11 +132,13 @@ def get_releases_context(request, domain, app_id):
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
-        'enable_update_prompts': app.enable_update_prompts,
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
     })
     if not app.is_remote_app():
+        context.update({
+            'enable_update_prompts': app.enable_update_prompts,
+        })
         if not toggles.APP_MANAGER_V1.enabled(request.user.username):
             if ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request).version == ab_tests.APP_BUILDER_VIDEO_ON:
                 context.update({'show_video': True})
