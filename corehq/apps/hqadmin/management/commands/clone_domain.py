@@ -70,11 +70,11 @@ class Command(BaseCommand):
 
         copy_locations = self._clone_type(options, 'locations')
         copy_location_types = self._clone_type(options, 'location_types')
-        if copy_locations and not copy_location_types:
-            raise CommandError("You can't copy locations by excluding types")
-        else:
-            types_only = copy_location_types and not copy_locations
+        if copy_location_types:
+            types_only = not copy_locations
             self.copy_locations(types_only)
+        elif copy_locations:
+            raise CommandError("You can't copy locations by excluding types")
 
         if self._clone_type(options, 'products'):
             self.copy_products()
