@@ -34,10 +34,10 @@ class Command(BaseCommand):
         ))
 
         cases = (CaseSearchES()
-                    .domain(domain)
-                    .case_type("episode")
-                    .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must")
-                    .run().hits)
+                 .domain(domain)
+                 .case_type("episode")
+                 .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must")
+                 .run().hits)
 
         with open(log_path, "w") as f:
             for case in cases:
@@ -48,7 +48,8 @@ class Command(BaseCommand):
                 treatment_initiating_facility_id = case_props.get('treatment_initiating_facility_id')
 
                 if diagnosing_facility_id and treatment_initiating_facility_id:
-                    if treatment_initiated == 'yes_phi' and diagnosing_facility_id != treatment_initiating_facility_id:
+                    if treatment_initiated == 'yes_phi' and \
+                                    diagnosing_facility_id != treatment_initiating_facility_id:
                         treatment_status = 'initiated_outside_facility'
                     elif treatment_initiated == 'yes_phi':
                         treatment_status = 'initiated_first_line_treatment'
