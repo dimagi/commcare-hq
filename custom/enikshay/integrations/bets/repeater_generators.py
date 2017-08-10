@@ -349,27 +349,27 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
-    def _get_prescription_threshold_to_send(episode_case):
+    def _get_prescription_threshold_to_send(episode_case, check_already_sent=True):
         from custom.enikshay.integrations.bets.repeaters import BETSDrugRefillRepeater
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                episode_case.dynamic_case_properties(), n
+                    episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
             )
         ]
-
-        _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
-        message = ("Repeater should not have allowed to forward if there were more or less than"
-                   "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
-        _assert(len(thresholds_to_send) == 1, message)
+        if check_already_sent:
+            _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+            message = ("Repeater should not have allowed to forward if there were more or less than"
+                       "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
+            _assert(len(thresholds_to_send) == 1, message)
 
         try:
-            return thresholds_to_send[0]
+            return thresholds_to_send[-1]
         except IndexError:
             return 0
 
     def get_payload(self, repeat_record, episode_case):
-        n = self._get_prescription_threshold_to_send(episode_case)
+        n = self._get_prescription_threshold_to_send(episode_case, check_already_sent=False)
         return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):
