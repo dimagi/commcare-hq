@@ -6,14 +6,20 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.util.argparse_types import date_type
-from corehq.util.timezones.conversions import UserTime
+from corehq.util.timezones.conversions import UserTime, ServerTime
 from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
+from dimagi.utils.decorators.memoized import memoized
 from django.core.management.base import BaseCommand
 
 
 class BaseICDSSMSExportCommand(BaseCommand):
     help = ""
+
+    @property
+    @memoized
+    def timezone(self):
+        return pytz.timezone('Asia/Kolkata')
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -79,6 +85,10 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
         return sms.custom_metadata.get('icds_indicator', 'unknown')
 
+    def format_timestamp(self, utc_timestamp):
+        ist_timestamp = ServerTime(utc_timestamp).user_time(self.timezone).done()
+        return ist_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
     def get_records(self, domain, start_timestamp, end_timestamp, indicator_filter=None, state_filter=None):
         indicator_filter = indicator_filter or []
         state_filter = state_filter or []
@@ -108,7 +118,7 @@ class BaseICDSSMSExportCommand(BaseCommand):
                 continue
 
             yield (
-                sms.date.strftime('%Y-%m-%d %H:%M:%S'),
+                self.format_timestamp(sms.date),
                 indicator_slug,
                 sms.phone_number,
                 recipient_details['type'],
@@ -136,12 +146,12 @@ class Command(BaseICDSSMSExportCommand):
 
         start_timestamp = UserTime(
             datetime.combine(start_date, time(0, 0)),
-            pytz.timezone('Asia/Kolkata')
+            self.timezone
         ).server_time().done().replace(tzinfo=None)
 
         end_timestamp = UserTime(
             datetime.combine(end_date, time(0, 0)),
-            pytz.timezone('Asia/Kolkata')
+            self.timezone
         ).server_time().done().replace(tzinfo=None)
 
         # end_date is inclusive
