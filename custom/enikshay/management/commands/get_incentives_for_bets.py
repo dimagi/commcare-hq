@@ -70,7 +70,7 @@ class Command(BaseCommand):
                     payload[u'AgencyId'] = agency_user.raw_username
 
                 except Exception as e:
-                    errors.append([record.payload_id, unicode(e)])
+                    errors.append([record.payload_id, record._id, unicode(e)])
                     continue
                 payload['Succeeded'] = record.succeeded
                 incentive_episode_pair = (payload.get('EpisodeID'), payload.get('EventID'),)
@@ -94,6 +94,6 @@ class Command(BaseCommand):
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.writerow(['episode_id', 'error'])
+                writer.writerow(['episode_id', 'repeat_record_id', 'error'])
                 for error in errors:
                     writer.writerow(error)
