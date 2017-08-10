@@ -515,8 +515,7 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         "first_name", "husband_father_name", "id_original_beneficiary_count",
         "id_original_device_number", "id_original_issuer_number",
         "language_preference", "last_name", "other_id_type", "person_id",
-        "phi", "phone_number", "send_alerts", "sex", "tu_choice",
-        "contact_phone_number",
+        "phi", "send_alerts", "sex", "tu_choice",
     ]
 
     @property
@@ -549,4 +548,6 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
             for prop in BETSBeneficiaryPayloadGenerator.case_properties
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
+        # This is the "real" phone number
+        case_json["properties"]["phone_number"] = case_properties.get("contact_phone_number", "")
         return case_json

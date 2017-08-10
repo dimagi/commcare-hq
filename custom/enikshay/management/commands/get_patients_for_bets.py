@@ -58,7 +58,6 @@ class Command(BaseCommand):
         'user_id',
         'xform_ids',
         'uatbc_id',
-        'properties.contact_phone_number',
     ]
 
     def add_arguments(self, parser):
