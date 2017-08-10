@@ -139,7 +139,7 @@ Util.CloudcareUrl = function (options) {
     this.singleApp = options.singleApp;
     this.previewCommand = options.previewCommand;
     this.installReference = options.installReference;
-    this.sortIndex = options.sortIndex
+    this.sortIndex = options.sortIndex;
 
     this.setSteps = function (steps) {
         this.steps = steps;
@@ -230,7 +230,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
         singleApp: self.singleApp,
         previewCommand: self.previewCommand,
         installReference: self.installReference,
-        sortIndex: self.sortIndex
+        sortIndex: self.sortIndex,
     };
     return JSON.stringify(dict);
 };
@@ -247,7 +247,7 @@ Util.CloudcareUrl.fromJson = function (json) {
         'singleApp': data.singleApp,
         'previewCommand': data.previewCommand,
         'installReference': data.installReference,
-        'sortIndex': data.sortIndex
+        'sortIndex': data.sortIndex,
     };
     return new Util.CloudcareUrl(options);
 };
