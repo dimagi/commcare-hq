@@ -259,13 +259,22 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
             if (result.isNew) {
                 return '<span class="label label-success">New</span> ' + result.text;
             }
-            return result.name + ' <span class="label">' + result.rate_type + '</span>';
+            if (_.has(result, 'rate_type')) {
+                return result.name + ' <span class="label">' + result.rate_type + '</span>';
+            } else {
+                return result.name;
+            }
+
         };
     
         self.formatSelection = function (result) {
             self.isNew(!!result.isNew);
             self.isExisting(!!result.isExisting);
-            return result.text || (result.name + ' [' + result.rate_type + ']');
+            if (_.has(result, 'rate_type')) {
+                return result.text || (result.name + ' [' + result.rate_type + ']');
+            } else {
+                return result.text || result.name;
+            }
         };
     
         self.getInitialData = function (element) {
