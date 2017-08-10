@@ -194,6 +194,8 @@ class MockDevice(object):
         if case_kwargs:
             assert cases is None, "pass one: cases or kwargs"
             if "case_id" not in case_kwargs:
+                if not case_kwargs.get('create'):
+                    raise ValueError("case_id is required for update")
                 case_kwargs["case_id"] = uuid4().hex
             self.case_blocks.append(factory.get_case_block(**case_kwargs))
             return

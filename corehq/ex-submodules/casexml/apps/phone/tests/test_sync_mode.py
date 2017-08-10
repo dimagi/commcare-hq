@@ -108,13 +108,6 @@ class SyncBaseTest(TestCase):
         delete_all_users()
         super(SyncBaseTest, cls).tearDownClass()
 
-    def _createCaseStubs(self, id_list, **kwargs):
-        case_attrs = {'create': True}
-        case_attrs.update(kwargs)
-        return self.factory.create_or_update_cases(
-            [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
-        )
-
     def get_device(self, **kw):
         kw.setdefault("project", self.project)
         kw.setdefault("user", self.user)

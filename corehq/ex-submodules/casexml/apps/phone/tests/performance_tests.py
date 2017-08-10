@@ -1,5 +1,5 @@
 from unittest import skip
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.mock import CaseBlock, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
 from casexml.apps.phone.tests.utils import (
     synclog_from_restore_payload,
@@ -28,6 +28,14 @@ class SyncPerformanceTest(SyncBaseTest):
     """
     Tests the interaction of two users in sync mode doing various things
     """
+
+    def _createCaseStubs(self, id_list, **kwargs):
+        # TODO remove this when these tests use MockDevice
+        case_attrs = {'create': True}
+        case_attrs.update(kwargs)
+        return self.factory.create_or_update_cases(
+            [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
+        )
 
     def setUp(self):
         super(SyncPerformanceTest, self).setUp()
