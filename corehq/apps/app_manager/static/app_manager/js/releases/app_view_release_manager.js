@@ -1,7 +1,7 @@
-/* globals hqDefine hqImport django */
+/* globals hqDefine hqImport django analytics */
 hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    
+
     hqImport('app_manager/js/app_manager.js').setPrependedPageTitle(django.gettext("Publish"));
 
     // Main releases content
@@ -18,6 +18,10 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
     }
+
+    $("#onboarding-video").click(function() {
+        analytics.workflow('Clicked onboarding video link');
+    });
 
     // View changes / app diff
     var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
