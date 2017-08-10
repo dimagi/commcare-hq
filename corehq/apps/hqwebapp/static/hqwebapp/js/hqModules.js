@@ -67,12 +67,28 @@ function hqDefine(path, dependencies, moduleAccessor) {
 // which have not yet been converted to hqDefine. When not on a RequireJS page,
 // moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
 function hqGlobal(path, dependencies, moduleAccessor) {
+    var paths = {
+        'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'knockout': typeof ko === 'undefined' ? undefined : ko,
+        'ko': typeof ko === 'undefined' ? undefined : ko,
+        'underscore': typeof _ === 'undefined' ? undefined : _,
+    };
     (function(factory) {
         if (typeof define === 'function' && define.amd) {
             define(path, dependencies, factory);
         } else {
-            factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), (typeof _ === 'undefined' ? undefined :
-_));
+            path = path.replace(/\.js$/, "");
+            path = path + ".js";
+            args = [];
+            for (var i = 0; i < dependencies.length; i++) {
+                if (dependencies[i] in paths) {
+                    args[i] = paths[dependencies[i]];
+                } else if (path in COMMCAREHQ_MODULES) {
+                    args[i] = hqImport(dependencies[i]);
+                }
+            }
+            COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
         }
     }(moduleAccessor));
 }
