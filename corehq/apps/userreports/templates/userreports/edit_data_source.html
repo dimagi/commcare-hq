@@ -39,6 +39,12 @@
       {% trans 'Rebuild Tables In Place (Advanced)' %}
     </button>
   </form>
+  <form method='post' action="{% url 'recalculate_data_source' domain data_source.get_id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-default disable-on-submit">
+      {% trans 'Recalculate (Advanced)' %}
+    </button>
+  </form>
   {% endif %}
 {% endif %}
 {% endblock %}

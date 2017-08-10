@@ -153,9 +153,9 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
                 commcare_version = xform.metadata.commcare_version
                 message = "Case created without create block"
                 send_to = None
-                if commcare_version >= LooseVersion("2.35"):
+                if commcare_version >= LooseVersion("2.38"):
                     send_to = "{}@{}.com".format('skelly', 'dimagi')
-                    message += " in CC version >= 2.35"
+                    message += " in CC version >= 2.38"
                 soft_assert(to=send_to)(
                     case_update.creates_case(),
                     message, {

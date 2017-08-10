@@ -87,7 +87,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_provider=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -100,7 +100,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.build_table()
-        _iteratively_build_table(config, in_place=True)
+        _iteratively_build_table(config, in_place=True, doc_id_provider=doc_id_provider)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -120,13 +120,26 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False, limit=-1):
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def recalculate_indicators(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    adapter = get_indicator_adapter(config)
+    doc_id_provider = adapter.get_distinct_values('doc_id', 10000)[0]
+    rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
+
+
+def _iteratively_build_table(config, last_id=None, resume_helper=None,
+                             in_place=False, doc_id_provider=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
     relevant_ids = []
     document_store = get_document_store(config.domain, config.referenced_doc_type)
-    for i, relevant_id in enumerate(document_store.iter_document_ids(last_id)):
+
+    if not doc_id_provider:
+        doc_id_provider = document_store.iter_document_ids(last_id)
+
+    for i, relevant_id in enumerate(doc_id_provider):
         if last_id is None and i >= limit > -1:
             break
         relevant_ids.append(relevant_id)

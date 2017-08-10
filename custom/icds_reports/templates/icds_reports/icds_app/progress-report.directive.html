@@ -49,8 +49,8 @@
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
+                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
                             <span ng-if="row.average !== void(0)">{$ $ctrl.sumValues(row.average) | number:2 $} %</span>

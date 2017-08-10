@@ -39,6 +39,18 @@ function MonthModalController($location, $uibModalInstance) {
 function MonthFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
 
+    vm.getPlaceholder = function() {
+        var month = $location.search().month;
+        var year = $location.search().year;
+        var formattedMonth = moment(month, 'MM').format('MMMM');
+
+        if (month && year) {
+            return formattedMonth + ' ' + year;
+        } else {
+            return 'Search by Month/Year';
+        }
+    };
+
     vm.open = function () {
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,

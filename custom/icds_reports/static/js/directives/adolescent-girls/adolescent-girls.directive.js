@@ -22,7 +22,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
@@ -51,7 +51,10 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '</div>';
     };
 
     vm.loadData = function () {
@@ -63,7 +66,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getAdolescentGirlsData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getAdolescentGirlsData(vm.step, vm.filtersData).then(function(response) {
             vm.data.mapData = response.data.report_data;
         });
     };

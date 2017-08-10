@@ -24,9 +24,9 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from fluff.signals import (
-    apply_index_changes,
+    migrate_tables,
     get_migration_context,
-    get_tables_with_index_changes,
+    get_tables_to_migrate,
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
@@ -51,8 +51,8 @@ def time_ucr_process_change(method):
         te = datetime.now()
         seconds = (te - ts).total_seconds()
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
-            table = args[1]
-            doc = args[2]
+            table = args[2]
+            doc = args[3]
             log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
@@ -180,9 +180,9 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
-            tables_with_index_changes -= tables_to_rebuild
-            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
+            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+            tables_to_migrate -= tables_to_rebuild
+            migrate_tables(engine, raw_diffs, tables_to_migrate)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators
