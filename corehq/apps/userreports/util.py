@@ -106,8 +106,12 @@ def allowed_report_builder_reports(request):
 
 def number_of_report_builder_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
+    from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
-    builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
+    builder_reports = [
+        report for report in existing_reports
+        if report.report_meta.created_by_builder and not report.title.startswith(TEMP_REPORT_PREFIX)
+    ]
     return len(builder_reports)
 
 
