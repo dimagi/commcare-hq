@@ -1,14 +1,15 @@
 from __future__ import absolute_import
-from collections import namedtuple
+import urllib
+from collections import namedtuple, OrderedDict
 import datetime
 import functools
 import json
 import os
 import tempfile
+import uuid
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404, JsonResponse
 from django.shortcuts import redirect
@@ -25,16 +26,12 @@ from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
+from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-from corehq.apps.userreports.document_stores import get_document_store
-from corehq.apps.userreports.expressions import ExpressionFactory
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -61,8 +58,12 @@ from corehq.apps.style.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    use_angular_js)
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+    use_angular_js,
+    use_nvd3,
+)
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -70,6 +71,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -79,23 +81,31 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
+    DataSourceMeta,
+    DataSourceBuildInformation,
 )
+from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
     DataSourceForm,
-    ConfigureBarChartReportForm,
+    ConfigureMapReportForm,
+    DataSourceBuilder,
     ConfigureListReportForm,
-    ConfigureWorkerReportForm,
-    ConfigureMapReportForm)
+    ConfigureTableReportForm,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
-    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place,
-    recalculate_indicators
+    rebuild_indicators,
+    resume_building_indicators,
+    delete_data_source_task,
+    rebuild_indicators,
+    resume_building_indicators,
+    rebuild_indicators_in_place,
+    recalculate_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -108,7 +118,7 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     allowed_report_builder_reports,
-    number_of_report_builder_reports
+    number_of_report_builder_reports,
 )
 from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
@@ -116,6 +126,11 @@ from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
+
+
+SAMPLE_DATA_MAX_ROWS = 100
+TEMP_REPORT_PREFIX = '__tmp'
+TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -253,10 +268,16 @@ class ReportBuilderView(BaseDomainView):
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        if has_report_builder_access(request):
-            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
-        else:
-            raise Http404
+        return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        main_context = super(ReportBuilderView, self).main_context
+        main_context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'paywall_url': paywall_home(self.domain),
+        })
+        return main_context
 
     @property
     def section_name(self):
@@ -264,7 +285,65 @@ class ReportBuilderView(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
+        return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
+
+    def _build_temp_data_source(self, app_source, username):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self._get_config_kwargs(app_source)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        self._expire_data_source(data_source_config._id)
+        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self.filter_data_source_changes(data_source_config._id)
+        return data_source_config._id
+
+    def _expire_data_source(self, data_source_config_id):
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config_id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
+    def _get_config_kwargs(self, app_source):
+        app = Application.get(app_source.application)
+        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
+        return {
+            'display_name': builder.data_source_name,
+            'referenced_doc_type': builder.source_doc_type,
+            'configured_filter': builder.filter,
+            'configured_indicators': builder.all_possible_indicators(),
+            'base_item_expression': builder.base_item_expression(False),
+            'meta': DataSourceMeta(
+                build=DataSourceBuildInformation(
+                    source_id=app_source.source,
+                    app_id=app._id,
+                    app_version=app.version,
+                )
+            )
+        }
+
+    @staticmethod
+    def filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
+        data_source_config.save()
 
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
@@ -347,6 +426,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         return self.get(request, domain, *args, **kwargs)
 
 
+# TODO: kill
 class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
     template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
@@ -473,10 +553,7 @@ class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
-
-    @property
-    def report_type(self):
-        return self.kwargs['report_type']
+    urlname = 'report_builder_select_source'
 
     @property
     def page_context(self):
@@ -493,27 +570,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            url_names_map = {
-                'list': 'configure_list_report',
-                'chart': 'configure_chart_report',
-                'table': 'configure_table_report',
-                'worker': 'configure_worker_report',
-                'map': 'configure_map_report',
-            }
-            url_name = url_names_map[self.report_type]
-            get_params = {
-                'report_name': self.form.cleaned_data['report_name'],
-                'chart_type': self.form.cleaned_data['chart_type'],
-                'application': app_source.application,
-                'source_type': app_source.source_type,
-                'source': app_source.source,
-            }
+            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
+
             track_workflow(
                 request.user.email,
                 "Successfully submitted the first part of the Report Builder "
@@ -526,8 +590,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 app_source.source_type,
             ])
 
+            get_params = {
+                'report_name': self.form.cleaned_data['report_name'],
+                'application': app_source.application,
+                'source_type': app_source.source_type,
+                'source': app_source.source,
+                'data_source': data_source_config_id,
+            }
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain], params=get_params)
+                reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -539,79 +610,178 @@ class EditReportInBuilder(View):
         report_id = kwargs['report_id']
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
-            view_class = {
-                'chart': ConfigureChartReport,
-                'list': ConfigureListReport,
-                'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport,
-                'map': ConfigureMapReport,
-            }[report.report_meta.builder_report_type]
             try:
-                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
+                    from corehq.apps.userreports.v1.views import (
+                        ConfigureChartReport,
+                        ConfigureListReport,
+                        ConfigureMapReport,
+                        ConfigureWorkerReport,
+                        ConfigureTableReport,
+                    )
+                    view_class = {
+                        'chart': ConfigureChartReport,
+                        'list': ConfigureListReport,
+                        'worker': ConfigureWorkerReport,
+                        'table': ConfigureTableReport,
+                        'map': ConfigureMapReport,
+                    }[report.report_meta.builder_report_type]
+                    return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+                else:
+                    return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
-class ConfigureChartReport(ReportBuilderView):
+class ConfigureReport(ReportBuilderView):
+    urlname = 'configure_report'
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
-    url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_lazy("Chart Report: {}")
-    report_type = 'chart'
+    report_title = '{}'
     existing_report = None
 
     @use_jquery_ui
+    @use_datatables
+    @use_nvd3
     def dispatch(self, request, *args, **kwargs):
-        if not self.existing_report and not (self.request.GET or self.request.POST):
-            return HttpResponseRedirect(
-                reverse('report_builder_select_source', args=[self.domain, self.report_type])
-            )
-        return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
+        if self.existing_report:
+            self.source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            self.source_id = self.existing_report.config.meta.build.source_id
+            self.app_id = self.existing_report.config.meta.build.app_id
+            self.app = Application.get(self.app_id) if self.app_id else None
+        else:
+            self.app_id = self.request.GET['application']
+            self.app = Application.get(self.app_id)
+            self.source_type = self.request.GET['source_type']
+            self.source_id = self.request.GET['source']
+
+        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        self._properties_by_column_id = {}
+        for p in self.data_source_builder.data_source_properties.values():
+            column = p.to_report_column_option()
+            for agg in column.aggregation_options:
+                indicators = column.get_indicators(agg)
+                for i in indicators:
+                    self._properties_by_column_id[i['column_id']] = p
+
+        return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_name(self):
-        title = self.request.GET.get('report_name', '')
-        if self.existing_report:
-            title = self.existing_report.title
+        title = self._get_report_name()
         return _(self.report_title).format(title)
 
     @property
+    def report_description(self):
+        if self.existing_report:
+            return self.existing_report.description or None
+        return None
+
+    def _get_report_name(self, request=None):
+        if self.existing_report:
+            return self.existing_report.title
+        else:
+            request = request or self.request
+            return request.GET.get('report_name', '')
+
+    @memoized
+    def _get_preview_data_source(self):
+        """
+        Return the ID of the report's DataSourceConfiguration
+        """
+
+        if self.existing_report:
+            source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            source_id = self.existing_report.config.meta.build.source_id
+            app_id = self.existing_report.config.meta.build.app_id
+            app_source = ApplicationDataSource(app_id, source_type, source_id)
+            data_soruce_id = self._build_temp_data_source(app_source, self.request.user.username)
+            return data_soruce_id
+        else:
+            return self.request.GET['data_source']
+
+    def _get_existing_report_type(self):
+        if self.existing_report:
+            type_ = "list"
+            if self.existing_report.aggregation_columns != ["doc_id"]:
+                type_ = "table"
+            if self.existing_report.map_config:
+                type_ = "map"
+            return type_
+
+    def _get_property_id_by_indicator_id(self, indicator_column_id):
+        """
+        Return the data source property id corresponding to the given data
+        source indicator column id.
+        :param indicator_column_id: The column_id field of a data source indicator
+            configuration dictionary
+        :return: A DataSourceProperty property id, e.g. "/data/question1"
+        """
+        data_source_property = self._properties_by_column_id.get(indicator_column_id)
+        if data_source_property:
+            return data_source_property.get_id()
+
+    def _get_initial_location(self, report_form):
+        if self.existing_report:
+            cols = [col for col in self.existing_report.report_columns if col.type == 'location']
+            if cols:
+                indicator_id = cols[0].field
+                return report_form._get_property_id_by_indicator_id(indicator_id)
+
+    def _get_initial_chart_type(self):
+        if self.existing_report:
+            if self.existing_report.configured_charts:
+                type_ = self.existing_report.configured_charts[0]['type']
+                if type_ == "multibar":
+                    return "bar"
+                if type_ == "pie":
+                    return "pie"
+
+    def _get_column_options(self, report_form):
+        options = OrderedDict()
+        for option in report_form.report_column_options.values():
+            key = option.get_uniquenss_key()
+            if key in options:
+                options[key].append(option)
+            else:
+                options[key] = [option]
+
+    @property
     def page_context(self):
-        try:
-            report_form = self.report_form
-        except Exception as e:
-            self.template_name = 'userreports/report_error.html'
-            error_response = {
-                'error_message': '',
-                'details': six.text_type(e)
-            }
-            if self.existing_report is not None:
-                error_response.update({
-                    'report_id': self.existing_report.get_id,
-                    'is_static': self.existing_report.is_static,
-                })
-            return self._handle_exception(error_response, e)
-        field_names = report_form.fields.keys()
+        form_type = _get_form_type(self._get_existing_report_type())
+        report_form = form_type(
+            self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+        )
         return {
-            'report': {
-                "title": self.page_name
-            },
-            'report_type': self.report_type,
-            'form': report_form,
-            'is_group_by_required': 'group_by' in field_names or 'location' in field_names,
-            'editing_existing_report': bool(self.existing_report),
-            'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
-            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
-            # For now only use date ranges that don't require additional parameters
-            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'existing_report': self.existing_report,
+            'report_description': self.report_description,
+            'report_title': self.page_name,
+            'existing_report_type': self._get_existing_report_type(),
+
+            'column_options': [p.to_view_model() for p in report_form.report_column_options.values()],
+            # TODO: Consider renaming this because it's more like "possible" data source props
+            'data_source_properties': [p.to_view_model() for p in report_form.data_source_properties.values()],
             'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
             'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
-            'initial_columns': [
-                c._asdict() for c in getattr(report_form, 'initial_columns', [])
-            ],
-            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
+            'initial_columns': [c._asdict() for c in report_form.initial_columns],
+            'initial_location': self._get_initial_location(report_form),
+            'initial_chart_type': self._get_initial_chart_type(),
+            'source_type': self.source_type,
+            'source_id': self.source_id,
+            'application': self.app_id,
+            'report_preview_url': reverse(ReportPreview.urlname,
+                                          args=[self.domain, self._get_preview_data_source()]),
+            'preview_datasource_id': self._get_preview_data_source(),
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
+            'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         }
 
     def _handle_exception(self, response, exception):
@@ -641,107 +811,58 @@ class ConfigureChartReport(ReportBuilderView):
         else:
             raise
 
-    @property
-    @memoized
-    def configuration_form_class(self):
-        if self.existing_report:
-            type_ = self.existing_report.configured_charts[0]['type']
-        else:
-            type_ = self.request.GET.get('chart_type')
-        return {
-            'multibar': ConfigureBarChartReportForm,
-            'bar': ConfigureBarChartReportForm,
-            'pie': ConfigurePieChartReportForm,
-        }[type_]
-
-    @property
-    @memoized
-    def report_form(self):
-        args = [self.request.GET.get(f, '') for f in self.url_args] + [self.existing_report]
-        if self.request.method == 'POST':
-            args.append(self.request.POST)
-        return self.configuration_form_class(*args)
-
-    def _get_sum_avg_columns(self, columns):
-        """
-        Return a list of columns that have either sum or average aggregation types.
-        Items in the list are tuples of (column['field'], column['aggregation']).
-        """
-        return [
-            (col.get('field', None), col['aggregation'])
-            for col in columns
-            if col.get('aggregation', None) in ("sum", "average")
-        ]
-
-    def _track_invalid_form_events(self):
-        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
-        if "required" in [e.code for e in group_by_errors]:
-            add_event(self.request, [
-                "Report Builder",
-                "Click on Done (No Group By Chosen)",
-                self.report_type,
-            ])
-
-    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
-        if self.report_type != "chart":
-            sum_avg_cols = self._get_sum_avg_columns(
-                report_configuration.columns)
-            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
-            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
-                add_event(self.request, [
-                    "Report Builder",
-                    "Changed Column Format to Sum or Average",
-                    self.report_type,
-                ])
-
-    def _track_new_report_events(self):
-        track_workflow(
-            self.request.user.email,
-            "Successfully created a new report in the Report Builder"
+    def _get_bound_form(self, report_data):
+        form_class = _get_form_type(report_data['report_type'])
+        return form_class(
+            self._get_report_name(),
+            self.app._id,
+            self.source_type,
+            self.source_id,
+            self.existing_report,
+            report_data
         )
-        add_event(self.request, [
-            "Report Builder",
-            "Click On Done On New Report (Successfully)",
-            self.report_type,
-        ])
 
-    def post(self, *args, **kwargs):
-        if self.report_form.is_valid():
-            existing_sum_avg_cols = []
-            if self.report_form.existing_report:
-                try:
-                    existing_sum_avg_cols = self._get_sum_avg_columns(
-                        self.report_form.existing_report.columns
-                    )
-                    report_configuration = self.report_form.update_report()
-                except ValidationError as e:
-                    messages.error(self.request, e.message)
-                    return self.get(*args, **kwargs)
+    def post(self, request, domain, *args, **kwargs):
+        if not has_report_builder_access(request):
+            raise Http404
+
+        report_data = json.loads(request.body)
+        if report_data['existing_report'] and not self.existing_report:
+            # This is the case if the user has clicked "Save" for a second time from the new report page
+            # i.e. the user created a report with the first click, but didn't navigate to the report view page
+            self.existing_report = ReportConfiguration.get(report_data['existing_report'])
+
+        _munge_report_data(report_data)
+
+        bound_form = self._get_bound_form(report_data)
+
+        if bound_form.is_valid():
+            if self.existing_report:
+                report_configuration = bound_form.update_report()
             else:
                 self._confirm_report_limit()
                 try:
-                    report_configuration = self.report_form.create_report()
+                    report_configuration = bound_form.create_report()
                 except BadSpecError as err:
                     messages.error(self.request, str(err))
                     notify_exception(self.request, str(err), details={
                         'domain': self.domain,
-                        'report_form_class': self.report_form.__class__.__name__,
-                        'report_type': self.report_form.report_type,
-                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
-                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
-                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
+                        'report_form_class': bound_form.__class__.__name__,
+                        'report_type': bound_form.report_type,
+                        'group_by': getattr(bound_form, 'group_by', 'Not set'),
+                        'user_filters': getattr(bound_form, 'user_filters', 'Not set'),
+                        'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
                     })
-                    return self.get(*args, **kwargs)
-                self._track_new_report_events()
+                    return self.get(request, domain, *args, **kwargs)
+            self._delete_temp_data_source(report_data)
+            return json_response({
+                'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
+                'report_id': report_configuration._id,
+            })
 
-            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
-            return HttpResponseRedirect(
-                reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
-            )
-        else:
-            self._track_invalid_form_events()
-
-        return self.get(*args, **kwargs)
+    def _delete_temp_data_source(self, report_data):
+        if report_data.get("delete_temp_data_source", False):
+            delete_data_source_shared(self.domain, report_data["preview_data_source_id"])
 
     def _confirm_report_limit(self):
         """
@@ -756,44 +877,69 @@ class ConfigureChartReport(ReportBuilderView):
             raise Http404()
 
 
-class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_lazy("List Report: {}")
-    report_type = 'list'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
+def _get_form_type(report_type):
+    assert report_type in (None, "list", "table", "chart", "map")
+    if report_type == "list" or report_type is None:
         return ConfigureListReportForm
-
-
-class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Table Report: {}")
-    report_type = 'table'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureTableReportForm
-
-
-class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Worker Report: {}")
-    report_type = 'worker'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureWorkerReportForm
-
-
-class ConfigureMapReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Map Report: {}")
-    report_type = 'map'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
+    if report_type == "table":
+            return ConfigureTableReportForm
+    if report_type == "map":
         return ConfigureMapReportForm
+
+
+def _munge_report_data(report_data):
+    """
+    Split aggregation columns out of report_data and into
+    :param report_data:
+    :return:
+    """
+    agg_columns = []
+    if report_data['report_type'] == "table":
+        clean_columns = []
+
+        for col in report_data['columns']:
+            if col['calculation'] == "Group By":
+                agg_columns.append(col)
+            else:
+                clean_columns.append(col)
+        agg_columns = [x['property'] for x in agg_columns]
+
+        report_data['columns'] = clean_columns
+
+    report_data['group_by'] = agg_columns or None
+
+    report_data['columns'] = json.dumps(report_data['columns'])
+    report_data['user_filters'] = json.dumps(report_data['user_filters'])
+    report_data['default_filters'] = json.dumps(report_data['default_filters'])
+
+
+class ReportPreview(BaseDomainView):
+    urlname = 'report_preview'
+
+    def post(self, request, domain, data_source):
+        report_data = json.loads(urllib.unquote(request.body))
+        form_class = _get_form_type(report_data['report_type'])
+
+        # ignore filters
+        report_data['user_filters'] = []
+        report_data['default_filters'] = []
+
+        _munge_report_data(report_data)
+
+        bound_form = form_class(
+            '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
+            report_data['app'],
+            report_data['source_type'],
+            report_data['source_id'],
+            None,
+            report_data
+        )
+        if bound_form.is_valid():
+            temp_report = bound_form.create_temp_report(data_source)
+            response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
+            if response_data:
+                return json_response(response_data)
+        return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
 def _assert_report_delete_privileges(request):
