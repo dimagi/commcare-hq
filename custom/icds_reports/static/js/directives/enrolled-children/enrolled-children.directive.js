@@ -24,7 +24,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month'];
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
@@ -53,7 +53,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -65,7 +67,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

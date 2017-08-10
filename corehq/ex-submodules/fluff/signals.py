@@ -5,6 +5,7 @@ import logging
 
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
@@ -41,6 +42,9 @@ class DiffTypes(object):
     ADD_INDEX = 'add_index'
     REMOVE_INDEX = 'remove_index'
     INDEX_TYPES = (ADD_INDEX, REMOVE_INDEX)
+
+    ADD_NULLABLE_COLUMN = 'add_nullable_column'
+    MIGRATEABLE_TYPES = (ADD_NULLABLE_COLUMN,) + INDEX_TYPES
 
     CONSTRAINT_TYPES = (ADD_CONSTRAINT, REMOVE_CONSTRAINT) + INDEX_TYPES
 
@@ -113,6 +117,10 @@ def reformat_alembic_diffs(raw_diffs):
         elif type_ in DiffTypes.MODIFY_TYPES:
             diffs.append(
                 SimpleDiff(type_, raw_diff[2], raw_diff[3])
+            )
+        elif type_ == DiffTypes.ADD_COLUMN and raw_diff[3].nullable:
+            diffs.append(
+                SimpleDiff(DiffTypes.ADD_NULLABLE_COLUMN, raw_diff[2], raw_diff[3].name)
             )
         elif type_ in DiffTypes.COLUMN_TYPES:
             diffs.append(
@@ -192,6 +200,51 @@ def apply_index_changes(engine, raw_diffs, table_names):
     _assert = soft_assert(to="@".join(["jemord", "dimagi.com"]))
     for index in remove_indexes:
         _assert(False, "Index {} can be removed".format(index.name))
+
+
+def get_tables_with_added_nullable_columns(diffs, table_names):
+    return {
+        diff.table_name
+        for diff in diffs
+        if (
+            diff.table_name in table_names
+            and diff.type == DiffTypes.ADD_NULLABLE_COLUMN
+        )
+    }
+
+
+def _get_columns_to_add(raw_diffs, table_names):
+    # raw diffs come in as a list of (action, index)
+    return [
+        diff[3]
+        for diff in raw_diffs
+        if diff[0] in DiffTypes.ADD_COLUMN and diff[3].nullable is True
+    ]
+
+
+def add_columns(engine, raw_diffs, table_names):
+    with engine.begin() as conn:
+        ctx = get_migration_context(conn, table_names)
+        op = Operations(ctx)
+        columns = _get_columns_to_add(raw_diffs, table_names)
+
+        for col in columns:
+            table_name = col.table.name
+            # the column has a reference to a table definition that already
+            # has the column defined, so remove that and add the column
+            col.table = None
+            op.add_column(table_name, col)
+
+
+def get_tables_to_migrate(diffs, table_names):
+    tables_with_indexes = get_tables_with_index_changes(diffs, table_names)
+    tables_with_added_columns = get_tables_with_added_nullable_columns(diffs, table_names)
+    return tables_with_indexes | tables_with_added_columns
+
+
+def migrate_tables(engine, raw_diffs, table_names):
+    apply_index_changes(engine, raw_diffs, table_names)
+    add_columns(engine, raw_diffs, table_names)
 
 
 def rebuild_table(engine, pillow, indicator_doc):
