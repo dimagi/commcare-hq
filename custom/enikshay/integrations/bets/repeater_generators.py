@@ -9,6 +9,7 @@ from pytz import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
@@ -126,12 +127,22 @@ class IncentivePayload(BETSPayload):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
-        location = cls._get_location(
-            person_case.dynamic_case_properties().get('last_owner'),
-            field_name="last_owner",
-            related_case_type="person",
-            related_case_id=person_case.case_id,
-        )
+        if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+            owner_id = person_case.dynamic_case_properties().get('last_owner')
+            location = cls._get_location(
+                person_case.dynamic_case_properties().get('last_owner'),
+                field_name="last_owner",
+                related_case_type="person",
+                related_case_id=person_case.case_id,
+            )
+        else:
+            owner_id = person_case.owner_id
+            location = cls._get_location(
+                person_case.owner_id,
+                field_name="owner_id",
+                related_case_type="person",
+                related_case_id=person_case.case_id
+            )
 
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
@@ -139,7 +150,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
-            Location=person_case.dynamic_case_properties().get('last_owner'),
+            Location=owner_id,
             DTOLocation=_get_district_location(location),
         )
 

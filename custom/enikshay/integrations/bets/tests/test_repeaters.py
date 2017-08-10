@@ -284,7 +284,29 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
 
     def test_successful_treatment_payload(self):
         self.person.attrs['update']['last_owner'] = self.pcp.location_id
+        self.person.attrs['owner_id'] = "_archive_"
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        cases = self.create_case_structure()
+        episode = cases[self.episode_id]
+
+        expected_payload = {"incentive_details": [{
+            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.person_id,
+            u"BeneficiaryType": u"patient",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }]}
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSSuccessfulTreatmentPayloadGenerator(None).get_payload(None, episode))
+        )
+
+    def test_successful_treatment_payload_non_closed_case(self):
+        self.episode.attrs['update']["prescription_total_days"] = 180
+        self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        self.person.attrs['owner_id'] = self.pcp.location_id
         cases = self.create_case_structure()
         episode = cases[self.episode_id]
 
