@@ -186,12 +186,15 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     init();
 
+
     vm.getPlaceholder = function() {
         var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+
         if (!selectedLocation) {
             return 'Search by Location';
         } else {
-            return selectedLocation.location_type_name;
+            var locationTypeName = selectedLocation.location_type_name;
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
         }
     };
 
