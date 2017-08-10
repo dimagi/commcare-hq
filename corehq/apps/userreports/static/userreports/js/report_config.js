@@ -311,6 +311,8 @@ var reportBuilder = function () {  // eslint-disable-line
                     $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, aaData, $("#chart"));
                 }
+            } else {
+                charts.clear($("#chart"));
             }
         };
 
