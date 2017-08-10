@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, time
 from django.core.management.base import BaseCommand
 
 
-class Command(BaseCommand):
+class BaseICDSSMSExportCommand(BaseCommand):
     help = ""
 
     def add_arguments(self, parser):
@@ -107,6 +107,9 @@ class Command(BaseCommand):
                 location_details['block'].get('location_id'),
                 location_details['state'].get('location_id'),
             )
+
+
+class Command(BaseICDSSMSExportCommand):
 
     def handle(self, domain, start_date, end_date, **options):
         self.recipient_details = {}
