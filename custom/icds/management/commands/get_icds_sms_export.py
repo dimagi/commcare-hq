@@ -119,22 +119,22 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
             yield (
                 self.format_timestamp(sms.date),
-                indicator_slug,
                 sms.phone_number,
-                recipient_details['type'],
-                sms.couch_recipient,
                 recipient_details['name'],
-                location_details['awc'].get('name'),
-                location_details['supervisor'].get('name'),
+                location_details['state'].get('name'),
                 location_details['district'].get('name'),
                 location_details['block'].get('name'),
-                location_details['state'].get('name'),
+                location_details['supervisor'].get('name'),
+                location_details['awc'].get('name'),
                 sms.text,
-                location_details['awc'].get('location_id'),
-                location_details['supervisor'].get('location_id'),
+                recipient_details['type'],
+                sms.couch_recipient,
+                indicator_slug,
+                location_details['state'].get('location_id'),
                 location_details['district'].get('location_id'),
                 location_details['block'].get('location_id'),
-                location_details['state'].get('location_id'),
+                location_details['supervisor'].get('location_id'),
+                location_details['awc'].get('location_id'),
             )
 
 
@@ -159,23 +159,23 @@ class Command(BaseICDSSMSExportCommand):
 
         with open('icds-sms-export.xlsx', 'wb') as f:
             headers = (
-                'Date',
-                'Indicator',
+                'Date (IST)',
                 'Phone Number',
-                'Recipient Case Type',
-                'Recipient Case Id',
-                'Recipient Case Name',
-                'AWC Name',
-                'LS Name',
+                'Recipient Name',
+                'State Name',
                 'District Name',
                 'Block Name',
-                'State Name',
+                'LS Name',
+                'AWC Name',
                 'Text',
-                'AWC Id',
-                'LS Id',
+                'Recipient Type',
+                'Recipient Id',
+                'Indicator',
+                'State Id',
                 'District Id',
                 'Block Id',
-                'State Id',
+                'LS Id',
+                'AWC Id',
             )
 
             data = tuple(self.get_records(domain, start_timestamp, end_timestamp))
