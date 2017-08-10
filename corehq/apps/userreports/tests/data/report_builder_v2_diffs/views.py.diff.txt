@@ -87,7 +87,7 @@
  from corehq.apps.userreports.models import (
      ReportConfiguration,
      DataSourceConfiguration,
-@@ -45,28 +80,56 @@
+@@ -45,28 +80,57 @@
      get_datasource_config,
      get_report_config,
      report_config_id_is_static,
@@ -123,6 +123,7 @@
 +    rebuild_indicators,
 +    resume_building_indicators,
 +    rebuild_indicators_in_place,
++    recalculate_indicators,
 +)
  from corehq.apps.userreports.ui.forms import (
      ConfigurableReportEditForm,
@@ -152,7 +153,7 @@
  
  
  def get_datasource_config_or_404(config_id, domain):
-@@ -81,6 +144,25 @@
+@@ -81,6 +145,25 @@
          return get_report_config(config_id, domain)
      except ReportConfigurationNotFoundError:
          raise Http404
@@ -178,7 +179,7 @@
  
  
  class BaseUserConfigReportsView(BaseDomainView):
-@@ -172,6 +254,11 @@
+@@ -172,6 +255,11 @@
      page_title = ugettext_lazy("Edit Report")
  
  
@@ -190,7 +191,7 @@
  class ReportBuilderView(BaseDomainView):
  
      @method_decorator(require_permission(Permissions.edit_data))
-@@ -180,10 +267,16 @@
+@@ -180,10 +268,16 @@
      @use_daterangepicker
      @use_datatables
      def dispatch(self, request, *args, **kwargs):
@@ -211,7 +212,7 @@
  
      @property
      def section_name(self):
-@@ -191,9 +284,148 @@
+@@ -191,9 +285,148 @@
  
      @property
      def section_url(self):
@@ -363,7 +364,7 @@
  class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
      template_name = "userreports/reportbuilder/report_type_select.html"
      urlname = 'report_builder_select_type'
-@@ -204,7 +436,6 @@
+@@ -204,7 +437,6 @@
          max_allowed_reports = allowed_report_builder_reports(self.request)
          num_builder_reports = number_of_report_builder_reports(self.domain)
          if num_builder_reports >= max_allowed_reports:
@@ -371,7 +372,7 @@
              return redirect(ReportBuilderPaywallPricing.urlname, self.domain)
  
          return super(ReportBuilderTypeSelect, self).dispatch(request, *args, **kwargs)
-@@ -319,12 +550,9 @@
+@@ -319,12 +551,9 @@
  
  
  class ReportBuilderDataSourceSelect(ReportBuilderView):
@@ -386,7 +387,7 @@
  
      @property
      def page_context(self):
-@@ -341,27 +569,14 @@
+@@ -341,27 +570,14 @@
      def form(self):
          max_allowed_reports = allowed_report_builder_reports(self.request)
          if self.request.method == 'POST':
@@ -418,7 +419,7 @@
              track_workflow(
                  request.user.email,
                  "Successfully submitted the first part of the Report Builder "
-@@ -374,71 +589,198 @@
+@@ -374,71 +590,198 @@
                  app_source.source_type,
              ])
  
@@ -661,7 +662,7 @@
          }
  
      def _handle_exception(self, response, exception):
-@@ -468,107 +810,58 @@
+@@ -468,107 +811,58 @@
          else:
              raise
  
@@ -813,7 +814,7 @@
  
      def _confirm_report_limit(self):
          """
-@@ -583,41 +876,712 @@
+@@ -583,41 +877,733 @@
              raise Http404()
  
  
@@ -1345,6 +1346,27 @@
 +    )
 +
 +    rebuild_indicators_in_place.delay(config_id, request.user.username)
++    return HttpResponseRedirect(reverse(
++        EditDataSourceView.urlname, args=[domain, config._id]
++    ))
++
++
++@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
++@require_POST
++def recalculate_data_source(request, domain, config_id):
++    config, is_static = get_datasource_config_or_404(config_id, domain)
++    if config.is_deactivated:
++        config.is_deactivated = False
++        config.save()
++
++    messages.success(
++        request,
++        _('Table "{}" is now being recalculated. New data should start showing up soon').format(
++            config.display_name
++        )
++    )
++
++    recalculate_indicators.delay(config_id, request.user.username)
 +    return HttpResponseRedirect(reverse(
 +        EditDataSourceView.urlname, args=[domain, config._id]
 +    ))
