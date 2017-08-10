@@ -16,8 +16,8 @@
             </td>
             <td class="col-sm-2">
                 <i style="cursor: pointer;"
-                   class="icon-remove icon-blue fa fa-remove"
-                   data-bind="click: $parent.removeProperty"></i>
+                   data-bind="click: $parent.removeProperty,
+                              css: hqImport('style/js/main.js').icons.DELETE"></i>
             </td>
         </tr>
     </script>
@@ -78,8 +78,8 @@
                             </td>
                             <td class="col-sm-2">
                                 <i style="cursor: pointer;"
-                                   class="icon-remove icon-blue fa fa-remove"
-                                   data-bind="click: $parent.removeDefaultProperty"></i>
+                                   data-bind="click: $parent.removeDefaultProperty,
+                                              css: hqImport('style/js/main.js').icons.DELETE"></i>
                             </td>
                         </tr>
                     </tbody>
