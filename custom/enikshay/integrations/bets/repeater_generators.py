@@ -144,9 +144,15 @@ class IncentivePayload(BETSPayload):
                 related_case_id=person_case.case_id
             )
 
+        event_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE)
+        if not event_date:
+            # the treatment_outcome_date property used to be called
+            # "rx_outcome_date", and was changed at some point. Older cases
+            # still have the rx_outcome_date property set.
+            event_date = episode_case_properties.get('rx_outcome_date')
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=event_date,
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
