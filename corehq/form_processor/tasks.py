@@ -9,7 +9,7 @@ SUBMISSION_REPROCESS_CELERY_QUEUE = 'submission_reprocessing_queue'
 
 @no_result_task(queue=SUBMISSION_REPROCESS_CELERY_QUEUE, acks_late=True)
 def reprocess_submission(submssion_stub_id):
-    with CriticalSection(['reprocess_submission_' + submssion_stub_id]):
+    with CriticalSection(['reprocess_submission_%s' % submssion_stub_id]):
         try:
             stub = UnfinishedSubmissionStub.objects.get(id=submssion_stub_id)
         except UnfinishedSubmissionStub.DoesNotExist:
