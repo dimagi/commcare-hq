@@ -63,6 +63,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     received_on = fields.CharField(attribute="received_on")
     edited_on = fields.CharField(attribute="edited_on", null=True)
+    server_modified_on = fields.CharField(attribute="server_modified_on")
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
