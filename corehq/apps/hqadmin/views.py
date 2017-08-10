@@ -1166,16 +1166,20 @@ class SessionDetialsView(View):
             return HttpResponseBadRequest()
 
         session_id = data.get('sessionId', None)
+        domain = data.get('domain', None)
         if not session_id:
             return HttpResponseBadRequest()
 
         user = get_django_user_from_session_key(session_id)
         if not user:
-            raise Http404
-
-        couch_user = CouchUser.get_by_username(user.username)
-        if not couch_user:
-            raise Http404
+            couch_user = CouchUser.get_anonymous_mobile_worker(domain)
+            if not couch_user:
+                raise Http404
+            user = couch_user.get_django_user()
+        else:
+            couch_user = CouchUser.get_by_username(user.username)
+            if not couch_user:
+                raise Http404
 
         try:
             auth_token = user.auth_token.key
