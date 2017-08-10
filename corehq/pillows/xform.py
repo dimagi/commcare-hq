@@ -132,7 +132,7 @@ def transform_xform_for_elasticsearch(doc_dict):
     if doc_ret.get('edited_on', None):
         # doesn't take archiving and unarchiving into account
         received_on = string_to_utc_datetime(doc_ret['received_on'])
-        edited_on = string_to_utc_datetime(doc_ret['edited_om'])
+        edited_on = string_to_utc_datetime(doc_ret['edited_on'])
         server_modified_on = max(received_on, edited_on).isoformat()
     doc_ret['server_modified_on'] = server_modified_on
     return doc_ret
