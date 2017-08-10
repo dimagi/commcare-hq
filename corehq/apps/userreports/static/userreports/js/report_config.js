@@ -399,7 +399,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 }
             },
         });
-        if (config['hasReportBuilderAccess']) {
+        if (!config['previewMode']) {
             self.saveButton.ui.appendTo($("#saveButtonHolder"));
         }
 

@@ -22,11 +22,18 @@
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 
+{% block has_report_builder_access %}
+  <div class="spacer"></div>
+  {{ block.super }}
+{% endblock %}
+
+{% block at_report_limit_warning %}
+  <div class="spacer"></div>
+  {{ block.super }}
+{% endblock %}
+
 {% block page_content %}
-  {% if not has_report_builder_access %}
-    <div class="spacer"></div>
-    {% include "userreports/partials/preview_warning.html" %}
-  {% endif %}
+  {{ block.super }}
   <div id="reportConfig" class="ko-template">
     <div class="pull-right page-actions-toolbar">
       {% if existing_report %}
@@ -39,7 +46,9 @@
         </a>&nbsp;
       {% endif %}
       {% if has_report_builder_access %}
-        <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+        {% if not at_report_limit or existing_report %}
+          <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+        {% endif %}
       {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
     </div>
@@ -311,9 +320,17 @@
             "initialLocation": {{ initial_location|JSON }},
             "initialChartType": {{ initial_chart_type|JSON }},
             "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
-            "hasReportBuilderAccess": {{ has_report_builder_access|JSON }},
+            // In previewMode, report can't be saved.
+            "previewMode":
+              {% if not has_report_builder_access or at_report_limit and not existing_report%}
+                true
+              {% else %}
+                false
+              {% endif %}
+            ,
+
         });
-        $("#reportConfig").koApplyBindings(reportConfig)
+        $("#reportConfig").koApplyBindings(reportConfig);
         window._bindingsApplied = true;
     });
 </script>
