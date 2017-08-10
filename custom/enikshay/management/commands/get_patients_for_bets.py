@@ -76,7 +76,7 @@ class Command(BaseCommand):
             writer.writerow(self.field_names)
 
             person_ids = self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, owner_ids)
-            for person in with_progress_bar(self.accessor.iter_cases(person_ids)):
+            for person in with_progress_bar(self.accessor.iter_cases(person_ids), len(person_ids)):
                 if person.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
                     self.add_person(person, writer)
         print "Wrote to {}".format(filename)
