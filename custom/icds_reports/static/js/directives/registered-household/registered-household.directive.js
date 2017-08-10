@@ -22,7 +22,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };
@@ -49,7 +49,10 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of household registered: <strong>' + household + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
+            '<div>Total number of household registered: <strong>' + household + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -61,7 +64,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

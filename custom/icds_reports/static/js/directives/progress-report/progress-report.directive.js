@@ -11,7 +11,7 @@ function ProgressReportController($scope, $location, progressReportService, stor
     }
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
-    vm.label = "Progress Report";
+    vm.label = "ICDS-CAS Fact Sheet";
     vm.data = {};
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
@@ -33,10 +33,15 @@ function ProgressReportController($scope, $location, progressReportService, stor
         return sum / values.length;
     };
 
-    vm.checkColor = function(color, index, data) {
+    vm.checkColor = function(color, index, data, reverseColors) {
         if (color === 'black') {
             return index === 1 || (index > 0 && data[index]['html'] === data[index - 1]['html']);
-        } else if (color ==='red') {
+        }
+        if (reverseColors === 'true') {
+            color = color === 'green' ? 'red': 'green';
+        }
+
+        if (color ==='red') {
             return index > 0 && data[index]['html'] < data[index - 1]['html'];
         } else if (color === 'green') {
             return  index > 0 && data[index]['html'] > data[index - 1]['html'];

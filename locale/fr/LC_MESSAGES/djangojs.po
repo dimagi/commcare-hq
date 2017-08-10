@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-01 19:17+0000\n"
+"POT-Creation-Date: 2017-08-08 19:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,6 +305,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:91
 msgid "'commcare-user' is a reserved case type. Please change the case type"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+msgid "Go back to case list"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
+msgid "Proceed with registered case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:139
@@ -2050,7 +2058,7 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:258
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:210
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2075,12 +2083,12 @@ msgstr ""
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:358
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:382
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:386
 msgid "Please wait..."
 msgstr ""
 

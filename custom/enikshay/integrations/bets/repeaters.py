@@ -352,7 +352,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
-    friendly_name = _("AYUSH/Other provider: Registering and referral of a presumptive TB case"
+    friendly_name = _("BETS - AYUSH/Other provider: Registering and referral of a presumptive TB case"
                       " in UATBC/e-Nikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
@@ -380,7 +380,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
 
 
 class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
-    friendly_name = _("Forward users to BETS")
+    friendly_name = _("BETS - Forward Agency Users")
     payload_generator_classes = (BETSUserPayloadGenerator,)
 
     location_types_to_forward = ['plc', 'pcp', 'pcc', 'pac']
@@ -390,12 +390,13 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
                 and location.location_type.code in self.location_types_to_forward)
 
     def allowed_to_forward(self, user):
-        return any(self._is_relevant_location(loc)
-                   for loc in user.get_sql_locations(self.domain))
+        return (user.user_data.get('user_level', None) == 'real'
+                and any(self._is_relevant_location(loc)
+                        for loc in user.get_sql_locations(self.domain)))
 
 
 class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
-    friendly_name = _("Forward locations to BETS")
+    friendly_name = _("BETS - Forward Locations")
     payload_generator_classes = (BETSLocationPayloadGenerator,)
     location_types_to_forward = (
         'ctd',
@@ -413,9 +414,8 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
-
 class BETSBeneficiaryRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - Beneficiary creation and update")
+    friendly_name = _("BETS - Patient (beneficiary) registration and update")
     payload_generator_classes = (BETSBeneficiaryPayloadGenerator,)
     properties_we_care_about = (
         'phone_number',

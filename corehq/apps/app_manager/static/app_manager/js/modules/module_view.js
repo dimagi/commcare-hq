@@ -107,10 +107,16 @@ $(function () {
 
     // Registration in case list
     if ($('#case-list-form').length) {
-        var CaseListForm = function (originalFormId, formOptions) {
+        var CaseListForm = function (originalFormId, formOptions, postFormWorkflow) {
             var self = this;
 
             self.caseListForm = ko.observable(originalFormId);
+            self.postFormWorkflow = ko.observable(postFormWorkflow);
+            self.endOfRegistrationOptions = [
+                {value: 'case_list', label: gettext('Go back to case list')},
+                {value: 'default', label: gettext('Proceed with registered case')},
+            ];
+
             self.formMissing = ko.computed(function() {
                 return self.caseListForm() && !formOptions[self.caseListForm()];
             });
@@ -129,10 +135,11 @@ $(function () {
             self.caseListForm.subscribe(showMedia);
         };
         var case_list_form_options = initial_page_data('case_list_form_options');
-            caseListForm = new CaseListForm(
-                case_list_form_options ? case_list_form_options.form.form_id : null,
-                case_list_form_options ? case_list_form_options.options : []
-            );
+        var caseListForm = new CaseListForm(
+            case_list_form_options ? case_list_form_options.form.form_id : null,
+            case_list_form_options ? case_list_form_options.options : [],
+            case_list_form_options ? case_list_form_options.form.post_form_workflow: 'default'
+        );
         $('#case-list-form').koApplyBindings(caseListForm);
 
         // Reset save button after bindings

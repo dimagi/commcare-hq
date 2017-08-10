@@ -14,6 +14,7 @@ from corehq.util.quickcache import quickcache
 from django.db import IntegrityError
 from django.http.response import Http404
 
+from dimagi.utils.chunked import chunked
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -47,39 +48,40 @@ class MALTTableGenerator(object):
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan)
-        for app_row in apps_submitted_for:
-            app_id = app_row.app_id
-            num_of_forms = app_row.doc_count
-            try:
-                app_data = self._app_data(domain_name, app_id)
-                user_id, username, user_type, email = self._user_data(
-                    app_row.user_id,
-                    app_row.username,
-                    all_users_by_id
-                )
-            except Exception as ex:
-                logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
-                             (id=user_id, app_id=app_id, ex=str(ex)), exc_info=True)
-                continue
+        for users in chunked(all_users_by_id.keys(), 1000):
+            apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
+            for app_row in apps_submitted_for:
+                app_id = app_row.app_id
+                num_of_forms = app_row.doc_count
+                try:
+                    app_data = self._app_data(domain_name, app_id)
+                    user_id, username, user_type, email = self._user_data(
+                        app_row.user_id,
+                        app_row.username,
+                        all_users_by_id
+                    )
+                except Exception as ex:
+                    logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
+                                 (id=user_id, app_id=app_id, ex=str(ex)), exc_info=True)
+                    continue
 
-            malt_dict = {
-                'month': monthspan.startdate,
-                'user_id': user_id,
-                'username': username,
-                'email': email,
-                'user_type': user_type,
-                'domain_name': domain_name,
-                'num_of_forms': num_of_forms,
-                'app_id': app_id or MISSING_APP_ID,
-                'device_id': app_row.device_id,
-                'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, NOT_SET),
-                'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, NOT_SET),
-                'use_threshold': app_data.use_threshold,
-                'experienced_threshold': app_data.experienced_threshold,
-                'is_app_deleted': app_data.is_app_deleted,
-            }
-            malt_row_dicts.append(malt_dict)
+                malt_dict = {
+                    'month': monthspan.startdate,
+                    'user_id': user_id,
+                    'username': username,
+                    'email': email,
+                    'user_type': user_type,
+                    'domain_name': domain_name,
+                    'num_of_forms': num_of_forms,
+                    'app_id': app_id or MISSING_APP_ID,
+                    'device_id': app_row.device_id,
+                    'wam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.wam, NOT_SET),
+                    'pam': AMPLIFY_COUCH_TO_SQL_MAP.get(app_data.pam, NOT_SET),
+                    'use_threshold': app_data.use_threshold,
+                    'experienced_threshold': app_data.experienced_threshold,
+                    'is_app_deleted': app_data.is_app_deleted,
+                }
+                malt_row_dicts.append(malt_dict)
         return malt_row_dicts
 
     @classmethod

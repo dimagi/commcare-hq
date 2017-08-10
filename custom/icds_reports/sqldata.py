@@ -1587,17 +1587,20 @@ class ProgressReport(object):
                     },
                     {
                         'header': 'Total number of unweighed children',
-                        'slug': 'nutrition_status_unweighed'
+                        'slug': 'nutrition_status_unweighed',
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 0 - 5 years who are severely underweight (weight-for-age)',
                         'slug': 'severely_underweight',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 0-5 years who are moderately underweight (weight-for-age)',
                         'slug': 'moderately_underweight',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 0-5 years who are at normal weight-for-age',
@@ -1607,14 +1610,16 @@ class ProgressReport(object):
                     {
                         'header': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)',
                         'slug': 'wasting_severe',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': (
                             'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'
                         ),
                         'slug': 'wasting_moderate',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 6 - 60 months with normal weight-for-height',
@@ -1624,12 +1629,14 @@ class ProgressReport(object):
                     {
                         'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
                         'slug': 'stunting_severe',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                         'slug': 'stunting_moderate',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Children from 6 - 60 months with normal height-for-age',
@@ -1692,7 +1699,8 @@ class ProgressReport(object):
                     {
                         'header': 'Pregnant women who are anemic',
                         'slug': 'severe_anemic',
-                        'average': []
+                        'average': [],
+                        'reverseColors': 'true',
                     },
                     {
                         'header': 'Pregnant women with tetanus completed',

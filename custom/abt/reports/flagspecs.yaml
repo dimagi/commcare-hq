@@ -738,49 +738,49 @@ http://openrosa.org/formdesigner/2BAC5FDC-72F3-4AF4-8381-9160E8AE13CF:
     warning_fr: "Problème signalé : {msg}"
 # Form 5
 http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
-  - question: [A, A_G_1, Q_1, q1_action]
+  - question: [q1_action]
     flag_name: "Mask usage?"
     flag_name_por: "Uso da máscara?"
     flag_name_fr: "Utiliser les masques ?"
     warning: "Problem reported: Personnel entered the pesticide storage area without proper PPE."
     warning_por: "Problema relatado: O pessoal entrou na área de armazenamento de insecticida sem o EPI adequado."
     warning_fr: "Problème signalé : Le personnel est entré dans l’aire de stockage des pesticides sans porter d’EPI approprié."
-  - question: [A, A_G_1, Q_2, q2_action]
+  - question: [q2_action]
     flag_name: "PPE to handle pesticides"
     flag_name_por: "EPI para lidar com o insecticida"
     flag_name_fr: "EPI à manipuler les pesticides"
     warning: "Problem reported: Personnel handling pesticides without wearing masks, gloves, boots, and overalls."
     warning_por: "Problema relatado: manuseio pessoal de insectica sem usar máscaras, luvas, botas e macacão."
     warning_fr: "Problème signalé : Le personnel manipule les pesticides sans porter de masques, gants, bottes et salopettes."
-  - question: [A, A_G_1, Q_3, q3_action]
+  - question: [q3_action]
     flag_name: "Eating in the warehouse?"
     flag_name_por: "Comem nos armazéns?"
     flag_name_fr: "Manger dans l'entrepôt ?"
     warning: "Problem reported: Workers eating inside warehouse while IRS pesticides are in stock."
     warning_por: "Problema relatado: Os trabalhadores comem no interior do armazém, enquanto o insecticida estão armazenados"
     warning_fr: "Problème signalé : Les travailleurs mangent dans l’entrepôt lorsque les pesticides PID sont en stock."
-  - question: [A, A_G_2, Q_4, q4_action]
+  - question: [q4_action]
     flag_name: "Soap and basin available?"
     flag_name_por: "Sabão e bacia disponíveis?"
     flag_name_fr: "Savon et lavabo disponibles ?"
     warning: "Problem reported:  Water basins not provided in storeroom for washing hands."
     warning_por: "Problema relatado: bacias com água não são fornecidas no armazém para lavar as mãos"
     warning_fr: "Problème signalé :  Pas de bassines d’eau fournies dans la salle de stockage pour se laver les mains."
-  - question: [A, A_G_2, Q_5, q5_action]
+  - question: [q5_action]
     flag_name: "Current MSDS posted?"
     flag_name_por: "MSDS actuais publicadas?"
     flag_name_fr: "FDS actuels affichés ?"
     warning: "Problem reported: Material Safety Data sheet for the current pesticide(s) not posted"
     warning_por: "Problema relatado: Ficha de Segurança do Material para o insecticida (s) actual não publicada"
     warning_fr: "Problème signalé : La ou les fiches de données de sécurité (FDS) du ou des pesticides actuels ne sont pas affichées"
-  - question: [A, A_G_2, Q_6, q6_action]
+  - question: [q6_action]
     flag_name: "Thermometer in storeroom?"
     flag_name_por: "Termómetro na sala de armazenamento?"
     flag_name_fr: "Thermomètre dans cellier ?"
     warning: "Problem reported: Thermometer needed in storeroom."
     warning_por: "Problema relatado: Termómetro necessário na sala de armazenamento"
     warning_fr: "Problème signalé : Un thermomètre est requis pour la salle de stockage."
-  - question: [A, A_G_3, Q_7, q7]
+  - question: [q7]
     flag_name: "First aid kit stocked?"
     flag_name_por: "Kit de primeiros socorros abastecido?"
     flag_name_fr: " Trousse de secours stocké ?"
@@ -790,7 +790,7 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: First aid items are needed for this facility. Missing: {msg}"
     warning_por: "Problema relatado: itens de primeiros socorros são necessários para esta instalação. Faltando: {msg}"
     warning_fr: "Problème signalé : Un ou des articles de soins de premiers secours sont requis pour cet établissement. Article(s) manquant(s) : {msg}"
-  - question: [A, A_G_3, Q_8, q8]
+  - question: [q8]
     flag_name: "Spill kit and fire extinquisher?"
     flag_name_por: "Kit de derramamento e extintor de incêndio?"
     flag_name_fr: "Kit en cas de déversement et d'incendie extinquisher ?"
@@ -800,373 +800,373 @@ http://openrosa.org/formdesigner/7B543EA4-A416-4E46-A121-C4F57412B5AA:
     warning: "Problem reported: Storeroom missing {msg}."
     warning_por: "Problema relatado: Sala de armazenamento faltando {msg}."
     warning_fr: "Problème signalé : Article(s) manquant(s) dans la salle de stockage {msg}."
-  - question: [A, A_G_3, Q_9, q9_action]
+  - question: [q9_action]
     flag_name: "Storekeeper familiar with poisoning symptoms?"
     flag_name_por: "Fiel de Armanez familiarizado com os sintomas envenenamento?"
     flag_name_fr: "Magasinier familiariser avec symptômes d'empoisonnement ?"
     warning: "Problem reported: Storekeeper not familiar with symptoms of poisoning for the current pesticide(s)."
     warning_por: "Problema relatado: Os fieis de armazen não estão familiarizados com os sintomas de envenenamento por insecticida (s) atuais."
     warning_fr: "Problème signalé : Les magasiniers ne sont pas au courant des symptômes de l’empoisonnement pour le ou les pesticides actuels."
-  - question: [A, A_G_4, Q_10, q10_action]
+  - question: [q10_action]
     flag_name: "Knowledge of nearest health facility?"
     flag_name_por: "Conhecimento da unidade sanitaria mais próxima?"
     flag_name_fr: "La connaissance de l'établissement de santé le plus proche?"
     warning: "Problem reported: Storekeeper does not know location of  nearest health facility."
     warning_por: "Problema relatado: O fiel de armazen não conhece a localidade  da unidade sanitaria mais próxima."
     warning_fr: "Problème signalé : Les magasiniers ne savent pas où se trouve l’établissement médical le plus proche."
-  - question: [A, A_G_4, Q_11, q11_action]
+  - question: [q11_action]
     flag_name: "Antidotes at nearest health facility?"
     flag_name_por: "Antídotos na unidade de saúde mais próxima?"
     flag_name_fr: "Antidotes au centre de santé le plus proche ?"
     warning: "Problem reported: Antidotes may not be available in the nearest health facility."
     warning_por: "Problema relatado: Os antídotos podem não estar disponíveis na unidade sanitaria mais próxima."
     warning_fr: "Problème signalé : Des antidotes sont susceptibles de ne pas être disponibles dans l’établissement médical le plus proche."
-  - question: [A, A_G_4, Q_12, q12_action]
+  - question: [q12_action]
     flag_name: "Pregnancy testing records available?"
     flag_name_por: "Registos do teste de gravidez disponível?"
     flag_name_fr: "Dossiers de tests de grossesse disponibles ?"
     warning: "Problem reported: Records for pregnancy not available."
     warning_por: "Problema relatado: Registos para a gravidez não disponível."
     warning_fr: "Problème signalé : Les dossiers de grossesse ne sont pas disponibles."
-  - question: [A, A_G_5, Q_13, q13_action]
+  - question: [q13_action]
     flag_name: "Pesticide leakage evidence?"
     flag_name_por: "Evidências de vazamentos de insecticidas?"
     flag_name_fr: "Pesticide fuites preuves ?"
     warning: "Problem reported: Pesticide leak discovered in storeroom. "
     warning_por: "Problema relatado: vazamento de insecticida descoberto na sala de armazenamento"
     warning_fr: "Problème signalé : Fuite de pesticides découverte dans la salle de stockage."
-  - question: [A, A_G_5, Q_14, q14_action]
+  - question: [q14_action]
     flag_name: "Proper elevation and stack height? "
     flag_name_por: "Elevação adequada e altura da pilha?"
     flag_name_fr: "Bonne hauteur et la hauteur de la pile ?"
     warning: "Problem reported: Improper pesticide storage: Skids and/or stacking height."
     warning_por: "Problema relatado: armazenação de insecticida inadequada: Derrapagens e / ou altura de empilhamento."
     warning_fr: "Problème signalé : Stockage de pesticides inapproprié : en ce qui concerne les palettes et/ou la hauteur d’empilage."
-  - question: [A, A_G_5, Q_15, q15_action]
+  - question: [q15_action]
     flag_name: "Water storage?"
     flag_name_por: "Armazenamento de água?"
     flag_name_fr: "Stockage de l'eau ?"
     warning: "Problem reported: Deficient pesticide and contaminated waste storage procedures."
     warning_por: "Problema relatado: Insecticida deficiente e procedimentos de armazenamento de resíduos solidos."
     warning_fr: "Problème signalé : Procédures insatisfaisantes relatives au stockage du ou des pesticides et des déchets contaminés."
-  - question: [A, A_G_6, Q_16, q16_action]
+  - question: [q16_action]
     flag_name: "Proper pesticide record-keeping"
     flag_name_por: "Conservação de registos de pesticida adequada"
     flag_name_fr: "Pesticides bonne tenue de dossiers ?"
     warning: "Problem reported: Deficient pesticide record-keeping."
     warning_por: "Problema relatado: conservação de registos de insecticida deficiente."
     warning_fr: "Problème signalé : Tenue des documents liés aux pesticides insatisfaisante."
-  - question: [A, A_G_6, Q_17, q17_action]
+  - question: [q17_action]
     flag_name: "Stock card recording system?"
     flag_name_por: "Sistema de registo da ficha de stock?"
     flag_name_fr: "Stock carte de système d'enregistrement ?"
     warning: "Problem reported: Deficient stock record-keeping: No system for recording stock cards."
     warning_por: "Problema relatado: Deficiente de stock : Nenhum sistema de fichas de stock."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
-  - question: [A, A_G_6, Q_18, q18_action]
+  - question: [q18_action]
     flag_name: "Up to date stock cards?"
     flag_name_por: "Fichas de Stock actualizadas"
     flag_name_fr: "Jusqu'à ce jour, les cartes d'achat d'actions ?"
     warning: "Problem reported: Deficient stock record-keeping: Stock cards not up-to-date."
     warning_por: "Problema relatado: Deficiente de stock: fichas de stock não actualizadas."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante."
-  - question: [A, A_G_7, Q_19, q19_action]
+  - question: [q19_action]
     flag_name: "Waste stock recorded?"
     flag_name_por: "Reserva de resíduos registada?"
     flag_name_fr: "Stock de déchets enregistré ?"
     warning: "Problem reported: Deficient stock record-keeping: waste stock."
     warning_por: "Problema relatado: Deficiente conservação de fichas de Stock: residous solidos."
     warning_fr: "Problème signalé : Tenue des documents liés au stock insatisfaisante : stock de déchets."
-  - question: [A, A_G_7, Q_20, q20_action]
+  - question: [q20_action]
     flag_name: "Adequate filing system?"
     flag_name_por: "Sistema de preenchimento adequado?"
     flag_name_fr: "Système de classement adéquat ?"
     warning: "Problem reported: Deficient record-keeping: filing: Filing system."
     warning_por: "Problema relatado: Deficiente Fichas de Sotck: sistema de preenchimento."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : classement."
-  - question: [A, A_G_7, Q_21, q21_action]
+  - question: [q21_action]
     flag_name: "Quantity and age of stock known? "
     flag_name_por: "Quantidade e idade da reserva conhecida?"
     flag_name_fr: "Quantité et l'âge de stock connu ?"
     warning: "Problem reported: Deficient record-keeping; inventory."
     warning_por: "Problema relatado: Deficiente conservação de registos da reserva; inventário."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : inventaire."
-  - question: [A, A_G_8, Q_22, q22_action]
+  - question: [q22_action]
     flag_name: "Quantity of used stock known?"
     flag_name_por: "Quantidade de stock utilizado conhecido?"
     flag_name_fr: "Quantité de stock utilisé connue ?"
     warning: "Problem reported: Deficient record-keeping: usage."
     warning_por: "Problema relatado: Deficiente registo da reserva: o uso."
     warning_fr: "Problème signalé : Tenue des documents insatisfaisante : utilisation."
-  - question: [A, A_G_8, Q_23, q23_action]
+  - question: [q23_action]
     flag_name: "Shelving and labeling?"
     flag_name_por: "Estantes e rotulagem?"
     flag_name_fr: "Rayonnages et de l'étiquetage ?"
     warning: "Problem reported: Deficient storage (no shelving) and/or labeling."
     warning_por: "Problema relatado: deficiência de armazenamento (sem prateleiras) e / ou rotulagem."
     warning_fr: "Problème signalé : Stockage (absence d’étagères) et/ou étiquetage insatisfaisant(s)."
-  - question: [A, A_G_9, Q_24, q24_action]
+  - question: [q24_action]
     flag_name: "Pesticides labeled?"
     flag_name_por: "Insecticidas rotulados?"
     flag_name_fr: "Pesticides étiquetés?"
     warning: "Problem reported: Deficient pesticide labeling."
     warning_por: "Problema relatado: rotulagem de pesticidas deficiente."
     warning_fr: "Problème signalé : Étiquetage de pesticides insatisfaisant."
-  - question: [A, A_G_9, Q_25, q25_action]
+  - question: [q25_action]
     flag_name: "FEFO system?"
     flag_name_por: "Sistema FEFO?"
     flag_name_fr: "PPPS système ?"
     warning: "Problem reported: Not using FEFO inventory system."
     warning_por: "Problema do Alerta: Não usa o sistema de inventário FEFO."
     warning_fr: "Problème signalé : Non-utilisation du système d’inventaire PPPS."
-  - question: [A, A_G_10, Q_26, q26_action]
+  - question: [q26_action]
     flag_name: "Expired Insecticides?"
     flag_name_por: "Inseticidas fora do prazo?"
     flag_name_fr: "Insecticides expiré ?"
     warning: "Problem reported: Expired pesticides in storeroom."
     warning_por: "Problema relatado: Pesticidas fora do prazo na sala de armazenação."
     warning_fr: "Problème signalé : Présence de pesticides expirés dans la salle de stockage."
-  - question: [A, A_G_10, Q_27, q27_action]
+  - question: [q27_action]
     flag_name: "Waste containers labeled?"
     flag_name_por: "Contentores de lixo rotulados?"
     flag_name_fr: "Les conteneurs à déchets étiquetés?"
     warning: "Problem reported: Deficient storage and/or labeling of hazardous waste."
     warning_por: "Problema relatado: armazenamento deficiente e / ou rotulagem de resíduos perigosos."
     warning_fr: "Problème signalé : Stockage et/ou étiquetage des déchets dangereux insatisfaisant(s)."
-  - question: [B, B_G_1, Q_28, q28_action]
+  - question: [q28_action]
     flag_name: "Waste packaging stored?"
     flag_name_por: "Embalagem de lixo armazenado?"
     flag_name_fr: "Déchets d'emballage stockées ?"
     warning: "Problem reported: Deficient storage and/or labeling of empty sachets."
     warning_por: "Problema relatado: armazenamento deficiente e / ou rotulagem de sacos vazios."
     warning_fr: "Problème signalé : Stockage et/ou étiquetage des sachets vides insatisfaisant(s)."
-  - question: [B, B_G_1, Q_29, q29_action]
+  - question: [q29_action]
     flag_name: "Pesticide usage inventory?"
     flag_name_por: "Inventário do uso de pesticidas?"
     flag_name_fr: "Pesticide inventaire d'utilisation?"
     warning: "Problem reported: Pesticide packaging waste inventory does not balance."
     warning_por: "Problema relatado: inventário dos resíduos de embalagens de pesticidas Não equilibra."
     warning_fr: "Problème signalé : L’inventaire du ou des pesticides ne s’équilibre pas."
-  - question: [B, B_G_1, Q_30, q30_action]
+  - question: [q30_action]
     flag_name: "Old waste stored?"
     flag_name_por: "Resíduos antigos armazenados?"
     flag_name_fr: "Old déchets stockés ?"
     warning: "Problem reported: More than one season of accumulated solid waste in store."
     warning_por: "Problema relatado: Mais do que uma estação de resíduos sólidos acumulados no armazém."
     warning_fr: "Problème signalé : Pesticides excédentaires dans l’inventaire."
-  - question: [B, B_G_2, Q_31, q31_action]
+  - question: [q31_action]
     flag_name: "Waste Management plan?"
     flag_name_por: "Plano de gestão de resíduos?"
     flag_name_fr: "Plan de gestion des déchets ?"
     warning: "Problem reported: Deficient waste management planning."
     warning_por: "Problema relatado: Deficiente planeamento da gestão de resíduos."
     warning_fr: "Problème signalé : Planification de la gestion des déchets insatisfaisante."
-  - question: [B, B_G_2, Q_32, q32_action]
+  - question: [q32_action]
     flag_name: "Waste disposal issue?"
     flag_name_por: "Problema de eliminação de resíduos?"
     flag_name_fr: "Élimination problème des déchets ?"
     warning: "Problem reported: problems in identifying waste disposal system."
     warning_por: "Problema relatado: Identificar os problemas no sistema de eliminação de resíduos."
     warning_fr: "Problème signalé : problèmes liés à la planification de la gestion des déchets."
-  - question: [B, B_G_3, Q_36, q36_action]
+  - question: [q36_action]
     flag_name: "Spray Tracking Sheet use?"
     flag_name_por: "Uso da Folha de acompanhamento da pulverização?"
     flag_name_fr: "Vaporiser Fiche de suivi d'utilisation?"
     warning: "Problem reported: Spray Performance Tracking Sheet not displayed and correctly filled out."
     warning_por: "Problema relatado: Folha de Acompanhamento do desempenho do Roceador não apresentados correctamente preenchidos."
     warning_fr: "Problème signalé : La feuille de suivi de la performance des pulvérisations n’est pas affichée et n’est pas remplie correctement."
-  - question: [B, B_G_4, Q_37, q37_action]
+  - question: [q37_action]
     flag_name: "Updated ledger book?"
     flag_name_por: "Livro de contabilidade actualizado?"
     flag_name_fr: "Mise à jour grand livre ?"
     warning: "Problem reported: The store ledger book is not fully updated."
     warning_por: "Problema relatado: O livro de contabilidade da reserva não está totalmente actualizado."
     warning_fr: "Problème signalé : Le grand livre du magasin n’est pas entièrement mis à jour."
-  - question: [B, B_G_4, Q_38, q38_action]
+  - question: [q38_action]
     flag_name: "Updated Stock cards?"
     flag_name_por: "Cartões de reserva atualizados?"
     flag_name_fr: "Les fiches de stock mis à jour?"
     warning: "Problem reported: The stock cards for all the stock items are not fully updated."
     warning_por: "Problema relatado: Os cartões de reserva para todos os artigos de reserva não estão totalmente actualizados."
     warning_fr: "Problème signalé : Les fiches de stock de tous les articles du stock ne sont pas entièrement mises à jour."
-  - question: [B, B_G_4, Q_39, q39_action]
+  - question: [q39_action]
     flag_name: "Stock card and ledger balances match?"
     flag_name_por: "Os cartões de reserva e os saldos contabilísticos  conscidem?"
     flag_name_fr: "Carte de Stock et soldes du grand livre match?"
     warning: "Problem reported: The balance in the store ledger book does not match the balance on the stock card for all stock items."
     warning_por: "Problema relatado: O saldo no livro de contabilidade não coincide com o saldo no cartão de reserva para todos os artigos em reserva."
     warning_fr: "Problème signalé : Le solde du grand livre du magasin ne correspond pas au solde de la fiche de stock pour tous les articles qui sont en stock."
-  - question: [B, B_G_5, Q_40, q40_action]
+  - question: [q40_action]
     flag_name: "Stock card balance matches   physical count?"
     flag_name_por: "O saldo do cartão da reserva coincide com a contagem física?"
     flag_name_fr: "Stock équilibre de la carte correspond décompte physique ?"
     warning: "Problem reported: The balance on the stock card does not equal the result of a physical stock count for all items."
     warning_por: "Problema relatado: O saldo no cartão de reserva não é igual ao resultado de uma contagem da reserva física para todos os artigos."
     warning_fr: "Problème signalé : Le solde de la fiche de stock ne correspond pas au résultat d’un comptage de stock physique pour tous les articles."
-  - question: [B, B_G_5, Q_41, q41_action]
+  - question: [q41_action]
     flag_name: "Stock and Performance Tracking Sheet?"
     flag_name_por: "Folha de rastreamento da reserva e do desempenho?"
     flag_name_fr: "Stock et Performance Feuille de suivi ?"
     warning: "Problem reported: The stock balance on the Spray Performance Tracking Sheet does not equal the physical stock count."
     warning_por: "Problema relatado: O saldo da reserva na Folha de Acompanhamento de desempenho da pulverização não iguala a contagem da reserva física."
     warning_fr: "Problème signalé : Le solde du stock de la feuille de suivi de la performance des pulvérisations ne correspond pas au comptage de stock physique."
-  - question: [B, B_G_5, Q_42, q42_action]
+  - question: [q42_action]
     flag_name: "Insecticide Tracking Sheet use?"
     flag_name_por: "Uso da folha de acompanhamento do inseticida?"
     flag_name_fr: "Fiche de suivi Utiliser les insecticides ?"
     warning: "Problem reported: The Insecticide Tracking Sheet is not completed daily."
     warning_por: "Problema relatado: A Folha de Acompanhamento de insecticida não é preenchido diariamente."
     warning_fr: "Problème signalé : La feuille de suivi du ou des insecticides n’est pas remplie chaque jour."
-  - question: [B, B_G_6, Q_43, q43_action]
+  - question: [q43_action]
     flag_name: "Insecticide Tracking Sheet and ledger? "
     flag_name_por: "Folha de Acompanhamento de inseticida e contabilidade?"
     flag_name_fr: "Insecticide feuille de suivi et le grand livre ?"
     warning: "Problem reported: The stock balance on the Insecticide Tracking Sheet does not match the balances in the store ledger and on the stock car."
     warning_por: "Problema relatado: O saldo da reserva na Folha de acompanhemento do inseticida não coincide com o saldo da contabilidade e no cartão de reservas."
     warning_fr: "Problème signalé : Le solde du stock de la feuille de suivi du ou des insecticides ne correspond pas aux soldes du grand livre et de la fiche de stock du magasin."
-  - question: [B, B_G_6, Q_44, q44_action]
+  - question: [q44_action]
     flag_name: "Pesticide tock reconciles?"
     flag_name_por: "A reseva de Pesticida reconcilia?"
     flag_name_fr: "Pesticide tac réconcilie ?"
     warning: "Problem reported: The stock balance records of pesticides does not reconcile."
     warning_por: "Problema relatado: Os registos do saldo da reserva de pesticidas não reconcilia."
     warning_fr: "Problème signalé : Les documents concernant le solde du stock de pesticides ne peuvent pas être rapprochés."
-  - question: [B, B_G_6, Q_45, q45_action]
+  - question: [q45_action]
     flag_name: "Mask stock reconciles?"
     flag_name_por: "A reserva das máscara reconcilia?"
     flag_name_fr: "Masque actions réconcilie ?"
     warning: "Problem reported: The stock balance records of dust masks does not reconcile."
     warning_por: "Problema relatado: Os registos do saldo da reserva de máscaras contra poeira não reconcilia."
     warning_fr: "Problème signalé : Les documents concernant le solde du stock de masques anti-poussière ne peuvent pas être rapprochés."
-# Form 6
+ # Form 6
 http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
-  - question: [q1_action]
+  - question: [A, A_G_1, Q_1, q1_action]
     flag_name: "PPE use to wash area?"
     flag_name_por: "EPP é utilizado na área de lavagem?"
     flag_name_fr: "PPE utiliser pour laver la zone?"
     warning: "Problem reported: All SOs must continue to wear PPE on the way back to the operations site."
     warning_por: "Problema relatado: Todos os OPs devem continuar a utilizar o EPP no caminho de volta para o local das operações."
     warning_fr: "Problème signalé : Tous les opérateurs de pulvérisation doivent continuer à porter leur EPI lorsqu’ils retournent vers le site d’exploitation."
-  - question: [q2_action]
+  - question: [A, A_G_1, Q_2, q2_action]
     flag_name: "Eating/drinking in PPE?"
     flag_name_por: "Comer / beber no EPP?"
     flag_name_fr: "Manger / Boire en EPI?"
     warning: "Problem reported: Eating and/or drinking violation."
     warning_por: "Problema relatado: violação da comida e / ou bebida."
     warning_fr: "Problème signalé : Violation de l’interdiction de manger et/ou de boire."
-  - question: [q3_action]
+  - question: [A, A_G_1, Q_3, q3_action]
     flag_name: "Wash-up supervised?"
     flag_name_por: "Lavagem supervisionadas?"
     flag_name_fr: "Nettoyage supervisé?"
     warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
     warning_por: "Problema relatado: Líderes da equipa não supervisionam a limpeza e a lavagem."
     warning_fr: "Problème signalé : Les chefs d’équipe ne supervisent pas le nettoyage et le lavage."
-  - question: [q4_action]
+  - question: [A, A_G_2, Q_4, q4_action]
     flag_name: "Soap and water available?"
     flag_name_por: "Sabão e água disponíveis?"
     flag_name_fr: "Savon et l'eau disponible?"
     warning: "Problem reported: Wash facilities with soap and water must be available to operators."
     warning_por: "Problema relatado: As instalações de lavagem com água e sabão devem estar disponíveis para os operadores."
     warning_fr: "Problème signalé : Des installations de lavage qui ont du savon et de l’eau doivent être disponibles pour les opérateurs de pulvérisation."
-  - question: [q5_action]
+  - question: [A, A_G_2, Q_5, q5_action]
     flag_name: "Sloped soak pit?  "
     flag_name_por: "Poço de mergulho inclinado?"
     flag_name_fr: "Inclinée en direction du puisard?"
     warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped to soak pit."
     warning_por: "Problema relatado: A tríplice lavagem e a área de lavagem deve estar cobertas por uma superfície à prova de vazamentos e inclinado para o poço de mergulho."
     warning_fr: "Problème signalé : La zone de triple rinçage et de lavage doit être recouverte d’une surface imperméable et inclinée en direction du puisard."
-  - question: [q6_action]
+  - question: [A, A_G_2, Q_6, q6_action]
     flag_name: "PPE use in wash area?"
     flag_name_por: "Uso do EPP na área de lavagem?"
     flag_name_fr: "EPI utiliser dans la zone de lavage?"
     warning: "Problem reported: All personnel in the wash area must wear full PPE."
     warning_por: "Problema relatado: Todo o pessoal na área de lavagem deve utilizar EPP completo."
     warning_fr: "Problème signalé : Tous les membres du personnel qui sont dans la zone de lavage doivent porter tout leur EPI."
-  - question: [q7_action]
+  - question: [A, A_G_3, Q_7, q7_action]
     flag_name: "Leftover pesticde disposal?"
     flag_name_por: "Eliminação da sobra pesticida?"
     flag_name_fr: "Les restes de pesticde disposition?"
     warning: "Notify operations coordinator of triple-rinse violations."
     warning_por: "Notificar o coordenador das operações sobre violações de tríplece-lavagem."
     warning_fr: "Notifier le coordonnateur des opérations des violations de la procédure de triple rinçage."
-  - question: [q8_action]
+  - question: [A, A_G_3, Q_8, q8_action]
     flag_name: "Water available?"
     flag_name_por: "Água disponível?"
     flag_name_fr: "L'eau disponible?"
     warning: "Problem reported: Insufficient water for triple rinse."
     warning_por: "Problema relatado: água insuficiente para a tríplice lavagem."
     warning_fr: "Problème signalé : Il n’y a pas suffisamment d’eau pour le triple rinçage."
-  - question: [q9_action]
+  - question: [A, A_G_3, Q_9, q9_action]
     flag_name: "Correct rinse method?"
     flag_name_por: "Método de lavagem correto?"
     flag_name_fr: "Méthode de rinçage correcte?"
     warning: "Problem reported: Triple-rinse violations."
     warning_por: "Problema relatado: violações na Triplece-lavagem."
     warning_fr: "Problème signalé : Violations de la procédure de triple rinçage."
-  - question: [q10_action]
+  - question: [A, A_G_4, Q_10, q10_action]
     flag_name: "Outside of pumps washed?"
     flag_name_por: "Lavado o lado de fora das bombas?"
     flag_name_fr: "En dehors de pompes lave?"
     warning: "Problem reported: Pumps not properly washed"
     warning_por: "Problema relatado: Bombas não lavadas corretamente"
     warning_fr: "Problème signalé : Les pompes ne sont pas lavées de manière appropriée"
-  - question: [q11_action]
+  - question: [A, A_G_4, Q_11, q11_action]
     flag_name: "PPE rinsed?"
     flag_name_por: "EPP lavado?"
     flag_name_fr: "EPI rincé?"
     warning: "Problem reported: PPE not properly washed"
     warning_por: "Problema relatado: EPP não devidamente lavados"
     warning_fr: "Problème signalé : L’EPI n’est pas lavé de manière appropriée"
-  - question: [q12_action]
+  - question: [A, A_G_4, Q_12, q12_action]
     flag_name: "Wash hands and face?"
     flag_name_por: "Mãos e rosto lavados?"
     flag_name_fr: "Se laver les mains et le visage?"
     warning: "Problem reported: Operators must wash hands and face with soap and water after removing PPE."
     warning_por: "Problema relatado: Os operadores devem lavar as mãos e o rosto com água e sabão depois da remoção do EPP."
     warning_fr: "Problème signalé : Les opérateurs de pulvérisation doivent se laver le visage et les mains avec de l’eau et du savon, après avoir retiré leur équipement de protection individuelle (EPI)."
-  - question: [q13_action]
+  - question: [A, A_G_5, Q_13, q13_action]
     flag_name: "Pesticide/waste returned?"
     flag_name_por: "Pesticida / resíduos devolvidos?"
     flag_name_fr: "Pesticide / déchets retourné?"
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
     warning_por: "Problema relatado: O armazenista deve manter os registos dos pesticidas entregues e devolvidos."
     warning_fr: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
-  - question: [q14_action]
+  - question: [A, A_G_5, Q_14, q14_action]
     flag_name: "Empties counted?"
     flag_name_por: "Vazios contados?"
     flag_name_fr: "Sachets/bouteilles vides compté?"
     warning: "Problem reported: Need for strict accounting for sachets/bottles, for labeled containers for all contaminated waste, and for storekeeper training."
     warning_por: "contabilidade rigorosa para sacos / garrafas,  recipientes rotulados para todos os resíduos contaminados, e para a formação do armazenista."
     warning_fr: "Problème signalé : Il est nécessaire d’instaurer une comptabilité rigoureuse en ce qui concerne les sachets/bouteilles, les contenants étiquetés destinés aux déchets contaminés et la formation du magasinier."
-  - question: [q15_action]
+  - question: [A, A_G_5, Q_15, q15_action]
     flag_name: "Daily reports?"
     flag_name_por: "Relatórios diários?"
     flag_name_fr: "Des rapports quotidiens?"
     warning: "Problem reported: Spray operators must complete daily report forms."
     warning_por: "Problema relatado: Os operadores de pulverização devem preencher formulários de relatório diários."
     warning_fr: "problème signalé : Les opérateurs de pulvérisation doivent remplir chaque jour leurs formulaires de rapport."
-  - question: [q16_action]
+  - question: [A, A_G_6, Q_16, q16_action]
     flag_name: "Supervisors check forms?"
     flag_name_por: "Formulários verificados pelos Supervisores?"
     flag_name_fr: "Superviseurs formules de chèque?"
     warning: "Problem reported: Supervisors must check spray forms."
     warning_por: "Problema relatado: Os supervisores devem verificar os formulários de pulverização."
     warning_fr: "problème signalé : Les superviseurs de pulvérisation doivent vérifier les formulaires de pulvérisation."
-  - question: [q17_action]
+  - question: [A, A_G_6, Q_17, q17_action]
     flag_name: "Error Eliminator use?"
     flag_name_por: "Uso Eliminador do Erro?"
     flag_name_fr: "Utilisation de l’Éliminateur d’erreurs?"
     warning: "Problem reported: Team Leaders not using Error Eliminator.  "
     warning_por: "Problema relatado: Os Líderes da equipa não usam o  Eliminator do Erro."
     warning_fr: "Problème signalé : Les chefs d’équipe n’utilisent pas l’Éliminateur d’erreurs."
-  - question: [q17_2_action]
+  - question: [A, A_G_6, Q_17, q17_2_action]
     flag_name: "EE used correctly?"
     flag_name_por: "EE usado corretamente?"
     flag_name_fr: "EE utilisé correctement?"
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
     warning_por: "Problema relatado: Líderes da  Equipa têm dificuldade em usar o eliminador do erro corretamente."
     warning_fr: "Problème signalé : Les chefs d’équipe ont des difficultés à utiliser correctement l’Éliminateur d’erreurs."
-  - question: [q18]
+  - question: [A, A_G_6, Q_18, q18]
     flag_name: "Any accidents?"
     flag_name_por: "Algum acidente?"
     flag_name_fr: "Accidents ?"
@@ -1174,272 +1174,272 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
     warning: " Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
     warning_por: "Problema reportado: Um incidente foi reportado e o formulário do Relatório de Incidente é necessário imediatamente. Acompanhado pelo Gestor do Setor para ter certeza que o formulário de relatório do acidente é arquivado e enviado para TC e ECM."
     warning_fr: "Problème signalé : Un incident a été signalé et un formulaire de rapport d’incident est immédiatement requis. Il est nécessaire d’effectuer un travail de suivi auprès du responsable de secteur pour s’assurer qu’un formulaire de rapport d’incident a été déposé et envoyé à TC et à ECM."
-  - question: [q19_action]
+  - question: [A, A_G_7, Q_19, q19_action]
     flag_name: "SOs irritation?"
     flag_name_por: "Irritação dos OPs?"
     flag_name_fr: "Irritation d'operateurs?"
     warning: "Possible exposure reported: Follow-up on status of SO complaining of irritation and ensure incident report has been sent to home office Technical Coordinator and ECM."
     warning_por: "Possível Exposição  reportada: Acompanhamento do estado do OP a queixar-se de irritação e assegurar que relatório sobre o incidente tenha enviado para o Coordenador Técnico e ECM da sede ."
     warning_fr: "Exposition potentielle signalée : Effectuer un travail de suivi sur l’état de l’opérateur de pulvérisation qui se plaint d’irritations et s’assurer qu’un rapport d’incident a été envoyé au coordonnateur technique et à l’ECM du bureau du siège."
-  - question: [q20_action]
+  - question: [A, A_G_7, Q_20, q20_action]
     flag_name: "Overalls cleaning?"
     flag_name_por: "Limpeza dos Macacões?"
     flag_name_fr: "Salopettes netoyer ?"
     warning: "Problem reported: Overalls not properly washed and dried"
     warning_por: "Problema relatado: Macacões não devidamente lavados e secos"
     warning_fr: "Problème signalé : Les salopettes ne sont pas lavées et séchées de manière appropriée"
-  - question: [q21_action]
+  - question: [A, A_G_7, Q_21, q21_action]
     flag_name: "Disposal of waste water?"
     flag_name_por: "Eliminação de águas residuais?"
     flag_name_fr: "Élimination des eaux usées?"
     warning: "Problem reported:  Improper disposal of wastewater."
     warning_por: "Problema reportado: O descarte inadequado de águas residuais."
     warning_fr: "Problème signalé :  Élimination inappropriée des eaux usées."
-  - question: [q22_action]
+  - question: [A, A_G_8, Q_22, q22_action]
     flag_name: "Water draining?"
     flag_name_por: "Drenagem de água?"
     flag_name_fr: "Vidange de l'eau?"
     warning: "Problem reported: Water not draining properly into soak-pit."
     warning_por: "Problema reportado: A água não drenada corretamente no tanque de retencao"
     warning_fr: "Problème signalé : L’eau ne s’écoule pas de manière appropriée dans le puisard."
-  - question: [q23_action]
+  - question: [A, A_G_8, Q_23, q23_action]
     flag_name: "Soak pit draining?"
     flag_name_por: "Drenagem do tanque de retencao"
     flag_name_fr: "Puisard effectue un écoulement approprié?"
     warning: "Problem reported: Soak-pit not draining properly."
     warning_por: "Problema relatado: Tanque de retencao  não drenado adequadamente."
     warning_fr: "Problème signalé : Le puisard n’effectue pas un écoulement approprié."
-  - question: [q24_action]
+  - question: [A, A_G_9, Q_24, q24_action]
     flag_name: "Gravel in soak pit?"
     flag_name_por: "Cascalho no tanque de retencao?"
     flag_name_fr: "Gravier en puisard?"
     warning: "Problem reported: Inadequate gravel in soak pit."
     warning_por: "Problema reportado: cascalho inadequado no tanque de retencao."
     warning_fr: "Problème signalé : Quantité de gravier insuffisante dans le puisard."
-  - question: [q25_action]
+  - question: [A, A_G_9, Q_25, q25_action]
     flag_name: "Pumps hung to dry?"
     flag_name_por: "Bombas penduradas para secar?"
     flag_name_fr: "Pompes mis à sécher?"
     warning: "Problem reported: Pumps not hung up to dry"
     warning_por: "Problema Reportado: bombas não penduradas para secar"
     warning_fr: "Problème signalé : Les pompes ne sont pas pendues pour sécher"
-  - question: [q26_action]
+  - question: [A, A_G_10, Q_26, q26_action]
     flag_name: "Pump storage?"
     flag_name_por: "Armazenamento da Bomba?"
     flag_name_fr: "Pompe stockage?"
     warning: "Problem reported: Pumps not stored properly."
     warning_por: "Problema relatado: Bombas não armazenadas corretamente."
     warning_fr: "Problème signalé : Les pompes ne sont pas entreposées de manière appropriée."
-  - question: [q27_action]
+  - question: [A, A_G_10, Q_27, q27_action]
     flag_name: "Drums covered?"
     flag_name_por: "Cilindros cobertos?"
     flag_name_fr: "Futs de rinçage couverts?"
     warning: "Problem reported: Rinse and/or waste drums not covered overnight."
     warning_por: "Problema relatado: Lavagem e / ou cilindros de resíduos não cobertos durante a noite."
     warning_fr: "Problème signalé : Les fûts de rinçage et/ou de déchets ne sont pas couverts pendant la nuit."
-  - question: [q28_action]
+  - question: [B, B_G_1, Q_28, q28_action]
     flag_name: "PPE use to wash area?"
     flag_name_por: "EPI utilizado na área de lavagem?"
     flag_name_fr: "EPI utiliser pour laver la zone?"
     warning: "Problem reported: Mobile soak pit must be located away from water bodies, steep slopes or flood prone areas."
     warning_por: "Problema relatado: tanque de retencao móvel deve estar localizado longe de corpos d'água, encostas íngremes ou áreas sujeitas a inundações."
     warning_fr: "Problème signalé : Le puisard mobile doit être situé loin des étendues d’eau, des pentes abruptes ou des zones inondables."
-  - question: [q29_action]
+  - question: [B, B_G_1, Q_29, q29_action]
     flag_name: "Pesticide/waste returned?"
     flag_name_por: "Insecticidas  / resíduos devolvidos?"
     flag_name_fr: "Pesticide / déchets retourné?"
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
     warning_por: "Problema relatado: O fiel de armazen deve manter os registros do insecticida entregues e devolvido."
     warning_fr: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
-  - question: [q30_action]
+  - question: [B, B_G_1, Q_30, q30_action]
     flag_name: "Pesticide/waste returned?"
     flag_name_por: "Insecticida  / resíduos devolvidos?"
     flag_name_fr: "Pesticide / déchets retourné?"
     warning: "Problem reported: Storekeeper must keep records of pesticides handed out and returned."
     warning_por: "Problema relatado: O fiel de armazém  deve manter os registros dos insecticidas entregues e devolvido."
     warning_fr: "Problème signalé : Le magasinier doit conserver des documents sur les pesticides qui sont distribués et retournés."
-  - question: [q31_action]
+  - question: [B, B_G_2, Q_31, q31_action]
     flag_name: "Waste water at wash area overnight?"
     flag_name_por: "Águas residuais na área de lavagem durante a noite?"
     flag_name_fr: "L'eaux usées à la zone de lavage nuit ?"
     warning: "Problem reported: Waste water from collection barrel left at the wash area overnight."
     warning_por: "Problema relatado: Resíduos de água da recolha do barril da esquerda na área de lavagem durante a noite."
     warning_fr: "Problème signalé : Les eaux usées provenant du fût de collecte ont été laissées dans la zone de lavage pendant la nuit."
-  - question: [q32_action]
+  - question: [B, B_G_2, Q_32, q32_action]
     flag_name: "Eating/drinking in PPE?"
     flag_name_por: "Comer / beber usando EPI?"
     flag_name_fr: "Manger / Boire en puisard?"
     warning: "Problem reported: Eating and/or drinking violation."
     warning_por: "Problema relatado: violação da Comida e / ou beber ."
     warning_fr: "Problème signalé : Violation de l’interdiction de manger et/ou de boire."
-  - question: [q33_action]
+  - question: [B, B_G_2, Q_33, q33_action]
     flag_name: "Wash-up supervised?"
     flag_name_por: "Lavagem supervisionada?"
     flag_name_fr: "Netoyage/lavage supervisé?"
     warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
     warning_por: "Problema relatado: Os líderes da equipa não supervisionam a limpeza e lavagem."
     warning_fr: "Problème signalé : Les chefs d’équipe ne supervisent pas le nettoyage et le lavage."
-  - question: [q34_action]
+  - question: [B, B_G_3, Q_34, q34_action]
     flag_name: "Sloped catchment area"
     flag_name_por: "Área de influência inclinada"
     flag_name_fr: "Zone de chalandise pente"
     warning: "Problem reported: Triple rinse and wash area must be covered with leak-proof surface and sloped to mobile soak pit."
     warning_por: "Problema relatado: tríplice lavagem e a área de lavagem deve ser cobertas por uma área à prova de vazamentos e inclinado para o tanque de retencao."
     warning_fr: "Problème signalé : La zone de triple rinçage et de lavage doit être recouverte d’une surface imperméable et inclinée en direction du puisard mobile."
-  - question: [q35_action]
+  - question: [B, B_G_3, Q_35, q35_action]
     flag_name: "PPE use in wash area?"
     flag_name_por: "EPI usado na área de lavagem?"
     flag_name_fr: "EPI utiliser dans la zone de lavage?"
     warning: "Problem reported: All personnel in the wash area must wear full PPE."
     warning_por: "Problema relatado: Todo o pessoal na área de lavagem deve Usar o EPI completo."
     warning_fr: "Problème signalé : Tous les membres du personnel qui sont dans la zone de lavage doivent porter tout leur EPI."
-  - question: [q36_action]
+  - question: [B, B_G_3, Q_36, q36_action]
     flag_name: "PPE use in wash area?"
     flag_name_por: "EPI usado na área de lavagem?"
     flag_name_fr: "EPI utiliser dans la zone de lavage?"
     warning: "Notify operations coordinator of triple-rinse violations."
     warning_por: "Notificar o coordenador de operações sobre as violações da triplece lavagem."
     warning_fr: "Notifier le coordonnateur des opérations des violations de la procédure de triple rinçage."
-  - question: [q37_action]
+  - question: [B, B_G_4, Q_37, q37_action]
     flag_name: "Water available?"
     flag_name_por: "Água disponível?"
     flag_name_fr: "L'eau disponible?"
     warning: "Problem reported: Insufficient water for triple rinse."
     warning_por: "Problema relatado: água insuficiente para a lavagem progressiva."
     warning_fr: "Problème signalé : Il n’y a pas suffisamment d’eau pour le triple rinçage."
-  - question: [q38_action]
+  - question: [B, B_G_4, Q_38, q38_action]
     flag_name: "Correct rinse method?"
     flag_name_por: "Método de lavagem correto?"
     flag_name_fr: "Méthode de rinçage correcte?"
     warning: "Problem reported: Triple-rinse violations."
     warning_por: "Problema relatado: violações da lavagem progressiva."
     warning_fr: "Problème signalé : Violations de la procédure de triple rinçage."
-  - question: [q39_action]
+  - question: [B, B_G_4, Q_39, q39_action]
     flag_name: "Depressurized pumps?"
     flag_name_por: "Bombas despressurizadas?"
     flag_name_fr: "Pompes dépressurisés?"
     warning: "Problem reported: Pumps not properly rinsed"
     warning_por: "Problema relatado: Bombas não adequadamente lavadas"
     warning_fr: "Problème signalé : Les pompes ne sont pas rincées de manière appropriée"
-  - question: [q40_action]
+  - question: [B, B_G_5, Q_40, q40_action]
     flag_name: "Outside of pumps washed?"
     flag_name_por: "Bombas lavadas do lado de fora?"
     flag_name_fr: "En dehors de pompes lave?"
     warning: "Problem reported: Pumps not properly washed"
     warning_por: "Problema relatado: Bombas não lavadas corretamente  "
     warning_fr: "Problème signalé : Les pompes ne sont pas lavées de manière appropriée"
-  - question: [q41_action]
+  - question: [B, B_G_5, Q_41, q41_action]
     flag_name: "Waste water distributed?"
     flag_name_por: "Águas residuais distribuídas?"
     flag_name_fr: "Les eaux usées distribué?"
     warning: "Problem reported: Waste water from collection drum not distributed into spray pumps."
     warning_por: "Problema relatado: Desperdício de água do tambor de recolha não distribuídos nas bombas de pulverização."
     warning_fr: "Problème signalé : Les eaux usées provenant du fût de collecte ne sont pas distribuées dans les pompes de pulvérisation."
-  - question: [q42_action]
+  - question: [B, B_G_5, Q_42, q42_action]
     flag_name: "PPE rinsed?"
     flag_name_por: "EPI lavado?"
     flag_name_fr: "PPE rincé?"
     warning: "Problem reported: PPE not properly washed"
     warning_por: "Problema relatado: EPI não devidamente lavados"
     warning_fr: "Problème signalé : L’EPI n’est pas lavé de manière appropriée"
-  - question: [q43_action]
+  - question: [B, B_G_6, Q_43, q43_action]
     flag_name: "Wash hands and face?"
     flag_name_por: "Lavar as mãos e rosto?"
     flag_name_fr: "Se laver les mains et le visage?"
     warning: "Problem reported: Operators must wash hands and face with soap and water after removing PPE."
     warning_por: "Problema relatado: Os roceadores devem lavar as mãos e o rosto com água e sabão depois da remoção do EPI."
     warning_fr: "Problème signalé : Les opérateurs de pulvérisation doivent se laver le visage et les mains avec de l’eau et du savon, après avoir retiré leur équipement de protection individuelle (EPI)."
-  - question: [q44_action]
+  - question: [B, B_G_6, Q_44, q44_action]
     flag_name: "MSP used for waste water"
     flag_name_por: "Tanque de Retencao Movel  utilizado para águas residuais"
     flag_name_fr: "Puisard utilisé pour eaux usées"
     warning: "Problem reported:  Improper disposal of wastewater."
     warning_por: "Problema reportado: O descarte inadequado de águas residuais."
     warning_fr: "Problème signalé :  Élimination inappropriée des eaux usées."
-  - question: [q45_action]
+  - question: [B, B_G_6, Q_45, q45_action]
     flag_name: "Water draining?"
     flag_name_por: "Drenagem de água?"
     flag_name_fr: "Vidange de l'eau?"
     warning: "Problem reported: Water not draining properly into mobile soak pit."
     warning_por: "Problema reportado: A água não drenada corretamente para o tanque de retencao movel ."
     warning_fr: "Problème signalé : L’eau ne s’écoule pas de manière appropriée dans le puisard mobile."
-  - question: [q46_action]
+  - question: [B, B_G_7, Q_46, q46_action]
     flag_name: "Soak pit draining?"
     flag_name_por: "Denagem do tanque de retencao?"
     flag_name_fr: "Puisard effectue un écoulement approprié ?"
     warning: "Problem reported: Mobile soak pit not draining properly."
     warning_por: "Problema relatado: Tanque de retencao móvel  não drenado adequadamente."
     warning_fr: "Problème signalé : Le puisard mobile n’effectue pas un écoulement approprié."
-  - question: [q47_action]
+  - question: [B, B_G_7, Q_47, q47_action]
     flag_name: "Rinse drums covered?"
     flag_name_por: "Cobertos os tambores da Lavagem?"
     flag_name_fr: "Fûts de rinçage couverts ?"
     warning: "Problem reported: Rinse and/or waste drums not covered overnight."
     warning_por: "Problema relatado: Lavagem e / ou tambores de resíduos não cobertos durante a noite."
     warning_fr: "Problème signalé : Les fûts de rinçage et/ou de déchets ne sont pas couverts pendant la nuit."
-  - question: [q48_action]
+  - question: [B, B_G_7, Q_48, q48_action]
     flag_name: "Site restored?"
     flag_name_por: "Local restaurado?"
     flag_name_fr: "Site restauré?"
     warning: "Problem reported: MSP not properly restored."
     warning_por: "Problema relatado: Tanque de Retencao Movel não devidamente restaurado."
     warning_fr: "Problème signalé : Le puisard mobile n’est pas correctement restauré."
-  - question: [q48_2_action]
+  - question: [B, B_G_7, Q_48, q48_2_action]
     flag_name: "Site secured?"
     flag_name_por: "Local assegurado?"
     flag_name_fr: "Site securisé"
     warning: "Problem reported: MSP installation site not secured at the end of the day."
     warning_por: "Problema relatado: local de instalação Tanque de Retencao Movel não assegurado no final do dia."
     warning_fr: "Problème signalé : Le site d’installation du puisard mobile n’est pas sécurisé à la fin de la journée."
-  - question: [q49_action]
+  - question: [B, B_G_8, Q_49, q49_action]
     flag_name: ""
     flag_name_fr: ""
     warning: "Problem reported: MSP has to be secured at the end of day."
     warning_por: "Problema relatado: Tanque de Retencao Movel  tem de ser assegurada no final do dia."
     warning_fr: "Problème signalé : Le puisard mobile doit être sécurisé à la fin de la journée."
-  - question: [q50_action]
+  - question: [B, B_G_8, Q_50, q50_action]
     flag_name: "Overalls washed?"
     flag_name_por: "Uniformes lavados?"
     flag_name_fr: "Salopette lavées?"
     warning: "Problem reported: Porters not transporting overalls to be washed and dried"
     warning_por: "Problema relatado: Os portadores não transportam os uniformes para serem lavados e secos"
     warning_fr: "Problème signalé : Les porteurs ne transportent pas les salopettes à laver et à sécher"
-  - question: [q51_action]
+  - question: [B, B_G_8, Q_51, q51_action]
     flag_name: "Clean overalls available?"
     flag_name_por: "Uniformes limpos disponíveis?"
     flag_name_fr: "Salopette netoyées disponible?"
     warning: "Problem reported: Porters not transporting clean overalls to field teams"
     warning_por: "Problema relatado: Os portadores não transportam os uniformes  limpos para equipas"
     warning_fr: "Problème signalé : Les porteurs ne transportent pas les salopettes propres aux équipes sur le terrain"
-  - question: [q52_action]
+  - question: [B, B_G_9, Q_52, q52_action]
     flag_name: "Daily reports?"
     flag_name_por: "Relatórios diários?"
     flag_name_fr: "Des rapports quotidiens?"
     warning: "Problem reported: Spray operators must complete daily report forms."
     warning_por: "Problema relatado: Os roceadors devem preencher formulários de relatório diários."
     warning_fr: "Problème signalé : Les opérateurs de pulvérisation doivent remplir chaque jour leurs formulaires de rapport."
-  - question: [q53_action]
+  - question: [B, B_G_9, Q_53, q53_action]
     flag_name: "Supervisors check forms?"
     flag_name_por: "Formulários de verificação dos Supervisores?"
     flag_name_fr: "Superviseurs formules de chèque?"
     warning: "Problem reported: Supervisors must check spray forms."
     warning_por: "Problema relatado: Os supervisores devem verificar os formulários de pulverização."
     warning_fr: "Problème signalé : Les superviseurs de pulvérisation doivent vérifier les formulaires de pulvérisation."
-  - question: [q54_action]
+  - question: [B, B_G_9, Q_54, q54_action]
     flag_name: "Error Eliminator use?"
     flag_name_por: "Uso do Eliminador de Erro ?"
     flag_name_fr: "Erreur utilisation Eliminator?"
     warning: "Problem reported: Team Leaders not using Error Eliminator."
     warning_por: "Problema relatado: Os chefes de equipa não usam o Eliminador de Erro."
     warning_fr: "Problème signalé : Les chefs d’équipe n’utilisent pas l’Éliminateur d’erreurs."
-  - question: [q54_2_action]
+  - question: [B, B_G_9, Q_54, q54_2_action]
     flag_name: "EE used correctly?"
     flag_name_por: "EE usado corretamente?"
     flag_name_fr: "EE utilisé correctement?"
     warning: "Problem reported: Team Leaders have difficulty using the Error Eliminator correctly."
     warning_por: "Problema relatado: Os chfes de equipa têm dificuldade em usar o eliminador de erro corretamente."
     warning_fr: "Problème signalé : Les chefs d’équipe ont des difficultés à utiliser correctement l’Éliminateur d’erreurs."
-  - question: [q55]
+  - question: [B, B_G_10, Q_55, q55]
     flag_name: "Any Accidents?"
     flag_name_por: "Algum acidente?"
     flag_name_fr: "Des accidents?"
@@ -1447,7 +1447,7 @@ http://openrosa.org/formdesigner/89F60CF0-C6A7-4AD8-A48E-AA0F7A7A9B4D:
     warning: "Problem reported: An incident has been reported and an Incident Report Form is needed immediately. Follow up with Sector Manager to be sure accident report form is filed and sent to TC and ECM."
     warning_por: "Problema reportado: Um incidente foi reportado e o formulário do Relatório de Incidente é necessário imediatamente. Acompanhado Gestor de Supervisaopara ter certeza que o formulário de relatório do acidente é arquivado e enviado para TPM  e ECM."
     warning_fr: "Problème signalé : Un incident a été signalé et un formulaire de rapport d’incident est immédiatement requis. Il est nécessaire d’effectuer un travail de suivi auprès du responsable de secteur pour s’assurer qu’un formulaire de rapport d’incident a été déposé et envoyé à TC et à ECM."
-  - question: [q56_action]
+  - question: [B, B_G_10, Q_56, q56_action]
     flag_name: "SOs irritation?"
     flag_name_por: "Irritação dos roceadores?"
     flag_name_fr: "Irritation d'operateurs?"

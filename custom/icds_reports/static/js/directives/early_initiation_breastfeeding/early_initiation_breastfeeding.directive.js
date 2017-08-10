@@ -54,7 +54,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
-        var percent = row ? d3.format('.2%')(row.birth / row.in_month) : 'N/A';
+        var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div>' +
@@ -151,9 +151,13 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                         return d3.format(",")(day['y']);
                     };
 
+                    var total = findValue(vm.chartData[1].values, d.value);
+                    var value = findValue(vm.chartData[0].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total Number of Children born in the given month:<strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total Number of Children who were put to the breast within one hour of birth:  <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total Number of Children born in the given month:<strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
+                    tooltip_content += "<p>Total Number of Children who were put to the breast within one hour of birth:  <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });

@@ -82,7 +82,6 @@ def _get_export_instance(cls, key):
         endkey=key + [{}],
         include_docs=True,
         reduce=False,
-        limit=100,
     ).all()
     return [cls.wrap(result['doc']) for result in results]
 

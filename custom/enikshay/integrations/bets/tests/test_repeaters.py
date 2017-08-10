@@ -631,7 +631,10 @@ class UserRepeaterTest(TestCase):
             "davos.shipwright@stannis.gov",
             "123",
             location=location,
+            commit=False,
         )
+        user.user_data['user_level'] = 'real'
+        user.save()
         self.addCleanup(user.delete)
         return user
 
@@ -720,7 +723,13 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'location_type': 'tu',
                 'location_type_code': 'tu',
                 'longitude': None,
-                'metadata': {},
+                'metadata': {
+                    'is_test': None,
+                    'tests_available': None,
+                    'private_sector_org_id': None,
+                    'nikshay_code': None,
+                    'enikshay_enabled': None,
+                },
                 'name': location.name,
                 'parent_location_id': self.locations['DTO'].location_id,
                 'parent_site_code': self.locations['DTO'].site_code,

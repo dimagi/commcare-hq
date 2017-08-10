@@ -94,7 +94,7 @@ class AdherenceReport(EnikshayReport):
         rows = []
         for row in data:
             rows.append([
-                row.get('external_id', ''),
+                row.get('person_id_property', ''),
                 row.get('person_name', ''),
                 row.get('husband_father_name', ''),
                 row.get('sex', ''),
@@ -112,13 +112,13 @@ class AdherenceReport(EnikshayReport):
                 row.get('person_owner_id', ''),
                 row.get('treatment_supervisor_name', ''),
                 row.get('treatment_supervisor_phone', ''),
-                row.get('episode_fo', ''),
+                row.get('fo', ''),
                 row.get('date_of_notification', ''),
                 row.get('treatment_initiation_date', ''),
                 row.get('adherence_tracking_mechanism', ''),
                 row.get('date_of_99d_registration', ''),
                 row.get('date_of_merm_registration', ''),
-                row.get('adherence_registered', ''),
+                row.get('{}_adherence_score'.format(period), ''),
                 row.get('{}_adherence_score_99DOTS'.format(period), ''),
                 row.get('{}_adherence_score_treatment_supervisor'.format(period), ''),
                 row.get('{}_adherence_score_field_officer'.format(period), ''),
@@ -126,8 +126,8 @@ class AdherenceReport(EnikshayReport):
                 row.get('{}_adherence_score_provider'.format(period), ''),
                 row.get('{}_adherence_score_other'.format(period), ''),
                 row.get('{}_adherence_score_MERM'.format(period), ''),
-                row.get('unknown_doses', ''),
-                row.get('missed_doses', ''),
+                row.get('{}_unknown_score'.format(period), ''),
+                row.get('{}_missed_score'.format(period), ''),
                 row.get('current_interim_outcome', ''),
                 row.get('visit_date', '')
             ])

@@ -272,8 +272,8 @@ def _validate_indices(case_db, cases):
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version
                             _soft_assert(
-                                commcare_version < LooseVersion("2.35"),
-                                "Invalid Case Index in CC version >= 2.35", {
+                                commcare_version < LooseVersion("2.38"),
+                                "Invalid Case Index in CC version >= 2.38", {
                                     'domain': case_db.domain,
                                     'xform_id': xform.form_id,
                                     'missing_case_id': index.referenced_id,

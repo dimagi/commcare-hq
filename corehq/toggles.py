@@ -413,7 +413,7 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH,
+    TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
@@ -1242,7 +1242,8 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
 
 PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
-    'Expose phone apk heartbeat URL and add it profile.xml',
+    "Ability to configure a mobile feature to prompt "
+    "users to update to latest CommCare app and apk",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
