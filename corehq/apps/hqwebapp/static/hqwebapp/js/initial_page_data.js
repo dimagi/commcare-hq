@@ -5,38 +5,45 @@
  *  define data, then in JavaScript use this module's get function to
  *  access it.
  */
-var COMMCAREHQ_INITIAL_PAGE_DATA = {};
 hqDefine('hqwebapp/js/initial_page_data.js', function () {
+    var selector = ".initial-page-data",
+        data = {};
+
     /*
      * Fetch a named value.
      */
     var get = function(name) {
-        if (COMMCAREHQ_INITIAL_PAGE_DATA[name] === undefined) {
-            gather();
+        if (data[name] === undefined) {
+            data = gather(selector, data);
         }
-        return COMMCAREHQ_INITIAL_PAGE_DATA[name];
+        return data[name];
     };
 
     /*
      *  Find any unregistered data. Error on any duplicates.
      */
-    var gather = function() {
-        $(".initial-page-data").each(function() {
+    var gather = function(selector, existing) {
+        existing = existing || {};
+        $(selector).each(function() {
             _.each($(this).children(), function(div) {
                 var $div = $(div),
                     data = $div.data();
-                if (COMMCAREHQ_INITIAL_PAGE_DATA[data.name] !== undefined) {
+                if (existing[data.name] !== undefined) {
                     throw new Error("Duplicate key in initial page data: " + data.name);
                 }
-                COMMCAREHQ_INITIAL_PAGE_DATA[data.name] = data.value;
+                existing[data.name] = data.value;
                 $div.remove();
             });
         });
+        return existing;
     };
 
-    $(gather);
+    $(function() {
+        data = gather(selector, data);
+    });
 
     return {
+        gather: gather,
         get: get,
     };
 });

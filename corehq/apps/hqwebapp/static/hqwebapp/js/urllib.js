@@ -1,5 +1,7 @@
-var COMMCAREHQ_URLS = {};
 hqDefine('hqwebapp/js/urllib.js', function () {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js"),
+        urls = {};
+
     // http://stackoverflow.com/a/21903119/240553
     var getUrlParameter = function (param) {
         return getUrlParameterFromString(param, window.location.search);
@@ -18,40 +20,27 @@ hqDefine('hqwebapp/js/urllib.js', function () {
             }
         }
     };
-    /*var registerUrl = function(name, url) {
-        COMMCAREHQ_URLS[name] = url;
-    };*/
     var reverse = function (name) {
         var args = arguments;
         var index = 1;
-        if (!COMMCAREHQ_URLS[name]) {
-            gather();
-            if (!COMMCAREHQ_URLS[name]) {
+        if (!urls[name]) {
+            urls = initial_page_data.gather(".commcarehq-urls", urls);
+            if (!urls[name]) {
                 throw new Error("URL '" + name + "' not found in registry");
             }
         }
-        return COMMCAREHQ_URLS[name].replace(/---/g, function () {
+        return urls[name].replace(/---/g, function () {
             return args[index++];
         });
     };
 
-    var gather = function() {
-        $(".commcarehq-urls").each(function() {
-            _.each($(this).children(), function(div) {
-                var $div = $(div),
-                    data = $div.data();
-                COMMCAREHQ_URLS[data.name] = data.value;
-                $div.remove();
-            });
-        });
-    };
-
-    $(gather);
+    $(function() {
+        urls = initial_page_data.gather(".commcarehq-urls", urls);
+    });
 
     return {
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
-        //registerUrl: registerUrl,
         reverse: reverse,
     };
 });
