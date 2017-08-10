@@ -46,6 +46,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def get_all_rows(self):
         repeater_id = self.request.GET.get('repeater', None)
         state = self.request.GET.get('record_state', None)
+        if self.is_rendered_as_email:
+            return []
         return [self._make_row(record) for record in
                 iter_repeat_records_by_domain(self.domain, repeater_id=repeater_id, state=state)]
 
@@ -58,10 +60,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Attempts')),
+            DataTablesColumn(_('Payload')),
         ]
-        if not self.is_rendered_as_email:
-            columns.append(DataTablesColumn(_('Payload')))
-
         return DataTablesHeader(*columns)
 
     def _make_row(self, record):
@@ -70,6 +70,11 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
                 date=self._format_date(attempt.datetime),
                 message=attempt.message))
             for attempt in record.attempts]
+        try:
+            payload = record.get_payload()
+        except Exception as error:
+            payload = u"Error: {}".format(error)
+
         row = [
             record._id,
             self._get_state(record)[1],
@@ -77,13 +82,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             ",<br />".join(attempt_messages),
+            payload,
         ]
-        if not self.is_rendered_as_email:
-            try:
-                payload = record.get_payload()
-            except Exception as error:
-                payload = u"Error: {}".format(error)
-            row.append(payload)
         return row
 
     def _get_person_id_link(self, record):
