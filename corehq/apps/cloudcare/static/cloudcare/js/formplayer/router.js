@@ -154,6 +154,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
+    FormplayerFrontend.on("menu:sort", function (sortIndex) {
+        var urlObject = Util.currentUrlToObject();
+        urlObject.setSort(sortIndex);
+        Util.setUrlToObject(urlObject);
+        API.listMenus();
+    });
+
     FormplayerFrontend.on("menu:search", function (search) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setSearch(search);

@@ -27,7 +27,7 @@
               <tr>
                 <% _.each(headers, function(header, index) { %>
                   <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
-                    <th class="module-caselist-header"> <%= header %></th>
+                    <th class="module-caselist-header" data-id="<%= index %>"> <%= header %></th>
                   <% } %>
                 <% }); %>
               </tr>

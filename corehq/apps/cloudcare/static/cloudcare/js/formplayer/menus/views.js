@@ -276,12 +276,14 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             actionButton: '#double-management',
             searchButton: '#case-list-search-button',
             paginators: '.page-link',
+            columnHeader: '.module-caselist-header',
         },
 
         events: {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
+            'click @ui.columnHeader': 'columnSortAction',
             'keypress': 'keyAction',
         },
 
@@ -305,6 +307,11 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
+        },
+
+        columnSortAction: function (e) {
+            var columnSelection = $(e.currentTarget).data("id");
+            FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
         templateHelpers: function () {

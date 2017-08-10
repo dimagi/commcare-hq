@@ -9,7 +9,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.API = {
 
         queryFormplayer: function (params, route) {
-
             var user = FormplayerFrontend.request('currentUser'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
@@ -64,6 +63,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
+                "sortIndex": params.sortIndex,
             });
             options.url = formplayerUrl + '/' + route;
 

@@ -139,6 +139,7 @@ Util.CloudcareUrl = function (options) {
     this.singleApp = options.singleApp;
     this.previewCommand = options.previewCommand;
     this.installReference = options.installReference;
+    this.sortIndex = options.sortIndex
 
     this.setSteps = function (steps) {
         this.steps = steps;
@@ -158,10 +159,16 @@ Util.CloudcareUrl = function (options) {
         this.page = page;
     };
 
+    this.setSort = function (sortIndex) {
+        this.sortIndex = sortIndex;
+    };
+
+
     this.setSearch = function (search) {
         this.search = search;
         //clear out pagination on search
         this.page = null;
+        this.sortIndex = null;
     };
 
     this.setSessionId = function (sessionId) {
@@ -169,6 +176,7 @@ Util.CloudcareUrl = function (options) {
         this.steps = null;
         this.page = null;
         this.search = null;
+        this.sortIndex = null;
     };
 
     this.setQuery = function (queryDict) {
@@ -179,6 +187,7 @@ Util.CloudcareUrl = function (options) {
         this.sessionId = null;
         this.steps = null;
         this.page = null;
+        this.sortIndex = null;
         this.search = null;
         this.queryDict = null;
         this.previewCommand = null;
@@ -187,6 +196,7 @@ Util.CloudcareUrl = function (options) {
     this.onSubmit = function () {
         this.steps = null;
         this.page = null;
+        this.sortIndex = null;
         this.search = null;
         this.queryDict = null;
         this.previewCommand = null;
@@ -204,6 +214,7 @@ Util.CloudcareUrl = function (options) {
         this.page = null;
         this.search = null;
         this.queryDict = null;
+        this.sortIndex = null;
     };
 };
 
@@ -219,6 +230,7 @@ Util.CloudcareUrl.prototype.toJson = function () {
         singleApp: self.singleApp,
         previewCommand: self.previewCommand,
         installReference: self.installReference,
+        sortIndex: self.sortIndex
     };
     return JSON.stringify(dict);
 };
@@ -235,6 +247,7 @@ Util.CloudcareUrl.fromJson = function (json) {
         'singleApp': data.singleApp,
         'previewCommand': data.previewCommand,
         'installReference': data.installReference,
+        'sortIndex': data.sortIndex
     };
     return new Util.CloudcareUrl(options);
 };
