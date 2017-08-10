@@ -43,14 +43,13 @@ hqDefine('app_manager/js/case_config_utils.js', function () {
             }
             return options;
         },
-        refreshQuestions: function(questions_observable, url, moduleId, formId, event){
+        refreshQuestions: function(questions_observable, url, formUniqueId, event){
             var $el = $(event.currentTarget);
             $el.find('i').addClass('fa-spin');
             $.get({
                 url: url,
                 data: {
-                    module_id: moduleId,
-                    form_id: formId,
+                    form_unique_id: formUniqueId,
                 },
                 success: function(data) {
                     $el.addClass('btn-success').removeClass('btn-danger');

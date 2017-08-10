@@ -4,7 +4,7 @@
 
 {# For APP BUILDER PROTOTYPE use only #}
 
-<a href="{% url "view_module" domain app.id module.id %}"
+<a href="{% url "view_module" domain app.id module.unique_id %}"
    class="appnav-title{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
     <i class="drag_handle appnav-drag-icon js-appnav-drag-module"></i>
     {% if module.module_type == 'advanced' %}
@@ -18,7 +18,7 @@
     {% else %}
       <i class="fa fa-folder-open appnav-primary-icon"></i>
     {% endif %}
-    <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
+    <span {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}>
         {{ module.name|html_trans_prefix:langs }}
     </span>
 </a>

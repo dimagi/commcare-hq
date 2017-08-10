@@ -128,8 +128,8 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
         };
 
-        self.refreshQuestions = function(url, moduleId, formId, event){
-            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
+        self.refreshQuestions = function(url, formUniqueId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, formUniqueId, event);
         };
         self.getAnswers = function (condition) {
             return caseConfigUtils.getAnswers(self.questions(), condition);

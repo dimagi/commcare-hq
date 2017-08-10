@@ -110,7 +110,7 @@
                     <li class="edit-module-li {% ifequal module.id selected_module.id %}{% if not form %}
                         active{% endif %}{% endifequal %}"
                         data-index="{{ module.id }}">
-                        <a href="{% url "view_module" domain app.id module.id %}"
+                        <a href="{% url "view_module" domain app.id module.unique_id %}"
                             >
                             <i class="drag_handle"></i>
                             <i
@@ -147,7 +147,7 @@
                                            data-category="App Builder"
                                            data-action="View Form"
                                            data-label="Sidebar"
-                                           href="{% url "view_form" domain app.id module.id form.id %}">
+                                           href="{% url "view_form" domain app.id form.unique_id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
                                             <i
@@ -174,7 +174,7 @@
                                                    data-category="App Builder"
                                                    data-action="Open Form"
                                                    data-label="Edit Pen"
-                                                   href="{% url "form_source" domain app.id module.id form.id %}">
+                                                   href="{% url "form_source" domain app.id form.unique_id %}">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </div>
@@ -183,7 +183,7 @@
                                 {% endfor %}
                             {% endwith %}
                             <li class="sort-disabled">
-                                <form id="form-to-create-new-form-for-module-{{ module.id }}" action="{% url "new_form" domain app.id module.id %}"
+                                <form id="form-to-create-new-form-for-module-{{ module.unique_id }}" action="{% url "new_form" domain app.id module.unique_id %}"
                                       method="post" class="hide">{% csrf_token %}
                                     <input type="hidden" name="form_type">
                                 </form>
