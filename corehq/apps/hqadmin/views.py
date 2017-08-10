@@ -1165,7 +1165,7 @@ class SessionDetialsView(View):
         if not data or not isinstance(data, dict):
             return HttpResponseBadRequest()
 
-        session_id = data.get('session_id', None)
+        session_id = data.get('sessionId', None)
         if not session_id:
             return HttpResponseBadRequest()
 
