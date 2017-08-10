@@ -52,7 +52,9 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
 class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
-        if hasattr(request, 'domain') and getattr(response, '_remember_domain', True):
+        if hasattr(request, 'domain') \
+                and hasattr(request, 'session') \
+                and getattr(response, '_remember_domain', True):
             self.remember_domain_visit(request, response)
         return response
 
