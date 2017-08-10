@@ -614,7 +614,7 @@ class LatestAppInfo(object):
         return app
 
     def clear_caches(self):
-        self.get_info.clear(self)
+        self.get_latest_app_version.clear(self)
 
     def get_latest_apk_version(self):
         from corehq.apps.builds.utils import get_default_build_spec
@@ -627,6 +627,7 @@ class LatestAppInfo(object):
             elif self.app.global_app_config.apk_prompt == "forced":
                 return {"value": value, "force": True}
 
+    @quickcache(vary_on=['self.app_id'])
     def get_latest_app_version(self):
         if self.app.global_app_config.app_prompt == "off":
             return {}
@@ -638,7 +639,6 @@ class LatestAppInfo(object):
             elif self.app.global_app_config.app_prompt == "forced":
                 return {"value": self.app.version, "force": True}
 
-    @quickcache(vary_on=['self.app_id'])
     def get_info(self):
         return {
             "latest_apk_version": self.get_latest_apk_version(),
