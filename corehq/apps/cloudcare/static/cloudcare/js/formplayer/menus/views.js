@@ -310,7 +310,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
 
         columnSortAction: function (e) {
-            var columnSelection = $(e.currentTarget).data("id");
+            var columnSelection = $(e.currentTarget).data("id") + 1;
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 

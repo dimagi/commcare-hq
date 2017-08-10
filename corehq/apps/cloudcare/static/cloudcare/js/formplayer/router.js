@@ -154,9 +154,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:sort", function (sortIndex) {
+    FormplayerFrontend.on("menu:sort", function (newSortIndex) {
         var urlObject = Util.currentUrlToObject();
-        urlObject.setSort(sortIndex);
+        var currentSortIndex = urlObject.sortIndex;
+        // If the column index is the same as already loaded, reverse the sort
+        if (newSortIndex === Math.abs(currentSortIndex)) {
+            newSortIndex = -1 * currentSortIndex;
+        }
+        urlObject.setSort(newSortIndex);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
