@@ -22,8 +22,8 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
     def get_recipient_details(self, sms):
         details = {
-            'case_type': None,
-            'case_name': None,
+            'type': None,
+            'name': None,
             'location_id': None,
         }
 
@@ -33,8 +33,8 @@ class BaseICDSSMSExportCommand(BaseCommand):
 
             recipient = sms.recipient
             if is_commcarecase(recipient):
-                details['case_name'] = recipient.name
-                details['case_type'] = recipient.type
+                details['name'] = recipient.name
+                details['type'] = 'case: %s' % recipient.type
 
                 if recipient.type == 'commcare-user':
                     user = CommCareUser.get_by_user_id(recipient.owner_id)
@@ -42,6 +42,10 @@ class BaseICDSSMSExportCommand(BaseCommand):
                         details['location_id'] = user.location_id
                 else:
                     details['location_id'] = recipient.owner_id
+            elif isinstance(recipient, CommCareUser):
+                details['name'] = recipient.username
+                details['type'] = 'mobile worker'
+                details['location_id'] = recipient.location_id
 
             self.recipient_details[sms.couch_recipient] = details
 
@@ -107,9 +111,9 @@ class BaseICDSSMSExportCommand(BaseCommand):
                 sms.date.strftime('%Y-%m-%d %H:%M:%S'),
                 indicator_slug,
                 sms.phone_number,
-                recipient_details['case_type'],
+                recipient_details['type'],
                 sms.couch_recipient,
-                recipient_details['case_name'],
+                recipient_details['name'],
                 location_details['awc'].get('name'),
                 location_details['supervisor'].get('name'),
                 location_details['district'].get('name'),
