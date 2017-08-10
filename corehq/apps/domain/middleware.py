@@ -76,5 +76,8 @@ class DomainMigrationMiddleware(MiddlewareMixin):
                     request=request,
                     template='domain/data_migration_in_progress.html',
                     status=503,
+                    context={
+                        'domain': request.domain
+                    }
                 )
         return None
