@@ -343,14 +343,13 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
         var self = this;
     
         self.name = ko.observable(data.name);
-        self.product_type = ko.observable(data.product_type);
         self.product_id = ko.observable(data.product_id);
         self.rate_id = ko.observable(data.rate_id);
         self.monthly_fee = ko.observable(data.monthly_fee);
     
         self.asJSON = function () {
             var result = {};
-            _.each(['name', 'product_type', 'product_id', 'rate_id', 'monthly_fee'], function (field) {
+            _.each(['name', 'product_id', 'rate_id', 'monthly_fee'], function (field) {
                 result[field] = self[field]();
             });
             return result;
