@@ -812,6 +812,10 @@ class InviteWebUserView(BaseManageWebUserView):
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Add Web User to Project")
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def invite_web_user_form(self):

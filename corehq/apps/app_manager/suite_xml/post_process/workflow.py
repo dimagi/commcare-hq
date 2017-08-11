@@ -359,13 +359,17 @@ class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_create
     source_session_var = None
 
     def add_children(self, children):
-        for child in children:
-            if self.case_created:
+        children = list(children)
+        if self.case_created:
+            for child in children:
                 self.case_created.add_child(child)
+        for child in children:
             if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
                 # add all children to the 'case not created' block unless it's the datum of the
-                # case that was supposed to be created by the form
+                # case that was supposed to be created by the form, or a later datum
                 self.case_not_created.add_child(child)
+            else:
+                break
 
     @property
     def ids_on_stack(self):

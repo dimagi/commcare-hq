@@ -8,7 +8,7 @@ from corehq.apps.data_interfaces.models import (
     AUTO_UPDATE_XMLNS,
 )
 from corehq.util.decorators import serial_task
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from django.conf import settings
@@ -99,6 +99,14 @@ def run_rules_for_case(case, rules, now):
     return aggregated_result
 
 
+def check_data_migration_in_progress(domain, last_migration_check_time):
+    utcnow = datetime.utcnow()
+    if last_migration_check_time is None or (utcnow - last_migration_check_time) > timedelta(minutes=1):
+        return DATA_MIGRATION.enabled(domain), utcnow
+
+    return False, last_migration_check_time
+
+
 @serial_task(
     '{domain}',
     timeout=36 * 60 * 60,
@@ -108,6 +116,7 @@ def run_rules_for_case(case, rules, now):
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
+    last_migration_check_time = None
     run_record = DomainCaseRuleRun.objects.create(
         domain=domain,
         started_on=start_run,
@@ -125,11 +134,15 @@ def run_case_update_rules_for_domain(domain, now=None):
 
         for case_ids in case_id_chunks:
             for case in CaseAccessors(domain).iter_cases(case_ids):
+                migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
+                    last_migration_check_time)
+
                 time_elapsed = datetime.utcnow() - start_run
                 max_updates = 50000 if domain == 'enikshay' else settings.MAX_RULE_UPDATES_IN_ONE_RUN
                 if (
                     time_elapsed.seconds > HALT_AFTER or
-                    case_update_result.total_updates >= max_updates
+                    case_update_result.total_updates >= max_updates or
+                    migration_in_progress
                 ):
                     run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
                     notify_error("Halting rule run for domain %s." % domain)

@@ -354,18 +354,22 @@ class ENikshay2BMigrator(object):
         }
 
         treatment_status = episode.get_case_property('treatment_status')
+        treatment_initiated = episode.get_case_property('treatment_initiated')
+        diagnosing_facility_id = episode.get_case_property('diagnosing_facility_id')
+        treatment_initiating_facility_id = episode.get_case_property('treatment_initiating_facility_id')
         if treatment_status == 'second_line_treatment':
             props['treatment_status'] = 'initiated_second_line_treatment'
-        elif treatment_status == 'yes_phi':
+        # skipping patients who don't have a diagnosing and treatment IDs (so we don't set the wrong status)
+        elif treatment_initiated == 'yes_phi' and diagnosing_facility_id and treatment_initiating_facility_id \
+                and diagnosing_facility_id != treatment_initiating_facility_id:
+            props['treatment_status'] = 'initiated_outside_facility'
+        # skipping patients who don't have a diagnosing and treatment IDs (so we don't set the wrong status)
+        elif treatment_initiated == 'yes_phi' and diagnosing_facility_id and treatment_initiating_facility_id:
             props['treatment_status'] = 'initiated_first_line_treatment'
-        elif treatment_status == 'yes_private':
+        elif treatment_initiated == 'yes_private':
             props['treatment_status'] = 'initiated_outside_rntcp'
 
-        if treatment_status == 'yes_phi':
-            props['treatment_initiated'] = 'yes_phi'
-        elif treatment_status == 'yes_private':
-            props['treatment_initiated'] = 'yes_private'
-        elif treatment_status:
+        if treatment_status and treatment_status != 'yes_phi' and treatment_status != 'yes_private':
             props['treatment_initiated'] = 'no'
 
         if not episode.get_case_property('date_of_diagnosis'):
