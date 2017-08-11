@@ -3,7 +3,7 @@
 hqDefine("app_manager/js/app_view.js", function() {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            reverse = hqImport("hqwebapp/js/urllib.js").reverse;
+            reverse = hqImport("hqwebapp/js/initial_page_data.js").reverse;
 
         // Settings
         var $settingsContainer = $('#commcare-settings');
@@ -48,7 +48,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                 if (!self.load_state() || self.load_state() === 'error') {
                     self.load_state('loading');
                     $.ajax({
-                        url: hqImport("hqwebapp/js/urllib.js").reverse("app_multimedia_ajax"),
+                        url: hqImport("hqwebapp/js/initial_page_data.js").reverse("app_multimedia_ajax"),
                         success: function(content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
@@ -96,7 +96,7 @@ hqDefine("app_manager/js/app_view.js", function() {
 
                 // Load the content
                 $.ajax({
-                    url: hqImport("hqwebapp/js/urllib.js").reverse('release_manager_ajax') + "?limit=" + initial_page_data("fetch_limit"),
+                    url: hqImport("hqwebapp/js/initial_page_data.js").reverse('release_manager_ajax') + "?limit=" + initial_page_data("fetch_limit"),
                     success: function(content) {
                         state = "loaded";
                         showSpinner = false;

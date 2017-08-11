@@ -20,7 +20,7 @@ hqDefine('app_manager/js/import_app.js', function () {
         });
  
         var source = hqImport('hqwebapp/js/initial_page_data.js').get('export_json');
-        var post_url = hqImport('hqwebapp/js/urllib.js').reverse('import_app');
+        var post_url = hqImport('hqwebapp/js/initial_page_data.js').reverse('import_app');
         $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
     });
 });

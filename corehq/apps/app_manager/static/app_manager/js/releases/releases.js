@@ -266,7 +266,7 @@ hqDefine('app_manager/js/releases/releases.js', function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
-            return hqImport("hqwebapp/js/urllib.js").reverse.apply(null, arguments);
+            return hqImport("hqwebapp/js/initial_page_data.js").reverse.apply(null, arguments);
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;

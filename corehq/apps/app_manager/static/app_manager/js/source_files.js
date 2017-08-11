@@ -34,7 +34,7 @@ hqDefine('app_manager/js/source_files.js', function() {
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version].build_id);
+            window.location = hqImport('hqwebapp/js/initial_page_data.js').reverse('diff', version_map[version].build_id);
         });
     });
 });

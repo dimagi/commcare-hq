@@ -36,7 +36,7 @@ function MapOrSectorController() {
 
 MapOrSectorController.$inject = [];
 
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
 window.angular.module('icdsApp').directive('mapOrSectorView', function() {
     return {

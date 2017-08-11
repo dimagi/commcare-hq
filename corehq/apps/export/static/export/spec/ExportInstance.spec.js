@@ -5,7 +5,7 @@ describe('ExportInstance model', function() {
     var constants = hqImport('export/js/const.js');
     var viewModels = hqImport('export/js/models.js');
     var basicFormExport, savedFormExport;
-    hqImport('hqwebapp/js/urllib.js').registerUrl(
+    hqImport('hqwebapp/js/initial_page_data.js').registerUrl(
         "build_schema", "/a/---/data/export/build_full_schema/"
     );
     beforeEach(function() {
