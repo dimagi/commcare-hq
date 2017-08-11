@@ -30,6 +30,20 @@ function MapOrSectorController() {
                     return d3.format(".4r")(d);
                 },
             },
+            tooltip: function(x, y) {
+                if(!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
+                    return 'NA';
+                }
+
+                return vm.templatePopup({
+                    loc: {
+                        properties: {
+                            name: y,
+                        },
+                    },
+                    row: vm.data.mapData.tooltips_data[y],
+                });
+            },
         },
     };
 }
