@@ -3,7 +3,7 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
@@ -47,21 +47,32 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         repeater_id = self.request.GET.get('repeater', None)
         state = self.request.GET.get('record_state', None)
         if self.is_rendered_as_email:
-            return []
+            return [
+                [
+                    get_repeat_record_count(self.domain, repeater_id, "SUCCESS"),
+                    get_repeat_record_count(self.domain, repeater_id, "CANCELLED"),
+                ]
+            ]
         return [self._make_row(record) for record in
                 iter_repeat_records_by_domain(self.domain, repeater_id=repeater_id, state=state)]
 
     @property
     def headers(self):
-        columns = [
-            DataTablesColumn(_('Record ID')),
-            DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Person Case')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
-            DataTablesColumn(_('Attempts')),
-            DataTablesColumn(_('Payload')),
-        ]
+        if self.is_rendered_as_email:
+            columns = [
+                DataTablesColumn(_('Successful Records')),
+                DataTablesColumn(_('Cancelled Records')),
+            ]
+        else:
+            columns = [
+                DataTablesColumn(_('Record ID')),
+                DataTablesColumn(_('Status')),
+                DataTablesColumn(_('Person Case')),
+                DataTablesColumn(_('URL')),
+                DataTablesColumn(_('Last sent date')),
+                DataTablesColumn(_('Attempts')),
+                DataTablesColumn(_('Payload')),
+            ]
         return DataTablesHeader(*columns)
 
     def _make_row(self, record):
