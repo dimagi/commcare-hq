@@ -1,16 +1,15 @@
+from datetime import datetime, date
 import json
 
 import jsonobject
-from datetime import datetime, date
-
 import pytz
 from pytz import timezone
 
 from django.core.serializers.json import DjangoJSONEncoder
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
@@ -27,15 +26,18 @@ from custom.enikshay.const import (
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
 )
-from custom.enikshay.integrations.bets.const import (
+from custom.enikshay.exceptions import NikshayLocationNotFound
+from .const import (
     TREATMENT_180_EVENT,
     DRUG_REFILL_EVENT,
     SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
     LOCATION_TYPE_MAP,
-    CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
-from custom.enikshay.exceptions import NikshayLocationNotFound
+    CHEMIST_VOUCHER_EVENT,
+    LAB_VOUCHER_EVENT,
+    TOTAL_DAY_THRESHOLDS
+)
 from .utils import get_bets_location_json
 
 
@@ -409,7 +411,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                    episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
+                episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
             )
         ]
         if check_already_sent:
