@@ -86,7 +86,12 @@ class SessionDetailsViewTest(TestCase):
         assert not settings.DEBUG
         data = json.dumps({'session_id': self.session_key})
         header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
-        response = Client().post(self.url, data, content_type="application/json", HTTP_X_MAC_DIGEST=header_value)
+        response = Client().post(
+            self.url,
+            data,
+            content_type="application/json",
+            HTTP_X_MAC_DIGEST=header_value
+        )
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.expected_response, response.content)
 
@@ -95,6 +100,10 @@ class SessionDetailsViewTest(TestCase):
         assert not settings.DEBUG
         data = json.dumps({'session_id': self.session_key})
 
-        response = Client().post(self.url, data, content_type="application/json", HTTP_X_MAC_DIGEST='bad signature')
+        response = Client().post(
+            self.url,
+            data,
+            content_type="application/json",
+            HTTP_X_MAC_DIGEST='bad signature'
+        )
         self.assertEqual(401, response.status_code)
-
