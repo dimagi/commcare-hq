@@ -1,5 +1,5 @@
 var COMMCAREHQ_URLS = {};
-hqDefine('hqwebapp/js/urllib.js', function () {
+hqDefine('hqwebapp/js/urllib', function () {
     // http://stackoverflow.com/a/21903119/240553
     var getUrlParameter = function (param) {
         return getUrlParameterFromString(param, window.location.search);

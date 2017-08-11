@@ -12,7 +12,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var ExportInstance = hqImport('export/js/models.js').ExportInstance;
+            var ExportInstance = hqImport('export/js/models').ExportInstance;
             var customExportView = new ExportInstance(
                 {{ export_instance|JSON }},
                 {
@@ -23,7 +23,7 @@
                     numberOfAppsToProcess: {{ number_of_apps_to_process }},
                 }
             );
-            hqImport('hqwebapp/js/urllib.js').registerUrl(
+            hqImport('hqwebapp/js/urllib').registerUrl(
                 "build_schema", "/a/---/data/export/build_full_schema/"
             )
             $('#customize-export').koApplyBindings(customExportView);
@@ -198,22 +198,22 @@
             <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
                 <button type="submit" class="btn btn-lg btn-primary" data-bind="
                     click: save,
-                    disable: (saveState() === hqImport('export/js/const.js').SAVE_STATES.SAVING ||
-                              saveState() === hqImport('export/js/const.js').SAVE_STATES.SUCCESS ||
+                    disable: (saveState() === hqImport('export/js/const').SAVE_STATES.SAVING ||
+                              saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS ||
                               ! isValid())
                 ">
                     <span data-bind="
-                        visible: saveState() === hqImport('export/js/const.js').SAVE_STATES.READY,
+                        visible: saveState() === hqImport('export/js/const').SAVE_STATES.READY,
                         text: getSaveText()">
                     </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const.js').SAVE_STATES.SAVING">
+                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SAVING">
                         <i class="fa fa-refresh fa-spin"></i>
                         {% trans "Saving" %}
                     </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const.js').SAVE_STATES.ERROR">
+                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.ERROR">
                         {% trans "Try Again" %}
                     </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const.js').SAVE_STATES.SUCCESS">
+                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS">
                         {% trans "Saved!" %}
                     </span>
                 </button>

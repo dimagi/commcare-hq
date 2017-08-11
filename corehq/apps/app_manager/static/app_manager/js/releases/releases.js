@@ -1,5 +1,5 @@
 /* globals: ga_track_event */
-hqDefine('app_manager/js/releases/releases.js', function () {
+hqDefine('app_manager/js/releases/releases', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
         $.each(['comment_user_name', '_deleteState'], function (i, attr) {
@@ -212,8 +212,8 @@ hqDefine('app_manager/js/releases/releases.js', function () {
 
     function ReleasesMain(o) {
         /* {fetchUrl, deleteUrl} */
-        var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
-        var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
+        var AsyncDownloader = hqImport('app_manager/js/download_async_modal').AsyncDownloader;
+        var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
         self.options = o;
         self.recipients = self.options.recipient_contacts;
@@ -266,7 +266,7 @@ hqDefine('app_manager/js/releases/releases.js', function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
-            return hqImport("hqwebapp/js/urllib.js").reverse.apply(null, arguments);
+            return hqImport("hqwebapp/js/urllib").reverse.apply(null, arguments);
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
@@ -435,7 +435,7 @@ hqDefine('app_manager/js/releases/releases.js', function () {
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
-                    hqImport('app_manager/js/app_manager.js').setPublishStatus(false);
+                    hqImport('app_manager/js/app_manager').setPublishStatus(false);
                 },
                 error: function() {
                     self.buildState('error');

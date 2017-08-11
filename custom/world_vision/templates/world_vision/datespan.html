@@ -51,7 +51,7 @@
 {% ifequal slug 'datespan'  %}
 <script type="text/javascript">
     $(function () {
-        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
         $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', '');
         $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', '');
 

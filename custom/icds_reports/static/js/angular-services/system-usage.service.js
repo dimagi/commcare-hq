@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/urllib').reverse;
 
 window.angular.module('icdsApp').factory('systemUsageService', ['$http', function($http) {
     return {

@@ -1,6 +1,6 @@
 /* globals hqDefine, $, eventize */
 
-hqDefine('style/js/ui_elements/ui-element-select.js', function () {
+hqDefine('style/js/ui_elements/ui-element-select', function () {
     'use strict';
     var module = {};
 

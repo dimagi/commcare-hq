@@ -6,7 +6,7 @@
  *  access it.
  */
 var COMMCAREHQ_INITIAL_PAGE_DATA = {};
-hqDefine('hqwebapp/js/initial_page_data.js', function () {
+hqDefine('hqwebapp/js/initial_page_data', function () {
     /*
      * Fetch a named value.
      */

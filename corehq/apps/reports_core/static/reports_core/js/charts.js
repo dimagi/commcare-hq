@@ -1,5 +1,5 @@
 /* global _, nv, d3 */
-hqDefine('reports_core/js/charts.js', function() {
+hqDefine('reports_core/js/charts', function() {
     var fn = {};
     var renderPie = function (config, data, svgSelector) {
         return function () {

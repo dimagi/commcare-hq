@@ -10,9 +10,9 @@ if (!String.prototype.endsWith) {
     };
 }
 
-hqDefine('export/js/utils.js', function() {
+hqDefine('export/js/utils', function() {
     var getTagCSSClass = function(tag) {
-        var constants = hqImport('export/js/const.js');
+        var constants = hqImport('export/js/const');
         var cls = 'label';
         if (tag === constants.TAG_DELETED) {
             return cls + ' label-warning';
@@ -58,7 +58,7 @@ hqDefine('export/js/utils.js', function() {
      * @returns {Array} Returns an array of PathNodes.
      */
     var customPathToNodes = function(customPathString) {
-        var models = hqImport('export/js/models.js');
+        var models = hqImport('export/js/models');
         var parts = customPathString.split('.');
         return _.map(parts, function(part) {
             var isRepeat = part.endsWith('[]');

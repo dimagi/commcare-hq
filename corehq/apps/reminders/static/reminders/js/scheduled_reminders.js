@@ -1,14 +1,14 @@
 /* globals moment */
-hqDefine("reminders/js/scheduled_reminders.js", function() {
+hqDefine("reminders/js/scheduled_reminders", function() {
     $(function () {
-        var reminders = _.map(hqImport("hqwebapp/js/initial_page_data.js").get("reminder_data"), function(data) {
+        var reminders = _.map(hqImport("hqwebapp/js/initial_page_data").get("reminder_data"), function(data) {
                 var next_fire = moment.utc(data.next_fire);
                 return {
                     nickname: data.handler_name,
                     date: next_fire.format("YYYY-MM-DD"),
                     time: next_fire.format("h:mm a"),
                     case_name: data.case_name,
-                    case_url: data.case_id ? hqImport("hqwebapp/js/urllib.js").reverse("case_details", data.case_id) : "",
+                    case_url: data.case_id ? hqImport("hqwebapp/js/urllib").reverse("case_details", data.case_id) : "",
                     recipient_desc: data.recipient_desc,
                     recipient_type: data.recipient_type,
                 };

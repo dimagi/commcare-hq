@@ -1,6 +1,6 @@
 /* globals django */
-hqDefine("groups/js/group_members.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+hqDefine("groups/js/group_members", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
     // Multiselect widget
     $(function () {
@@ -15,7 +15,7 @@ hqDefine("groups/js/group_members.js", function() {
 
     $(function () {
         // custom data
-        var customDataEditor = hqImport('style/js/ui-element.js').map_list(initial_page_data("group_id"), gettext("Group Information"));
+        var customDataEditor = hqImport('style/js/ui-element').map_list(initial_page_data("group_id"), gettext("Group Information"));
         customDataEditor.val(initial_page_data("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));

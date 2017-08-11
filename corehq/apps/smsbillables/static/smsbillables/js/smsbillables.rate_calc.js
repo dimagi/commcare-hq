@@ -1,4 +1,4 @@
-hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
+hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
     var SMSRateCalculator = function (form_data) {
         'use strict';
         var self = this;
@@ -111,7 +111,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc.js", function() {
         self.country_code.subscribe(updateRate);
     };
     
-    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler.js").BaseSelect2Handler;
+    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler;
     var Select2SmsRateHandler = function (options) {
         'use strict';
         BaseSelect2Handler.call(this, options);

@@ -36,7 +36,7 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
-        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
         if (null !== standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
@@ -281,8 +281,8 @@ $(function() {
     var $configList = $("#ko-report-config-list");
     if ($configList.length) {
         $configList.koApplyBindings(new ReportConfigsViewModel({
-            items: hqImport("hqwebapp/js/initial_page_data.js").get('configs'),
-            saveUrl: hqImport("hqwebapp/js/urllib.js").reverse("add_report_config"),
+            items: hqImport("hqwebapp/js/initial_page_data").get('configs'),
+            saveUrl: hqImport("hqwebapp/js/urllib").reverse("add_report_config"),
         }));
     }
 });

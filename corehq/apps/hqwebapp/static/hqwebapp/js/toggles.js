@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/toggles.js', function () {
+hqDefine('hqwebapp/js/toggles', function () {
     var genericToggleEnabled = function (allToggles, toggleName) {
         var value = allToggles[toggleName];
         if (typeof value === 'undefined') {

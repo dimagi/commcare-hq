@@ -1,8 +1,8 @@
 /*globals $, COMMCAREHQ, _, ko, console*/
-hqDefine('app_manager/js/visit_scheduler.js', function () {
+hqDefine('app_manager/js/visit_scheduler', function () {
     'use strict';
-    var app_manager = hqImport('app_manager/js/app_manager.js');
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
+    var app_manager = hqImport('app_manager/js/app_manager');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
         var self = this;
@@ -50,12 +50,12 @@ hqDefine('app_manager/js/visit_scheduler.js', function () {
         var Phase = function(id, anchor, forms){
             var self = this;
             self.id = id;
-            self.anchor = hqImport('style/js/ui-element.js').input().val(anchor);
+            self.anchor = hqImport('style/js/ui-element').input().val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function(){
                 self.anchor.observableVal(self.anchor.val());
             });
-            var CC_DETAIL_SCREEN = hqImport('app_manager/js/details/screen_config.js').CC_DETAIL_SCREEN;
+            var CC_DETAIL_SCREEN = hqImport('app_manager/js/details/screen_config').CC_DETAIL_SCREEN;
             CC_DETAIL_SCREEN.setUpAutocomplete(self.anchor, params.caseProperties);
             self.forms = ko.observable(forms);
             self.form_abbreviations = ko.computed(function(){

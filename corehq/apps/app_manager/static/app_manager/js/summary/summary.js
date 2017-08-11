@@ -1,5 +1,5 @@
 /* globals COMMCAREHQ, hqLayout */
-hqDefine("app_manager/js/summary/summary.js", function() {
+hqDefine("app_manager/js/summary/summary", function() {
     $(function() {
         'use strict';
 
@@ -9,8 +9,8 @@ hqDefine("app_manager/js/summary/summary.js", function() {
         }
 
         var summaryApp = window.angular.module('summaryApp', ['ngRoute', 'summaryModule']),
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            url = hqImport('hqwebapp/js/urllib.js').reverse;
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            url = hqImport('hqwebapp/js/urllib').reverse;
         summaryApp.config(['$httpProvider', function($httpProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';

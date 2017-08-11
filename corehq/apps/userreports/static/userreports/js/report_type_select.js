@@ -1,6 +1,6 @@
-hqDefine("userreports/js/report_type_select.js", function() {
+hqDefine("userreports/js/report_type_select", function() {
     'use strict';
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         dashboardApp = window.angular.module('dashboardApp', [
             'ui.bootstrap',
             'ngResource',

@@ -76,7 +76,7 @@ MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageSer
 MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/urllib').reverse;
     return {
         restrict:'E',
         scope: {

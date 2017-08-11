@@ -5,10 +5,10 @@
  *
  */
 
-hqDefine('export/js/models.js', function () {
-    var constants = hqImport('export/js/const.js');
-    var utils = hqImport('export/js/utils.js');
-    var urls = hqImport('hqwebapp/js/urllib.js');
+hqDefine('export/js/models', function () {
+    var constants = hqImport('export/js/const');
+    var utils = hqImport('export/js/utils');
+    var urls = hqImport('hqwebapp/js/urllib');
 
     /**
      * ExportInstance

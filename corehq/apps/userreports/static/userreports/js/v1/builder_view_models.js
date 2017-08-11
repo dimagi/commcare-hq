@@ -1,5 +1,5 @@
 /* global django */
-hqDefine('userreports/js/v1/builder_view_models.js', function () {
+hqDefine('userreports/js/v1/builder_view_models', function () {
     'use strict';
 
     var getOrDefault = function(options, key, default_) {
@@ -85,14 +85,14 @@ hqDefine('userreports/js/v1/builder_view_models.js', function () {
         // the PropertyListItem represents columns in a non-aggregated report
         // or a filter
         self.calculation = ko.observable(
-            hqImport('userreports/js/v1/constants.js').DEFAULT_CALCULATION_OPTIONS[0]
+            hqImport('userreports/js/v1/constants').DEFAULT_CALCULATION_OPTIONS[0]
         );
         self.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
                 return propObject.aggregation_options;
             }
-            return hqImport('userreports/js/v1/constants.js').DEFAULT_CALCULATION_OPTIONS;
+            return hqImport('userreports/js/v1/constants').DEFAULT_CALCULATION_OPTIONS;
         });
         // for default filters, the value to filter by
         self.filterValue = ko.observable("");

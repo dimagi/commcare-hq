@@ -1,4 +1,4 @@
-hqDefine("reports/js/config.dataTables.bootstrap.js", function() {
+hqDefine("reports/js/config.dataTables.bootstrap", function() {
 
     var HQReportDataTables = function(options) {
         var self = this;

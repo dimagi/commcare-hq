@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/urllib').reverse;
 
 function AdultWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
                                              locationsService, userLocationId, storageService) {
