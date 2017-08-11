@@ -37,7 +37,7 @@ class Command(BaseCommand):
                  .domain(domain)
                  .case_type("episode")
                  .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must")
-                 .run().hits)
+                 .scroll())
 
         with open(log_path, "w") as f:
             for case in cases:
