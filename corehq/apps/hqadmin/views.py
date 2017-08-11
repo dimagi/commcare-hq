@@ -67,7 +67,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
-from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.toggles import any_toggle_enabled, SUPPORT, ANONYMOUS_WEB_APPS_USAGE
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
 from corehq.util.hmac_request import validate_request_hmac
@@ -1171,21 +1171,18 @@ class SessionDetialsView(View):
         if not session_id:
             return HttpResponseBadRequest()
 
+        auth_token = None
+        anonymous = False
         user = get_django_user_from_session_key(session_id)
-        if not user:
-            couch_user = CouchUser.get_anonymous_mobile_worker(domain)
-            if not couch_user:
-                raise Http404
-            user = couch_user.get_django_user()
-        else:
+        if user:
             couch_user = CouchUser.get_by_username(user.username)
             if not couch_user:
                 raise Http404
-
-        try:
-            auth_token = user.auth_token.key
-        except Token.DoesNotExist:
-            auth_token = None
+        elif domain and ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
+            user, couch_user, auth_token = self._get_anonymous_user_details(domain)
+            anonymous = True
+        else:
+            raise Http404
 
         return JsonResponse({
             'username': user.username,
@@ -1193,4 +1190,16 @@ class SessionDetialsView(View):
             'superUser': user.is_superuser,
             'authToken': auth_token,
             'domains': couch_user.domains,
+            'anonymous': anonymous
         })
+
+    def _get_anonymous_user_details(self, domain):
+        couch_user = CouchUser.get_anonymous_mobile_worker(domain)
+        if not couch_user:
+            raise Http404
+        user = couch_user.get_django_user()
+        try:
+            auth_token = user.auth_token.key
+        except Token.DoesNotExist:
+            raise Http404  # anonymous user must have an auth token
+        return user, couch_user, auth_token
