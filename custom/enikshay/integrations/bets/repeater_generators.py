@@ -79,6 +79,14 @@ class BETSPayload(jsonobject.JsonObject):
 class IncentivePayload(BETSPayload):
     EpisodeID = jsonobject.StringProperty(required=False)
 
+    @staticmethod
+    def _get_agency_id(episode_case):
+        agency_id = episode_case.get_case_property('bets_notifying_provider_user_id')
+        if not agency_id:
+            raise NikshayLocationNotFound("Episode {} does not have an agency".format(agency_id))
+        agency_user = CommCareUser.get_by_user_id(agency_id)
+        return agency_user.raw_username
+
     @classmethod
     def create_180_treatment_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
@@ -102,6 +110,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -129,6 +139,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -171,6 +183,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=owner_id,
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -202,6 +216,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -211,6 +227,7 @@ class IncentivePayload(BETSPayload):
     @classmethod
     def create_ayush_referral_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
         location = cls._get_location(
             episode_case_properties.get("registered_by"),
@@ -230,6 +247,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
