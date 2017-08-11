@@ -6,7 +6,6 @@ from datetime import datetime, date
 import pytz
 from pytz import timezone
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
@@ -65,8 +64,6 @@ class BETSPayload(jsonobject.JsonObject):
     @classmethod
     def _get_location(cls, location_id, field_name=None, related_case_type=None, related_case_id=None):
         try:
-            if not location_id:
-                raise SQLLocation.DoesNotExist()
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
             msg = "Location with id {location_id} not found.".format(location_id=location_id)
@@ -215,31 +212,15 @@ class IncentivePayload(BETSPayload):
     def create_ayush_referral_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
 
-        registered_by_location = episode_case_properties.get("registered_by")
-        if registered_by_location:
-            location = cls._get_location(
-                registered_by_location,
-                field_name="registered_by",
-                related_case_type="episode",
-                related_case_id=episode_case.case_id,
-            )
-            if not location.user_id:
-                raise NikshayLocationNotFound(
-                    "Location {} does not have a virtual location user".format(location.location_id))
-        else:
-            # it's an older case, check the user who created it
-            try:
-                creating_user = CommCareUser.get_by_user_id(episode_case.opened_by)
-            except (ResourceNotFound):
-                raise NikshayLocationNotFound(
-                    "Episode {} wasn't opened by an agency user".format(episode_case.case_id))
-            else:
-                location = cls._get_location(
-                    creating_user.user_location_id,
-                    field_name='user_location_id',
-                    related_case_type='CommCareUser',
-                    related_case_id=creating_user._id,
-                )
+        location = cls._get_location(
+            episode_case_properties.get("registered_by"),
+            field_name="registered_by",
+            related_case_type="episode",
+            related_case_id=episode_case.case_id,
+        )
+        if not location.user_id:
+            raise NikshayLocationNotFound(
+                "Location {} does not have a virtual location user".format(location.location_id))
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
