@@ -80,7 +80,7 @@ function hqGlobal(path, dependencies, moduleAccessor) {
         } else {
             path = path.replace(/\.js$/, "");
             path = path + ".js";
-            args = [];
+            var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 if (dependencies[i] in paths) {
                     args[i] = paths[dependencies[i]];
