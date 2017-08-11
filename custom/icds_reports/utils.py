@@ -888,7 +888,7 @@ def get_demographics_data(yesterday, config):
                         two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
-                    'format': 'number',
+                    'format': 'percent_and_div',
                     'frequency': 'day'
                 }
             ]
@@ -1458,7 +1458,7 @@ def get_awc_reports_pse(config, month, two_before, domain):
         pse_date__range=(datetime(*two_before), datetime(*month)), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
-    )
+    ).order_by('-pse_date')
 
     map_data = {}
     image_data = []
@@ -1545,7 +1545,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
         'kpi': [
             [
                 {
-                    'label': _('Prevalence of undernutrition (weight-for-age)'),
+                    'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children with weight-for-age less than -2 standard deviations of the "
                         "WHO Child Growth Standards median. Children who are moderately or severely underweight "
@@ -1830,7 +1830,7 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('month', 'person_name')
+    ).order_by('-month', 'person_name')
 
     config = {
         'rows': {},
@@ -1840,7 +1840,7 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
                 dtstart=datetime(*two_before),
                 until=datetime(*month)
             )
-        ],
+        ][::-1],
         'last_month': datetime(*month).strftime("%b %Y"),
         'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }

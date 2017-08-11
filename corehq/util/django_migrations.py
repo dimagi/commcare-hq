@@ -61,3 +61,14 @@ class AlterIndexIfNotExists(migrations.AlterIndexTogether):
                 app_label, schema_editor, from_state, to_state)
         finally:
             schema_editor.__class__ = DatabaseSchemaEditor
+
+
+class AlterFieldCreateIndexIfNotExists(migrations.AlterField):
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        schema_editor.__class__ = DatabaseSchemaEditorIfNotExists
+        try:
+            super(AlterFieldCreateIndexIfNotExists, self).database_forwards(
+                app_label, schema_editor, from_state, to_state)
+        finally:
+            schema_editor.__class__ = DatabaseSchemaEditor

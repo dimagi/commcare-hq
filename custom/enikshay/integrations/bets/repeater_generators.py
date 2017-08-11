@@ -11,6 +11,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
@@ -142,20 +143,36 @@ class IncentivePayload(BETSPayload):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
-        location = cls._get_location(
-            person_case.dynamic_case_properties().get('last_owner'),
-            field_name="last_owner",
-            related_case_type="person",
-            related_case_id=person_case.case_id,
-        )
+        if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+            owner_id = person_case.dynamic_case_properties().get('last_owner')
+            location = cls._get_location(
+                person_case.dynamic_case_properties().get('last_owner'),
+                field_name="last_owner",
+                related_case_type="person",
+                related_case_id=person_case.case_id,
+            )
+        else:
+            owner_id = person_case.owner_id
+            location = cls._get_location(
+                person_case.owner_id,
+                field_name="owner_id",
+                related_case_type="person",
+                related_case_id=person_case.case_id
+            )
 
+        event_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE)
+        if not event_date:
+            # the treatment_outcome_date property used to be called
+            # "rx_outcome_date", and was changed at some point. Older cases
+            # still have the rx_outcome_date property set.
+            event_date = episode_case_properties.get('rx_outcome_date')
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=event_date,
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
-            Location=person_case.dynamic_case_properties().get('last_owner'),
+            Location=owner_id,
             DTOLocation=_get_district_location(location),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
@@ -387,27 +404,27 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
-    def _get_prescription_threshold_to_send(episode_case):
+    def _get_prescription_threshold_to_send(episode_case, check_already_sent=True):
         from custom.enikshay.integrations.bets.repeaters import BETSDrugRefillRepeater
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                episode_case.dynamic_case_properties(), n
+                    episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
             )
         ]
-
-        _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
-        message = ("Repeater should not have allowed to forward if there were more or less than"
-                   "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
-        _assert(len(thresholds_to_send) == 1, message)
+        if check_already_sent:
+            _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+            message = ("Repeater should not have allowed to forward if there were more or less than"
+                       "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
+            _assert(len(thresholds_to_send) == 1, message)
 
         try:
-            return thresholds_to_send[0]
+            return thresholds_to_send[-1]
         except IndexError:
             return 0
 
     def get_payload(self, repeat_record, episode_case):
-        n = self._get_prescription_threshold_to_send(episode_case)
+        n = self._get_prescription_threshold_to_send(episode_case, check_already_sent=False)
         return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):

@@ -103,13 +103,13 @@
                                 {% trans "Display" %}<br />
                                 {% if export_instance.type == 'form' %}
                                 <a
-                                    class="btn btn-xs btn-primary"
-                                    data-bind="click: table.useLabels">
+                                    class="btn btn-xs"
+                                    data-bind="click: table.useLabels, css: { 'btn-primary': table.displayType() === 'labels', 'btn-default': table.displayType() !== 'labels'}">
                                     {% trans "Use question labels" %}
                                 </a>
                                 <a
-                                    class="btn btn-xs btn-default"
-                                    data-bind="click: table.useIds">
+                                    class="btn btn-xs"
+                                    data-bind="click: table.useIds, css: { 'btn-primary': table.displayType() === 'ids', 'btn-default': table.displayType() !== 'ids'}">
                                     {% trans "Use question ids" %}
                                 </a>
                                 {% endif %}

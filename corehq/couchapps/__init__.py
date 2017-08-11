@@ -19,6 +19,7 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'app_translations_by_popularity': (None, settings.NEW_APPS_DB),
     'apps_with_submissions': settings.NEW_APPS_DB,
     'hash_to_anonymous_app': settings.NEW_APPS_DB,
+    'global_app_config_by_app_id': settings.NEW_APPS_DB,
     'exports_forms_by_app': (None, settings.NEW_APPS_DB),
     'forms_by_app_info': (None, settings.NEW_APPS_DB),
     'sync_logs_by_date': settings.SYNCLOGS_DB,

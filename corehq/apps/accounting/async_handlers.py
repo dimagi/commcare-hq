@@ -191,10 +191,9 @@ class Select2BillingInfoHandler(BaseSelect2AsyncHandler):
     @property
     def plan_version_response(self):
         edition = self.data.get('additionalData[edition]')
-        product = self.data.get('additionalData[product]')
         plan_versions = SoftwarePlanVersion.objects.filter(
             plan__edition=edition
-        ).filter(product_rate__product__product_type=product)
+        )
         if self.search_string:
             plan_versions = plan_versions.filter(
                 plan__name__icontains=self.search_string)
