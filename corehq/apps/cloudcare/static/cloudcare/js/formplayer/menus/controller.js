@@ -45,8 +45,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         selectDetail: function(caseId, detailIndex, isPersistent) {
+            var urlObject = Util.currentUrlToObject();
             if (!isPersistent) {
-                var urlObject = Util.currentUrlToObject();
                 urlObject.addStep(caseId);
             }
             var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
