@@ -275,7 +275,8 @@ class ReportBuilderView(BaseDomainView):
         main_context = super(ReportBuilderView, self).main_context
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit': number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
+            'at_report_limit':
+                number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
             'report_limit': allowed_report_builder_reports(self.request),
             'paywall_url': paywall_home(self.domain),
         })
