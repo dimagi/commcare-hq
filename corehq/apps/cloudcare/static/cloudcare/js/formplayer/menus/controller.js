@@ -45,8 +45,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         selectDetail: function(caseId, detailIndex, isPersistent) {
-            var urlObject = Util.currentUrlToObject();
-            urlObject.addStep(caseId);
+            if (!isPersistent) {
+                var urlObject = Util.currentUrlToObject();
+                urlObject.addStep(caseId);
+            }
             var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
@@ -172,6 +174,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
             var numRows = detailObject.maxHeight;
             var numColumns = detailObject.maxWidth;
+            var hasInlineTile = detailObject.hasInlineTile;
             var useUniformUnits = detailObject.useUniformUnits || false;
             var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'persistent');
@@ -186,6 +189,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
                 prefix: 'persistent',
+                hasInlineTile: detailObject.hasInlineTile,
             });
         },
     };
