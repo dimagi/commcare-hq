@@ -1,4 +1,3 @@
-/* global hqGlobal */
 (function () {
     var components = {
         'inline-edit': 'style/js/components/inline_edit.js',

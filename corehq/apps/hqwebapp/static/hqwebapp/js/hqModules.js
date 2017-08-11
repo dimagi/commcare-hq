@@ -80,7 +80,7 @@ function hqGlobal(path, dependencies, moduleAccessor) {
         } else {
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
-                dependency = dependencies[i];
+                var dependency = dependencies[i];
                 if (dependency in thirdParty) {
                     args[i] = thirdParty[dependency];
                 } else if (dependency in COMMCAREHQ_MODULES) {
