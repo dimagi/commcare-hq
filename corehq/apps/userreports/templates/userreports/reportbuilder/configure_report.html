@@ -261,11 +261,14 @@
                       <option value="pie">{% trans 'Pie' %}</option>
                   </select>
               </div>
-              <div id="chart-warning" class="alert alert-warning hide">
-                {% blocktrans %}
-                  Charts cannot be displayed with more than 25 categories.
-                  Once you Save and View report, you will be able to filter the data to limit the number of rows.
-                {% endblocktrans %}
+              <div data-bind="visible: tooManyChartCategoriesWarning" style="display: none;">
+                <div class="spacer"></div>
+                <div id="chart-warning" class="alert alert-warning">
+                  {% blocktrans %}
+                    Charts cannot be displayed with more than 25 categories.
+                    Once you Save and View report, you will be able to filter the data to limit the number of rows.
+                  {% endblocktrans %}
+                </div>
               </div>
               <div id="chart" class="fs-hide"></div>
             </div>

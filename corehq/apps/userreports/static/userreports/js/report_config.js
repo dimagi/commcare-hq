@@ -133,6 +133,13 @@ var reportBuilder = function () {  // eslint-disable-line
         });
 
         self.previewChart = ko.observable(false);
+        self.tooManyChartCategoriesWarning = ko.observable(false);
+
+        self.previewChart.subscribe(function() {
+            // Clear this warning before revealing the chart div. This it them from flickering.
+            // The warning will be update in _renderChartPreview
+            self.tooManyChartCategoriesWarning(false);
+        });
 
         /**
          * Convert the data source properties passed through the template
@@ -305,10 +312,9 @@ var reportBuilder = function () {  // eslint-disable-line
             var charts = hqImport('reports_core/js/charts.js');
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 if (aaData.length > 25) {
-                    $("#chart-warning").removeClass("hide");
+                    self.tooManyChartCategoriesWarning(true);
                     charts.clear($("#chart-container"));
                 } else {
-                    $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, aaData, $("#chart"));
                 }
             } else {
