@@ -250,3 +250,50 @@ def create_aww_indicator_6(domain):
             timed_schedule_id=schedule.schedule_id,
             recipients=(('Owner', None),),
         )
+
+
+def create_ls_indicator_4b(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED'),
+            total_iterations=1,
+            start_offset=7,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'ls_4b'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="LS #4b: Child Illness Reported in Referral Form",
+            case_type='person',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='last_referral_date',
+            match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='referral_health_problem',
+            match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='dob',
+            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            property_value='-2192',
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
+            reset_case_property_name='last_referral_date',
+        )
