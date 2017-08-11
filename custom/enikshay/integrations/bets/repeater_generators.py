@@ -88,7 +88,8 @@ class IncentivePayload(BETSPayload):
     def _get_agency_id(episode_case):
         agency_id = episode_case.get_case_property('bets_notifying_provider_user_id')
         if not agency_id:
-            raise NikshayLocationNotFound("Episode {} does not have an agency".format(agency_id))
+            raise NikshayLocationNotFound(
+                "Episode {} does not have an agency".format(episode_case.case_id))
         agency_user = CommCareUser.get_by_user_id(agency_id)
         return agency_user.raw_username
 

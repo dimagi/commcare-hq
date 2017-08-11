@@ -50,6 +50,7 @@ def get_person_case_structure(case_id, user_id, extra_update=None, owner_id=None
         'nikshay_registered': "false",
         'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
         'current_address_postal_code': '110088',
+        'person_id': 'THX-1138',
     }
     update.update(extra_update)
 
@@ -276,6 +277,8 @@ class ENikshayCaseStructureMixin(object):
             self.domain,
             username=self.username,
             password=self.password,
+            first_name="Jon",
+            last_name="Snow",
         )
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
