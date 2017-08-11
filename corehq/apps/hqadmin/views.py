@@ -56,7 +56,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.apps.users.dbaccessors import get_user_id_by_username
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.elastic import parse_args_for_es, run_query, ES_META
