@@ -44,7 +44,7 @@ class Command(BaseCommand):
             writer.writerow(self.field_names)
             loc_types = BETSLocationRepeater.location_types_to_forward
             for loc in (SQLLocation.active_objects
-                        .filter(domain=domain, location_type__name__in=loc_types)
+                        .filter(domain=domain, location_type__code__in=loc_types)
                         .prefetch_related('parent', 'location_type')):
                 if loc.metadata.get('is_test') != "yes":
                     self.add_loc(loc, writer)

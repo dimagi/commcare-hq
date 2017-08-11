@@ -3,11 +3,11 @@ import json
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from custom.enikshay.case_utils import get_person_case_from_voucher
-from corehq.apps.users.models import CommCareUser
 
 
 class Command(BaseCommand):
@@ -61,15 +61,12 @@ class Command(BaseCommand):
 
                     voucher_id = record.payload_id
                     person_case = get_person_case_from_voucher(domain, voucher_id)
-                    voucher_case = accessor.get_case(voucher_id)
-                    payload[u'PersonId'] = person_case.case_id
-                    payload[u'AgencyId'] = voucher_case.get_case_property('voucher_fulfilled_by_id')
+                    payload[u'PersonId'] = person_case.get_case_property('person_id')
 
-                    approver_id = voucher_case.get_case_property('voucher_approved_by_id')
-                    approver = CommCareUser.get_by_user_id(approver_id)
-                    payload[u'EnikshayApprover'] = approver.name
-                    payload[u'EnikshayRole'] = approver.user_data.get('usertype')
-                    payload[u'EnikshayApprovalDate'] = voucher_case.get_case_property('date_approved')
+                    voucher_case = accessor.get_case(voucher_id)
+                    agency_user = CommCareUser.get_by_user_id(
+                        voucher_case.get_case_property('voucher_fulfilled_by_id'))
+                    payload[u'AgencyId'] = agency_user.raw_username
 
                     payload['Succeeded'] = record.succeeded
 

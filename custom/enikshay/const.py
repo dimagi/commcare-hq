@@ -179,3 +179,13 @@ AGENCY_LOCATION_FIELDS = [
 DSTB_EPISODE_TYPE = "confirmed_tb"
 PERSON_CASE_2B_VERSION = '20'
 REAL_DATASET_PROPERTY_VALUE = 'real'
+
+USERTYPE_DISPLAYS = {
+    'pac': 'AYUSH / Other Provider',
+    'pcp': 'MBBS Provider',
+    'pcc-chemist': 'Chemist',
+    'plc': 'Lab',
+    'ps-fieldstaff': 'Field Staff',
+    'ppia-do': 'District Reviewer',
+    'dto': 'District TB Officer',
+}

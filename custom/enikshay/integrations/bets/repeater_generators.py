@@ -9,6 +9,7 @@ from pytz import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
@@ -24,6 +25,7 @@ from custom.enikshay.const import (
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
     INVESTIGATION_TYPE,
+    USERTYPE_DISPLAYS,
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
@@ -55,6 +57,9 @@ class BETSPayload(jsonobject.JsonObject):
     BeneficiaryType = jsonobject.StringProperty(required=True)
     Location = jsonobject.StringProperty(required=True)
     DTOLocation = jsonobject.StringProperty(required=True)
+    EnikshayApprover = jsonobject.StringProperty(required=False)
+    EnikshayRole = jsonobject.StringProperty(required=False)
+    EnikshayApprovalDate = jsonobject.StringProperty(required=False)
 
     @classmethod
     def _get_location(cls, location_id, field_name=None, related_case_type=None, related_case_id=None):
@@ -97,6 +102,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -119,7 +128,11 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location)
+            DTOLocation=_get_district_location(pcp_location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -158,6 +171,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=owner_id,
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @staticmethod
@@ -185,6 +202,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     @classmethod
@@ -209,6 +230,10 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
+            # Incentives are not yet approved in eNikshay
+            EnikshayApprover=None,
+            EnikshayRole=None,
+            EnikshayApprovalDate=None,
         )
 
     def payload_json(self):
@@ -237,6 +262,14 @@ class VoucherPayload(BETSPayload):
             related_case_id=voucher_case.case_id
         )
 
+        approver_id = voucher_case.get_case_property('voucher_approved_by_id')
+        if not approver_id:
+            raise AssertionError("Voucher does not have an approver")
+        approver = CommCareUser.get_by_user_id(approver_id)
+        approver_name = approver.name
+        usertype = approver.user_data.get('usertype')
+        approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
+
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
@@ -247,6 +280,9 @@ class VoucherPayload(BETSPayload):
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
+            EnikshayApprover=approver_name,
+            EnikshayRole=approver_usertype,
+            EnikshayApprovalDate=voucher_case.get_case_property('date_approved'),
         )
 
     def payload_json(self):
@@ -458,10 +494,10 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     def serialize(domain, user):
         location = user.get_sql_location(domain)
         user_json = {
-            "username": user.username,
+            "username": user.raw_username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "default_phone_number": user.default_phone_number,
+            "default_phone_number": user.user_data.get("contact_phone_number"),
             "id": user._id,
             "phone_numbers": user.phone_numbers,
             "email": user.email,
@@ -494,7 +530,7 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         "first_name", "husband_father_name", "id_original_beneficiary_count",
         "id_original_device_number", "id_original_issuer_number",
         "language_preference", "last_name", "other_id_type", "person_id",
-        "phi", "phone_number", "send_alerts", "sex", "tu_choice",
+        "phi", "send_alerts", "sex", "tu_choice",
     ]
 
     @property
@@ -502,6 +538,11 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_payload(self, repeat_record, person_case):
+        case_json = self.serialize(person_case)
+        return json.dumps(case_json, cls=DjangoJSONEncoder)
+
+    @staticmethod
+    def serialize(person_case):
         case_json = {
             "case_id": person_case.case_id,
             "closed": person_case.closed,
@@ -519,7 +560,9 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         case_properties = person_case.dynamic_case_properties()
         case_json["properties"] = {
             prop: case_properties.get(prop, "")
-            for prop in self.case_properties
+            for prop in BETSBeneficiaryPayloadGenerator.case_properties
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
-        return json.dumps(case_json, cls=DjangoJSONEncoder)
+        # This is the "real" phone number
+        case_json["properties"]["phone_number"] = case_properties.get("contact_phone_number", "")
+        return case_json
