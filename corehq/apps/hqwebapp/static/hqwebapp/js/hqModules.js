@@ -67,7 +67,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
 // which have not yet been converted to hqDefine. When not on a RequireJS page,
 // moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
 function hqGlobal(path, dependencies, moduleAccessor) {
-    var paths = {
+    var thirdParty = {
         'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
         'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
         'knockout': typeof ko === 'undefined' ? undefined : ko,
@@ -78,16 +78,24 @@ function hqGlobal(path, dependencies, moduleAccessor) {
         if (typeof define === 'function' && define.amd) {
             define(path, dependencies, factory);
         } else {
-            path = path.replace(/\.js$/, "");
-            path = path + ".js";
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
-                if (dependencies[i] in paths) {
-                    args[i] = paths[dependencies[i]];
-                } else if (path in COMMCAREHQ_MODULES) {
-                    args[i] = hqImport(dependencies[i]);
+                dependency = dependencies[i];
+                if (dependency in thirdParty) {
+                    args[i] = thirdParty[dependency];
+                } else if (dependency in COMMCAREHQ_MODULES) {
+                    args[i] = hqImport(dependency);
+                } else {
+                    dependency = dependency.replace(/\.js$/, "").replace(/$/, ".js");
+                    if (dependency in COMMCAREHQ_MODULES) {
+                        args[i] = hqImport(dependency);
+                    } else {
+                    }
                 }
             }
+        }
+        if (!(path in COMMCAREHQ_MODULES)) {
+            path = path.replace(/\.js$/, "").replace(/$/, ".js");
             COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
         }
     }(moduleAccessor));
