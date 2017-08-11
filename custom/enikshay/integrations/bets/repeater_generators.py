@@ -13,7 +13,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
-from custom.enikshay.case_utils import update_case, get_person_case_from_episode
+from custom.enikshay.case_utils import (
+    update_case, get_person_case_from_episode, get_person_case_from_voucher)
 from custom.enikshay.const import (
     DATE_FULFILLED,
     FULFILLED_BY_ID,
@@ -59,6 +60,8 @@ class BETSPayload(jsonobject.JsonObject):
     BeneficiaryType = jsonobject.StringProperty(required=True)
     Location = jsonobject.StringProperty(required=True)
     DTOLocation = jsonobject.StringProperty(required=True)
+    PersonId = jsonobject.StringProperty(required=False)
+    AgencyId = jsonobject.StringProperty(required=False)
     EnikshayApprover = jsonobject.StringProperty(required=False)
     EnikshayRole = jsonobject.StringProperty(required=False)
     EnikshayApprovalDate = jsonobject.StringProperty(required=False)
@@ -283,6 +286,10 @@ class VoucherPayload(BETSPayload):
             related_case_id=voucher_case.case_id
         )
 
+        person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case.case_id)
+        agency_user = CommCareUser.get_by_user_id(
+            voucher_case.get_case_property('voucher_fulfilled_by_id'))
+
         approver_id = voucher_case.get_case_property('voucher_approved_by_id')
         if not approver_id:
             raise AssertionError("Voucher does not have an approver")
@@ -301,6 +308,8 @@ class VoucherPayload(BETSPayload):
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=agency_user.raw_username,
             EnikshayApprover=approver_name,
             EnikshayRole=approver_usertype,
             EnikshayApprovalDate=voucher_case.get_case_property('date_approved'),
