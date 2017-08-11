@@ -215,3 +215,38 @@ def create_ls_indicator_5(domain):
     _create_ls_indicator_5(domain, 1)
     _create_ls_indicator_5(domain, 2)
     _create_ls_indicator_5(domain, 3)
+
+
+def create_aww_indicator_6(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE'),
+            total_iterations=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_6'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #6: CF Visits Complete",
+            case_type='ccs_record',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        for i in [1, 2, 3, 4, 5, 6, 7]:
+            rule.add_criteria(
+                MatchPropertyDefinition,
+                property_name='cf%s_date' % i,
+                match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+            )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+        )
