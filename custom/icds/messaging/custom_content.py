@@ -128,3 +128,34 @@ def missed_cf_visit_to_ls(recipient, case_schedule_instance):
 
 def missed_pnc_visit_to_ls(recipient, case_schedule_instance):
     return render_missed_visit_message(recipient, case_schedule_instance, 'missed_pnc_visit_to_ls.txt')
+
+
+def child_illness_reported(recipient, case_schedule_instance):
+    if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
+        return []
+
+    if case_schedule_instance.case.type != 'person':
+        raise ValueError("Expected 'person' case")
+
+    context = {
+        'awc': case_schedule_instance.case_owner.name if case_schedule_instance.case_owner else '',
+        'child': case_schedule_instance.case.name,
+    }
+    return [render_content_for_user(recipient, 'child_illness_reported.txt', context)]
+
+
+def cf_visits_complete(recipient, case_schedule_instance):
+    if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
+        return []
+
+    if case_schedule_instance.case.type != 'ccs_record':
+        raise ValueError("Expected 'ccs_record' case")
+
+    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
+    if not mother_case:
+        return []
+
+    context = {
+        'beneficiary': mother_case.name,
+    }
+    return [render_content_for_user(recipient, 'cf_visits_complete.txt', context)]
