@@ -1558,6 +1558,10 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
         "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
     "ICDS_MISSED_PNC_VISIT_TO_LS":
         "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+    "ICDS_CHILD_ILLNESS_REPORTED":
+        "custom.icds.messaging.custom_content.child_illness_reported",
+    "ICDS_CF_VISITS_COMPLETE":
+        "custom.icds.messaging.custom_content.cf_visits_complete",
 }
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
