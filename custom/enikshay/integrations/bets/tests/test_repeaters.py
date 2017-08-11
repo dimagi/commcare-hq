@@ -179,6 +179,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             prescription.case_id, {
                 "voucher_type": "prescription",
                 "voucher_fulfilled_by_id": self.user.user_id,
+                "voucher_approved_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.pcc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
@@ -196,7 +197,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
-            u"EnikshayApprover": None,
+            u"EnikshayApprover": u"",
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
         }]}
