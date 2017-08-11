@@ -43,7 +43,7 @@ function hqDefine(path, moduleAccessor) {
     if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
         throw new Error("The module '" + path + "' has already been defined elsewhere.");
     }
-    if (path.endsWith(".js")) {
+    if (typeof path === "string" && path.endsWith(".js")) {
         throw new Error("Error in '" + path + "': module names should not end in .js.");
     }
     COMMCAREHQ_MODULES[path] = moduleAccessor();
