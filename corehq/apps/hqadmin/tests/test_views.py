@@ -63,13 +63,14 @@ class SessionDetailsViewTest(TestCase):
 
         cls.url = reverse('session_details')
 
-        cls.expected_response = json.dumps({
-            'username': cls.sql_user.username,
-            'djangoUserId': cls.sql_user.pk,
-            'superUser': cls.sql_user.is_superuser,
-            'authToken': None,
-            'domains': ['toyland'],
-        })
+        cls.expected_response = {
+            u'username': cls.sql_user.username,
+            u'djangoUserId': cls.sql_user.pk,
+            u'superUser': cls.sql_user.is_superuser,
+            u'authToken': None,
+            u'domains': [u'toyland'],
+            u'anonymous': False
+        }
 
     @classmethod
     def tearDownClass(cls):
@@ -82,7 +83,7 @@ class SessionDetailsViewTest(TestCase):
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
-        self.assertEqual(self.expected_response, response.content)
+        self.assertJSONEqual(response.content, self.expected_response)
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):
@@ -96,7 +97,7 @@ class SessionDetailsViewTest(TestCase):
             HTTP_X_MAC_DIGEST=header_value
         )
         self.assertEqual(200, response.status_code)
-        self.assertEqual(self.expected_response, response.content)
+        self.assertJSONEqual(response.content, self.expected_response)
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing_fail(self):
