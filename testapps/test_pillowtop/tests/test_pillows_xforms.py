@@ -150,6 +150,7 @@ class TestReportXFormProcessing(SimpleTestCase):
         del(restored['form']['meta']['app_build_version'])
         del(restored['form']['meta']['commcare_version'])
         del(restored['form']['meta']['geo_point'])
+        del(restored['server_modified_on'])
 
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)
@@ -166,6 +167,7 @@ class TestReportXFormProcessing(SimpleTestCase):
         """
         orig = {
             '_id': 'nested_case_blocks',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'case': {
                     "@xmlns": "http://commcarehq.org/case/transaction/v2",
@@ -254,6 +256,7 @@ class TestReportXFormProcessing(SimpleTestCase):
     def testBlanktoNulls(self):
         orig = {
             '_id': 'blank_strings',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'case': {
                     "@xmlns": "http://commcarehq.org/case/transaction/v2",
@@ -294,6 +297,7 @@ class TestReportXFormProcessing(SimpleTestCase):
         """
         orig = {
             '_id': 'blank_strings',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'case': {
                     "@xmlns": "http://commcarehq.org/case/transaction/v2",
