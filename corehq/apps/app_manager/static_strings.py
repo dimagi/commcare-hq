@@ -150,6 +150,8 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Password Format'),
     ugettext_noop('Practice Mobile Worker'),
     ugettext_noop('Profile URL'),
+    ugettext_noop('Prompt Updates to Latest CommCare Version'),
+    ugettext_noop('Prompt Updates to Latest Released App Version'),
     ugettext_noop('Purge Frequency'),
     ugettext_noop('Push Only'),
     ugettext_noop('Required'),

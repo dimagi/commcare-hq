@@ -52,23 +52,17 @@ def get_cloudcare_app():
     forms = pact_cloudcare[0]['forms']
     ret = dict((f['name']['en'], ix) for (ix, f) in enumerate(forms))
 
-    url_root = '/a/%(domain)s/cloudcare/apps/view/%(build_id)s/%(module_id)s/%(form_id)s/case/%(case_id)s/enter/'
-    ret['url_root'] = url_root
-    ret['domain'] = PACT_DOMAIN
     ret['app_id'] = app_id
-    latest_build_id = get_latest_build_id(PACT_DOMAIN, app_id)
-    if latest_build_id is not None:
-        ret['build_id'] = latest_build_id
-    ret['module_id'] = 0
+    ret['build_id'] = get_latest_build_id(PACT_DOMAIN, app_id)
     return ret
 
 
 def get_cloudcare_url(case_id, mode):
+    from corehq.apps.cloudcare.utils import webapps_url
+
     app_dict = get_cloudcare_app()
-    url_root = app_dict['url_root']
     build_id = app_dict['build_id']
-    module_id = app_dict['module_id']
-    return  url_root % dict(form_id=app_dict[mode], case_id=case_id, domain=PACT_DOMAIN, build_id=build_id, module_id=module_id)
+    return webapps_url(PACT_DOMAIN, app_id=build_id, module_id=0, form_id=app_dict[mode], case_id=case_id)
 
 
 class PactFormAPI(DomainAPI):

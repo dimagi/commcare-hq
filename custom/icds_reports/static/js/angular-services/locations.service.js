@@ -26,5 +26,12 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', function(
                 return response.data;
             });
         },
+        getLocationByNameAndParent: function(name, parentId) {
+            return $http.get(url('icds_locations'), {
+                params: {name: name, parent_id: parentId},
+            }).then(function(response) {
+                return response.data.locations;
+            });
+        },
     };
 }]);

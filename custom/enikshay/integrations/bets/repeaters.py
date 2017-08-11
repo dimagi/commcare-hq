@@ -246,12 +246,16 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             return None
 
     @staticmethod
-    def prescription_total_days_threshold_in_trigger_state(episode_case_properties, n):
+    def prescription_total_days_threshold_in_trigger_state(episode_case_properties, n, check_already_sent=True):
         threshold_case_prop = BETSDrugRefillRepeater._get_threshold_case_prop(n)
-        return bool(
-            BETSDrugRefillRepeater._property_as_date(episode_case_properties, threshold_case_prop)
-            and episode_case_properties.get("event_{}_{}".format(DRUG_REFILL_EVENT, n)) != "sent"
-        )
+        if check_already_sent:
+            return bool(
+                BETSDrugRefillRepeater._property_as_date(episode_case_properties, threshold_case_prop)
+                and episode_case_properties.get("event_{}_{}".format(DRUG_REFILL_EVENT, n)) != "sent"
+            )
+        else:
+            return BETSDrugRefillRepeater._property_as_date(
+                episode_case_properties, threshold_case_prop) is not None
 
     def allowed_to_forward(self, episode_case):
         if not self.case_types_and_users_allowed(episode_case):
@@ -267,7 +271,9 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
                 episode_case_properties, threshold_case_prop
             )
             trigger_for_n = bool(
-                self.prescription_total_days_threshold_in_trigger_state(episode_case_properties, n)
+                self.prescription_total_days_threshold_in_trigger_state(
+                    episode_case_properties, n, check_already_sent=True
+                )
                 and case_properties_changed(episode_case, [threshold_case_prop])
             )
             trigger_by_threshold[n] = trigger_for_n
@@ -352,7 +358,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
-    friendly_name = _("AYUSH/Other provider: Registering and referral of a presumptive TB case"
+    friendly_name = _("BETS - AYUSH/Other provider: Registering and referral of a presumptive TB case"
                       " in UATBC/e-Nikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
@@ -380,22 +386,23 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
 
 
 class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
-    friendly_name = _("Forward users to BETS")
+    friendly_name = _("BETS - Forward Agency Users")
     payload_generator_classes = (BETSUserPayloadGenerator,)
 
-    location_types_to_forward = ['plc', 'pcp', 'pcc', 'pac']
+    location_types_to_forward = ('plc', 'pcp', 'pcc', 'pac')
 
     def _is_relevant_location(self, location):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
     def allowed_to_forward(self, user):
-        return any(self._is_relevant_location(loc)
-                   for loc in user.get_sql_locations(self.domain))
+        return (user.user_data.get('user_level', None) == 'real'
+                and any(self._is_relevant_location(loc)
+                        for loc in user.get_sql_locations(self.domain)))
 
 
 class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
-    friendly_name = _("Forward locations to BETS")
+    friendly_name = _("BETS - Forward Locations")
     payload_generator_classes = (BETSLocationPayloadGenerator,)
     location_types_to_forward = (
         'ctd',
@@ -413,9 +420,8 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
-
 class BETSBeneficiaryRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - Beneficiary creation and update")
+    friendly_name = _("BETS - Patient (beneficiary) registration and update")
     payload_generator_classes = (BETSBeneficiaryPayloadGenerator,)
     properties_we_care_about = (
         'phone_number',

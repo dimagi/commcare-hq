@@ -10,16 +10,21 @@ class UnfinishedSubmissionStubAdmin(admin.ModelAdmin):
         'timestamp',
         'saved',
         'domain',
+        'date_queued',
+        'attempts',
     ]
 
     search_fields = [
         'xform_id',
+        'domain',
     ]
 
     list_filter = [
         'timestamp',
         'saved',
         'domain',
+        'date_queued',
+        'attempts',
     ]
 
 

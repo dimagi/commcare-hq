@@ -1317,7 +1317,7 @@ BEGIN
 		'ls_awc_not_open_unknown = ut.ls_awc_not_open_unknown, ' ||
 		'ls_awc_not_open_other = ut.ls_awc_not_open_other ' ||
 	'FROM (SELECT ' ||
-		'location_id AS awc_id, ' ||
+		'awc_id AS awc_id, ' ||
 		'month, ' ||
 		'sum(count) AS ls_supervision_visit, ' ||
 		'CASE WHEN sum(count) > 0 THEN 1 ELSE 0 END AS ls_num_supervised, ' ||
@@ -1331,7 +1331,7 @@ BEGIN
 		'sum(awc_not_open_unknown) AS ls_awc_not_open_unknown, ' ||
 		'sum(awc_not_open_other) AS ls_awc_not_open_other '
 		'FROM ' || quote_ident(_ls_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY location_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 
@@ -1372,7 +1372,7 @@ BEGIN
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
-	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+	'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
 

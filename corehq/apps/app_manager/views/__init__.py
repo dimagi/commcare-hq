@@ -115,6 +115,7 @@ from corehq.apps.app_manager.views.settings import (
     commcare_profile,
     edit_commcare_profile,
     edit_commcare_settings,
+    PromptSettingsUpdateView,
 )
 from corehq.apps.app_manager.views.translations import (
     download_bulk_app_translations,

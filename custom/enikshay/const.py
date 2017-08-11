@@ -2,10 +2,16 @@
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
 OTHER_NUMBER = "phone_number_other"
+ALTERNATE_NUMBER_1 = "phone_number_alternate_1"
+ALTERNATE_NUMBER_2 = "phone_number_alternate_2"
+ALTERNATE_NUMBER_3 = "phone_number_alternate_3"
 NINETYNINEDOTS_NUMBERS = [
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
     OTHER_NUMBER,
+    ALTERNATE_NUMBER_1,
+    ALTERNATE_NUMBER_2,
+    ALTERNATE_NUMBER_3,
 ]
 
 MERM_ID = 'merm_id'
@@ -173,3 +179,13 @@ AGENCY_LOCATION_FIELDS = [
 DSTB_EPISODE_TYPE = "confirmed_tb"
 PERSON_CASE_2B_VERSION = '20'
 REAL_DATASET_PROPERTY_VALUE = 'real'
+
+USERTYPE_DISPLAYS = {
+    'pac': 'AYUSH / Other Provider',
+    'pcp': 'MBBS Provider',
+    'pcc-chemist': 'Chemist',
+    'plc': 'Lab',
+    'ps-fieldstaff': 'Field Staff',
+    'ppia-do': 'District Reviewer',
+    'dto': 'District TB Officer',
+}
