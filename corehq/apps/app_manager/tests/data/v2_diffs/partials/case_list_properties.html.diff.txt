@@ -1,18 +1,6 @@
 --- 
 +++ 
-@@ -34,9 +34,9 @@
-             ">
-                 <td class="text-center col-sm-1">
-                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
--                    <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v" data-bind="
-+                    <i class="grip sortable-handle icon-resize-vertical icon-blue fa fa-arrows-v"
-+                       style="cursor: move;" data-bind="
-                         if: grip,
--                        style: {cursor: 'move'},
-                         event: {mousedown: function(){ $(':focus').blur(); }}
-                     "></i>
-                 </td>
-@@ -118,12 +118,12 @@
+@@ -119,12 +119,12 @@
              <tr>
                  <td></td>
                  <td colspan="4">
