@@ -133,6 +133,15 @@ var reportBuilder = function () {  // eslint-disable-line
         });
 
         self.previewChart = ko.observable(false);
+        self.tooManyChartCategoriesWarning = ko.observable(false);
+        self.noChartForConfigWarning = ko.observable(false);
+
+        self.previewChart.subscribe(function() {
+            // Clear these warnings before revealing the chart div. This prevents them from flickering.
+            // The warnings will be update in _renderChartPreview
+            self.tooManyChartCategoriesWarning(false);
+            self.noChartForConfigWarning(false);
+        });
 
         /**
          * Convert the data source properties passed through the template
@@ -305,12 +314,14 @@ var reportBuilder = function () {  // eslint-disable-line
             var charts = hqImport('reports_core/js/charts.js');
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 if (aaData.length > 25) {
-                    $("#chart-warning").removeClass("hide");
+                    self.tooManyChartCategoriesWarning(true);
                     charts.clear($("#chart-container"));
                 } else {
-                    $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, aaData, $("#chart"));
                 }
+            } else {
+                self.noChartForConfigWarning(true);
+                charts.clear($("#chart"));
             }
         };
 
@@ -397,7 +408,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 }
             },
         });
-        if (config['hasReportBuilderAccess']) {
+        if (!config['previewMode']) {
             self.saveButton.ui.appendTo($("#saveButtonHolder"));
         }
 
