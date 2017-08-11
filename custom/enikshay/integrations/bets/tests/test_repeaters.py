@@ -214,6 +214,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "test",
+                "voucher_approved_by_id": self.user.user_id,
                 "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.plc.location_id,
                 "date_fulfilled": "2017-08-15",
@@ -233,7 +234,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
-            u"EnikshayApprover": None,
+            u"EnikshayApprover": self.user.name,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
         }]}
@@ -334,6 +335,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
