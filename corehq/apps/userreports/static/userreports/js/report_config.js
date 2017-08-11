@@ -134,11 +134,13 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.previewChart = ko.observable(false);
         self.tooManyChartCategoriesWarning = ko.observable(false);
+        self.noChartForConfigWarning = ko.observable(false);
 
         self.previewChart.subscribe(function() {
-            // Clear this warning before revealing the chart div. This it them from flickering.
-            // The warning will be update in _renderChartPreview
+            // Clear these warnings before revealing the chart div. This prevents them from flickering.
+            // The warnings will be update in _renderChartPreview
             self.tooManyChartCategoriesWarning(false);
+            self.noChartForConfigWarning(false);
         });
 
         /**
@@ -318,6 +320,7 @@ var reportBuilder = function () {  // eslint-disable-line
                     charts.render(chartSpecs, aaData, $("#chart"));
                 }
             } else {
+                self.noChartForConfigWarning(true);
                 charts.clear($("#chart"));
             }
         };

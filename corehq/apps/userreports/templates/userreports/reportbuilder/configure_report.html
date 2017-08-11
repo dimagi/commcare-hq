@@ -270,6 +270,16 @@
                   {% endblocktrans %}
                 </div>
               </div>
+              <div data-bind="visible: noChartForConfigWarning" style="display: none;">
+                <div id="chart-warning-bad-config">
+                  <div class="spacer"></div>
+                  <div class="alert alert-warning">
+                    {% blocktrans %}
+                      At least one indicator must not be of format "Group By" to generate charts.
+                    {% endblocktrans %}
+                  </div>
+                </div>
+              </div>
               <div id="chart" class="fs-hide"></div>
             </div>
 
