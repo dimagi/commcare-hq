@@ -64,8 +64,11 @@ class SessionDetailsViewTest(TestCase):
         cls.url = reverse('session_details')
 
         cls.expected_response = json.dumps({
-            'sql_user_id': cls.sql_user.pk,
-            'couch_user_id': cls.couch_user._id
+            'username': cls.sql_user.username,
+            'djangoUserId': cls.sql_user.pk,
+            'superUser': cls.sql_user.is_superuser,
+            'authToken': None,
+            'domains': ['toyland'],
         })
 
     @classmethod
@@ -76,7 +79,7 @@ class SessionDetailsViewTest(TestCase):
     @override_settings(DEBUG=True)
     @softer_assert()
     def test_session_details_view(self):
-        data = json.dumps({'session_id': self.session_key})
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.expected_response, response.content)
@@ -84,7 +87,7 @@ class SessionDetailsViewTest(TestCase):
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
-        data = json.dumps({'session_id': self.session_key})
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
         header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
         response = Client().post(
             self.url,
@@ -98,7 +101,7 @@ class SessionDetailsViewTest(TestCase):
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing_fail(self):
         assert not settings.DEBUG
-        data = json.dumps({'session_id': self.session_key})
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
 
         response = Client().post(
             self.url,

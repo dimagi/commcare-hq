@@ -30,6 +30,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
+from rest_framework.authtoken.models import Token
 from restkit import Resource
 from restkit.errors import Unauthorized
 
@@ -1183,7 +1184,7 @@ class SessionDetialsView(View):
 
         try:
             auth_token = user.auth_token.key
-        except User.DoesNotExist:
+        except Token.DoesNotExist:
             auth_token = None
 
         return JsonResponse({
