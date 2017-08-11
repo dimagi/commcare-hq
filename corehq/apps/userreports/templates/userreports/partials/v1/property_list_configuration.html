@@ -85,7 +85,7 @@ TODO:
             ><tr data-bind="attr: {'data-order': _sortableOrder}">
                 <td class="span1">
                     <i class="grip sortable-handle" style="cursor: move;" data-bind="
-                        css: COMMCAREHQ.icons.GRIP + ' hq-icon-full'
+                        css: hqImport('style/js/main.js').icons.GRIP + ' hq-icon-full'
                     "></i>
                 </td>
 
@@ -183,7 +183,7 @@ TODO:
                 <td class="span1">
                     <i style="cursor: pointer;" title="Delete" data-bind="
                         click: function(){$parent.columns.remove($data)},
-                        css: COMMCAREHQ.icons.DELETE + ' hq-icon-full'
+                        css: hqImport('style/js/main.js').icons.DELETE + ' hq-icon-full'
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}
