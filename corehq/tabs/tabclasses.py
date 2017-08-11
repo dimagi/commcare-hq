@@ -102,12 +102,17 @@ class ProjectReportsTab(UITab):
         """
         Return the url for the start of the report builder, or the paywall.
         """
-        if has_report_builder_access(self._request):
-            url = reverse("report_builder_select_type", args=[self.domain])
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+            from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
+            return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:
-            from corehq.apps.userreports.views import paywall_home
-            url = paywall_home(self.domain)
-        return url
+            if has_report_builder_access(self._request):
+                url = reverse("report_builder_select_type", args=[self.domain])
+            else:
+                from corehq.apps.userreports.views import paywall_home
+                url = paywall_home(self.domain)
+            return url
 
     @staticmethod
     def _filter_sidebar_items(sidebar_items):

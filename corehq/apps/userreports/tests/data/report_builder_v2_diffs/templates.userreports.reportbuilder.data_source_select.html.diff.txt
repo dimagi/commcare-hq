@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -1,6 +1,10 @@
+-{% extends "userreports/v1/base_report_builder.html" %}
++{% extends "userreports/base_report_builder.html" %}
+ {% load i18n %}
+ {% load hq_shared_tags %}
++
++{% block head %}{{ block.super }}
++    {% include 'analytics/fullstory.html' %}
++{% endblock %}
+ 
+ {% block js %}{{ block.super }}
+     <script src="{% static 'userreports/js/data_source_select.js' %}"></script>
