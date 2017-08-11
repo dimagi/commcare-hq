@@ -174,7 +174,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var numEntitiesPerRow = detailObject.numEntitiesPerRow || 1;
             var numRows = detailObject.maxHeight;
             var numColumns = detailObject.maxWidth;
-            var hasInlineTile = detailObject.hasInlineTile;
             var useUniformUnits = detailObject.useUniformUnits || false;
             var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'persistent');
