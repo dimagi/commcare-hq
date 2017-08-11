@@ -88,8 +88,9 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         self.domain = domain
         self.locationless_users = []
+        bets_dto = SQLLocation.objects.get(location_id='07fb72ef99fe49e2bc470edf5a0221b5')
         self.locations_by_id = {
-            loc.location_id: loc for loc in SQLLocation.objects.filter(domain=domain)
+            loc.location_id: loc for loc in bets_dto.get_family()
         }
         filename = 'agency_users.csv'
         self.data_fields = self.get_data_fields()
@@ -107,14 +108,8 @@ class Command(BaseCommand):
                     writer.writerow([username, user_id])
 
     def add_user(self, user, writer):
-
-        def _is_relevant_location(location):
-            return (location.metadata.get('is_test') != "yes"
-                    and location.location_type.code in BETSUserRepeater.location_types_to_forward)
-
-        user_locations = [self.locations_by_id.get(loc_id) for loc_id in user.get_location_ids(self.domain)]
-        if not (user.user_data.get('user_level', None) == 'real'
-                and any(_is_relevant_location(loc) for loc in user_locations)):
+        if not any(loc_id in self.locations_by_id for loc_id in
+                   [user.user_location_id, user.location_id] + user.assigned_location_ids):
             return
 
         user_data = BETSUserPayloadGenerator.serialize(self.domain, user)

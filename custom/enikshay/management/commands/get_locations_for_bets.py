@@ -43,11 +43,11 @@ class Command(BaseCommand):
             writer = csv.writer(f)
             writer.writerow(self.field_names)
             loc_types = BETSLocationRepeater.location_types_to_forward
-            for loc in (SQLLocation.active_objects
+            bets_dto = SQLLocation.objects.get(location_id='07fb72ef99fe49e2bc470edf5a0221b5')
+            for loc in (bets_dto.get_family()
                         .filter(domain=domain, location_type__code__in=loc_types)
                         .prefetch_related('parent', 'location_type')):
-                if loc.metadata.get('is_test') != "yes":
-                    self.add_loc(loc, writer)
+                self.add_loc(loc, writer)
         print "Wrote to {}".format(filename)
 
     def add_loc(self, location, writer):
