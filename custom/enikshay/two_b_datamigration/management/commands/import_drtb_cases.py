@@ -860,7 +860,7 @@ def get_cbnaat_resistance(column_mapping, row):
     if value is None:
         return None
     if value not in ["sensitive", "resistant"]:
-        FieldValidationFailure(value, "cbnaat result")
+        raise FieldValidationFailure(value, "cbnaat result")
     return value == "resistant"
 
 
