@@ -50,12 +50,12 @@ DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
 CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
 cache = get_redis_client()
 
-
-@periodic_task(
-    bind=True,
-    run_every=crontab(hour=0, minute=0),  # every day at midnight
-    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
-)
+# ToDo: Enable post migration
+# @periodic_task(
+#     bind=True,
+#     run_every=crontab(hour=0, minute=0),  # every day at midnight
+#     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
+# )
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
