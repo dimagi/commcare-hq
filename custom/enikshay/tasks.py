@@ -31,6 +31,7 @@ from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
     DOSE_MISSED,
     DOSE_TAKEN_INDICATORS,
+    DATE_FULFILLED,
     DAILY_SCHEDULE_FIXTURE_NAME,
     DAILY_SCHEDULE_ID,
     SCHEDULE_ID_FIXTURE,
@@ -523,7 +524,7 @@ class EpisodeVoucherUpdate(object):
         relevant_vouchers = [
             voucher for voucher in self._get_all_vouchers()
             if (voucher.get_case_property('voucher_type') == 'prescription'
-                and voucher.get_case_property('state') == 'fulfilled')
+                and voucher.get_case_property(DATE_FULFILLED))
         ]
         return sorted(relevant_vouchers, key=self._get_fulfilled_voucher_date)
 
