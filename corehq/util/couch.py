@@ -101,8 +101,6 @@ def get_classes_by_doc_type():
             if klass._doc_type not in classes_by_doc_type:
                 classes_by_doc_type[klass._doc_type] = klass
         queue.extend(klass.__subclasses__())
-    from corehq.motech.repeaters.models import RepeatRecord
-    classes_by_doc_type["RepeatRecord-Failed"] = RepeatRecord
     return classes_by_doc_type
 
 
