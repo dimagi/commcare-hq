@@ -26,6 +26,7 @@ from custom.enikshay.const import (
     NOTIFYING_PROVIDER_USER_ID,
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
+    FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from .const import (
@@ -216,7 +217,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
-            EventOccurDate=episode_case.get_case_property('bets_first_prescription_voucher_redeemed_date'),
+            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
             BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,

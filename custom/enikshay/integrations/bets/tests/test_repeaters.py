@@ -16,6 +16,8 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
+    FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
+    FIRST_PRESCRIPTION_VOUCHER_REDEEMED,
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
@@ -363,7 +365,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
     def test_diagnosis_and_notification_payload(self):
         date_today = u"2017-08-15"
         self.episode.attrs['update'][NOTIFYING_PROVIDER_USER_ID] = self.user.user_id
-        self.episode.attrs['update']['bets_first_prescription_voucher_redeemed_date'] = date_today
+        self.episode.attrs['update'][FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE] = date_today
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
@@ -596,7 +598,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
             self.domain,
             self.episode_id,
             {
-                'bets_first_prescription_voucher_redeemed': 'false',
+                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
                 ENROLLED_IN_PRIVATE: "true",
             },
         )
@@ -633,7 +635,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
             self.domain,
             self.episode_id,
             {
-                'bets_first_prescription_voucher_redeemed': 'false',
+                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
                 'created_by_user_type': 'pac',
                 ENROLLED_IN_PRIVATE: "true",
             },
