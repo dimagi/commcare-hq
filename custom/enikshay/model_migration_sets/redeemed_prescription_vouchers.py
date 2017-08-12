@@ -1,4 +1,4 @@
-from casexml.apps.case.util import get_date_case_property_changed
+from casexml.apps.case.util import get_datetime_case_property_changed
 
 
 class VoucherRedeemedDateSetter(object):
@@ -16,12 +16,12 @@ class VoucherRedeemedDateSetter(object):
         if not self.should_update:
             return {}
 
-        redeemed_date = get_date_case_property_changed(
+        redeemed_datetime = get_datetime_case_property_changed(
             self.episode, 'bets_first_prescription_voucher_redeemed', 'true',
         )
-        if redeemed_date is not None:
+        if redeemed_datetime is not None:
             return {
-                'bets_first_prescription_voucher_redeemed_date': redeemed_date
+                'bets_first_prescription_voucher_redeemed_date': str(redeemed_datetime.date())
             }
         else:
             return {}

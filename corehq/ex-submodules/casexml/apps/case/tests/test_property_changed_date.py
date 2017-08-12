@@ -3,7 +3,7 @@ import pytz
 
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
-from casexml.apps.case.util import get_date_case_property_changed
+from casexml.apps.case.util import get_datetime_case_property_changed
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
@@ -38,5 +38,5 @@ class TestDateCasePropertyChanged(TestCase):
 
         self.assertEqual(
             updated_on.replace(tzinfo=pytz.UTC),
-            get_date_case_property_changed(case, "abc", "updated")
+            get_datetime_case_property_changed(case, "abc", "updated")
         )

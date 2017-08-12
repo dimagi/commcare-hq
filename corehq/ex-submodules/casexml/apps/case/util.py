@@ -179,8 +179,8 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
             yield case
 
 
-def get_date_case_property_changed(case, case_property_name, value):
-    """Returns the date a particular case property was changed to a specific value
+def get_datetime_case_property_changed(case, case_property_name, value):
+    """Returns the datetime a particular case property was changed to a specific value
 
     Not performant!
     """
