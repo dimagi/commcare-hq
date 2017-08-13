@@ -47,9 +47,6 @@ for key, value in {
         # strange error:
         # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
         'submodules/touchforms-src/touchforms/backend',
-
-        # FIXME failing, excluded for now because they were not run by django test runner
-        'submodules/bootstrap3_crispy',
     ]),
 }.items():
     os.environ.setdefault(key, value)
