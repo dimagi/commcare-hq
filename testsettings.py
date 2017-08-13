@@ -81,18 +81,24 @@ def _set_logging_levels(levels):
     for path, level in levels.items():
         logging.getLogger(path).setLevel(level)
 _set_logging_levels({
-    # Quiet down a few really noisy ones.
-    # (removing these can be handy to debug couchdb access for failing tests)
+    # Quiet down noisy loggers. Selective removal can be handy for debugging.
+    'auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
+    'datadog': 'WARNING',
+    'elasticsearch': 'ERROR',
+    'quickcache': 'INFO',
+    'requests.packages.urllib3': 'WARNING',
     'restkit.client': 'INFO',
     's3transfer': 'INFO',
+    'urllib3': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
 # TODO empty logging config (and fix revealed deprecation warnings)
 LOGGING = {
+    'disable_existing_loggers': False,
     'version': 1,
     'loggers': {},
 }
