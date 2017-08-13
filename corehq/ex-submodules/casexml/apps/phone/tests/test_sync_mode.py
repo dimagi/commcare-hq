@@ -7,13 +7,9 @@ import os
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
-from casexml.apps.phone.tests.utils import (
-    get_next_sync_log,
-    generate_restore_payload,
-    MockDevice,
-)
-from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import synclog_from_restore_payload, get_restore_config
+from casexml.apps.phone.tests.utils import MockDevice
+from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
+from casexml.apps.phone.tests.utils import get_restore_config
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -174,13 +170,6 @@ class SyncBaseTest(TestCase):
             migrated_sync_log = SimplifiedSyncLog.from_other_format(sync_log)
             self.assertEqual(sync_log.get_state_hash(), migrated_sync_log.get_state_hash())
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
-
-    def get_next_sync_log(self, **kw):
-        assert not set(self.restore_options) & set(kw), kw
-        kw.update(self.restore_options)
-        kw.setdefault('project', self.project)
-        kw.setdefault('user', self.user)
-        return get_next_sync_log(**kw)
 
 
 class SyncTokenUpdateTest(SyncBaseTest):
