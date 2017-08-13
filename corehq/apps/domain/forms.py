@@ -1553,19 +1553,15 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     future_subscriptions.update(date_end=F('date_start'))
 
                 if self.current_subscription is not None:
-                    subscription = self.current_subscription.change_plan(
+                    self.current_subscription.change_plan(
                         self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 else:
-                    subscription = Subscription.new_domain_subscription(
+                    Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -1573,11 +1569,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        # this point can only be reached if the initiating user was a superuser
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 return True
         except Exception as e:
             log_accounting_error(
