@@ -1576,7 +1576,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 % (self.domain, self.plan_version.plan.name, e.message),
                 show_stack_trace=True,
             )
-        return False
+            return False
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
@@ -1672,6 +1672,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
                 "Subscription for %(domain)s failed to renew due to: %(error)s." % {
@@ -1679,7 +1680,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     'error': e,
                 }
             )
-        return True
+            return False
 
 
 class ProBonoForm(forms.Form):
