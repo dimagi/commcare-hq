@@ -1,3 +1,97 @@
+"""
+# DRTB Case import
+
+This management imports cases into HQ from a given excel file.
+
+The script supports importing three different excel file formats (mumbai, mehsana2016, and mehsana2017), although
+only mumbai is complete!!
+
+## Usage
+
+NOTE: You should be sure to save all excel files processed by this management command and the csv files it
+produces. These will be essential for debugging the import should any issues arise later.
+
+Example:
+```
+$ ./manage.py import_drtb_cases enikshay drtb_cases.xlsx mumbai
+```
+(This is a dry run because no `--commit` flag is passed)
+
+Each run of the script is assigned an id, based on the current time.
+Every run (dry or otherwise) will output two csv log files.
+
+"drtb-import-<import id>.csv" lists the case ids that were created, or the exception that was raised for each row
+of the import file.
+
+"bad-rows-<import id>.csv" lists each row that was not imported successfully, and the error message for that row.
+This document is useful for sending back to EY for cleaning. The document also includes the original row, so
+a cleaner can:
+- open this document
+- fix each error *in the same document* according to the error message
+- delete the first two columns (which list row number and error message)
+- send the document back to dimagi for re-import
+Then you can simply run the script with the modified document
+
+I've also created a companion management command to help debug issues that may occur. I'm imaging the following
+types of requests coming in from the field:
+
+1. "John Doe was in the spreadsheet, but I can't find him in the app"
+In this case, you'll want to be able to match a row from the import to a commcare case.
+You can run
+```
+$ ./manange.py drtb_import_history get_outcome <spreadsheet row> <import id>
+```
+This will parse the "drtb-import-<import id>.csv" created by `improt_drtb_cases`, and print either a list of case
+ids created, or the error message that was raised in processing that row
+
+2. "This case in the app is in an inconsistent state, I think something might have gone wrong with the import"
+In this case, you will want to be able to match a case id to the spreadsheet row that it was generated from.
+You can run:
+```
+$ ./manange.py drtb_import_history get_row <case_id> <import id>
+```
+This will output a row number.
+
+
+## Design
+
+The spec is located [here](https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=1273583155)
+and defines how each row in the excel sheet should be mapped to commcare cases. Each row corresponds to multiple
+cases (sometimes dozens).
+
+You'll probably notice that a fair number of the `clean_<field name>()` functions are pretty lame, and just check
+if the given value is in some list. There has been a bit of churn on the requirements for this script, so at an
+earlier time these functions did more sophisticated conversion of messy values in the xlsx to values that matched
+our app. However it was eventually decided to have EY clean all the excel sheets before hand, which is why those
+functions don't do much now. I probably wouldn't have used this architecture if I was writing this from scratch.
+
+The main components of the script are as follows:
+
+
+## `ColumnMapping`
+This class allows accessing the values in an excel sheet row by a normalized column name. e.g.
+```
+ColumnMapping.get_value("age", row)
+```
+This will return the age value from the row. The normalized column names are useful because the column index will
+differ between formats. This also makes it easy to change the index->column name mapping should anyone happen to
+add columns to the sheet without telling you :)
+
+### <LOCATION>_MAP
+Each `ColumnMapping` references a dictionary (e.g. MUMBAI_MAP) that maps the normalized column names to column
+indexes)
+
+
+## `MumbaiConstants`/`MehsanaConstants`
+These classes hold constants specific to their respective locations which are used to populate some case properties
+
+
+## `get_case_structures_from_row()`
+This is where the magic happens. The row is converted to CaseStructure objects, which will alter be submited to HQ
+with the CaseFactory if this isn't a dry run. Various helper functions extract case property dicts from the row
+for each case, then convert these to CaseStructure objects.
+"""
+
 import csv
 import decimal
 import logging
@@ -436,6 +530,9 @@ class MehsanaConstants(object):
 
 
 def get_case_structures_from_row(commit, domain, migration_id, column_mapping, city_constants, row):
+    """
+    Return a list of CaseStructure objects corresponding to the information in the given row.
+    """
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
@@ -496,6 +593,9 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
 
 
 def get_case_structure(case_type, properties, migration_identifier, host=None):
+    """
+    Converts a properties dictionary to a CaseStructure object
+    """
     owner_id = properties.pop("owner_id")
     props = {k: v for k, v in properties.iteritems() if v is not None}
     props['created_by_migration'] = migration_identifier
@@ -754,6 +854,7 @@ def get_disease_site_properties(column_mapping, row):
         "disease_classification": classification,
         "site_detail": site,
     }
+
 
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
@@ -1211,6 +1312,7 @@ def clean_patient_type(value):
         raise FieldValidationFailure(value, "type of patient")
     return value
 
+
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
 
     drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
@@ -1635,6 +1737,13 @@ def get_drtb_hiv_location(domain, district_id):
 
 
 class _PersonIdGenerator(object):
+    """
+    Person cases in eNikshay require unique, human-readable ids.
+    These ids are generated by combining a user id, device id, and serial count for the user/device pair
+
+    This script is its own "device", and in --commit runs, the serial count is maintained in a database to insure
+    that the next number is always unique.
+    """
 
     dry_run_counter = 0
 
@@ -1675,6 +1784,10 @@ class _PersonIdGenerator(object):
 
     @classmethod
     def generate_person_id_flat(cls, domain, phi_id, commit):
+        """
+        Generate a flat person id. If commit is False, this id will only be unique within this run of the
+        management command, it won't be unique between runs.
+        """
         user = cls.get_user(domain, phi_id)
         return (
             cls.get_id_issuer_body(user) +
@@ -1684,6 +1797,9 @@ class _PersonIdGenerator(object):
 
     @classmethod
     def get_person_id(cls, person_id_flat):
+        """
+        Create a more human readable version of the flat person id.
+        """
         num_chars_between_hyphens = 3
         return '-'.join([
             person_id_flat[i:i + num_chars_between_hyphens]
