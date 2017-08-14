@@ -556,6 +556,8 @@ class EpisodeVoucherUpdate(object):
 
     def get_prescription_total_days(self):
         prescription_json = {}
+        threshold = 168 if self.episode.get_case_property("treatment_options") == "fdc" else 180
+        threshold_already_met = False
         total_days = 0
         for voucher in self._get_fulfilled_vouchers():
             raw_days_value = voucher.get_case_property('final_prescription_num_days')
@@ -565,8 +567,13 @@ class EpisodeVoucherUpdate(object):
                 prop = "prescription_total_days_threshold_{}".format(num_days)
                 if total_days >= num_days and prop not in prescription_json:
                     prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
-        prescription_json['prescription_total_days'] = total_days
 
+            if total_days >= threshold and not threshold_already_met:
+                prop = 'bets_date_prescription_total_days_{}_met'.format(threshold)
+                prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
+                threshold_already_met = True
+
+        prescription_json['prescription_total_days'] = total_days
         return prescription_json
 
     def get_prescription_refill_due_dates(self):

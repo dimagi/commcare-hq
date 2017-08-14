@@ -80,6 +80,19 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             }
         )
 
+    def test_bets_incentive_threshold(self):
+        prescription = self.create_prescription_case()
+        self.make_voucher(prescription, 150, datetime(2017, 1, 1))
+        # This voucher should be the one to meet the threshold
+        self.make_voucher(prescription, 40, datetime(2017, 1, 2))
+        # This one is over the threshold anyways
+        self.make_voucher(prescription, 50, datetime(2017, 1, 3))
+        update = EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days()
+        self.assertEqual(
+            update['bets_date_prescription_total_days_180_met'],
+            '2017-01-02T00:00:00.000000Z'
+        )
+
     @patch('custom.enikshay.tasks.AdherenceDatastore', MagicMock())
     def test_case_updates(self):
         with patch('custom.enikshay.tasks.EpisodeAdherenceUpdate.update_json', MagicMock()) as adherence_update:
