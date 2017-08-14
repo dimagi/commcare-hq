@@ -482,8 +482,8 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
     phi_id = person_case_properties['owner_id']
     person_id_flat = _PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
     person_id = _PersonIdGenerator.get_person_id(person_id_flat)
-    occurrence_id = person_id + "O1"
-    episode_id = person_id + "E1"
+    occurrence_id = person_id + "-O1"
+    episode_id = person_id + "-E1"
 
     person_case_properties['person_id'] = person_id
     person_case_properties['person_id_flat'] = person_id_flat
@@ -526,6 +526,7 @@ def get_person_case_properties(domain, column_mapping, row):
     district_name, district_id = match_district(domain, xlsx_district_name)
     phi_name, phi_id = match_phi(domain, column_mapping.get_value("phi_name", row))
     tu_name, tu_id = get_tu(domain, phi_id)
+    age = clean_age_entered(column_mapping.get_value("age_entered", row))
 
     properties = {
         "name": person_name,
@@ -536,7 +537,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
         "sex": clean_sex(column_mapping.get_value("sex", row)),
-        "age_entered": clean_age_entered(column_mapping.get_value("age_entered", row)),
+        "age_entered": age,
+        "age": age,
         "dob": calculate_dob(column_mapping.get_value("age_entered", row)),
         "current_address": column_mapping.get_value("address", row),
         "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
@@ -858,7 +860,7 @@ def get_cbnaat_resistance(column_mapping, row):
     if value is None:
         return None
     if value not in ["sensitive", "resistant"]:
-        FieldValidationFailure(value, "cbnaat result")
+        raise FieldValidationFailure(value, "cbnaat result")
     return value == "resistant"
 
 
