@@ -350,9 +350,9 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
             case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
-            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and not_sent
             and enrolled_in_private_sector
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
         )
 
@@ -377,10 +377,10 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
             case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
-            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and case_properties.get("created_by_user_type") == "pac"
             and not_sent
             and enrolled_in_private_sector
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
         )
 
