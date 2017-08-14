@@ -111,13 +111,6 @@ class SyncBaseTest(TestCase):
         kw.setdefault("default_case_type", PARENT_TYPE)
         return MockDevice(**kw)
 
-    def _postFakeWithSyncToken(self, caseblocks, token_id):
-        if not isinstance(caseblocks, list):
-            # can't use list(caseblocks) since that returns children of the node
-            # http://lxml.de/tutorial.html#elements-are-lists
-            caseblocks = [caseblocks]
-        return self.factory.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
-
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
 

@@ -37,6 +37,14 @@ class SyncPerformanceTest(SyncBaseTest):
             [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
         )
 
+    def _postFakeWithSyncToken(self, caseblocks, token_id):
+        # TODO remove this when these tests use MockDevice
+        if not isinstance(caseblocks, list):
+            # can't use list(caseblocks) since that returns children of the node
+            # http://lxml.de/tutorial.html#elements-are-lists
+            caseblocks = [caseblocks]
+        return self.factory.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
+
     def setUp(self):
         super(SyncPerformanceTest, self).setUp()
         # the other user is an "owner" of the original users cases as well,
