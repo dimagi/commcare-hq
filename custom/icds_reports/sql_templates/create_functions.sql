@@ -1242,11 +1242,11 @@ BEGIN
 
 	-- Update num launched AWCs based on previous month as well
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-	   'is_launched = ut.is_launched, ' ||
-	   'num_launched_awcs = ut.num_launched_awcs ' ||
-    'FROM (SELECT is_launched, num_launched_awcs, awc_id ' ||
+	   'is_launched = ' || quote_literal(_yes_text) || ', ' ||
+	   'num_launched_awcs = 1 ' ||
+    'FROM (SELECT DISTINCT(awc_id) ' ||
        'FROM agg_awc ' ||
-	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE month <= ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Update training status based on the previous month as well

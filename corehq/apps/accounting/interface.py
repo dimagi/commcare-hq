@@ -60,7 +60,6 @@ from .models import (
     PaymentRecord,
     SoftwarePlan,
     SoftwarePlanVersion,
-    SoftwareProductType,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -1120,10 +1119,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 return ['', '', '', '']
 
             types = [
-                dict(SoftwareProductType.CHOICES).get(
-                    credit_line.product_type,
-                    "Any"
-                ) if credit_line.product_type is not None else '',
+                "Any" if credit_line.product_type is not None else '',
                 dict(FeatureType.CHOICES).get(
                     credit_line.feature_type,
                     "Any"

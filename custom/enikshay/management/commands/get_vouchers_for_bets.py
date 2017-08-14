@@ -58,18 +58,8 @@ class Command(BaseCommand):
             for record in with_progress_bar(records, length=record_count):
                 try:
                     payload = json.loads(record.get_payload())['voucher_details'][0]
-
                     voucher_id = record.payload_id
-                    person_case = get_person_case_from_voucher(domain, voucher_id)
-                    payload[u'PersonId'] = person_case.get_case_property('person_id')
-
-                    voucher_case = accessor.get_case(voucher_id)
-                    agency_user = CommCareUser.get_by_user_id(
-                        voucher_case.get_case_property('voucher_fulfilled_by_id'))
-                    payload[u'AgencyId'] = agency_user.raw_username
-
                     payload['Succeeded'] = record.succeeded
-
                 except Exception as e:
                     errors.append([record.payload_id, unicode(e)])
                     continue

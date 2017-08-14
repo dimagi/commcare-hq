@@ -126,7 +126,7 @@ hqDefine('notifications/js/notifications_service.js', function () {
     $(function () {
         var notifications = hqImport('notifications/js/notifications_service.js');
         var csrfToken = $("#csrfTokenContainer").val();
-        notifications.setRMI(hqImport('hqwebapp/js/urllib.js').reverse('notifications_service'), csrfToken);
+        notifications.setRMI(hqImport('hqwebapp/js/initial_page_data.js').reverse('notifications_service'), csrfToken);
         notifications.initService('#js-settingsmenu-notifications');
         notifications.initUINotify('.alert-ui-notify');
     });

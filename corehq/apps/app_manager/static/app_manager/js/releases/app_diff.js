@@ -44,7 +44,7 @@
  * and is taken advantage of in this code.
  * */
 hqDefine('app_manager/js/releases/app_diff.js', function () {
-    var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
+    var reverse = hqImport('hqwebapp/js/initial_page_data.js').reverse;
     var sanitize = DOMPurify.sanitize;
 
     var init = function(selector, options) {

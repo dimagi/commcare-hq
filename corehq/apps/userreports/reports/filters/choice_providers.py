@@ -285,8 +285,18 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
     def _locations_to_choices(self, locations):
+        cached_path_display = {}  # works best if self.order_by_hierarchy == True
+
         def display(loc):
-            return loc.get_path_display() if self.show_full_path else loc.display_name
+            if self.show_full_path:
+                if loc.parent_id in cached_path_display:
+                    path_display = '{}/{}'.format(cached_path_display[loc.parent_id], loc.name)
+                else:
+                    path_display = loc.get_path_display()
+                cached_path_display[loc.id] = path_display
+                return path_display
+            else:
+                return loc.display_name
         return [Choice(loc.location_id, display(loc)) for loc in locations]
 
 

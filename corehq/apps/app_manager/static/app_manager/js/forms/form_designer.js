@@ -150,7 +150,7 @@ hqDefine("app_manager/js/forms/form_designer.js", function() {
                 );
             }
 
-            var reverse = hqImport("hqwebapp/js/urllib.js").reverse,
+            var reverse = hqImport("hqwebapp/js/initial_page_data.js").reverse,
                 editDetails = hqImport('app_manager/js/forms/edit_form_details.js');
             editDetails.initName(
                 initial_page_data("form_name"),

@@ -1,6 +1,6 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
-function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
+function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -118,7 +118,7 @@ window.angular.module('icdsApp').directive('adolescentGirls', function() {
         scope: {
             data: '=',
         },
-        controller: EnrolledWomenController,
+        controller: AdolescentWomenController,
         controllerAs: '$ctrl',
     };
 });
