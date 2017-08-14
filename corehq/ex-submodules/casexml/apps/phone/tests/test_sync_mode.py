@@ -84,12 +84,7 @@ class SyncBaseTest(TestCase):
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
 
-        self.device = MockDevice(
-            self.project,
-            self.user,
-            self.restore_options,
-            default_case_type=PARENT_TYPE,
-        )
+        self.device = self.get_device()
         self.sync_log = self.device.sync(overwrite_cache=True, version=V1).log
         self.factory = self.device.case_factory
         # HACK remove once all tests are converted to use self.device
@@ -126,6 +121,13 @@ class SyncBaseTest(TestCase):
         with open(file_path, "rb") as f:
             xml_data = f.read()
         return submit_form_locally(xml_data, 'test-domain', last_sync_token=token_id).xform
+
+    def get_device(self, **kw):
+        kw.setdefault("project", self.project)
+        kw.setdefault("user", self.user)
+        kw.setdefault("restore_options", self.restore_options)
+        kw.setdefault("default_case_type", PARENT_TYPE)
+        return MockDevice(**kw)
 
     def _postFakeWithSyncToken(self, caseblocks, token_id):
         if not isinstance(caseblocks, list):
@@ -1975,8 +1977,8 @@ class MultiUserSyncTest(SyncBaseTest):
         p2, o2, e2 = create_case_graph(2)
 
         # Alice and Bob sync
-        alice = MockDevice(self.project, self.user, self.restore_options)
-        bob = MockDevice(self.project, self.other_user, self.restore_options)
+        alice = self.get_device()
+        bob = self.get_device(user=self.other_user)
         all_cases = {case.case_id for case in [p1, o1, e1, p2, o2, e2]}
         self.assertEqual(set(alice.last_sync.log.case_ids_on_phone), all_cases)
         self.assertEqual(set(bob.last_sync.log.case_ids_on_phone), all_cases)
