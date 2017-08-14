@@ -954,7 +954,7 @@
             {
               "type": "boolean_expression",
               "operator": "in",
-              "property_value": ["", null],
+              "property_value": [null],
               "expression": {
                 "type": "property_path",
                 "property_path": [
