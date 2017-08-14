@@ -62,7 +62,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_fulfilled_by_id",
+                "field": "voucher_fulfilled_by_login_name",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Id"

@@ -26,6 +26,8 @@ class Command(BaseCommand):
             '--console', action='store_true', default=False, dest='console',
             help='Write output to the console instead of to file.'
         )
+        parser.add_argument('--dumper', dest='dumpers', action='append', default=[],
+                            help='Dumper slug to run (use multiple --dumper to run multiple dumpers).')
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
@@ -39,6 +41,10 @@ class Command(BaseCommand):
         stats = Counter()
         # domain dumper should be first since it validates domain exists
         dumpers = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
+
+        requested_dumpers = options.get('dumpers')
+        if requested_dumpers:
+            dumpers = [dumper for dumper in dumpers if dumper.slug in requested_dumpers]
 
         for dumper in dumpers:
             filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)

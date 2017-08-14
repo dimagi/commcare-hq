@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'shard',
-            help="File path for log file",
+            help="db shard to query against",
         )
         parser.add_argument(
             'log_file',

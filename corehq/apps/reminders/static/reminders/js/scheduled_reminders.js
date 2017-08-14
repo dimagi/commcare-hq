@@ -8,7 +8,7 @@ hqDefine("reminders/js/scheduled_reminders.js", function() {
                     date: next_fire.format("YYYY-MM-DD"),
                     time: next_fire.format("h:mm a"),
                     case_name: data.case_name,
-                    case_url: data.case_id ? hqImport("hqwebapp/js/urllib.js").reverse("case_details", data.case_id) : "",
+                    case_url: data.case_id ? hqImport("hqwebapp/js/initial_page_data.js").reverse("case_details", data.case_id) : "",
                     recipient_desc: data.recipient_desc,
                     recipient_type: data.recipient_type,
                 };

@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
 window.angular.module('icdsApp').factory('progressReportService', ['$http', function($http) {
     return {

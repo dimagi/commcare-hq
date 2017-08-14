@@ -3,7 +3,7 @@
 hqDefine("app_manager/js/app_view_application.js", function() {
     $(function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            reverse = hqImport("hqwebapp/js/urllib.js").reverse;
+            reverse = hqImport("hqwebapp/js/initial_page_data.js").reverse;
 
         // Languages: CommCare Translations
         var $translation_ui = $("#translations_ui");

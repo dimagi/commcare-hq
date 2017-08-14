@@ -29,14 +29,6 @@ hqDefine('app_manager/js/releases/releases.js', function () {
         self.failed_url_generation = ko.observable(false);
         self.build_profile = ko.observable('');
 
-        self.allow_editing_comment = ko.observable(false);
-        self.is_comment_visible = ko.computed(function () {
-            return self.build_comment() || self.allow_editing_comment();
-        });
-        self.showComment = function () {
-            self.allow_editing_comment(true);
-        };
-
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
@@ -266,7 +258,7 @@ hqDefine('app_manager/js/releases/releases.js', function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
-            return hqImport("hqwebapp/js/urllib.js").reverse.apply(null, arguments);
+            return hqImport("hqwebapp/js/initial_page_data.js").reverse.apply(null, arguments);
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;

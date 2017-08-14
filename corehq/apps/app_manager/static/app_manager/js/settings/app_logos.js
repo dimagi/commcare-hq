@@ -38,7 +38,7 @@ hqDefine("app_manager/js/settings/app_logos.js", function() {
 
     self.removeLogo = function(slug) {
         $.post(
-            hqImport("hqwebapp/js/urllib.js").reverse("hqmedia_remove_logo"),
+            hqImport("hqwebapp/js/initial_page_data.js").reverse("hqmedia_remove_logo"),
             {
               logo_slug: slug
             },

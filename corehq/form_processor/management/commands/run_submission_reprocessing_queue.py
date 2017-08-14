@@ -29,7 +29,8 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
         _record_datadog_metrics()
         day_ago = utcnow - timedelta(days=1)
         queue_filter = Q(saved=False) & (Q(date_queued__isnull=True) | Q(date_queued__lte=day_ago))
-        stub_ids = list(UnfinishedSubmissionStub.objects.filter(queue_filter).values_list('id', flat=True)[:1000])
+        query = UnfinishedSubmissionStub.objects.filter(queue_filter).order_by('timestamp')
+        stub_ids = list(query.values_list('id', flat=True)[:1000])
         if stub_ids:
             UnfinishedSubmissionStub.objects.filter(pk__in=stub_ids).update(
                 date_queued=utcnow, attempts=F('attempts') + 1

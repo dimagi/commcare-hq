@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, check_domain_migration
 from dimagi.utils.web import json_response
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
@@ -46,6 +46,7 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
+@check_domain_migration
 def update_patient_adherence(request, domain):
     try:
         request_json = json.loads(request.body)
@@ -70,6 +71,7 @@ def update_patient_adherence(request, domain):
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
+@check_domain_migration
 def update_adherence_confidence(request, domain):
     try:
         request_json = json.loads(request.body)
@@ -101,6 +103,7 @@ def update_adherence_confidence(request, domain):
 @login_or_digest_or_basic_or_apikey()
 @require_POST
 @csrf_exempt
+@check_domain_migration
 def update_default_confidence(request, domain):
     try:
         request_json = json.loads(request.body)

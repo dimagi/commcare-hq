@@ -120,6 +120,7 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
+    LatestAppInfo,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -4611,6 +4612,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         return self
 
+    @property
+    @memoized
+    def global_app_config(self):
+        return GlobalAppConfig.for_app(self)
+
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
 
@@ -4928,14 +4934,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    @property
-    def odk_profile_display_url(self):
-        return self.short_odk_url or self.odk_profile_url
-
-    @property
-    def odk_media_profile_display_url(self):
-        return self.short_odk_media_url or self.odk_media_profile_url
-
     def get_odk_qr_code(self, with_media=False, build_profile_id=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
         try:
@@ -5055,6 +5053,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
+
+        LatestAppInfo(self.copy_of or self.id, self.domain).clear_caches()
+
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
@@ -5472,6 +5473,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
         )
 
+    @property
+    @memoized
+    def enable_update_prompts(self):
+        return (
+            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+        )
+
     @memoized
     def get_practice_user(self, build_profile_id=None):
         """
@@ -5704,7 +5713,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if app_manager_v2:
+            if app_manager_v2 and not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -6247,6 +6256,47 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
+
+
+class GlobalAppConfig(Document):
+    # this should be the unique id of the app (not of a versioned copy)
+    app_id = StringProperty()
+    domain = StringProperty()
+
+    # these let mobile prompt updates for application and APK
+    app_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+    apk_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+
+    @classmethod
+    def for_app(cls, app):
+        """
+        Returns the actual config object for the app or an unsaved
+            default object
+        """
+        app_id = app.copy_of or app.id
+
+        res = cls.get_db().view(
+            "global_app_config_by_app_id/view",
+            key=[app_id, app.domain],
+            reduce=False,
+            include_docs=True,
+        ).one()
+
+        if res:
+            return cls(res['doc'])
+        else:
+            # return default config
+            return cls(app_id=app_id, domain=app.domain)
+
+    def save(self, *args, **kwargs):
+        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
 # backwards compatibility with suite-1.0.xml

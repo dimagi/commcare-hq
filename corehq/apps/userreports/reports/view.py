@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
-
+from contextlib import contextmanager
 from datetime import datetime
 
 import pytz
@@ -29,7 +29,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -116,6 +116,12 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
         if u_key in query_dict:
             request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
+
+
+@contextmanager
+def tmp_report_config(report_config):
+    yield report_config
+    report_config.delete()
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -529,12 +535,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             })
 
         raw_rows = list(data.get_data())
-        headers = [column.header for column in self.data_source.columns if column.data_tables_column.visible]
+
+        headers = [
+            column.header
+            for column in self.data_source.inner_columns if column.data_tables_column.visible
+        ]
 
         column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
-            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+            if column.visible:
+                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []
@@ -629,6 +640,32 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         temp = StringIO()
         export_from_tables(self.export_table, temp, Format.XLS_2007)
         return export_response(temp, Format.XLS_2007, self.title)
+
+    @classmethod
+    def report_preview_data(cls, domain, temp_report):
+
+        with tmp_report_config(temp_report) as report_config:
+            view = cls(request=HttpRequest())
+            view._domain = domain
+            view._lang = "en"
+            view._report_config_id = report_config._id
+            try:
+                export_table = view.export_table
+                datatables_data = json.loads(view.get_ajax({}).content)
+            except UserReportsError:
+                # User posted an invalid report configuration
+                return None
+            except DataSourceConfigurationNotFoundError:
+                # A temporary data source has probably expired
+                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+                return None
+            else:
+                return {
+                    "table": export_table[0][1],
+                    "map_config": view.spec.map_config,
+                    "chart_configs": view.spec.charts,
+                    "aaData": datatables_data['aaData'],
+                }
 
 
 # Base class for classes that provide custom rendering for UCRs

@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
 function LactatingEnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
@@ -22,7 +22,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
 
     vm.rightLegend = {
         info: 'Total number of lactating women who are enrolled for ICDS services',
@@ -51,7 +51,9 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of lactating women who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of lactating women who are enrolled for ICDS services: <strong>' + valid + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -63,7 +65,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {
             vm.data.mapData = response.data.report_data;
         });
     };

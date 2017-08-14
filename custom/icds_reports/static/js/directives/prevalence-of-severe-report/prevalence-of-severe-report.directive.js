@@ -1,6 +1,6 @@
 /* global d3*/
 
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -55,9 +55,9 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? d3.format(".0%")(row.severe / row.total) : 'N/A';
-        var moderate = row ? d3.format(".0%")(row.moderate / row.total) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal /row.total) : 'N/A';
+        var sever = row ? d3.format(".0%")(row.severe / (row.total || 1)) : 'N/A';
+        var moderate = row ? d3.format(".0%")(row.moderate / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +

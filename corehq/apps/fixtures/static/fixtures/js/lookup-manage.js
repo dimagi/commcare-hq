@@ -52,9 +52,7 @@ define([
             self._id = ko.observable();
         }
         self.view_link = ko.computed(function(){
-            // TODO: fix urllib.js
-            return "/a/bosco/fixtures/view_lookup_tables/" + "?table_id=" + self._id();
-            //return hqImport('hqwebapp/js/urllib.js').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
+            return hqImport('hqwebapp/js/initial_page_data').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
         }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
@@ -113,9 +111,7 @@ define([
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                // TODO: fix urllib.js
-                url: "/a/bosco/fixtures/edit_lookup_tables/update-tables/" + (self._id() || ''),
-                //url: hqImport('hqwebapp/js/urllib.js').reverse('update_lookup_tables') + (self._id() || ''),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('update_lookup_tables') + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 error: function(data) {
@@ -280,9 +276,7 @@ define([
             if (tables.length > 0){
                 // POST, because a long querystring can overflow the request
                 $.ajax({
-                    // TODO: fix urllib.js
-                    url: "/a/bosco/fixtures/edit_lookup_tables/download/",
-                    //url: hqImport('hqwebapp/js/urllib.js').reverse('download_fixtures'),
+                    url: hqImport('hqwebapp/js/initial_page_data').reverse('download_fixtures'),
                     type: 'POST',
                     data: {'table_ids': tables},
                     dataType: 'json',
@@ -351,16 +345,14 @@ define([
         self.removeDataType = function (dataType) {
             if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'?")){
                     self.data_types.destroy(dataType);
-                    dataType.save();                 
+                    dataType.save();
             }
             return false;
         };
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                // TODO: fix urllib.js
-                url: "/a/bosco/fixtures/edit_lookup_tables/data-types/",
-                //url: hqImport('hqwebapp/js/urllib.js').reverse('fixture_data_types'),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('fixture_data_types'),
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {

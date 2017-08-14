@@ -13,7 +13,7 @@ from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProces
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
@@ -28,10 +28,10 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
     other processing that needs to happen on each form
     """
     change_feed = KafkaChangeFeed(
-        topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor',
+        topics=topics.FORM_TOPICS, group_id='form-processsor',
         num_processes=num_processes, process_num=process_num
     )
-    checkpoint = PillowCheckpoint('form-submission-metadata-tracker', change_feed.sequence_format)
+    checkpoint = KafkaPillowCheckpoint('form-submission-metadata-tracker', topics.FORM_TOPICS)
     form_processor = FormSubmissionMetadataTrackerProcessor()
     return ConstructedPillow(
         name=pillow_id,

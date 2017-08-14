@@ -1,6 +1,7 @@
 from datetime import datetime
 from mock import patch, MagicMock
 from django.test import TestCase, override_settings
+from casexml.apps.case.mock import CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
 from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
@@ -27,6 +28,15 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             }
         )
 
+    def approve_voucher(self, voucher):
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=voucher.case_id,
+            attrs={
+                "create": False,
+                "update": {'state': 'approved'}
+            },
+        ))
+
     def test_basic_voucher_update(self):
         prescription1 = self.create_prescription_case()
         self.make_voucher(prescription1, 12, datetime(2017, 1, 1))
@@ -49,7 +59,17 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         # It should hit 30 now, and should flp the order of the above two
         self.make_voucher(prescription, 7, datetime(2017, 1, 3))
         # This one should trigger both the 60 and 90 thresholds
-        self.make_voucher(prescription, 70, datetime(2017, 1, 4))
+        voucher = self.make_voucher(prescription, 70, datetime(2017, 1, 4))
+        self.assertEqual(
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days(),
+            {
+                "prescription_total_days": 29 + 1 + 7 + 70,
+                "prescription_total_days_threshold_30": '2017-01-02T00:00:00.000000Z',
+                "prescription_total_days_threshold_60": '2017-01-04T00:00:00.000000Z',
+                "prescription_total_days_threshold_90": '2017-01-04T00:00:00.000000Z',
+            }
+        )
+        self.approve_voucher(voucher)  # approving the voucher shouldn't change anything
         self.assertEqual(
             EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days(),
             {
@@ -66,7 +86,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             adherence_update.return_value = {'update': {}}
 
             prescription = self.create_prescription_case()
-            self.make_voucher(prescription, 29, datetime(2017, 1, 2))
+            voucher = self.make_voucher(prescription, 29, datetime(2017, 1, 2))
             self.make_voucher(prescription, 11, datetime(2017, 1, 1))
 
             # the updater should pickup the above changes
@@ -76,6 +96,12 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             self.assertEqual(episode.get_case_property("prescription_total_days"), unicode(29 + 11))
 
             # test that a subsequent update performs a noop
+            self.assertEqual(
+                EpisodeVoucherUpdate(self.domain, episode).update_json(),
+                {}
+            )
+            # Updating after a voucher has been approved also shouldn't change anything
+            self.approve_voucher(voucher)
             self.assertEqual(
                 EpisodeVoucherUpdate(self.domain, episode).update_json(),
                 {}
@@ -155,12 +181,10 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             'drugs_ordered_readable': "Happy Pills, Sad Pills, Buggy Pillz"
         })
         voucher11 = get_voucher_case_structure(None, prescription1.case_id, {
-            'date_fulfilled': '2013-01-01',
             'date_issued': '2012-01-01',
             'state': "available",
         })
         voucher21 = get_voucher_case_structure(None, prescription1.case_id, {
-            'date_fulfilled': '2013-01-01',
             'date_issued': '2012-01-01',
             'state': "available",
         })

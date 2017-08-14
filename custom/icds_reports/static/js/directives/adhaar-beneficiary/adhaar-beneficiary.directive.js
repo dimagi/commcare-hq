@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
 
 function AdhaarController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
@@ -24,7 +24,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
         info: 'Percentage number of ICDS beneficiaries whose Adhaar identification has been captured',
     };
@@ -51,8 +51,11 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var percent = row ? d3.format('.2%')(row.in_month / row.all) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div><div>% of ICDS beneficiaries whose Adhaar has been captured: <strong>' + percent + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Adhaar has been captured: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -64,7 +67,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             vm.steps['map'].label = 'Map';
         }
 
-        demographicsService.getAdhaarData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = demographicsService.getAdhaarData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {

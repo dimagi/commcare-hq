@@ -162,7 +162,9 @@ def get_cleanliness_flag_from_scratch(domain, owner_id):
             }
             if dependent_cases_owned_by_other_owners:
                 hint_id = dependent_cases & owned_cases
-                return CleanlinessFlag(False, hint_id.pop())
+                # can't get back from extension case to owned case e.g. host is a child of owned case
+                if hint_id:
+                    return CleanlinessFlag(False, hint_id.pop())
 
         if cases_to_check:
             # it wasn't in any of the open or closed IDs - it must be dirty

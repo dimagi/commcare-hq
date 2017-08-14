@@ -125,12 +125,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
                 var levels = [];
                 window.angular.forEach(vm.levels, function (value) {
-                    if (value.id > selectedLocationIndex() + 1) {
+                    if (value.id > selectedLocationIndex()) {
                         levels.push(value);
                     }
                 });
                 vm.groupByLevels = levels;
-                vm.selectedLevel = selectedLocationIndex() + 2;
+                vm.selectedLevel = selectedLocationIndex() + 1;
             });
         } else {
             initHierarchy();
@@ -195,12 +195,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
         });
         var levels = [];
         window.angular.forEach(vm.levels, function (value) {
-            if (value.id > selectedLocationIndex() + 1) {
+            if (value.id > selectedLocationIndex()) {
                 levels.push(value);
             }
         });
         vm.groupByLevels = levels;
-        vm.selectedLevel = selectedLocationIndex() + 2;
+        vm.selectedLevel = selectedLocationIndex() + 1;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
@@ -214,7 +214,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
     return {
         restrict:'E',
         scope: {

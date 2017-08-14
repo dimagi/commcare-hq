@@ -9,6 +9,7 @@ from corehq.apps.app_manager.views import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    PromptSettingsUpdateView,
     view_app,
     download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
     upload_bulk_app_translations, multimedia_ajax, releases_ajax, current_app_version, paginate_releases,
@@ -64,7 +65,8 @@ app_urls = [
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
-    url(r'^copy/gzip$', export_gzip, name='gzip_app')
+    url(r'^copy/gzip$', export_gzip, name='gzip_app'),
+    url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
 ]
 
 

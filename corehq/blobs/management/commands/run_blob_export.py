@@ -18,7 +18,12 @@ Slugs:
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py run_blob_export [options] export_domain_apps domain
+    Example: ./manage.py run_blob_export [options] domain
+
+    Dump XForms in parallel:
+        ./manage.py run_blob_export -e sql_xforms --limit-to-db p0 domain
+         ...
+        ./manage.py run_blob_export -e sql_xforms --limit-to-db pN domain
     """
     help = USAGE
 
@@ -31,11 +36,14 @@ class Command(BaseCommand):
                             help='Run all exporters')
         parser.add_argument('--chunk-size', type=int, default=100,
                             help='Maximum number of records to read from couch at once.')
+        parser.add_argument('--limit-to-db', dest='limit_to_db',
+                            help="When specifying a SQL importer use this to restrict "
+                                 "the exporter to a single database.")
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, domain=None, reset=False,
-               chunk_size=100, all=None, **options):
+               chunk_size=100, all=None, limit_to_db=None, **options):
         exporters = options.get('exporters')
 
         if not domain:
@@ -43,6 +51,10 @@ class Command(BaseCommand):
 
         if all:
             exporters = list(EXPORTERS)
+
+        migrator_options = {}
+        if limit_to_db:
+            migrator_options['limit_to_db'] = limit_to_db
 
         for exporter_slug in exporters:
             try:
@@ -61,6 +73,6 @@ class Command(BaseCommand):
             else:
                 reset_export = True  # always reset if the file doesn't already exist
             exporter.by_domain(domain)
-            total, skips = exporter.migrate(reset=reset_export, chunk_size=chunk_size)
+            total, skips = exporter.migrate(reset=reset_export, chunk_size=chunk_size, **migrator_options)
             if skips:
                 sys.exit(skips)

@@ -417,36 +417,35 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
         }
 
     def handle_success(self, response, payload_doc, repeat_record):
-        # A successful response returns a Nikshay ID like 00001
-        # Failures also return with status code 200 and some message like
-        # Dublicate Entry or Invalid data format
-        # (Dublicate is not a typo)
         message = parse_SOAP_response(
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
-            response
+            response,
         )
         try:
-            if isinstance(message, basestring) and message.isdigit():
-                health_facility_id = self._get_person_locations(payload_doc).pcp
-                nikshay_id = '-'.join([health_facility_id, message])
-                update_case(
-                    payload_doc.domain,
-                    payload_doc.case_id,
-                    {
-                        "private_nikshay_registered": "true",
-                        "nikshay_id": nikshay_id,
-                        "private_nikshay_error": "",
-                    },
-                    external_id=nikshay_id,
-                )
-            else:
-                self.handle_failure(message, payload_doc, repeat_record)
-        except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            health_facility_id = self._get_person_locations(payload_doc).pcp
+        except NikshayLocationNotFound as e:
+            self.handle_exception(e, repeat_record)
+        else:
+            nikshay_id = '-'.join([health_facility_id, message])
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "private_nikshay_registered": "true",
+                    "nikshay_id": nikshay_id,
+                    "private_nikshay_error": "",
+                },
+                external_id=nikshay_id,
+            )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response,
+        )
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 
@@ -493,7 +492,8 @@ def _get_person_case_properties(person_case, person_case_properties):
     person_properties = {
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
-        "page": person_case_properties.get('age', ''),
+        # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+        "page": person_case_properties.get('age', '') or person_case_properties.get('age_entered', ''),
         "paddress": person_case_properties.get('current_address', ''),
         "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),

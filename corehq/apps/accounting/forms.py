@@ -381,10 +381,6 @@ class SubscriptionForm(forms.Form):
     delay_invoice_until = forms.DateField(
         label=ugettext_lazy("Delay Invoice Until"), widget=forms.DateInput(), required=False
     )
-    plan_product = forms.ChoiceField(
-        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
-    )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
@@ -551,7 +547,6 @@ class SubscriptionForm(forms.Form):
                 placeholder="Search for Software Plan"
             )
 
-        plan_product_field = self.plan_product_field()
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -573,7 +568,6 @@ class SubscriptionForm(forms.Form):
                 start_date_field,
                 end_date_field,
                 delay_invoice_until_field,
-                plan_product_field,
                 plan_edition_field,
                 plan_version_field,
                 domain_field,
@@ -604,27 +598,6 @@ class SubscriptionForm(forms.Form):
                     )
                 )
             )
-        )
-
-    def plan_product_field(self):
-        # product type is now always commcare, but need to support old subscriptions
-        is_existing = self.subscription is not None
-        if is_existing:
-            try:
-                plan_product = self.subscription.plan_version.product_rate.product.product_type
-                self.fields['plan_product'].initial = plan_product
-            except (IndexError, SoftwarePlanVersion.DoesNotExist):
-                plan_product = (
-                    '<i class="fa fa-exclamation-triangle"></i> No Product Exists for '
-                    'the Plan (update required)'
-                )
-            return hqcrispy.B3TextField(
-                'plan_product',
-                plan_product,
-            )
-        return hqcrispy.B3TextField(
-            'plan_product',
-            SoftwareProductType.COMMCARE
         )
 
     @transaction.atomic
@@ -735,10 +708,6 @@ class ChangeSubscriptionForm(forms.Form):
         required=True,
         widget=forms.Textarea,
     )
-    new_plan_product = forms.ChoiceField(
-        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
-    )
     new_plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
@@ -779,7 +748,6 @@ class ChangeSubscriptionForm(forms.Form):
             crispy.Fieldset(
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
-                'new_plan_product',
                 'new_plan_edition',
                 crispy.Field(
                     'new_plan_version', css_class="input-xxlarge",
@@ -832,8 +800,6 @@ class CreditForm(forms.Form):
         self.subscription = subscription
         super(CreditForm, self).__init__(*args, **kwargs)
 
-        product_choices = [('', 'Any')]
-        product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()

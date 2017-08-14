@@ -310,7 +310,7 @@
                 "field": "tu_name",
                 "calculate_total": false,
                 "type": "field",
-                "display": "TU Name"
+                "display": "Treating TU Name"
             },
             {
                 "sortable": false,

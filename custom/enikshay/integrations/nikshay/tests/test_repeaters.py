@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import os
 from mock import patch
 from collections import namedtuple
 from datetime import datetime
@@ -47,6 +48,9 @@ MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url oper
 MockNikshayRegisterPrivatePatientRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
 
 
+WSDL_URL = os.path.join(os.path.dirname(__file__), 'nikshay.wsdl')
+
+
 class MockResponse(object):
     def __init__(self, status_code, json_data):
         self.json_data = json_data
@@ -61,6 +65,7 @@ class MockSoapResponse(object):
         self.status_code = status_code
         self.content = content
         self.headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        self.reason = "hooray!"
 
 FAILURE_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
@@ -1094,7 +1099,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
 
         self.repeater = NikshayRegisterPrivatePatientRepeater(
             domain=self.domain,
-            url='case-repeater-url?wsdl',
+            url=WSDL_URL,
             username='test-user'
         )
         self.repeater.white_listed_case_types = ['episode']
@@ -1153,6 +1158,23 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(1, len(self.repeat_records().all()))
 
+    def test_handle_response(self):
+        self.repeater.operation = 'InsertHFIDPatient_UATBC'
+        self.repeater.save()
+        self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.pcp.location_id)
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+
+        record = list(self.repeat_records())[0]
+        with patch.object(NikshayRegisterPrivatePatientPayloadGenerator, 'handle_success') as success:
+            self.repeater.handle_response(MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE), record)
+            assert success.called
+
+        with patch.object(NikshayRegisterPrivatePatientPayloadGenerator, 'handle_failure') as failure:
+            self.repeater.handle_response(MockSoapResponse(200, FAILURE_RESPONSE), record)
+            assert failure.called
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
                    ENIKSHAY_PRIVATE_API_USERS={'MH': 'ppia-mh14'})
@@ -1195,7 +1217,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
 
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
-                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                url=WSDL_URL,
                 operation='InsertHFIDPatient_UATBC')
         )
 
@@ -1217,13 +1239,11 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
 
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
-                # using the actual WSDL link to fetch the xml structure for dummy response parsing.
-                # No data request is sent
-                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                url=WSDL_URL,
                 operation='InsertHFIDPatient_UATBC')
         )
 
-        payload_generator.handle_success(
+        payload_generator.handle_failure(
             MockSoapResponse(200, FAILURE_RESPONSE),
             self.cases[self.episode_id],
             repeat_record,
