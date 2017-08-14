@@ -1,3 +1,5 @@
+import csv
+
 from django.core.management.base import BaseCommand
 
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -23,15 +25,13 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         case_ids = get_all_episode_ids(domain)
         cases = iter_all_active_person_episode_cases(domain, case_ids)
 
-        for person, episode in with_progress_bar(cases, len(case_ids)):
-            update_json = {}
-            for updater in self.updaters:
-                try:
-                    update_json.update(updater(self.domain, episode).update_json())
-                except Exception as e:
-                    error = [episode.case_id, episode.domain, updater.__name__, e]
-                    errors.append(error)
-                    print "{}: {} - {}".format(*error)
+        for person, episode in with_progress_bar(cases, len(case_ids), oneline=False):
+            try:
+                update_json = self.updater(domain, person, episode).update_json()
+            except Exception as e:
+                errors.append([person.case_id, episode.case_id, episode.domain, e])
+                continue
+
             if update_json:
                 updates.append((episode.case_id, update_json, False))
             if len(updates) >= batch_size:
@@ -40,3 +40,18 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
 
         if len(updates) > 0:
             bulk_update_cases(domain, updates)
+
+        self.write_errors(errors)
+
+    @property
+    def log_filename(self):
+        return "{}_errors.csv".format(self.updater.__name__)
+
+    def write_errors(self, errors):
+        if not errors:
+            return None
+
+        with file(self.log_filename, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Person ID', 'Episode ID', 'Domain', 'Error'])
+            writer.writerows(errors)
