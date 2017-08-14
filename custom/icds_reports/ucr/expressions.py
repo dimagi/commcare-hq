@@ -2,6 +2,7 @@ from datetime import datetime
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.es.forms import FormES
+from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
@@ -31,6 +32,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
     ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
     ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
+    ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
 ]
 
 
@@ -222,6 +224,16 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, form_json)
         return form_json
 
+class GetAppVersion(JsonObject):
+    type = TypeProperty('icds_get_app_version')
+    app_version_string = DefaultProperty(required=True)
+
+    def configure(self, app_version_string):
+        self._app_version_string = app_version_string
+
+    def __call__(self, item, context=None):
+        app_version_string = self._app_version_string(item, context)
+        return get_version_from_appversion_text(app_version_string)
 
 def month_start(spec, context):
     # fix offset to 3 months in past
@@ -1123,5 +1135,13 @@ def get_forms_in_date_expression(spec, context):
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
         from_date_expression=from_date,
         to_date_expression=to_date
+    )
+    return wrapped
+
+
+def get_app_version(spec, context):
+    wrapped = GetAppVersion.wrap(spec)
+    wrapped.configure(
+        app_version_string=ExpressionFactory.from_spec(wrapped.app_version_string, context)
     )
     return wrapped
