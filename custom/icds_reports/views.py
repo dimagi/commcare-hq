@@ -218,7 +218,8 @@ class ProgramSummaryView(View):
 
         test_date = datetime(year, month, day)
 
-        yesterday = (test_date - relativedelta(days=1)).date()
+        day_before_date_from_filter = (test_date - relativedelta(days=1)).date()
+        yesterday = (now - relativedelta(days=1)).date()
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
@@ -241,7 +242,7 @@ class ProgramSummaryView(View):
             data = get_maternal_child_data(config)
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
-                tuple(yesterday.timetuple())[:3],
+                tuple(day_before_date_from_filter.timetuple())[:3],
                 config
             )
         elif step == 'demographics':

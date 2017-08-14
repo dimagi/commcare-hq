@@ -407,7 +407,7 @@ def get_maternal_child_data(config):
                     'redirect': 'underweight_children'
                 },
                 {
-                    'label': _('Wasting (weight-for-height)'),
+                    'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -436,7 +436,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('Stunting (height-for-age)'),
+                    'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
                         "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
@@ -4183,8 +4183,9 @@ def get_awcs_covered_data_map(config, loc_level):
             'awcs': awcs,
             'fillKey': 'Launched',
         }
-
         map_data.update({name: row_values})
+
+    total_awcs = sum(map(lambda x: x['awcs'], map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -4197,7 +4198,8 @@ def get_awcs_covered_data_map(config, loc_level):
             "fills": fills,
             "rightLegend": {
                 "info": _((
-                    "Total AWCs that have launched ICDS CAS"
+                    "Total AWCs that have launched ICDS CAS <br />" +
+                    "Number of AWCs launched: %d" % total_awcs
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4947,17 +4949,17 @@ def get_adhaar_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 50:
-            row_values.update({'fillKey': '25%-49%'})
-        elif value >= 50:
-            row_values.update({'fillKey': '50%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value > 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-49%': ORANGE})
-    fills.update({'50%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5195,17 +5197,17 @@ def get_clean_water_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value >= 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
-    fills.update({'75%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [

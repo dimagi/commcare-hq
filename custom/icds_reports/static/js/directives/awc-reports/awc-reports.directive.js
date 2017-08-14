@@ -951,6 +951,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 yAxis: {
                     axisLabel: '',
                 },
+                tooltip:
+                    function(x, y, value) {
+                        return '<strong>Total number of children between ' + y +':</strong> ' + value;
+                    },
+
             },
         };
         $scope.$apply();
