@@ -224,6 +224,7 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, form_json)
         return form_json
 
+
 class GetAppVersion(JsonObject):
     type = TypeProperty('icds_get_app_version')
     app_version_string = DefaultProperty(required=True)
