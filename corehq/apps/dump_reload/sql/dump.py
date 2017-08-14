@@ -78,6 +78,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('ota.DemoUserRestore', UserIDFilter('demo_user_id', include_web_users=False)),
     FilteredModelIteratorBuilder('domain_migration_flags.DomainMigrationProgress', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('products.SQLProduct', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('smsforms.SQLXFormsSession', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('parent__domain')),
     FilteredModelIteratorBuilder('sms.PhoneNumber', SimpleFilter('domain')),
