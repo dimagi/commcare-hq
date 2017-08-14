@@ -946,11 +946,23 @@
         }
       },
       "attended_children": {
-        "comment": "This expression has logic to deal with a bug in the app.  The app counts an extra child if active is blank and inactive is not since it concats an extra space",
+        "comment": "This expression has logic to deal with a bug in the app.  The app counts an extra child if active is blank and inactive is not since it concats an extra space.  It also uses GPS location to differentiate old and new versions of the app (this is not great).  New version of app has gps_location as a variable.  Ideally we can remove this completely after all users have updated to new version of app.",
         "type": "conditional",
         "test": {
           "type": "and",
           "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": ["", null],
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "gps_location"
+                ]
+              }
+            },
             {
               "type": "boolean_expression",
               "operator": "in",
