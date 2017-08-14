@@ -197,7 +197,9 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
-            u"EnikshayApprover": u"",
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": u"Jon Snow",
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
         }]}
@@ -234,6 +236,8 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": self.user.name,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -247,6 +251,10 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestIncentivePayload, self).setUp()
+        self.episode.attrs['update']['bets_notifying_provider_user_id'] = self.user._id
+
     def test_bets_180_treatment_payload(self):
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
         self.episode.attrs['update'][LAST_VOUCHER_CREATED_BY_ID] = self.user.user_id
@@ -262,6 +270,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -287,6 +297,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -311,6 +323,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -335,6 +349,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -359,6 +375,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
@@ -386,6 +404,8 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pac.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
             u"EnikshayApprover": None,
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,

@@ -6,7 +6,7 @@ hqDefine("reports/js/submission_error_report", function() {
             $btn.disableButton();
 
             $.post({
-                url: hqImport("hqwebapp/js/urllib").reverse('reprocess_xform_errors'),
+                url: hqImport("hqwebapp/js/initial_page_data").reverse('reprocess_xform_errors'),
                 data: { form_id: formId },
                 success: function(data) {
                     $btn.removeSpinnerFromButton();

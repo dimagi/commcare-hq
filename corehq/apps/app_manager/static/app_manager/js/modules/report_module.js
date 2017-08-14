@@ -387,7 +387,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
     $(function () {
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/urllib').reverse('validate_module_for_build'));
+        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
     });
 
     return {

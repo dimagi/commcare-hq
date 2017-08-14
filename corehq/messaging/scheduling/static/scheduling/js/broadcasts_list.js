@@ -1,6 +1,6 @@
 hqDefine("scheduling/js/broadcasts_list", function() {
     $(function() {
-        var list_broadcasts_url = hqImport("hqwebapp/js/urllib").reverse("new_list_broadcasts"),
+        var list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("new_list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src");
 
         $("#scheduled-table").dataTable({

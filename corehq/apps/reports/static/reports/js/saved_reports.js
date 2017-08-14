@@ -282,7 +282,7 @@ $(function() {
     if ($configList.length) {
         $configList.koApplyBindings(new ReportConfigsViewModel({
             items: hqImport("hqwebapp/js/initial_page_data").get('configs'),
-            saveUrl: hqImport("hqwebapp/js/urllib").reverse("add_report_config"),
+            saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
         }));
     }
 });

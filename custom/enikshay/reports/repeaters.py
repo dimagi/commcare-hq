@@ -3,7 +3,7 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
@@ -46,22 +46,32 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def get_all_rows(self):
         repeater_id = self.request.GET.get('repeater', None)
         state = self.request.GET.get('record_state', None)
+        if self.is_rendered_as_email:
+            return [
+                [
+                    get_repeat_record_count(self.domain, repeater_id, "SUCCESS"),
+                    get_repeat_record_count(self.domain, repeater_id, "CANCELLED"),
+                ]
+            ]
         return [self._make_row(record) for record in
                 iter_repeat_records_by_domain(self.domain, repeater_id=repeater_id, state=state)]
 
     @property
     def headers(self):
-        columns = [
-            DataTablesColumn(_('Record ID')),
-            DataTablesColumn(_('Status')),
-            DataTablesColumn(_('Person Case')),
-            DataTablesColumn(_('URL')),
-            DataTablesColumn(_('Last sent date')),
-            DataTablesColumn(_('Attempts')),
-        ]
-        if not self.is_rendered_as_email:
-            columns.append(DataTablesColumn(_('Payload')))
-
+        if self.is_rendered_as_email:
+            columns = [
+                DataTablesColumn(_('Successful Records')),
+                DataTablesColumn(_('Cancelled Records')),
+            ]
+        else:
+            columns = [
+                DataTablesColumn(_('Record ID')),
+                DataTablesColumn(_('Status')),
+                DataTablesColumn(_('Person Case')),
+                DataTablesColumn(_('URL')),
+                DataTablesColumn(_('Last sent date')),
+                DataTablesColumn(_('Attempts')),
+            ]
         return DataTablesHeader(*columns)
 
     def _make_row(self, record):
@@ -70,6 +80,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
                 date=self._format_date(attempt.datetime),
                 message=attempt.message))
             for attempt in record.attempts]
+
         row = [
             record._id,
             self._get_state(record)[1],
@@ -78,12 +89,6 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             self._format_date(record.last_checked) if record.last_checked else '---',
             ",<br />".join(attempt_messages),
         ]
-        if not self.is_rendered_as_email:
-            try:
-                payload = record.get_payload()
-            except Exception as error:
-                payload = u"Error: {}".format(error)
-            row.append(payload)
         return row
 
     def _get_person_id_link(self, record):

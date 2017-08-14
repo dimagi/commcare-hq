@@ -1,6 +1,6 @@
 /* global _ */
 
-var url = hqImport('hqwebapp/js/urllib').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService, storageService, userLocationId) {
     var vm = this;

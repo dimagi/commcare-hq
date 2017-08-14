@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {

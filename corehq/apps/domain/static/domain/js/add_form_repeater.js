@@ -50,7 +50,7 @@ $(function() {
         $testLinkButton.disableButton();
 
         $.post({
-            url: hqImport("hqwebapp/js/urllib").reverse("test_repeater"),
+            url: hqImport("hqwebapp/js/initial_page_data").reverse("test_repeater"),
             data: data,
             success: handleSuccess,
             error: handleFailure,

@@ -38,7 +38,7 @@ hqDefine("app_manager/js/add_ons", function() {
             $addOns.koApplyBindings(new EditAddOns(
                 hqImport("hqwebapp/js/initial_page_data").get("add_ons"),
                 hqImport("hqwebapp/js/initial_page_data").get("add_ons_layout"),
-                hqImport("hqwebapp/js/urllib").reverse("edit_add_ons")
+                hqImport("hqwebapp/js/initial_page_data").reverse("edit_add_ons")
             ));
             sectionChanger.attachToForm($addOns.find("form"));
         }

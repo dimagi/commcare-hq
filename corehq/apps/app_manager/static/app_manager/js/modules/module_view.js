@@ -30,7 +30,7 @@ $(function () {
                 properties: detail.properties,
                 lang: moduleBrief.lang,
                 langs: moduleBrief.langs,
-                saveUrl: hqImport('hqwebapp/js/urllib').reverse('edit_module_detail_screens'),
+                saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
                 parentModules: initial_page_data('parent_modules'),
                 childCaseTypes: detail.subcase_types,
                 fixture_columns_by_type: options.fixture_columns_by_type || {},
@@ -163,7 +163,7 @@ $(function () {
             var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
             var visitScheduler = new VisitScheduler.ModuleScheduler({
                 home: $('#module-scheduler'),
-                saveUrl: hqImport('hqwebapp/js/urllib').reverse('edit_schedule_phases'),
+                saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
                 hasSchedule: moduleBrief.has_schedule,
                 schedulePhases: initial_page_data('schedule_phases'),
                 caseProperties: initial_page_data('details')[0].properties,
@@ -178,7 +178,7 @@ $(function () {
 
     $(function () {
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/urllib').reverse('validate_module_for_build'));
+        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
     });
 
     $(function() {

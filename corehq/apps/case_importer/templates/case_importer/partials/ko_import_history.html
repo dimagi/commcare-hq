@@ -51,7 +51,7 @@
             <!--ko if: upload_comment_edit_allowed-->
             <inline-edit params="
                 value: comment,
-                url: hqImport('hqwebapp/js/urllib').reverse('case_importer_update_upload_comment', upload_id),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('case_importer_update_upload_comment', upload_id),
                 rows: 1,
                 placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                 saveValueName: 'comment',
@@ -76,7 +76,7 @@
             <!--/ko-->
             <!--ko if: upload_file_download_allowed-->
                 <i class="fa fa-download"></i>
-                <a data-bind="attr: {href: hqImport('hqwebapp/js/urllib').reverse('case_importer_upload_file_download', upload_id)}">
+                <a data-bind="attr: {href: hqImport('hqwebapp/js/initial_page_data').reverse('case_importer_upload_file_download', upload_id)}">
                     <span data-bind="text: upload_file_name"></span>
                 </a>
             <!--/ko-->

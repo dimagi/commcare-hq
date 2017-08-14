@@ -30,13 +30,27 @@ function MapOrSectorController() {
                     return d3.format(".4r")(d);
                 },
             },
+            tooltip: function(x, y) {
+                if(!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
+                    return 'NA';
+                }
+
+                return vm.templatePopup({
+                    loc: {
+                        properties: {
+                            name: y,
+                        },
+                    },
+                    row: vm.data.mapData.tooltips_data[y],
+                });
+            },
         },
     };
 }
 
 MapOrSectorController.$inject = [];
 
-var url = hqImport('hqwebapp/js/urllib').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 window.angular.module('icdsApp').directive('mapOrSectorView', function() {
     return {

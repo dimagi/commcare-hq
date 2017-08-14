@@ -62,7 +62,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                 });
                 self.saveButton.ajax({
                     type: 'post',
-                    url: hqImport('hqwebapp/js/urllib').reverse('edit_toggle') + location.search,
+                    url: hqImport('hqwebapp/js/initial_page_data').reverse('edit_toggle') + location.search,
                     data: {
                         item_list: JSON.stringify(items)
                     },
@@ -74,7 +74,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             }
         });
 
-        var projectInfoUrl = '<a href="' + hqImport('hqwebapp/js/urllib').reverse('domain_internal_settings') + '">domain</a>';
+        var projectInfoUrl = '<a href="' + hqImport('hqwebapp/js/initial_page_data').reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function(namespace, value) {
             if (namespace === 'domain') {
                 return projectInfoUrl.replace('___', value);

@@ -6,7 +6,7 @@ hqDefine("domain/js/internal_calculations", function() {
         var calc_tag = $calc_btn.attr('data-calc-tag');
 
         $calc_btn.html('Loading...');
-        $.get(hqImport('hqwebapp/js/urllib').reverse('calculated_properties'), {calc_tag: calc_tag}, function(data) {
+        $.get(hqImport('hqwebapp/js/initial_page_data').reverse('calculated_properties'), {calc_tag: calc_tag}, function(data) {
             if (!data.error) {
                 $('#calc-' + calc_tag).html(data.value);
                 $calc_btn.addClass('btn-success');
@@ -24,7 +24,7 @@ hqDefine("domain/js/internal_calculations", function() {
         $(document).on("click", ".load-calc-btn", function() {
             load_calculation($(this).parent());
         });
-    
+
         $(document).on("click", '#load-all-btn', function() {
             $('.calc-group').each(function(_, ele) {
                 load_calculation($(ele));

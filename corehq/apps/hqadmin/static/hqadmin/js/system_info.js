@@ -294,7 +294,7 @@ hqDefine('hqadmin/js/system_info', function () {
     
         self.perform_operation = function(operation) {
             self.operation_in_progress(true);
-            $.post(hqImport("hqwebapp/js/urllib").reverse("pillow_operation_api"), {
+            $.post(hqImport("hqwebapp/js/initial_page_data").reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
                 'operation': operation
             }, function( data ) {
@@ -333,7 +333,7 @@ hqDefine('hqadmin/js/system_info', function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
             celery_update = initial_page_data("celery_update"),
             couch_update = initial_page_data("couch_update"),
-            system_ajax_url = hqImport("hqwebapp/js/urllib").reverse("system_ajax");
+            system_ajax_url = hqImport("hqwebapp/js/initial_page_data").reverse("system_ajax");
         var celeryViewModel = new RefreshableViewModel(system_ajax_url + "?api=flower_poll", CeleryTaskModel, celery_update);
         var couchViewModel;
         if (initial_page_data("is_bigcouch")) {

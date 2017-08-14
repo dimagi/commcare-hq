@@ -82,7 +82,7 @@ hqDefine("reminders/js/reminders.list", function() {
 
     $(function() {
         var remindersList = new RemindersListModel(hqImport("hqwebapp/js/initial_page_data").get('reminders'),
-            hqImport("hqwebapp/js/urllib").reverse("reminder_rule_progress"));
+            hqImport("hqwebapp/js/initial_page_data").reverse("reminder_rule_progress"));
         $('#reminders-list').koApplyBindings(remindersList);
         remindersList.init();
 

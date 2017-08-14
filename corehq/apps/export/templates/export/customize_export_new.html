@@ -23,7 +23,7 @@
                     numberOfAppsToProcess: {{ number_of_apps_to_process }},
                 }
             );
-            hqImport('hqwebapp/js/urllib').registerUrl(
+            hqImport('hqwebapp/js/initial_page_data').registerUrl(
                 "build_schema", "/a/---/data/export/build_full_schema/"
             )
             $('#customize-export').koApplyBindings(customExportView);

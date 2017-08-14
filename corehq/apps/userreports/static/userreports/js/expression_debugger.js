@@ -1,7 +1,7 @@
 hqDefine('userreports/js/expression_debugger', function() {
     $(function () {
         var ExpressionModel = hqImport('userreports/js/expression_evaluator').ExpressionModel;
-        var submitUrl = hqImport("hqwebapp/js/urllib").reverse("expression_evaluator");
+        var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("expression_evaluator");
         var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
         var sampleExpression = {
             "type": "property_name",

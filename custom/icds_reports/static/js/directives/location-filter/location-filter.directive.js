@@ -315,7 +315,7 @@ LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locatio
 LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
-    var url = hqImport('hqwebapp/js/urllib').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

@@ -6,7 +6,7 @@
     <script>
         $(function () {
             var DataSourceModel = hqImport('userreports/js/data_source_evaluator').DataSourceModel;
-            var submitUrl = hqImport("hqwebapp/js/urllib").reverse("data_source_evaluator");
+            var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("data_source_evaluator");
 
             ko.applyBindings(
                 new DataSourceModel(submitUrl),

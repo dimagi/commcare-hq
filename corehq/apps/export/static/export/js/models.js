@@ -8,7 +8,7 @@
 hqDefine('export/js/models', function () {
     var constants = hqImport('export/js/const');
     var utils = hqImport('export/js/utils');
-    var urls = hqImport('hqwebapp/js/urllib');
+    var urls = hqImport('hqwebapp/js/initial_page_data');
 
     /**
      * ExportInstance

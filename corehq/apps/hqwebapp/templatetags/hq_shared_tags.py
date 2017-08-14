@@ -640,12 +640,12 @@ def registerurl(parser, token):
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return ("<script>hqImport('hqwebapp/js/urllib').registerUrl({}, {})</script>"
-                    .format(json.dumps(url_name), json.dumps(url)))
+            return (u"<div data-name=\"{}\" data-value={}></div>"
+                    .format(url_name, json.dumps(url)))
 
     nodelist = NodeList([FakeNode()])
 
-    return AddToBlockNode(nodelist, 'js-inline')
+    return AddToBlockNode(nodelist, 'registered_urls')
 
 
 @register.simple_tag

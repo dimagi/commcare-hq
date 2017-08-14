@@ -1,20 +1,20 @@
+from datetime import datetime, date
 import json
 
 import jsonobject
-from datetime import datetime, date
-
 import pytz
 from pytz import timezone
 
 from django.core.serializers.json import DjangoJSONEncoder
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
-from custom.enikshay.case_utils import update_case, get_person_case_from_episode
+from custom.enikshay.case_utils import (
+    update_case, get_person_case_from_episode, get_person_case_from_voucher)
 from custom.enikshay.const import (
     DATE_FULFILLED,
     FULFILLED_BY_ID,
@@ -27,15 +27,18 @@ from custom.enikshay.const import (
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
 )
-from custom.enikshay.integrations.bets.const import (
+from custom.enikshay.exceptions import NikshayLocationNotFound
+from .const import (
     TREATMENT_180_EVENT,
     DRUG_REFILL_EVENT,
     SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
     LOCATION_TYPE_MAP,
-    CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
-from custom.enikshay.exceptions import NikshayLocationNotFound
+    CHEMIST_VOUCHER_EVENT,
+    LAB_VOUCHER_EVENT,
+    TOTAL_DAY_THRESHOLDS
+)
 from .utils import get_bets_location_json
 
 
@@ -57,6 +60,8 @@ class BETSPayload(jsonobject.JsonObject):
     BeneficiaryType = jsonobject.StringProperty(required=True)
     Location = jsonobject.StringProperty(required=True)
     DTOLocation = jsonobject.StringProperty(required=True)
+    PersonId = jsonobject.StringProperty(required=False)
+    AgencyId = jsonobject.StringProperty(required=False)
     EnikshayApprover = jsonobject.StringProperty(required=False)
     EnikshayRole = jsonobject.StringProperty(required=False)
     EnikshayApprovalDate = jsonobject.StringProperty(required=False)
@@ -78,6 +83,15 @@ class BETSPayload(jsonobject.JsonObject):
 
 class IncentivePayload(BETSPayload):
     EpisodeID = jsonobject.StringProperty(required=False)
+
+    @staticmethod
+    def _get_agency_id(episode_case):
+        agency_id = episode_case.get_case_property('bets_notifying_provider_user_id')
+        if not agency_id:
+            raise NikshayLocationNotFound(
+                "Episode {} does not have an agency".format(episode_case.case_id))
+        agency_user = CommCareUser.get_by_user_id(agency_id)
+        return agency_user.raw_username
 
     @classmethod
     def create_180_treatment_payload(cls, episode_case):
@@ -102,6 +116,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -129,6 +145,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -171,6 +189,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=owner_id,
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -202,6 +222,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -211,6 +233,7 @@ class IncentivePayload(BETSPayload):
     @classmethod
     def create_ayush_referral_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
         location = cls._get_location(
             episode_case_properties.get("registered_by"),
@@ -230,6 +253,8 @@ class IncentivePayload(BETSPayload):
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=cls._get_agency_id(episode_case),
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -262,6 +287,10 @@ class VoucherPayload(BETSPayload):
             related_case_id=voucher_case.case_id
         )
 
+        person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case.case_id)
+        agency_user = CommCareUser.get_by_user_id(
+            voucher_case.get_case_property('voucher_fulfilled_by_id'))
+
         approver_id = voucher_case.get_case_property('voucher_approved_by_id')
         if not approver_id:
             raise AssertionError("Voucher does not have an approver")
@@ -280,6 +309,8 @@ class VoucherPayload(BETSPayload):
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
+            PersonId=person_case.get_case_property('person_id'),
+            AgencyId=agency_user.raw_username,
             EnikshayApprover=approver_name,
             EnikshayRole=approver_usertype,
             EnikshayApprovalDate=voucher_case.get_case_property('date_approved'),
@@ -390,7 +421,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                    episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
+                episode_case.dynamic_case_properties(), n, check_already_sent=check_already_sent
             )
         ]
         if check_already_sent:

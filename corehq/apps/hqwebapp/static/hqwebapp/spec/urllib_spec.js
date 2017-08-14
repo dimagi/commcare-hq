@@ -2,7 +2,7 @@
 /* global $, sinon */
 
 describe('urllib', function() {
-    var urllib = hqImport('hqwebapp/js/urllib');
+    var urllib = hqImport('hqwebapp/js/initial_page_data');
     describe('getUrlParameterFromString', function() {
         it('should return undefined when URL param missing', function() {
             assert.strictEqual(urllib.getUrlParameterFromString('asdf', '?limit=29'), undefined);

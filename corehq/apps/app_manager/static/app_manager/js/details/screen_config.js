@@ -1034,7 +1034,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     this.printTemplateReference = _.extend(printRef, {
                         removePrintTemplate: function() {
                             $.post(
-                                hqImport("hqwebapp/js/urllib").reverse("hqmedia_remove_detail_print_template"),
+                                hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_detail_print_template"),
                                 {
                                     module_unique_id: spec.moduleUniqueId,
                                 },

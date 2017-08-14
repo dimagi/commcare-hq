@@ -800,8 +800,6 @@ class CreditForm(forms.Form):
         self.subscription = subscription
         super(CreditForm, self).__init__(*args, **kwargs)
 
-        product_choices = [('', 'Any')]
-        product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()

@@ -16,7 +16,7 @@ function KpiController($location) {
 KpiController.$inject = ['$location'];
 
 window.angular.module('icdsApp').directive("kpi", function() {
-    var url = hqImport('hqwebapp/js/urllib').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

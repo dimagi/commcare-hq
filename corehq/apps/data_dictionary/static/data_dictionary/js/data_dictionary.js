@@ -178,8 +178,8 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
     };
 
     $(function() {
-        var dataUrl = hqImport('hqwebapp/js/urllib').reverse('data_dictionary_json'),
-            casePropertyUrl = hqImport('hqwebapp/js/urllib').reverse('update_case_property'),
+        var dataUrl = hqImport('hqwebapp/js/initial_page_data').reverse('data_dictionary_json'),
+            casePropertyUrl = hqImport('hqwebapp/js/initial_page_data').reverse('update_case_property'),
             typeChoices = hqImport('hqwebapp/js/initial_page_data').get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();

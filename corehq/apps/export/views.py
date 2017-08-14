@@ -1578,10 +1578,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
         try:
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
-            response = StreamingHttpResponse(
-                blob if hasattr(blob, '__iter__') else FileWrapper(blob),
-                content_type=data_file.content_type
-            )
+            response = StreamingHttpResponse(FileWrapper(blob), content_type=data_file.content_type)
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
         response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'

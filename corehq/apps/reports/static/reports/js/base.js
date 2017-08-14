@@ -19,7 +19,7 @@ hqDefine("reports/js/base", function() {
                 filterForm: $("#reportFilters"),
                 items: initial_page_data('report_configs'),
                 defaultItem: defaultConfig,
-                saveUrl: hqImport("hqwebapp/js/urllib").reverse("add_report_config"),
+                saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
             });
         }
 

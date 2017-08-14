@@ -310,7 +310,7 @@ hqDefine('app_manager/js/app_manager', function () {
                     action = $a.data("case-action"),
                     moduleId = $popoverContent.data("module-id"),
                     $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
-                $form.attr("action", hqImport("hqwebapp/js/urllib").reverse("new_form", moduleId));
+                $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
                 $form.find("input[name='case_action']").val(action);
                 $form.find("input[name='form_type']").val($a.data("form-type"));
                 if (!$form.data('clicked')) {

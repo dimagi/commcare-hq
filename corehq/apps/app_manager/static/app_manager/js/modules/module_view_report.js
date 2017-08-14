@@ -15,7 +15,7 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
                 initial_page_data("multimedia_object_map"),
                 navMenuMediaItem.default_file_name
         );
-        var saveURL = hqImport("hqwebapp/js/urllib").reverse("edit_report_module");
+        var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
         var staticData = new StaticFilterData(initial_page_data('static_data_options'));
         var reportModule = new ReportModule(_.extend({}, initial_page_data("report_module_options"), {
             lang: initial_page_data('lang'),
@@ -59,7 +59,7 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
                 placeholder: " ",
                 ajax: {
                     // TODO - this is pretty hackish
-                    url: (hqImport("hqwebapp/js/urllib").reverse("choice_list_api").split('report_id')[0]
+                    url: (hqImport("hqwebapp/js/initial_page_data").reverse("choice_list_api").split('report_id')[0]
                           + element.parent()[0].lastElementChild.value + "/"),
                     dataType: 'json',
                     quietMillis: 250,

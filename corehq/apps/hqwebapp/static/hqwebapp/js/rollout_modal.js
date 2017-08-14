@@ -29,7 +29,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
         // User clicks to turn on flag
         $modal.on('click', '.flag-enable', function() {
             $.post({
-                url: hqImport("hqwebapp/js/urllib").reverse("toggle_" + slug),
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "on",
                 },
@@ -56,7 +56,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
             var slug = $(this).data("slug"),
                 redirect = $(this).data("redirect");
             $.post({
-                url: hqImport("hqwebapp/js/urllib").reverse("toggle_" + slug),
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "off",
                 },

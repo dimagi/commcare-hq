@@ -28,7 +28,7 @@ hqDefine("userreports/js/configurable_report", function() {
             var retrying = false;
             (function poll() {
                 $.ajax({
-                    url: hqImport("hqwebapp/js/urllib").reverse('configurable_data_source_status'),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse('configurable_data_source_status'),
                     dataType: 'json',
                     success: function(data) {
                         if (data.isBuilt){
@@ -107,7 +107,7 @@ hqDefine("userreports/js/configurable_report", function() {
             filterForm: $("#paramSelectorForm"),
             items: initial_page_data("report_configs"),
             defaultItem: defaultConfig,
-            saveUrl: hqImport("hqwebapp/js/urllib").reverse("add_report_config"),
+            saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
         });
 
         $('#email-enabled').tooltip({
