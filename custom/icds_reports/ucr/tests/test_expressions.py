@@ -192,4 +192,4 @@ class TestGetAppVersion(SimpleTestCase):
             "app_version_string": "CommCare Android, version 2.36.2(433756). App v9969. "
                                   "CommCare Version 2.36. Build 433756, built on: 2017-06-23"}))
         self.assertEqual(105, expression({
-            "app_version_string": "CommCare Android, version 2.36.2(433756). App v105"}))
+            "app_version_string": "CommCare Android, version 2.36.2(433756). App v105."}))
