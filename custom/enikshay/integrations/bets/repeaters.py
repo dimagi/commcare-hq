@@ -327,16 +327,10 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         )
 
     def _met_prescription_days_threshold(self, episode_case):
-        if not case_properties_changed(episode_case, ["prescription_total_days"]):
-            return False
-
-        prescription_total_days = _cast_to_int(
-            episode_case.get_case_property("prescription_total_days", 0)
+        return (
+            case_properties_changed(episode_case, ['bets_date_prescription_total_days_168_met'])
+            or case_properties_changed(episode_case, ['bets_date_prescription_total_days_180_met'])
         )
-        if episode_case.get_case_property("treatment_options") == "fdc":
-            return prescription_total_days >= 168
-        else:
-            return prescription_total_days >= 180
 
 
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
