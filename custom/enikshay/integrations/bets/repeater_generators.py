@@ -198,12 +198,6 @@ class IncentivePayload(BETSPayload):
             EnikshayApprovalDate=None,
         )
 
-    @staticmethod
-    def _india_now():
-        utc_now = pytz.UTC.localize(datetime.utcnow())
-        india_now = utc_now.replace(tzinfo=timezone('Asia/Kolkata')).date()
-        return str(india_now)
-
     @classmethod
     def create_diagnosis_and_notification_payload(cls, episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
@@ -248,7 +242,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
-            EventOccurDate=cls._india_now(),
+            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
             BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
