@@ -48,6 +48,8 @@ def _setup_once(*args, **kw):
     if not hasattr(_setup_once, "done"):
         _setup_once.done = True
         _setup_once.setup(*args, **kw)
+
+
 _setup_once.setup = django.setup
 django.setup = _setup_once
 
