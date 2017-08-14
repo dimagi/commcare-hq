@@ -176,12 +176,21 @@ class IncentivePayload(BETSPayload):
                 related_case_id=person_case.case_id
             )
 
-        event_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE)
+        if episode_case_properties.get('treatment_outcome') in ("cured", "treatment_completed"):
+            event_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE)
+            if not event_date:
+                # the treatment_outcome_date property used to be called
+                # "rx_outcome_date", and was changed at some point. Older cases
+                # still have the rx_outcome_date property set.
+                event_date = episode_case_properties.get('rx_outcome_date')
+        else:  # They hit a threshold of total prescription days
+            event_date = (episode_case_properties.get('bets_date_prescription_total_days_168_met')
+                          or episode_case_properties.get('bets_date_prescription_total_days_168_met'))
+
         if not event_date:
-            # the treatment_outcome_date property used to be called
-            # "rx_outcome_date", and was changed at some point. Older cases
-            # still have the rx_outcome_date property set.
-            event_date = episode_case_properties.get('rx_outcome_date')
+            raise AssertionError("No treatment completion date found for episode {}. "
+                                 "How was this triggered?".format(episode_case.case_id))
+
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
             EventOccurDate=event_date,
