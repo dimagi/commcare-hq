@@ -3,7 +3,7 @@ var upcoming_table = null;  // needs to be accessible to global function delete_
 hqDefine("reminders/js/broadcasts_list.js", function() {
     $(function() {
         var past_table,
-            list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
+            list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data.js").reverse("list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
 
         upcoming_table = $("#upcoming-broadcasts-table").dataTable({
@@ -13,7 +13,7 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
             "displayLength": 5,
             "processing": true,
             "serverSide": true,
-            "ajaxSource": hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
+            "ajaxSource": hqImport("hqwebapp/js/initial_page_data.js").reverse("list_broadcasts"),
             "fnServerParams": function(aoData) {
                 aoData.push({"name": "action", "value": "list_upcoming"});
             },
@@ -77,7 +77,7 @@ hqDefine("reminders/js/broadcasts_list.js", function() {
 function delete_broadcast(broadcast_id)  {
     if (confirm(gettext('Are you sure you want to delete this broadcast?'))) {
         $.ajax({
-            url: hqImport("hqwebapp/js/urllib.js").reverse("list_broadcasts"),
+            url: hqImport("hqwebapp/js/initial_page_data.js").reverse("list_broadcasts"),
             type: "POST",
             data: {
                 action: "delete_broadcast",

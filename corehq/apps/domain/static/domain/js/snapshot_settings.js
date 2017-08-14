@@ -7,7 +7,7 @@ hqDefine("domain/js/snapshot_settings.js", function() {
     
     $(function() {
         $("#contentDistributionAgreement").on("show.bs.modal", function() {
-            $(this).find(".modal-body").load(hqImport('hqwebapp/js/urllib.js').reverse('cda_basic'));
+            $(this).find(".modal-body").load(hqImport('hqwebapp/js/initial_page_data.js').reverse('cda_basic'));
         });
     
         $('[data-target="#contentDistributionAgreement"]').click(function() {

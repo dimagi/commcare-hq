@@ -31,7 +31,7 @@ hqDefine('hqadmin/js/domain_faceted_report.js', function () {
                     chart_name: key,
                     histogram_type: key,
                     xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: hqImport("hqwebapp/js/urllib.js").reverse("admin_stats_data"),
+                    ajax_url: hqImport("hqwebapp/js/initial_page_data.js").reverse("admin_stats_data"),
                     data: url_params,
                     interval: hqImport("hqwebapp/js/initial_page_data.js").get("interval"),
                 });

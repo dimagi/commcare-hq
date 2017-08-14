@@ -35,7 +35,7 @@ describe('App Releases', function() {
 
         beforeEach(function() {
             var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain,
-                registerUrl = hqImport("hqwebapp/js/urllib.js").registerUrl;
+                registerUrl = hqImport("hqwebapp/js/initial_page_data.js").registerUrl;
             registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
             registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
             registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz")

@@ -15,7 +15,7 @@ $(function () {
             $('.step-1').fadeIn(500);
         });
     };
-    reg.initRMI(hqImport('hqwebapp/js/urllib.js').reverse('process_registration'));
+    reg.initRMI(hqImport('hqwebapp/js/initial_page_data.js').reverse('process_registration'));
     if (!initial_page_data('hide_password_feedback')) {
         reg.showPasswordFeedback();
     }

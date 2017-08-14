@@ -36,7 +36,7 @@ hqDefine("users/js/web_users.js", function() {
     });
 
     $(function () {
-        var url = hqImport("hqwebapp/js/urllib.js").reverse;
+        var url = hqImport("hqwebapp/js/initial_page_data.js").reverse;
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton

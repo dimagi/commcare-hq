@@ -10,7 +10,7 @@ hqDefine("app_manager/js/summary/summary.js", function() {
 
         var summaryApp = window.angular.module('summaryApp', ['ngRoute', 'summaryModule']),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            url = hqImport('hqwebapp/js/urllib.js').reverse;
+            url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
         summaryApp.config(['$httpProvider', function($httpProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';

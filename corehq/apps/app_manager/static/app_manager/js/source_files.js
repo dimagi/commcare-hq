@@ -14,7 +14,7 @@ hqDefine('app_manager/js/source_files.js', function() {
         built_versions = _.sortBy(_.filter(built_versions, function(v) {
             return v.version != current_version;
         }), function(v) { return parseInt(v.version); }).reverse();
-        version_map = _.indexBy(built_versions, 'version');
+        var version_map = _.indexBy(built_versions, 'version');
     
         $input.select2({
             data: _.map(built_versions, function(v) {
@@ -34,7 +34,7 @@ hqDefine('app_manager/js/source_files.js', function() {
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version].build_id);
+            window.location = hqImport('hqwebapp/js/initial_page_data.js').reverse('diff', version_map[version].build_id);
         });
     });
 });
