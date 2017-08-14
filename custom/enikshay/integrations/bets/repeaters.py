@@ -307,28 +307,36 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         if not self.case_types_and_users_allowed(episode_case):
             return False
 
-        case_properties = episode_case.dynamic_case_properties()
-        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
-        treatment_options = case_properties.get("treatment_options")
-        if treatment_options == "fdc":
-            meets_days_threshold = prescription_total_days >= 168
-        else:
-            meets_days_threshold = prescription_total_days >= 180
+        enrolled_in_private_sector = episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+        not_sent = episode_case.get_case_property("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
 
-        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
-        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
             not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
             and (
-                case_properties_changed(episode_case, ["treatment_outcome"])
-                and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            ) or (
-                case_properties_changed(episode_case, ["prescription_total_days"])
-                and meets_days_threshold
+                self._treatment_completed(episode_case)
+                or self._met_prescription_days_threshold(episode_case)
             )
         )
+
+    def _treatment_completed(self, episode_case):
+        return (
+            case_properties_changed(episode_case, ["treatment_outcome"])
+            and episode_case.get_case_property("treatment_outcome") in ("cured", "treatment_completed")
+        )
+
+    def _met_prescription_days_threshold(self, episode_case):
+        if not case_properties_changed(episode_case, ["prescription_total_days"]):
+            return False
+
+        prescription_total_days = _cast_to_int(
+            episode_case.get_case_property("prescription_total_days", 0)
+        )
+        if episode_case.get_case_property("treatment_options") == "fdc":
+            return prescription_total_days >= 168
+        else:
+            return prescription_total_days >= 180
 
 
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
