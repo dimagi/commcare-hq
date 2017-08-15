@@ -278,11 +278,6 @@ class EpisodeAdherenceUpdate(object):
 
         self._cache_dose_taken_by_date = False
 
-    @property
-    @memoized
-    def case_properties(self):
-        return self.episode.dynamic_case_properties()
-
     @memoized
     def get_doses_data(self):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
@@ -293,16 +288,6 @@ class EpisodeAdherenceUpdate(object):
             doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
             doses_per_week_by_schedule_id[schedule_id] = doses_per_week
         return doses_per_week_by_schedule_id
-
-    def get_property(self, property):
-        """
-        Args:
-            name of the case-property
-
-        Returns:
-            value of the episode case-property named 'property'
-        """
-        return self.case_properties.get(property)
 
     @memoized
     def get_valid_adherence_cases(self):
@@ -322,7 +307,7 @@ class EpisodeAdherenceUpdate(object):
 
     def get_adherence_schedule_start_date(self):
         # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
-        raw_date = self.get_property('adherence_schedule_date_start')
+        raw_date = self.episode.get_case_property('adherence_schedule_date_start')
         if not raw_date:
             return None
         elif parse_date(raw_date):
@@ -499,7 +484,7 @@ class EpisodeAdherenceUpdate(object):
 
         # calculate 'expected_doses_taken' score
         dose_data = self.get_doses_data()
-        adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+        adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
         if doses_per_week:
             update['expected_doses_taken'] = int(((
@@ -526,7 +511,7 @@ class EpisodeAdherenceUpdate(object):
                 If all of them are set as expected, returns None
         """
         needs_update = any([
-            self.get_property(k) != v
+            self.episode.get_case_property(k) != v
             for (k, v) in update_dict.iteritems()
         ])
         if needs_update:
