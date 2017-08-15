@@ -59,7 +59,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-list', function () {
 
         $('#'+this.modal_id+' a').click(function() {
             if($(this).attr('data-enum-action') === 'add') {
-                $(this).parent().parent().find('fieldset').append(module.input_map(true).ui);
+                $(this).parent().parent().find('fieldset').append(hqImport('style/js/ui-element').input_map(true).ui);
                 $(this).parent().parent().find('fieldset input.enum-key').last().focus();
             }
             if (!$(this).attr('data-dismiss'))
@@ -87,8 +87,8 @@ hqDefine('style/js/ui_elements/ui-element-key-val-list', function () {
                     this.$edit_view.text('');
                 }
                 for (var key in this.value) {
-                    $modal_fields.append(module.input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
-                    this.$edit_view.append(module.input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
+                    $modal_fields.append(hqImport('style/js/ui-element').input_map(true).val(key, this.value[key], this.translated_value[key]).ui);
+                    this.$edit_view.append(hqImport('style/js/ui-element').input_map(true).val(key, this.value[key], this.translated_value[key]).setEdit(false).$noedit_view);
                 }
             }
 
