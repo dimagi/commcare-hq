@@ -323,5 +323,5 @@ class BulkDocProcessor(DocumentProcessorController):
 
             elapsed, remaining = self.timing
             self.progress_logger.progress(
-                self.total, self.processed, self.visited, elapsed, remaining
+                self.processed, self.visited, self.total, elapsed, remaining
             )
