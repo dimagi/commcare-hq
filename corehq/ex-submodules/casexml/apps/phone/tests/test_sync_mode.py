@@ -1,9 +1,9 @@
+import os
 import uuid
+from datetime import datetime
 from xml.etree import ElementTree
-from couchdbkit import ResourceNotFound
 from django.test.utils import override_settings
 from django.test import TestCase
-import os
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
@@ -21,18 +21,14 @@ from corehq.form_processor.tests.utils import (
     use_sql_backend,
 )
 from corehq.util.test_utils import flag_enabled
-from casexml.apps.case.tests.util import (
-    check_user_has_case, assert_user_doesnt_have_case,
-    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases,
-    check_payload_has_case_ids, assert_user_doesnt_have_cases)
-from casexml.apps.phone.tests.utils import create_restore_user, has_cached_payload
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
     LOG_FORMAT_SIMPLIFIED,
     SimplifiedSyncLog,
-    SyncLog,
 )
 from casexml.apps.phone.restore import (
     CachedResponse,
@@ -44,7 +40,6 @@ from casexml.apps.phone.restore import (
 )
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from datetime import datetime
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
