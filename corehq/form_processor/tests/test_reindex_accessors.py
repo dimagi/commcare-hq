@@ -60,7 +60,7 @@ class BaseReindexAccessorTest(object):
         return self.accessor_class().get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
 
     def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
-        return self.accessor_class().get_docs_for_domain(None, domain, start, last_doc_pk=last_doc_pk, limit=limit)
+        return self.accessor_class(domain).get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
 
     def test_get_docs(self):
         docs = self._get_docs(None)
@@ -123,17 +123,17 @@ class BaseShardedAccessorMixin(object):
 
     def _get_docs(self, start, last_doc_pk=None, limit=500):
         accessor = self.accessor_class()
+        return self._get_docs_from_accessor(accessor, start, last_doc_pk, limit)
+
+    def _get_docs_from_accessor(self, accessor, start, last_doc_pk=None, limit=500):
         all_docs = []
         for from_db in partition_config.get_form_processing_dbs():
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
 
     def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
-        accessor = self.accessor_class()
-        all_docs = []
-        for from_db in partition_config.get_form_processing_dbs():
-            all_docs.extend(accessor.get_docs_for_domain(from_db, domain, start))
-        return all_docs
+        accessor = self.accessor_class(domain)
+        return self._get_docs_from_accessor(accessor, start, last_doc_pk, limit)
 
     def test_get_doc_count(self):
         doc_count = sum(

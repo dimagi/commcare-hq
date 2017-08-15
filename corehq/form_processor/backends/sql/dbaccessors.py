@@ -626,6 +626,12 @@ class FormAccessorSQL(AbstractFormAccessor):
 
 
 class CaseReindexAccessor(ReindexAccessor):
+    """
+    :param: domain: If supplied the accessor will restrict results to only that domain
+    """
+    def __init__(self, domain=None):
+        self.domain = domain
+
     @property
     def model_class(self):
         return CommCareCaseSQL
@@ -641,15 +647,12 @@ class CaseReindexAccessor(ReindexAccessor):
             pass
 
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        return self.get_docs_for_domain(from_db, None, startkey, last_doc_pk, limit)
-
-    def get_docs_for_domain(self, from_db, domain, startkey, last_doc_pk=None, limit=500):
         server_modified_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        domain_clause = "case_table.domain = %s AND" if domain else ""
+        domain_clause = "case_table.domain = %s AND" if self.domain else ""
         values = [False, server_modified_on_since, last_id, limit]
-        if domain:
-            values = [domain] + values
+        if self.domain:
+            values = [self.domain] + values
 
         # using raw query to avoid having to expand the tuple comparison
         results = CommCareCaseSQL.objects.using(from_db).raw(
