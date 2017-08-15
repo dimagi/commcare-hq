@@ -175,9 +175,12 @@ def get_couch_form_reindexer():
     )
 
 
-def get_sql_form_reindexer():
-    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
+def get_sql_form_reindexer(limit_to_db=None):
+    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}".format(
+        XFORM_INDEX_INFO.index, limit_to_db or 'all'
+    )
+    limit_db_aliases = [limit_to_db] if limit_to_db else None
+    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor(limit_db_aliases=limit_db_aliases))
     return ResumableBulkElasticPillowReindexer(
         doc_provider,
         elasticsearch=get_es_new(),

@@ -90,14 +90,25 @@ class Command(BaseCommand):
             help='Run the reindex in place - assuming it is against a live index.'
         )
 
+        parser.add_argument(
+            '--limit-to-db',
+            dest='limit_to_db',
+            help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
+        )
+
     def handle(self, index, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
+        limit_to_db = options.pop('limit_to_db')
 
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
-        reindexer = REINDEX_FNS[index]()
+        if limit_to_db:
+            reindexer = REINDEX_FNS[index](limit_to_db=limit_to_db)
+        else:
+            reindexer = REINDEX_FNS[index]()
+
         reindexer_options = {
             key: value for key, value in options.items()
             if value and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode

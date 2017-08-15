@@ -109,10 +109,11 @@ def _fail_gracefully_and_tell_admins():
     return FakeReindexer()
 
 
-def get_case_search_reindexer(domain=None):
+def get_case_search_reindexer(domain=None, limit_to_db=None):
     """Returns a reindexer that will return either all domains with case search
     enabled, or a single domain if passed in
     """
+    limit_db_aliases = [limit_to_db] if limit_to_db else None
     initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
     try:
         if domain is not None:
@@ -123,7 +124,7 @@ def get_case_search_reindexer(domain=None):
             # return changes for all enabled domains
             domains = case_search_enabled_domains()
 
-        change_provider = get_domain_case_change_provider(domains=domains)
+        change_provider = get_domain_case_change_provider(domains=domains, limit_db_aliases=limit_db_aliases)
     except ProgrammingError:
         # The db hasn't been intialized yet, so skip this reindex and complain.
         return _fail_gracefully_and_tell_admins()
