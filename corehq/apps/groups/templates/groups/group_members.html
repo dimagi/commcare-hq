@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    {% include 'style/includes/ui_element_js.html' %}
     <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
