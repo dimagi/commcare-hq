@@ -38,6 +38,7 @@ from .const import (
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
     VALID_ADHERENCE_SOURCES,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
@@ -569,8 +570,8 @@ class EpisodeVoucherUpdate(object):
                     prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
 
             if total_days >= threshold and not threshold_already_met:
-                prop = 'bets_date_prescription_total_days_{}_met'.format(threshold)
-                prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
+                prescription_json[BETS_DATE_PRESCRIPTION_THRESHOLD_MET] = \
+                    self._get_fulfilled_voucher_date(voucher)
                 threshold_already_met = True
 
         prescription_json['prescription_total_days'] = total_days

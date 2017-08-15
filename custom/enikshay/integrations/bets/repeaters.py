@@ -11,7 +11,9 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
 from custom.enikshay.case_utils import CASE_TYPE_PERSON
-from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
+from custom.enikshay.const import (
+    ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
@@ -329,10 +331,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         )
 
     def _met_prescription_days_threshold(self, episode_case):
-        return (
-            case_properties_changed(episode_case, ['bets_date_prescription_total_days_180_met'])
-            or case_properties_changed(episode_case, ['bets_date_prescription_total_days_168_met'])
-        )
+        return case_properties_changed(episode_case, [BETS_DATE_PRESCRIPTION_THRESHOLD_MET])
 
 
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):

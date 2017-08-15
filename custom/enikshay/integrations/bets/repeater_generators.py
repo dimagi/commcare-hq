@@ -27,6 +27,7 @@ from custom.enikshay.const import (
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from .const import (
@@ -184,8 +185,7 @@ class IncentivePayload(BETSPayload):
                 # still have the rx_outcome_date property set.
                 event_date = episode_case_properties.get('rx_outcome_date')
         else:  # They hit a threshold of total prescription days
-            event_date = (episode_case_properties.get('bets_date_prescription_total_days_168_met')
-                          or episode_case_properties.get('bets_date_prescription_total_days_168_met'))
+            event_date = episode_case_properties.get(BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
 
         if not event_date:
             raise AssertionError("No treatment completion date found for episode {}. "
