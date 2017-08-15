@@ -257,6 +257,11 @@ def get_datastore(domain):
     return AdherenceDatastore(domain)
 
 
+@memoized
+def get_itemlist(domain):
+    return FixtureDataItem.get_item_list(domain, DAILY_SCHEDULE_FIXTURE_NAME)
+
+
 class EpisodeAdherenceUpdate(object):
     """
     Class to capture adherence related calculations specific to an 'episode' case
@@ -281,7 +286,7 @@ class EpisodeAdherenceUpdate(object):
     @memoized
     def get_doses_data(self):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
-        fixtures = FixtureDataItem.get_item_list(self.domain, DAILY_SCHEDULE_FIXTURE_NAME)
+        fixtures = get_itemlist(self.domain)
         doses_per_week_by_schedule_id = {}
         for f in fixtures:
             schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
