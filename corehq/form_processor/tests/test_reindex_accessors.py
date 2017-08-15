@@ -37,7 +37,7 @@ class BaseReindexAccessorTest(object):
         time.sleep(.02)
         cls.end = datetime.utcnow()
 
-        cls.all_docs_ids = cls.first_batch_global + cls.second_batch_global
+        cls.all_doc_ids = cls.first_batch_global + cls.second_batch_global
         cls.all_doc_ids_domain = cls.first_batch_domain + cls.second_batch_domain
 
         cls._analyse()
@@ -64,9 +64,9 @@ class BaseReindexAccessorTest(object):
 
     def test_get_docs(self):
         docs = self._get_docs(None)
-        self.assertEqual(len(self.all_docs_ids), len(docs))
+        self.assertEqual(len(self.all_doc_ids), len(docs))
         self.assertEqual(set(self._get_doc_ids(docs)),
-                         set(self.all_docs_ids))
+                         set(self.all_doc_ids))
 
         docs = self._get_docs(self.middle)
         self.assertEqual(8, len(docs))
@@ -128,12 +128,19 @@ class BaseShardedAccessorMixin(object):
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
 
+    def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
+        accessor = self.accessor_class()
+        all_docs = []
+        for from_db in partition_config.get_form_processing_dbs():
+            all_docs.extend(accessor.get_docs_for_domain(from_db, domain, start))
+        return all_docs
+
     def test_get_doc_count(self):
         doc_count = sum(
             self.accessor_class().get_doc_count(from_db)
             for from_db in partition_config.get_form_processing_dbs()
         )
-        self.assertEqual(8, doc_count)
+        self.assertEqual(len(self.all_doc_ids), doc_count)
 
 
 class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
