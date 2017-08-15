@@ -1,57 +1,110 @@
 from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (
-    get_couch_app_form_submission_tracker_reindexer,
-    get_sql_app_form_submission_tracker_reindexer,
-    get_user_form_submission_tracker_reindexer
+    CouchAppFormSubmissionTrackerReindexerFactory,
+    SqlAppFormSubmissionTrackerReindexerFactory,
+    UserAppFormSubmissionReindexerFactory
 )
-from corehq.pillows.application import get_app_reindexer
+from corehq.pillows.application import AppReindexerFactory
 from corehq.pillows.case import (
-    get_couch_case_reindexer, get_sql_case_reindexer
+    CouchCaseReindexerFactory, SqlCaseReindexerFactory
 )
-from corehq.pillows.case_search import get_case_search_reindexer
-from corehq.pillows.domain import get_domain_reindexer
-from corehq.pillows.group import get_group_reindexer
-from corehq.pillows.groups_to_user import get_groups_to_user_reindexer
-from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindexer
-from corehq.pillows.reportcase import get_report_case_reindexer
-from corehq.pillows.reportxform import get_report_xforms_reindexer
-from corehq.pillows.sms import get_sms_reindexer
-from corehq.pillows.synclog import get_user_sync_history_reindexer
-from corehq.pillows.user import get_user_reindexer
-from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
+from corehq.pillows.case_search import CaseSearchReindexerFactory, ResumableCaseSearchReindexerFactory
+from corehq.pillows.domain import DomainReindexerFactory
+from corehq.pillows.group import GroupReindexerFactory
+from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
+from corehq.pillows.ledger import LedgerV1ReindexerFactory, LedgerV2ReindexerFactory
+from corehq.pillows.reportcase import ReportCaseReindexerFactory
+from corehq.pillows.reportxform import ReportFormReindexerFactory
+from corehq.pillows.sms import SmsReindexerFactory
+from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
+from corehq.pillows.user import UserReindexerFactory
+from corehq.pillows.xform import CouchFormReindexerFactory, SqlFormReindexerFactory
+from corehq.util.test_utils import unit_testing_only
 
-REINDEX_FNS = {
-    'domain': get_domain_reindexer,
-    'user': get_user_reindexer,
-    'group': get_group_reindexer,
-    'groups-to-user': get_groups_to_user_reindexer,
-    'case': get_couch_case_reindexer,
-    'form': get_couch_form_reindexer,
-    'sql-case': get_sql_case_reindexer,
-    'sql-form': get_sql_form_reindexer,
-    'case-search': get_case_search_reindexer,
-    'ledger-v2': get_ledger_v2_reindexer,
-    'ledger-v1': get_ledger_v1_reindexer,
-    'sms': get_sms_reindexer,
-    'report-case': get_report_case_reindexer,
-    'report-xform': get_report_xforms_reindexer,
-    'app': get_app_reindexer,
-    'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
-    'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
-    'user-sync-history': get_user_sync_history_reindexer,
-    'user-app-form-submission': get_user_form_submission_tracker_reindexer,
+USAGE = """Reindex a pillowtop index.
+
+To get help for a specific reindexer user:
+
+    ./manage.py ptop_reindexer_v2 [reindexer] -h
+"""
+
+
+FACTORIES = [
+    DomainReindexerFactory,
+    UserReindexerFactory,
+    GroupReindexerFactory,
+    GroupToUserReindexerFactory,
+    CouchCaseReindexerFactory,
+    CouchFormReindexerFactory,
+    SqlCaseReindexerFactory,
+    SqlFormReindexerFactory,
+    CaseSearchReindexerFactory,
+    ResumableCaseSearchReindexerFactory,
+    LedgerV2ReindexerFactory,
+    LedgerV1ReindexerFactory,
+    SmsReindexerFactory,
+    ReportCaseReindexerFactory,
+    ReportFormReindexerFactory,
+    AppReindexerFactory,
+    CouchAppFormSubmissionTrackerReindexerFactory,
+    SqlAppFormSubmissionTrackerReindexerFactory,
+    UpdateUserSyncHistoryReindexerFactory,
+    UserAppFormSubmissionReindexerFactory,
+]
+
+
+FACTORIES_BY_SLUG = {
+    factory.slug: factory
+    for factory in FACTORIES
 }
 
 
-class Command(BaseCommand):
-    help = 'Reindex a pillowtop index'
+@unit_testing_only
+def reindex_and_clean(slug, **options):
+    reindexer = FACTORIES_BY_SLUG[slug](**options).build()
+    reindexer.clean()
+    reindexer.reindex()
+
+
+class SubCommand(BaseCommand):
+    subcommands = {}
+
+    def run_from_argv(self, argv):
+        self.subcommand = None
+        if len(argv) >= 3 and argv[2] in self.subcommands:
+            self.subcommand = argv[2]
+            argv = argv[0:2] + argv[3:]
+            super(SubCommand, self).run_from_argv(argv)
+        else:
+            super(SubCommand, self).run_from_argv(argv)
+
+    def create_parser(self, prog_name, command_name):
+        parser = super(SubCommand, self).create_parser(prog_name, command_name)
+        if self.subcommand:
+            self.add_subcommand_arguments(parser, self.subcommand)
+        return parser
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'index',
-            choices=list(REINDEX_FNS),
-        )
+        if not self.subcommand:
+            parser.add_argument(
+                'subcommand',
+                choices=list(self.subcommands),
+            )
+        self.add_global_arguments(parser)
+
+    def add_subcommand_arguments(self, parser, subcommand):
+        pass
+
+    def add_global_arguments(self, parser):
+        pass
+
+
+class Command(SubCommand):
+    help = USAGE
+    subcommands = FACTORIES_BY_SLUG
+
+    def add_global_arguments(self, parser):
         parser.add_argument(
             '--cleanup',
             action='store_true',
@@ -67,58 +120,21 @@ class Command(BaseCommand):
             help='Skip important confirmation warnings.'
         )
 
-        # for resumable reindexers
-        parser.add_argument(
-            '--reset',
-            action='store_true',
-            dest='reset',
-            help='Reset a resumable reindex'
-        )
-        parser.add_argument(
-            '--chunksize',
-            type=int,
-            action='store',
-            dest='chunksize',
-            help='Number of docs to process at a time'
-        )
+    def add_subcommand_arguments(self, parser, subcommand):
+        FACTORIES_BY_SLUG[subcommand].add_arguments(parser)
 
-        # for ES reindexers
-        parser.add_argument(
-            '--in-place',
-            action='store_true',
-            dest='in-place',
-            help='Run the reindex in place - assuming it is against a live index.'
-        )
-
-        parser.add_argument(
-            '--limit-to-db',
-            dest='limit_to_db',
-            help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
-        )
-
-    def handle(self, index, **options):
+    def handle(self, **options):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
-        limit_to_db = options.pop('limit_to_db')
+
+        for option in ['settings', 'pythonpath', 'verbosity', 'traceback', 'no_color']:
+            options.pop(option, None)
 
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
-        if limit_to_db:
-            reindexer = REINDEX_FNS[index](limit_to_db=limit_to_db)
-        else:
-            reindexer = REINDEX_FNS[index]()
-
-        reindexer_options = {
-            key: value for key, value in options.items()
-            if value and key in ['reset', 'chunksize', 'in-place']  # TODO - don't hardcode
-        }
-        unconsumed = reindexer.consume_options(reindexer_options)
-        if unconsumed:
-            raise CommandError(
-                """The following options don't apply to the reindexer you're calling: {}
-                """.format(unconsumed.keys())
-            )
+        factory = FACTORIES_BY_SLUG[self.subcommand](**options)
+        reindexer = factory.build()
 
         if cleanup and (noinput or confirm()):
             reindexer.clean()

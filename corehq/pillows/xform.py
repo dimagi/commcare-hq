@@ -24,7 +24,7 @@ from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDep
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def is_valid_date(txt):
@@ -153,38 +153,56 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     )
 
 
-def get_couch_form_reindexer():
-    iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        XFormInstance,
-        XFormArchived,
-        XFormError,
-        XFormDeprecated,
-        XFormDuplicate,
-        ('XFormInstance-Deleted', XFormInstance),
-        ('HQSubmission', XFormInstance),
-        SubmissionErrorLog,
-    ])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch,
-        pillow=get_xform_to_elasticsearch_pillow(),
-    )
+class CouchFormReindexerFactory(ReindexerFactory):
+    slug = 'form'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            XFormInstance,
+            XFormArchived,
+            XFormError,
+            XFormDeprecated,
+            XFormDuplicate,
+            ('XFormInstance-Deleted', XFormInstance),
+            ('HQSubmission', XFormInstance),
+            SubmissionErrorLog,
+        ])
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=XFORM_INDEX_INFO,
+            doc_filter=xform_pillow_filter,
+            doc_transform=transform_xform_for_elasticsearch,
+            pillow=get_xform_to_elasticsearch_pillow(),
+            **self.options
+        )
 
 
-def get_sql_form_reindexer(limit_to_db=None):
-    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}".format(
-        XFORM_INDEX_INFO.index, limit_to_db or 'all'
-    )
-    limit_db_aliases = [limit_to_db] if limit_to_db else None
-    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor(limit_db_aliases=limit_db_aliases))
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
-    )
+class SqlFormReindexerFactory(ReindexerFactory):
+    slug = 'sql-form'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+    ]
+
+    def build(self):
+        limit_to_db = self.options.pop('limit_to_db', None)
+        iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}".format(
+            XFORM_INDEX_INFO.index, limit_to_db or 'all'
+        )
+        limit_db_aliases = [limit_to_db] if limit_to_db else None
+        doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor(limit_db_aliases=limit_db_aliases))
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=XFORM_INDEX_INFO,
+            doc_filter=xform_pillow_filter,
+            doc_transform=transform_xform_for_elasticsearch,
+            **self.options
+        )

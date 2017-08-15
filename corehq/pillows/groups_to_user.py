@@ -9,7 +9,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
+from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory
 
 
 class GroupsToUsersProcessor(PillowProcessor):
@@ -97,16 +97,19 @@ def stream_user_sources(user_ids):
         yield UserSource(result['_id'], group_ids, group_names)
 
 
-def get_groups_to_user_reindexer():
-    return PillowChangeProviderReindexer(
-        pillow=get_group_to_user_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=Group.get_db(),
-            view_name='all_docs/by_doc_type',
-            view_kwargs={
-                'startkey': ['Group'],
-                'endkey': ['Group', {}],
-                'include_docs': True,
-            }
-        ),
-    )
+class GroupToUserReindexerFactory(ReindexerFactory):
+    slug = 'groups-to-user'
+
+    def build(self):
+        return PillowChangeProviderReindexer(
+            pillow=get_group_to_user_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=Group.get_db(),
+                view_name='all_docs/by_doc_type',
+                view_kwargs={
+                    'startkey': ['Group'],
+                    'endkey': ['Group', {}],
+                    'include_docs': True,
+                }
+            ),
+        )
