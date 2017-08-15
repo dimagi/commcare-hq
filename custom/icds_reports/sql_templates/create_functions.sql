@@ -973,6 +973,7 @@ DECLARE
 	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
+	_female text;
 	_month_end_11yr date;
 	_month_start_15yr date;
 	_month_end_15yr date;
@@ -989,6 +990,7 @@ BEGIN
 	_null_value = NULL;
 	_yes_text = 'yes';
 	_no_text = 'no';
+	_female = 'F';
 	_tablename1 := 'agg_awc' || '_' || _start_date || '_1';
 	_tablename2 := 'agg_awc' || '_' || _start_date || '_2';
 	_tablename3 := 'agg_awc' || '_' || _start_date || '_3';
@@ -1158,10 +1160,10 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
 		'FROM ' || quote_ident(_person_tablename) || ' ' ||
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
