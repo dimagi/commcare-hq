@@ -6,7 +6,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-list', function () {
 
     var KeyValList = function(guid, modal_title) {
         var that = this;
-        hqImport("style/js/main.js").eventize(this);
+        hqImport("style/js/main").eventize(this);
         this.ui = $('<div class="enum-pairs" />');
         this.value = {};
         this.translated_value = {};

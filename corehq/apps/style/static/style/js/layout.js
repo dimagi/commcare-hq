@@ -106,7 +106,7 @@ hqLayout.actions = {
                 }
             }
 
-            if ($content.find("#formdesigner").length && hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
+            if ($content.find("#formdesigner").length && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                 $content.css("padding-left", 0);
                 $content.css("padding-right", 0);
             }

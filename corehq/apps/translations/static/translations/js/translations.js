@@ -20,12 +20,12 @@ var mk_translation_ui = function (spec) {
                 this.value = hqImport('style/js/ui-element').input().val(value);
                 this.solid = true;
 
-                this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(hqImport('style/js/main.js').icons.DELETE).click(function () {
+                this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(hqImport('style/js/main').icons.DELETE).click(function () {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', gettext("Delete Translation"));
 
-                this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(hqImport('style/js/main.js').icons.ADD).click(function () {
+                this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(hqImport('style/js/main').icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
                     if (that.key.val() && !translation_ui.translations[that.key.val()]) {
@@ -152,7 +152,7 @@ var mk_translation_ui = function (spec) {
         }
     }
 
-    translation_ui.saveButton = hqImport("style/js/main.js").initSaveButton({
+    translation_ui.saveButton = hqImport("style/js/main").initSaveButton({
         unsavedMessage: gettext("You have unsaved user interface translations."),
         save: function () {
             translation_ui.save()
@@ -192,7 +192,7 @@ var mk_translation_ui = function (spec) {
                 },
                 context: this,
                 success: function (data) {
-                    hqImport("style/js/main.js").updateDOM(data.update);
+                    hqImport("style/js/main").updateDOM(data.update);
                 }
             });
         }
@@ -256,7 +256,7 @@ var mk_translation_ui = function (spec) {
             $('.auto-fill-help').attr('data-content', gettext("Autofill is not available in English (en). " +
                 "Please change your language using the dropdown in the top left."));
         }
-        hqImport("style/js/main.js").transformHelpTemplate($('.auto-fill-help'), true);
+        hqImport("style/js/main").transformHelpTemplate($('.auto-fill-help'), true);
         translation_ui.appendAdder();
         $home.append($home);
     };

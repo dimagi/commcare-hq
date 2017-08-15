@@ -21,7 +21,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         this.app_langs = app_langs;
         this.enable_practice_users = enable_practice_users;
         this.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
-        this.saveButton = hqImport("style/js/main.js").initSaveButton({
+        this.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function() {
                 var postProfiles = [];

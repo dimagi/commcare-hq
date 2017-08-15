@@ -6,7 +6,7 @@ hqDefine('style/js/ui_elements/ui-element-input', function () {
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
-        hqImport("style/js/main.js").eventize(this);
+        hqImport("style/js/main").eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
         this.edit = true;

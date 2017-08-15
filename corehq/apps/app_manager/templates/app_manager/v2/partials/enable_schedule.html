@@ -54,7 +54,7 @@
         <tr class="phase" data-bind="style: {cursor: 'move'}">
             <td>
                 <i class="grip sortable-handle"
-                   data-bind="css: hqImport('style/js/main.js').icons.GRIP,
+                   data-bind="css: hqImport('style/js/main').icons.GRIP,
                               event: {mousedown: function(){ $(':focus').blur(); }},
                               visible: $data !== $parent.selectedPhase()"></i>
                 <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
@@ -67,7 +67,7 @@
             <td data-bind="text: form_abbreviations"></td>
             <td>
                 <i style="cursor: pointer;"
-                   data-bind="css: hqImport('style/js/main.js').icons.DELETE,
+                   data-bind="css: hqImport('style/js/main').icons.DELETE,
                               click: $parent.removePhase,
                               visible: forms().length == 0
                               "></i>

@@ -81,7 +81,7 @@ hqDefine('domain/js/case-search-config', function () {
             self.change();
         };
 
-        self.saveButton = hqImport("style/js/main.js").initSaveButton({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: "You have unchanged settings",
             save: function() {
                 self.saveButton.ajax({

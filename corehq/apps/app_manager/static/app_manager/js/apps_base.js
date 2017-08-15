@@ -1,7 +1,7 @@
 /* globals hqImport, hqLayout */
 
 $(function () {
-    var v2 = !hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1');
+    var v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1');
 
     $('#deleted-app-modal').modal({
         backdrop: 'static',

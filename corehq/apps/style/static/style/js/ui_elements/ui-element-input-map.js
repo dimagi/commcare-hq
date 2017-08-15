@@ -6,7 +6,7 @@ hqDefine('style/js/ui_elements/ui-element-input-map', function () {
 
     var InputMap = function (show_del_button) {
         var that = this;
-        hqImport("style/js/main.js").eventize(this);
+        hqImport("style/js/main").eventize(this);
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",

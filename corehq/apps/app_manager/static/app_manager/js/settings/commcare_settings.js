@@ -16,7 +16,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        if (!hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             // only referenced in v2 template
             self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
         }
@@ -249,7 +249,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     return setting.visible();
                 });
             });
-            if (hqImport('hqwebapp/js/toggles.js').toggleEnabled('APP_MANAGER_V1')) {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                 section.reallyCollapse = ko.computed(function () {
                     var el = document.getElementById(section.id);
                     return section.collapse &&
@@ -317,7 +317,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = hqImport("style/js/main.js").initSaveButton({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());

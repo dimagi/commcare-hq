@@ -6,7 +6,7 @@ hqDefine('style/js/ui_elements/ui-element-checkbox', function () {
 
     var Checkbox = function () {
         var that = this;
-        hqImport("style/js/main.js").eventize(this);
+        hqImport("style/js/main").eventize(this);
         this.ui = $('<span/>');
         this.value = true;
         this.edit = true;

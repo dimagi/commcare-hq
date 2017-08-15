@@ -8,7 +8,7 @@ hqDefine('style/js/ui_elements/ui-element-select', function () {
         var that = this,
             i,
             option;
-        hqImport("style/js/main.js").eventize(this);
+        hqImport("style/js/main").eventize(this);
         this.ui = $('<span/>');
         this.value = "";
         this.edit = true;
