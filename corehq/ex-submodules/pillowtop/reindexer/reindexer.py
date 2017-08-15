@@ -78,6 +78,7 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
                 type=int,
                 action='store',
                 dest='chunk_size',
+                default=1000,
                 help='Number of docs to process at a time'
             )
 
