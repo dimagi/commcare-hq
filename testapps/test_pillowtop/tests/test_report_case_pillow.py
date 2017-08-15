@@ -4,10 +4,11 @@ from django.test import TestCase, override_settings
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import CaseES
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
-from corehq.pillows.reportcase import get_report_case_reindexer
+from corehq.pillows.reportcase import ReportCaseReindexerFactory
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -90,8 +91,7 @@ class ReportCaseReindexerTest(TestCase):
         # excluded case
         create_and_save_a_case('unsupported', uuid.uuid4().hex, 'unsupported')
 
-        reindexer = get_report_case_reindexer()
-        reindexer.reindex()
+        reindex_and_clean('report-case')
 
         # verify there
         results = CaseES("report_cases").run()

@@ -22,33 +22,33 @@ def get_reindex_commands(alias_name):
     # to lists of management commands or functions
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
-        'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
+        'hqdomains': [('ptop_reindexer_v2', {'subcommand': 'domain'})],
         'hqcases': [
-            ('ptop_reindexer_v2', {'index': 'case'}),
-            ('ptop_reindexer_v2', {'index': 'sql-case'}),
+            ('ptop_reindexer_v2', {'subcommand': 'case'}),
+            ('ptop_reindexer_v2', {'subcommand': 'sql-case'}),
         ],
         'xforms': [
-            ('ptop_reindexer_v2', {'index': 'form'}),
-            ('ptop_reindexer_v2', {'index': 'sql-form'}),
+            ('ptop_reindexer_v2', {'subcommand': 'form'}),
+            ('ptop_reindexer_v2', {'subcommand': 'sql-form'}),
         ],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
-            ('ptop_reindexer_v2', {'index': 'user'}),
+            ('ptop_reindexer_v2', {'subcommand': 'user'}),
             add_demo_user_to_user_index,
-            ('ptop_reindexer_v2', {'index': 'groups-to-user'}),
+            ('ptop_reindexer_v2', {'subcommand': 'groups-to-user'}),
         ],
         'hqapps': [
-            ('ptop_reindexer_v2', {'index': 'app'})
+            ('ptop_reindexer_v2', {'subcommand': 'app'})
         ],
-        'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
-        'report_xforms': [('ptop_reindexer_v2', {'index': 'report-xform'})],
-        'report_cases': [('ptop_reindexer_v2', {'index': 'report-case'})],
-        'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})],
+        'hqgroups': [('ptop_reindexer_v2', {'subcommand': 'group'})],
+        'report_xforms': [('ptop_reindexer_v2', {'subcommand': 'report-xform'})],
+        'report_cases': [('ptop_reindexer_v2', {'subcommand': 'report-case'})],
+        'case_search': [('ptop_reindexer_v2', {'subcommand': 'case-search'})],
         'ledgers': [
-            ('ptop_reindexer_v2', {'index': 'ledger-v1'}),
-            ('ptop_reindexer_v2', {'index': 'ledger-v2'}),
+            ('ptop_reindexer_v2', {'subcommand': 'ledger-v1'}),
+            ('ptop_reindexer_v2', {'subcommand': 'ledger-v2'}),
         ],
-        'smslogs': [('ptop_reindexer_v2', {'index': 'sms'})],
+        'smslogs': [('ptop_reindexer_v2', {'subcommand': 'sms'})],
     }
     return pillow_command_map.get(alias_name, [])
 
@@ -64,7 +64,7 @@ def do_reindex(alias_name, reset):
             reindex_command, command_kwargs = reindex_command
             kwargs.update(command_kwargs)
             if reindex_command == 'ptop_reindexer_v2':
-                index = kwargs.pop('index')
+                index = kwargs.pop('subcommand')
                 call_command(reindex_command, index, **kwargs)
             else:
                 call_command(reindex_command, **kwargs)
