@@ -53,7 +53,7 @@ CHILD_RELATIONSHIP = "child"
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
-class SyncBaseTest(TestCase):
+class BaseSyncTest(TestCase):
     """
     Shared functionality among tests
     """
@@ -61,7 +61,7 @@ class SyncBaseTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(SyncBaseTest, cls).setUpClass()
+        super(BaseSyncTest, cls).setUpClass()
         delete_all_users()
 
         cls.project = Domain(name=TEST_DOMAIN_NAME)
@@ -74,21 +74,12 @@ class SyncBaseTest(TestCase):
         # this creates the initial blank sync token in the database
 
     def setUp(self):
-        super(SyncBaseTest, self).setUp()
+        super(BaseSyncTest, self).setUp()
         FormProcessorTestUtils.delete_all_cases()
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_sync_logs()
-
         self.device = self.get_device()
-        self.sync_log = self.device.sync(overwrite_cache=True, version=V1).log
-        self.factory = self.device.case_factory
-        # HACK remove once all tests are converted to use self.device
-        # NOTE self.device.sync() overrides last_sync_token with the
-        # most recent sync token, so this is effectively ignored when
-        # using that method.
-        self.factory.form_extras = {
-            'last_sync_token': self.sync_log._id,
-        }
+        self.device.sync(overwrite_cache=True, version=V1)
 
     def tearDown(self):
         restore_config = RestoreConfig(
@@ -97,12 +88,12 @@ class SyncBaseTest(TestCase):
             **self.restore_options
         )
         restore_config.cache.delete(restore_config._restore_cache_key)
-        super(SyncBaseTest, self).tearDown()
+        super(BaseSyncTest, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
-        super(SyncBaseTest, cls).tearDownClass()
+        super(BaseSyncTest, cls).tearDownClass()
 
     def get_device(self, **kw):
         kw.setdefault("project", self.project)
@@ -165,7 +156,23 @@ class SyncBaseTest(TestCase):
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
 
-class SyncTokenUpdateTest(SyncBaseTest):
+class SyncBaseTest(BaseSyncTest):
+    """DEPRECATED use BaseSyncTest when making new subclasses
+
+    This base class has `self.factory` and `self.sync_log`, which
+    are superseded by `self.device` (`MockDevice`).
+    """
+
+    def setUp(self):
+        super(SyncBaseTest, self).setUp()
+        self.sync_log = self.device.last_sync.log
+        self.factory = self.device.case_factory
+        self.factory.form_extras = {
+            'last_sync_token': self.sync_log._id,
+        }
+
+
+class SyncTokenUpdateTest(BaseSyncTest):
     """
     Tests sync token updates on submission related to the list of cases
     on the phone and the footprint.
@@ -795,7 +802,7 @@ class LiveQuerySyncTokenUpdateTestSQL(LiveQuerySyncTokenUpdateTest):
     pass
 
 
-class SyncDeletedCasesTest(SyncBaseTest):
+class SyncDeletedCasesTest(BaseSyncTest):
 
     def test_deleted_case_doesnt_sync(self):
         case_id = uuid.uuid4().hex
@@ -837,7 +844,7 @@ class LiveQuerySyncDeletedCasesTestSQL(LiveQuerySyncDeletedCasesTest):
     pass
 
 
-class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
+class ExtensionCasesSyncTokenUpdates(BaseSyncTest):
     """Makes sure the extension case trees are propertly updated
     """
 
@@ -1078,7 +1085,7 @@ class LiveQueryExtensionCasesSyncTokenUpdatesSQL(LiveQueryExtensionCasesSyncToke
     pass
 
 
-class ExtensionCasesFirstSync(SyncBaseTest):
+class ExtensionCasesFirstSync(BaseSyncTest):
 
     def setUp(self):
         super(ExtensionCasesFirstSync, self).setUp()
@@ -1121,7 +1128,7 @@ class LiveQueryExtensionCasesFirstSyncSQL(LiveQueryExtensionCasesFirstSync):
     pass
 
 
-class ChangingOwnershipTest(SyncBaseTest):
+class ChangingOwnershipTest(BaseSyncTest):
 
     def test_remove_user_from_group(self):
         group = Group(
@@ -1192,7 +1199,7 @@ class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
     pass
 
 
-class SyncTokenCachingTest(SyncBaseTest):
+class SyncTokenCachingTest(BaseSyncTest):
 
     def testCaching(self):
         sync0 = self.device.last_sync
@@ -1303,7 +1310,7 @@ class LiveQuerySyncTokenCachingTestSQL(LiveQuerySyncTokenCachingTest):
     pass
 
 
-class MultiUserSyncTest(SyncBaseTest):
+class MultiUserSyncTest(BaseSyncTest):
     """
     Tests the interaction of two users in sync mode doing various things
     """
@@ -1858,7 +1865,7 @@ class LiveQueryMultiUserSyncTestSQL(LiveQueryMultiUserSyncTest):
     pass
 
 
-class SteadyStateExtensionSyncTest(SyncBaseTest):
+class SteadyStateExtensionSyncTest(BaseSyncTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
     """
@@ -1982,7 +1989,7 @@ class LiveQuerySteadyStateExtensionSyncTestSQL(LiveQuerySteadyStateExtensionSync
     pass
 
 
-class SyncTokenReprocessingTest(SyncBaseTest):
+class SyncTokenReprocessingTest(BaseSyncTest):
     """
     Tests sync token logic for fixing itself when it gets into a bad state.
     """
@@ -2024,7 +2031,7 @@ class LiveQuerySyncTokenReprocessingTestSQL(LiveQuerySyncTokenReprocessingTest):
     pass
 
 
-class LooseSyncTokenValidationTest(SyncBaseTest):
+class LooseSyncTokenValidationTest(BaseSyncTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
         # this is just asserting that an exception is not raised when there's no synclog
@@ -2061,7 +2068,7 @@ class LiveQueryLooseSyncTokenValidationTestSQL(LiveQueryLooseSyncTokenValidation
     pass
 
 
-class IndexSyncTest(SyncBaseTest):
+class IndexSyncTest(BaseSyncTest):
 
     def test_sync_index_between_open_owned_cases(self):
         child_id = "leaf"
