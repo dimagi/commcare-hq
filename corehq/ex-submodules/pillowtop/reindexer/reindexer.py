@@ -61,7 +61,7 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         parser.add_argument(
             '--in-place',
             action='store_true',
-            dest='in-place',
+            dest='in_place',
             help='Run the reindex in place - assuming it is against a live index.'
         )
 
