@@ -2,7 +2,6 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.change_publishers import change_meta_from_sql_case
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -24,12 +23,13 @@ def get_couch_domain_case_change_provider(domain):
 
 class SqlDomainCaseChangeProvider(ChangeProvider):
 
-    def __init__(self, domain):
+    def __init__(self, domain, limit_db_aliases=None):
         self.domain = domain
+        self.limit_db_aliases = limit_db_aliases
 
     def iter_all_changes(self, start_from=None):
-        for db_alias in get_db_aliases_for_partitioned_query():
-            accessor = CaseReindexAccessor(self.domain)
+        accessor = CaseReindexAccessor(self.domain, limit_db_aliases=self.limit_db_aliases)
+        for db_alias in accessor.sql_db_aliases:
             cases = accessor.get_docs(db_alias, start_from)
             while cases:
                 for case in cases:
@@ -40,11 +40,11 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
                 cases = accessor.get_docs(db_alias, start_from, last_doc_pk=last_id)
 
 
-def get_domain_case_change_provider(domains):
+def get_domain_case_change_provider(domains, limit_db_aliases=None):
     change_providers = []
     for domain in domains:
         if should_use_sql_backend(domain):
-            change_providers.append(SqlDomainCaseChangeProvider(domain))
+            change_providers.append(SqlDomainCaseChangeProvider(domain, limit_db_aliases=limit_db_aliases))
         else:
             change_providers.append(get_couch_domain_case_change_provider(domain))
     return CompositeChangeProvider(change_providers)
