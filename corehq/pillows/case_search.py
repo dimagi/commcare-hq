@@ -109,9 +109,19 @@ def _fail_gracefully_and_tell_admins():
     return FakeReindexer()
 
 
+def domain_args(parser):
+    parser.add_argument(
+        '--domain',
+        dest='domain'
+    )
+
+
 class CaseSearchReindexerFactory(ReindexerFactory):
     slug = 'case-search'
-    valid_options = ['domain', 'limit_to_db']
+    arg_contributors = [
+        ReindexerFactory.limit_db_args,
+        domain_args
+    ]
 
     def build(self):
         """Returns a reindexer that will return either all domains with case search

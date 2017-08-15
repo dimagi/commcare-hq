@@ -51,17 +51,19 @@ class UnexpectedOptionException(Exception):
 
 
 class ReindexerFactory(six.with_metaclass(ABCMeta)):
-    valid_options = None
     slug = None
+    arg_contributors = None
 
     def __init__(self, **options):
-        self.validate_options(options)
         self.options = options
 
-    def validate_options(self, options):
-        extras = set(options) - set(self.valid_options or [])
-        if extras:
-            raise UnexpectedOptionException(self.slug, extras)
+    @classmethod
+    def add_arguments(cls, parser):
+        if not cls.arg_contributors:
+            return
+
+        for contributor in cls.arg_contributors:
+            contributor(parser)
 
     @abstractmethod
     def build(self):
@@ -70,6 +72,39 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         :return: a fully configured reindexer
         """
         raise NotImplementedError
+
+    @staticmethod
+    def elastic_reindexer_args(parser):
+        parser.add_argument(
+            '--in-place',
+            action='store_true',
+            dest='in-place',
+            help='Run the reindex in place - assuming it is against a live index.'
+        )
+
+    @staticmethod
+    def resumable_reindexer_args(parser):
+            parser.add_argument(
+                '--reset',
+                action='store_true',
+                dest='reset',
+                help='Reset a resumable reindex'
+            )
+            parser.add_argument(
+                '--chunksize',
+                type=int,
+                action='store',
+                dest='chunksize',
+                help='Number of docs to process at a time'
+            )
+
+    @staticmethod
+    def limit_db_args(parser):
+        parser.add_argument(
+            '--limit-to-db',
+            dest='limit_to_db',
+            help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
+        )
 
 
 class PillowReindexer(Reindexer):

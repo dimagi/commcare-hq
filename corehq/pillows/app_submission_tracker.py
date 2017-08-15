@@ -114,7 +114,9 @@ class AppFormSubmissionReindexer(Reindexer):
 
 class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
     slug = 'couch-app-form-submission'
-    valid_options = ['reset', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
@@ -134,7 +136,9 @@ class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
 
 class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
     slug = 'sql-app-form-submission'
-    valid_options = ['reset', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "SqlAppFormSubmissionTrackerPillow_reindexer"
@@ -215,7 +219,9 @@ class UserAppFormSubmissionReindexer(Reindexer):
 
 class UserAppFormSubmissionReindexerFactory(ReindexerFactory):
     slug = 'user-app-form-submission'
-    valid_options = ['reset', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "UserAppFormSubmissionTrackerPillow_reindexer"

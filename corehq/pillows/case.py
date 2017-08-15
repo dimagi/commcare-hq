@@ -60,7 +60,10 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
 
 class CouchCaseReindexerFactory(ReindexerFactory):
     slug = 'case'
-    valid_options = ['reset', 'in-place', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
@@ -81,7 +84,11 @@ class CouchCaseReindexerFactory(ReindexerFactory):
 
 class SqlCaseReindexerFactory(ReindexerFactory):
     slug = 'sql-case'
-    valid_options = ['reset', 'in-place', 'chunksize', 'limit_to_db']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+    ]
 
     def build(self):
         limit_to_db = self.options.get('limit_to_db', None)

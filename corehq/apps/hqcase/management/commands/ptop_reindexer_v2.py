@@ -136,34 +136,7 @@ class Command(SubCommand):
         )
 
     def add_subcommand_arguments(self, parser, subcommand):
-        if subcommand in RESUMABLE:
-            parser.add_argument(
-                '--reset',
-                action='store_true',
-                dest='reset',
-                help='Reset a resumable reindex'
-            )
-            parser.add_argument(
-                '--chunksize',
-                type=int,
-                action='store',
-                dest='chunksize',
-                help='Number of docs to process at a time'
-            )
-
-        if subcommand not in NOT_ELASTIC:
-            parser.add_argument(
-                '--in-place',
-                action='store_true',
-                dest='in-place',
-                help='Run the reindex in place - assuming it is against a live index.'
-            )
-
-            parser.add_argument(
-                '--limit-to-db',
-                dest='limit_to_db',
-                help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
-            )
+        FACTORIES_BY_SLUG[subcommand].add_arguments(parser)
 
     def handle(self, **options):
         cleanup = options.pop('cleanup')

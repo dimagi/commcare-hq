@@ -37,7 +37,9 @@ def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **
 
 class GroupReindexerFactory(ReindexerFactory):
     slug = 'group'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         reindexer = ElasticPillowReindexer(

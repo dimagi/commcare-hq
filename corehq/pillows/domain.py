@@ -54,7 +54,9 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
 
 class DomainReindexerFactory(ReindexerFactory):
     slug = 'domain'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         reindexer = ElasticPillowReindexer(

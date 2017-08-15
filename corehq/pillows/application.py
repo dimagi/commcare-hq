@@ -42,7 +42,10 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
 
 class AppReindexerFactory(ReindexerFactory):
     slug = 'app'
-    valid_options = ['reset', 'in-place', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "ApplicationToElasticsearchPillow_{}_reindexer".format(APP_INDEX_INFO.index)

@@ -59,7 +59,9 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
 
 class ReportCaseReindexerFactory(ReindexerFactory):
     slug = 'report-case'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         """Returns a reindexer that will only reindex data from enabled domains

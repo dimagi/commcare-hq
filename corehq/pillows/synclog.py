@@ -143,7 +143,9 @@ class UserSyncHistoryReindexer(Reindexer):
 
 class UpdateUserSyncHistoryReindexerFactory(ReindexerFactory):
     slug = 'user-sync-history'
-    valid_options = ['reset', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "UpdateUserSyncHistoryPillow_reindexer"

@@ -80,7 +80,10 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
 
 class LedgerV2ReindexerFactory(ReindexerFactory):
     slug = 'ledger-v2'
-    valid_options = ['reset', 'in-place', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer".format(LEDGER_INDEX_INFO.index)
@@ -97,7 +100,9 @@ class LedgerV2ReindexerFactory(ReindexerFactory):
 
 class LedgerV1ReindexerFactory(ReindexerFactory):
     slug = 'ledger-v1'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         from corehq.apps.commtrack.models import StockState

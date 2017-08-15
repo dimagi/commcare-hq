@@ -62,7 +62,9 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
 
 class ReportFormReindexerFactory(ReindexerFactory):
     slug = 'report-xform'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         """Returns a reindexer that will only reindex data from enabled domains

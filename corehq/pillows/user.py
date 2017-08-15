@@ -134,7 +134,9 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
 
 class UserReindexerFactory(ReindexerFactory):
     slug = 'user'
-    valid_options = 'in-place'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         reindexer = ElasticPillowReindexer(

@@ -38,7 +38,9 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
 
 class SmsReindexerFactory(ReindexerFactory):
     slug = 'sms'
-    valid_options = ['in-place']
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         from corehq.apps.sms.models import SMS

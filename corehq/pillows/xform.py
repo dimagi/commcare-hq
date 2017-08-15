@@ -155,7 +155,10 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 
 class CouchFormReindexerFactory(ReindexerFactory):
     slug = 'form'
-    valid_options = ['reset', 'in-place', 'chunksize']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
 
     def build(self):
         iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
@@ -183,7 +186,11 @@ class CouchFormReindexerFactory(ReindexerFactory):
 
 class SqlFormReindexerFactory(ReindexerFactory):
     slug = 'sql-form'
-    valid_options = ['reset', 'in-place', 'chunksize', 'limit-to-db']
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+    ]
 
     def build(self):
         limit_to_db = self.options.get('limit_to_db', None)
