@@ -4,7 +4,8 @@ from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
 
-from celery.task import periodic_task
+from celery import group
+from celery.task import periodic_task, task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -14,6 +15,8 @@ from corehq import toggles
 from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -72,10 +75,14 @@ def enikshay_task(self):
             continue
 
         try:
-            updater = EpisodeUpdater(domain, task_id=task_id)
-            updater.run()
+            EpisodeUpdater(domain).run()
         except Exception as e:
             logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
+
+
+@task
+def run_task(updater, case_ids):
+    updater.run_batch(case_ids)
 
 
 class Timer:
@@ -123,7 +130,27 @@ class EpisodeUpdater(object):
         })
 
     def run(self):
-        # iterate over all open 'episode' cases and set 'adherence' properties
+        """Kicks off multiple tasks with a batch of case_ids for each partition
+        """
+        tasks = []
+        for case_ids in self._get_case_id_batches():
+            tasks.append(run_task.s(self.domain, case_ids))
+        group(tasks)()
+
+    def _get_case_id_batches(self):
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            case_ids = (
+                CommCareCaseSQL.objects
+                .using(db)
+                .filter(domain=self.domain, type=CASE_TYPE_EPISODE)
+                .values_list('case_id', flat=True)
+            )
+            yield case_ids
+
+    def run_batch(self, case_ids):
+        """Run all case updaters against the case_ids passed in
+        """
         device_id = "%s.%s" % (__name__, type(self).__name__)
         update_count = 0
         noupdate_count = 0
@@ -132,7 +159,6 @@ class EpisodeUpdater(object):
         batches_processed = 0
 
         errors = []
-        case_ids = self._get_case_ids()
         total_count = len(case_ids)
 
         with Timer() as t:
@@ -149,7 +175,7 @@ class EpisodeUpdater(object):
                         did_error = True
                         error = [episode.case_id, episode.domain, updater.__name__, e]
                         errors.append(error)
-                        logger.error("{}: {} - {}".format(*error))
+                        logger.error(error)
                 if did_error:
                     error_count += 1
                 else:
@@ -206,11 +232,6 @@ class EpisodeUpdater(object):
         if update_json:
             update_case(self.domain, episode_case.case_id, update_json,
                         device_id="%s.%s" % (__name__, type(self).__name__))
-
-    def _get_case_ids(self):
-        case_accessor = CaseAccessors(self.domain)
-        case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        return case_ids
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
