@@ -66,10 +66,7 @@ class CouchCaseReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        partition_num, partition_size = get_partitioned_run_params()
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
-        )
+        iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
         doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
             CommCareCase,
             ("CommCareCase-Deleted", CommCareCase)
@@ -94,8 +91,9 @@ class SqlCaseReindexerFactory(ReindexerFactory):
 
     def build(self):
         limit_to_db = self.options.pop('limit_to_db', None)
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all'
+        partition_num, partition_size = get_partitioned_run_params()
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
