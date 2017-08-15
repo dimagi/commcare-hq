@@ -54,7 +54,7 @@ branches:
   - sk/sessions # sk 7/26
 #  - bmb/appv2-unique-urls # BMB 8/10
   - np/billing/remove-product_type-version-form # NP 8/10
-#  - np/tastypie # NP 8/15
+  - np/tastypie # NP 8/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
