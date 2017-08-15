@@ -20,7 +20,6 @@ from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import CouchFormReindexerFactory, SqlFormReindexerFactory
-from pillowtop.reindexer.reindexer import UnexpectedOptionException, ReindexerFactory
 
 USAGE = """Reindex a pillowtop index.
 
@@ -148,11 +147,7 @@ class Command(SubCommand):
         def confirm():
             return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
-        try:
-            factory = FACTORIES_BY_SLUG[self.subcommand](**options)
-        except UnexpectedOptionException as e:
-            raise CommandError(e.message)
-
+        factory = FACTORIES_BY_SLUG[self.subcommand](**options)
         reindexer = factory.build()
 
         if cleanup and (noinput or confirm()):

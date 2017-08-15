@@ -33,14 +33,6 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class UnexpectedOptionException(Exception):
-    def __init__(self, reindexer_slug, extras):
-        super(UnexpectedOptionException, self).__init__(
-            "The following options don't apply "
-            "to the reindexer ({}): {}".format(reindexer_slug, ','.join(list(extras)))
-        )
-
-
 class ReindexerFactory(six.with_metaclass(ABCMeta)):
     slug = None
     arg_contributors = None
