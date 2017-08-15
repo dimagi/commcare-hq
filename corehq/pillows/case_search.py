@@ -156,6 +156,10 @@ class CaseSearchReindexerFactory(ReindexerFactory):
 
 
 class ResumableCaseSearchReindexerFactory(ReindexerFactory):
+    """Reindexer for case search that is supports resume.
+
+    Can only be run for a single domain at a time and only for SQL domains.
+    """
     slug = 'case-search-resumable'
     arg_contributors = [
         ReindexerFactory.resumable_reindexer_args,
