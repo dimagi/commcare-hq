@@ -1,6 +1,6 @@
 /*globals $, _, django */
 
-var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
+var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders").get();
 
 function MultimediaReferenceController (references, obj_map, totals) {
     'use strict';

@@ -304,8 +304,8 @@
  <script>
  
      var ReportBuilder = {
--        Constants: hqImport('userreports/js/v1/constants.js')
-+      Constants: hqImport("userreports/js/constants.js"),
+-        Constants: hqImport('userreports/js/v1/constants')
++      Constants: hqImport("userreports/js/constants"),
      };
  
 -    (function () {
@@ -321,7 +321,7 @@
 -        var isGroupByRequired = {{ is_group_by_required|JSON }};
 -        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
 -
--        var ConfigForm = hqImport('userreports/js/v1/builder_view_models.js').ConfigForm;
+-        var ConfigForm = hqImport('userreports/js/v1/builder_view_models').ConfigForm;
 -        $("#report-config-form").koApplyBindings(
 -            new ConfigForm(
 -                reportType,

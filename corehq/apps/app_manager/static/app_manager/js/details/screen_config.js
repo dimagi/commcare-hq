@@ -1,8 +1,8 @@
 /*globals $, _, DOMPurify, hqDefine, hqImport */
 
-hqDefine('app_manager/js/details/screen_config.js', function () {
+hqDefine('app_manager/js/details/screen_config', function () {
     var module = {},
-        uiElement = hqImport('style/js/ui-element.js');
+        uiElement = hqImport('style/js/ui-element');
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
@@ -346,7 +346,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             lang = that.screen.langs[i];
                             if (that.original.header[lang]) {
                                 visibleVal = that.original.header[lang]
-                                    + hqImport('style/js/ui_elements/ui-element-langcode-button.js').LANG_DELIN
+                                    + hqImport('style/js/ui_elements/ui-element-langcode-button').LANG_DELIN
                                     + lang;
                                 break;
                             }
@@ -413,7 +413,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
-                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config.js').GraphConfigurationUiElement;
+                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
                 this.graph_extra = new GraphConfigurationUiElement({
                     childCaseTypes: this.screen.childCaseTypes,
                     fixtures: this.screen.fixtures,
@@ -776,7 +776,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             data: this.serialize(),
                             dataType: 'json',
                             success: function (data) {
-                                var app_manager = hqImport('app_manager/js/app_manager.js');
+                                var app_manager = hqImport('app_manager/js/app_manager');
                                 app_manager.updateDOM(data.update);
                             }
                         });
@@ -1009,14 +1009,14 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                         that.shortScreen.saveButton.fire("change");
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
-                    this.caseListLookup = hqImport("app_manager/js/details/case_list_callout.js").caseListLookupViewModel(
+                    this.caseListLookup = hqImport("app_manager/js/details/case_list_callout").caseListLookupViewModel(
                         $case_list_lookup_el,
                         spec.state.short,
                         spec.lang,
                         this.shortScreen.saveButton
                     );
                     // Set up case search
-                    this.search = hqImport("app_manager/js/details/case_claim.js").searchViewModel(
+                    this.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
                         spec.searchProperties || [],
                         spec.includeClosed,
                         spec.defaultProperties,
@@ -1027,14 +1027,14 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     );
                 }
                 if (spec.state.long !== undefined) {
-                    var printModule = hqImport("app_manager/js/details/case_detail_print.js"),
+                    var printModule = hqImport("app_manager/js/details/case_detail_print"),
                         printRef = printModule.getPrintRef(),
                         printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
                     this.printTemplateReference = _.extend(printRef, {
                         removePrintTemplate: function() {
                             $.post(
-                                hqImport("hqwebapp/js/initial_page_data.js").reverse("hqmedia_remove_detail_print_template"),
+                                hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_detail_print_template"),
                                 {
                                     module_unique_id: spec.moduleUniqueId,
                                 },
@@ -1084,7 +1084,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             );
         }
 
-        var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
+        var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
         if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "enum-image", label: gettext('Icon')}

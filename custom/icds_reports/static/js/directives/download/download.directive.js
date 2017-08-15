@@ -214,7 +214,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
-    var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport, $, django */
 
-hqDefine('style/js/ui_elements/ui-element-input-map.js', function () {
+hqDefine('style/js/ui_elements/ui-element-input-map', function () {
     'use strict';
     var module = {};
 

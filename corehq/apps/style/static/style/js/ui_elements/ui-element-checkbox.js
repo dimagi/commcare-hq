@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport, $ */
 
-hqDefine('style/js/ui_elements/ui-element-checkbox.js', function () {
+hqDefine('style/js/ui_elements/ui-element-checkbox', function () {
     'use strict';
     var module = {};
 

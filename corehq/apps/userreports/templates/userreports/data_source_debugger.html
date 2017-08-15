@@ -5,8 +5,8 @@
     <script src="{% static 'userreports/js/data_source_evaluator.js' %}"></script>
     <script>
         $(function () {
-            var DataSourceModel = hqImport('userreports/js/data_source_evaluator.js').DataSourceModel;
-            var submitUrl = hqImport("hqwebapp/js/initial_page_data.js").reverse("data_source_evaluator");
+            var DataSourceModel = hqImport('userreports/js/data_source_evaluator').DataSourceModel;
+            var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("data_source_evaluator");
 
             ko.applyBindings(
                 new DataSourceModel(submitUrl),

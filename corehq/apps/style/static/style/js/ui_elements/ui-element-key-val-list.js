@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport, $, _, django */
 
-hqDefine('style/js/ui_elements/ui-element-key-val-list.js', function () {
+hqDefine('style/js/ui_elements/ui-element-key-val-list', function () {
     'use strict';
     var module = {};
 

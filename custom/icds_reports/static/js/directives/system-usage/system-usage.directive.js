@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;

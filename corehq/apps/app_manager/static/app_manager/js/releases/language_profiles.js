@@ -1,5 +1,5 @@
 /* globals hqDefine, hqImport, ko */
-hqDefine('app_manager/js/releases/language_profiles.js', function () {
+hqDefine('app_manager/js/releases/language_profiles', function () {
     var _p = {};
     _p.profileUrl = 'profiles/';
 

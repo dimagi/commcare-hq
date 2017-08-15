@@ -7,8 +7,8 @@
 
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
-hqDefine("reports/js/standard_hq_report.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+hqDefine("reports/js/standard_hq_report", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         standardReport = undefined,
         asyncReport = undefined;
 
@@ -21,7 +21,7 @@ hqDefine("reports/js/standard_hq_report.js", function() {
             // Custom reports, notably ewsghana and ilsgateway
             standardReport = standardHQReport;
         } else {
-            var ucr = "userreports/js/configurable_report.js";
+            var ucr = "userreports/js/configurable_report";
             if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();

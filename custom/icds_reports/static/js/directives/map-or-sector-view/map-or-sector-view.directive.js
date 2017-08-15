@@ -50,7 +50,7 @@ function MapOrSectorController() {
 
 MapOrSectorController.$inject = [];
 
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 window.angular.module('icdsApp').directive('mapOrSectorView', function() {
     return {

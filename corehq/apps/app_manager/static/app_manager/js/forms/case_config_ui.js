@@ -1,8 +1,8 @@
 /*globals $, hqDefine, hqImport, ko, _*/
 
-hqDefine('app_manager/js/forms/case_config_ui.js', function () {
+hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
         // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];
@@ -67,7 +67,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
@@ -90,7 +90,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                     }
@@ -987,7 +987,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
     };
 
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
             var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),

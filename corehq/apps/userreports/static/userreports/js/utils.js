@@ -1,4 +1,4 @@
-hqDefine('userreports/js/utils.js', function() {
+hqDefine('userreports/js/utils', function() {
 
     /**
      * Return an object representing the given DataSourceProperty object

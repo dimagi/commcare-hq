@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport, $, _, django, ko */
 
-hqDefine('style/js/ui_elements/ui-element-key-val-mapping.js', function () {
+hqDefine('style/js/ui_elements/ui-element-key-val-mapping', function () {
     'use strict';
     var module = {};
 
@@ -45,8 +45,8 @@ hqDefine('style/js/ui_elements/ui-element-key-val-mapping.js', function () {
         };
 
 
-        var app_manager = hqImport('app_manager/js/app_manager_media.js');
-        var uploaders = hqImport("app_manager/js/nav_menu_media_common.js");
+        var app_manager = hqImport('app_manager/js/app_manager_media');
+        var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         // attach a media-manager if item.value is a file-path to icon
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];

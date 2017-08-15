@@ -16,8 +16,8 @@ var mk_translation_ui = function (spec) {
         Translation = (function () {
             var Translation = function (key, value) {
                 var that = this;
-                this.key = hqImport('style/js/ui-element.js').input().val(key).setEdit(false);
-                this.value = hqImport('style/js/ui-element.js').input().val(value);
+                this.key = hqImport('style/js/ui-element').input().val(key).setEdit(false);
+                this.value = hqImport('style/js/ui-element').input().val(value);
                 this.solid = true;
 
                 this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(hqImport('style/js/main.js').icons.DELETE).click(function () {

@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/download_async_modal.js', function () {
+hqDefine('app_manager/js/download_async_modal', function () {
     var AsyncDownloader = function($el){
         "use strict";
         var self = this;

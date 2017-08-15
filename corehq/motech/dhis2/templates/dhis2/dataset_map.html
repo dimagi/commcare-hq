@@ -11,7 +11,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
     $(function () {
-        var Dhis2MapSettings = hqImport('dhis2/js/dhis2_map_settings.js').Dhis2MapSettings;
+        var Dhis2MapSettings = hqImport('dhis2/js/dhis2_map_settings').Dhis2MapSettings;
         var viewModel = new Dhis2MapSettings({{ dataset_maps|JSON }}, {{ send_data_url|JSON }});
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);

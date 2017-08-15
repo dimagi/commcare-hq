@@ -14,8 +14,8 @@
     <script>
         Stripe.setPublishableKey('{{ stripe_public_key }}');
         $(function () {
-            var CreditsManager = hqImport('accounting/js/accounting.credits.js').CreditsManager;
-            var PaymentMethodHandler = hqImport('accounting/js/accounting.payment_method_handler.js').PaymentMethodHandler;
+            var CreditsManager = hqImport('accounting/js/accounting.credits').CreditsManager;
+            var PaymentMethodHandler = hqImport('accounting/js/accounting.payment_method_handler').PaymentMethodHandler;
             var paymentHandler = new PaymentMethodHandler(
                 "add-credit-form",
                 {

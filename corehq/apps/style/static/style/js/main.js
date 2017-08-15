@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine("style/js/main.js", function() {
+hqDefine("style/js/main", function() {
     var eventize = function (that) {
         'use strict';
         var events = {};
@@ -127,19 +127,47 @@ hqDefine("style/js/main.js", function() {
                         } else {
                             this.setState(state);
                         }
-                    },
-                    setState: function (state) {
-                        if (this.state === state) {
-                            return;
-                        }
-                        this.state = state;
-                        this.$save.detach();
-                        this.$saving.detach();
-                        this.$saved.detach();
-                        this.$retry.detach();
-                        var buttonUi = this.ui;
-                        _.each(BAR_STATE, function (v, k) {
-                            buttonUi.removeClass(v);
+                        hqImport("style/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                        error.apply(this, arguments);
+                    };
+                    var jqXHR = $.ajax(options);
+                    if (!jqXHR) {
+                        // request was aborted
+                        that.setState('save');
+                    }
+                }
+            };
+            eventize(button);
+            button.setState('saved');
+            button.on('change', function () {
+                this.setStateWhenReady('save');
+            });
+            if (options.save) {
+                button.on('save', options.save);
+            }
+            $(window).on('beforeunload', function () {
+                var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                if (lastParent) {
+                    var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                    if (button.state !== 'saved' && stillAttached) {
+                        if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
+                        return options.unsavedMessage || "";
+                    }
+                }
+            });
+            return button;
+        },
+        initForm: function ($form, options) {
+            var url = $form.attr('action'),
+                button = SaveButton.init({
+                    unsavedMessage: options.unsavedMessage,
+                    save: function () {
+                        this.ajax({
+                            url: url,
+                            type: 'POST',
+                            dataType: 'json',
+                            data: $form.serialize(),
+                            success: options.success
                         });
                         if (state === 'save') {
                             this.ui.addClass(BAR_STATE.SAVE);
@@ -178,7 +206,7 @@ hqDefine("style/js/main.js", function() {
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;
                             }
-                            hqImport("style/js/alert_user.js").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                            hqImport("style/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                             error.apply(this, arguments);
                         };
                         var jqXHR = $.ajax(options);
@@ -188,7 +216,7 @@ hqDefine("style/js/main.js", function() {
                         }
                     }
                 };
-                hqImport("style/js/main.js").eventize(button);
+                eventize(button);
                 button.setState('saved');
                 button.on('change', function () {
                     this.setStateWhenReady('save');

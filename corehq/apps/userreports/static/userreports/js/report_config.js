@@ -2,9 +2,9 @@
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
-    var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
-    var PropertyListItem = hqImport('userreports/js/builder_view_models.js').PropertyListItem;
-    var constants = hqImport('userreports/js/constants.js');
+    var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
+    var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
+    var constants = hqImport('userreports/js/constants');
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
         PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
@@ -142,7 +142,7 @@ var reportBuilder = function () {  // eslint-disable-line
          * @private
          */
         var _getSelectableProperties = function (dataSourceIndicators) {
-            var utils = hqImport('userreports/js/utils.js');
+            var utils = hqImport('userreports/js/utils');
             if (self._optionsContainQuestions(dataSourceIndicators)) {
                 return _.compact(_.map(
                     dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
@@ -155,7 +155,7 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var _getSelectableReportColumnOptions = function(reportColumnOptions, dataSourceIndicators) {
-            var utils = hqImport('userreports/js/utils.js');
+            var utils = hqImport('userreports/js/utils');
             if (self._optionsContainQuestions(dataSourceIndicators)) {
                 return _.compact(_.map(
                     reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
@@ -294,7 +294,7 @@ var reportBuilder = function () {  // eslint-disable-line
             if (self.reportType() === "map" && mapSpec) {
                 self.displayMapPreview(true);
                 mapSpec.mapboxAccessToken = self._mapboxAccessToken;
-                var render = hqImport('reports_core/js/maps.js').render;
+                var render = hqImport('reports_core/js/maps').render;
                 render(mapSpec, aaData, $("#map-preview-container"));
             } else {
                 self.displayMapPreview(false);
@@ -302,7 +302,7 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         self._renderChartPreview = function (chartSpecs, aaData) {
-            var charts = hqImport('reports_core/js/charts.js');
+            var charts = hqImport('reports_core/js/charts');
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 if (aaData.length > 25) {
                     $("#chart-warning").removeClass("hide");

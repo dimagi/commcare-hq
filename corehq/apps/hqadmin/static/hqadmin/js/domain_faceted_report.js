@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('hqadmin/js/domain_faceted_report.js', function () {
+hqDefine('hqadmin/js/domain_faceted_report', function () {
     var visualizations = {
         forms: {name: "forms", xaxis_label: "# form submissions", viz: null},
         cases: {name: "cases", xaxis_label: "# case creations", viz: null},
@@ -31,9 +31,9 @@ hqDefine('hqadmin/js/domain_faceted_report.js', function () {
                     chart_name: key,
                     histogram_type: key,
                     xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: hqImport("hqwebapp/js/initial_page_data.js").reverse("admin_stats_data"),
+                    ajax_url: hqImport("hqwebapp/js/initial_page_data").reverse("admin_stats_data"),
                     data: url_params,
-                    interval: hqImport("hqwebapp/js/initial_page_data.js").get("interval"),
+                    interval: hqImport("hqwebapp/js/initial_page_data").get("interval"),
                 });
                 visualizations[key].viz.init();
             }

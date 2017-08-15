@@ -8,10 +8,10 @@ $(function () {
         keyboard: false,
         show: true
     }).on('hide.bs.modal', function () {
-        window.location = hqImport('hqwebapp/js/initial_page_data.js').reverse('default_app');
+        window.location = hqImport('hqwebapp/js/initial_page_data').reverse('default_app');
     });
-    if (hqImport('hqwebapp/js/initial_page_data.js').get('show_live_preview') || v2) {
-        var previewApp = hqImport('app_manager/js/preview_app.js');
+    if (hqImport('hqwebapp/js/initial_page_data').get('show_live_preview') || v2) {
+        var previewApp = hqImport('app_manager/js/preview_app');
         previewApp.initPreviewWindow(hqLayout);
     }
 
