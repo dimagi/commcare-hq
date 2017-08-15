@@ -13,7 +13,9 @@ from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ResumableBulkElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import (
+    ElasticPillowReindexer, ResumableBulkElasticPillowReindexer, ReindexerFactory
+)
 
 
 @quickcache(['case_id'])
