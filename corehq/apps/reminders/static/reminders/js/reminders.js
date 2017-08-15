@@ -1,4 +1,4 @@
-hqDefine("reminders/js/reminders.js", function() {
+hqDefine("reminders/js/reminders", function() {
     $(function (){
         var unsaved = false;
         $(":input[type='submit'].btn-primary").click(function (){

@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/modules/case_list_setting.js", function() {
+hqDefine("app_manager/js/modules/case_list_setting", function() {
     function getLabel(slug) { return $('.case-list-setting-label[data-slug="' + slug + '"]'); }
     function getShow(slug) { return $('.case-list-setting-show[data-slug="' + slug + '"]'); }
     function getMedia(slug) { return $('.case-list-setting-media[data-slug="' + slug + '"]'); }

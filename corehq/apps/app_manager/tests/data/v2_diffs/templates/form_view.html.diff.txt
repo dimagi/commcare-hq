@@ -37,7 +37,7 @@
 +    </div>
 +
 +    <div class="appmanager-edit-title">
-+      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
++      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
 +      {% if form.get_action_type == 'open' %}
 +        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
 +      {% elif form.requires_case %}
@@ -78,7 +78,7 @@
 -    {% registerurl "formplayer_single_app" domain app.id %}
 -
 -    <div id="build_errors"></div>
--    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
+-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager').updateDOM(data.update);}" %}
 -    <br />
 -    <inline-edit params="
 -        name: 'comment',

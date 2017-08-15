@@ -6,7 +6,7 @@
 
 /* globals RMI, $, _, ko */
 
-hqDefine('notifications/js/notifications_service.js', function () {
+hqDefine('notifications/js/notifications_service', function () {
     'use strict';
     var module = {};
     var _private = {};
@@ -124,9 +124,9 @@ hqDefine('notifications/js/notifications_service.js', function () {
     };
 
     $(function () {
-        var notifications = hqImport('notifications/js/notifications_service.js');
+        var notifications = hqImport('notifications/js/notifications_service');
         var csrfToken = $("#csrfTokenContainer").val();
-        notifications.setRMI(hqImport('hqwebapp/js/initial_page_data.js').reverse('notifications_service'), csrfToken);
+        notifications.setRMI(hqImport('hqwebapp/js/initial_page_data').reverse('notifications_service'), csrfToken);
         notifications.initService('#js-settingsmenu-notifications');
         notifications.initUINotify('.alert-ui-notify');
     });

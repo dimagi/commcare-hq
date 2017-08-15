@@ -1,5 +1,5 @@
 /* global django */
-hqDefine('userreports/js/builder_view_models.js', function () {
+hqDefine('userreports/js/builder_view_models', function () {
     'use strict';
 
     var getOrDefault = function(options, key, default_) {
@@ -83,7 +83,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
 
         self.format = ko.observable("");
 
-        var constants = hqImport('userreports/js/constants.js');
+        var constants = hqImport('userreports/js/constants');
         self.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
@@ -290,7 +290,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             groupByInitialValue
     ) {
         var self = this;
-        var constants = hqImport('userreports/js/constants.js');
+        var constants = hqImport('userreports/js/constants');
 
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
@@ -301,7 +301,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         self.isGroupByRequired = ko.observable(isGroupByRequired);
         self.showGroupByValidationError = ko.observable(false);
 
-        var utils = hqImport("userreports/js/utils.js");
+        var utils = hqImport("userreports/js/utils");
 
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and

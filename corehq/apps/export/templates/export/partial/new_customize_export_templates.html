@@ -179,7 +179,7 @@
                                     <span data-bind="foreach: { data: column.tags, as: 'tag' }">
                                         <span data-bind="
                                             text: tag,
-                                            attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
+                                            attr: { class: hqImport('export/js/utils').getTagCSSClass(tag) }"></span>
                                     </span>
 
                                     <!-- ko if: !column.isEditable() -->
@@ -222,11 +222,11 @@
                                                 }
                                             "></span>
                                             <select style="width:200px" class="form-control" data-bind="
-                                                options: hqImport('export/js/const.js').USER_DEFINED_SPLIT_TYPES,
+                                                options: hqImport('export/js/const').USER_DEFINED_SPLIT_TYPES,
                                                 value: column.split_type,
                                             "/></select>
                                         </div>
-                                        <!-- ko if: column.split_type() === hqImport('export/js/const.js').MULTISELECT_SPLIT_TYPE -->
+                                        <!-- ko if: column.split_type() === hqImport('export/js/const').MULTISELECT_SPLIT_TYPE -->
                                         <div class="form-group">
                                             <button class="btn btn-default btn-xs" data-bind="
                                                 visible: !column.showOptions(),

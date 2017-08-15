@@ -2,8 +2,8 @@
 +++ 
 @@ -1,5 +1,5 @@
  /* global django */
--hqDefine('userreports/js/v1/builder_view_models.js', function () {
-+hqDefine('userreports/js/builder_view_models.js', function () {
+-hqDefine('userreports/js/v1/builder_view_models', function () {
++hqDefine('userreports/js/builder_view_models', function () {
      'use strict';
  
      var getOrDefault = function(options, key, default_) {
@@ -17,16 +17,16 @@
 -        // the PropertyListItem represents columns in a non-aggregated report
 -        // or a filter
 -        self.calculation = ko.observable(
--            hqImport('userreports/js/v1/constants.js').DEFAULT_CALCULATION_OPTIONS[0]
+-            hqImport('userreports/js/v1/constants').DEFAULT_CALCULATION_OPTIONS[0]
 -        );
 +
-+        var constants = hqImport('userreports/js/constants.js');
++        var constants = hqImport('userreports/js/constants');
          self.calculationOptions = ko.pureComputed(function() {
              var propObject = self.getPropertyObject(self.property());
              if (propObject) {
                  return propObject.aggregation_options;
              }
--            return hqImport('userreports/js/v1/constants.js').DEFAULT_CALCULATION_OPTIONS;
+-            return hqImport('userreports/js/v1/constants').DEFAULT_CALCULATION_OPTIONS;
 -        });
 +            return constants.DEFAULT_CALCULATION_OPTIONS;
 +        });
@@ -243,7 +243,7 @@
              groupByInitialValue
      ) {
          var self = this;
-+        var constants = hqImport('userreports/js/constants.js');
++        var constants = hqImport('userreports/js/constants');
 +
          self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
              return o.type === 'question';
@@ -252,7 +252,7 @@
          self.isGroupByRequired = ko.observable(isGroupByRequired);
          self.showGroupByValidationError = ko.observable(false);
  
-+        var utils = hqImport("userreports/js/utils.js");
++        var utils = hqImport("userreports/js/utils");
 +
          // Convert the DataSourceProperty and ColumnOption passed through the template
          // context into objects with the correct format for the select2 and

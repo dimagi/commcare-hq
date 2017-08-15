@@ -1,7 +1,7 @@
 /* globals hqDefine */
-hqDefine('hqadmin/js/couch_changes.js', function () {
+hqDefine('hqadmin/js/couch_changes', function () {
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             domain_data = initial_page_data('domain_data'),
             doc_type_data = initial_page_data('doc_type_data');
         var addGraph = function (data, divId) {

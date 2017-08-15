@@ -1,6 +1,6 @@
 /* globals COMMCAREHQ */
-hqDefine("app_manager/js/add_ons.js", function() {
-    var sectionChanger = hqImport("app_manager/js/section_changer.js");
+hqDefine("app_manager/js/add_ons", function() {
+    var sectionChanger = hqImport("app_manager/js/section_changer");
 
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
@@ -36,9 +36,9 @@ hqDefine("app_manager/js/add_ons.js", function() {
         var $addOns = $("#add-ons");
         if ($addOns.length) {
             $addOns.koApplyBindings(new EditAddOns(
-                hqImport("hqwebapp/js/initial_page_data.js").get("add_ons"),
-                hqImport("hqwebapp/js/initial_page_data.js").get("add_ons_layout"),
-                hqImport("hqwebapp/js/initial_page_data.js").reverse("edit_add_ons")
+                hqImport("hqwebapp/js/initial_page_data").get("add_ons"),
+                hqImport("hqwebapp/js/initial_page_data").get("add_ons_layout"),
+                hqImport("hqwebapp/js/initial_page_data").reverse("edit_add_ons")
             ));
             sectionChanger.attachToForm($addOns.find("form"));
         }

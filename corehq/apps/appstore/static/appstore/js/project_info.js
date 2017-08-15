@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('appstore/js/project_info.js', function () {
+hqDefine('appstore/js/project_info', function () {
     function update_import_into_button() {
         var project = $('#project_select option:selected').text();
         $("#import-into-button").text("Import into " + project);
@@ -30,7 +30,7 @@ hqDefine('appstore/js/project_info.js', function () {
         });
     
         // Analytics
-        var project = hqImport('hqwebapp/js/initial_page_data.js').get('project');
+        var project = hqImport('hqwebapp/js/initial_page_data').get('project');
         $('#download-new-project').click(function() {
             ga_track_event('Exchange', 'Download As New Project', project);
         });

@@ -1,7 +1,7 @@
-hqDefine('export/js/download_export.js', function() {
+hqDefine('export/js/download_export', function() {
     'use strict';
 
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     var downloadExportsApp = window.angular.module('downloadExportsApp', ['hq.download_export']);
     downloadExportsApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));

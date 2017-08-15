@@ -2,7 +2,7 @@
 /* eslint-env mocha */
 describe('Render a case list', function () {
     var Menus = FormplayerFrontend.Menus;
-    var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures.js");
+    var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
         var server;
         beforeEach(function() {

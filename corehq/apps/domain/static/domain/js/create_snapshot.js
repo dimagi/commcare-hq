@@ -1,7 +1,7 @@
 /* globals hqDefine */
-hqDefine("domain/js/create_snapshot.js", function() {
+hqDefine("domain/js/create_snapshot", function() {
     $(function(){
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             ids = initial_page_data('app_ids').concat(initial_page_data('fixture_ids'));
     
         _.each(ids, function (id) {

@@ -3,15 +3,15 @@
 
 describe('Location Types', function() {
 
-    var LocationSettingsViewModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel,
-        LocationTypeModel = hqImport('locations/js/location_types.js').LocationTypeModel;
+    var LocationSettingsViewModel = hqImport('locations/js/location_types').LocationSettingsViewModel,
+        LocationTypeModel = hqImport('locations/js/location_types').LocationTypeModel;
 
     var extract_name = function(loc_type){
         return loc_type.name();
     };
 
     describe('Linear Hierarchy', function(){
-        var data = hqImport('locations/spec/data/locations_data.js').linear;
+        var data = hqImport('locations/spec/data/locations_data').linear;
 
         beforeEach(function(){
             this.location_types = _.map(data, function(data){
@@ -98,7 +98,7 @@ describe('Location Types', function() {
     });
 
     describe('Forked Hierarchy', function(){
-        var data = hqImport('locations/spec/data/locations_data.js').forked;
+        var data = hqImport('locations/spec/data/locations_data').forked;
 
         beforeEach(function(){
             this.location_types = _.map(data, function(data){

@@ -6,7 +6,7 @@ describe('ExportColumn', function() {
         deletedColumn,
         table,
         instance,
-        viewModels = hqImport('export/js/models.js');
+        viewModels = hqImport('export/js/models');
 
     beforeEach(function() {
         selectedColumn = {

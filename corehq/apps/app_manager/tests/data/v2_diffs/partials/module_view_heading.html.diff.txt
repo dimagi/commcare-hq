@@ -5,13 +5,13 @@
  {% load xforms_extras %}
 +{% load hq_shared_tags %}
  
--{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+-{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager').updateDOM(data.update); }" %}
 -<br />
 +<div class="appmanager-page-actions">
 +  {% include 'app_manager/v2/partials/app_summary_button.html' %}
 +</div>
 +<div class="appmanager-edit-title">
-+  {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-module_name']); return appManager.updateDOM(data.update);}" %}
++  {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-module_name']); return appManager.updateDOM(data.update);}" %}
 +  {% if module.is_surveys %}
 +      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave=postSave %}
 +  {% else %}

@@ -1,5 +1,5 @@
 /*globals hqDefine */
-hqDefine('reports_core/js/maps.js', function () {
+hqDefine('reports_core/js/maps', function () {
     var module = {},
         privates = {};
 

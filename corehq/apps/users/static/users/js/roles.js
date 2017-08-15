@@ -1,4 +1,4 @@
-hqDefine('users/js/roles.js', function () {
+hqDefine('users/js/roles', function () {
     var RolesViewModel = function (o) {
         'use strict';
         var self = this,

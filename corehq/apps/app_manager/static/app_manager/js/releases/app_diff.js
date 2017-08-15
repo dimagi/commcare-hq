@@ -43,8 +43,8 @@
  * Notice how the browser autocorrects the end tag differently. This works out well for us
  * and is taken advantage of in this code.
  * */
-hqDefine('app_manager/js/releases/app_diff.js', function () {
-    var reverse = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+hqDefine('app_manager/js/releases/app_diff', function () {
+    var reverse = hqImport('hqwebapp/js/initial_page_data').reverse;
     var sanitize = DOMPurify.sanitize;
 
     var init = function(selector, options) {

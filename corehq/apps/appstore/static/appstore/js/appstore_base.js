@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('appstore/js/appstore_base.js', function () {
+hqDefine('appstore/js/appstore_base', function () {
     // This assures that all the result elements are the same height
     function assure_correct_spacing() {
         $('.results').each(function(){
