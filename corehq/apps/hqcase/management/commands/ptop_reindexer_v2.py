@@ -20,6 +20,7 @@ from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import CouchFormReindexerFactory, SqlFormReindexerFactory
+from corehq.util.test_utils import unit_testing_only
 
 USAGE = """Reindex a pillowtop index.
 
@@ -58,24 +59,7 @@ FACTORIES_BY_SLUG = {
 }
 
 
-RESUMABLE = {
-    'case',
-    'form',
-    'sql-case',
-    'sql-form',
-    'application',
-    'ledger-v2'
-}
-
-NOT_ELASTIC = {
-    'groups-to-user',
-    'couch-app-form-submission',
-    'sql-app-form-submission',
-    'user-sync-history',
-    'user-app-form-submission',
-}
-
-
+@unit_testing_only
 def reindex_and_clean(slug, **options):
     reindexer = FACTORIES_BY_SLUG[slug](**options).build()
     reindexer.clean()
