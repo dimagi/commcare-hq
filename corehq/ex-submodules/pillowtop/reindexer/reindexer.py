@@ -85,11 +85,10 @@ class PillowChangeProviderReindexer(PillowReindexer):
         self.change_provider = change_provider
 
     def consume_options(self, options):
-        self.start_from = options.pop("start_from", None)
         return options
 
     def reindex(self):
-        for i, change in enumerate(self.change_provider.iter_all_changes(start_from=self.start_from)):
+        for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
                 self.pillow.process_change(change)
             except Exception:
