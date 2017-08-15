@@ -1,5 +1,6 @@
 import itertools
 import logging
+import os
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
@@ -643,6 +644,15 @@ class CaseReindexAccessor(ReindexAccessor):
     def __init__(self, domain=None, limit_db_aliases=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
+        try:
+            self.partition_num = int(os.environ.get('PARTITION_NUM'))
+            self.partition_size = int(os.environ.get('PARTITION_SIZE'))
+            if self.partition_num < 0 or self.partition_num >= self.partition_size:
+                raise RuntimeError("Expected PARTITION_NUM between 0 and PARTITION_SIZE - 1")
+        except (ValueError, TypeError):
+            self.partition_num = 0
+            self.partition_size = 1
+        print("Using partition number %s with a partition size of %s" % (self.partition_num, self.partition_size))
 
     @property
     def model_class(self):
@@ -672,8 +682,10 @@ class CaseReindexAccessor(ReindexAccessor):
             WHERE {domain_clause}
             deleted = %s AND
             (case_table.server_modified_on, case_table.id) > (%s, %s)
+            AND MOD(id, {partition_size}) = {partition_num}
             ORDER BY case_table.server_modified_on, case_table.id
             LIMIT %s;""".format(
+                partition_num=self.partition_num, partition_size=self.partition_size,
                 table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
             ),
             values
