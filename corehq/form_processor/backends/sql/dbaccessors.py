@@ -643,12 +643,17 @@ class CaseReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         server_modified_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
-            [server_modified_on_since, last_id, limit],
-            using=from_db
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = CommCareCaseSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as case_table
+            WHERE (case_table.server_modified_on, case_table.id) > (%s, %s)
+            ORDER BY case_table.server_modified_on, case_table.id
+            LIMIT %s;""".format(
+                table=CommCareCaseSQL._meta.db_table
+            ),
+            [server_modified_on_since, last_id, limit]
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
 
 
