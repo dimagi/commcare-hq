@@ -139,7 +139,7 @@ class UserReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        reindexer = ElasticPillowReindexer(
+        return ElasticPillowReindexer(
             pillow=get_user_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=CommCareUser.get_db(),
@@ -150,6 +150,5 @@ class UserReindexerFactory(ReindexerFactory):
             ),
             elasticsearch=get_es_new(),
             index_info=USER_INDEX_INFO,
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer

@@ -59,7 +59,7 @@ class DomainReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        reindexer = ElasticPillowReindexer(
+        return ElasticPillowReindexer(
             pillow=get_domain_kafka_to_elasticsearch_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Domain.get_db(),
@@ -72,6 +72,5 @@ class DomainReindexerFactory(ReindexerFactory):
             ),
             elasticsearch=get_es_new(),
             index_info=DOMAIN_INDEX_INFO,
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer

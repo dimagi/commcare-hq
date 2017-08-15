@@ -121,15 +121,11 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
 
 class UserSyncHistoryReindexer(Reindexer):
 
-    def __init__(self, doc_provider, chunk_size=1000):
+    def __init__(self, doc_provider, chunk_size=1000, reset=False):
+        self.reset = reset
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = UserSyncHistoryReindexerDocProcessor(UserSyncHistoryProcessor())
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.chunk_size = options.pop("chunksize", self.chunk_size)
-        return options
 
     def reindex(self):
         processor = DocumentProcessorController(
@@ -153,6 +149,4 @@ class UpdateUserSyncHistoryReindexerFactory(ReindexerFactory):
             CommCareUser,
             WebUser
         ])
-        reindexer = UserSyncHistoryReindexer(doc_provider)
-        reindexer.consume_options(self.options)
-        return reindexer
+        return UserSyncHistoryReindexer(doc_provider, **self.options)

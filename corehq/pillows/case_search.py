@@ -127,8 +127,8 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         """Returns a reindexer that will return either all domains with case search
         enabled, or a single domain if passed in
         """
-        limit_to_db = self.options.get('limit_to_db', None)
-        domain = self.options.get('domain', None)
+        limit_to_db = self.options.pop('limit_to_db', None)
+        domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
@@ -146,12 +146,10 @@ class CaseSearchReindexerFactory(ReindexerFactory):
             # The db hasn't been intialized yet, so skip this reindex and complain.
             return _fail_gracefully_and_tell_admins()
         else:
-            reindexer = PillowChangeProviderReindexer(
+            return PillowChangeProviderReindexer(
                 get_case_search_to_elasticsearch_pillow(),
-                change_provider=change_provider
+                change_provider=change_provider,
             )
-            reindexer.consume_options(self.options)
-            return reindexer
 
 
 def delete_case_search_cases(domain):

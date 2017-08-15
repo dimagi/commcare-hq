@@ -42,7 +42,7 @@ class GroupReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        reindexer = ElasticPillowReindexer(
+        return ElasticPillowReindexer(
             pillow=get_group_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Group.get_db(),
@@ -55,6 +55,5 @@ class GroupReindexerFactory(ReindexerFactory):
             ),
             elasticsearch=get_es_new(),
             index_info=GROUP_INDEX_INFO,
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer

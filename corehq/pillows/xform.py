@@ -172,16 +172,15 @@ class CouchFormReindexerFactory(ReindexerFactory):
             ('HQSubmission', XFormInstance),
             SubmissionErrorLog,
         ])
-        reindexer = ResumableBulkElasticPillowReindexer(
+        return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=XFORM_INDEX_INFO,
             doc_filter=xform_pillow_filter,
             doc_transform=transform_xform_for_elasticsearch,
             pillow=get_xform_to_elasticsearch_pillow(),
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer
 
 
 class SqlFormReindexerFactory(ReindexerFactory):
@@ -193,19 +192,17 @@ class SqlFormReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        limit_to_db = self.options.get('limit_to_db', None)
+        limit_to_db = self.options.pop('limit_to_db', None)
         iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}".format(
             XFORM_INDEX_INFO.index, limit_to_db or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor(limit_db_aliases=limit_db_aliases))
-        reindexer = ResumableBulkElasticPillowReindexer(
+        return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=XFORM_INDEX_INFO,
             doc_filter=xform_pillow_filter,
-            doc_transform=transform_xform_for_elasticsearch
+            doc_transform=transform_xform_for_elasticsearch,
+            **self.options
         )
-
-        reindexer.consume_options(self.options)
-        return reindexer

@@ -88,14 +88,13 @@ class LedgerV2ReindexerFactory(ReindexerFactory):
     def build(self):
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer".format(LEDGER_INDEX_INFO.index)
         doc_provider = SqlDocumentProvider(iteration_key, LedgerReindexAccessor())
-        reindexer = ResumableBulkElasticPillowReindexer(
+        return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=LEDGER_INDEX_INFO,
-            doc_transform=_prepare_ledger_for_es
+            doc_transform=_prepare_ledger_for_es,
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer
 
 
 class LedgerV1ReindexerFactory(ReindexerFactory):
@@ -111,6 +110,7 @@ class LedgerV1ReindexerFactory(ReindexerFactory):
             change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
             elasticsearch=get_es_new(),
             index_info=LEDGER_INDEX_INFO,
+            **self.options
         )
 
 

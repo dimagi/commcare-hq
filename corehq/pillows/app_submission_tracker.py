@@ -88,7 +88,8 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
 class AppFormSubmissionReindexer(Reindexer):
     reset = False
 
-    def __init__(self, doc_provider, data_source_type, data_source_name, chunk_size=1000):
+    def __init__(self, doc_provider, data_source_type, data_source_name, chunk_size=1000, reset=False):
+        self.reset = reset
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = AppFormSubmissionReindexDocProcessor(
@@ -96,11 +97,6 @@ class AppFormSubmissionReindexer(Reindexer):
             data_source_type,
             data_source_name,
         )
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.chunk_size = options.pop("chunksize", self.chunk_size)
-        return options
 
     def reindex(self):
         processor = DocumentProcessorController(
@@ -129,9 +125,9 @@ class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
             ('HQSubmission', XFormInstance),
             SubmissionErrorLog,
         ])
-        reindexer = AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().dbname)
-        reindexer.consume_options(self.options)
-        return reindexer
+        return AppFormSubmissionReindexer(
+            doc_provider, COUCH, XFormInstance.get_db().dbname, **self.options
+        )
 
 
 class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
@@ -146,9 +142,9 @@ class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
             iteration_key,
             FormReindexAccessor(include_attachments=False)
         )
-        reindexer = AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
-        reindexer.consume_options(self.options)
-        return reindexer
+        return AppFormSubmissionReindexer(
+            doc_provider, FORM_SQL, 'form_processor_xforminstancesql', **self.options
+        )
 
 
 class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
@@ -197,15 +193,11 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
 
 
 class UserAppFormSubmissionReindexer(Reindexer):
-    def __init__(self, doc_provider, chunk_size=1000):
+    def __init__(self, doc_provider, chunk_size=1000, reset=False):
+        self.reset = reset
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = UserAppFormSubmissionDocProcessor(FormSubmissionMetadataTrackerProcessor())
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.chunk_size = options.pop("chunksize", self.chunk_size)
-        return options
 
     def reindex(self):
         processor = DocumentProcessorController(
@@ -229,6 +221,4 @@ class UserAppFormSubmissionReindexerFactory(ReindexerFactory):
             CommCareUser,
             WebUser
         ])
-        reindexer = UserAppFormSubmissionReindexer(doc_provider)
-        reindexer.consume_options(self.options)
-        return reindexer
+        return UserAppFormSubmissionReindexer(doc_provider, **self.options)

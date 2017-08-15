@@ -18,15 +18,6 @@ MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
-    def consume_options(self, options):
-        """Called from the management command with the command line
-        options.
-
-        :param options: command line options dict
-        :return: dict of unprocessed options
-        """
-        return options
-
     def clean(self):
         """
             Cleans the index.
@@ -94,7 +85,7 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
                 '--chunksize',
                 type=int,
                 action='store',
-                dest='chunksize',
+                dest='chunk_size',
                 help='Number of docs to process at a time'
             )
 
@@ -118,9 +109,6 @@ class PillowChangeProviderReindexer(PillowReindexer):
     def __init__(self, pillow, change_provider):
         super(PillowChangeProviderReindexer, self).__init__(pillow)
         self.change_provider = change_provider
-
-    def consume_options(self, options):
-        return options
 
     def reindex(self):
         for i, change in enumerate(self.change_provider.iter_all_changes()):
@@ -159,14 +147,11 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow, change_provider, elasticsearch, index_info):
+    def __init__(self, pillow, change_provider, elasticsearch, index_info, in_place=False):
         super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
-
-    def consume_options(self, options):
-        super(ElasticPillowReindexer, self).consume_options(options)
-        self.in_place = options.pop("in-place", False)
+        self.in_place = in_place
 
     def clean(self):
         _clean_index(self.es, self.index_info)
@@ -256,7 +241,10 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
     in_place = False
 
     def __init__(self, doc_provider, elasticsearch, index_info,
-                 doc_filter=None, doc_transform=None, chunk_size=1000, pillow=None):
+                 doc_filter=None, doc_transform=None, chunk_size=1000, pillow=None,
+                 reset=False, in_place=False):
+        self.reset = reset
+        self.in_place = in_place
         self.doc_provider = doc_provider
         self.es = elasticsearch
         self.index_info = index_info
@@ -265,14 +253,6 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
             self.es, self.index_info, doc_filter, doc_transform
         )
         self.pillow = pillow
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.in_place = options.pop("in-place", False)
-        chunk_size = options.pop("chunksize", None)
-        if chunk_size:
-            self.chunk_size = chunk_size
-        return options
 
     def clean(self):
         _clean_index(self.es, self.index_info)

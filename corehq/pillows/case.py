@@ -71,15 +71,14 @@ class CouchCaseReindexerFactory(ReindexerFactory):
             CommCareCase,
             ("CommCareCase-Deleted", CommCareCase)
         ])
-        reindexer = ResumableBulkElasticPillowReindexer(
+        return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=CASE_INDEX_INFO,
             doc_transform=transform_case_for_elasticsearch,
-            pillow=get_case_to_elasticsearch_pillow()
+            pillow=get_case_to_elasticsearch_pillow(),
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer
 
 
 class SqlCaseReindexerFactory(ReindexerFactory):
@@ -91,17 +90,16 @@ class SqlCaseReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        limit_to_db = self.options.get('limit_to_db', None)
+        limit_to_db = self.options.pop('limit_to_db', None)
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
             CASE_INDEX_INFO.index, limit_to_db or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
-        reindexer = ResumableBulkElasticPillowReindexer(
+        return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=CASE_INDEX_INFO,
-            doc_transform=transform_case_for_elasticsearch
+            doc_transform=transform_case_for_elasticsearch,
+            **self.options
         )
-        reindexer.consume_options(self.options)
-        return reindexer
