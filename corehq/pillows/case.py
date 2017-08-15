@@ -70,6 +70,10 @@ class CouchCaseReindexerFactory(ReindexerFactory):
         iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
             CASE_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
         )
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            CommCareCase,
+            ("CommCareCase-Deleted", CommCareCase)
+        ])
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
