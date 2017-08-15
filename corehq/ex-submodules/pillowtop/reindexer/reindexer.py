@@ -42,6 +42,36 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
+class UnexpectedOptionException(Exception):
+    def __init__(self, reindexer_slug, extras):
+        super(UnexpectedOptionException, self).__init__(
+            "The following options don't apply "
+            "to the reindexer ({}): {}".format(reindexer_slug, ','.join(list(extras)))
+        )
+
+
+class ReindexerFactory(six.with_metaclass(ABCMeta)):
+    valid_options = None
+    slug = None
+
+    def __init__(self, **options):
+        self.validate_options(options)
+        self.options = options
+
+    def validate_options(self, options):
+        extras = set(options) - set(self.valid_options or [])
+        if extras:
+            raise UnexpectedOptionException(self.slug, extras)
+
+    @abstractmethod
+    def build(self):
+        """
+        :param options: dict of options
+        :return: a fully configured reindexer
+        """
+        raise NotImplementedError
+
+
 class PillowReindexer(Reindexer):
     def __init__(self, pillow):
         self.pillow = pillow

@@ -11,7 +11,7 @@ from pillowtop.processors.interface import PillowProcessor
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import Change
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.reindexer.reindexer import Reindexer
+from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
@@ -141,10 +141,16 @@ class UserSyncHistoryReindexer(Reindexer):
         processor.run()
 
 
-def get_user_sync_history_reindexer():
-    iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        CommCareUser,
-        WebUser
-    ])
-    return UserSyncHistoryReindexer(doc_provider)
+class UpdateUserSyncHistoryReindexerFactory(ReindexerFactory):
+    slug = 'user-sync-history'
+    valid_options = ['reset', 'chunksize']
+
+    def build(self):
+        iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            CommCareUser,
+            WebUser
+        ])
+        reindexer = UserSyncHistoryReindexer(doc_provider)
+        reindexer.consume_options(self.options)
+        return reindexer

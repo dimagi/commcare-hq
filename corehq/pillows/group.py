@@ -8,7 +8,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 
 def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
@@ -35,18 +35,24 @@ def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **
     )
 
 
-def get_group_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_group_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=Group.get_db(),
-            view_name='all_docs/by_doc_type',
-            view_kwargs={
-                'startkey': ['Group'],
-                'endkey': ['Group', {}],
-                'include_docs': True,
-            }
-        ),
-        elasticsearch=get_es_new(),
-        index_info=GROUP_INDEX_INFO,
-    )
+class GroupReindexerFactory(ReindexerFactory):
+    slug = 'group'
+    valid_options = ['in-place']
+
+    def build(self):
+        reindexer = ElasticPillowReindexer(
+            pillow=get_group_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=Group.get_db(),
+                view_name='all_docs/by_doc_type',
+                view_kwargs={
+                    'startkey': ['Group'],
+                    'endkey': ['Group', {}],
+                    'include_docs': True,
+                }
+            ),
+            elasticsearch=get_es_new(),
+            index_info=GROUP_INDEX_INFO,
+        )
+        reindexer.consume_options(self.options)
+        return reindexer

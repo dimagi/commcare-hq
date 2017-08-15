@@ -8,7 +8,7 @@ from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.django_model import DjangoModelChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
 
@@ -36,14 +36,20 @@ def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0,
     )
 
 
-def get_sms_reindexer():
-    from corehq.apps.sms.models import SMS
-    return ElasticPillowReindexer(
-        pillow=get_sql_sms_pillow(),
-        change_provider=DjangoModelChangeProvider(SMS, _sql_sms_to_change),
-        elasticsearch=get_es_new(),
-        index_info=SMS_INDEX_INFO,
-    )
+class SmsReindexerFactory(ReindexerFactory):
+    slug = 'sms'
+    valid_options = ['in-place']
+
+    def build(self):
+        from corehq.apps.sms.models import SMS
+        reindexer = ElasticPillowReindexer(
+            pillow=get_sql_sms_pillow(),
+            change_provider=DjangoModelChangeProvider(SMS, _sql_sms_to_change),
+            elasticsearch=get_es_new(),
+            index_info=SMS_INDEX_INFO,
+        )
+        reindexer.consume_options(self.options)
+        return reindexer
 
 
 def _sql_sms_to_change(sms):

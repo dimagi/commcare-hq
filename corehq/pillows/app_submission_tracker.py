@@ -17,7 +17,7 @@ from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
-from pillowtop.reindexer.reindexer import Reindexer
+from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 
 def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
@@ -112,27 +112,39 @@ class AppFormSubmissionReindexer(Reindexer):
         processor.run()
 
 
-def get_couch_app_form_submission_tracker_reindexer():
-    iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        XFormInstance,
-        XFormArchived,
-        XFormError,
-        XFormDeprecated,
-        XFormDuplicate,
-        ('HQSubmission', XFormInstance),
-        SubmissionErrorLog,
-    ])
-    return AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().dbname)
+class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
+    slug = 'couch-app-form-submission'
+    valid_options = ['reset', 'chunksize']
+
+    def build(self):
+        iteration_key = "CouchAppFormSubmissionTrackerPillow_reindexer"
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            XFormInstance,
+            XFormArchived,
+            XFormError,
+            XFormDeprecated,
+            XFormDuplicate,
+            ('HQSubmission', XFormInstance),
+            SubmissionErrorLog,
+        ])
+        reindexer = AppFormSubmissionReindexer(doc_provider, COUCH, XFormInstance.get_db().dbname)
+        reindexer.consume_options(self.options)
+        return reindexer
 
 
-def get_sql_app_form_submission_tracker_reindexer():
-    iteration_key = "SqlAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = SqlDocumentProvider(
-        iteration_key,
-        FormReindexAccessor(include_attachments=False)
-    )
-    return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
+class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
+    slug = 'sql-app-form-submission'
+    valid_options = ['reset', 'chunksize']
+
+    def build(self):
+        iteration_key = "SqlAppFormSubmissionTrackerPillow_reindexer"
+        doc_provider = SqlDocumentProvider(
+            iteration_key,
+            FormReindexAccessor(include_attachments=False)
+        )
+        reindexer = AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
+        reindexer.consume_options(self.options)
+        return reindexer
 
 
 class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
@@ -201,10 +213,16 @@ class UserAppFormSubmissionReindexer(Reindexer):
         processor.run()
 
 
-def get_user_form_submission_tracker_reindexer():
-    iteration_key = "UserAppFormSubmissionTrackerPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        CommCareUser,
-        WebUser
-    ])
-    return UserAppFormSubmissionReindexer(doc_provider)
+class UserAppFormSubmissionReindexerFactory(ReindexerFactory):
+    slug = 'user-app-form-submission'
+    valid_options = ['reset', 'chunksize']
+
+    def build(self):
+        iteration_key = "UserAppFormSubmissionTrackerPillow_reindexer"
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            CommCareUser,
+            WebUser
+        ])
+        reindexer = UserAppFormSubmissionReindexer(doc_provider)
+        reindexer.consume_options(self.options)
+        return reindexer

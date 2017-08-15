@@ -8,7 +8,7 @@ from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def transform_app_for_es(doc_dict):
@@ -40,14 +40,20 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
     )
 
 
-def get_app_reindexer():
-    iteration_key = "ApplicationToElasticsearchPillow_{}_reindexer".format(APP_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, [Application, RemoteApp, LinkedApplication])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=APP_INDEX_INFO,
-        doc_transform=transform_app_for_es,
-        pillow=get_app_to_elasticsearch_pillow(),
-        chunk_size=5,
-    )
+class AppReindexerFactory(ReindexerFactory):
+    slug = 'app'
+    valid_options = ['reset', 'in-place', 'chunksize']
+
+    def build(self):
+        iteration_key = "ApplicationToElasticsearchPillow_{}_reindexer".format(APP_INDEX_INFO.index)
+        doc_provider = CouchDocumentProvider(iteration_key, [Application, RemoteApp, LinkedApplication])
+        reindexer = ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=APP_INDEX_INFO,
+            doc_transform=transform_app_for_es,
+            pillow=get_app_to_elasticsearch_pillow(),
+            chunk_size=5,
+        )
+        reindexer.consume_options(self.options)
+        return reindexer
