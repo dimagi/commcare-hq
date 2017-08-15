@@ -647,7 +647,7 @@ class CaseReindexAccessor(ReindexAccessor):
         server_modified_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
         domain_clause = "case_table.domain = %s AND" if domain else ""
-        values = [server_modified_on_since, last_id, limit]
+        values = [False, server_modified_on_since, last_id, limit]
         if domain:
             values = [domain] + values
 
@@ -655,6 +655,7 @@ class CaseReindexAccessor(ReindexAccessor):
         results = CommCareCaseSQL.objects.using(from_db).raw(
             """SELECT * FROM {table} as case_table
             WHERE {domain_clause}
+            deleted = %s AND
             (case_table.server_modified_on, case_table.id) > (%s, %s)
             ORDER BY case_table.server_modified_on, case_table.id
             LIMIT %s;""".format(
