@@ -9,7 +9,7 @@ from corehq.pillows.application import AppReindexerFactory
 from corehq.pillows.case import (
     CouchCaseReindexerFactory, SqlCaseReindexerFactory
 )
-from corehq.pillows.case_search import CaseSearchReindexerFactory
+from corehq.pillows.case_search import CaseSearchReindexerFactory, ResumableCaseSearchReindexerFactory
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
@@ -40,6 +40,7 @@ FACTORIES = [
     SqlCaseReindexerFactory,
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
+    ResumableCaseSearchReindexerFactory,
     LedgerV2ReindexerFactory,
     LedgerV1ReindexerFactory,
     SmsReindexerFactory,

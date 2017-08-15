@@ -13,17 +13,20 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
+from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
-from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory, \
+    ResumableBulkElasticPillowReindexer
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -150,6 +153,42 @@ class CaseSearchReindexerFactory(ReindexerFactory):
                 get_case_search_to_elasticsearch_pillow(),
                 change_provider=change_provider,
             )
+
+
+class ResumableCaseSearchReindexerFactory(ReindexerFactory):
+    slug = 'case-search-resumable'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+    ]
+
+    @classmethod
+    def add_arguments(cls, parser):
+        super(ResumableCaseSearchReindexerFactory, cls).add_arguments(parser)
+        parser.add_argument(
+            '--domain',
+            dest='domain',
+            required=True
+        )
+
+    def build(self):
+        limit_to_db = self.options.pop('limit_to_db', None)
+        domain = self.options.pop('domain')
+        assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
+        iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}".format(
+            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all'
+        )
+        limit_db_aliases = [limit_to_db] if limit_to_db else None
+        accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
+        doc_provider = SqlDocumentProvider(iteration_key, accessor)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=CASE_SEARCH_INDEX_INFO,
+            doc_transform=transform_case_for_elasticsearch,
+            **self.options
+        )
 
 
 def delete_case_search_cases(domain):
