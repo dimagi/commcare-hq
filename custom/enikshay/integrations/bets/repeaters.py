@@ -293,6 +293,10 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
         pass
 
 
+def xor(a, b):
+    return bool(a) ^ bool(b)
+
+
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
@@ -314,22 +318,20 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
             not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
-            and (
-                self._treatment_completed(episode_case)
-                or self._met_prescription_days_threshold(episode_case)
-            )
+            and xor(self._treatment_completed(episode_case),
+                    self._met_prescription_days_threshold(episode_case))
         )
 
     def _treatment_completed(self, episode_case):
         return (
-            case_properties_changed(episode_case, ["treatment_outcome"])
-            and episode_case.get_case_property("treatment_outcome") in ("cured", "treatment_completed")
+            episode_case.get_case_property("treatment_outcome") in ("cured", "treatment_completed")
+            and case_properties_changed(episode_case, ["treatment_outcome"])
         )
 
     def _met_prescription_days_threshold(self, episode_case):
         return (
-            case_properties_changed(episode_case, ['bets_date_prescription_total_days_168_met'])
-            or case_properties_changed(episode_case, ['bets_date_prescription_total_days_180_met'])
+            case_properties_changed(episode_case, ['bets_date_prescription_total_days_180_met'])
+            or case_properties_changed(episode_case, ['bets_date_prescription_total_days_168_met'])
         )
 
 
