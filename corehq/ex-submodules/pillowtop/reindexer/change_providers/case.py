@@ -1,7 +1,8 @@
 from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.change_publishers import change_meta_from_sql_case
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -27,9 +28,16 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
         self.domain = domain
 
     def iter_all_changes(self, start_from=None):
-        case_ids = CaseAccessorSQL.get_case_ids_in_domain(self.domain)
-        for case in CaseAccessorSQL.get_cases(case_ids):
-            yield _sql_case_to_change(case)
+        for db_alias in get_db_aliases_for_partitioned_query():
+            accessor = CaseReindexAccessor(self.domain)
+            cases = accessor.get_docs(db_alias, start_from)
+            while cases:
+                for case in cases:
+                    yield _sql_case_to_change(case)
+
+                start_from = case.server_modified_on
+                last_id = case.id
+                cases = accessor.get_docs(db_alias, start_from, last_doc_pk=last_id)
 
 
 def get_domain_case_change_provider(domains):
