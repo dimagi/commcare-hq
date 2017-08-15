@@ -6,8 +6,8 @@ from django.utils.encoding import force_unicode
 
 from django_countries.data import COUNTRIES
 from phonenumbers import COUNTRY_CODE_TO_REGION_CODE
-from twilio import TwilioRestException
-from twilio.rest import TwilioRestClient
+from twilio.base.exceptions import TwilioRestException
+from twilio.rest import Client
 
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
@@ -40,7 +40,7 @@ def _get_twilio_client(backend_instance):
         include_deleted=True,
     )
     config = twilio_backend.config
-    return TwilioRestClient(config.account_sid, config.auth_token)
+    return Client(config.account_sid, config.auth_token)
 
 
 @quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
