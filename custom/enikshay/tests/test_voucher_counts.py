@@ -89,7 +89,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         self.make_voucher(prescription, 50, date(2017, 1, 3))
         update = EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days()
         self.assertEqual(
-            update['bets_date_prescription_total_days_180_met'],
+            update['bets_date_prescription_threshold_met'],
             '2017-01-02'
         )
 
