@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfantsWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
                                              locationsService, userLocationId, storageService) {

@@ -11,10 +11,10 @@
       </button>
       <ul class="dropdown-menu">
           <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
-          <!-- ko if: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.17") -->
+          <!-- ko if: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
           <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
           <!-- /ko -->
-          <!-- ko ifnot: hqImport('app_manager/js/app_manager.js').checkCommcareVersion("2.17") -->
+          <!-- ko ifnot: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
           <li class="disabled"><a>{% trans "Graph <small>(upgrade to 2.17 or greater)</small>" %}</a></li>
           <!-- /ko -->
       </ul>

@@ -1,11 +1,11 @@
 /* globals hqDefine hqImport django analytics */
-hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+hqDefine("app_manager/js/releases/app_view_release_manager", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
-    hqImport('app_manager/js/app_manager.js').setPrependedPageTitle(django.gettext("Publish"));
+    hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Publish"));
 
     // Main releases content
-    var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
+    var ReleasesMain = hqImport('app_manager/js/releases/releases').ReleasesMain;
     var o = {
         currentAppVersion: initial_page_data('app_version') || -1,
         recipient_contacts: initial_page_data('sms_contacts'),
@@ -24,7 +24,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     });
 
     // View changes / app diff
-    var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
+    var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
     $('#recent-changes-btn').on('click', function () {
         appDiff.renderDiff(initial_page_data('app_id'), initial_page_data('latest_build_id'));
     });
@@ -32,7 +32,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     // Build profiles
     var $profilesTab = $('#profiles-tab');
     if ($profilesTab.length) {
-        var profiles = hqImport('app_manager/js/releases/language_profiles.js');
+        var profiles = hqImport('app_manager/js/releases/language_profiles');
         profiles.setProfileUrl(initial_page_data('application_profile_url'));
         var ProfileManager = profiles.ProfileManager;
         var app_langs = initial_page_data("langs");
@@ -44,7 +44,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     }
 
     if (initial_page_data('intro_only')) {
-        hqImport('app_manager/js/preview_app.js').forceShowPreview();
+        hqImport('app_manager/js/preview_app').forceShowPreview();
     }
 
     $(function() {

@@ -1,5 +1,5 @@
 /* globals django */
-hqDefine("reports/js/edit_scheduled_report.js", function() {
+hqDefine("reports/js/edit_scheduled_report", function() {
     var add_options_to_select = function($select, opt_list, selected_val) {
         for (var i = 0; i < opt_list.length; i++) {
             var $opt = $('<option />').val(opt_list[i][0]).text(opt_list[i][1]);
@@ -41,7 +41,7 @@ hqDefine("reports/js/edit_scheduled_report.js", function() {
         };
     };
 
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
     var isConfigurableMap = initial_page_data('is_configurable_map');
     var languagesMap = initial_page_data('languages_map');
     var languagesForSelect = initial_page_data('languages_for_select');

@@ -1,5 +1,5 @@
 /* globals CodeMirror, gettext */
-hqDefine('cloudcare/js/debugger/debugger.js', function () {
+hqDefine('cloudcare/js/debugger/debugger', function () {
 
     /**
      * These define tabs that are availabe in the debugger.

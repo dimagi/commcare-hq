@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine("domain/js/snapshot_settings.js", function() {
+hqDefine("domain/js/snapshot_settings", function() {
     function view_on_exchange(version_name) {
         gaTrackLink($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
         return false;
@@ -7,7 +7,7 @@ hqDefine("domain/js/snapshot_settings.js", function() {
     
     $(function() {
         $("#contentDistributionAgreement").on("show.bs.modal", function() {
-            $(this).find(".modal-body").load(hqImport('hqwebapp/js/initial_page_data.js').reverse('cda_basic'));
+            $(this).find(".modal-body").load(hqImport('hqwebapp/js/initial_page_data').reverse('cda_basic'));
         });
     
         $('[data-target="#contentDistributionAgreement"]').click(function() {
@@ -26,7 +26,7 @@ hqDefine("domain/js/snapshot_settings.js", function() {
             }
         });
     
-        _.each(hqImport('hqwebapp/js/initial_page_data.js').get('snapshots'), function(snapshot) {
+        _.each(hqImport('hqwebapp/js/initial_page_data').get('snapshots'), function(snapshot) {
             $('#publish_' + snapshot.name).click(function() {
                 ga_track_event('Exchange', 'Publish Previous Version', snapshot.name);
             });

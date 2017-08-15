@@ -2,9 +2,9 @@
 /* eslint-env mocha */
 
 describe('Debugger', function() {
-    var EvaluateXPath = hqImport('cloudcare/js/debugger/debugger.js').EvaluateXPath,
-        API = hqImport('cloudcare/js/debugger/debugger.js').API,
-        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerFormEntry;
+    var EvaluateXPath = hqImport('cloudcare/js/debugger/debugger').EvaluateXPath,
+        API = hqImport('cloudcare/js/debugger/debugger').API,
+        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry;
 
     describe('EvaluateXPath', function() {
         it('should correctly match xpath input', function() {

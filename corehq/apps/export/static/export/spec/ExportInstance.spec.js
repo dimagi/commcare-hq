@@ -2,10 +2,10 @@
 /* globals SampleExportInstances */
 
 describe('ExportInstance model', function() {
-    var constants = hqImport('export/js/const.js');
-    var viewModels = hqImport('export/js/models.js');
+    var constants = hqImport('export/js/const');
+    var viewModels = hqImport('export/js/models');
     var basicFormExport, savedFormExport;
-    hqImport('hqwebapp/js/initial_page_data.js').registerUrl(
+    hqImport('hqwebapp/js/initial_page_data').registerUrl(
         "build_schema", "/a/---/data/export/build_full_schema/"
     );
     beforeEach(function() {

@@ -1,4 +1,4 @@
-hqDefine("reports/js/case_details.js", function() {
+hqDefine("reports/js/case_details", function() {
     $(function() {
         $('#close_case').submit(function() {
             ga_track_event('Edit Data', 'Close Case', '-', {

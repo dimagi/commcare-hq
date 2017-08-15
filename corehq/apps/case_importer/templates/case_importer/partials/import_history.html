@@ -11,7 +11,7 @@
 {% addtoblock js-inline %}
 <script>
 $(function () {
-    var RecentUploads = hqImport('case_importer/js/import_history.js').RecentUploads;
+    var RecentUploads = hqImport('case_importer/js/import_history').RecentUploads;
     var recentUploads = RecentUploads();
     $('#recent-uploads').koApplyBindings(recentUploads);
     _.delay(recentUploads.fetchCaseUploads);

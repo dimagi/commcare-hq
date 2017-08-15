@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine("domain/js/info_basic.js", function() {
+hqDefine("domain/js/info_basic", function() {
     $(function() {
         // Update project dropdown in page header with potentially new project name
         var name = $('#id_hr_name').val(),

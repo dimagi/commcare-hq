@@ -8,7 +8,7 @@
  * This model is for validating and stepping through the new user registration form
  */
 
-hqDefine('registration/js/new_user.ko.js', function () {
+hqDefine('registration/js/new_user.ko', function () {
     'use strict';
     var module = {};
 

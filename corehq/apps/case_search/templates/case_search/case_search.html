@@ -10,7 +10,7 @@
 {% endcompress %}
 {% block js-inline %}
     <script>
-     var CaseSearchModel = hqImport('case_search/js/case_search.js');
+     var CaseSearchModel = hqImport('case_search/js/case_search');
      $("#case-search").koApplyBindings(new CaseSearchModel("{% url 'case_details' request.domain '___' %}"));
     </script>
 {% endblock %}

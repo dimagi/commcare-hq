@@ -1,10 +1,10 @@
-hqDefine("app_manager/js/modules/module_view_report.js", function() {
+hqDefine("app_manager/js/modules/module_view_report", function() {
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-        var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
-        var select2Separator = hqImport('app_manager/js/modules/report_module.js').select2Separator;
-        var ReportModule = hqImport('app_manager/js/modules/report_module.js').ReportModule;
-        var StaticFilterData = hqImport('app_manager/js/modules/report_module.js').StaticFilterData;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
+        var select2Separator = hqImport('app_manager/js/modules/report_module').select2Separator;
+        var ReportModule = hqImport('app_manager/js/modules/report_module').ReportModule;
+        var StaticFilterData = hqImport('app_manager/js/modules/report_module').StaticFilterData;
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
@@ -15,7 +15,7 @@ hqDefine("app_manager/js/modules/module_view_report.js", function() {
                 initial_page_data("multimedia_object_map"),
                 navMenuMediaItem.default_file_name
         );
-        var saveURL = hqImport("hqwebapp/js/initial_page_data.js").reverse("edit_report_module");
+        var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
         var staticData = new StaticFilterData(initial_page_data('static_data_options'));
         var reportModule = new ReportModule(_.extend({}, initial_page_data("report_module_options"), {
             lang: initial_page_data('lang'),
@@ -59,7 +59,7 @@ hqDefine("app_manager/js/modules/module_view_report.js", function() {
                 placeholder: " ",
                 ajax: {
                     // TODO - this is pretty hackish
-                    url: (hqImport("hqwebapp/js/initial_page_data.js").reverse("choice_list_api").split('report_id')[0]
+                    url: (hqImport("hqwebapp/js/initial_page_data").reverse("choice_list_api").split('report_id')[0]
                           + element.parent()[0].lastElementChild.value + "/"),
                     dataType: 'json',
                     quietMillis: 250,

@@ -41,7 +41,7 @@ $(function () {
             self._id = ko.observable();
         }
         self.view_link = ko.computed(function(){
-            return hqImport('hqwebapp/js/initial_page_data.js').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
+            return hqImport('hqwebapp/js/initial_page_data').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
         }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
@@ -100,7 +100,7 @@ $(function () {
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: hqImport('hqwebapp/js/initial_page_data.js').reverse('update_lookup_tables') + (self._id() || ''),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('update_lookup_tables') + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 error: function(data) {
@@ -265,7 +265,7 @@ $(function () {
             if (tables.length > 0){
                 // POST, because a long querystring can overflow the request
                 $.ajax({
-                    url: hqImport('hqwebapp/js/initial_page_data.js').reverse('download_fixtures'),
+                    url: hqImport('hqwebapp/js/initial_page_data').reverse('download_fixtures'),
                     type: 'POST',
                     data: {'table_ids': tables},
                     dataType: 'json',
@@ -333,15 +333,15 @@ $(function () {
         };
         self.removeDataType = function (dataType) {
             if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'?")){
-                    self.data_types.destroy(dataType);
-                    dataType.save();                 
+                self.data_types.destroy(dataType);
+                dataType.save();
             }
             return false;
         };
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                url: hqImport('hqwebapp/js/initial_page_data.js').reverse('fixture_data_types'),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('fixture_data_types'),
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {

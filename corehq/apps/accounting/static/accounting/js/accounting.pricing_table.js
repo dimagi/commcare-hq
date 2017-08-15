@@ -1,4 +1,4 @@
-hqDefine('accounting/js/accounting.pricing_table.js', function () {
+hqDefine('accounting/js/accounting.pricing_table', function () {
     var PricingTable = function (editions, current_edition, isRenewal) {
         'use strict';
         var self = this;
@@ -59,7 +59,7 @@ hqDefine('accounting/js/accounting.pricing_table.js', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             pricingTable = new PricingTable(
                 initial_page_data('editions'),
                 initial_page_data('current_edition'),

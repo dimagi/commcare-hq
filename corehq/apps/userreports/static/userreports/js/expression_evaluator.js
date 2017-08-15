@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('userreports/js/expression_evaluator.js', function () {
+hqDefine('userreports/js/expression_evaluator', function () {
     var ExpressionModel = function (editor, submitUrl, initialData) {
         var self = this;
         initialData = initialData || {};

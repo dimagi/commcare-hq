@@ -243,7 +243,7 @@
 -    readOnlyClass: 'h3',
 -    url: '{% url "edit_app_attr" domain app.id 'name' %}',
 -    placeholder: '{% trans "Untitled App"|escapejs %}',
--    postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
+-    postSave: function(data) { return hqImport('app_manager/js/app_manager').updateDOM(data.update); },
 -    rows: 1,
 -    saveValueName: 'name',
 -"></inline-edit>
