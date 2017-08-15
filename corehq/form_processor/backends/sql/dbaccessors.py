@@ -51,6 +51,7 @@ from corehq.sql_db.routers import db_for_read_write
 from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
+from dimagi.utils.decorators.memoized import memoized
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -637,6 +638,20 @@ class FormAccessorSQL(AbstractFormAccessor):
             return [result.form_id for result in results]
 
 
+@memoized
+def get_partitioned_run_params():
+    try:
+        partition_num = int(os.environ.get('PARTITION_NUM'))
+        partition_size = int(os.environ.get('PARTITION_SIZE'))
+        if partition_num < 0 or partition_num >= partition_size:
+            raise RuntimeError("Expected PARTITION_NUM between 0 and PARTITION_SIZE - 1")
+    except (ValueError, TypeError):
+        partition_num = 0
+        partition_size = 1
+
+    return partition_num, partition_size
+
+
 class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
@@ -644,14 +659,7 @@ class CaseReindexAccessor(ReindexAccessor):
     def __init__(self, domain=None, limit_db_aliases=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
-        try:
-            self.partition_num = int(os.environ.get('PARTITION_NUM'))
-            self.partition_size = int(os.environ.get('PARTITION_SIZE'))
-            if self.partition_num < 0 or self.partition_num >= self.partition_size:
-                raise RuntimeError("Expected PARTITION_NUM between 0 and PARTITION_SIZE - 1")
-        except (ValueError, TypeError):
-            self.partition_num = 0
-            self.partition_size = 1
+        self.partition_num, self.partition_size = get_partitioned_run_params()
         print("Using partition number %s with a partition size of %s" % (self.partition_num, self.partition_size))
 
     @property

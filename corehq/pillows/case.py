@@ -6,7 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, get_partitioned_run_params
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -91,8 +91,9 @@ class SqlCaseReindexerFactory(ReindexerFactory):
 
     def build(self):
         limit_to_db = self.options.pop('limit_to_db', None)
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all'
+        partition_num, partition_size = get_partitioned_run_params()
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
