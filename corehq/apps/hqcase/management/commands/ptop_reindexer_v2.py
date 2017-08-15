@@ -76,7 +76,8 @@ class SubCommand(BaseCommand):
             self.subcommand = argv[2]
             argv = argv[0:2] + argv[3:]
             super(SubCommand, self).run_from_argv(argv)
-        super(SubCommand, self).run_from_argv(argv)
+        else:
+            super(SubCommand, self).run_from_argv(argv)
 
     def create_parser(self, prog_name, command_name):
         parser = super(SubCommand, self).create_parser(prog_name, command_name)
