@@ -13,7 +13,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, get_partitioned_run_params
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
@@ -183,8 +183,9 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
         assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
-        iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}".format(
-            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all'
+        partition_num, partition_size = get_partitioned_run_params()
+        iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
+            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)

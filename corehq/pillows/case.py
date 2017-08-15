@@ -6,7 +6,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, get_partitioned_run_params
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -66,11 +66,10 @@ class CouchCaseReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
-        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-            CommCareCase,
-            ("CommCareCase-Deleted", CommCareCase)
-        ])
+        partition_num, partition_size = get_partitioned_run_params()
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all', partition_num, partition_size
+        )
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
