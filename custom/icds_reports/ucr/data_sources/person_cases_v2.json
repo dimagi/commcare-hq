@@ -2241,13 +2241,19 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "operator": "eq",
-            "type": "boolean_expression",
-            "expression": {
-              "type": "property_name",
-              "property_name": "has_aadhar"
-            },
-            "property_value": "yes"
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "aadhar_number"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
           },
           "expression_if_true": {
             "type": "conditional",
@@ -2286,16 +2292,22 @@
                     ]
                   },
                   "filter_expression": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "update",
-                        "has_aadhar"
+                    "type": "not",
+                    "filter": {
+                      "operator": "in",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "update",
+                          "aadhar_number"
+                        ]
+                      },
+                      "property_value": [
+                        "",
+                        null
                       ]
-                    },
-                    "property_value": "yes"
+                    }
                   }
                 }
               },
