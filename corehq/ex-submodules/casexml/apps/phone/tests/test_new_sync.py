@@ -167,6 +167,7 @@ class TestLiveQuery(TestCase):
 
     def test_clean_owners_after_livequery(self):
         device = MockDevice(self.project, self.user, {"case_sync": LIVEQUERY})
+        device.sync()
         with self.assertRaises(RestoreException):
             device.sync(case_sync=CLEAN_OWNERS)
 
