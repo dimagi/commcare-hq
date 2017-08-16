@@ -99,7 +99,12 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
     def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
-        cache_id = async_restore_task_id_cache_key(domain=self.domain, user_id=self.user.user_id)
+        cache_id = async_restore_task_id_cache_key(
+            domain=self.domain,
+            user_id=self.user.user_id,
+            sync_log_id=None,
+            device_id=None,
+        )
         with mock.patch('casexml.apps.phone.restore.get_async_restore_payload') as task:
             delay = mock.MagicMock()
             delay.id = 'random_task_id'
@@ -129,7 +134,12 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
                 get_result.assert_called_with(timeout=1)
 
     def test_completed_task_deletes_cache(self):
-        cache_id = async_restore_task_id_cache_key(domain=self.domain, user_id=self.user.user_id)
+        cache_id = async_restore_task_id_cache_key(
+            domain=self.domain,
+            user_id=self.user.user_id,
+            sync_log_id=None,
+            device_id=None,
+        )
         restore_config = self._restore_config(async=True)
         restore_config.cache.set(cache_id, 'im going to be deleted by the next command')
         restore_config.timing_context.start()
@@ -184,7 +194,12 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
-        task_cache_id = async_restore_task_id_cache_key(domain=self.domain, user_id=self.user.user_id)
+        task_cache_id = async_restore_task_id_cache_key(
+            domain=self.domain,
+            user_id=self.user.user_id,
+            sync_log_id=None,
+            device_id=None,
+        )
         initial_sync_cache_id = restore_payload_path_cache_key(
             domain=self.domain,
             user_id=self.user.user_id,
