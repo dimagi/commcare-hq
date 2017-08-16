@@ -186,8 +186,8 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         """
         task_cache_id = async_restore_task_id_cache_key(domain=self.domain, user_id=self.user.user_id)
         initial_sync_cache_id = restore_payload_path_cache_key(
-            self.domain,
-            self.user.user_id,
+            domain=self.domain,
+            user_id=self.user.user_id,
             version='2.0'
         )
         fake_cached_thing = 'fake-cached-thing'

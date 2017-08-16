@@ -126,8 +126,8 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
 
 def has_cached_payload(sync_log, version):
     return bool(get_redis_default_cache().get(restore_payload_path_cache_key(
-        sync_log.domain,
-        sync_log.user_id,
+        domain=sync_log.domain,
+        user_id=sync_log.user_id,
         version=version,
         sync_log_id=sync_log._id,
     )))

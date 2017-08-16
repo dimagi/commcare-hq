@@ -342,8 +342,8 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     def _cache_key(self, version):
         from casexml.apps.phone.restore import restore_payload_path_cache_key
         return restore_payload_path_cache_key(
-            self.domain,
-            self.user_id,
+            domain=self.domain,
+            user_id=self.user_id,
             version=version,
             sync_log_id=self._id,
         )

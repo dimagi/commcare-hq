@@ -211,8 +211,8 @@ class SubmissionPost(object):
         from casexml.apps.phone.restore import restore_payload_path_cache_key
         """invalidate cached initial restores"""
         initial_restore_cache_key = restore_payload_path_cache_key(
-            self.domain,
-            user_id,
+            domain=self.domain,
+            user_id=user_id,
             version=V2
         )
         self._cache.delete(initial_restore_cache_key)
