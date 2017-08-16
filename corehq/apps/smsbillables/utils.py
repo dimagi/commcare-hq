@@ -46,6 +46,6 @@ def _get_twilio_client(backend_instance):
 @quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
 def get_twilio_message(backend_instance, backend_message_id):
     try:
-        return _get_twilio_client(backend_instance).messages.get(backend_message_id)
+        return _get_twilio_client(backend_instance).messages.get(backend_message_id).fetch()
     except TwilioRestException as e:
         raise RetryBillableTaskException(e.message)
