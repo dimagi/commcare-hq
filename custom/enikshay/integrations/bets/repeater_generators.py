@@ -26,7 +26,6 @@ from custom.enikshay.const import (
     NOTIFYING_PROVIDER_USER_ID,
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
-    FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from .const import (
@@ -198,6 +197,12 @@ class IncentivePayload(BETSPayload):
             EnikshayApprovalDate=None,
         )
 
+    @staticmethod
+    def _india_now():
+        utc_now = pytz.UTC.localize(datetime.utcnow())
+        india_now = utc_now.replace(tzinfo=timezone('Asia/Kolkata')).date()
+        return str(india_now)
+
     @classmethod
     def create_diagnosis_and_notification_payload(cls, episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
@@ -211,7 +216,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
-            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
+            EventOccurDate=cls._india_now(),
             BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
@@ -242,7 +247,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
-            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
+            EventOccurDate=cls._india_now(),
             BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,

@@ -16,8 +16,6 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
-    FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
-    FIRST_PRESCRIPTION_VOUCHER_REDEEMED,
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
@@ -363,12 +361,11 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         )
 
     def test_diagnosis_and_notification_payload(self):
-        date_today = u"2017-08-15"
         self.episode.attrs['update'][NOTIFYING_PROVIDER_USER_ID] = self.user.user_id
-        self.episode.attrs['update'][FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE] = date_today
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
+        date_today = u"2017-08-15"
 
         expected_payload = {"incentive_details": [{
             u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
@@ -384,20 +381,20 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
         }]}
-        self.assertDictEqual(
-            expected_payload,
-            json.loads(BETSDiagnosisAndNotificationPayloadGenerator(None).get_payload(None, episode))
-        )
+        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
+            self.assertDictEqual(
+                expected_payload,
+                json.loads(BETSDiagnosisAndNotificationPayloadGenerator(None).get_payload(None, episode))
+            )
 
     def test_ayush_referral_payload(self):
-        date_today = u"2017-08-15"
         self.pac.user_id = self.user.user_id
         self.pac.save()
         self.episode.attrs['update']['registered_by'] = self.pac.location_id
-        self.episode.attrs['update'][FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE] = date_today
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
+        date_today = u"2017-08-15"
 
         expected_payload = {"incentive_details": [{
             u"EventID": unicode(AYUSH_REFERRAL_EVENT),
@@ -413,10 +410,11 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"EnikshayRole": None,
             u"EnikshayApprovalDate": None,
         }]}
-        self.assertDictEqual(
-            expected_payload,
-            json.loads(BETSAYUSHReferralPayloadGenerator(None).get_payload(None, episode))
-        )
+        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
+            self.assertDictEqual(
+                expected_payload,
+                json.loads(BETSAYUSHReferralPayloadGenerator(None).get_payload(None, episode))
+            )
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -598,7 +596,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
             self.domain,
             self.episode_id,
             {
-                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
+                'bets_first_prescription_voucher_redeemed': 'false',
                 ENROLLED_IN_PRIVATE: "true",
             },
         )
@@ -635,7 +633,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
             self.domain,
             self.episode_id,
             {
-                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
+                'bets_first_prescription_voucher_redeemed': 'false',
                 'created_by_user_type': 'pac',
                 ENROLLED_IN_PRIVATE: "true",
             },
