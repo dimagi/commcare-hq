@@ -49,5 +49,8 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
 
     $(function() {
         analytics.workflow('Visited the Release Manager');
+        if (initial_page_data('confirm')) {
+            analytics.usage('User actions', 'User created login', window.location.pathname);
+        }
     });
 });
