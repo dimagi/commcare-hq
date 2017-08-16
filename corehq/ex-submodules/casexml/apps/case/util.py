@@ -191,6 +191,7 @@ def get_datetime_case_property_changed(case, case_property_name, value):
         update_actions = [
             (update.modified_on_str, update.get_update_action())
             for update in get_case_updates(action.form)
+            if update.id == case.case_id
         ]
         for (modified_on, action) in update_actions:
             if action:
