@@ -1,4 +1,4 @@
-/* global Clipboard */
+/* global Clipboard, hqDefine, hqImport */
 hqDefine('app_manager/js/details/graph_config', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property
@@ -61,7 +61,7 @@ hqDefine('app_manager/js/details/graph_config', function () {
         };
 
         self.ui.koApplyBindings(self);
-        eventize(self);
+        hqImport("style/js/main").eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable

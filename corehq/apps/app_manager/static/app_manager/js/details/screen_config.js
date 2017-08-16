@@ -1,4 +1,4 @@
-/*globals $, _, eventize, COMMCAREHQ, DOMPurify */
+/*globals $, _, DOMPurify, hqDefine, hqImport */
 
 hqDefine('app_manager/js/details/screen_config', function () {
     var module = {},
@@ -283,7 +283,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column extras: enum, late_flag
                 */
                 var that = this;
-                eventize(this);
+                hqImport("style/js/main").eventize(this);
                 this.original = JSON.parse(JSON.stringify(col));
 
                 // Set defaults for normal (non-tab) column attributes
@@ -326,7 +326,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 ]).val(this.original.model);
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                   ? COMMCAREHQ.icons.PAPERCLIP : null);
+                   ? 'fa fa-paperclip' : null);
                 this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
@@ -585,7 +585,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             function Screen(spec, config, options) {
                 var i, column, model, property, header,
                     that = this, columns;
-                eventize(this);
+                hqImport("style/js/main").eventize(this);
                 this.type = spec.type;
                 this.saveUrl = options.saveUrl;
                 this.config = config;
@@ -615,12 +615,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
                 this.showCaseTileColumn = ko.computed(function () {
-                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                    return that.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
                 this.customVariablesViewModel = {
-                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
                     xml: ko.observable(spec[this.columnKey].custom_variables || ""),
                 };
                 this.customVariablesViewModel.xml.subscribe(function(){
@@ -694,7 +694,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     that.initColumnAsColumn(this.columns()[i]);
                 }
 
-                this.saveButton = COMMCAREHQ.SaveButton.init({
+                this.saveButton = hqImport("style/js/main").initSaveButton({
                     unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function () {
                         that.save();
@@ -967,11 +967,11 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             fixtures: _.keys(spec.fixture_columns_by_type),
                             containsSortConfiguration: columnType == "short",
                             containsParentConfiguration: columnType == "short",
-                            containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
+                            containsFixtureConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
-                            containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP')),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                            containsSearchConfiguration: (columnType === "short" && COMMCAREHQ.toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                            containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'
@@ -1002,7 +1002,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     }
                     this.customXMLViewModel = {
-                        enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML'),
+                        enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML'),
                         xml: ko.observable(spec.state.short.custom_xml || "")
                     };
                     this.customXMLViewModel.xml.subscribe(function(v){
@@ -1077,7 +1077,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             {value: "distance", label: gettext('Distance from current location')}
         ];
 
-        if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "picture", label: gettext('Picture')},
                 {value: "audio", label: gettext('Audio')}
