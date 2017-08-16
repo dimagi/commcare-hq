@@ -689,8 +689,8 @@ class RestoreConfig(object):
     @property
     def async_cache_key(self):
         return async_restore_task_id_cache_key(
-            self.domain,
-            self.restore_user.user_id,
+            domain=self.domain,
+            user_id=self.restore_user.user_id,
             sync_log_id=self.sync_log._id if self.sync_log else '',
             device_id=self.params.device_id,
         )

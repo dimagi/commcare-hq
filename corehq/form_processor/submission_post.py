@@ -222,7 +222,7 @@ class SubmissionPost(object):
 
     def _invalidate_async_caches(self, user_id):
         from casexml.apps.phone.restore import async_restore_task_id_cache_key
-        cache_key = async_restore_task_id_cache_key(self.domain, user_id)
+        cache_key = async_restore_task_id_cache_key(domain=self.domain, user_id=user_id)
         task_id = self._cache.get(cache_key)
 
         if task_id is not None:
