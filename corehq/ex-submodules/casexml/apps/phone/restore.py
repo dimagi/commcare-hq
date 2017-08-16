@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
-def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, device_id=None):
+def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
     response_class = get_restore_response_class(domain)
     hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
         response_class=response_class.__name__,
@@ -79,6 +79,28 @@ def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, d
         device_id=device_id or '',
     )
     return hashlib.md5(hashable_key).hexdigest()
+
+
+def restore_payload_path_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
+    return _restore_cache_key(
+        domain=domain,
+        prefix=RESTORE_CACHE_KEY_PREFIX,
+        user_id=user_id,
+        version=version,
+        sync_log_id=sync_log_id,
+        device_id=device_id,
+    )
+
+
+def async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
+    return _restore_cache_key(
+        domain=domain,
+        prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
+        user_id=user_id,
+        version=None,
+        sync_log_id=sync_log_id,
+        device_id=device_id,
+    )
 
 
 def stream_response(payload, headers=None, status=200):
@@ -666,20 +688,18 @@ class RestoreConfig(object):
 
     @property
     def async_cache_key(self):
-        return restore_cache_key(
-            self.domain,
-            ASYNC_RESTORE_CACHE_KEY_PREFIX,
-            self.restore_user.user_id,
+        return async_restore_task_id_cache_key(
+            domain=self.domain,
+            user_id=self.restore_user.user_id,
             sync_log_id=self.sync_log._id if self.sync_log else '',
             device_id=self.params.device_id,
         )
 
     @property
     def _restore_cache_key(self):
-        return restore_cache_key(
-            self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
-            self.restore_user.user_id,
+        return restore_payload_path_cache_key(
+            domain=self.domain,
+            user_id=self.restore_user.user_id,
             version=self.version,
             sync_log_id=self.sync_log._id if self.sync_log else '',
             device_id=self.params.device_id,

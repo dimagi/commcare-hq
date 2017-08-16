@@ -25,7 +25,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -139,7 +138,7 @@ class SubmissionPost(object):
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
-        self._invalidate_caches(submitted_form.user_id)
+        self._invalidate_caches(submitted_form)
         submission_type = None
 
         if submitted_form.is_submission_error_log:
@@ -208,26 +207,28 @@ class SubmissionPost(object):
     def _cache(self):
         return get_redis_default_cache()
 
-    @property
-    def _restore_cache_key(self):
-        from casexml.apps.phone.restore import restore_cache_key
-        return restore_cache_key
-
-    def _invalidate_caches(self, user_id):
+    def _invalidate_caches(self, xform):
+        from casexml.apps.phone.restore import restore_payload_path_cache_key
         """invalidate cached initial restores"""
-        initial_restore_cache_key = self._restore_cache_key(
-            self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
-            user_id,
+        initial_restore_cache_key = restore_payload_path_cache_key(
+            domain=self.domain,
+            user_id=xform.user_id,
             version=V2
         )
         self._cache.delete(initial_restore_cache_key)
 
         if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_caches(user_id)
+            self._invalidate_async_caches(xform)
 
-    def _invalidate_async_caches(self, user_id):
-        cache_key = self._restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
+    def _invalidate_async_caches(self, xform):
+        from casexml.apps.phone.restore import async_restore_task_id_cache_key
+        cache_key = async_restore_task_id_cache_key(
+            domain=self.domain,
+            user_id=xform.user_id,
+            sync_log_id=self.last_sync_token,
+            device_id=xform.metadata.deviceID if xform.metadata else None,
+        )
+
         task_id = self._cache.get(cache_key)
 
         if task_id is not None:
