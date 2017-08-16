@@ -10,7 +10,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 from .base import convert_property_dict
 
 
@@ -57,14 +57,21 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
     )
 
 
-def get_report_case_reindexer():
-    """Returns a reindexer that will only reindex data from enabled domains
-    """
-    domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
-    change_provider = get_domain_case_change_provider(domains=domains)
-    return ElasticPillowReindexer(
-        pillow=get_report_case_to_elasticsearch_pillow(),
-        change_provider=change_provider,
-        elasticsearch=get_es_new(),
-        index_info=REPORT_CASE_INDEX_INFO
-    )
+class ReportCaseReindexerFactory(ReindexerFactory):
+    slug = 'report-case'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        """Returns a reindexer that will only reindex data from enabled domains
+        """
+        domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
+        change_provider = get_domain_case_change_provider(domains=domains)
+        return ElasticPillowReindexer(
+            pillow=get_report_case_to_elasticsearch_pillow(),
+            change_provider=change_provider,
+            elasticsearch=get_es_new(),
+            index_info=REPORT_CASE_INDEX_INFO,
+            **self.options
+        )
