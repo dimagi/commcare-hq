@@ -81,6 +81,28 @@ def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, d
     return hashlib.md5(hashable_key).hexdigest()
 
 
+def restore_payload_path_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
+    return restore_cache_key(
+        domain=domain,
+        prefix=RESTORE_CACHE_KEY_PREFIX,
+        user_id=user_id,
+        version=version,
+        sync_log_id=sync_log_id,
+        device_id=device_id,
+    )
+
+
+def async_restore_task_id_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
+    return restore_cache_key(
+        domain=domain,
+        prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
+        user_id=user_id,
+        version=version,
+        sync_log_id=sync_log_id,
+        device_id=device_id,
+    )
+
+
 def stream_response(payload, headers=None, status=200):
     try:
         response = StreamingHttpResponse(
