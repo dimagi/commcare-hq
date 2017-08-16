@@ -3,7 +3,7 @@ from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.restore import RestoreParams, RestoreConfig, restore_cache_key
+from casexml.apps.phone.restore import RestoreParams, RestoreConfig, restore_payload_path_cache_key
 from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -86,9 +86,9 @@ class SimpleCachingResponseTest(SimpleTestCase):
         BlobRestoreResponse that we don't use the old FileRestoreResponse
         cache
         '''
-        key1 = restore_cache_key('domain', 'prefix', 'user_id')
+        key1 = restore_payload_path_cache_key('domain', 'user_id')
         with flag_enabled('BLOBDB_RESTORE'):
-            key2 = restore_cache_key('domain', 'prefix', 'user_id')
+            key2 = restore_payload_path_cache_key('domain', 'user_id')
         self.assertNotEqual(key1, key2)
 
 
