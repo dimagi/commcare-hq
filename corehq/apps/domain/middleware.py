@@ -76,6 +76,8 @@ class DomainMigrationMiddleware(MiddlewareMixin):
                 url_parts = request.path.split('/')
                 if len(url_parts) > 3 and url_parts[3] in ['reports', 'toggles.js']:
                     return None
+                if request.path.startswith('/a/enikshay/configurable_reports/api/choice_list/'):
+                    return None
 
                 return TemplateResponse(
                     request=request,
