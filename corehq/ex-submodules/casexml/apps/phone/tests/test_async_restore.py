@@ -20,8 +20,8 @@ from casexml.apps.phone.restore import (
     AsyncRestoreResponse,
     FileRestoreResponse,
     restore_cache_key,
-)
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
+    restore_payload_path_cache_key)
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -185,9 +185,8 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
         task_cache_id = restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, self.user.user_id)
-        initial_sync_cache_id = restore_cache_key(
+        initial_sync_cache_id = restore_payload_path_cache_key(
             self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
             self.user.user_id,
             version='2.0'
         )

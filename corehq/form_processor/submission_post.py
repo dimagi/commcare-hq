@@ -25,7 +25,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
+from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -214,10 +214,10 @@ class SubmissionPost(object):
         return restore_cache_key
 
     def _invalidate_caches(self, user_id):
+        from casexml.apps.phone.restore import restore_payload_path_cache_key
         """invalidate cached initial restores"""
-        initial_restore_cache_key = self._restore_cache_key(
+        initial_restore_cache_key = restore_payload_path_cache_key(
             self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
             user_id,
             version=V2
         )

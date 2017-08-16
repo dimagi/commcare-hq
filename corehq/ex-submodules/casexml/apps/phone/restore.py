@@ -698,9 +698,8 @@ class RestoreConfig(object):
 
     @property
     def _restore_cache_key(self):
-        return restore_cache_key(
+        return restore_payload_path_cache_key(
             self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
             self.restore_user.user_id,
             version=self.version,
             sync_log_id=self.sync_log._id if self.sync_log else '',
