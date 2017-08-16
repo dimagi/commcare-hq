@@ -5,7 +5,6 @@ from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import hqnottest
-from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -489,35 +488,3 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
 
 def get_prescription_from_voucher(domain, voucher_id):
     return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
-
-
-def get_all_episode_ids(domain):
-    case_accessor = CaseAccessors(domain)
-    case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-    return case_ids
-
-
-def iter_all_active_person_episode_cases(domain, case_ids):
-    """From a list of case_ids, return all the active episodes and associate person case
-    """
-    case_accessor = CaseAccessors(domain)
-    episode_cases = case_accessor.iter_cases(case_ids)
-    for episode_case in episode_cases:
-        if episode_case.type != CASE_TYPE_EPISODE:
-            continue
-
-        if episode_case.closed:
-            continue
-
-        try:
-            person_case = get_person_case_from_episode(domain, episode_case.case_id)
-        except ENikshayCaseNotFound:
-            continue
-
-        if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
-            continue
-
-        if person_case.closed:
-            continue
-
-        yield person_case, episode_case
