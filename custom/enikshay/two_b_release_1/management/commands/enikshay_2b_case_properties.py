@@ -71,10 +71,6 @@ class Command(BaseCommand):
             help="The domain to migrate."
         )
         parser.add_argument(
-            'dto_id',
-            help="The id of the dto location to migrate."
-        )
-        parser.add_argument(
             '--commit',
             action='store_true',
             help="actually create the cases. Without this flag, it's a dry run."
@@ -85,12 +81,7 @@ class Command(BaseCommand):
         logger.info("Starting {} migration on {} at {}".format(
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
         ))
-        dto = SQLLocation.objects.get(
-            domain=domain, location_id=dto_id, location_type__code='dto')
-        num_descendants = dto.get_descendants(include_self=True).count()
-        confirm("Do you want to migrate the DTO '{}', which has {} descendants?"
-                .format(dto.get_path_display(), num_descendants))
-        migrator = ENikshay2BMigrator(domain, dto, commit)
+        migrator = ENikshay2BMigrator(domain, commit)
         migrator.migrate()
         logger.info("Migrated {} person cases".format(migrator.total_persons))
         logger.info("Migrated {} occurrence cases".format(migrator.total_occurrences))
@@ -103,9 +94,8 @@ class Command(BaseCommand):
 
 
 class ENikshay2BMigrator(object):
-    def __init__(self, domain, dto, commit):
+    def __init__(self, domain, commit):
         self.domain = domain
-        self.dto = dto
         self.commit = commit
         self.accessor = CaseAccessors(self.domain)
         self.factory = CaseFactory(self.domain)
@@ -123,7 +113,7 @@ class ENikshay2BMigrator(object):
     @memoized
     def locations(self):
         return {loc.location_id: loc for loc in
-                self.dto.get_descendants(include_self=True).prefetch_related('location_type')}
+                SQLLocation.objects.filter(domain=self.domain).prefetch_related('location_type')}
 
     @property
     @memoized
@@ -147,8 +137,7 @@ class ENikshay2BMigrator(object):
             self.migrate_person_case_set(person)
 
     def get_relevant_person_case_ids(self):
-        location_owners = self.locations.keys()
-        return self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
+        return self.accessor.get_case_ids_in_domain(CASE_TYPE_PERSON)
 
     def get_relevant_person_case_sets(self, person_ids):
         """

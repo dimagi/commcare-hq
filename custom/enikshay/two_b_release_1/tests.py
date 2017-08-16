@@ -144,7 +144,7 @@ class TestCreateEnikshayCases(TestCase):
         )
 
     def test(self):
-        migrator = ENikshay2BMigrator(self.domain, self.locations['DTO'], commit=True)
+        migrator = ENikshay2BMigrator(self.domain, commit=True)
         # first check some utils
         person_case_ids = migrator.get_relevant_person_case_ids()
         person_case_sets = list(migrator.get_relevant_person_case_sets(person_case_ids))
