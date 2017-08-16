@@ -1,4 +1,3 @@
-import urllib
 from datetime import datetime
 import logging
 from django.conf import settings
@@ -403,6 +402,7 @@ def confirm_domain(request, guid=None):
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
+    request.session['CONFIRM'] = True
     return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
 
 
