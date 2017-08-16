@@ -122,7 +122,7 @@
     <script>
 
         {% if report_table and report_table.datatables %}
-            var reportTables = hqImport("reports/js/config.dataTables.bootstrap.js").HQReportDataTables({
+            var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
                 defaultRows: {{ report_table.default_rows|default:10 }},
                 startAtRowNum: {{ report_table.start_at_row|default:0 }},
@@ -154,7 +154,7 @@
                     fixColsWidth: {{ report_table.left_col.fixed.width }},
                 {% endif %}
             });
-            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }

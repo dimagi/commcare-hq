@@ -842,7 +842,7 @@ var height_for_age = {
     },
 };
 
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;

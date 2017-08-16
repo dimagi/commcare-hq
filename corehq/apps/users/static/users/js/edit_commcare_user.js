@@ -1,6 +1,6 @@
 /* globals hqDefine */
-hqDefine('users/js/edit_commcare_user.js', function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+hqDefine('users/js/edit_commcare_user', function () {
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         couch_user_id = initial_page_data('couch_user_id'),
         activeTabCookie = 'active_tab',
         last_active_tab = $.cookie(activeTabCookie);
@@ -33,7 +33,7 @@ hqDefine('users/js/edit_commcare_user.js', function () {
                 expires: 1});
     });
 
-    var alert_user = hqImport("style/js/alert_user.js").alert_user;
+    var alert_user = hqImport("style/js/alert_user").alert_user;
     $('#reset-password-form').submit(function(){
         $(this).ajaxSubmit({
             url: $(this).attr('action'),

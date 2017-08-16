@@ -1,6 +1,6 @@
 /* globals ko, $ */
 
-hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
+hqDefine("data_interfaces/js/case_rule_criteria", function() {
 
     var CaseRuleCriteria = function(initial, constants) {
         'use strict';
@@ -236,8 +236,8 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
 
     $(function() {
         criteria_model = new CaseRuleCriteria(
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_initial'),
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_constants')
+            hqImport("hqwebapp/js/initial_page_data").get('criteria_initial'),
+            hqImport("hqwebapp/js/initial_page_data").get('criteria_constants')
         );
         $('#rule-criteria').koApplyBindings(criteria_model);
         criteria_model.load_initial();

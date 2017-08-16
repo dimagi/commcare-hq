@@ -1,8 +1,8 @@
 --- 
 +++ 
 @@ -1,7 +1,16 @@
--hqDefine('userreports/js/v1/constants.js', function () {
-+hqDefine('userreports/js/constants.js', function () {
+-hqDefine('userreports/js/v1/constants', function () {
++hqDefine('userreports/js/constants', function () {
 +    var COUNT_PER_CHOICE = "Count per Choice";
 +    var SUM = "Sum";
 +    var GROUP_BY = "Group By";

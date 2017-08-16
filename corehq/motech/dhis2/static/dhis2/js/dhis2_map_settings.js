@@ -1,6 +1,6 @@
 /* globals hqDefine, ko, $, _ */
 
-hqDefine('dhis2/js/dhis2_map_settings.js', function () {
+hqDefine('dhis2/js/dhis2_map_settings', function () {
     'use strict';
 
     var module = {};
@@ -93,7 +93,7 @@ hqDefine('dhis2/js/dhis2_map_settings.js', function () {
 
     module.Dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
         var self = this;
-        var alert_user = hqImport("style/js/alert_user.js").alert_user;
+        var alert_user = hqImport("style/js/alert_user").alert_user;
 
         self.frequencyOptions = [
             {"value": "monthly", "text": "Monthly"},

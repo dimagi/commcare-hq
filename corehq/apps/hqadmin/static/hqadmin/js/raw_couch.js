@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('hqadmin/js/raw_couch.js', function () {
+hqDefine('hqadmin/js/raw_couch', function () {
     $(function() {
         // don't break if offline (Also why I left it as a <pre/>)
         if (window.CodeMirror) {

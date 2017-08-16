@@ -24,7 +24,7 @@
 
 {% block js-inline %}{{ block.super }}
   <script>
-      hqImport('app_manager/js/app_manager.js').setPrependedPageTitle("{% trans 'Settings' %}");
+      hqImport('app_manager/js/app_manager').setPrependedPageTitle("{% trans 'Settings' %}");
   </script>
 {% endblock js-inline %}
 

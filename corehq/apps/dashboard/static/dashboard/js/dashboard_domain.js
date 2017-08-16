@@ -1,6 +1,6 @@
-hqDefine('dashboard/js/dashboard_domain.js', function() {
+hqDefine('dashboard/js/dashboard_domain', function() {
     'use strict';
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     var dashboardApp = window.angular.module('dashboardApp', [
         'ui.bootstrap',
         'ngResource',

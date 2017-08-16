@@ -1,4 +1,4 @@
-hqDefine("reports/js/export_action_download.js", function() {
+hqDefine("reports/js/export_action_download", function() {
     $('.export-action-download').click(function() {
         var $modalBody = $("#export-download-status .modal-body");
         $modalBody.text("Fetching...");

@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {

@@ -84,7 +84,7 @@ AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal' ];
 AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
-    var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

@@ -1,7 +1,7 @@
-/* globals Clipboard, COMMCAREHQ */
-hqDefine('app_manager/js/settings/commcare_settings.js', function () {
+/* globals Clipboard */
+hqDefine('app_manager/js/settings/commcare_settings', function () {
     function CommcareSettings(options) {
-        var app_manager = hqImport('app_manager/js/app_manager.js');
+        var app_manager = hqImport('app_manager/js/app_manager');
         var self = this;
         var initialValues = options.values;
         self.sections = options.sections;
@@ -16,9 +16,9 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             // only referenced in v2 template
-            self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
+            self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
         }
 
         self.settings = [];
@@ -249,7 +249,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
                     return setting.visible();
                 });
             });
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                 section.reallyCollapse = ko.computed(function () {
                     var el = document.getElementById(section.id);
                     return section.collapse &&
@@ -257,7 +257,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
                         !_(section.settings).some(function (setting) { return setting.hasError(); });
                 });
             } else {
-                section.collapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", section.id, section.collapse);
+                section.collapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", section.id, section.collapse);
             }
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
@@ -317,15 +317,15 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
-            hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
+            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
         }
 
         self.onAddCustomProperty = function() {
@@ -433,7 +433,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
     };
 
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
-        var app_manager = hqImport('app_manager/js/app_manager.js');
+        var app_manager = hqImport('app_manager/js/app_manager');
         function update(appVersion) {
             var major = appVersion.split('/')[0].split('.')[0];
             var opts = self.options_map[major];
@@ -456,7 +456,7 @@ hqDefine('app_manager/js/settings/commcare_settings.js', function () {
     };
 
     CommcareSettings.widgets.image_uploader = function (self) {
-        self.manager = hqImport("app_manager/js/settings/app_logos.js").LogoManager;
+        self.manager = hqImport("app_manager/js/settings/app_logos").LogoManager;
         self.slug = "hq_" + self.id;
         self.href = "#" + self.slug;
         self.path = self.manager.getPathFromSlug(self.slug);

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,66 +1,320 @@
+@@ -1,66 +1,351 @@
 -
 -{% extends "userreports/v1/base_report_builder.html" %}
 +{% extends "userreports/base_report_builder.html" %}
@@ -20,26 +20,35 @@
      <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
 -    <script src="{% static 'userreports/js/v1/constants.js' %}"></script>
 -    <script src="{% static 'userreports/js/v1/builder_view_models.js' %}"></script>
-+    <script src="{% static 'userreports/js/constants.js' %}"></script>
-+    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
-+    <script src="{% static 'userreports/js/report_config.js' %}"></script>
-+    <script src="{% static 'userreports/js/utils.js' %}"></script>
-+    <script src="{% static 'style/js/hq.helpers.js' %}"></script>
- {% endblock %}
- 
+-{% endblock %}
+-
 -{% block page_title %}
 -    {% if not editing_existing_report %}
 -    {% trans "Step 2 of 2" %} -
 -    {% endif %}
 -    {% trans "Configure Report Settings" %}
 -{% endblock page_title %}
++    <script src="{% static 'userreports/js/constants.js' %}"></script>
++    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
++    <script src="{% static 'userreports/js/report_config.js' %}"></script>
++    <script src="{% static 'userreports/js/utils.js' %}"></script>
++    <script src="{% static 'style/js/hq.helpers.js' %}"></script>
++{% endblock %}
++
 +{% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 +
++{% block has_report_builder_access %}
++  <div class="spacer"></div>
++  {{ block.super }}
++{% endblock %}
++
++{% block at_report_limit_warning %}
++  <div class="spacer"></div>
++  {{ block.super }}
++{% endblock %}
++
 +{% block page_content %}
-+  {% if not has_report_builder_access %}
-+    <div class="spacer"></div>
-+    {% include "userreports/partials/preview_warning.html" %}
-+  {% endif %}
++  {{ block.super }}
 +  <div id="reportConfig" class="ko-template">
 +    <div class="pull-right page-actions-toolbar">
 +      {% if existing_report %}
@@ -52,7 +61,9 @@
 +        </a>&nbsp;
 +      {% endif %}
 +      {% if has_report_builder_access %}
-+        <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
++        {% if not at_report_limit or existing_report %}
++          <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
++        {% endif %}
 +      {% endif %}
 +      &nbsp;<span id="saveButtonHolder"></span>
 +    </div>
@@ -265,11 +276,24 @@
 +                      <option value="pie">{% trans 'Pie' %}</option>
 +                  </select>
 +              </div>
-+              <div id="chart-warning" class="alert alert-warning hide">
-+                {% blocktrans %}
-+                  Charts cannot be displayed with more than 25 categories.
-+                  Once you Save and View report, you will be able to filter the data to limit the number of rows.
-+                {% endblocktrans %}
++              <div data-bind="visible: tooManyChartCategoriesWarning" style="display: none;">
++                <div class="spacer"></div>
++                <div id="chart-warning" class="alert alert-warning">
++                  {% blocktrans %}
++                    Charts cannot be displayed with more than 25 categories.
++                    Once you Save and View report, you will be able to filter the data to limit the number of rows.
++                  {% endblocktrans %}
++                </div>
++              </div>
++              <div data-bind="visible: noChartForConfigWarning" style="display: none;">
++                <div id="chart-warning-bad-config">
++                  <div class="spacer"></div>
++                  <div class="alert alert-warning">
++                    {% blocktrans %}
++                      At least one indicator must not be of format "Group By" to generate charts.
++                    {% endblocktrans %}
++                  </div>
++                </div>
 +              </div>
 +              <div id="chart" class="fs-hide"></div>
 +            </div>
@@ -304,8 +328,8 @@
  <script>
  
      var ReportBuilder = {
--        Constants: hqImport('userreports/js/v1/constants.js')
-+      Constants: hqImport("userreports/js/constants.js"),
+-        Constants: hqImport('userreports/js/v1/constants')
++      Constants: hqImport("userreports/js/constants"),
      };
  
 -    (function () {
@@ -321,7 +345,7 @@
 -        var isGroupByRequired = {{ is_group_by_required|JSON }};
 -        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
 -
--        var ConfigForm = hqImport('userreports/js/v1/builder_view_models.js').ConfigForm;
+-        var ConfigForm = hqImport('userreports/js/v1/builder_view_models').ConfigForm;
 -        $("#report-config-form").koApplyBindings(
 -            new ConfigForm(
 -                reportType,
@@ -363,10 +387,19 @@
 +            "initialLocation": {{ initial_location|JSON }},
 +            "initialChartType": {{ initial_chart_type|JSON }},
 +            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
-+            "hasReportBuilderAccess": {{ has_report_builder_access|JSON }},
++            // In previewMode, report can't be saved.
++            "previewMode":
++              {# equivalent to: not has_report_builder_access or (at_report_limit and not existing_report) #}
++              {% if not has_report_builder_access or at_report_limit and not existing_report %}
++                true
++              {% else %}
++                false
++              {% endif %}
++            ,
++
          });
 -    })();
-+        $("#reportConfig").koApplyBindings(reportConfig)
++        $("#reportConfig").koApplyBindings(reportConfig);
 +        window._bindingsApplied = true;
 +    });
  </script>

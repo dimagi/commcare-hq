@@ -4,6 +4,7 @@
     "enikshay"
   ],
   "server_environment": [
+    "enikshay",
     "softlayer"
   ],
   "config": {

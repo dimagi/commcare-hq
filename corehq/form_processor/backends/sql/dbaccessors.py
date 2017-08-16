@@ -163,6 +163,9 @@ class ShardAccessor(object):
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
     startkey_min_value = datetime.min
 
+    def __init__(self, limit_db_aliases=None):
+        self.limit_db_aliases = limit_db_aliases
+
     def is_sharded(self):
         """
         :return: True the django model is sharded, otherwise false.
@@ -172,7 +175,14 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        if self.limit_db_aliases:
+            db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
+            assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(
+                all_db_aliases, self.limit_db_aliases
+            )
+            return db_aliases
+        return all_db_aliases
 
     @abstractproperty
     def model_class(self):
@@ -228,7 +238,8 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, include_attachments=True):
+    def __init__(self, include_attachments=True, limit_db_aliases=None):
+        super(FormReindexAccessor, self).__init__(limit_db_aliases)
         self.include_attachments = include_attachments
 
     @property
@@ -629,7 +640,8 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None):
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
 
     @property

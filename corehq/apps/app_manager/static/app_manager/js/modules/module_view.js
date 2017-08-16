@@ -1,17 +1,17 @@
-/*globals $, COMMCAREHQ, _, ko, django */
+/*globals $, hqImport, _, ko, django */
 $(function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1'),
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
+        v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
 
-    hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Module Settings"));
+    hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Module Settings"));
 
     // Set up details
     if (!v2 || moduleBrief.case_type) {
-        var state = hqImport('app_manager/js/details/screen_config.js').state;
-        var DetailScreenConfig = hqImport('app_manager/js/details/screen_config.js').DetailScreenConfig;
+        var state = hqImport('app_manager/js/details/screen_config').state;
+        var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').DetailScreenConfig;
         state.requires_case_details(moduleBrief.requires_case_details);
 
         var details = initial_page_data('details');
@@ -30,7 +30,7 @@ $(function () {
                 properties: detail.properties,
                 lang: moduleBrief.lang,
                 langs: moduleBrief.langs,
-                saveUrl: hqImport('hqwebapp/js/initial_page_data.js').reverse('edit_module_detail_screens'),
+                saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
                 parentModules: initial_page_data('parent_modules'),
                 childCaseTypes: detail.subcase_types,
                 fixture_columns_by_type: options.fixture_columns_by_type || {},
@@ -151,7 +151,7 @@ $(function () {
 
     if (moduleType === 'shadow') {
         // Shadow module checkboxes for including/excluding forms
-        var ShadowModule = hqImport('app_manager/js/modules/shadow_module_settings.js').ShadowModule,
+        var ShadowModule = hqImport('app_manager/js/modules/shadow_module_settings').ShadowModule,
             shadowOptions = initial_page_data('shadow_module_options');
         $('#sourceModuleForms').koApplyBindings(new ShadowModule(
             shadowOptions.modules,
@@ -159,11 +159,11 @@ $(function () {
             shadowOptions.excluded_form_ids
         ));
     } else if (moduleType === 'advanced') {
-        if (moduleBrief.has_schedule || COMMCAREHQ.toggleEnabled('VISIT_SCHEDULER')) {
-            var VisitScheduler = hqImport('app_manager/js/visit_scheduler.js');
+        if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
+            var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
             var visitScheduler = new VisitScheduler.ModuleScheduler({
                 home: $('#module-scheduler'),
-                saveUrl: hqImport('hqwebapp/js/initial_page_data.js').reverse('edit_schedule_phases'),
+                saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
                 hasSchedule: moduleBrief.has_schedule,
                 schedulePhases: initial_page_data('schedule_phases'),
                 caseProperties: initial_page_data('details')[0].properties,
@@ -177,8 +177,8 @@ $(function () {
     }
 
     $(function () {
-        var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/initial_page_data.js').reverse('validate_module_for_build'));
+        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
+        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
     });
 
     $(function() {

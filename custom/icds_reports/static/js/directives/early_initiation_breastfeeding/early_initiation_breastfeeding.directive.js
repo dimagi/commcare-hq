@@ -1,5 +1,5 @@
 /* global d3*/
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {

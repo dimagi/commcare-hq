@@ -2,7 +2,7 @@
 
 describe('Async Download Modal', function() {
     var url = 'test_url';
-    var AsyncDownloader = hqImport('app_manager/js/download_async_modal.js').AsyncDownloader;
+    var AsyncDownloader = hqImport('app_manager/js/download_async_modal').AsyncDownloader;
 
     describe('#AsyncDownloader.isDone', function() {
         var downloader = null,

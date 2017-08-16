@@ -1,16 +1,16 @@
-/* globals COMMCAREHQ, hqLayout */
-hqDefine("app_manager/js/summary/summary.js", function() {
+/* globals hqImport, hqLayout */
+hqDefine("app_manager/js/summary/summary", function() {
     $(function() {
         'use strict';
 
-        var v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1');
+        var v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1');
         if (v2) {
             hqLayout.utils.setIsAppbuilderResizing(true);
         }
 
         var summaryApp = window.angular.module('summaryApp', ['ngRoute', 'summaryModule']),
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            url = hqImport('hqwebapp/js/initial_page_data').reverse;
         summaryApp.config(['$httpProvider', function($httpProvider) {
             $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';

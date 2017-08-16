@@ -1,6 +1,6 @@
 /* globals HQReport */
-hqDefine("userreports/js/configurable_report.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+hqDefine("userreports/js/configurable_report", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
     var getStandardHQReport = function() {
         if (!initial_page_data("standardHQReport")) {
@@ -28,7 +28,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
             var retrying = false;
             (function poll() {
                 $.ajax({
-                    url: hqImport("hqwebapp/js/initial_page_data.js").reverse('configurable_data_source_status'),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse('configurable_data_source_status'),
                     dataType: 'json',
                     success: function(data) {
                         if (data.isBuilt){
@@ -48,7 +48,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
             })();
         }
 
-        var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
+        var urlSerialize = hqImport('reports/js/reports.util').urlSerialize;
         var reportOptions = {
             domain: initial_page_data('domain'),
             urlRoot: initial_page_data('url_root'),
@@ -107,7 +107,7 @@ hqDefine("userreports/js/configurable_report.js", function() {
             filterForm: $("#paramSelectorForm"),
             items: initial_page_data("report_configs"),
             defaultItem: defaultConfig,
-            saveUrl: hqImport("hqwebapp/js/initial_page_data.js").reverse("add_report_config"),
+            saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
         });
 
         $('#email-enabled').tooltip({
