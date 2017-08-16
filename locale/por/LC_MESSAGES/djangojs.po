@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-08 19:12+0000\n"
+"POT-Creation-Date: 2017-08-15 19:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -371,6 +371,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
 #: corehq/apps/style/static/style/js/main.js:253
+#: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr ""
 
@@ -378,19 +379,19 @@ msgstr ""
 msgid "Select a user"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:44
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:36
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:374
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:366
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:408
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:400
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:413
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:405
 msgid "No new changes!"
 msgstr ""
 
@@ -2262,19 +2263,19 @@ msgstr ""
 msgid "Excel 2007"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:493
+#: corehq/apps/export/static/export/js/models.js:496
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:603
+#: corehq/apps/export/static/export/js/models.js:606
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:605
+#: corehq/apps/export/static/export/js/models.js:608
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:607
+#: corehq/apps/export/static/export/js/models.js:610
 msgid "None"
 msgstr ""
 
@@ -2603,16 +2604,19 @@ msgid "There was an error fetching the SMS rate."
 msgstr ""
 
 #: corehq/apps/style/static/style/js/main.js:250
+#: corehq/apps/userreports/static/userreports/js/report_config.js:387
 msgid "Saving..."
 msgstr ""
 
 #: corehq/apps/style/static/style/js/main.js:251
+#: corehq/apps/userreports/static/userreports/js/report_config.js:388
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr ""
 
 #: corehq/apps/style/static/style/js/main.js:252
 #: corehq/apps/style/static/style/js/main.js:260
+#: corehq/apps/userreports/static/userreports/js/report_config.js:389
 msgid "Try Again"
 msgstr ""
 
@@ -2723,47 +2727,65 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:388
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:332
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:347
+#: corehq/apps/userreports/static/userreports/js/report_config.js:230
+#: corehq/apps/userreports/static/userreports/js/report_config.js:248
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:373
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:388
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:374
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:333
+#: corehq/apps/userreports/static/userreports/js/report_config.js:231
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:374
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:334
+#: corehq/apps/userreports/static/userreports/js/report_config.js:232
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:375
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:389
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:348
+#: corehq/apps/userreports/static/userreports/js/report_config.js:249
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:389
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
+#: corehq/apps/userreports/static/userreports/js/report_config.js:250
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:390
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:401
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:401
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:431
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:431
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:7
 msgid "Form"
 msgstr "Formulário"
+
+#: corehq/apps/userreports/static/userreports/js/report_config.js:386
+msgid "Update Report"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"
@@ -2881,4 +2903,16 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "show"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "hide"
+msgstr ""
+
+#: submodules/formdesigner/_build/src/global-deps.js:3
+msgid "toggle"
 msgstr ""
