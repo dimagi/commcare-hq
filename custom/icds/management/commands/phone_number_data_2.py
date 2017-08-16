@@ -4,7 +4,6 @@ import csv
 
 from django.core.management import BaseCommand
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
