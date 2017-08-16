@@ -118,6 +118,7 @@ class Command(BaseCommand):
             return
 
         user_data = BETSUserPayloadGenerator.serialize(self.domain, user)
+        user_data['migrationCrtdRecordId'] = user.user_data.get('agency_id_legacy', '')
 
         def get_field(field):
             if field == 'phone_numbers':

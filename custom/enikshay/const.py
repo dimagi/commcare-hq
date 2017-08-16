@@ -2,10 +2,16 @@
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
 OTHER_NUMBER = "phone_number_other"
+ALTERNATE_NUMBER_1 = "phone_number_alternate_1"
+ALTERNATE_NUMBER_2 = "phone_number_alternate_2"
+ALTERNATE_NUMBER_3 = "phone_number_alternate_3"
 NINETYNINEDOTS_NUMBERS = [
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
     OTHER_NUMBER,
+    ALTERNATE_NUMBER_1,
+    ALTERNATE_NUMBER_2,
+    ALTERNATE_NUMBER_3,
 ]
 
 MERM_ID = 'merm_id'
@@ -41,6 +47,9 @@ PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION = "private_sector_episode_pending_r
 WEIGHT_BAND = 'weight_band'
 LAST_VOUCHER_CREATED_BY_ID = "bets_last_voucher_created_by_id"
 NOTIFYING_PROVIDER_USER_ID = "bets_notifying_provider_user_id"
+FIRST_PRESCRIPTION_VOUCHER_REDEEMED = 'bets_first_prescription_voucher_redeemed'
+FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE = 'bets_first_prescription_voucher_redeemed_date'
+
 
 CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
@@ -173,3 +182,13 @@ AGENCY_LOCATION_FIELDS = [
 DSTB_EPISODE_TYPE = "confirmed_tb"
 PERSON_CASE_2B_VERSION = '20'
 REAL_DATASET_PROPERTY_VALUE = 'real'
+
+USERTYPE_DISPLAYS = {
+    'pac': 'AYUSH / Other Provider',
+    'pcp': 'MBBS Provider',
+    'pcc-chemist': 'Chemist',
+    'plc': 'Lab',
+    'ps-fieldstaff': 'Field Staff',
+    'ppia-do': 'District Reviewer',
+    'dto': 'District TB Officer',
+}

@@ -1,5 +1,5 @@
 /* globals COMMCAREHQ */
-hqDefine("reminders/js/reminders.manage.js", function() {
+hqDefine("reminders/js/reminders.manage", function() {
     var ManageRemindersViewModel = function (
         initial,
         choices,
@@ -510,7 +510,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
     };
 
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
             manageRemindersModel = new ManageRemindersViewModel(
                 initial_page_data("current_values"),
                 initial_page_data("relevant_choices"),

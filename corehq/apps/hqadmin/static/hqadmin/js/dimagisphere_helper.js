@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('hqadmin/js/dimagisphere_helper.js', function () {
+hqDefine('hqadmin/js/dimagisphere_helper', function () {
     var dimagisphere = (function() {
         var self = {};
     

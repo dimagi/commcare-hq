@@ -116,6 +116,9 @@ class FormplayerMain(View):
         the eventual response
         """
 
+        if not hasattr(request, 'couch_user'):
+            raise Http404()
+
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 

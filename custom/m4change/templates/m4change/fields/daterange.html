@@ -34,7 +34,7 @@
         $.getScript("{% static 'm4change/javascripts/daterangepicker.js' %}", function () {
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels|safe }}');
-            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+            var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
 
             $('#filter_range').createDateRangePicker(report_labels, separator);
             $('#filter_range').on('apply', function(ev, picker) {

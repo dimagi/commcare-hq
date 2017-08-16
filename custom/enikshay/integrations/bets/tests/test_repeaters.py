@@ -16,6 +16,8 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
+    FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
+    FIRST_PRESCRIPTION_VOUCHER_REDEEMED,
 )
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
@@ -179,6 +181,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             prescription.case_id, {
                 "voucher_type": "prescription",
                 "voucher_fulfilled_by_id": self.user.user_id,
+                "voucher_approved_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.pcc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
@@ -196,6 +199,11 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": u"Jon Snow",
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
 
         self.assertDictEqual(
@@ -210,6 +218,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "test",
+                "voucher_approved_by_id": self.user.user_id,
                 "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.plc.location_id,
                 "date_fulfilled": "2017-08-15",
@@ -229,6 +238,11 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": self.user.name,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
 
         self.assertDictEqual(
@@ -239,6 +253,10 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestIncentivePayload, self).setUp()
+        self.episode.attrs['update']['bets_notifying_provider_user_id'] = self.user._id
+
     def test_bets_180_treatment_payload(self):
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
         self.episode.attrs['update'][LAST_VOUCHER_CREATED_BY_ID] = self.user.user_id
@@ -254,6 +272,11 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -276,6 +299,11 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -284,6 +312,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
 
     def test_successful_treatment_payload(self):
         self.person.attrs['update']['last_owner'] = self.pcp.location_id
+        self.person.attrs['owner_id'] = "_archive_"
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
         cases = self.create_case_structure()
         episode = cases[self.episode_id]
@@ -296,6 +325,37 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
+        }]}
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSSuccessfulTreatmentPayloadGenerator(None).get_payload(None, episode))
+        )
+
+    def test_successful_treatment_payload_non_closed_case(self):
+        self.episode.attrs['update']["prescription_total_days"] = 180
+        self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        self.person.attrs['owner_id'] = self.pcp.location_id
+        cases = self.create_case_structure()
+        episode = cases[self.episode_id]
+
+        expected_payload = {"incentive_details": [{
+            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.person_id,
+            u"BeneficiaryType": u"patient",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
         self.assertDictEqual(
             expected_payload,
@@ -303,11 +363,12 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         )
 
     def test_diagnosis_and_notification_payload(self):
+        date_today = u"2017-08-15"
         self.episode.attrs['update'][NOTIFYING_PROVIDER_USER_ID] = self.user.user_id
+        self.episode.attrs['update'][FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE] = date_today
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
-        date_today = u"2017-08-15"
 
         expected_payload = {"incentive_details": [{
             u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
@@ -317,21 +378,26 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
-        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
-            self.assertDictEqual(
-                expected_payload,
-                json.loads(BETSDiagnosisAndNotificationPayloadGenerator(None).get_payload(None, episode))
-            )
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSDiagnosisAndNotificationPayloadGenerator(None).get_payload(None, episode))
+        )
 
     def test_ayush_referral_payload(self):
+        date_today = u"2017-08-15"
         self.pac.user_id = self.user.user_id
         self.pac.save()
         self.episode.attrs['update']['registered_by'] = self.pac.location_id
+        self.episode.attrs['update'][FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE] = date_today
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
-        date_today = u"2017-08-15"
 
         expected_payload = {"incentive_details": [{
             u"EventID": unicode(AYUSH_REFERRAL_EVENT),
@@ -341,12 +407,16 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pac.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
+            u"PersonId": self.person.attrs['update']['person_id'],
+            u"AgencyId": self.username.split('@')[0],
+            u"EnikshayApprover": None,
+            u"EnikshayRole": None,
+            u"EnikshayApprovalDate": None,
         }]}
-        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
-            self.assertDictEqual(
-                expected_payload,
-                json.loads(BETSAYUSHReferralPayloadGenerator(None).get_payload(None, episode))
-            )
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSAYUSHReferralPayloadGenerator(None).get_payload(None, episode))
+        )
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -528,7 +598,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
             self.domain,
             self.episode_id,
             {
-                'bets_first_prescription_voucher_redeemed': 'false',
+                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
                 ENROLLED_IN_PRIVATE: "true",
             },
         )
@@ -565,7 +635,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
             self.domain,
             self.episode_id,
             {
-                'bets_first_prescription_voucher_redeemed': 'false',
+                FIRST_PRESCRIPTION_VOUCHER_REDEEMED: 'false',
                 'created_by_user_type': 'pac',
                 ENROLLED_IN_PRIVATE: "true",
             },

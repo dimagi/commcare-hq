@@ -1,6 +1,6 @@
 import json
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from datetime import datetime, timedelta
 
@@ -407,7 +407,7 @@ def get_maternal_child_data(config):
                     'redirect': 'underweight_children'
                 },
                 {
-                    'label': _('Wasting (weight-for-height)'),
+                    'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -436,7 +436,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('Stunting (height-for-age)'),
+                    'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
                         "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
@@ -888,7 +888,7 @@ def get_demographics_data(yesterday, config):
                         two_days_ago_data) > 0 else 'red',
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
-                    'format': 'number',
+                    'format': 'percent_and_div',
                     'frequency': 'day'
                 }
             ]
@@ -1286,6 +1286,7 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
         valid=Sum('wer_eligible'),
+        normal=Sum('nutrition_status_normal')
     ).order_by('%s_name' % loc_level)
 
     loc_data = {
@@ -1301,6 +1302,13 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         'orange': [],
         'red': []
     }
+
+    tooltips_data = defaultdict(lambda: {
+        'severely_underweight': 0,
+        'moderately_underweight': 0,
+        'total': 0,
+        'normal': 0
+    })
 
     for row in data:
         valid = row['valid']
@@ -1318,6 +1326,12 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
             }
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
+        normal = row['normal']
+
+        tooltips_data[name]['severely_underweight'] += severely_underweight
+        tooltips_data[name]['moderately_underweight'] += moderately_underweight
+        tooltips_data[name]['total'] += (valid or 0)
+        tooltips_data[name]['normal'] += normal
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
 
@@ -1336,6 +1350,7 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, loc_data['red']])
 
     return {
+        "tooltips_data": dict(tooltips_data),
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -1458,7 +1473,7 @@ def get_awc_reports_pse(config, month, two_before, domain):
         pse_date__range=(datetime(*two_before), datetime(*month)), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
-    )
+    ).order_by('-pse_date')
 
     map_data = {}
     image_data = []
@@ -1545,7 +1560,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
         'kpi': [
             [
                 {
-                    'label': _('Prevalence of undernutrition (weight-for-age)'),
+                    'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children with weight-for-age less than -2 standard deviations of the "
                         "WHO Child Growth Standards median. Children who are moderately or severely underweight "
@@ -1830,7 +1845,7 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('month', 'person_name')
+    ).order_by('-month', 'person_name')
 
     config = {
         'rows': {},
@@ -1840,7 +1855,7 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
                 dtstart=datetime(*two_before),
                 until=datetime(*month)
             )
-        ],
+        ][::-1],
         'last_month': datetime(*month).strftime("%b %Y"),
         'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }
@@ -2055,6 +2070,8 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
         valid=Sum('height_eligible'),
+        normal=Sum('wasting_normal'),
+        total_measured=Sum('height_measured_in_month'),
     ).order_by('%s_name' % loc_level)
 
     loc_data = {
@@ -2070,6 +2087,14 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         'orange': [],
         'red': []
     }
+
+    tooltips_data = defaultdict(lambda: {
+        'severe': 0,
+        'moderate': 0,
+        'total': 0,
+        'normal': 0,
+        'total_measured': 0
+    })
 
     for row in data:
         valid = row['valid']
@@ -2087,6 +2112,14 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
             }
         severe = row['severe']
         moderate = row['moderate']
+        normal = row['normal']
+        total_measured = row['total_measured']
+
+        tooltips_data[name]['severe'] += (severe or 0)
+        tooltips_data[name]['moderate'] += (moderate or 0)
+        tooltips_data[name]['total'] += (valid or 0)
+        tooltips_data[name]['normal'] += normal
+        tooltips_data[name]['total_measured'] += total_measured
 
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
 
@@ -2105,6 +2138,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -2291,6 +2325,8 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
         valid=Sum('height_eligible'),
+        normal=Sum('stunting_normal'),
+        total_measured=Sum('height_measured_in_month'),
     ).order_by('%s_name' % loc_level)
 
     loc_data = {
@@ -2306,6 +2342,14 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         'orange': [],
         'red': []
     }
+
+    tooltips_data = defaultdict(lambda: {
+        'severe': 0,
+        'moderate': 0,
+        'total': 0,
+        'normal': 0,
+        'total_measured': 0
+    })
 
     for row in data:
         valid = row['valid']
@@ -2323,6 +2367,19 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
             }
         severe = row['severe']
         moderate = row['moderate']
+        normal = row['normal']
+        total_measured = row['total_measured']
+
+        row_values = {
+            'severe': severe or 0,
+            'moderate': moderate or 0,
+            'total': valid or 0,
+            'normal': normal or 0,
+            'total_measured': total_measured or 0,
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
 
@@ -2341,6 +2398,7 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -3022,9 +3080,24 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'children': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
+
+        in_month = row['in_month']
+
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         if tmp_name and name != tmp_name:
             chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
@@ -3055,6 +3128,7 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -3258,6 +3332,11 @@ def get_children_initiated_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'children': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
@@ -3273,6 +3352,12 @@ def get_children_initiated_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -3291,6 +3376,7 @@ def get_children_initiated_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -3496,6 +3582,11 @@ def get_institutional_deliveries_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'children': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
@@ -3511,6 +3602,13 @@ def get_institutional_deliveries_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -3529,6 +3627,7 @@ def get_institutional_deliveries_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -3732,6 +3831,11 @@ def get_immunization_coverage_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'children': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
@@ -3747,6 +3851,13 @@ def get_immunization_coverage_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -3765,6 +3876,7 @@ def get_immunization_coverage_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -3970,6 +4082,11 @@ def get_awc_daily_status_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_day': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -3985,6 +4102,12 @@ def get_awc_daily_status_sector_data(config, loc_level):
                 'red': 0
             }
         in_day = row['in_day']
+        row_values = {
+            'in_day': in_day or 0,
+            'all': valid or 0
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_day or 0) * 100 / float(valid or 1)
 
@@ -4003,6 +4126,7 @@ def get_awc_daily_status_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -4059,8 +4183,9 @@ def get_awcs_covered_data_map(config, loc_level):
             'awcs': awcs,
             'fillKey': 'Launched',
         }
-
         map_data.update({name: row_values})
+
+    total_awcs = sum(map(lambda x: x['awcs'], map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -4073,7 +4198,8 @@ def get_awcs_covered_data_map(config, loc_level):
             "fills": fills,
             "rightLegend": {
                 "info": _((
-                    "Total AWCs that have launched ICDS CAS"
+                    "Total AWCs that have launched ICDS CAS <br />" +
+                    "Number of AWCs launched: %d" % total_awcs
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4089,7 +4215,6 @@ def get_awcs_covered_sector_data(config, loc_level):
         group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
-    del config['month']
 
     data = AggAwcMonthly.objects.filter(
         **config
@@ -4109,17 +4234,37 @@ def get_awcs_covered_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'districts': 0,
+        'blocks': 0,
+        'supervisors': 0,
+        'awcs': 0
+    })
+
     for row in data:
+        name = row['%s_name' % loc_level]
         districts = row['districts']
         blocks = row['blocks']
         supervisors = row['supervisors']
         awcs = row['awcs']
-        chart_data['blue'].append(districts or 0)
-        chart_data['green'].append(blocks or 0)
-        chart_data['orange'].append(supervisors or 0)
-        chart_data['red'].append(awcs or 0)
+
+        row_values = {
+            'districts': districts,
+            'blocks': blocks,
+            'supervisors': supervisors,
+            'awcs': awcs
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
+
+    for name, value_dict in tooltips_data.iteritems():
+        chart_data['blue'].append([name, value_dict['districts']])
+        chart_data['green'].append([name, value_dict['blocks']])
+        chart_data['orange'].append([name, value_dict['supervisors']])
+        chart_data['red'].append([name, value_dict['awcs']])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4205,7 +4350,6 @@ def get_registered_household_sector_data(config, loc_level):
         group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
-    del config['month']
 
     data = AggAwcMonthly.objects.filter(
         **config
@@ -4219,11 +4363,25 @@ def get_registered_household_sector_data(config, loc_level):
         'blue': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'household': 0
+    })
+
     for row in data:
+        name = row['%s_name' % loc_level]
         household = row['household']
-        chart_data['blue'].append(household or 0)
+
+        row_values = {
+            'household': household
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
+
+    for name, value_dict in tooltips_data.iteritems():
+        chart_data['blue'].append([name, value_dict['household'] or 0])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4383,6 +4541,10 @@ def get_enrolled_children_sector_data(config, loc_level):
         'blue': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'valid': 0
+    })
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -4393,6 +4555,12 @@ def get_enrolled_children_sector_data(config, loc_level):
                 'blue': 0
             }
 
+        row_values = {
+            'valid': valid or 0,
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
+
         loc_data['blue'] += valid
         tmp_name = name
         rows_for_location += 1
@@ -4400,6 +4568,7 @@ def get_enrolled_children_sector_data(config, loc_level):
     chart_data['blue'].append([tmp_name, loc_data['blue']])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4485,6 +4654,10 @@ def get_enrolled_women_sector_data(config, loc_level):
         'blue': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'valid': 0
+    })
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -4495,6 +4668,12 @@ def get_enrolled_women_sector_data(config, loc_level):
                 'blue': 0
             }
 
+        row_values = {
+            'valid': valid or 0,
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
+
         loc_data['blue'] += valid
         tmp_name = name
         rows_for_location += 1
@@ -4502,6 +4681,7 @@ def get_enrolled_women_sector_data(config, loc_level):
     chart_data['blue'].append([tmp_name, loc_data['blue']])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4587,9 +4767,19 @@ def get_lactating_enrolled_women_sector_data(config, loc_level):
         'blue': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'valid': 0
+    })
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+
+        row_values = {
+            'valid': valid or 0,
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         if tmp_name and name != tmp_name:
             chart_data['blue'].append([tmp_name, loc_data['blue']])
@@ -4604,6 +4794,7 @@ def get_lactating_enrolled_women_sector_data(config, loc_level):
     chart_data['blue'].append([tmp_name, loc_data['blue']])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4689,6 +4880,10 @@ def get_adolescent_girls_sector_data(config, loc_level):
         'blue': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'valid': 0
+    })
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -4699,6 +4894,12 @@ def get_adolescent_girls_sector_data(config, loc_level):
                 'blue': 0
             }
 
+        row_values = {
+            'valid': valid or 0,
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
+
         loc_data['blue'] += valid
         tmp_name = name
         rows_for_location += 1
@@ -4706,6 +4907,7 @@ def get_adolescent_girls_sector_data(config, loc_level):
     chart_data['blue'].append([tmp_name, loc_data['blue']])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -4747,17 +4949,17 @@ def get_adhaar_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 50:
-            row_values.update({'fillKey': '25%-49%'})
-        elif value >= 50:
-            row_values.update({'fillKey': '50%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value > 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-49%': ORANGE})
-    fills.update({'50%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -4894,6 +5096,11 @@ def get_adhaar_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -4909,6 +5116,13 @@ def get_adhaar_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -4927,6 +5141,7 @@ def get_adhaar_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -4982,17 +5197,17 @@ def get_clean_water_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value >= 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
-    fills.update({'75%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5129,6 +5344,11 @@ def get_clean_water_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5144,6 +5364,13 @@ def get_clean_water_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -5162,6 +5389,7 @@ def get_clean_water_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -5364,6 +5592,11 @@ def get_functional_toilet_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5379,6 +5612,14 @@ def get_functional_toilet_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -5397,6 +5638,7 @@ def get_functional_toilet_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -5581,7 +5823,7 @@ def get_medicine_kit_sector_data(config, loc_level):
     ).values(
         *group_by
     ).annotate(
-        in_month=Sum('get_medicine_kit'),
+        in_month=Sum('infra_medicine_kits'),
         all=Sum('num_awcs'),
     ).order_by('%s_name' % loc_level)
 
@@ -5599,6 +5841,11 @@ def get_medicine_kit_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5614,6 +5861,14 @@ def get_medicine_kit_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -5632,6 +5887,7 @@ def get_medicine_kit_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -5834,6 +6090,11 @@ def get_infants_weight_scale_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5849,6 +6110,13 @@ def get_infants_weight_scale_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -5867,6 +6135,7 @@ def get_infants_weight_scale_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
@@ -6069,6 +6338,11 @@ def get_adult_weight_scale_sector_data(config, loc_level):
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -6084,6 +6358,13 @@ def get_adult_weight_scale_sector_data(config, loc_level):
                 'red': 0
             }
         in_month = row['in_month']
+        row_values = {
+            'in_month': in_month or 0,
+            'all': valid or 0
+        }
+
+        for prop, value in row_values.iteritems():
+            tooltips_data[name][prop] += value
 
         value = (in_month or 0) * 100 / float(valid or 1)
 
@@ -6102,6 +6383,7 @@ def get_adult_weight_scale_sector_data(config, loc_level):
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],

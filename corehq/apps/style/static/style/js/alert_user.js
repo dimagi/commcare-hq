@@ -12,7 +12,7 @@
 
     alert_user("Awesome job!", "success", true);
 */
-hqDefine("style/js/alert_user.js", function() {
+hqDefine("style/js/alert_user", function() {
     var message_alert = function(message, tags) {
         var alert_obj = {
             "message": ko.observable(message),

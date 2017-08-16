@@ -842,7 +842,7 @@ var height_for_age = {
     },
 };
 
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
@@ -951,6 +951,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 yAxis: {
                     axisLabel: '',
                 },
+                tooltip:
+                    function(x, y, value) {
+                        return '<strong>Total number of children between ' + y +':</strong> ' + value;
+                    },
+
             },
         };
         $scope.$apply();

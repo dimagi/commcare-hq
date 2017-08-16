@@ -973,6 +973,7 @@ DECLARE
 	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
+	_female text;
 	_month_end_11yr date;
 	_month_start_15yr date;
 	_month_end_15yr date;
@@ -989,6 +990,7 @@ BEGIN
 	_null_value = NULL;
 	_yes_text = 'yes';
 	_no_text = 'no';
+	_female = 'F';
 	_tablename1 := 'agg_awc' || '_' || _start_date || '_1';
 	_tablename2 := 'agg_awc' || '_' || _start_date || '_2';
 	_tablename3 := 'agg_awc' || '_' || _start_date || '_3';
@@ -1158,10 +1160,10 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
 		'FROM ' || quote_ident(_person_tablename) || ' ' ||
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
@@ -1242,11 +1244,11 @@ BEGIN
 
 	-- Update num launched AWCs based on previous month as well
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-	   'is_launched = ut.is_launched, ' ||
-	   'num_launched_awcs = ut.num_launched_awcs ' ||
-    'FROM (SELECT is_launched, num_launched_awcs, awc_id ' ||
+	   'is_launched = ' || quote_literal(_yes_text) || ', ' ||
+	   'num_launched_awcs = 1 ' ||
+    'FROM (SELECT DISTINCT(awc_id) ' ||
        'FROM agg_awc ' ||
-	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE month <= ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Update training status based on the previous month as well
@@ -1317,7 +1319,7 @@ BEGIN
 		'ls_awc_not_open_unknown = ut.ls_awc_not_open_unknown, ' ||
 		'ls_awc_not_open_other = ut.ls_awc_not_open_other ' ||
 	'FROM (SELECT ' ||
-		'location_id AS awc_id, ' ||
+		'awc_id AS awc_id, ' ||
 		'month, ' ||
 		'sum(count) AS ls_supervision_visit, ' ||
 		'CASE WHEN sum(count) > 0 THEN 1 ELSE 0 END AS ls_num_supervised, ' ||
@@ -1331,7 +1333,7 @@ BEGIN
 		'sum(awc_not_open_unknown) AS ls_awc_not_open_unknown, ' ||
 		'sum(awc_not_open_other) AS ls_awc_not_open_other '
 		'FROM ' || quote_ident(_ls_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY location_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 

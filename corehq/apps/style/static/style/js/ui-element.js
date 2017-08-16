@@ -1,39 +1,39 @@
 /* globals hqImport, hqDefine */
 
-hqDefine('style/js/ui-element.js', function () {
+hqDefine('style/js/ui-element', function () {
     'use strict';
     var module = {};
 
     module.input = function (value) {
-        return hqImport('style/js/ui_elements/ui-element-input.js').new(value);
+        return hqImport('style/js/ui_elements/ui-element-input').new(value);
     };
 
     module.textarea = function () {
-        return hqImport('style/js/ui_elements/ui-element-input.js').new_textarea();
+        return hqImport('style/js/ui_elements/ui-element-input').new_textarea();
     };
 
     module.select = function (options) {
-        return hqImport('style/js/ui_elements/ui-element-select.js').new(options);
+        return hqImport('style/js/ui_elements/ui-element-select').new(options);
     };
 
     module.map_list = function(guid, modalTitle) {
-        return hqImport('style/js/ui_elements/ui-element-key-val-list.js').new(guid, modalTitle);
+        return hqImport('style/js/ui_elements/ui-element-key-val-list').new(guid, modalTitle);
     };
 
     module.input_map = function(show_del_button) {
-        return hqImport('style/js/ui_elements/ui-element-input-map.js').new(show_del_button);
+        return hqImport('style/js/ui_elements/ui-element-input-map').new(show_del_button);
     };
 
     module.checkbox = function () {
-        return hqImport('style/js/ui_elements/ui-element-checkbox.js').new();
+        return hqImport('style/js/ui_elements/ui-element-checkbox').new();
     };
 
     module.langcode_tag_btn = function ($elem, new_lang) {
-        return hqImport('style/js/ui_elements/ui-element-langcode-button.js').new($elem, new_lang);
+        return hqImport('style/js/ui_elements/ui-element-langcode-button').new($elem, new_lang);
     };
 
     module.key_value_mapping = function (options) {
-        return hqImport('style/js/ui_elements/ui-element-key-val-mapping.js').new(options);
+        return hqImport('style/js/ui_elements/ui-element-key-val-mapping').new(options);
     };
 
     module.serialize = function (obj) {

@@ -27,7 +27,12 @@ from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
-from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_view_sms_exports
+from corehq.apps.users.permissions import (
+    can_view_form_exports,
+    can_view_case_exports,
+    can_view_sms_exports,
+    can_download_data_files,
+)
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -102,12 +107,17 @@ class ProjectReportsTab(UITab):
         """
         Return the url for the start of the report builder, or the paywall.
         """
-        if has_report_builder_access(self._request):
-            url = reverse("report_builder_select_type", args=[self.domain])
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+            from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
+            return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:
-            from corehq.apps.userreports.views import paywall_home
-            url = paywall_home(self.domain)
-        return url
+            if has_report_builder_access(self._request):
+                url = reverse("report_builder_select_type", args=[self.domain])
+            else:
+                from corehq.apps.userreports.views import paywall_home
+                url = paywall_home(self.domain)
+            return url
 
     @staticmethod
     def _filter_sidebar_items(sidebar_items):
@@ -483,7 +493,9 @@ class ProjectDataTab(UITab):
 
     @property
     def _is_viewable(self):
-        return self.domain and (self.can_edit_commcare_data or self.can_export_data)
+        return self.domain and (
+            self.can_edit_commcare_data or self.can_export_data or can_download_data_files(self.domain)
+        )
 
     @property
     def sidebar_items(self):
@@ -702,7 +714,7 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
-        if toggles.DATA_FILE_DOWNLOAD.enabled(self.domain):
+        if can_download_data_files(self.domain):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
@@ -750,11 +762,17 @@ class ProjectDataTab(UITab):
 
     @property
     def dropdown_items(self):
-        if self.can_only_see_deid_exports or not self.can_export_data:
+        if (
+            self.can_only_see_deid_exports or (
+                not self.can_export_data and not can_download_data_files(self.domain)
+            )
+        ):
             return []
+
         from corehq.apps.export.views import (
             FormExportListView, CaseExportListView, DownloadNewSmsExportView,
         )
+
         items = []
         if self.can_view_form_exports:
             items.append(dropdown_dict(
@@ -772,10 +790,9 @@ class ProjectDataTab(UITab):
                 url=reverse(DownloadNewSmsExportView.urlname, args=(self.domain,))
             ))
 
-        items += [
-            dropdown_dict(None, is_divider=True),
-            dropdown_dict(_("View All"), url=self.url),
-        ]
+        if items:
+            items += [dropdown_dict(None, is_divider=True)]
+        items += [dropdown_dict(_("View All"), url=self.url)]
         return items
 
 

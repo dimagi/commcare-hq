@@ -2,7 +2,7 @@ function FiltersController() {
 }
 
 window.angular.module('icdsApp').directive("filters", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

@@ -1,6 +1,6 @@
 /* globals hqDefine */
-hqDefine("domain/js/internal_settings.js", function() {
-    var areas = hqImport('hqwebapp/js/initial_page_data.js').get('areas');
+hqDefine("domain/js/internal_settings", function() {
+    var areas = hqImport('hqwebapp/js/initial_page_data').get('areas');
     function update_subareas() {
         var $subarea = $subarea || $('[name="sub_area"]');
         var chosen_sub_area = $subarea.val();

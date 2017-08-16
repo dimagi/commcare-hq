@@ -157,6 +157,19 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
             self.web_user,
         )
 
+    def test_get_choices_for_values_include_descendants(self):
+        self.choice_provider.include_descendants = True
+
+        def clean():
+            self.choice_provider.include_descendants = False
+        self.addCleanup(clean)
+
+        choice_values = [self.locations['Massachusetts'].location_id]
+        self.assertEqual(
+            self.choice_provider.get_choices_for_values(choice_values, self.web_user),
+            set(self.static_choice_provider.choices)
+        )
+
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
         self.restrict_user_to_assigned_locations(self.web_user)

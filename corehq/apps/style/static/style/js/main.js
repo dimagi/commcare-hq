@@ -186,7 +186,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                             // this is sending back a full html page, likely login, so no error message.
                             customError = null;
                         }
-                        hqImport("style/js/alert_user.js").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                        hqImport("style/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                         error.apply(this, arguments);
                     };
                     var jqXHR = $.ajax(options);
@@ -283,5 +283,5 @@ $(function () {
     $(window).on('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
 
-COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;
-COMMCAREHQ.previewEnabled = hqImport('hqwebapp/js/toggles.js').previewEnabled;
+COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles').toggleEnabled;
+COMMCAREHQ.previewEnabled = hqImport('hqwebapp/js/toggles').previewEnabled;

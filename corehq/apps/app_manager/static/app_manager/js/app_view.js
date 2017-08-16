@@ -1,21 +1,21 @@
 /* globals COMMCAREHQ */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
-hqDefine("app_manager/js/app_view.js", function() {
+hqDefine("app_manager/js/app_view", function() {
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            reverse = hqImport("hqwebapp/js/urllib.js").reverse;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
 
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
-            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings.js').CommcareSettings;
+            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings').CommcareSettings;
             $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
         }
 
         // Languages
         var $languagesContainer = $("#supported-languages");
         if ($languagesContainer.length) {
-            var SupportedLanguages = hqImport('app_manager/js/supported_languages.js').SupportedLanguages;
+            var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: initial_page_data("langs"),
                 saveURL: reverse("edit_app_langs"),
@@ -48,7 +48,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                 if (!self.load_state() || self.load_state() === 'error') {
                     self.load_state('loading');
                     $.ajax({
-                        url: hqImport("hqwebapp/js/urllib.js").reverse("app_multimedia_ajax"),
+                        url: hqImport("hqwebapp/js/initial_page_data").reverse("app_multimedia_ajax"),
                         success: function(content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
@@ -96,7 +96,7 @@ hqDefine("app_manager/js/app_view.js", function() {
 
                 // Load the content
                 $.ajax({
-                    url: hqImport("hqwebapp/js/urllib.js").reverse('release_manager_ajax') + "?limit=" + initial_page_data("fetch_limit"),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse('release_manager_ajax') + "?limit=" + initial_page_data("fetch_limit"),
                     success: function(content) {
                         state = "loaded";
                         showSpinner = false;
@@ -112,7 +112,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                             fetchLimit: initial_page_data("fetch_limit"),
                         };
                         var el = $('#releases-table');
-                        var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
+                        var ReleasesMain = hqImport('app_manager/js/releases/releases').ReleasesMain;
                         var releasesMain = new ReleasesMain(o);
                         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
                         el.koApplyBindings(releasesMain);
@@ -124,12 +124,12 @@ hqDefine("app_manager/js/app_view.js", function() {
                             var app_profiles = initial_page_data('build_profiles');
                             var enable_practice_users = initial_page_data('enable_practice_users');
                             var practice_users = initial_page_data('practice_users');
-                            var ProfileManager = hqImport('app_manager/js/releases/language_profiles.js').ProfileManager;
+                            var ProfileManager = hqImport('app_manager/js/releases/language_profiles').ProfileManager;
                             $profileManager.koApplyBindings(new ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users));
                         }
 
                         // App diff
-                        var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
+                        var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
                         $('#recent-changes-btn').on('click', function (e) {
                             appDiff.renderDiff(initial_page_data("app_id"), initial_page_data("latest_build_id"));
                         });

@@ -42,7 +42,7 @@ $(function() {
         var data = {
             url: $('#id_url').val(),
             format: $('#id_format').val(),
-            repeater_type: hqImport("hqwebapp/js/initial_page_data.js").get("repeater_type"),
+            repeater_type: hqImport("hqwebapp/js/initial_page_data").get("repeater_type"),
             auth_type: $('#id_auth_type').val(),
             username: $('#id_username').val(),
             password: $('#id_password').val(),
@@ -50,7 +50,7 @@ $(function() {
         $testLinkButton.disableButton();
 
         $.post({
-            url: hqImport("hqwebapp/js/urllib.js").reverse("test_repeater"),
+            url: hqImport("hqwebapp/js/initial_page_data").reverse("test_repeater"),
             data: data,
             success: handleSuccess,
             error: handleFailure,

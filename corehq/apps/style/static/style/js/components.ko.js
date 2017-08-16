@@ -1,6 +1,6 @@
 (function () {
     var components = {
-        'inline-edit': 'style/js/components/inline_edit.js',
+        'inline-edit': 'style/js/components/inline_edit',
     };
 
     _.each(components, function(moduleName, elementName) {

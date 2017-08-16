@@ -186,12 +186,15 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     init();
 
+
     vm.getPlaceholder = function() {
         var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+
         if (!selectedLocation) {
             return 'Search by Location';
         } else {
-            return selectedLocation.location_type_name;
+            var locationTypeName = selectedLocation.location_type_name;
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
         }
     };
 
@@ -312,7 +315,7 @@ LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locatio
 LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

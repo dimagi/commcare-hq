@@ -51,8 +51,8 @@ def time_ucr_process_change(method):
         te = datetime.now()
         seconds = (te - ts).total_seconds()
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
-            table = args[1]
-            doc = args[2]
+            table = args[2]
+            doc = args[3]
             log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )

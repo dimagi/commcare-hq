@@ -1,7 +1,7 @@
 /* globals analytics, COMMCAREHQ, SyntaxHighlighter, Util, django */
-hqDefine("app_manager/js/forms/form_view.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Form Settings"));
+hqDefine("app_manager/js/forms/form_view", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+    hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Form Settings"));
 
     function formFilterMatches(filter, pattern_matches, substring_matches) {
         if (typeof(filter) !== 'string') {
@@ -60,8 +60,8 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
 
     $(function (){
         // Validation for build
-        var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-        setupValidation(hqImport("hqwebapp/js/urllib.js").reverse("validate_form_for_build"));
+        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
+        setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // CloudCare "Preview Form" URL
         if (initial_page_data('allow_cloudcare') && COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
@@ -92,7 +92,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 
-            var reverse = hqImport("hqwebapp/js/urllib.js").reverse,
+            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                 app_id = initial_page_data('app_id'),
                 module_id = initial_page_data('module_id'),
                 form_id = initial_page_data('form_id');
@@ -116,7 +116,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
         }
 
         if (initial_page_data('allow_form_workflow')) {
-            var FormWorkflow = hqImport('app_manager/js/forms/form_workflow.js').FormWorkflow;
+            var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
             labels[FormWorkflow.Values.ROOT] = gettext("First Menu");
@@ -136,7 +136,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
                 labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
                 options.forms = initial_page_data('linkable_forms');
                 options.formLinks = initial_page_data('form_links');
-                options.formDatumsUrl = hqImport('hqwebapp/js/urllib.js').reverse('get_form_datums');
+                options.formDatumsUrl = hqImport('hqwebapp/js/initial_page_data').reverse('get_form_datums');
             }
 
             $('#form-workflow').koApplyBindings(new FormWorkflow(options));
@@ -159,7 +159,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
         }
 
         if (COMMCAREHQ.toggleEnabled('CUSTOM_INSTANCES')) {
-            var customInstances = hqImport('app_manager/js/forms/custom_instances.js').wrap({
+            var customInstances = hqImport('app_manager/js/forms/custom_instances').wrap({
                 customInstances: initial_page_data('custom_instances'),
             });
             $('#custom-instances').koApplyBindings(customInstances);

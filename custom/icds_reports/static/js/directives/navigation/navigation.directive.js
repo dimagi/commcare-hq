@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $scope, $route, $routeParams, $location) {
     $scope.$route = $route;

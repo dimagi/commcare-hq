@@ -17,14 +17,10 @@
 
 <!-- Stored here for duration of APP_MANAGER_V2 rollout -->
 <script>
-    hqDefine('style/js/components/inline_edit.js', function() {
+    hqDefine('style/js/components/inline_edit', function() {
         return {
             viewModel: function(params) {
                 var self = this;
-
-                if (!params.url) {
-                    throw "Inline edit widget requires a url";
-                }
 
                 // Attributes passed on to the input
                 self.name = params.name || '';
@@ -76,44 +72,46 @@
                 self.save = function() {
                     self.isEditing(false);
 
-                    // Nothing changed
-                    if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
-                        return;
+                    if (self.url) {
+                        // Nothing changed
+                        if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
+                            return;
+                        }
+
+                        // Strip HTML and then undo DOMPurify's HTML escaping
+                        self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
+                        self.readOnlyValue = self.value();
+
+                        var data = self.saveParams;
+                        _.each(data, function (value, key) {
+                            data[key] = ko.utils.unwrapObservable(value);
+                        });
+                        data[self.saveValueName] = self.value();
+                        self.isSaving(true);
+                        $(window).on("beforeunload", self.beforeUnload);
+
+                        $.ajax({
+                            url: self.url,
+                            type: 'POST',
+                            dataType: 'JSON',
+                            data: data,
+                            success: function (data) {
+                                self.isSaving(false);
+                                self.hasError(false);
+                                self.serverValue = self.readOnlyValue;
+                                if (self.postSave) {
+                                    self.postSave(data);
+                                }
+                                $(window).off("beforeunload", self.beforeUnload);
+                            },
+                            error: function () {
+                                self.isEditing(true);
+                                self.isSaving(false);
+                                self.hasError(true);
+                                $(window).off("beforeunload", self.beforeUnload);
+                            },
+                        });
                     }
-
-                    // Strip HTML and then undo DOMPurify's HTML escaping
-                    self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
-                    self.readOnlyValue = self.value();
-
-                    var data = self.saveParams;
-                    _.each(data, function(value, key) {
-                        data[key] = ko.utils.unwrapObservable(value);
-                    });
-                    data[self.saveValueName] = self.value();
-                    self.isSaving(true);
-                    $(window).on("beforeunload", self.beforeUnload);
-
-                    $.ajax({
-                        url: self.url,
-                        type: 'POST',
-                        dataType: 'JSON',
-                        data: data,
-                        success: function (data) {
-                            self.isSaving(false);
-                            self.hasError(false);
-                            self.serverValue = self.readOnlyValue;
-                            if (self.postSave) {
-                                self.postSave(data);
-                            }
-                            $(window).off("beforeunload", self.beforeUnload);
-                        },
-                        error: function () {
-                            self.isEditing(true);
-                            self.isSaving(false);
-                            self.hasError(true);
-                            $(window).off("beforeunload", self.beforeUnload);
-                        },
-                    });
                 };
 
                 // Revert to last value and switch modes

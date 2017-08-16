@@ -385,6 +385,12 @@
             {# do not override this block, use initial_page_data template tag to populate #}
         {% endblock %}
         </div>
+        {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
+        <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
+        </div>
 
         {# javascript below this line #}
 
@@ -398,14 +404,12 @@
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        {% registerurl 'notifications_service' %}
         <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
         {% endif %}
 
