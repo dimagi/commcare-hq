@@ -14,7 +14,7 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 pillow_logging = logging.getLogger("pillowtop")
 pillow_logging.setLevel(logging.INFO)
@@ -58,30 +58,48 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
     )
 
 
-def get_couch_case_reindexer():
-    iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        CommCareCase,
-        ("CommCareCase-Deleted", CommCareCase)
-    ])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_transform=transform_case_for_elasticsearch,
-        pillow=get_case_to_elasticsearch_pillow()
-    )
+class CouchCaseReindexerFactory(ReindexerFactory):
+    slug = 'case'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        iteration_key = "CouchCaseToElasticsearchPillow_{}_reindexer".format(CASE_INDEX_INFO.index)
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            CommCareCase,
+            ("CommCareCase-Deleted", CommCareCase)
+        ])
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=CASE_INDEX_INFO,
+            doc_transform=transform_case_for_elasticsearch,
+            pillow=get_case_to_elasticsearch_pillow(),
+            **self.options
+        )
 
 
-def get_sql_case_reindexer(limit_to_db=None):
-    iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
-        CASE_INDEX_INFO.index, limit_to_db or 'all'
-    )
-    limit_db_aliases = [limit_to_db] if limit_to_db else None
-    doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=CASE_INDEX_INFO,
-        doc_transform=transform_case_for_elasticsearch
-    )
+class SqlCaseReindexerFactory(ReindexerFactory):
+    slug = 'sql-case'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+    ]
+
+    def build(self):
+        limit_to_db = self.options.pop('limit_to_db', None)
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all'
+        )
+        limit_db_aliases = [limit_to_db] if limit_to_db else None
+        doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=CASE_INDEX_INFO,
+            doc_transform=transform_case_for_elasticsearch,
+            **self.options
+        )

@@ -8,6 +8,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -97,7 +98,8 @@ class LedgerPillowTest(TestCase):
         ref = UniqueLedgerReference(case.case_id, 'stock', self.product_id)
 
         index_id = 'ledger-v2' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'ledger-v1'
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
+        options = {'reset': True} if settings.TESTS_SHOULD_USE_SQL_BACKEND else {}
+        reindex_and_clean(index_id, **options)
 
         self._assert_ledger_in_es(ref)
 
