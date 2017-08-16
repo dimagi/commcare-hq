@@ -92,12 +92,12 @@ def restore_payload_path_cache_key(domain, user_id, version=None, sync_log_id=No
     )
 
 
-def async_restore_task_id_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
+def async_restore_task_id_cache_key(domain, user_id, sync_log_id=None, device_id=None):
     return _restore_cache_key(
         domain=domain,
         prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
         user_id=user_id,
-        version=version,
+        version=None,
         sync_log_id=sync_log_id,
         device_id=device_id,
     )
