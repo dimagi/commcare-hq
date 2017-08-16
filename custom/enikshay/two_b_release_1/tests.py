@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.domain.models import Domain
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import get_parent_of_case, CASE_TYPE_DRTB_HIV_REFERRAL
@@ -43,9 +44,11 @@ class TestCreateEnikshayCases(TestCase):
         referral = self._get_referral_structure(person)
         trail = self._get_trail_structure(referral)
         drtb_hiv_referral = self._get_drtb_hiv_referral_structure(episode)
-        return {c.case_id: c for c in self.factory.create_or_update_cases([
+        cases = {c.case_id: c for c in self.factory.create_or_update_cases([
             private_person, occurrence, test, referral, episode, trail, drtb_hiv_referral,
         ])}
+        cases[test.case_id] = self._update_test(test)
+        return cases
 
     def _get_person_structure(self, person_id, owner_id):
         person_fields = {ENROLLED_IN_PRIVATE: ""}
@@ -97,9 +100,30 @@ class TestCreateEnikshayCases(TestCase):
             'purpose_of_testing': 'diagnostic',
             'max_bacilli_count': '11',
             'clinical_remarks': 'that looks infected',
-            'result': 'tb_not_detected',
+            'result': 'tb_detected',
+            'test_type_value': 'cbnaat',
         })
         return test
+
+    def _update_test(self, test):
+        form_xml = """
+        <data xmlns="http://commcarehq.org/case">
+            <case case_id="{case_id}"
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+                <update>
+                    <result_recorded>yes</result_recorded>
+                </update>
+            </case>
+            <update_test_result>
+                <cbnaat>
+                    <ql_sample_a>
+                        <sample_a_rif_resistance_result>detected</sample_a_rif_resistance_result>
+                    </ql_sample_a>
+                </cbnaat>
+            </update_test_result>
+        </data>
+        """.format(case_id=test.case_id)
+        submit_form_locally(form_xml, self.domain)
 
     def _get_referral_structure(self, person):
         case_id = person.case_id + '-referral'
@@ -217,7 +241,8 @@ class TestCreateEnikshayCases(TestCase):
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
             'episode_case_id': 'roland-deschain-occurrence-episode',
-            'result_summary_display': "TB Not Detected\nCount of bacilli: 11\nthat looks infected"
+            'result_summary_display': "TB Detected\nR: Res\nCount of bacilli: 11\nthat looks infected",
+            'drug_resistance_list': 'r',
         }, new_test.dynamic_case_properties())
 
         new_referral = accessor.get_case(person.referrals[0].case_id)

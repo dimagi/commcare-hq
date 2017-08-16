@@ -12,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
+from casexml.apps.case.xform import get_case_updates
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -373,6 +374,24 @@ class ENikshay2BMigrator(object):
             },
         )
 
+    @staticmethod
+    def _get_result_recorded_form(test):
+        """get last form that set result_recorded to yes"""
+        for action in reversed(test.actions):
+            for update in get_case_updates(action.form):
+                if update.id == test.case_id:
+                    case_properties = update.get_update_action().dynamic_properties
+                    if case_properties.get('result_recorded') == 'yes':
+                        return action.form.form_data
+
+    @staticmethod
+    def _get_path(path, form_data):
+        block = form_data
+        while path:
+            block = block.get(path[0], {})
+            path = path[1:]
+        return block
+
     def migrate_test(self, test, person, episodes):
         self.total_tests += 1
         props = {
@@ -409,10 +428,33 @@ class ENikshay2BMigrator(object):
         else:
             detected = None
         bacilli_count = test.get_case_property('max_bacilli_count')
+        resistance_display = None
+
+        if (test.get_case_property('test_type_value') == 'cbnaat'
+                and test.get_case_property('result_recorded') == 'yes'):
+            form_data = self._get_result_recorded_form(test)
+            sample_a = self._get_path(
+                'update_test_result cbnaat ql_sample_a sample_a_rif_resistance_result'.split(),
+                form_data,
+            )
+            sample_b = self._get_path(
+                'update_test_result cbnaat ql_sample_b sample_b_rif_resistance_result'.split(),
+                form_data,
+            )
+            if sample_a == 'detected' or sample_b == 'detected':
+                detected = 'TB Detected'
+                props['drug_resistance_list'] = 'r'
+                resistance_display = 'R: Res'
+            elif sample_a == 'not_detected' or sample_b == 'not_detected':
+                detected = 'TB Not Detected'
+                props['drug_sensitive_list'] = 'r'
+            else:
+                detected = ''
 
         props['result_summary_display'] = '\n'.join(filter(None, [
             detected,
             test.get_case_property('result_grade'),
+            resistance_display,
             'Count of bacilli: {}'.format(bacilli_count) if bacilli_count else None,
             test.get_case_property('clinical_remarks'),
         ]))
