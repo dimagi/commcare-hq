@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _
-from corehq.apps.users.forms import GroupMembershipForm
 
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
