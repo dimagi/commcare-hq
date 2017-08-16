@@ -580,8 +580,7 @@ class DataSourceBuilder(object):
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
-        # the options are currently static, after loading the report builder a user can switch to an aggregated
-        # report.
+        # the options are currently static, after loading the report builder a user can switch to an agged report.
         count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
         options[count_col.get_property()] = count_col
 
