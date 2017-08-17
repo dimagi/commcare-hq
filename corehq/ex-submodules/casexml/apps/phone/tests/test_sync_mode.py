@@ -1218,7 +1218,8 @@ class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
 class SyncTokenCachingTest(SyncBaseTest):
 
     def testCaching(self):
-        self.assertFalse(has_cached_payload(self.sync_log, V2))
+        device_id = 'XYQR2HDOITHZQITPYN5DNEYL'
+        self.assertFalse(has_cached_payload(self.sync_log, V2, device_id))
         # first request should populate the cache
         original_payload = RestoreConfig(
             project=self.project,
@@ -1226,13 +1227,14 @@ class SyncTokenCachingTest(SyncBaseTest):
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()
         next_sync_log = synclog_from_restore_payload(original_payload)
 
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
 
         # a second request with the same config should be exactly the same
         cached_payload = RestoreConfig(
@@ -1276,23 +1278,25 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertIsInstance(cached_payload, CachedResponse)
 
     def testCacheInvalidation(self):
+        device_id = 'H3M4QK8Z3TGPXETXCLTHHVJU'
         original_payload = RestoreConfig(
             project=self.project,
             restore_user=self.user,
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
 
         # posting a case associated with this sync token should invalidate the cache
         case_id = "cache_invalidation"
         self._createCaseStubs([case_id])
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), V2))
+        self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), V2, device_id))
 
         # resyncing should recreate the cache
         next_payload = RestoreConfig(
@@ -1301,11 +1305,12 @@ class SyncTokenCachingTest(SyncBaseTest):
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
         self.assertNotEqual(original_payload, next_payload)
         self.assertFalse(case_id in original_payload)
         # since it was our own update, it shouldn't be in the new payload either
@@ -1314,17 +1319,19 @@ class SyncTokenCachingTest(SyncBaseTest):
         self.assertTrue(self.sync_log.phone_is_holding_case(case_id))
 
     def testCacheNonInvalidation(self):
+        device_id = 'AXDPWO2NZYCBPLSTPBAWGVH9'
         original_payload = RestoreConfig(
             project=self.project,
             restore_user=self.user,
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2))
+        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
 
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token

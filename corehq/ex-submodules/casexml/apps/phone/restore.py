@@ -81,7 +81,7 @@ def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id)
     return hashlib.md5(hashable_key).hexdigest()
 
 
-def restore_payload_path_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
+def restore_payload_path_cache_key(domain, user_id, version, sync_log_id, device_id):
     return _restore_cache_key(
         domain=domain,
         prefix=RESTORE_CACHE_KEY_PREFIX,
