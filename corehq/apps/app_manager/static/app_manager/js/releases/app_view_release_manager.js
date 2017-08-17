@@ -52,5 +52,12 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         if (initial_page_data('confirm')) {
             analytics.usage('User actions', 'User created login', window.location.pathname);
         }
+
+        var ab_test = initial_page_data('ab_test');
+        if (ab_test) {
+            var options = {};
+            options[ab_test.name] = ab_test.version;
+            analytics.identify(options);
+        }
     });
 });
