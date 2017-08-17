@@ -39,6 +39,8 @@ from .const import (
     ENIKSHAY_TIMEZONE,
     VALID_ADHERENCE_SOURCES,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
+    FDC_PRESCRIPTION_DAYS_THRESHOLD,
+    NON_FDC_PRESCRIPTION_DAYS_THRESHOLD,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
@@ -557,7 +559,9 @@ class EpisodeVoucherUpdate(object):
 
     def get_prescription_total_days(self):
         prescription_json = {}
-        threshold = 168 if self.episode.get_case_property("treatment_options") == "fdc" else 180
+        threshold = (FDC_PRESCRIPTION_DAYS_THRESHOLD
+                     if self.episode.get_case_property("treatment_options") == "fdc"
+                     else NON_FDC_PRESCRIPTION_DAYS_THRESHOLD)
         threshold_already_met = False
         total_days = 0
         for voucher in self._get_fulfilled_vouchers():

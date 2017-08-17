@@ -192,3 +192,6 @@ USERTYPE_DISPLAYS = {
     'ppia-do': 'District Reviewer',
     'dto': 'District TB Officer',
 }
+
+FDC_PRESCRIPTION_DAYS_THRESHOLD = 168
+NON_FDC_PRESCRIPTION_DAYS_THRESHOLD = 180
