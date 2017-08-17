@@ -2,7 +2,6 @@ import csv
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import get_person_case_from_voucher, CASE_TYPE_VOUCHER
