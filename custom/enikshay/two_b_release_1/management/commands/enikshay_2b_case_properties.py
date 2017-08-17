@@ -379,10 +379,12 @@ class ENikshay2BMigrator(object):
         """get last form that set result_recorded to yes"""
         for action in reversed(test.actions):
             for update in get_case_updates(action.form):
-                if update.id == test.case_id:
-                    case_properties = update.get_update_action().dynamic_properties
-                    if case_properties.get('result_recorded') == 'yes':
-                        return action.form.form_data
+                if (
+                    update.id == test.case_id
+                    and update.get_update_action()
+                    and update.get_update_action().dynamic_properties.get('result_recorded') == 'yes'
+                ):
+                    return action.form.form_data
 
     @staticmethod
     def _get_path(path, form_data):
