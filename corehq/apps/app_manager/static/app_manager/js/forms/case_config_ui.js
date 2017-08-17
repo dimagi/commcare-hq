@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, ko, _*/
+/*globals $, hqDefine, hqImport, ko, _*/
 
 hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
@@ -48,7 +48,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
@@ -76,7 +76,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }
         });
 
-        self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
+        self.saveUsercaseButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(

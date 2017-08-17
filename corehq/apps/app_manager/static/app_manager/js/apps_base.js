@@ -1,7 +1,7 @@
-/* globals COMMCAREHQ, hqLayout */
+/* globals hqImport, hqLayout */
 
 $(function () {
-    var v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1');
+    var v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1');
 
     $('#deleted-app-modal').modal({
         backdrop: 'static',

@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqDefine, hqImport */
 hqDefine("reports/js/filters", function() {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
@@ -137,7 +137,7 @@ hqDefine("reports/js/filters", function() {
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            hqImport("style/js/main").transformHelpTemplate($(this), true);
         });
     };
 
