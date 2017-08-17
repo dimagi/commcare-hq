@@ -2,7 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ProgressReportController($scope, $location, progressReportService, storageService, userLocationId) {
+function ProgressReportController($scope, $location, progressReportService,
+                                  storageService, $routeParams, userLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -12,10 +13,11 @@ function ProgressReportController($scope, $location, progressReportService, stor
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
     vm.label = "ICDS-CAS Fact Sheet";
-    vm.data = {};
+    vm.data = [];
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = storageService.getKey('search') === void(0) && (storageService.getKey('search')['month'] === void(0) || vm.now === storageService.getKey('search')['month']);
+    vm.report = $routeParams.report;
 
     $scope.$on('filtersChange', function() {
         vm.showWarning =  vm.now === storageService.getKey('search')['month'];
@@ -23,8 +25,14 @@ function ProgressReportController($scope, $location, progressReportService, stor
     });
 
     vm.loadData = function () {
-        vm.myPromise = progressReportService.getData(vm.filtersData).then(function(response) {
-            vm.data = response.data.config;
+        if (!vm.report) {
+            return;
+        }
+        var params = window.angular.copy(vm.filtersData);
+        params.category = vm.report;
+        vm.myPromise = progressReportService.getData(params).then(function(response) {
+            vm.title = response.data.config.title;
+            vm.data = response.data.config.sections;
         });
     };
 
@@ -73,10 +81,16 @@ function ProgressReportController($scope, $location, progressReportService, stor
         }
     };
 
+    vm.goToReport = function(reportName) {
+        $location.path('progress_report/' + reportName);
+    };
+
     vm.loadData();
 }
 
-ProgressReportController.$inject = ['$scope', '$location', 'progressReportService', 'storageService', 'userLocationId'];
+ProgressReportController.$inject = [
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
+];
 
 window.angular.module('icdsApp').directive('progressReport', function() {
     return {

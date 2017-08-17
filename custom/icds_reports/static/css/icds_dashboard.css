@@ -521,8 +521,26 @@ circle {
 .uib-carousel {
     position: relative;
     bottom: 30%;
+    left: 8%;
     margin: 0 auto;
     color: white;
     font-size: 20px;
     font-weight: bolder;
+}
+
+.blank-image .uib-carousel {
+    color: black;
+}
+
+.progress-report-directive .nav-block {
+    border-radius: 10px;
+    text-align: center;
+    padding: 25px;
+    height: 250px;
+}
+
+.progress-report-directive .nav-block .caption {
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
 }

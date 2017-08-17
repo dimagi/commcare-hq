@@ -10,11 +10,13 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
+from corehq.apps.cloudcare.utils import webapps_url
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.users.models import Permissions
+from custom.icds_reports.const import LocationTypes, APP_ID
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -196,6 +198,15 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+
+        is_commcare_user = self.couch_user.is_commcare_user()
+        is_web_user_with_edit_data_permissions = (
+            self.couch_user.is_web_user() and
+            self.couch_user.has_permission(self.domain, Permissions.edit_data.name)
+        )
+
+        if is_commcare_user or is_web_user_with_edit_data_permissions:
+            kwargs['report_an_issue_url'] = webapps_url(domain=self.domain, app_id=APP_ID, module_id=0, form_id=0)
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
@@ -449,8 +460,6 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
-                tuple(month.timetuple())[:3],
-                tuple(two_before.timetuple())[:3],
                 self.kwargs.get('domain')
             )
         elif step == 'maternal_child':
@@ -541,7 +550,8 @@ class ProgressReportView(View):
         config = {
             'aggregation_level': aggregation_level,
             'month': this_month,
-            'two_before': two_before
+            'two_before': two_before,
+            'category': request.GET.get('category')
         }
 
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
