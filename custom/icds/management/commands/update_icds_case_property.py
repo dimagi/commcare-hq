@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from dimagi.utils.chunked import chunked
 
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
