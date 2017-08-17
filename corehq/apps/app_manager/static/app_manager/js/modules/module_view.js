@@ -1,7 +1,7 @@
-/*globals $, hqImport, _, ko, django */
+/*globals $, COMMCAREHQ, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
+        v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
@@ -159,7 +159,7 @@ $(function () {
             shadowOptions.excluded_form_ids
         ));
     } else if (moduleType === 'advanced') {
-        if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
+        if (moduleBrief.has_schedule || COMMCAREHQ.toggleEnabled('VISIT_SCHEDULER')) {
             var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
             var visitScheduler = new VisitScheduler.ModuleScheduler({
                 home: $('#module-scheduler'),

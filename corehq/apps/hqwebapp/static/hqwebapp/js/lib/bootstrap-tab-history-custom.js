@@ -1,4 +1,3 @@
-/* globals hqImport */
 // copied and modified from https://gist.github.com/dsully/1938283
 $(function () {
 
@@ -92,7 +91,7 @@ $(function () {
 
         // Don't set the state if we haven't changed tabs.
         if (State.data.tab != tab) {
-            var message = hqImport("style/js/main").beforeUnloadCallback();
+            var message = COMMCAREHQ.beforeUnloadCallback();
             var ask = message !== undefined && message !== undefined;
             if (!ask) {
                 History.pushState({'tab': tab}, pageTitle, url);

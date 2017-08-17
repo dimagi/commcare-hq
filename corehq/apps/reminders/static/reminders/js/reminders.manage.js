@@ -1,4 +1,4 @@
-/* globals hqImport */
+/* globals COMMCAREHQ */
 hqDefine("reminders/js/reminders.manage", function() {
     var ManageRemindersViewModel = function (
         initial,
@@ -278,7 +278,7 @@ hqDefine("reminders/js/reminders.manage", function() {
     
         self.refreshEventsListUI = function () {
             $('.hq-help-template').each(function () {
-                hqImport("style/js/main").transformHelpTemplate($(this), true);
+                COMMCAREHQ.transformHelpTemplate($(this), true);
             });
             $('[data-timeset="true"]').each(function () {
                 $(this).timepicker({

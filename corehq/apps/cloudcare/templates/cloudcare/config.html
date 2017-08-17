@@ -74,7 +74,7 @@
             self.groupDB = options.groupDB;
             self.appDB = options.appDB;
             self.applicationAccess = ApplicationAccess.wrap(options.access);
-            self.saveButton = hqImport("style/js/main").initSaveButton({
+            self.saveButton = COMMCAREHQ.SaveButton.init({
                 save: function () {
                     self.saveButton.ajax({
                         url: '{% url "cloudcare_app_settings" domain %}',

@@ -1,4 +1,4 @@
-/*globals $, _, ko */
+/*globals $, COMMCAREHQ, _, ko */
 hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
     'use strict';
     var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
@@ -40,7 +40,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -213,7 +213,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 });
 
                 $('.hq-help-template').each(function () {
-                    hqImport("style/js/main").transformHelpTemplate($(this), true);
+                    COMMCAREHQ.transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -666,7 +666,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("style/js/main").transformHelpTemplate($(this), true);
+                            COMMCAREHQ.transformHelpTemplate($(this), true);
                         });
                     });
                 });

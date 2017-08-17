@@ -36,7 +36,7 @@
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
                         if: grip,
-                        css: hqImport('style/js/main').icons.GRIP,
+                        css: COMMCAREHQ.icons.GRIP,
                         style: {cursor: 'move'},
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
@@ -109,7 +109,7 @@
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
-                        css: hqImport('style/js/main').icons.DELETE,
+                        css: COMMCAREHQ.icons.DELETE,
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

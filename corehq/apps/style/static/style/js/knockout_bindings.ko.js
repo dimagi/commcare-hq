@@ -182,7 +182,7 @@ ko.bindingHandlers.saveButton2 = {
             state = valueAccessor(),
             saveButton;
 
-        saveButton = hqImport("style/js/main").initSaveButton({
+        saveButton = COMMCAREHQ.SaveButton.init({
             save: function () {
                 saveButton.ajax(saveOptions());
             }
@@ -207,7 +207,7 @@ ko.bindingHandlers.deleteButton = {
             state = valueAccessor(),
             deleteButton;
 
-        deleteButton = hqImport("style/js/main").initDeleteButton({
+        deleteButton = COMMCAREHQ.DeleteButton.init({
             save: function () {
                 deleteButton.ajax(saveOptions());
             }
@@ -352,7 +352,7 @@ ko.bindingHandlers.makeHqHelp = {
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
         $(element).find('.hq-help').remove();
-        hqImport("style/js/main").makeHqHelp({
+        COMMCAREHQ.makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
