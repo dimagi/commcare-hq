@@ -68,7 +68,7 @@ Pycco==0.3.0
 django-mptt==0.8.7
 jsonpath-rw==1.4.0
 pip>=6.1.1
-git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4
+django-transfer==0.4
 Pygments==2.0.2
 tinys3==0.1.12
 django-formtools==2.0
