@@ -1,4 +1,4 @@
-/* globals hqDefine, ko, $, _, hqImport */
+/* globals hqDefine, ko, $, _, COMMCAREHQ, hqImport */
 
 hqDefine('domain/js/case-search-config', function () {
     'use strict';
@@ -81,7 +81,7 @@ hqDefine('domain/js/case-search-config', function () {
             self.change();
         };
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged settings",
             save: function() {
                 self.saveButton.ajax({

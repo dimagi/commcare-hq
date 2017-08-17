@@ -1,4 +1,4 @@
-/* globals hqImport */
+/* globals COMMCAREHQ */
 // This file depends on reports/js/filters.js
 var HQAsyncReport = function (o) {
     'use strict';

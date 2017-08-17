@@ -1,4 +1,4 @@
-/* globals hqDefine, hqImport, ko */
+/* globals hqDefine, ko, COMMCAREHQ */
 hqDefine('app_manager/js/releases/language_profiles', function () {
     var _p = {};
     _p.profileUrl = 'profiles/';
@@ -21,7 +21,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         this.app_langs = app_langs;
         this.enable_practice_users = enable_practice_users;
         this.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
-        this.saveButton = hqImport("style/js/main").initSaveButton({
+        this.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),
             save: function() {
                 var postProfiles = [];

@@ -1,4 +1,4 @@
-/* globals analytics, hqImport, SyntaxHighlighter, Util, django */
+/* globals analytics, COMMCAREHQ, SyntaxHighlighter, Util, django */
 hqDefine("app_manager/js/forms/form_view", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
     hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Form Settings"));
@@ -64,7 +64,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
         // CloudCare "Preview Form" URL
-        if (initial_page_data('allow_cloudcare') && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
+        if (initial_page_data('allow_cloudcare') && COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
@@ -132,7 +132,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
                 workflow_fallback: initial_page_data('post_form_workflow_fallback'),
             };
 
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('FORM_LINK_WORKFLOW') || initial_page_data('uses_form_workflow')) {
+            if (COMMCAREHQ.toggleEnabled('FORM_LINK_WORKFLOW') || initial_page_data('uses_form_workflow')) {
                 labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
                 options.forms = initial_page_data('linkable_forms');
                 options.formLinks = initial_page_data('form_links');
@@ -152,13 +152,13 @@ hqDefine("app_manager/js/forms/form_view", function() {
             $shadowParent.koApplyBindings({
                 shadow_parent: ko.observable(initial_page_data('shadow_parent_form_id')),
             });
-        } else if (hqImport('hqwebapp/js/toggles').toggleEnabled('NO_VELLUM')) {
+        } else if (COMMCAREHQ.toggleEnabled('NO_VELLUM')) {
             $('#no-vellum').koApplyBindings({
                 no_vellum: ko.observable(initial_page_data('no_vellum')),
             });
         }
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('CUSTOM_INSTANCES')) {
+        if (COMMCAREHQ.toggleEnabled('CUSTOM_INSTANCES')) {
             var customInstances = hqImport('app_manager/js/forms/custom_instances').wrap({
                 customInstances: initial_page_data('custom_instances'),
             });

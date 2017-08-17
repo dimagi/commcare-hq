@@ -1,4 +1,4 @@
-/*globals $, _, ko, console, hqImport */
+/*globals $, COMMCAREHQ, _, ko, console*/
 hqDefine('app_manager/js/visit_scheduler', function () {
     'use strict';
     var app_manager = hqImport('app_manager/js/app_manager');
@@ -29,7 +29,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unchanged schedule settings",
             save: function() {
                 self.saveButton.ajax({
@@ -105,7 +105,7 @@ hqDefine('app_manager/js/visit_scheduler', function () {
         self.questions = params.questions;
         self.save_url = params.save_url;
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: "You have unsaved schedule settings",
             save: function () {
                 var isValid = self.validate();
