@@ -25,7 +25,7 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 ]
 
 
-def submit_case_blocks(case_blocks, domain, username="system", user_id="",
+def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
                        xmlns=SYSTEM_FORM_XMLNS, attachments=None,
                        form_id=None, form_extras=None, case_db=None):
     """
@@ -44,7 +44,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         'time': now,
         'uid': form_id,
         'username': username,
-        'user_id': user_id,
+        'user_id': user_id or "",
     })
     form_extras = form_extras or {}
 

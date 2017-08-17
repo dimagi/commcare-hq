@@ -119,6 +119,7 @@ class SyncBaseTest(TestCase):
         case_attrs.update(kwargs)
         return self.factory.create_or_update_cases(
             [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
+            user_id=kwargs.get('user_id') or self.user_id,
         )
 
     def _postWithSyncToken(self, filename, token_id):
@@ -127,12 +128,13 @@ class SyncBaseTest(TestCase):
             xml_data = f.read()
         return submit_form_locally(xml_data, 'test-domain', last_sync_token=token_id).xform
 
-    def _postFakeWithSyncToken(self, caseblocks, token_id):
+    def _postFakeWithSyncToken(self, caseblocks, token_id, user_id=None):
         if not isinstance(caseblocks, list):
             # can't use list(caseblocks) since that returns children of the node
             # http://lxml.de/tutorial.html#elements-are-lists
             caseblocks = [caseblocks]
-        return self.factory.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
+        return self.factory.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id},
+                                             user_id=user_id or self.user_id)
 
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
@@ -1492,7 +1494,8 @@ class MultiUserSyncTest(SyncBaseTest):
                 owner_id=self.user_id,
                 index={'mother': ('mother', mother_id)}
             ).as_xml(),
-            latest_sync.get_id
+            latest_sync.get_id,
+            user_id=self.other_user_id,
         )
 
         # original user syncs again
