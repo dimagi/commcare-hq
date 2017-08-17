@@ -1911,6 +1911,7 @@ def get_beneficiary_details(case_id, month):
     beneficiary = {
         'weight': [],
         'height': [],
+        'wfl': []
     }
     for row in data:
         beneficiary.update({
@@ -1921,8 +1922,9 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': int(row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': int(row.age_in_months), 'y': int(row.recorded_height or 0)})
+        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': float(row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': int(row.age_in_months), 'y': float(row.recorded_height or 0)})
+        beneficiary['wfl'].append({'x': float(row.recorded_height or 0), 'y': float(row.recorded_weight or 0)})
     return beneficiary
 
 
