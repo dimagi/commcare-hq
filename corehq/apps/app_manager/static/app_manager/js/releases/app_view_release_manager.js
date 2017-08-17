@@ -1,4 +1,4 @@
-/* globals hqDefine hqImport django analytics _kmq */
+/* globals hqDefine hqImport django analytics */
 hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -57,7 +57,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         if (ab_test) {
             var options = {};
             options[ab_test.name] = ab_test.version;
-            window.analytics.identify(options);
+            analytics.identify(options);
         }
     });
 });
