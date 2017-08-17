@@ -5,6 +5,7 @@ from corehq.apps.es import CaseSearchES
 from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 logger = logging.getLogger('enikshay_2b_cbnaat_fix')
 
@@ -56,21 +57,20 @@ class Command(BaseCommand):
                  .domain(domain)
                  .case_type("test")
                  .case_property_query("test_type_value", "cbnaat", "must")
-                 .scroll())
+                 .values_list('case_id', flat=True))
 
         with open(log_path, "w") as f:
-            for case in cases:
-                case_props = {prop['key']: prop['value'] for prop in case['case_properties']}
-                updated_by_migration = case_props.get('updated_by_migration')
+            for test in CaseAccessors(domain=domain).iter_cases(cases):
+                updated_by_migration = test.get_case_property('updated_by_migration')
                 if ((updated_by_migration == 'enikshay_2b_case_properties' or
                      updated_by_migration == 'enikshay_2b_reason_for_test_fix')
-                        and case.get_case_property('result_recorded') == 'yes'):
+                        and test.get_case_property('result_recorded') == 'yes'):
 
                     drug_resistance_list = ''
                     drug_sensitive_list = ''
                     resistance_display = None
 
-                    form_data = self._get_result_recorded_form(case)
+                    form_data = self._get_result_recorded_form(test)
                     sample_a = self._get_path(
                         'update_test_result cbnaat ql_sample_a sample_a_rif_resistance_result'.split(),
                         form_data,
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                         resistance_display,
                     ]))
 
-                    case_id = case['_id']
+                    case_id = test.case_id
                     f.write(case_id + "\n")
                     logger.info(case_id)
 
