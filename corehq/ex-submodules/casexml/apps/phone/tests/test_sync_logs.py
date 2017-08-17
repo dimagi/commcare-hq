@@ -78,20 +78,6 @@ class PhoneFootprintTest(SimpleTestCase):
         self.assertEqual(0, len(log.get_footprint_of_cases_on_phone()))
 
 
-class SimpleCachingResponseTest(SimpleTestCase):
-
-    def test_switch_restore_response(self):
-        '''
-        Ensures that when switching from using a FileRestoreResponse to a
-        BlobRestoreResponse that we don't use the old FileRestoreResponse
-        cache
-        '''
-        key1 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
-        with flag_enabled('BLOBDB_RESTORE'):
-            key2 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
-        self.assertNotEqual(key1, key2)
-
-
 class SyncLogModelTest(TestCase):
     domain = 'sync-log-model-test'
 
