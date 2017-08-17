@@ -11,8 +11,10 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
+from custom.enikshay.tasks import EpisodeUpdater
 from custom.enikshay.const import (
+    ENROLLED_IN_PRIVATE,
+    PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     TREATMENT_OUTCOME_DATE,
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
@@ -33,7 +35,6 @@ from custom.enikshay.integrations.bets.repeater_generators import (
     BETSDiagnosisAndNotificationPayloadGenerator,
     BETSAYUSHReferralPayloadGenerator,
     BETSDrugRefillPayloadGenerator,
-    IncentivePayload,
 )
 from custom.enikshay.integrations.bets.repeaters import (
     ChemistBETSVoucherRepeater,
@@ -569,7 +570,8 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Meet trigger
-        update_case(self.domain, case.case_id, {"prescription_total_days": "169"})
+        # This property is normally set by the episode task
+        update_case(self.domain, case.case_id, {'bets_date_prescription_threshold_met': '2017-08-08'})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again
