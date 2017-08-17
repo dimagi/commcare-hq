@@ -1,4 +1,4 @@
-/* globals hqDefine hqImport django analytics */
+/* globals hqDefine hqImport django analytics _kmq */
 hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
