@@ -1035,26 +1035,26 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 }
             ],
-            [
-                {
-                    'label': _('AWCs with infantometer'),
-                    'help_text': _('Percentage of AWCs with an Infantometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('AWCs with Stadiometer'),
-                    'help_text': _('Percentage of AWCs with a Stadiometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                }
-            ]
+            # [
+            #     {
+            #         'label': _('AWCs with infantometer'),
+            #         'help_text': _('Percentage of AWCs with an Infantometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     },
+            #     {
+            #         'label': _('AWCs with Stadiometer'),
+            #         'help_text': _('Percentage of AWCs with a Stadiometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     }
+            # ]
         ]
     }
 
