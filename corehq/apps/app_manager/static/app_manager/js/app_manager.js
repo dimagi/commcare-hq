@@ -451,7 +451,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("style/js/main").initSaveButton($form, {
+                button = hqImport("style/js/main").initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
