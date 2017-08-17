@@ -194,41 +194,53 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
     def test_restore_in_progress_form_submitted_kills_old_jobs(self):
         """If the user submits a form somehow while a job is running, the job should be terminated
         """
+        last_sync_token = '0a72d5a3c2ec53e85c1af27ee5717e0d'
+        device_id = 'RSMCHBA8PJNQIGMONN2JZT6E'
         task_cache_id = async_restore_task_id_cache_key(
             domain=self.domain,
             user_id=self.user.user_id,
-            sync_log_id=None,
-            device_id=None,
+            sync_log_id=last_sync_token,
+            device_id=device_id,
         )
         initial_sync_cache_id = restore_payload_path_cache_key(
             domain=self.domain,
             user_id=self.user.user_id,
-            version='2.0'
+            version='2.0',
+            device_id=device_id,
+            sync_log_id=last_sync_token,
         )
-        fake_cached_thing = 'fake-cached-thing'
+        async_restore_task_id = '0edecc20d89d6f4a09f2e992c0c24b5f'
+        initial_sync_path = 'path/to/payload'
         restore_config = self._restore_config(async=True)
         # pretend we have a task running
-        restore_config.cache.set(task_cache_id, fake_cached_thing)
-        restore_config.cache.set(initial_sync_cache_id, fake_cached_thing)
+        restore_config.cache.set(task_cache_id, async_restore_task_id)
+        restore_config.cache.set(initial_sync_cache_id, initial_sync_path)
 
-        form = """
-        <data xmlns="http://openrosa.org/formdesigner/blah">
-            <meta>
-                <userID>{user_id}</userID>
-            </meta>
-        </data>
-        """
+        def submit_form(user_id, device_id, last_sync_token):
+            form = """
+            <data xmlns="http://openrosa.org/formdesigner/blah">
+                <meta>
+                    <userID>{user_id}</userID>
+                    <deviceID>{device_id}</deviceID>
+                </meta>
+            </data>
+            """
+            submit_form_locally(
+                form.format(user_id=user_id, device_id=device_id),
+                self.domain,
+                last_sync_token=last_sync_token,
+            )
 
         with mock.patch('corehq.form_processor.submission_post.revoke_celery_task') as revoke:
             # with a different user in the same domain, task doesn't get killed
-            submit_form_locally(form.format(user_id="other_user"), self.domain)
+            submit_form(user_id="other_user", device_id='OTHERDEVICEID', last_sync_token='othersynctoken')
             self.assertFalse(revoke.called)
-            self.assertEqual(restore_config.cache.get(task_cache_id), fake_cached_thing)
-            self.assertEqual(restore_config.cache.get(initial_sync_cache_id), fake_cached_thing)
+            self.assertEqual(restore_config.cache.get(task_cache_id), async_restore_task_id)
+            self.assertEqual(restore_config.cache.get(initial_sync_cache_id), initial_sync_path)
 
             # task gets killed when the user submits a form
-            submit_form_locally(form.format(user_id=self.user.user_id), self.domain)
-            revoke.assert_called_with(fake_cached_thing)
+            submit_form(user_id=self.user.user_id, device_id=device_id, last_sync_token=last_sync_token)
+            revoke.assert_called_with(async_restore_task_id)
             self.assertIsNone(restore_config.cache.get(task_cache_id))
             self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
 
