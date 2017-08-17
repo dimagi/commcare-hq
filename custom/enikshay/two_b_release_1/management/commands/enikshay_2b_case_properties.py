@@ -77,7 +77,7 @@ class Command(BaseCommand):
             help="actually create the cases. Without this flag, it's a dry run."
         )
 
-    def handle(self, domain, dto_id, **options):
+    def handle(self, domain, **options):
         commit = options['commit']
         logger.info("Starting {} migration on {} at {}".format(
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
