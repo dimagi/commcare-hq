@@ -532,12 +532,11 @@ circle {
     color: black;
 }
 
-.progress-report-directive .nav-block{
-    width: 520px;
-    height: 250px;
+.progress-report-directive .nav-block {
     border-radius: 10px;
     text-align: center;
     padding: 25px;
+    height: 250px;
 }
 
 .progress-report-directive .nav-block .caption {

@@ -23,9 +23,6 @@
         <div class="col-md-1">
             <div class="row">
                 <div class="col-md-4">
-                    <print-report></print-report>
-                </div>
-                <div class="col-md-4">
                     <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
                      popover-placement="left"
                      popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
@@ -40,13 +37,13 @@
         <div ng-if="!$ctrl.report">
             <div class="row">
                 <div class="col-md-6">
-                    <div class="nav-block pull-right pointer" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
+                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
                         <img src="{% static 'img/maternal_and_child.png' %}"/>
                         <div class="caption">Maternal and Child Nutrition</div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="nav-block pointer" style="background-color: #f9c700;" ng-click="$ctrl.goToReport('interventions')">
+                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #f9c700;" ng-click="$ctrl.goToReport('interventions')">
                         <img src="{% static 'img/interventions.png' %}"/>
                         <div class="caption">Interventions</div>
                     </div>
@@ -54,13 +51,13 @@
             </div>
             <div class="row" style="margin-top: 20px;">
                 <div class="col-md-6">
-                    <div class="nav-block pull-right pointer" style="background-color: #ff8400;"  ng-click="$ctrl.goToReport('behavior_change')">
+                    <div class="nav-block pointer col-md-offset-4 col-sm-4 col-md-8" style="background-color: #ff8400;"  ng-click="$ctrl.goToReport('behavior_change')">
                         <img src="{% static 'img/behavior_change.png' %}"/>
                         <div class="caption">Behavior Change</div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="nav-block pointer" style="background-color: #47b700;"  ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
+                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #47b700;"  ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
                         <img src="{% static 'img/water_sanitation_hygiene.png' %}"/>
                         <div class="caption">Water, Sanitation and Hygiene</div>
                     </div>
@@ -68,13 +65,13 @@
             </div>
             <div class="row" style="margin-top: 20px;">
                 <div class="col-md-6">
-                    <div class="pull-right nav-block pointer" style="background-color: #00bdc5" ng-click="$ctrl.goToReport('demographics')">
+                    <div class="nav-block pointer col-md-offset-4 col-sm-4 col-md-8" style="background-color: #00bdc5" ng-click="$ctrl.goToReport('demographics')">
                         <img src="{% static 'img/demographics.png' %}"/>
                         <div class="caption">Demographics</div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="nav-block pointer" style="background-color: #9060c8;" ng-click="$ctrl.goToReport('all')">
+                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #9060c8;" ng-click="$ctrl.goToReport('all')">
                         <img src="{% static 'img/all.png' %}"/>
                         <div class="caption">All</div>
                     </div>

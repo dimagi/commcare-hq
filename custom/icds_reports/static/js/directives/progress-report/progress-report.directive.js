@@ -25,6 +25,9 @@ function ProgressReportController($scope, $location, progressReportService,
     });
 
     vm.loadData = function () {
+        if (!vm.report) {
+            return;
+        }
         var params = window.angular.copy(vm.filtersData);
         params.category = vm.report;
         vm.myPromise = progressReportService.getData(params).then(function(response) {
