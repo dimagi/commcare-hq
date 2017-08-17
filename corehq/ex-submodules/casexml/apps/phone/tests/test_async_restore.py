@@ -205,7 +205,6 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         initial_sync_cache_id = restore_payload_path_cache_key(
             domain=self.domain,
             user_id=self.user.user_id,
-            version='2.0',
             device_id=device_id,
             sync_log_id=last_sync_token,
         )

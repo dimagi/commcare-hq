@@ -1219,7 +1219,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
     def testCaching(self):
         device_id = 'XYQR2HDOITHZQITPYN5DNEYL'
-        self.assertFalse(has_cached_payload(self.sync_log, V2, device_id))
+        self.assertFalse(has_cached_payload(self.sync_log, device_id))
         # first request should populate the cache
         original_payload = RestoreConfig(
             project=self.project,
@@ -1234,7 +1234,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         next_sync_log = synclog_from_restore_payload(original_payload)
 
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
+        self.assertTrue(has_cached_payload(self.sync_log, device_id))
 
         # a second request with the same config should be exactly the same
         cached_payload = RestoreConfig(
@@ -1290,13 +1290,13 @@ class SyncTokenCachingTest(SyncBaseTest):
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
+        self.assertTrue(has_cached_payload(self.sync_log, device_id))
 
         # posting a case associated with this sync token should invalidate the cache
         case_id = "cache_invalidation"
         self._createCaseStubs([case_id])
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), V2, device_id))
+        self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), device_id))
 
         # resyncing should recreate the cache
         next_payload = RestoreConfig(
@@ -1310,7 +1310,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
+        self.assertTrue(has_cached_payload(self.sync_log, device_id))
         self.assertNotEqual(original_payload, next_payload)
         self.assertFalse(case_id in original_payload)
         # since it was our own update, it shouldn't be in the new payload either
@@ -1331,7 +1331,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             **self.restore_options
         ).get_payload().as_string()
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
-        self.assertTrue(has_cached_payload(self.sync_log, V2, device_id))
+        self.assertTrue(has_cached_payload(self.sync_log, device_id))
 
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token

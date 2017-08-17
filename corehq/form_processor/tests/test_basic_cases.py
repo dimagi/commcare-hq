@@ -326,7 +326,6 @@ class FundamentalCaseTests(TestCase):
         cache_key = restore_payload_path_cache_key(
             domain=DOMAIN,
             user_id='user_id',
-            version="2.0",
             sync_log_id=sync_log_id,
             device_id=device_id,
         )

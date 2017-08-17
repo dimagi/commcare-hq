@@ -81,12 +81,12 @@ def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id)
     return hashlib.md5(hashable_key).hexdigest()
 
 
-def restore_payload_path_cache_key(domain, user_id, version, sync_log_id, device_id):
+def restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
     return _restore_cache_key(
         domain=domain,
         prefix=RESTORE_CACHE_KEY_PREFIX,
         user_id=user_id,
-        version=version,
+        version='2.0',
         sync_log_id=sync_log_id,
         device_id=device_id,
     )
@@ -662,7 +662,6 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
         self.async = async
 
-        self.version = self.params.version
         self.restore_state = RestoreState(
             self.project,
             self.restore_user,
@@ -700,7 +699,6 @@ class RestoreConfig(object):
         return restore_payload_path_cache_key(
             domain=self.domain,
             user_id=self.restore_user.user_id,
-            version=self.version,
             sync_log_id=self.sync_log._id if self.sync_log else '',
             device_id=self.params.device_id,
         )

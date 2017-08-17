@@ -91,7 +91,6 @@ class SimpleCachingResponseTest(SimpleTestCase):
             return restore_payload_path_cache_key(
                 domain='domain',
                 user_id='user_id',
-                version='2.0',
                 sync_log_id='synclogid',
                 device_id='DEVICEID',
             )
