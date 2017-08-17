@@ -1,12 +1,32 @@
-function MainController($scope, $route, $routeParams, $location, $rootScope) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
+
+    $scope.reportAnIssue = function() {
+        if (reportAnIssueUrl) {
+            $window.location.href = reportAnIssueUrl;
+            return;
+        }
+        $uibModal.open({
+            ariaLabelledBy: 'modal-title',
+            ariaDescribedBy: 'modal-body',
+            templateUrl: 'reportIssueModal.html',
+        });
+    };
 }
 
-MainController.$inject = ['$scope', '$route', '$routeParams', '$location'];
+MainController.$inject = [
+    '$scope',
+    '$route',
+    '$routeParams',
+    '$location',
+    '$uibModal',
+    '$window',
+    'reportAnIssueUrl',
+];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'leaflet-directive', 'cgBusy'])
     .controller('MainController', MainController)
@@ -71,6 +91,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "<download></download>",
             })
             .when("/progress_report", {
+                template : "<progress-report></progress-report>",
+            })
+            .when("/progress_report/:report", {
                 template : "<progress-report></progress-report>",
             })
             .when("/exclusive_breastfeeding", {

@@ -7,8 +7,7 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from dateutil.rrule import DAILY
-from django.urls.base import reverse
+from dateutil.rrule import rrule, DAILY, MONTHLY
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -22,7 +21,7 @@ from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.const import LocationTypes
-from dimagi.utils.dates import DateSpan, rrule, MONTHLY
+from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggChildHealthMonthly, AggAwcMonthly, \
     AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView, ChildHealthMonthlyView
@@ -1467,19 +1466,19 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
     }
 
 
-def get_awc_reports_pse(config, month, two_before, domain):
-
+def get_awc_reports_pse(config, domain):
+    now = datetime.utcnow()
+    last_30_days = (now - timedelta(days=30))
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(datetime(*two_before), datetime(*month)), **config
+        pse_date__range=(last_30_days, now), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
 
     map_data = {}
-    image_data = []
-    tmp_image = []
-    img_count = 0
-    count = 1
+
+    date_to_image_data = {}
+
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
         long = map_row['form_location_long']
@@ -1498,25 +1497,44 @@ def get_awc_reports_pse(config, month, two_before, domain):
                 }
             })
         if image_name:
+            date_str = pse_date.strftime("%d/%m/%Y")
+            date_to_image_data[date_str] = map_row
+
+    images = []
+    tmp_image = []
+
+    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=now)):
+        date_str = date.strftime("%d/%m/%Y")
+        image_data = date_to_image_data.get(date_str)
+
+        if image_data:
+            image_name = image_data['image_name']
+            doc_id = image_data['doc_id']
+
             tmp_image.append({
-                'id': count,
+                'id': idx,
                 'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
-                'date': pse_date.strftime("%d/%m/%Y")
+                'date': date_str
             })
-            img_count += 1
-            count += 1
-            if img_count == 4:
-                img_count = 0
-                image_data.append(tmp_image)
-                tmp_image = []
+        else:
+            tmp_image.append({
+                'id': idx,
+                'image': None,
+                'date': date_str
+            })
+
+        if (idx + 1) % 4 == 0:
+            images.append(tmp_image)
+            tmp_image = []
+
     if tmp_image:
-        image_data.append(tmp_image)
+        images.append(tmp_image)
 
     return {
         'map': {
             'markers': map_data,
         },
-        'images': image_data
+        'images': images
     }
 
 

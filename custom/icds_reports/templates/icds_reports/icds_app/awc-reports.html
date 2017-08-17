@@ -51,9 +51,15 @@
                     <h2 class="center">PSE Photo Submissions</h2>
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
-                            <div style="display: inline-block" ng-repeat="img in images track by img.id">
-                                <img class="slider-image" ng-src="{$ img.image $}">
-                                <div class="uib-carousel">{$ img.date $}</div>
+                            <div style="display: inline-block; width: 200px; height: 200px" ng-repeat="img in images track by img.id" ng-class="{'blank-image': !img.image}">
+                                <img class="slider-image" ng-src="{$ img.image $}" style="width: 200px; height: 200px">
+                                <div class="uib-carousel">
+                                    <span ng-hide="img.image">No Photo Available</span>
+                                    <span ng-hide="!img.image">&nbsp;</span>
+                                </div>
+                                <div class="uib-carousel">
+                                    {$ img.date $}
+                                </div>
                             </div>
                         </div>
                     </div>
