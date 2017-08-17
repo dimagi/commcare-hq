@@ -57,7 +57,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         if (ab_test) {
             var options = {};
             options[ab_test.name] = ab_test.version;
-            _kmq.push(["set", options]);
+            window.analytics.identify(options);
         }
     });
 });
