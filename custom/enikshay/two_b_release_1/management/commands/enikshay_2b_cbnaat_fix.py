@@ -62,8 +62,9 @@ class Command(BaseCommand):
             for case in cases:
                 case_props = {prop['key']: prop['value'] for prop in case['case_properties']}
                 updated_by_migration = case_props.get('updated_by_migration')
-                if (updated_by_migration == 'enikshay_2b_case_properties' or 'enikshay_2b_reason_for_test_fix') \
-                        and case.get_case_property('result_recorded') == 'yes':
+                if ((updated_by_migration == 'enikshay_2b_case_properties' or
+                     updated_by_migration == 'enikshay_2b_reason_for_test_fix')
+                    and case.get_case_property('result_recorded') == 'yes'):
 
                     drug_resistance_list = ''
                     drug_sensitive_list = ''
