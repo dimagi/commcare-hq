@@ -107,7 +107,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -183,6 +183,17 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food. \n' +
+            '\n' +
+            'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

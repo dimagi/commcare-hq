@@ -165,12 +165,24 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 return chart;
             },
         },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+            '\n' +
+            'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+            'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
+        },
     };
 
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });

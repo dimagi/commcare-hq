@@ -362,6 +362,8 @@ class LocationView(View):
         parent_id = request.GET.get('parent_id')
         name = request.GET.get('name')
 
+        show_test = request.GET.get('include_test', False)
+
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
             locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
@@ -377,9 +379,9 @@ class LocationView(View):
                     'location_id': loc.location_id,
                     'name': loc.name,
                     'parent_id': parent_id,
-                    'location_type_name': loc.location_type_name
+                    'location_type_name': loc.location_type_name,
                 }
-                for loc in locations
+                for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
             ]
         })
 
@@ -389,6 +391,7 @@ class LocationView(View):
 class LocationAncestorsView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        show_test = request.GET.get('include_test', False)
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
@@ -405,9 +408,9 @@ class LocationAncestorsView(View):
                     'location_id': location.location_id,
                     'name': location.name,
                     'parent_id': location.parent.location_id if location.parent else None,
-                    'location_type_name': location.location_type_name
+                    'location_type_name': location.location_type_name,
                 }
-                for location in set(list(locations) + list(parents))
+                for location in set(list(locations) + list(parents)) if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,

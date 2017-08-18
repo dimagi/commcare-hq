@@ -16,7 +16,7 @@
                         <span class="number white" ng-if="cell.format == 'div'"><span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span class="white" ng-bind="cell.all | indiaNumbers"></span></span>
                         <span class="number white" ng-if="cell.format == 'number'" ng-bind="cell.value | indiaNumbers"></span>
                         <div ng-if="cell.format == 'percent_and_div'">
-                            <div class="number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span></div>
+                            <div class="number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
                             <div class="second_number white">(<span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span  class="white" ng-bind="cell.all | indiaNumbers"></span>)</div>
                         </div>
                     </div>

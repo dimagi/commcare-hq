@@ -3724,8 +3724,8 @@ def get_immunization_coverage_data_map(config, loc_level):
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "info": _((
-                    "Percentage of children 1 year+ who have recieved complete immunization as per National "
-                    "Immunization Schedule of India required by age 1."
+                    "Percentage of children at age 3 who have recieved complete immunization as per "
+                    "National Immunization Schedule of India."
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4453,7 +4453,7 @@ def get_enrolled_children_data_map(config, loc_level):
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
-                    "Total number of pregnant women who are enrolled for ICDS services"
+                    "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
