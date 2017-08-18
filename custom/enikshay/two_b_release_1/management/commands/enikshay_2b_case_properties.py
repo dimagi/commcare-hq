@@ -242,7 +242,7 @@ class ENikshay2BMigrator(object):
             'area': person.get_case_property('phi_area'),
             'language_code': 'hin',
             'referred_outside_enikshay_date': person.get_case_property('date_referred_out'),
-            'referred_outside_enikshay_by_id': person.get_case_property('date_by_id'),
+            'referred_outside_enikshay_by_id': person.get_case_property('referred_by_id'),
         }
         if episode:
             props.update({
