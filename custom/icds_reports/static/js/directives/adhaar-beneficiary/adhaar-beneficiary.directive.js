@@ -104,7 +104,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -174,6 +174,15 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage number of ICDS beneficiaries whose Adhaar identification has been captured',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

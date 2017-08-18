@@ -9,6 +9,7 @@ window.angular.module('icdsApp').directive("filters", function() {
             data: '=',
             filters: '=',
             selectedLocations: '=',
+            isOpenModal: '=?',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'filters'),

@@ -1,4 +1,4 @@
-function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId) {
+function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -8,6 +8,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
     vm.selectedLocationId = selectedLocationId || ALL_OPTION;
     vm.hierarchy = hierarchy;
     vm.selectedLocations = selectedLocations;
+    vm.showMessage = showMessage;
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
@@ -259,6 +260,9 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 maxLevel: function () {
                     return vm.maxLevel;
                 },
+                showMessage: function () {
+                    return vm.isOpenModal;
+                },
             },
         });
 
@@ -291,6 +295,10 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         });
     };
 
+    if (vm.isOpenModal) {
+        vm.open();
+    }
+
     $scope.$watch(function () {
         return $location.search();
     }, function (newValue, oldValue) {
@@ -312,7 +320,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 }
 
 LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService'];
-LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId'];
+LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
@@ -321,6 +329,7 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
         scope: {
             selectedLocationId: '=',
             selectedLocations: '=',
+            isOpenModal: '=?',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'location_filter'),

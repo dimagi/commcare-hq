@@ -1035,26 +1035,26 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 }
             ],
-            [
-                {
-                    'label': _('AWCs with infantometer'),
-                    'help_text': _('Percentage of AWCs with an Infantometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('AWCs with Stadiometer'),
-                    'help_text': _('Percentage of AWCs with a Stadiometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                }
-            ]
+            # [
+            #     {
+            #         'label': _('AWCs with infantometer'),
+            #         'help_text': _('Percentage of AWCs with an Infantometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     },
+            #     {
+            #         'label': _('AWCs with Stadiometer'),
+            #         'help_text': _('Percentage of AWCs with a Stadiometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     }
+            # ]
         ]
     }
 
@@ -1911,6 +1911,7 @@ def get_beneficiary_details(case_id, month):
     beneficiary = {
         'weight': [],
         'height': [],
+        'wfl': []
     }
     for row in data:
         beneficiary.update({
@@ -1921,8 +1922,9 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': int(row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': int(row.age_in_months), 'y': int(row.recorded_height or 0)})
+        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': float(row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': int(row.age_in_months), 'y': float(row.recorded_height or 0)})
+        beneficiary['wfl'].append({'x': float(row.recorded_height or 0), 'y': float(row.recorded_weight or 0)})
     return beneficiary
 
 
@@ -3722,8 +3724,8 @@ def get_immunization_coverage_data_map(config, loc_level):
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "info": _((
-                    "Percentage of children 1 year+ who have recieved complete immunization as per National "
-                    "Immunization Schedule of India required by age 1."
+                    "Percentage of children at age 3 who have recieved complete immunization as per "
+                    "National Immunization Schedule of India."
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4451,7 +4453,7 @@ def get_enrolled_children_data_map(config, loc_level):
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
-                    "Total number of pregnant women who are enrolled for ICDS services"
+                    "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
