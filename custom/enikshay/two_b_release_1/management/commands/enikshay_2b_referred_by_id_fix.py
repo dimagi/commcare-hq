@@ -45,8 +45,8 @@ class Command(BaseCommand):
                 referred_by_id = case_props.get('referred_by_id')
                 updated_by_migration = case_props.get('updated_by_migration')
                 if ((updated_by_migration == 'enikshay_2b_case_properties' or
-                             updated_by_migration == 'enikshay_2b_treatment_status_fix')
-                    and referred_by_id):
+                     updated_by_migration == 'enikshay_2b_treatment_status_fix')
+                        and referred_by_id):
 
                     case_id = case['_id']
                     f.write(case_id + "\n")
