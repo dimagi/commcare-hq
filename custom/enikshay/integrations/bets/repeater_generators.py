@@ -20,6 +20,7 @@ from custom.enikshay.const import (
     FULFILLED_BY_ID,
     FULFILLED_BY_LOCATION_ID,
     AMOUNT_APPROVED,
+    TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
     PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     LAST_VOUCHER_CREATED_BY_ID,
@@ -158,7 +159,7 @@ class IncentivePayload(BETSPayload):
     @staticmethod
     def _get_successful_treatment_date(episode_case):
         completed_date = None
-        if episode_case.get_case_property('treatment_outcome') in ("cured", "treatment_completed"):
+        if episode_case.get_case_property(TREATMENT_OUTCOME) in ("cured", "treatment_completed"):
             completed_date = episode_case.get_case_property(TREATMENT_OUTCOME_DATE)
             if not completed_date:
                 # the treatment_outcome_date property used to be called

@@ -15,6 +15,7 @@ from custom.enikshay.tasks import EpisodeUpdater
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
     PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
+    TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
     LAST_VOUCHER_CREATED_BY_ID,
     NOTIFYING_PROVIDER_USER_ID,
@@ -259,6 +260,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         self.episode.attrs['update']['bets_notifying_provider_user_id'] = self.user._id
 
     def test_bets_180_treatment_payload(self):
+        self.episode.attrs['update'][TREATMENT_OUTCOME] = "cured"
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
         self.episode.attrs['update'][LAST_VOUCHER_CREATED_BY_ID] = self.user.user_id
         cases = self.create_case_structure()
@@ -315,6 +317,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         self.person.attrs['update']['last_owner'] = self.pcp.location_id
         self.person.attrs['owner_id'] = "_archive_"
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        self.episode.attrs['update'][TREATMENT_OUTCOME] = "cured"
         cases = self.create_case_structure()
         episode = cases[self.episode_id]
 
@@ -340,6 +343,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
     def test_successful_treatment_payload_non_closed_case(self):
         self.episode.attrs['update']["prescription_total_days"] = 180
         self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        self.episode.attrs['update'][TREATMENT_OUTCOME] = "cured"
         self.person.attrs['owner_id'] = self.pcp.location_id
         cases = self.create_case_structure()
         episode = cases[self.episode_id]
