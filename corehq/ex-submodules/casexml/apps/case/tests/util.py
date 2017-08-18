@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
@@ -14,7 +15,8 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, \
+    restore_payload_path_cache_key
 
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -141,7 +143,12 @@ def cached_restore(testcase, user, restore_id="", version=V2,
     assert not hasattr(testcase, 'payload_string'), testcase
 
     if restore_id and purge_restore_cache:
-        SyncLog.get(restore_id).invalidate_cached_payloads()
+        get_redis_default_cache().delete(restore_payload_path_cache_key(
+            domain=user.domain,
+            user_id=user.user_id,
+            sync_log_id=restore_id,
+            device_id=None,
+        ))
 
     testcase.restore_config = RestoreConfig(
         project=user.project,

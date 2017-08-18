@@ -301,19 +301,42 @@ class FundamentalCaseTests(TestCase):
         case.date_opened = case.date_opened.date()
         check_user_has_case(self, user, case.as_xml())
 
-    def test_restore_caches_cleared(self):
-        cache = get_redis_default_cache()
-        cache_key = restore_payload_path_cache_key(domain=DOMAIN, user_id='user_id', version="2.0")
-        cache.set(cache_key, 'test-thing')
-        self.assertEqual(cache.get(cache_key), 'test-thing')
+    @staticmethod
+    def _submit_dummy_form(domain, user_id, device_id='', sync_log_id=None, form_id=None):
+        form_id = form_id or uuid.uuid4().hex
         form = """
             <data xmlns="http://openrosa.org/formdesigner/blah">
                 <meta>
                     <userID>{user_id}</userID>
+                    <deviceID>{device_id}</deviceID>
+                    <instanceID>{form_id}</instanceID>
                 </meta>
             </data>
         """
-        submit_form_locally(form.format(user_id='user_id'), DOMAIN)
+        return submit_form_locally(
+            form.format(user_id=user_id, device_id=device_id, form_id=form_id),
+            domain,
+            last_sync_token=sync_log_id,
+        )
+
+    def test_restore_caches_cleared(self):
+        sync_log_id = 'a8cac9222f42480764d6875c908040d5'
+        device_id = 'CBNMP7XCGTIIAPCIMNI2KRGY'
+        cache = get_redis_default_cache()
+        cache_key = restore_payload_path_cache_key(
+            domain=DOMAIN,
+            user_id='user_id',
+            sync_log_id=sync_log_id,
+            device_id=device_id,
+        )
+        cache.set(cache_key, 'test-thing')
+        self.assertEqual(cache.get(cache_key), 'test-thing')
+        self._submit_dummy_form(
+            domain=DOMAIN,
+            user_id='user_id',
+            device_id=device_id,
+            sync_log_id=sync_log_id,
+        )
         self.assertIsNone(cache.get(cache_key))
 
     def test_update_case_without_creating_triggers_soft_assert(self):
@@ -342,22 +365,13 @@ class FundamentalCaseTests(TestCase):
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
-
-        form = """
-            <data xmlns="http://openrosa.org/formdesigner/blah">
-                <meta>
-                    <userID>123</userID>
-                    <instanceID>{form_id}</instanceID>
-                </meta>
-            </data>
-        """
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
-            xform = submit_form_locally(form.format(form_id=form_id), 'domain1').xform
+            xform = self._submit_dummy_form('domain1', user_id='123', form_id=form_id).xform
             self.assertEqual(form_id, xform.form_id)
 
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             # form with duplicate ID submitted to different domain gets a new ID
-            xform = submit_form_locally(form.format(form_id=form_id), 'domain2').xform
+            xform = self._submit_dummy_form('domain2', user_id='123', form_id=form_id).xform
             self.assertNotEqual(form_id, xform.form_id)
 
     def test_globally_unique_case_id(self):
