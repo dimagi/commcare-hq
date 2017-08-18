@@ -968,6 +968,7 @@ class TestReportPillow(TestCase):
         bad_appVersion = {
             "_id": "foo",
             "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
+            'received_on': "2013-09-20T01:33:12Z",
             "form": {
                 "meta": {
                     "@xmlns": "http://openrosa.org/jr/xforms",
