@@ -2,6 +2,7 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 import json
+import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -10,11 +11,14 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.utils import get_restore_response_class
@@ -335,6 +339,21 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
                 self._previous_log_ref = None
         return self._previous_log_ref
 
+    def _cache_key(self, version):
+        from casexml.apps.phone.restore import restore_payload_path_cache_key
+        return restore_payload_path_cache_key(
+            domain=self.domain,
+            user_id=self.user_id,
+            version=version,
+            sync_log_id=self._id,
+        )
+
+    def invalidate_cached_payloads(self):
+        keys = [self._cache_key(version) for version in [V1, V2]]
+
+        for key in keys:
+            get_redis_default_cache().delete(key)
+
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
@@ -548,6 +567,7 @@ class SyncLog(AbstractSyncLog):
         if case_list:
             try:
                 self.save()
+                self.invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
@@ -1107,6 +1127,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     self.last_submitted = datetime.utcnow()
                     self.rev_before_last_submitted = self._rev
                     self.save()
+                    if case_list:
+                        try:
+                            self.invalidate_cached_payloads()
+                        except ResourceConflict:
+                            # this operation is harmless so just blindly retry and don't
+                            # reraise if it goes through the second time
+                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,

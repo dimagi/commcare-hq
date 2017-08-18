@@ -19,7 +19,7 @@ def balance_ota_block(sp, section_id, soh_reports, datestring):
 
 
 def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timestamp=None,
-                    date_formatter=json_format_datetime, device_id=None):
+                    date_formatter=json_format_datetime):
     timestamp = timestamp or datetime.utcnow()
     date_string = date_formatter(timestamp)
     insides = insides() if callable(insides) else insides
@@ -27,7 +27,7 @@ def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timesta
         <data uiVersion="1" version="33" name="New Form" xmlns="http://commtrack.org/test_form_submission">
             <products>{product0} {product1} {product2}</products>
             <meta>
-                <deviceID>{device_id}</deviceID>
+                <deviceID>351746051189879</deviceID>
                 <timeStart>2013-12-10T17:08:46.215-05</timeStart>
                 <timeEnd>2013-12-10T17:08:57.887-05</timeEnd>
                 <username>{username}</username>
@@ -49,7 +49,6 @@ def submission_wrap(instance_id, products, user, sp_id, sp2_id, insides, timesta
         instance_id=instance_id,
         username=user.username,
         long_date=date_string,
-        device_id=device_id if device_id is not None else '',
     )
 
 

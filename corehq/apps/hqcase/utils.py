@@ -25,9 +25,9 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 ]
 
 
-def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
+def submit_case_blocks(case_blocks, domain, username="system", user_id="",
                        xmlns=SYSTEM_FORM_XMLNS, attachments=None,
-                       form_id=None, form_extras=None, case_db=None, device_id=None):
+                       form_id=None, form_extras=None, case_db=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -44,8 +44,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         'time': now,
         'uid': form_id,
         'username': username,
-        'user_id': user_id or "",
-        'device_id': device_id,
+        'user_id': user_id,
     })
     form_extras = form_extras or {}
 
