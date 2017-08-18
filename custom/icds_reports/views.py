@@ -410,7 +410,8 @@ class LocationAncestorsView(View):
                     'parent_id': location.parent.location_id if location.parent else None,
                     'location_type_name': location.location_type_name,
                 }
-                for location in set(list(locations) + list(parents)) if show_test or location.metadata.get('is_test_location', 'real') != 'test'
+                for location in set(list(locations) + list(parents))
+                if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
