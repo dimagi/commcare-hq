@@ -17,7 +17,7 @@ def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id)
     return hashlib.md5(hashable_key).hexdigest()
 
 
-def restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
+def _restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
     return _restore_cache_key(
         domain=domain,
         prefix=RESTORE_CACHE_KEY_PREFIX,
@@ -46,11 +46,18 @@ class CacheAccessor(object):
     def get_value(self):
         return get_redis_default_cache().get(self.cache_key)
 
-    def set_value(self, value):
-        get_redis_default_cache().set(self.cache_key, value, timeout=self.timeout)
+    def set_value(self, value, timeout=None):
+        if timeout is None:
+            timeout = self.timeout
+        get_redis_default_cache().set(self.cache_key, value, timeout=timeout)
 
     def invalidate(self):
         get_redis_default_cache().delete(self.cache_key)
+
+
+class RestorePayloadPathCache(CacheAccessor):
+    def __init__(self, domain, user_id, sync_log_id, device_id):
+        self.cache_key = _restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id)
 
 
 class AsyncRestoreTaskIdCache(CacheAccessor):

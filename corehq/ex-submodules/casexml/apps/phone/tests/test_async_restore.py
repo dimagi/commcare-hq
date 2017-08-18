@@ -1,8 +1,7 @@
 import mock
 from cStringIO import StringIO
 from django.test import TestCase, SimpleTestCase
-from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
-    AsyncRestoreTaskIdCache
+from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 from celery.exceptions import TimeoutError
@@ -202,7 +201,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             sync_log_id=last_sync_token,
             device_id=device_id,
         )
-        initial_sync_cache_id = restore_payload_path_cache_key(
+        restore_payload_path_cache = RestorePayloadPathCache(
             domain=self.domain,
             user_id=self.user.user_id,
             device_id=device_id,
@@ -213,7 +212,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         restore_config = self._restore_config(async=True)
         # pretend we have a task running
         async_restore_task_id_cache.set_value(async_restore_task_id)
-        restore_config.cache.set(initial_sync_cache_id, initial_sync_path)
+        restore_payload_path_cache.set_value(initial_sync_path)
 
         def submit_form(user_id, device_id, last_sync_token):
             form = """
@@ -235,13 +234,13 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             submit_form(user_id="other_user", device_id='OTHERDEVICEID', last_sync_token='othersynctoken')
             self.assertFalse(revoke.called)
             self.assertEqual(async_restore_task_id_cache.get_value(), async_restore_task_id)
-            self.assertEqual(restore_config.cache.get(initial_sync_cache_id), initial_sync_path)
+            self.assertEqual(restore_payload_path_cache.get_value(), initial_sync_path)
 
             # task gets killed when the user submits a form
             submit_form(user_id=self.user.user_id, device_id=device_id, last_sync_token=last_sync_token)
             revoke.assert_called_with(async_restore_task_id)
             self.assertIsNone(async_restore_task_id_cache.get_value())
-            self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
+            self.assertIsNone(restore_payload_path_cache.get_value())
 
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):

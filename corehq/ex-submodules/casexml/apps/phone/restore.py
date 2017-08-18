@@ -23,8 +23,7 @@ from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
 )
-from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
-    AsyncRestoreTaskIdCache
+from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.timer import TimingContext
@@ -659,8 +658,8 @@ class RestoreConfig(object):
         )
 
     @property
-    def _restore_cache_key(self):
-        return restore_payload_path_cache_key(
+    def restore_payload_path_cache(self):
+        return RestorePayloadPathCache(
             domain=self.domain,
             user_id=self.restore_user.user_id,
             sync_log_id=self.sync_log._id if self.sync_log else '',
@@ -712,7 +711,7 @@ class RestoreConfig(object):
         if self.overwrite_cache:
             return None
 
-        cache_payload_path = self.cache.get(self._restore_cache_key)
+        cache_payload_path = self.restore_payload_path_cache.get_value()
 
         return CachedResponse(self.domain, cache_payload_path)
 
@@ -810,11 +809,11 @@ class RestoreConfig(object):
             self._set_cache_in_redis(cache_payload_path)
 
     def _set_cache_in_redis(self, cache_payload_path):
-        self.cache.set(self._restore_cache_key, cache_payload_path, self.cache_timeout)
+        self.restore_payload_path_cache.set_value(cache_payload_path, self.cache_timeout)
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.cache.get(self._restore_cache_key):
-            self.cache.delete(self._restore_cache_key)
+        if self.overwrite_cache and self.restore_payload_path_cache.get_value():
+            self.restore_payload_path_cache.invalidate()
 
     def _record_timing(self, status):
         timing = self.timing_context

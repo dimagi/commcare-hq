@@ -4,7 +4,7 @@ from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.restore import RestoreParams, RestoreConfig
-from casexml.apps.phone.restore_caching import restore_payload_path_cache_key
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -89,12 +89,12 @@ class SimpleCachingResponseTest(SimpleTestCase):
         '''
 
         def get_restore_payload_path_cache_key():
-            return restore_payload_path_cache_key(
+            return RestorePayloadPathCache(
                 domain='domain',
                 user_id='user_id',
                 sync_log_id='synclogid',
                 device_id='DEVICEID',
-            )
+            ).cache_key
         key1 = get_restore_payload_path_cache_key()
         with flag_enabled('BLOBDB_RESTORE'):
             key2 = get_restore_payload_path_cache_key()

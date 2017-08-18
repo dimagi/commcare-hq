@@ -9,7 +9,7 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
-from casexml.apps.phone.restore_caching import restore_payload_path_cache_key
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -322,21 +322,21 @@ class FundamentalCaseTests(TestCase):
         sync_log_id = 'a8cac9222f42480764d6875c908040d5'
         device_id = 'CBNMP7XCGTIIAPCIMNI2KRGY'
         cache = get_redis_default_cache()
-        cache_key = restore_payload_path_cache_key(
+        restore_payload_path_cache = RestorePayloadPathCache(
             domain=DOMAIN,
             user_id='user_id',
             sync_log_id=sync_log_id,
             device_id=device_id,
         )
-        cache.set(cache_key, 'test-thing')
-        self.assertEqual(cache.get(cache_key), 'test-thing')
+        restore_payload_path_cache.set_value('test-thing')
+        self.assertEqual(restore_payload_path_cache.get_value(), 'test-thing')
         self._submit_dummy_form(
             domain=DOMAIN,
             user_id='user_id',
             device_id=device_id,
             sync_log_id=sync_log_id,
         )
-        self.assertIsNone(cache.get(cache_key))
+        self.assertIsNone(restore_payload_path_cache.get_value())
 
     def test_update_case_without_creating_triggers_soft_assert(self):
         def _submit_form_with_cc_version(version):

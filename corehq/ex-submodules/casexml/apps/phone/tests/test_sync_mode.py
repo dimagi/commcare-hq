@@ -82,7 +82,7 @@ class BaseSyncTest(TestCase):
             restore_user=self.user,
             **self.restore_options
         )
-        restore_config.cache.delete(restore_config._restore_cache_key)
+        restore_config.restore_payload_path_cache.invalidate()
         super(BaseSyncTest, self).tearDown()
 
     @classmethod
