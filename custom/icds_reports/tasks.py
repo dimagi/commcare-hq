@@ -56,5 +56,5 @@ def move_ucr_data_into_aggregation_tables(date=None):
             celery_task_logger.info("Starting icds reports update_daily_aggregate_table")
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute, {"date": date.strftime('%Y-%M-%d')})
+                cursor.execute(sql_to_execute, {"date": date.strftime('%Y-%m-%d')})
             celery_task_logger.info("Ended icds reports update_daily_aggregate_table")
