@@ -11,7 +11,9 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
 from custom.enikshay.case_utils import CASE_TYPE_PERSON
-from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
+from custom.enikshay.const import (
+    ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
@@ -293,6 +295,10 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
         pass
 
 
+def xor(a, b):
+    return bool(a) ^ bool(b)
+
+
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
@@ -307,28 +313,25 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         if not self.case_types_and_users_allowed(episode_case):
             return False
 
-        case_properties = episode_case.dynamic_case_properties()
-        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
-        treatment_options = case_properties.get("treatment_options")
-        if treatment_options == "fdc":
-            meets_days_threshold = prescription_total_days >= 168
-        else:
-            meets_days_threshold = prescription_total_days >= 180
+        enrolled_in_private_sector = episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+        not_sent = episode_case.get_case_property("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
 
-        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
-        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
             not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
-            and (
-                case_properties_changed(episode_case, ["treatment_outcome"])
-                and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            ) or (
-                case_properties_changed(episode_case, ["prescription_total_days"])
-                and meets_days_threshold
-            )
+            and xor(self._treatment_completed(episode_case),
+                    self._met_prescription_days_threshold(episode_case))
         )
+
+    def _treatment_completed(self, episode_case):
+        return (
+            episode_case.get_case_property("treatment_outcome") in ("cured", "treatment_completed")
+            and case_properties_changed(episode_case, ["treatment_outcome"])
+        )
+
+    def _met_prescription_days_threshold(self, episode_case):
+        return case_properties_changed(episode_case, [BETS_DATE_PRESCRIPTION_THRESHOLD_MET])
 
 
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
