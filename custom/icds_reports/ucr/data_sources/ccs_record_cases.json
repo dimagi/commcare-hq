@@ -69,7 +69,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
-        "create_index": true,
+        "create_index": false,
         "type": "expression"
       },
       {

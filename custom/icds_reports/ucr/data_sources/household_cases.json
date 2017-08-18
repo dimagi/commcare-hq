@@ -45,7 +45,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
-        "create_index": true,
+        "create_index": false,
         "expression": {
           "type": "root_doc",
           "expression": {
@@ -73,7 +73,7 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
-        "create_index": true,
+        "create_index": false,
         "type": "expression"
       },
       {
