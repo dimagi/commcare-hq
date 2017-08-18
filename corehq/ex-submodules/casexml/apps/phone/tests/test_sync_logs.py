@@ -86,17 +86,9 @@ class SimpleCachingResponseTest(SimpleTestCase):
         BlobRestoreResponse that we don't use the old FileRestoreResponse
         cache
         '''
-
-        def get_restore_payload_path_cache_key():
-            return restore_payload_path_cache_key(
-                domain='domain',
-                user_id='user_id',
-                sync_log_id='synclogid',
-                device_id='DEVICEID',
-            )
-        key1 = get_restore_payload_path_cache_key()
+        key1 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
         with flag_enabled('BLOBDB_RESTORE'):
-            key2 = get_restore_payload_path_cache_key()
+            key2 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
         self.assertNotEqual(key1, key2)
 
 

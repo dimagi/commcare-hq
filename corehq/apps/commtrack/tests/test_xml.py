@@ -221,8 +221,7 @@ class CommTrackSubmissionTest(XMLTest):
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     @process_pillow_changes('LedgerToElasticsearchPillow')
-    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime,
-                        device_id='351746051189879', **submit_extras):
+    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,
@@ -233,7 +232,6 @@ class CommTrackSubmissionTest(XMLTest):
             xml_method,
             timestamp=timestamp,
             date_formatter=date_formatter,
-            device_id=device_id,
         )
         submit_form_locally(
             instance=instance,
@@ -586,8 +584,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
         # submit with token
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
-        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id,
-                             device_id=None)
+        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
         check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
                             restore_id=self.sync_log_id, version=V2, line_by_line=False)
