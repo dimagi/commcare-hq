@@ -13,8 +13,8 @@ from dimagi.utils.chunked import chunked
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_arugment('infile')
-        parser.add_arugment('logfile')
+        parser.add_argument('infile')
+        parser.add_argument('logfile')
 
     def handle(self, infile, logfile, *args, **options):
         self.domain = 'icds-cas'
