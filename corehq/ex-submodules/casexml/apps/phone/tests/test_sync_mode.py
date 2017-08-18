@@ -116,10 +116,12 @@ class SyncBaseTest(TestCase):
 
     def _createCaseStubs(self, id_list, **kwargs):
         case_attrs = {'create': True}
+        device_id = kwargs.pop('device_id', None)
         case_attrs.update(kwargs)
         return self.factory.create_or_update_cases(
             [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
             user_id=kwargs.get('user_id') or self.user_id,
+            device_id=device_id,
         )
 
     def _postWithSyncToken(self, filename, token_id):
@@ -1243,6 +1245,7 @@ class SyncTokenCachingTest(SyncBaseTest):
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()
@@ -1294,7 +1297,7 @@ class SyncTokenCachingTest(SyncBaseTest):
 
         # posting a case associated with this sync token should invalidate the cache
         case_id = "cache_invalidation"
-        self._createCaseStubs([case_id])
+        self._createCaseStubs([case_id], device_id=device_id)
         self.sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertFalse(has_cached_payload(SyncLog.get(self.sync_log._id), device_id))
 
@@ -1342,13 +1345,14 @@ class SyncTokenCachingTest(SyncBaseTest):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             case_type=PARENT_TYPE,
-        ).as_xml()])
+        ).as_xml()], device_id=device_id, user_id=self.user_id)
         next_payload = RestoreConfig(
             project=self.project,
             restore_user=self.user,
             params=RestoreParams(
                 version=V2,
                 sync_log_id=self.sync_log._id,
+                device_id=device_id,
             ),
             **self.restore_options
         ).get_payload().as_string()

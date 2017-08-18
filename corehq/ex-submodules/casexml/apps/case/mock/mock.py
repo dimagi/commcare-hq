@@ -79,7 +79,7 @@ class CaseFactory(object):
             **kwargs
         ).as_xml()
 
-    def post_case_blocks(self, caseblocks, form_extras=None, user_id=None):
+    def post_case_blocks(self, caseblocks, form_extras=None, user_id=None, device_id=None):
         submit_form_extras = copy.copy(self.form_extras)
         if form_extras is not None:
             submit_form_extras.update(form_extras)
@@ -88,6 +88,7 @@ class CaseFactory(object):
             form_extras=submit_form_extras,
             domain=self.domain,
             user_id=user_id,
+            device_id=device_id,
         )
 
     def create_case(self, **kwargs):
@@ -113,7 +114,7 @@ class CaseFactory(object):
     def create_or_update_case(self, case_structure, form_extras=None, user_id=None):
         return self.create_or_update_cases([case_structure], form_extras, user_id=user_id)
 
-    def create_or_update_cases(self, case_structures, form_extras=None, user_id=None):
+    def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
         from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
         def _get_case_block(substructure):
@@ -132,6 +133,7 @@ class CaseFactory(object):
             [block for structure in case_structures for block in _get_case_blocks(structure)],
             form_extras,
             user_id=user_id,
+            device_id=device_id,
         )
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
