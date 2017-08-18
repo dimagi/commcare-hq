@@ -2,7 +2,7 @@ import mock
 from cStringIO import StringIO
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
-    async_restore_task_id_cache_key
+    AsyncRestoreTaskIdCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 from celery.exceptions import TimeoutError
@@ -99,7 +99,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
     def test_subsequent_syncs_when_job_complete(self):
         # First sync, return a timout. Ensure that the async_task_id gets set
-        cache_id = async_restore_task_id_cache_key(
+        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=self.user.user_id,
             sync_log_id=None,
@@ -113,7 +113,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
             restore_config = self._restore_config(async=True)
             initial_payload = restore_config.get_payload()
-            self.assertIsNotNone(restore_config.cache.get(cache_id))
+            self.assertIsNotNone(async_restore_task_id_cache.get_value())
             self.assertIsInstance(initial_payload, AsyncRestoreResponse)
             # new synclog should not have been created
             self.assertIsNone(restore_config.restore_state.current_sync_log)
@@ -124,7 +124,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         with mock.patch.object(AsyncResult, 'get', file_restore_response) as get_result:
             with mock.patch.object(AsyncResult, 'status', ASYNC_RESTORE_SENT):
                 subsequent_restore = self._restore_config(async=True)
-                self.assertIsNotNone(restore_config.cache.get(cache_id))
+                self.assertIsNotNone(async_restore_task_id_cache.get_value())
                 subsequent_restore.get_payload()
 
                 # if the task actually ran, the cache should now not have the task id,
@@ -134,19 +134,19 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
                 get_result.assert_called_with(timeout=1)
 
     def test_completed_task_deletes_cache(self):
-        cache_id = async_restore_task_id_cache_key(
+        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=self.user.user_id,
             sync_log_id=None,
             device_id=None,
         )
         restore_config = self._restore_config(async=True)
-        restore_config.cache.set(cache_id, 'im going to be deleted by the next command')
+        async_restore_task_id_cache.set_value('im going to be deleted by the next command')
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
         get_async_restore_payload.delay(restore_config)
         self.assertTrue(restore_config.timing_context.is_finished())
-        self.assertIsNone(restore_config.cache.get(cache_id))
+        self.assertIsNone(async_restore_task_id_cache.get_value())
 
     def test_completed_task_creates_sync_log(self):
         restore_config = self._restore_config(async=True)
@@ -196,7 +196,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         """
         last_sync_token = '0a72d5a3c2ec53e85c1af27ee5717e0d'
         device_id = 'RSMCHBA8PJNQIGMONN2JZT6E'
-        task_cache_id = async_restore_task_id_cache_key(
+        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=self.user.user_id,
             sync_log_id=last_sync_token,
@@ -212,7 +212,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         initial_sync_path = 'path/to/payload'
         restore_config = self._restore_config(async=True)
         # pretend we have a task running
-        restore_config.cache.set(task_cache_id, async_restore_task_id)
+        async_restore_task_id_cache.set_value(async_restore_task_id)
         restore_config.cache.set(initial_sync_cache_id, initial_sync_path)
 
         def submit_form(user_id, device_id, last_sync_token):
@@ -234,13 +234,13 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
             # with a different user in the same domain, task doesn't get killed
             submit_form(user_id="other_user", device_id='OTHERDEVICEID', last_sync_token='othersynctoken')
             self.assertFalse(revoke.called)
-            self.assertEqual(restore_config.cache.get(task_cache_id), async_restore_task_id)
+            self.assertEqual(async_restore_task_id_cache.get_value(), async_restore_task_id)
             self.assertEqual(restore_config.cache.get(initial_sync_cache_id), initial_sync_path)
 
             # task gets killed when the user submits a form
             submit_form(user_id=self.user.user_id, device_id=device_id, last_sync_token=last_sync_token)
             revoke.assert_called_with(async_restore_task_id)
-            self.assertIsNone(restore_config.cache.get(task_cache_id))
+            self.assertIsNone(async_restore_task_id_cache.get_value())
             self.assertIsNone(restore_config.cache.get(initial_sync_cache_id))
 
     @flag_enabled('ASYNC_RESTORE')

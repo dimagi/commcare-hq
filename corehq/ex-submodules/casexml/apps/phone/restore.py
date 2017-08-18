@@ -24,7 +24,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
-    async_restore_task_id_cache_key
+    AsyncRestoreTaskIdCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.timer import TimingContext
@@ -650,8 +650,8 @@ class RestoreConfig(object):
         return self.restore_state.last_sync_log
 
     @property
-    def async_cache_key(self):
-        return async_restore_task_id_cache_key(
+    def async_restore_task_id_cache(self):
+        return AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=self.restore_user.user_id,
             sync_log_id=self.sync_log._id if self.sync_log else '',
@@ -719,7 +719,7 @@ class RestoreConfig(object):
     def _get_asynchronous_payload(self):
         new_task = False
         # fetch the task from celery
-        task_id = self.cache.get(self.async_cache_key)
+        task_id = self.async_restore_task_id_cache.get_value()
         task = AsyncResult(task_id)
         task_exists = task.status == ASYNC_RESTORE_SENT
 
@@ -737,7 +737,7 @@ class RestoreConfig(object):
                 task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
+            self.async_restore_task_id_cache.set_value(task.id)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:

@@ -1,6 +1,7 @@
 import hashlib
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.phone.utils import get_restore_response_class
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
@@ -27,7 +28,7 @@ def restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
     )
 
 
-def async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
+def _async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
     return _restore_cache_key(
         domain=domain,
         prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
@@ -36,3 +37,24 @@ def async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
         sync_log_id=sync_log_id,
         device_id=device_id,
     )
+
+
+class CacheAccessor(object):
+    cache_key = None
+    timeout = None
+
+    def get_value(self):
+        return get_redis_default_cache().get(self.cache_key)
+
+    def set_value(self, value):
+        get_redis_default_cache().set(self.cache_key, value, timeout=self.timeout)
+
+    def invalidate(self):
+        get_redis_default_cache().delete(self.cache_key)
+
+
+class AsyncRestoreTaskIdCache(CacheAccessor):
+    timeout = 24 * 60 * 60
+
+    def __init__(self, domain, user_id, sync_log_id, device_id):
+        self.cache_key = _async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id)

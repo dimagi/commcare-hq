@@ -14,11 +14,10 @@ from django.http import (
 )
 import sys
 from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
-    async_restore_task_id_cache_key
+    AsyncRestoreTaskIdCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
-from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -223,18 +222,18 @@ class SubmissionPost(object):
             self._invalidate_async_caches(xform)
 
     def _invalidate_async_caches(self, xform):
-        cache_key = async_restore_task_id_cache_key(
+        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=xform.user_id,
             sync_log_id=self.last_sync_token,
             device_id=xform.metadata.deviceID if xform.metadata else None,
         )
 
-        task_id = self._cache.get(cache_key)
+        task_id = async_restore_task_id_cache.get_value()
 
         if task_id is not None:
             revoke_celery_task(task_id)
-            self._cache.delete(cache_key)
+            async_restore_task_id_cache.invalidate()
 
     def save_processed_models(self, xforms, case_stock_result):
         from casexml.apps.case.signals import case_post_save
