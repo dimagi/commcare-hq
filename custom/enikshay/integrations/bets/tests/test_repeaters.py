@@ -11,7 +11,6 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from custom.enikshay.tasks import EpisodeUpdater
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
     PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
