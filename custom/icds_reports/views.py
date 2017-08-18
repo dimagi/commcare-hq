@@ -3,18 +3,21 @@ import requests
 from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
+from django.contrib import messages
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
+from corehq.apps.style.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions
 from custom.icds_reports.const import LocationTypes, APP_ID
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
@@ -23,6 +26,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -52,6 +56,7 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
     get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
     get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
+from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
 
@@ -1209,3 +1214,27 @@ class AdultWeightScaleView(View):
         return JsonResponse(data={
             'report_data': data,
         })
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+class AggregationScriptPage(BaseDomainView):
+    page_title = 'Aggregation Script'
+    urlname = 'aggregation_script_page'
+    template_name = 'icds_reports/aggregation_script.html'
+
+    @use_daterangepicker
+    def dispatch(self, *args, **kwargs):
+        return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+
+    def section_url(self):
+        return
+
+    def post(self, request, *args, **kwargs):
+        date_param = self.request.POST.get('date')
+        if not date_param:
+            messages.error(request, 'Date is required')
+            return redirect(self.urlname, domain=self.domain)
+        date = force_to_date(date_param)
+        move_ucr_data_into_aggregation_tables.delay(date)
+        messages.success(request, 'Aggregation task is running. Data should appear soon.')
+        return redirect(self.urlname, domain=self.domain)
