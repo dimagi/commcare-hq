@@ -17,6 +17,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
+from corehq.apps.style.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions
 from custom.icds_reports.const import LocationTypes, APP_ID
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
@@ -55,6 +56,7 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
     get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
     get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
+from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
 
@@ -1216,10 +1218,19 @@ class AggregationScriptPage(BaseDomainView):
     urlname = 'aggregation_script_page'
     template_name = 'icds_reports/aggregation_script.html'
 
+    @use_daterangepicker
+    def dispatch(self, *args, **kwargs):
+        return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+
     def section_url(self):
         return
 
     def post(self, request, *args, **kwargs):
-        move_ucr_data_into_aggregation_tables.delay()
+        date_param = self.request.POST.get('date')
+        if not date_param:
+            messages.error(request, 'Date is required')
+            return redirect(self.urlname, domain=self.domain)
+        date = force_to_date(date_param)
+        move_ucr_data_into_aggregation_tables.delay(date)
         messages.success(request, 'Aggregation task is running. Data should appear soon.')
         return redirect(self.urlname, domain=self.domain)

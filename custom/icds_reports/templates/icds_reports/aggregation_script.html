@@ -3,6 +3,22 @@
 {% block page_content %}
     <form method="post">
         {% csrf_token %}
+        <div class="form-group">
+            <label for="date">Date</label>
+            <input name="date" class="form-control" id="date" placeholder="Date">
+        </div>
         <button class="btn btn-default">Run Aggregation Script</button>
     </form>
+{% endblock %}
+
+
+{% block js-inline %}
+    <script>
+        $('#date').daterangepicker({
+            singleDatePicker: true,
+            locale: {
+                format: 'YYYY-MM-DD',
+            },
+        });
+    </script>
 {% endblock %}
