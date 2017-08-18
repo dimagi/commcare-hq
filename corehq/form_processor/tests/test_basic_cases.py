@@ -9,8 +9,8 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key
 from casexml.apps.phone.tests.utils import create_restore_user
-from casexml.apps.phone.restore import restore_payload_path_cache_key
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users

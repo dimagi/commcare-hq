@@ -13,6 +13,8 @@ from django.http import (
     HttpResponseForbidden,
 )
 import sys
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
+    async_restore_task_id_cache_key
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
@@ -208,7 +210,6 @@ class SubmissionPost(object):
         return get_redis_default_cache()
 
     def _invalidate_caches(self, xform):
-        from casexml.apps.phone.restore import restore_payload_path_cache_key
         """invalidate cached initial restores"""
         initial_restore_cache_key = restore_payload_path_cache_key(
             domain=self.domain,
@@ -222,7 +223,6 @@ class SubmissionPost(object):
             self._invalidate_async_caches(xform)
 
     def _invalidate_async_caches(self, xform):
-        from casexml.apps.phone.restore import async_restore_task_id_cache_key
         cache_key = async_restore_task_id_cache_key(
             domain=self.domain,
             user_id=xform.user_id,

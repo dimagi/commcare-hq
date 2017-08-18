@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import hashlib
 import logging
 import os
 import shutil
@@ -8,16 +7,24 @@ import tempfile
 from io import FileIO
 from cStringIO import StringIO
 from uuid import uuid4
+from distutils.version import LooseVersion
+from datetime import datetime, timedelta
+from wsgiref.util import FileWrapper
+from xml.etree import ElementTree
+
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from distutils.version import LooseVersion
-
 from couchdbkit import ResourceNotFound
+from django.http import HttpResponse, StreamingHttpResponse
+from django.conf import settings
+
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
 )
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
+    async_restore_task_id_cache_key
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.timer import TimingContext
@@ -33,7 +40,6 @@ from casexml.apps.phone.models import (
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
-from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.openrosa_response import (
     ResponseNature,
@@ -41,16 +47,12 @@ from couchforms.openrosa_response import (
     get_response_element,
 )
 from casexml.apps.case.xml import check_version, V1
-from django.http import HttpResponse, StreamingHttpResponse
-from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_TIMEOUT,
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
     ASYNC_RETRY_AFTER,
-    ASYNC_RESTORE_CACHE_KEY_PREFIX,
-    RESTORE_CACHE_KEY_PREFIX,
     CLEAN_OWNERS,
     LIVEQUERY,
 )
@@ -59,48 +61,10 @@ from casexml.apps.phone.utils import get_restore_response_class
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 
-from wsgiref.util import FileWrapper
-from xml.etree import ElementTree
-
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
-
-
-def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
-    response_class = get_restore_response_class(domain)
-    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
-        response_class=response_class.__name__,
-        prefix=prefix,
-        user=user_id,
-        version=version or '',
-        sync_log_id=sync_log_id or '',
-        device_id=device_id or '',
-    )
-    return hashlib.md5(hashable_key).hexdigest()
-
-
-def restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        version='2.0',
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
-
-
-def async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        version=None,
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
 
 
 def stream_response(payload, headers=None, status=200):

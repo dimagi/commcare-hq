@@ -1,6 +1,8 @@
 import mock
 from cStringIO import StringIO
 from django.test import TestCase, SimpleTestCase
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key, \
+    async_restore_task_id_cache_key
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 from celery.exceptions import TimeoutError
@@ -19,8 +21,6 @@ from casexml.apps.phone.restore import (
     RestoreCacheSettings,
     AsyncRestoreResponse,
     FileRestoreResponse,
-    async_restore_task_id_cache_key,
-    restore_payload_path_cache_key,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user

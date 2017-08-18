@@ -1,5 +1,6 @@
 from uuid import uuid4
 from xml.etree import ElementTree
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
@@ -10,8 +11,7 @@ from casexml.apps.phone.models import (
     OTARestoreWebUser,
     OTARestoreCommCareUser,
 )
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings, \
-    restore_payload_path_cache_key
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
 

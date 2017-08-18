@@ -3,6 +3,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import ElementTree
+from casexml.apps.phone.restore_caching import restore_payload_path_cache_key
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -15,8 +16,7 @@ from lxml import etree
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.restore import RestoreConfig, RestoreParams, \
-    restore_payload_path_cache_key
+from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 
 
 TEST_DOMAIN_NAME = 'test-domain'
