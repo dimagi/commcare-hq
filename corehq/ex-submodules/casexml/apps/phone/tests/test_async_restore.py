@@ -171,21 +171,22 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         """
         submit_form_locally(form, self.domain)
 
-    @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch.object(RestorePayloadPathCache, 'invalidate')
+    @mock.patch.object(RestorePayloadPathCache, 'get_value')
     @mock.patch.object(FileRestoreResponse, 'get_payload')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, cache):
+    def test_clears_cache(self, task, response, get_value, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
         response.return_value = StringIO('<restore_id>123</restore_id>')
-        cache.get.return_value = 'path-to-cached-restore'
+        get_value.return_value = 'path-to-cached-restore'
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
-        self.assertFalse(cache.delete.called)
+        self.assertFalse(invalidate.called)
 
         self._restore_config(async=True, overwrite_cache=True).get_payload()
-        self.assertTrue(cache.delete.called)
+        self.assertTrue(invalidate.called)
 
 
 class AsyncRestoreTest(BaseAsyncRestoreTest):
@@ -254,21 +255,22 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         """
         submit_form_locally(form, self.domain)
 
-    @mock.patch.object(RestoreConfig, 'cache')
+    @mock.patch.object(RestorePayloadPathCache, 'invalidate')
+    @mock.patch.object(RestorePayloadPathCache, 'get_value')
     @mock.patch.object(FileRestoreResponse, 'get_payload')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, cache):
+    def test_clears_cache(self, task, response, get_value, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        cache.get.return_value = 'path-to-cached-restore'
+        get_value.return_value = 'path-to-cached-restore'
         response.return_value = StringIO('<restore_id>123</restore_id>')
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
-        self.assertFalse(cache.delete.called)
+        self.assertFalse(invalidate.called)
 
         self._restore_config(async=True, overwrite_cache=True).get_payload()
-        self.assertTrue(cache.delete.called)
+        self.assertTrue(invalidate.called)
 
 
 @use_sql_backend
