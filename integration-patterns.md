@@ -91,7 +91,7 @@ Just like you might use the `{% url %}` tag to resolve a URL in a template
 <a href="{% url 'all_widget_info' domain %}">Widget Info</a>
 ```
 
-You can use `{% registerurl %}` to make a URL available in javascript, through the urllib.reverse utility (modeled after Django's python `reverse` function).
+You can use `{% registerurl %}` to make a URL available in javascript, through the initial_page_data.reverse utility (modeled after Django's python `reverse` function).
 
 in template
 ```
@@ -101,14 +101,14 @@ in template
 in js
 
 ```
-var urllib = hqImport('hqwebapp/js/urllib.js');
+var urllib = hqImport('hqwebapp/js/initial_page_data.js');
 
-$.get(urllib.reverse('all_widget_info')).done(function () {...});
+$.get(initial_page_data.reverse('all_widget_info')).done(function () {...});
 ```
 
-As in this example, prefer inlining the call to `urllib.reverse` over assigning its return value to a variable if there's no specific motivation for doing so.
+As in this example, prefer inlining the call to `initial_page_data.reverse` over assigning its return value to a variable if there's no specific motivation for doing so.
 
-In addition, you may keep positional arguments of the url unfilled by passing the special string `'---'` to `{% registerurl %}` and passing the argument value to `urllib.reverse` instead.
+In addition, you may keep positional arguments of the url unfilled by passing the special string `'---'` to `{% registerurl %}` and passing the argument value to `initial_page_data.reverse` instead.
 
 in template
 ```
@@ -118,9 +118,9 @@ in template
 in js
 
 ```
-var urllib = hqImport('hqwebapp/js/urllib.js');
+var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js');
 var widgetId = 'xxxx';
-$.get(urllib.reverse('more_widget_info', widgetId)).done(function () {...});
+$.get(initial_page_data.reverse('more_widget_info', widgetId)).done(function () {...});
 ```
 
 
