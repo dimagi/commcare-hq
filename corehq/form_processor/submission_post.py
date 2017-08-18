@@ -33,7 +33,6 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
 
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
@@ -202,10 +201,6 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
-
-    @property
-    def _cache(self):
-        return get_redis_default_cache()
 
     def _invalidate_caches(self, xform):
         """invalidate cached initial restores"""

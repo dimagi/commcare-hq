@@ -39,7 +39,6 @@ from casexml.apps.phone.models import (
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
@@ -638,10 +637,6 @@ class RestoreConfig(object):
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
-
-    @property
-    def cache(self):
-        return get_redis_default_cache()
 
     @property
     @memoized

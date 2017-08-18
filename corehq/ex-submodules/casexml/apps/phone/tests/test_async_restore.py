@@ -26,6 +26,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 class BaseAsyncRestoreTest(TestCase):
@@ -59,7 +60,7 @@ class BaseAsyncRestoreTest(TestCase):
             ),
             async=async
         )
-        self.addCleanup(restore_config.cache.clear)
+        self.addCleanup(get_redis_default_cache().clear)
         return restore_config
 
 
