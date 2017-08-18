@@ -3,15 +3,17 @@ import requests
 from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
+from django.contrib import messages
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
@@ -23,6 +25,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -1205,3 +1208,18 @@ class AdultWeightScaleView(View):
         return JsonResponse(data={
             'report_data': data,
         })
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+class AggregationScriptPage(BaseDomainView):
+    page_title = 'Aggregation Script'
+    urlname = 'aggregation_script_page'
+    template_name = 'icds_reports/aggregation_script.html'
+
+    def section_url(self):
+        return
+
+    def post(self, request, *args, **kwargs):
+        move_ucr_data_into_aggregation_tables.delay()
+        messages.success(request, 'Aggregation task is running. Data should appear soon.')
+        return redirect(self.urlname, domain=self.domain)

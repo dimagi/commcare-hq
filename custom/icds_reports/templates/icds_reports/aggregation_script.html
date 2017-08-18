@@ -1,0 +1,8 @@
+{% extends 'style/base_section.html' %}
+
+{% block page_content %}
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn btn-default">Run Aggregation Script</button>
+    </form>
+{% endblock %}
