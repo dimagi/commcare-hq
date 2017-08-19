@@ -72,12 +72,25 @@ class CaseFactory(object):
 
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
-            if k not in kwargs:
-                kwargs[k] = v
-        return CaseBlock(
-            case_id=case_id,
-            **kwargs
-        ).as_xml()
+            kwargs.setdefault(k, v)
+        return CaseBlock(case_id=case_id, **kwargs).as_xml()
+
+    def get_case_blocks(self, case_structures):
+
+        def get_blocks(structure):
+            assert isinstance(structure, CaseStructure), structure
+            yield self.get_case_block(
+                structure.case_id,
+                index=structure.index,
+                **structure.attrs
+            )
+            if structure.walk_related:
+                for index in structure.indices:
+                    for block in get_blocks(index.related_structure):
+                        yield block
+
+        return [block for structure in case_structures
+                      for block in get_blocks(structure)]
 
     def post_case_blocks(self, caseblocks, form_extras=None):
         submit_form_extras = copy.copy(self.form_extras)
@@ -115,22 +128,7 @@ class CaseFactory(object):
     def create_or_update_cases(self, case_structures, form_extras=None):
         from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-        def _get_case_block(substructure):
-            return self.get_case_block(substructure.case_id, index=substructure.index, **substructure.attrs)
-
-        def _get_case_blocks(substructure):
-            blocks = [_get_case_block(substructure)]
-            if substructure.walk_related:
-                blocks += [
-                    block for relationship in substructure.indices
-                    for block in _get_case_blocks(relationship.related_structure)
-                ]
-            return blocks
-
-        self.post_case_blocks(
-            [block for structure in case_structures for block in _get_case_blocks(structure)],
-            form_extras,
-        )
+        self.post_case_blocks(self.get_case_blocks(case_structures), form_extras)
 
         case_ids = [id for structure in case_structures for id in structure.walk_ids()]
         return list(CaseAccessors(self.domain).get_cases(case_ids, ordered=True))
