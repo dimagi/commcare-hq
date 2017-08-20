@@ -1,4 +1,4 @@
-/* globals hqDefine, $, eventize, _, django, ko */
+/* globals hqDefine, hqImport, $, _, django, ko */
 
 hqDefine('style/js/ui_elements/ui-element-key-val-mapping', function () {
     'use strict';
@@ -258,7 +258,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-mapping', function () {
         $div.attr("data-bind", "template: \'key_value_mapping_template\'");
         $div.koApplyBindings(m);
         m.ui = $div;
-        eventize(m);
+        hqImport("style/js/main").eventize(m);
         m.items.subscribe(function () {
             m.fire('change');
         });

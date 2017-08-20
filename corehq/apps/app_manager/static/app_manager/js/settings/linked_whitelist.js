@@ -1,9 +1,9 @@
-/* globals hqDefine, ko, COMMCAREHQ */
+/* globals hqDefine, ko */
 hqDefine('app_manager/js/settings/linked_whitelist', function () {
     function LinkedWhitelist(domains, saveUrl) {
         var self = this;
         this.linkedDomains = ko.observableArray(domains);
-        this.saveButton = COMMCAREHQ.SaveButton.init({
+        this.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your whitelist"),
             save: function () {
                 self.saveButton.ajax({
