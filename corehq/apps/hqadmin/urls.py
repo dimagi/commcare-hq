@@ -29,7 +29,7 @@ from corehq.apps.hqadmin.views import (
     pillow_operation_api,
     web_user_lookup,
     top_five_projects_by_country,
-    SessionDetialsView)
+    SessionDetailsView)
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
@@ -73,6 +73,6 @@ urlpatterns = [
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
-    url(r'^session_details/', SessionDetialsView.as_view(), name=SessionDetialsView.urlname),
+    url(r'^session_details/', SessionDetailsView.as_view(), name=SessionDetailsView.urlname),
     AdminReportDispatcher.url_pattern(),
 ]
