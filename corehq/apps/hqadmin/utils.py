@@ -1,7 +1,9 @@
 import json
+from importlib import import_module
 from itertools import groupby
 
 from django.conf import settings
+from django.contrib.auth import get_user_model, SESSION_KEY
 from django.utils.safestring import mark_safe
 from restkit import Resource
 
@@ -112,3 +114,32 @@ def parse_celery_workers(celery_workers):
         expect_running.append(sorted_workers.pop(0))
         expect_stopped.extend(sorted_workers)
     return expect_running, expect_stopped
+
+
+def get_django_user_from_session_key(session_key):
+    session = _get_session(session_key)
+    if not session:
+        return None
+
+    UserModel = get_user_model()
+    try:
+        user_id = UserModel._meta.pk.to_python(session[SESSION_KEY])
+    except KeyError:
+        return None
+    else:
+        try:
+            return UserModel._default_manager.get(pk=user_id)
+        except UserModel.DoesNotExist:
+            return None
+
+
+def _get_session(session_key):
+    engine = import_module(settings.SESSION_ENGINE)
+    session = engine.SessionStore(session_key)
+    try:
+        if session.is_empty():
+            return None
+    except AttributeError:
+        return None
+
+    return session
