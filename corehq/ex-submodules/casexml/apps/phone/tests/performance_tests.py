@@ -2,7 +2,7 @@ from unittest import skip
 from casexml.apps.case.mock import CaseBlock, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest, PARENT_TYPE
 from casexml.apps.phone.tests.utils import (
-    synclog_from_restore_payload,
+    deprecated_synclog_from_restore_payload,
     generate_restore_payload,
     create_restore_user,
 )
@@ -79,19 +79,19 @@ class SyncPerformanceTest(DeprecatedBaseSyncTest):
         self.referral_group.save()
 
         # this creates the initial blank sync token in the database
-        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.other_user
-        ))
-        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.referral_user
-        ))
+        self.other_sync_log = deprecated_synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.other_user)
+        )
+        self.referral_sync_log = deprecated_synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.referral_user)
+        )
 
         self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
         self.assertTrue(self.other_user.user_id in self.other_sync_log.owner_ids_on_phone)
 
-        self.sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.user
-        ))
+        self.sync_log = deprecated_synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user)
+        )
         self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
         self.assertTrue(self.user.user_id in self.sync_log.owner_ids_on_phone)
 

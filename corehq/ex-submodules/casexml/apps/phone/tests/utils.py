@@ -52,7 +52,8 @@ def deprecated_synclog_id_from_restore_payload(restore_payload):
     return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
 
 
-def synclog_from_restore_payload(restore_payload):
+def deprecated_synclog_from_restore_payload(restore_payload):
+    """DEPRECATED use <MockDevice>.sync().get_log()"""
     return get_properly_wrapped_sync_log(
         deprecated_synclog_id_from_restore_payload(restore_payload))
 
