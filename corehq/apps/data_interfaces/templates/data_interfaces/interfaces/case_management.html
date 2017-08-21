@@ -66,12 +66,10 @@
                     return {
                         total: data.total,
                         results: (data.results
-                            // filter out the generic types (All mobile workers, etc)
+                            // white list groups and users
                             .filter(function(o) {
-                                return !o.id.startsWith('t') && o.id !== 'project_data' && o.id !== 'all_data';
+                                return o.id.startsWith('u__') || o.id.startsWith('sg__');
                             })
-                            // filter out locations
-                            .filter(function(o) { return !o.id.startsWith('l'); })
                         )
                     };
                 },
