@@ -89,8 +89,10 @@ class LedgerV2ReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer".format(LEDGER_INDEX_INFO.index)
         domain = self.options.pop('domain', None)
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
+            LEDGER_INDEX_INFO.index, domain or 'all'
+        )
         doc_provider = SqlDocumentProvider(iteration_key, LedgerReindexAccessor(domain=domain))
         return ResumableBulkElasticPillowReindexer(
             doc_provider,

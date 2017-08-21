@@ -92,11 +92,11 @@ class SqlCaseReindexerFactory(ReindexerFactory):
 
     def build(self):
         limit_to_db = self.options.pop('limit_to_db', None)
-        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}".format(
-            CASE_INDEX_INFO.index, limit_to_db or 'all'
+        domain = self.options.pop('domain', None)
+        iteration_key = "SqlCaseToElasticsearchPillow_{}_reindexer_{}_{}".format(
+            CASE_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        domain = self.options.pop('domain', None)
 
         reindex_accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
         doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
