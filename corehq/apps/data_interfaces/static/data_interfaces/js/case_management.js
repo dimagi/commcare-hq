@@ -10,29 +10,13 @@ var CaseManagement = function (o) {
     self.webUserName = o.webUserName;
     self.form_name = o.form_name;
 
-    self.owners_by_type = {
-        'user': o.users
-    };
-    if (o.groups) {
-        self.owners_by_type.group = o.groups;
-    }
-    self.owner_types = _.keys(self.owners_by_type);
-    self.is_only_user_reassign = self.owner_types.length === 1;
-
     // What's checked in the table below
     self.selected_cases = ko.observableArray();
     self.selected_owners = ko.observableArray();
     self.selected_owner_types = ko.observableArray();
 
     // What we're assigning to
-    self.new_owner_type = ko.observable();
     self.new_owner = ko.observable();
-
-    // What's in the select box
-    self.available_owners = ko.computed(function () {
-        var owner_type = self.new_owner_type() || 'user';
-        return self.owners_by_type[owner_type];
-    });
 
     self.is_submit_enabled = ko.computed(function () {
         return !!self.new_owner();
@@ -44,19 +28,18 @@ var CaseManagement = function (o) {
         now = new Date();
     self.on_today = (enddate.toDateString() === now.toDateString());
 
-    var getOwnerName = function (owner, owner_list) {
-        for (var i = 0; i < owner_list.length; i++) {
-            if (owner_list[i].ownerid === owner) {
-                return owner_list[i].name;
-            }
+    var getOwnerType = function (owner_id) {
+        if (owner_id.startsWith('u')) {
+            return 'user';
+        } else if (owner_id.startsWith('sg')) {
+            return 'group';
         }
-        return "Unknown";
     };
 
     var updateCaseRow = function (case_id, owner_id, owner_type) {
         return function(data, textStatus) {
             var $checkbox = $('#case-management input[data-caseid="' + case_id + '"].selected-commcare-case'),
-                username = getOwnerName(owner_id, self.owners_by_type[owner_type]),
+                username = $('#reassign_owner_select').data().select2.data().text,
                 date_message = (self.on_today) ? '<span title="0"></span>' :
                                 '<span class="label label-warning" title="0">Out of range of filter. Will ' +
                                     'not appear on page refresh.</span>';
@@ -75,10 +58,6 @@ var CaseManagement = function (o) {
             $row.find('td:nth-child(5)').html('Today ' + date_message);
             $checkbox.prop("checked", false).change();
         };
-    };
-
-    self.changeNewOwnerType = function () {
-        self.new_owner_type($('#reassign_owner_type_select').val());
     };
 
     self.changeNewOwner = function () {
@@ -118,13 +97,8 @@ var CaseManagement = function (o) {
     self.updateCaseOwners = function (form) {
         var new_owner = $(form).find('#reassign_owner_select').val(),
             $modal = $('#caseManagementStatusModal'),
-            owner_type;
+            owner_type = getOwnerType(new_owner);
 
-        if (new_owner.startsWith('u')) {
-            owner_type = 'user';
-        } else if (new_owner.startsWith('sg')) {
-            owner_type = 'group';
-        }
         new_owner = new_owner.slice(3);
 
         if (_.isEmpty(new_owner)) {

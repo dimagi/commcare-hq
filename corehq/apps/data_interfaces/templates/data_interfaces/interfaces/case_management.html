@@ -11,8 +11,6 @@
         $.getScript("{% static 'data_interfaces/js/case_management.js' %}")
     ).done(function () {
         var OPTIONS = {
-            users: {{ users|JSON }},
-            groups: {{ groups|JSON }},
             receiverUrl: '{% url "receiver_secure_post" domain %}',
             enddate: '{{ datespan.enddate_param_utc }}',
             webUserID: '{{ request.couch_user.userID }}',
@@ -70,7 +68,7 @@
                         results: (data.results
                             // filter out the generic types (All mobile workers, etc)
                             .filter(function(o) {
-                                return !o.id.startsWith('t') || o.id !== 'project_data' || o.id !== 'all_data';
+                                return !o.id.startsWith('t') && o.id !== 'project_data' && o.id !== 'all_data';
                             })
                             // filter out locations
                             .filter(function(o) { return !o.id.startsWith('l'); })
@@ -88,14 +86,7 @@
     <div id="case-management">
         <div class="row">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
-                    <label for="reassign_owner_type_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
-                    <select name="reassign_owner_type"
-                            id="reassign_owner_type_select"
-                            class="form-control"
-                            data-bind="options: owner_types,
-                                       grabUniqueDefault: selected_owner_types,
-                                       event: {change: changeNewOwnerType}"></select>
-                    <label for="reassign_owner_select" class="inline" data-bind="visible: should_show_owners"> {% trans 'named' %} </label>
+                    <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
                     <span data-bind="visible: should_show_owners">
                         <input type="hidden" name="reassign_owner"
                             id="reassign_owner_select"
@@ -113,7 +104,6 @@
                         disabled="disabled"
                         data-bind="visible: !is_submit_enabled()"
                         class="btn btn-default">{% trans 'Reassign' %}</button>
-                <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
         {{ block.super }}
