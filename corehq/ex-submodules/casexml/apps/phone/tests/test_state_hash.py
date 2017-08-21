@@ -8,12 +8,7 @@ from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
-from casexml.apps.phone.tests.utils import (
-    generate_restore_response,
-    deprecated_generate_restore_payload,
-    create_restore_user,
-    MockDevice,
-)
+from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.tests.utils import use_sql_backend
@@ -36,8 +31,8 @@ class StateHashTest(TestCase):
         delete_all_sync_logs()
 
         # this creates the initial blank sync token in the database
-        device = MockDevice(self.project, self.user)
-        self.sync_log = device.sync(version=V1).log
+        self.device = MockDevice(self.project, self.user)
+        self.device.sync(version=V1)
 
     @classmethod
     def tearDownClass(cls):
@@ -48,60 +43,44 @@ class StateHashTest(TestCase):
     def testEmpty(self):
         empty_hash = CaseStateHash(EMPTY_HASH)
         wrong_hash = CaseStateHash("thisisntright")
-        self.assertEqual(empty_hash, self.sync_log.get_state_hash())
-        response = generate_restore_response(
-            self.project,
-            self.user,
-            self.sync_log.get_id,
-            version=V2
-        )
+        self.assertEqual(empty_hash, self.device.last_sync.log.get_state_hash())
+        response = self.device.get_restore_config().get_response()
         self.assertEqual(200, response.status_code)
 
+        config = self.device.get_restore_config(state_hash=str(wrong_hash))
         try:
-            deprecated_generate_restore_payload(
-                self.project, self.user, self.sync_log.get_id,
-                version=V2, state_hash=str(wrong_hash)
-            )
-            self.fail("Call to generate a payload with a bad hash should fail!")
+            config.get_payload()
         except BadStateException as e:
             self.assertEqual(empty_hash, e.server_hash)
             self.assertEqual(wrong_hash, e.phone_hash)
             self.assertEqual(0, len(e.case_ids))
+        else:
+            self.fail("Call to generate a payload with a bad hash should fail!")
 
-        response = generate_restore_response(self.project, self.user, self.sync_log.get_id, version=V2,
-                                             state_hash=str(wrong_hash))
-        self.assertEqual(412, response.status_code)
+        self.assertEqual(412, config.get_response().status_code)
 
     def testMismatch(self):
-        self.assertEqual(CaseStateHash(EMPTY_HASH), self.sync_log.get_state_hash())
-        
-        c1 = CaseBlock(case_id="abc123", create=True, 
-                       owner_id=self.user.user_id).as_xml()
-        c2 = CaseBlock(case_id="123abc", create=True, 
-                       owner_id=self.user.user_id).as_xml()
-        post_case_blocks([c1, c2],
-                         form_extras={"last_sync_token": self.sync_log.get_id})
-        
-        self.sync_log = get_properly_wrapped_sync_log(self.sync_log.get_id)
+        sync = self.device.last_sync
+        self.assertEqual(CaseStateHash(EMPTY_HASH), sync.log.get_state_hash())
+
+        c1 = CaseBlock(case_id="abc123", create=True, owner_id=self.user.user_id)
+        c2 = CaseBlock(case_id="123abc", create=True, owner_id=self.user.user_id)
+        self.device.post_changes([c1, c2])
+
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
         bad_hash = CaseStateHash("thisisntright")
-        self.assertEqual(real_hash, self.sync_log.get_state_hash())
-        deprecated_generate_restore_payload(
-            self.project, self.user, self.sync_log.get_id,
-            version=V2, state_hash=str(real_hash)
-        )
-        
+        self.assertEqual(real_hash, sync.get_log().get_state_hash())
+        self.device.sync(state_hash=str(real_hash))
+
+        self.device.last_sync = sync
         try:
-            deprecated_generate_restore_payload(
-                self.project, self.user, self.sync_log.get_id,
-                version=V2, state_hash=str(bad_hash))
-            self.fail("Call to generate a payload with a bad hash should fail!")
+            self.device.sync(state_hash=str(bad_hash))
         except BadStateException as e:
             self.assertEqual(real_hash, e.server_hash)
             self.assertEqual(bad_hash, e.phone_hash)
-            self.assertEqual(2, len(e.case_ids))
-            self.assertTrue("abc123" in e.case_ids)
-            self.assertTrue("123abc" in e.case_ids)
+            self.assertEqual(set(e.case_ids), {"abc123", "123abc"})
+        else:
+            self.fail("Call to generate a payload with a bad hash should fail!")
 
 
 @use_sql_backend

@@ -91,23 +91,11 @@ def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
     )
 
 
-def generate_restore_response(project, user, restore_id="", version=V1, state_hash="", items=False):
-    config = RestoreConfig(
-        project=project,
-        restore_user=user,
-        params=RestoreParams(
-            sync_log_id=restore_id,
-            version=version,
-            state_hash=state_hash,
-            include_item_count=items
-        )
-    )
-    return config.get_response()
-
-
 def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):
     """
     Convenience function for use in unit tests
+
+    TODO move to MockDevice since most arguments are members of that class
     """
     from casexml.apps.phone.restore import RestoreState
     from casexml.apps.phone.restore import RestoreParams
@@ -192,7 +180,7 @@ class MockDevice(object):
             self.change_cases(*args, **kw)
         if self.case_blocks:
             # post device case changes
-            token = self.last_sync.log._id if self.last_sync else None
+            token = self.last_sync.restore_id if self.last_sync else None
             form = self.case_factory.post_case_blocks(
                 self.case_blocks,
                 form_extras={"last_sync_token": token},
@@ -200,16 +188,19 @@ class MockDevice(object):
             self.case_blocks = []
             return form
 
+    def get_restore_config(self, **options):
+        for name, value in self.restore_options.items():
+            options.setdefault(name, value)
+        options.setdefault('version', V2)
+        if self.last_sync is not None and 'restore_id' not in options:
+            options['restore_id'] = self.last_sync.restore_id
+        return get_restore_config(self.project, self.user, **options)
+
     def sync(self, **config):
         """Synchronize device with HQ"""
         form = self.post_changes()
         # restore
-        for name, value in self.restore_options.items():
-            config.setdefault(name, value)
-        config.setdefault('version', V2)
-        if self.last_sync is not None and 'restore_id' not in config:
-            config['restore_id'] = self.last_sync.log._id
-        restore_config = get_restore_config(self.project, self.user, **config)
+        restore_config = self.get_restore_config(**config)
         payload = restore_config.get_payload().as_string()
         self.last_sync = SyncResult(restore_config, payload, form)
         return self.last_sync
