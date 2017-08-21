@@ -9,3 +9,14 @@ class IssuerId(models.Model):
     """
     domain = models.CharField(max_length=255, db_index=True)
     user_id = models.CharField(max_length=50, db_index=True, unique=True)
+
+
+class AgencyIdCounter(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    OFFSET = 700000
+
+    @classmethod
+    def get_new_agency_id(cls):
+        counter = AgencyIdCounter.objects.create()
+        return counter.id + cls.OFFSET

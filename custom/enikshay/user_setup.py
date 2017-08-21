@@ -20,7 +20,7 @@ from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_use
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
 from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS, DEFAULT_MOBILE_WORKER_ROLE
-from .models import IssuerId
+from .models import AgencyIdCounter, IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -412,6 +412,18 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
         return super(ENikshayUserLocationDataEditor, self)._make_field(field)
 
 
+class ENikshayLocationForm(LocationForm):
+
+    def save(self, metadata):
+        location = super(ENikshayLocationForm, self).save(metadata)
+        if location.location_type.code in ['pcp', 'pac', 'plc', 'pcc']:
+            if not location.metadata.get('private_sector_agency_id'):
+                private_sector_agency_id = str(AgencyIdCounter.get_new_agency_id())
+                location.metadata['private_sector_agency_id'] = private_sector_agency_id
+                location.name = '%s - %s' % (location.name, private_sector_agency_id)
+                location.save()
+
+
 def get_new_username_and_id(domain, attempts_remaining=3):
     if attempts_remaining <= 0:
         raise AssertionError(
@@ -431,7 +443,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
-    _location_form_class = LocationForm
+    _location_form_class = ENikshayLocationForm
     _location_data_editor = ENikshayUserLocationDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayLocationUserDataEditor
