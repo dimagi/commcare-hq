@@ -751,11 +751,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
-        product_type = product_rate.product.product_type
         return {
-            'name': product_type,
+            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': product_type,
+            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
                     subscription, product_type=SoftwareProductType.ANY
