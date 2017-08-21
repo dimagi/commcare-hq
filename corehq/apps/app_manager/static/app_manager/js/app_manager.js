@@ -338,7 +338,7 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         }
         function resetIndexes($sortable) {
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                 var $sortables = $sortable.children.get(),
                     i;
                 for (i in $sortables) {
@@ -360,7 +360,6 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             }
         }
-        COMMCAREHQ.resetIndexes = resetIndexes;
 
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
