@@ -236,14 +236,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
-        if not self.domain:
-            from_db = 'default' if from_db is None else from_db
-            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-            db_cursor = connections[from_db].cursor()
-            with db_cursor as cursor:
-                cursor.execute(sql_query.format(self.model_class._meta.db_table))
-                return int(fetchone_as_namedtuple(cursor).reltuples)
-        elif self.count_query:
+        if self.count_query:
             query, values = self.count_query
             query = 'EXPLAIN {}'.format(query)
             db_cursor = connections[from_db].cursor()
@@ -255,7 +248,12 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
                         return int(search.group(1))
             return 0
         else:
-            return 0
+            from_db = 'default' if from_db is None else from_db
+            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(sql_query.format(self.model_class._meta.db_table))
+                return int(fetchone_as_namedtuple(cursor).reltuples)
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -310,12 +308,10 @@ class FormReindexAccessor(ReindexAccessor):
     @property
     def count_query(self):
         # deletion clause left out on purpose since it throws off the count estimate
-        domain_clause = "form_table.domain = %s" if self.domain else ""
-        return """SELECT * FROM {table} as form_table
-        WHERE {domain_clause}""".format(
-            table=XFormInstanceSQL._meta.db_table,
-            domain_clause=domain_clause,
-        ), [self.domain] if self.domain else []
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=XFormInstanceSQL._meta.db_table,
+            ), [self.domain]
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -729,12 +725,10 @@ class CaseReindexAccessor(ReindexAccessor):
 
     @property
     def count_query(self):
-        domain_clause = "case_table.domain = %s AND" if self.domain else ""
-        return """SELECT * FROM {table} as case_table
-            WHERE {domain_clause}
-            deleted = %s""".format(
-                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
-        ), [self.domain, False] if self.domain else [False]
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s AND deleted = %s""".format(
+                    table=CommCareCaseSQL._meta.db_table
+            ), [self.domain, False]
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -1212,12 +1206,10 @@ class LedgerReindexAccessor(ReindexAccessor):
 
     @property
     def count_query(self):
-        domain_clause = "domain = %s" if self.domain else ""
-        return """SELECT * FROM {table}
-                WHERE {domain_clause}""".format(
-            table=LedgerValue._meta.db_table,
-            domain_clause=domain_clause
-        ), [self.domain] if self.domain else []
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=LedgerValue._meta.db_table,
+            ), [self.domain]
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
