@@ -131,13 +131,12 @@ CSRF_SOFT_MODE = True
 
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corehq.middleware.SessionBypassMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    'corehq.middleware.SessionlessAuthMiddleware',
+    'corehq.middleware.SessionlessMessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
@@ -155,6 +154,13 @@ MIDDLEWARE = [
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+SESSION_BYPASS_URLS = [
+    r'^/a/{domain}/receiver/',
+    r'^/a/{domain}/phone/heartbeat/',
+    r'^/a/{domain}/phone/keys/',
+    r'^/a/{domain}/apps/download/',
+]
 
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
