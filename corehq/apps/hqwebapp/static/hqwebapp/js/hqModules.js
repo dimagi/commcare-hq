@@ -82,16 +82,14 @@ function hqGlobal(path, dependencies, moduleAccessor) {
                     args[i] = thirdParty[dependency];
                 } else if (dependency in COMMCAREHQ_MODULES) {
                     args[i] = hqImport(dependency);
-                } else if (dependency in COMMCAREHQ_MODULES) {
-                    args[i] = hqImport(dependency);
                 }
             }
-        }
-        if (!(path in COMMCAREHQ_MODULES)) {
-            if (path.match(/\.js$/)) {
-                throw new Error("Error in '" + path + "': module names should not end in .js.");
+            if (!(path in COMMCAREHQ_MODULES)) {
+                if (path.match(/\.js$/)) {
+                    throw new Error("Error in '" + path + "': module names should not end in .js.");
+                }
+                COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
             }
-            COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
         }
     }(moduleAccessor));
 }
