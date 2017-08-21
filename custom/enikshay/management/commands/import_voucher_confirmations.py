@@ -148,6 +148,21 @@ class Command(BaseCommand):
             voucher for voucher_id, voucher in self.all_vouchers_in_domain.items()
             if voucher_id not in voucher_ids_to_update
         ]
+        headers = ['ReadableID', 'URL', 'state', 'voucher_approval_status'] + self.voucher_api_properties
+
+        def make_row(voucher):
+            api_payload = VoucherPayload.create_voucher_payload(voucher)
+            return [
+                voucher.get_case_property(VOUCHER_ID),
+                'https://enikshay.in/a/enikshay/reports/case_data/{}'.format(voucher.case_id),
+                voucher.get_case_property('state'),
+                voucher.get_case_property('voucher_approval_status'),
+            ] + [
+                api_payload[prop] for prop in self.voucher_api_properties
+            ]
+
+        rows = map(make_row, unmodified_vouchers)
+        self.write_csv('updates', headers, rows)
 
     def commit_updates(self, voucher_updates):
         pass
