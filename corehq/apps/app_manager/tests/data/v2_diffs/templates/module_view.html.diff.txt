@@ -55,9 +55,9 @@
 -    {% initial_page_data 'shadow_module_options' shadow_module_options %}
 -    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 -    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
--    {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+-    {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
 -    {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
--    {% registerurl "validate_module_for_build" domain app.id module.id %}
+-    {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -<div class="tabbable">
 -<ul class="nav nav-tabs" id="module-view-tabs">
@@ -81,9 +81,9 @@
 +  {% initial_page_data 'shadow_module_options' shadow_module_options %}
 +  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 +  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-+  {% registerurl "edit_module_detail_screens" domain app.id module.id %}
++  {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
 +  {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
-+  {% registerurl "validate_module_for_build" domain app.id module.id %}
++  {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
 +  <div class="tabbable appmanager-tabs-container">
 +
 +    {% if not module.is_surveys %}
