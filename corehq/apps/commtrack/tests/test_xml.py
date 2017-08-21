@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from casexml.apps.phone.tests.utils import deprecated_synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
@@ -575,7 +575,8 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             restore_user=self.restore_user,
             params=RestoreParams(version=V2),
         )
-        self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
+        self.sync_log_id = deprecated_synclog_id_from_restore_payload(
+            restore_config.get_payload().as_string())
 
     def testStockSyncToken(self):
         # first restore should not have the updated case

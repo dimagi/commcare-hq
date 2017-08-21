@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload, \
-    synclog_id_from_restore_payload, generate_restore_response
+    deprecated_synclog_id_from_restore_payload, generate_restore_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -29,7 +29,7 @@ class TestSyncPurge(TestCase):
         super(TestSyncPurge, cls).tearDownClass()
 
     def test_previous_log_purged(self):
-        initial_synclog_id = synclog_id_from_restore_payload(
+        initial_synclog_id = deprecated_synclog_id_from_restore_payload(
             generate_restore_payload(self.project, self.restore_user, items=True)
         )
 
@@ -38,7 +38,7 @@ class TestSyncPurge(TestCase):
         submit_form_locally(form_xml, self.domain, last_sync_token=initial_synclog_id)
 
         # second sync
-        synclog_id = synclog_id_from_restore_payload(generate_restore_payload(
+        synclog_id = deprecated_synclog_id_from_restore_payload(generate_restore_payload(
             self.project, self.restore_user, restore_id=initial_synclog_id
         ))
 

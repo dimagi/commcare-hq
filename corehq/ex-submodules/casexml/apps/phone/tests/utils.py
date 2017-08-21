@@ -46,13 +46,15 @@ def create_restore_user(
     return user
 
 
-def synclog_id_from_restore_payload(restore_payload):
+def deprecated_synclog_id_from_restore_payload(restore_payload):
+    """DEPRECATED use <MockDevice>.sync().restore_id"""
     element = ElementTree.fromstring(restore_payload)
     return element.findall('{%s}Sync' % SYNC_XMLNS)[0].findall('{%s}restore_id' % SYNC_XMLNS)[0].text
 
 
 def synclog_from_restore_payload(restore_payload):
-    return get_properly_wrapped_sync_log(synclog_id_from_restore_payload(restore_payload))
+    return get_properly_wrapped_sync_log(
+        deprecated_synclog_id_from_restore_payload(restore_payload))
 
 
 def get_exactly_one_wrapped_sync_log():
@@ -243,6 +245,13 @@ class SyncResult(object):
         self.form = form
         self.xml = ElementTree.fromstring(payload)
 
+    @property
+    @memoized
+    def restore_id(self):
+        return (self.xml
+            .findall('{%s}Sync' % SYNC_XMLNS)[0]
+            .findall('{%s}restore_id' % SYNC_XMLNS)[0].text)
+
     def get_log(self):
         """Get the latest sync log from the database
 
@@ -254,10 +263,7 @@ class SyncResult(object):
         `casexml.apps.case.xform.process_cases_with_casedb` and
         `casexml.apps.case.util.update_sync_log_with_checks`.
         """
-        restore_id = (self.xml
-            .findall('{%s}Sync' % SYNC_XMLNS)[0]
-            .findall('{%s}restore_id' % SYNC_XMLNS)[0].text)
-        return get_properly_wrapped_sync_log(restore_id)
+        return get_properly_wrapped_sync_log(self.restore_id)
 
     @property
     @memoized
