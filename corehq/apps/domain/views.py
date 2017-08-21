@@ -684,8 +684,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'name': subscription.next_subscription.plan_version.plan.name,
                         'price': (
                             _("USD %s /month")
-                            % subscription.next_subscription.plan_version.product_rate.monthly_fee)
-                        ,
+                            % subscription.next_subscription.plan_version.product_rate.monthly_fee
+                        ),
                     })
 
                 else:
