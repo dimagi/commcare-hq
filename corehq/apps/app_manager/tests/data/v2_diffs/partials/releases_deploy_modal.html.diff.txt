@@ -84,7 +84,7 @@
                                              </div>
 -                                        <div class="tab-pane">
 +                                        <div class="tab-pane" id="offline-install-tab">
-                                             <div data-bind="ifnot: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0')">
+                                             <div data-bind="ifnot: hqImport('app_manager/js/app_manager').versionGE(build_spec.version(), '2.13.0')">
                                                  Upgrade to CommCare 2.13 to use this feature
                                              </div>
 @@ -166,20 +173,22 @@

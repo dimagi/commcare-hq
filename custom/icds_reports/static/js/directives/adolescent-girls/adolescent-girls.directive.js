@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
@@ -25,7 +25,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.filters = ['month', 'age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of adolescent girls who are enrolled for ICDS services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -53,7 +53,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Total number of adolescent girls who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
             '</div>';
     };
 

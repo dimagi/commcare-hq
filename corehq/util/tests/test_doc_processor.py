@@ -131,10 +131,11 @@ class TestResumableDocsByTypeIterator(TestCase):
 
 
 class SimulateDeleteReindexAccessor(ReindexAccessor):
-    def __init__(self, wrapped_accessor, deleted_doc_ids=None):
+    def __init__(self, wrapped_accessor, deleted_doc_ids=None, limit_db_aliases=None):
         """
         :type wrapped_accessor: ReindexAccessor
         """
+        super(SimulateDeleteReindexAccessor, self).__init__(limit_db_aliases)
         self.deleted_doc_ids = deleted_doc_ids or []
         self.wrapped_accessor = wrapped_accessor
 

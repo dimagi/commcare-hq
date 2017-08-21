@@ -1,7 +1,7 @@
-/* globals hqDefine COMMCAREHQ django hqLayout */
-hqDefine('app_manager/js/app_manager.js', function () {
+/* globals hqDefine django hqLayout hqImport */
+hqDefine('app_manager/js/app_manager', function () {
     'use strict';
-    var module = eventize({});
+    var module = hqImport("style/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        COMMCAREHQ.updateDOM(update);
+        hqImport("style/js/main").updateDOM(update);
     };
 
     module.setupValidation = function (validation_url) {
@@ -102,7 +102,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         _initLangs();
         _initNewItemForm();
 
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             // legacy JS
             $('#form-tabs').show();
             $('#forms').tab('show');
@@ -172,7 +172,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
     };
 
     var _initPublishStatus = function () {
-        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data.js').get('current_app_version_url');
+        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data').get('current_app_version_url');
         var _checkPublishStatus = function () {
             $.ajax({
                 url: currentAppVersionUrl,
@@ -301,7 +301,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 form.submit();
             }
         });
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
@@ -310,7 +310,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     action = $a.data("case-action"),
                     moduleId = $popoverContent.data("module-id"),
                     $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
-                $form.attr("action", hqImport("hqwebapp/js/initial_page_data.js").reverse("new_form", moduleId));
+                $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
                 $form.find("input[name='case_action']").val(action);
                 $form.find("input[name='form_type']").val($a.data("form-type"));
                 if (!$form.data('clicked')) {
@@ -335,7 +335,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
+        $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
         $('.sortable').each(function () {
             var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
             if ($(this).children().not('.sort-disabled').length < min_elem) {
@@ -348,7 +348,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
-        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             $('.js-appnav-drag-module').on('mouseenter', function() {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
@@ -418,7 +418,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
 
-                            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                                 $sortable.sortable('option', 'disabled', true);
@@ -451,7 +451,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = COMMCAREHQ.SaveButton.initForm($form, {
+                button = hqImport("style/js/main").initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -464,15 +464,15 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         }
                         if (data.hasOwnProperty('case_list-show') &&
                                 module.hasOwnProperty('module_view')) {
-                            var requires_case_details = hqImport('app_manager/js/details/screen_config.js').state.requires_case_details;
+                            var requires_case_details = hqImport('app_manager/js/details/screen_config').state.requires_case_details;
                             requires_case_details(data['case_list-show']);
                         }
                     },
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
-                hqImport("app_manager/js/section_changer.js").attachToForm($form);
+            if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
+                hqImport("app_manager/js/section_changer").attachToForm($form);
             }
         });
     };

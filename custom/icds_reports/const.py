@@ -1,5 +1,7 @@
 from django.conf import settings
 
+APP_ID = '361a135293a84427afc947beee1acdfe'
+
 
 TABLEAU_TICKET_URL = settings.TABLEAU_URL_ROOT + "trusted/"
 TABLEAU_VIEW_URL = settings.TABLEAU_URL_ROOT + "#/views/"

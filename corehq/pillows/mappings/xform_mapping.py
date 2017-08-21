@@ -43,6 +43,10 @@ XFORM_MAPPING = {
             "type": "date",
             "format": DATE_FORMATS_STRING
         },
+        "server_modified_on": {
+            "type": "date",
+            "format": DATE_FORMATS_STRING
+        },
         'initial_processing_complete': {"type": "boolean"},
         'partial_submission': {"type": "boolean"},
         "#export_tag": {"type": "string", "index": "not_analyzed"},

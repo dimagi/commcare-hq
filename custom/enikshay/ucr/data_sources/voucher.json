@@ -5,6 +5,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "config": {
@@ -29,7 +30,7 @@
         "configured_indicators": [
             {
                 "comment": null,
-                "create_index": false,
+                "create_index": true,
                 "display_name": "person_owner_id",
                 "datatype": "string",
                 "expression": {
@@ -197,7 +198,7 @@
             },
             {
                 "comment": null,
-                "create_index": false,
+                "create_index": true,
                 "display_name": "date_fulfilled",
                 "datatype": "date",
                 "expression": {

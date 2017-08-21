@@ -23,7 +23,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.pillows.case_search import get_case_search_reindexer
+from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_INDEX,
@@ -266,7 +266,7 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
-        get_case_search_reindexer(DOMAIN).reindex()
+        CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
 

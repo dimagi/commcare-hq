@@ -25,10 +25,12 @@ from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
+from rest_framework.authtoken.models import Token
 from restkit import Resource
 from restkit.errors import Unauthorized
 
@@ -64,9 +66,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
-from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.toggles import any_toggle_enabled, SUPPORT, ANONYMOUS_WEB_APPS_USAGE
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
+from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
     SupervisorException,
@@ -94,7 +97,7 @@ from .forms import (
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
-from .utils import get_celery_stats
+from .utils import get_celery_stats, get_django_user_from_session_key
 
 
 @require_superuser
@@ -1134,3 +1137,68 @@ class WebUserDataView(View):
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True), name='dispatch')
+class SessionDetailsView(View):
+    """
+    Internal API to allow formplayer to get the Django user ID
+    from the session key.
+
+    Authentication is done by HMAC signing of the request body:
+
+        secret = settings.FORMPLAYER_INTERNAL_AUTH_KEY
+        data = '{"session_id": "123"}'
+        digest = base64.b64encode(hmac.new(secret, data, hashlib.sha256).digest())
+        requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
+    """
+    urlname = 'session_details'
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return HttpResponseBadRequest()
+
+        if not data or not isinstance(data, dict):
+            return HttpResponseBadRequest()
+
+        session_id = data.get('sessionId', None)
+        domain = data.get('domain', None)
+        if not session_id:
+            return HttpResponseBadRequest()
+
+        auth_token = None
+        anonymous = False
+        user = get_django_user_from_session_key(session_id)
+        if user:
+            couch_user = CouchUser.get_by_username(user.username)
+            if not couch_user:
+                raise Http404
+        elif domain and ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
+            user, couch_user, auth_token = self._get_anonymous_user_details(domain)
+            anonymous = True
+        else:
+            raise Http404
+
+        return JsonResponse({
+            'username': user.username,
+            'djangoUserId': user.pk,
+            'superUser': user.is_superuser,
+            'authToken': auth_token,
+            'domains': couch_user.domains,
+            'anonymous': anonymous
+        })
+
+    def _get_anonymous_user_details(self, domain):
+        couch_user = CouchUser.get_anonymous_mobile_worker(domain)
+        if not couch_user:
+            raise Http404
+        user = couch_user.get_django_user()
+        try:
+            auth_token = user.auth_token.key
+        except Token.DoesNotExist:
+            raise Http404  # anonymous user must have an auth token
+        return user, couch_user, auth_token

@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -946,11 +947,29 @@
         }
       },
       "attended_children": {
-        "comment": "This expression has logic to deal with a bug in the app.  The app counts an extra child if active is blank and inactive is not since it concats an extra space",
+        "comment": "This expression has logic to deal with a bug in the app.  The app version before 10324 counts an extra child if active is blank and inactive is not since it concats an extra space",
         "type": "conditional",
         "test": {
           "type": "and",
           "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "lt",
+              "property_value": 10324,
+              "expression": {
+                "type": "icds_get_app_version",
+                "datatype": "integer",
+                "app_version_string": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "appVersion",
+                    "#text"
+                  ]
+                }
+              }
+            },
             {
               "type": "boolean_expression",
               "operator": "in",

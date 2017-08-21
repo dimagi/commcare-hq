@@ -5,6 +5,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
+
+from corehq.apps.style.forms.widgets import Select2Ajax
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
@@ -705,6 +707,39 @@ class NewAnonymousMobileWorkerForm(forms.Form):
                 ),
                 location_field,
                 crispy.Hidden('is_anonymous', 'yes'),
+            )
+        )
+
+
+class GroupMembershipForm(forms.Form):
+    selected_ids = forms.Field(
+        label=ugettext_lazy("Group Membership"),
+        required=False,
+        widget=Select2Ajax(multiple=True),
+    )
+
+    def __init__(self, group_api_url, *args, **kwargs):
+        submit_label = kwargs.pop('submit_label', "Update")
+        fieldset_title = kwargs.pop(
+            'fieldset_title', ugettext_lazy("Edit Group Membership"))
+
+        super(GroupMembershipForm, self).__init__(*args, **kwargs)
+        self.fields['selected_ids'].widget.set_url(group_api_url)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                fieldset_title,
+                crispy.Field('selected_ids'),
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', submit_label)
+                )
             )
         )
 

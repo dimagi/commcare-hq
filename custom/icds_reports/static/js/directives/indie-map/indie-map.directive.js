@@ -81,6 +81,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
             height: Datamap.prototype[vm.type].objects[vm.scope].height,
             geographyConfig: {
+                highlightFillColor: '#00f8ff',
+                highlightBorderColor: '#000000',
+                highlightBorderWidth: 1,
+                highlightBorderOpacity: 1,
                 popupTemplate: function(geography, data) {
                     return vm.templatePopup({
                         loc: {
@@ -145,21 +149,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         var html = '<table style="width: 250px;">';
                         if (this.options.rightLegend['average'] !== void(0)) {
                             html += '<tr>';
-                            html += '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
+                            html += '<td style="border-right: 1px solid black; padding-right: 10px; border-bottom: 1px solid black; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
                             if (this.options.rightLegend['average_format'] === 'number') {
-                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
+                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
                             } else {
-                                html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
+                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
                             }
                             html += '<tr/>';
                         }
                         html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-bottom: 10px;">' + this.options.rightLegend['info'] + '</td>';
+                        html += '<td style="border-right: 1px solid black; border-bottom: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px; border-bottom: 1px solid black;">' + this.options.rightLegend['info'] + '</td>';
                         html += '<tr/>';
                         html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
+                        html += '<td style="border-right: 1px solid black; font-size: 2em; "><i class="fa fa-clock-o" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px; padding-top: 5px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
                         html += '<tr/>';
                         html += '</table>';
                         d3.select(this.options.element).append('div')

@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load xforms_extras %}
 
-{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager').updateDOM(data.update); }" %}
 <br />
 <inline-edit params="
     name: 'comment',

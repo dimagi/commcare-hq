@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/supported_languages.js', function () {
+hqDefine('app_manager/js/supported_languages', function () {
     function Language(langcode, languages) {
         var self = this;
         this.langcode = ko.observable(langcode);
@@ -45,7 +45,7 @@ hqDefine('app_manager/js/supported_languages.js', function () {
                 self._seen(true);
             }
         });
-        this.saveButton = COMMCAREHQ.SaveButton.init({
+        this.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your supported languages"),
             save: function () {
                 var message = self.validateGeneral();

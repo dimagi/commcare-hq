@@ -1,6 +1,6 @@
-/* globals hqDefine, ko, $, _, COMMCAREHQ, hqImport */
+/* globals hqDefine, ko, $, _, hqImport */
 
-hqDefine('domain/js/case-search-config.js', function () {
+hqDefine('domain/js/case-search-config', function () {
     'use strict';
 
     var module = {};
@@ -81,12 +81,12 @@ hqDefine('domain/js/case-search-config.js', function () {
             self.change();
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: "You have unchanged settings",
             save: function() {
                 self.saveButton.ajax({
                     type: 'post',
-                    url: hqImport("hqwebapp/js/initial_page_data.js").reverse("case_search_config"),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("case_search_config"),
                     data: JSON.stringify(self.serialize()),
                     dataType: 'json',
                     contentType: "application/json; charset=utf-8",

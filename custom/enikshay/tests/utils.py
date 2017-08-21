@@ -6,7 +6,6 @@ from nose.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-from corehq.apps.locations.models import SQLLocation, LocationType
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from corehq.apps.locations.tests.util import (
     LocationStructure,

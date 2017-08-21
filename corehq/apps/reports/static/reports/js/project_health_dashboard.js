@@ -1,5 +1,5 @@
 /* globals d3, django, moment, nv */
-hqDefine("reports/js/project_health_dashboard.js", function() {
+hqDefine("reports/js/project_health_dashboard", function() {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
         var highPerformingSeries = {
@@ -144,7 +144,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
     }
 
     $(function() {
-        var six_months_reports = hqImport("hqwebapp/js/initial_page_data.js").get("six_months_reports");
+        var six_months_reports = hqImport("hqwebapp/js/initial_page_data").get("six_months_reports");
         setupCharts(six_months_reports);
         setupPopovers();
         setupLineChart(six_months_reports);

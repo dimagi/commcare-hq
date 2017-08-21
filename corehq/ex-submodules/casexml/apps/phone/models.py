@@ -19,7 +19,6 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.xml import V1, V2
-from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.utils import get_restore_response_class
@@ -341,12 +340,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         return self._previous_log_ref
 
     def _cache_key(self, version):
-        from casexml.apps.phone.restore import restore_cache_key
-
-        return restore_cache_key(
-            self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
-            self.user_id,
+        from casexml.apps.phone.restore import restore_payload_path_cache_key
+        return restore_payload_path_cache_key(
+            domain=self.domain,
+            user_id=self.user_id,
             version=version,
             sync_log_id=self._id,
         )

@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -26,7 +26,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: 'Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
+        info: 'Percentage of children at age 3 who have recieved complete immunization as per National Immunization Schedule of India.',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -107,7 +107,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -183,6 +183,15 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

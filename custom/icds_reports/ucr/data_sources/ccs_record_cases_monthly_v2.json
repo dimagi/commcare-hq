@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-test",
     "icds-cas"
   ],
@@ -2587,6 +2588,9 @@
       },
       {
         "column_ids": ["supervisor_id", "month"]
+      },
+      {
+        "column_ids": ["block_id", "month"]
       }
     ]
   }

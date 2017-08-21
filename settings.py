@@ -184,7 +184,6 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'djcelery',
-    'djtables',
     'django_prbac',
     'djangular',
     'captcha',
@@ -407,7 +406,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'djcelery',
-    'djtables',
     'gunicorn',
     'langcodes',
     'raven.contrib.django.raven_compat',
@@ -2107,6 +2105,7 @@ DOMAIN_MODULE_MAP = {
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
+    'icds-dashboard-qa': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

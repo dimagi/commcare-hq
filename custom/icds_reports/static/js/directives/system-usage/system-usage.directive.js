@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;
@@ -58,7 +58,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });

@@ -15,9 +15,8 @@ jsonfield==1.0.3
 dropbox==7.3.1
 defusedxml==0.4.1
 diff-match-patch==20120106
-django-tastypie==0.13.3
+django-tastypie==0.14.0
 djangorestframework==3.5.4
-djtables==0.1.2
 elasticsearch==1.9.0
 #egenix-mx-base==3.2.8
 eulxml==0.18.0
@@ -30,7 +29,7 @@ mock==0.8.0
 openpyxl==2.2.5
 Pillow==2.7.0
 phonenumberslite==7.1.0
-psycopg2==2.6.1
+psycopg2==2.7.3
 psycogreen==1.0
 pycrypto==2.6.1
 py-KISSmetrics==1.0.1
@@ -60,7 +59,7 @@ django-redis==4.2
 redis==2.10.5
 # WeasyPrint==0.20.2
 twilio==5.6.0
-django-countries==4.0
+django-countries==4.6
 reportlab==3.0
 stripe==1.12.2
 django-compressor==2.1
@@ -69,14 +68,14 @@ Pycco==0.3.0
 django-mptt==0.8.7
 jsonpath-rw==1.4.0
 pip>=6.1.1
-git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e23aee3983ec4
+django-transfer==0.4
 Pygments==2.0.2
 tinys3==0.1.12
 django-formtools==2.0
 django-otp==0.3.13
 django-two-factor-auth==1.6.0
 datadog==0.15.0
-django-websocket-redis==0.4.6
+django-websocket-redis==0.5.0
 django-redis-sessions==0.5.6
 SQLAlchemy==1.1.9
 alembic==0.8.6

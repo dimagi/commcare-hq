@@ -7,8 +7,7 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from dateutil.rrule import DAILY
-from django.urls.base import reverse
+from dateutil.rrule import rrule, DAILY, MONTHLY
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -22,7 +21,7 @@ from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.const import LocationTypes
-from dimagi.utils.dates import DateSpan, rrule, MONTHLY
+from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggChildHealthMonthly, AggAwcMonthly, \
     AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView, ChildHealthMonthlyView
@@ -407,7 +406,7 @@ def get_maternal_child_data(config):
                     'redirect': 'underweight_children'
                 },
                 {
-                    'label': _('Wasting (weight-for-height)'),
+                    'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -436,7 +435,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('Stunting (height-for-age)'),
+                    'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
                         "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
@@ -1036,26 +1035,26 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 }
             ],
-            [
-                {
-                    'label': _('AWCs with infantometer'),
-                    'help_text': _('Percentage of AWCs with an Infantometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('AWCs with Stadiometer'),
-                    'help_text': _('Percentage of AWCs with a Stadiometer'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                }
-            ]
+            # [
+            #     {
+            #         'label': _('AWCs with infantometer'),
+            #         'help_text': _('Percentage of AWCs with an Infantometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     },
+            #     {
+            #         'label': _('AWCs with Stadiometer'),
+            #         'help_text': _('Percentage of AWCs with a Stadiometer'),
+            #         'percent': 0,
+            #         'value': 0,
+            #         'all': 0,
+            #         'format': 'percent_and_div',
+            #         'frequency': 'month'
+            #     }
+            # ]
         ]
     }
 
@@ -1467,19 +1466,19 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
     }
 
 
-def get_awc_reports_pse(config, month, two_before, domain):
-
+def get_awc_reports_pse(config, domain):
+    now = datetime.utcnow()
+    last_30_days = (now - timedelta(days=30))
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(datetime(*two_before), datetime(*month)), **config
+        pse_date__range=(last_30_days, now), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
 
     map_data = {}
-    image_data = []
-    tmp_image = []
-    img_count = 0
-    count = 1
+
+    date_to_image_data = {}
+
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
         long = map_row['form_location_long']
@@ -1498,25 +1497,44 @@ def get_awc_reports_pse(config, month, two_before, domain):
                 }
             })
         if image_name:
+            date_str = pse_date.strftime("%d/%m/%Y")
+            date_to_image_data[date_str] = map_row
+
+    images = []
+    tmp_image = []
+
+    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=now)):
+        date_str = date.strftime("%d/%m/%Y")
+        image_data = date_to_image_data.get(date_str)
+
+        if image_data:
+            image_name = image_data['image_name']
+            doc_id = image_data['doc_id']
+
             tmp_image.append({
-                'id': count,
+                'id': idx,
                 'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
-                'date': pse_date.strftime("%d/%m/%Y")
+                'date': date_str
             })
-            img_count += 1
-            count += 1
-            if img_count == 4:
-                img_count = 0
-                image_data.append(tmp_image)
-                tmp_image = []
+        else:
+            tmp_image.append({
+                'id': idx,
+                'image': None,
+                'date': date_str
+            })
+
+        if (idx + 1) % 4 == 0:
+            images.append(tmp_image)
+            tmp_image = []
+
     if tmp_image:
-        image_data.append(tmp_image)
+        images.append(tmp_image)
 
     return {
         'map': {
             'markers': map_data,
         },
-        'images': image_data
+        'images': images
     }
 
 
@@ -1893,6 +1911,7 @@ def get_beneficiary_details(case_id, month):
     beneficiary = {
         'weight': [],
         'height': [],
+        'wfl': []
     }
     for row in data:
         beneficiary.update({
@@ -1903,8 +1922,9 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': int(row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': int(row.age_in_months), 'y': int(row.recorded_height or 0)})
+        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': float(row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': int(row.age_in_months), 'y': float(row.recorded_height or 0)})
+        beneficiary['wfl'].append({'x': float(row.recorded_height or 0), 'y': float(row.recorded_weight or 0)})
     return beneficiary
 
 
@@ -3704,8 +3724,8 @@ def get_immunization_coverage_data_map(config, loc_level):
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "info": _((
-                    "Percentage of children 1 year+ who have recieved complete immunization as per National "
-                    "Immunization Schedule of India required by age 1."
+                    "Percentage of children at age 3 who have recieved complete immunization as per "
+                    "National Immunization Schedule of India."
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4183,8 +4203,9 @@ def get_awcs_covered_data_map(config, loc_level):
             'awcs': awcs,
             'fillKey': 'Launched',
         }
-
         map_data.update({name: row_values})
+
+    total_awcs = sum(map(lambda x: x['awcs'], map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -4197,7 +4218,8 @@ def get_awcs_covered_data_map(config, loc_level):
             "fills": fills,
             "rightLegend": {
                 "info": _((
-                    "Total AWCs that have launched ICDS CAS"
+                    "Total AWCs that have launched ICDS CAS <br />" +
+                    "Number of AWCs launched: %d" % total_awcs
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4431,7 +4453,7 @@ def get_enrolled_children_data_map(config, loc_level):
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
-                    "Total number of pregnant women who are enrolled for ICDS services"
+                    "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -4947,17 +4969,17 @@ def get_adhaar_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 50:
-            row_values.update({'fillKey': '25%-49%'})
-        elif value >= 50:
-            row_values.update({'fillKey': '50%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value > 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-49%': ORANGE})
-    fills.update({'50%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -5195,17 +5217,17 @@ def get_clean_water_data_map(config, loc_level):
         }
         if value < 25:
             row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
+        elif 25 <= value <= 50:
+            row_values.update({'fillKey': '25%-50%'})
+        elif value >= 50:
+            row_values.update({'fillKey': '51%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
-    fills.update({'75%-100%': PINK})
+    fills.update({'25%-50%': ORANGE})
+    fills.update({'51%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [

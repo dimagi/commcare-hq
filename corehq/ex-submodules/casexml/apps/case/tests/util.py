@@ -105,20 +105,24 @@ def check_xml_line_by_line(test_case, expected, actual):
 
 
 def assert_user_has_case(testcase, user, case_id, **kwargs):
+    """DEPRECATED use assertIn(case_id, <MockDevice>.sync().cases)"""
     return assert_user_has_cases(testcase, user, [case_id], return_single=True, **kwargs)
 
 
 def assert_user_has_cases(testcase, user, case_ids, **kwargs):
+    """DEPRECATED use assertTrue(set(case_ids) <= set(<MockDevice>.sync().cases))"""
     case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
                                should_have=True, line_by_line=False, **kwargs)
 
 
 def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
+    """DEPRECATED use assertNotIn(case_id, <MockDevice>.sync().cases)"""
     return assert_user_doesnt_have_cases(testcase, user, [case_id], return_single=True, **kwargs)
 
 
 def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
+    """DEPRECATED use assertFalse(set(case_ids) & set(<MockDevice>.sync().cases))"""
     case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
     return check_user_has_case(testcase, user, case_blocks,
                                should_have=False, **kwargs)
@@ -137,6 +141,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 @contextmanager
 def cached_restore(testcase, user, restore_id="", version=V2,
                    purge_restore_cache=False):
+    """DEPRECATED use <MockDevice>.sync().cases"""
     assert not hasattr(testcase, 'restore_config'), testcase
     assert not hasattr(testcase, 'payload_string'), testcase
 
@@ -158,6 +163,7 @@ def cached_restore(testcase, user, restore_id="", version=V2,
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
+    """DEPRECATED use <MockDevice>.sync().cases"""
 
     try:
         restore_config = testcase.restore_config
@@ -167,7 +173,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
             restore_config = testcase.restore_config
             payload_string = testcase.payload_string
 
-    return check_payload_has_cases(
+    return _check_payload_has_cases(
         testcase=testcase,
         payload_string=payload_string,
         username=user.username,
@@ -180,13 +186,9 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
     )
 
 
-def check_payload_has_case_ids(testcase, payload_string, username, case_ids):
-    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
-    return check_payload_has_cases(testcase, payload_string, username, case_blocks, line_by_line=False)
-
-
-def check_payload_has_cases(testcase, payload_string, username, case_blocks, should_have=True,
+def _check_payload_has_cases(testcase, payload_string, username, case_blocks, should_have=True,
                             line_by_line=True, version=V2, return_single=False, restore_config=None):
+    """DEPRECATED use <MockDevice>.sync().cases"""
 
     if not isinstance(case_blocks, list):
         case_blocks = [case_blocks]

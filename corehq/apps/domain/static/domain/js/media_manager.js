@@ -1,4 +1,4 @@
-hqDefine('domain/js/media_manager.js', function () {
+hqDefine('domain/js/media_manager', function () {
     var MediaFile = function(data) {
         var self = this;
         self.license = ko.observable(data.license || 'public');
@@ -41,7 +41,7 @@ hqDefine('domain/js/media_manager.js', function () {
     };
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         $('#update-media-sharing-settings').koApplyBindings(new MediaManager(
             initial_page_data('media'), initial_page_data('licenses')
         ));

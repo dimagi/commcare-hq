@@ -1,7 +1,7 @@
 /* globals CodeMirror */
-hqDefine('userreports/js/base.js', function() {
+hqDefine('userreports/js/base', function() {
     $(function () {
-        if (!hqImport('hqwebapp/js/initial_page_data.js').get("code_mirror_off")) {
+        if (!hqImport('hqwebapp/js/initial_page_data').get("code_mirror_off")) {
             $('.jsonwidget').each(function () {
                 var elem = this;
                 var codeMirror = CodeMirror.fromTextArea(elem, {

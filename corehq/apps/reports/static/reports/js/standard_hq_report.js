@@ -29,7 +29,7 @@ hqGlobal("reports/js/standard_hq_report", [
             // Custom reports, notably ewsghana and ilsgateway
             standardReport = standardHQReport;
         } else {
-            var ucr = "userreports/js/configurable_report.js";
+            var ucr = "userreports/js/configurable_report";
             if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();

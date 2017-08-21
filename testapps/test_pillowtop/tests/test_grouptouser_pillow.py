@@ -9,6 +9,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \
@@ -222,6 +223,6 @@ class GroupsToUserReindexerTest(TestCase):
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
-        call_command('ptop_reindexer_v2', 'groups-to-user', noinput=True)
+        reindex_and_clean('groups-to-user')
         self.es.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])

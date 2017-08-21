@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ, hqGlobal */
+/* globals hqDefine, hqImport */
 hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
@@ -37,7 +37,7 @@ hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
                 var report_labels = $filterRange.data('reportLabels');
-                var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+                var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
                     report_labels, separator,
@@ -139,7 +139,7 @@ hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            hqImport("style/js/main").transformHelpTemplate($(this), true);
         });
     };
 

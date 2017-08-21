@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
 function AwcOpenedYesterdayController($routeParams, $location, storageService, systemUsageService) {
@@ -15,7 +15,7 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     vm.filtersData = $location.search();
 
     vm.label = "AWCs Opened Yesterday";
-    
+
     vm.steps = {
         'map': {route: '/awc_opened/map', label: 'MapView'},
         'chart': {route: '/awc_opened/chart', label: 'ChartView'},

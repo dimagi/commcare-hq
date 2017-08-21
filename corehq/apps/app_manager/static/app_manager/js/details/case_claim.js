@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/details/case_claim.js", function() {
+hqDefine("app_manager/js/details/case_claim", function() {
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
                                     searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = this,

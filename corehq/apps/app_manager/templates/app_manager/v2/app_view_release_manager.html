@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block app_view_tabs %}
+  {% initial_page_data 'ab_test' ab_test %}
   {% initial_page_data 'app_id' app.id %}
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
@@ -32,6 +33,7 @@
   {% initial_page_data 'langs' app.langs %}
   {% initial_page_data 'latest_build_id' latest_build_id %}
   {% initial_page_data 'sms_contacts' sms_contacts %}
+  {% initial_page_data 'confirm' confirm %}
   {% registerurl "app_data_json" app.domain '---' %}
   {% registerurl "paginate_releases" domain app.id %}
   {% registerurl "delete_copy" domain app.id %}

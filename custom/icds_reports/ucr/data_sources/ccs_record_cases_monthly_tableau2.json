@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",

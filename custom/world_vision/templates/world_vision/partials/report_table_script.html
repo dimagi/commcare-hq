@@ -2,7 +2,7 @@
     <script type="text/javascript">
         $(function () {
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
+                hqImport("style/js/main").transformHelpTemplate($(this), true);
             });
         });
         {% if report_table and report_table.datatables %}

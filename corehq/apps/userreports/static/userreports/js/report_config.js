@@ -1,10 +1,10 @@
-/* global _, $, COMMCAREHQ, django */
+/* global _, $, django */
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
-    var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
-    var PropertyListItem = hqImport('userreports/js/builder_view_models.js').PropertyListItem;
-    var constants = hqImport('userreports/js/constants.js');
+    var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
+    var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
+    var constants = hqImport('userreports/js/constants');
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
         PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
@@ -133,6 +133,15 @@ var reportBuilder = function () {  // eslint-disable-line
         });
 
         self.previewChart = ko.observable(false);
+        self.tooManyChartCategoriesWarning = ko.observable(false);
+        self.noChartForConfigWarning = ko.observable(false);
+
+        self.previewChart.subscribe(function() {
+            // Clear these warnings before revealing the chart div. This prevents them from flickering.
+            // The warnings will be update in _renderChartPreview
+            self.tooManyChartCategoriesWarning(false);
+            self.noChartForConfigWarning(false);
+        });
 
         /**
          * Convert the data source properties passed through the template
@@ -142,7 +151,7 @@ var reportBuilder = function () {  // eslint-disable-line
          * @private
          */
         var _getSelectableProperties = function (dataSourceIndicators) {
-            var utils = hqImport('userreports/js/utils.js');
+            var utils = hqImport('userreports/js/utils');
             if (self._optionsContainQuestions(dataSourceIndicators)) {
                 return _.compact(_.map(
                     dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
@@ -155,7 +164,7 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var _getSelectableReportColumnOptions = function(reportColumnOptions, dataSourceIndicators) {
-            var utils = hqImport('userreports/js/utils.js');
+            var utils = hqImport('userreports/js/utils');
             if (self._optionsContainQuestions(dataSourceIndicators)) {
                 return _.compact(_.map(
                     reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
@@ -294,7 +303,7 @@ var reportBuilder = function () {  // eslint-disable-line
             if (self.reportType() === "map" && mapSpec) {
                 self.displayMapPreview(true);
                 mapSpec.mapboxAccessToken = self._mapboxAccessToken;
-                var render = hqImport('reports_core/js/maps.js').render;
+                var render = hqImport('reports_core/js/maps').render;
                 render(mapSpec, aaData, $("#map-preview-container"));
             } else {
                 self.displayMapPreview(false);
@@ -302,15 +311,17 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         self._renderChartPreview = function (chartSpecs, aaData) {
-            var charts = hqImport('reports_core/js/charts.js');
+            var charts = hqImport('reports_core/js/charts');
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 if (aaData.length > 25) {
-                    $("#chart-warning").removeClass("hide");
+                    self.tooManyChartCategoriesWarning(true);
                     charts.clear($("#chart-container"));
                 } else {
-                    $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, aaData, $("#chart"));
                 }
+            } else {
+                self.noChartForConfigWarning(true);
+                charts.clear($("#chart"));
             }
         };
 
@@ -368,10 +379,10 @@ var reportBuilder = function () {  // eslint-disable-line
             };
         };
 
-        var button = COMMCAREHQ.SaveButton;
+        var button = hqImport("style/js/main").SaveButton;
         if (config['existingReport']) {
-            button = COMMCAREHQ.makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from COMMCAREHQ.SaveButton
+            button = hqImport("style/js/main").makeSaveButton({
+                // The SAVE text is the only thing that distringuishes this from SaveButton
                 SAVE: django.gettext("Update Report"),
                 SAVING: django.gettext("Saving..."),
                 SAVED: django.gettext("Saved"),
@@ -397,7 +408,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 }
             },
         });
-        if (config['hasReportBuilderAccess']) {
+        if (!config['previewMode']) {
             self.saveButton.ui.appendTo($("#saveButtonHolder"));
         }
 

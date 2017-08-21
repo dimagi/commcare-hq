@@ -1,8 +1,10 @@
 from StringIO import StringIO
+from collections import OrderedDict
 
 import pytz
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.functions import datetime
+from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import EQ, OR, BETWEEN
@@ -1575,284 +1577,445 @@ class ProgressReport(object):
         self.config = config
 
     @property
-    def table_config(self):
+    def new_table_config(self):
         return [
             {
-                'section_title': 'Nutrition Status of Children',
-                'rows_config': [
+                'category': 'maternal_and_child_nutrition',
+                'title': 'Maternal and Child Nutrition',
+                'sections': [
                     {
-                        'header': 'Weighing Efficiency (Children <5 weighed)',
-                        'slug': 'status_weighed',
-                        'average': []
-                    },
-                    {
-                        'header': 'Total number of unweighed children',
-                        'slug': 'nutrition_status_unweighed',
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 0 - 5 years who are severely underweight (weight-for-age)',
-                        'slug': 'severely_underweight',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 0-5 years who are moderately underweight (weight-for-age)',
-                        'slug': 'moderately_underweight',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 0-5 years who are at normal weight-for-age',
-                        'slug': 'status_normal',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)',
-                        'slug': 'wasting_severe',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': (
-                            'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'
-                        ),
-                        'slug': 'wasting_moderate',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 6 - 60 months with normal weight-for-height',
-                        'slug': 'wasting_normal',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
-                        'slug': 'stunting_severe',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
-                        'slug': 'stunting_moderate',
-                        'average': [],
-                        'reverseColors': 'true',
-                    },
-                    {
-                        'header': 'Children from 6 - 60 months with normal height-for-age',
-                        'slug': 'stunting_normal',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children 1 year+ who have recieved complete immunization required by age 1.',
-                        'slug': 'fully_immunized',
-                        'average': []
+                        'section_title': 'Nutrition Status of Children',
+                        'slug': 'nutrition_status_of_children',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Weighing Efficiency (Children <5 weighed)',
+                                'slug': 'status_weighed',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Total number of unweighed children',
+                                'slug': 'nutrition_status_unweighed',
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0 - 5 years who are '
+                                          'severely underweight (weight-for-age)',
+                                'slug': 'severely_underweight',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0-5 years who '
+                                          'are moderately underweight (weight-for-age)',
+                                'slug': 'moderately_underweight',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0-5 years who are at normal weight-for-age',
+                                'slug': 'status_normal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with severe acute '
+                                          'malnutrition (weight-for-height)',
+                                'slug': 'wasting_severe',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': (
+                                    'Children from 6 - 60 months with moderate '
+                                    'acute malnutrition (weight-for-height)'
+                                ),
+                                'slug': 'wasting_moderate',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with normal weight-for-height',
+                                'slug': 'wasting_normal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
+                                'slug': 'stunting_moderate',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with normal height-for-age',
+                                'slug': 'stunting_normal',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'Child Feeding Indicators',
-                'rows_config': [
+                'category': 'interventions',
+                'title': 'Interventions',
+                'sections': [
                     {
-                        'header': 'Children who were put to the breast within one hour of birth.',
-                        'slug': 'breastfed_at_birth',
-                        'average': []
+                        'section_title': 'Nutrition Status of Children',
+                        'slug': 'nutrition_status_of_children',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children 1 year+ who have recieved complete '
+                                          'immunization required by age 1.',
+                                'slug': 'fully_immunized',
+                                'average': []
+                            }
+                        ]
                     },
                     {
-                        'header': 'Infants 0-6 months of age who are fed exclusively with breast milk.',
-                        'slug': 'exclusively_breastfed',
-                        'average': []
-                    },
-                    {
-                        'header': (
-                            "Children between 6 - 8 months given timely introduction to solid, "
-                            "semi-solid or soft food."
-                        ),
-                        'slug': 'cf_initiation',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 24 months complementary feeding',
-                        'slug': 'complementary_feeding',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 24 months consuming at least 4 food groups',
-                        'slug': 'diet_diversity',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 24 months consuming adequate food',
-                        'slug': 'diet_quantity',
-                        'average': []
-                    },
-                    {
-                        'header': 'Children from 6 - 24 months whose mothers handwash before feeding',
-                        'slug': 'handwashing',
-                        'average': []
+                        'section_title': 'Nutrition Status of Pregnant Women',
+                        'slug': 'nutrition_status_of_pregnant_women',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women with tetanus completed',
+                                'slug': 'tetanus_complete',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 1 by delivery',
+                                'slug': 'anc_1',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 2 by delivery',
+                                'slug': 'anc_2',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 3 by delivery',
+                                'slug': 'anc_3',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 4 by delivery',
+                                'slug': 'anc_4',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'Nutrition Status of Pregnant Woment',
-                'rows_config': [
+                'category': 'behavior_change',
+                'title': 'Behavior Change',
+                'sections': [
                     {
-                        'header': 'Pregnant women who are anemic',
-                        'slug': 'severe_anemic',
-                        'average': [],
-                        'reverseColors': 'true',
+                        'section_title': 'Child Feeding Indicators',
+                        'slug': 'child_feeding_indicators',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children who were put to the breast within one hour of birth.',
+                                'slug': 'breastfed_at_birth',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Infants 0-6 months of age who '
+                                          'are fed exclusively with breast milk.',
+                                'slug': 'exclusively_breastfed',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': (
+                                    "Children between 6 - 8 months given timely introduction to solid, "
+                                    "semi-solid or soft food."
+                                ),
+                                'slug': 'cf_initiation',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months complementary feeding',
+                                'slug': 'complementary_feeding',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months consuming at least 4 food groups',
+                                'slug': 'diet_diversity',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months consuming adequate food',
+                                'slug': 'diet_quantity',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months '
+                                          'whose mothers handwash before feeding',
+                                'slug': 'handwashing',
+                                'average': []
+                            }
+                        ]
                     },
                     {
-                        'header': 'Pregnant women with tetanus completed',
-                        'slug': 'tetanus_complete',
-                        'average': []
-                    },
-                    {
-                        'header': 'Pregnant women who received ANC 1 by delivery',
-                        'slug': 'anc_1',
-                        'average': []
-                    },
-                    {
-                        'header': 'Pregnant women who received ANC 2 by delivery',
-                        'slug': 'anc_2',
-                        'average': []
-                    },
-                    {
-                        'header': 'Pregnant women who received ANC 3 by delivery',
-                        'slug': 'anc_3',
-                        'average': []
-                    },
-                    {
-                        'header': 'Pregnant women who received ANC 4 by delivery',
-                        'slug': 'anc_4',
-                        'average': []
-                    },
-                    {
-                        'header': 'Women resting during pregnancy',
-                        'slug': 'resting',
-                        'average': []
-                    },
-                    {
-                        'header': 'Women eating an extra meal during pregnancy',
-                        'slug': 'extra_meal',
-                        'average': []
-                    },
-                    {
-                        'header': (
-                            "Pregnant women in 3rd trimester counselled on immediate and exclusive "
-                            "breastfeeding during home visit"
-                        ),
-                        'slug': 'trimester',
-                        'average': []
+                        'section_title': 'Nutrition Status of Pregnant Women',
+                        'slug': 'nutrition_status_of_pregnant_women',
+                        "rows_config": [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Women resting during pregnancy',
+                                'slug': 'resting',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Women eating an extra meal during pregnancy',
+                                'slug': 'extra_meal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': (
+                                    "Pregnant women in 3rd trimester counselled "
+                                    "on immediate and exclusive "
+                                    "breastfeeding during home visit"
+                                ),
+                                'slug': 'trimester',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
-            # {
-            #     'section_title': 'System Usage',
-            #     'rows_config': [
-            #         {'header': 'Number of AWCs Open in Month', 'slug': 'awc_num_open'},
-            #         {'header': 'Number of Household Registration Forms', 'slug': 'usage_num_hh_reg'},
-            #         {'header': 'Number of Pregnancy Registration Forms', 'slug': 'usage_num_add_pregnancy'},
-            #         {'header': 'Number of PSE Forms with Photo', 'slug': 'usage_num_pse_with_image'},
-            #         {'header': 'Home Visit - Number of Birth Preparedness Forms', 'slug': 'num_bp'},
-            #         {'header': 'Home Visit - Number of Delivery Forms', 'slug': 'usage_num_delivery'},
-            #         {'header': 'Home Visit - Number of PNC Forms', 'slug': 'usage_num_pnc'},
-            #         {'header': 'Home Visit - Number of EBF Forms', 'slug': 'usage_num_ebf'},
-            #         {'header': 'Home Visit - Number of CF Forms', 'slug': 'usage_num_cf'},
-            #         {'header': 'Number of GM Forms', 'slug': 'usage_num_gmp'},
-            #         {'header': 'Number of THR forms', 'slug': 'usage_num_thr'},
-            #         {'header': 'Number of Due List forms', 'slug': 'due_list'},
-            #     ]
-            # },
             {
-                'section_title': 'Demographics',
-                'rows_config': [
-                    {'header': 'Number of Households', 'slug': 'cases_household'},
-                    {'header': 'Total Number of Household Members', 'slug': 'cases_person_all'},
+                'category': 'water_sanitation_and_hygiene',
+                'title': 'Water Sanitation And Hygiene',
+                "sections": [
                     {
-                        'header': 'Total number of members enrolled at AWC',
-                        'slug': 'cases_person'
-                    },
-                    {'header': 'Adhaar seeded beneficiaries', 'slug': 'aadhar', 'format': 'percent'},
-                    {'header': 'Total pregnant women ', 'slug': 'cases_ccs_pregnant_all'},
-                    {'header': 'Total pregnant women enrolled for servics at AWC', 'slug': 'cases_ccs_pregnant'},
-                    {'header': 'Total lactating women', 'slug': 'cases_ccs_lactating_all'},
-                    {
-                        'header': 'Total lactating women registered for services at AWC',
-                        'slug': 'cases_ccs_lactating'
-                    },
-                    {'header': 'Total children (0-6 years)', 'slug': 'cases_child_health_all'},
-                    {
-                        'header': 'Total chldren (0-6 years) enrolled for ICDS services',
-                        'slug': 'cases_child_health'
-                    },
-                    {'header': 'Children (0-28 days)  enrolled for ICDS services', 'slug': 'zero'},
-                    {'header': 'Children (28 days - 6 months)  enrolled for ICDS services', 'slug': 'one'},
-                    {'header': 'Children (6 months - 1 year)  enrolled for ICDS services', 'slug': 'two'},
-                    {'header': 'Children (1 year - 3 years)  enrolled for ICDS services', 'slug': 'three'},
-                    {'header': 'Children (3 years - 6 years)  enrolled for ICDS services', 'slug': 'four'},
-                    {
-                        'header': 'Adolescent girls (11-14 years)',
-                        'slug': 'cases_person_adolescent_girls_11_14_all'
-                    },
-                    # {
-                    #     'header': 'Adolescent girls (15-18 years)',
-                    #     'slug': 'cases_person_adolescent_girls_15_18_all'
-                    # },
-                    {
-                        'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
-                        'slug': 'cases_person_adolescent_girls_11_14'
-                    },
-                    # {
-                    #     'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
-                    #     'slug': 'cases_person_adolescent_girls_15_18'
-                    # }
+                        'section_title': 'AWC Infrastructure',
+                        'slug': 'awc_infrastructure',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with clean drinking water',
+                                'slug': 'clean_water',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with functional toilet',
+                                'slug': 'functional_toilet',
+                                'average': []
+                            }
+                        ]
+                    }
                 ]
             },
             {
-                'section_title': 'AWC Infrastructure',
-                'rows_config': [
+                'category': 'demographics',
+                'title': 'Demographics',
+                'sections': [
                     {
-                        'header': 'AWCs with clean drinking water',
-                        'slug': 'clean_water',
-                        'average': []
-                    },
-                    {
-                        'header': 'AWCs with functional toilet',
-                        'slug': 'functional_toilet',
-                        'average': []
-                    },
-                    {
-                        'header': 'AWCs with medicine kit',
-                        'slug': 'medicine_kits',
-                        'average': []
-                    },
-                    {
-                        'header': 'AWCs with weighing scale for infants',
-                        'slug': 'baby_weighing_scale',
-                        'average': []
-                    },
-                    {
-                        'header': 'AWCs with weighing scale for mother and child',
-                        'slug': 'adult_weighing_scale',
-                        'average': []
+                        'section_title': 'Demographics',
+                        'slug': 'demographics',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Number of Households',
+                                'slug': 'cases_household'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total Number of Household Members',
+                                'slug': 'cases_person_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total number of members enrolled at AWC',
+                                'slug': 'cases_person'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adhaar seeded beneficiaries',
+                                'slug': 'aadhar',
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total pregnant women ',
+                                'slug': 'cases_ccs_pregnant_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total pregnant women enrolled for servics at AWC',
+                                'slug': 'cases_ccs_pregnant'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total lactating women',
+                                'slug': 'cases_ccs_lactating_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total lactating women registered for services at AWC',
+                                'slug': 'cases_ccs_lactating'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total children (0-6 years)',
+                                'slug': 'cases_child_health_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total chldren (0-6 years) enrolled for ICDS services',
+                                'slug': 'cases_child_health'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (0-28 days)  enrolled for ICDS services',
+                                'slug': 'zero'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (28 days - 6 months)  enrolled for ICDS services',
+                                'slug': 'one'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (6 months - 1 year)  enrolled for ICDS services',
+                                'slug': 'two'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (1 year - 3 years)  enrolled for ICDS services',
+                                'slug': 'three'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (3 years - 6 years)  enrolled for ICDS services',
+                                'slug': 'four'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (11-14 years)',
+                                'slug': 'cases_person_adolescent_girls_11_14_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (15-18 years)',
+                                'slug': 'cases_person_adolescent_girls_15_18_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
+                                'slug': 'cases_person_adolescent_girls_11_14'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
+                                'slug': 'cases_person_adolescent_girls_15_18'
+                            }
+                        ]
                     },
                 ]
             }
         ]
 
-    def get_data(self):
-        health_monthly = AggChildHealthMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        record_monthly = AggCCSRecordMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        awc_monthly = AggAWCMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        all_data = []
-        for idx in range(0, len(health_monthly)):
-            data = health_monthly[idx]
-            data.update(record_monthly[idx])
-            data.update(awc_monthly[idx])
-            all_data.append(data)
+    @property
+    def data_sources(self):
+        return {
+            'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            ),
+            'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            ),
+            'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            )
+        }
 
-        config = self.table_config
+    def _get_collected_sections(self, config_list):
+        sections_by_slug = OrderedDict()
+        for config in config_list:
+            for section in config['sections']:
+                slug = section['slug']
+                if slug not in sections_by_slug:
+                    sections_by_slug[slug] = {
+                        'slug': slug,
+                        'section_title': section['section_title'],
+                        'rows_config': section['rows_config']
+                    }
+                else:
+                    sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
+        return sections_by_slug.values()
+
+    def _get_needed_data_sources(self, config):
+        needed_data_sources = set()
+        for section in config['sections']:
+            for row in section['rows_config']:
+                needed_data_sources.add(row['data_source'])
+        return needed_data_sources
+
+    def _get_all_data(self, data_sources):
+        all_data = []
+        first_data_source = data_sources[0]
+        for idx in range(0, len(first_data_source)):
+            data = first_data_source[idx]
+            for other_data_source in data_sources[1:]:
+                data.update(other_data_source[idx])
+            all_data.append(data)
+        return all_data
+
+    @property
+    def config_list(self):
+        return filter(
+            lambda c: c['category'] == self.config['category'] or self.config['category'] == 'all',
+            self.new_table_config
+        )
+
+    def get_data(self):
+        config_list = self.config_list
+        if not config_list:
+            raise Http404()
+
+        if len(config_list) == 1:
+            config = config_list[0]
+        else:
+            config = {
+                'title': 'All',
+                'sections': self._get_collected_sections(config_list)
+            }
+
+        needed_data_sources = self._get_needed_data_sources(config)
+
+        data_sources = [
+            data_source.get_data()
+            for k, data_source in self.data_sources.iteritems()
+            if k in needed_data_sources
+        ]
+
+        all_data = self._get_all_data(data_sources)
 
         months = [
             dt.strftime("%b %Y") for dt in rrule(
@@ -1870,7 +2033,7 @@ class ProgressReport(object):
                     month_data = row_data
                     data_for_month = True
 
-            for section in config:
+            for section in config['sections']:
                 section['months'] = months
                 for row in section['rows_config']:
                     if 'data' not in row:

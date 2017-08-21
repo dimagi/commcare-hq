@@ -1,4 +1,4 @@
-function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId) {
+function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -8,6 +8,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
     vm.selectedLocationId = selectedLocationId || ALL_OPTION;
     vm.hierarchy = hierarchy;
     vm.selectedLocations = selectedLocations;
+    vm.showMessage = showMessage;
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
@@ -139,6 +140,68 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         vm.selectedLocations = new Array(vm.maxLevel);
     };
 
+    vm.open = function () {
+        var modalInstance = $uibModal.open({
+            animation: vm.animationsEnabled,
+            ariaLabelledBy: 'modal-title',
+            ariaDescribedBy: 'modal-body',
+            templateUrl: 'locationModalContent.html',
+            controller: LocationModalController,
+            controllerAs: '$ctrl',
+            resolve: {
+                location_id: function () {
+                    return vm.location_id;
+                },
+                selectedLocationId: function () {
+                    return vm.selectedLocationId;
+                },
+                hierarchy: function () {
+                    return vm.hierarchy;
+                },
+                selectedLocations: function () {
+                    return vm.selectedLocations;
+                },
+                locationsCache: function () {
+                    return vm.locationsCache;
+                },
+                maxLevel: function () {
+                    return vm.maxLevel;
+                },
+                showMessage: function () {
+                    return vm.isOpenModal;
+                },
+            },
+        });
+
+        modalInstance.result.then(function (selectedLocations) {
+            vm.selectedLocations = selectedLocations;
+            vm.currentLevel = selectedLocationIndex();
+            vm.selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+
+            if (selectedLocationIndex() >= 0) {
+                vm.selectedLocationId = vm.selectedLocation.location_id;
+                vm.location_id = vm.selectedLocationId;
+                var locations = vm.getLocationsForLevel(selectedLocationIndex());
+                var loc = _.filter(locations, function (loc) {
+                    return loc.location_id === vm.selectedLocationId;
+                });
+                $location.search('location_name', loc[0]['name']);
+                $location.search('location_id', vm.selectedLocationId);
+                $location.search('selectedLocationLevel', selectedLocationIndex());
+            } else if (selectedLocationIndex() === -1) {
+                $location.search('location_name', '');
+                $location.search('location_id', '');
+                $location.search('selectedLocationLevel', '');
+                vm.location_id = 'all';
+            }
+            storageService.setKey('search', $location.search());
+            if (selectedLocationIndex() === 4) {
+                $location.path('awc_reports');
+            }
+            $scope.$emit('filtersChange');
+        });
+    };
+
     var init = function() {
         if (vm.selectedLocationId && vm.selectedLocationId !== 'all') {
             locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
@@ -174,24 +237,31 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                     vm.selectedLocations[levelOfSelectedLocation] = childSelected;
                     levelOfSelectedLocation -= 1;
                 }
+
+
+                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                    vm.open();
+                }
             });
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
                 vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
                 vm.selectedLocations[0] = ALL_OPTION;
+
+                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                    vm.open();
+                }
             });
         }
+
     };
-
-    init();
-
 
     vm.getPlaceholder = function() {
         var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
 
         if (!selectedLocation) {
-            return 'Search by Location';
+            return 'Location';
         } else {
             var locationTypeName = selectedLocation.location_type_name;
             return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
@@ -232,65 +302,6 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         });
     };
 
-    vm.open = function () {
-        var modalInstance = $uibModal.open({
-            animation: vm.animationsEnabled,
-            ariaLabelledBy: 'modal-title',
-            ariaDescribedBy: 'modal-body',
-            templateUrl: 'locationModalContent.html',
-            controller: LocationModalController,
-            controllerAs: '$ctrl',
-            resolve: {
-                location_id: function () {
-                    return vm.location_id;
-                },
-                selectedLocationId: function () {
-                    return vm.selectedLocationId;
-                },
-                hierarchy: function () {
-                    return vm.hierarchy;
-                },
-                selectedLocations: function () {
-                    return vm.selectedLocations;
-                },
-                locationsCache: function () {
-                    return vm.locationsCache;
-                },
-                maxLevel: function () {
-                    return vm.maxLevel;
-                },
-            },
-        });
-
-        modalInstance.result.then(function (selectedLocations) {
-            vm.selectedLocations = selectedLocations;
-            vm.currentLevel = selectedLocationIndex();
-            vm.selectedLocation = vm.selectedLocations[selectedLocationIndex()];
-
-            if (selectedLocationIndex() >= 0) {
-                vm.selectedLocationId = vm.selectedLocation.location_id;
-                vm.location_id = vm.selectedLocationId;
-                var locations = vm.getLocationsForLevel(selectedLocationIndex());
-                var loc = _.filter(locations, function (loc) {
-                    return loc.location_id === vm.selectedLocationId;
-                });
-                $location.search('location_name', loc[0]['name']);
-                $location.search('location_id', vm.selectedLocationId);
-                $location.search('selectedLocationLevel', selectedLocationIndex());
-            } else if (selectedLocationIndex() === -1) {
-                $location.search('location_name', '');
-                $location.search('location_id', '');
-                $location.search('selectedLocationLevel', '');
-                vm.location_id = 'all';
-            }
-            storageService.setKey('search', $location.search());
-            if (selectedLocationIndex() === 4) {
-                $location.path('awc_reports');
-            }
-            $scope.$emit('filtersChange');
-        });
-    };
-
     $scope.$watch(function () {
         return $location.search();
     }, function (newValue, oldValue) {
@@ -309,18 +320,21 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             }
         }
     }, true);
+
+    init();
 }
 
 LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService'];
-LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId'];
+LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
-    var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {
             selectedLocationId: '=',
             selectedLocations: '=',
+            isOpenModal: '=?',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'location_filter'),

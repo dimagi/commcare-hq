@@ -47,6 +47,9 @@ PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION = "private_sector_episode_pending_r
 WEIGHT_BAND = 'weight_band'
 LAST_VOUCHER_CREATED_BY_ID = "bets_last_voucher_created_by_id"
 NOTIFYING_PROVIDER_USER_ID = "bets_notifying_provider_user_id"
+FIRST_PRESCRIPTION_VOUCHER_REDEEMED = 'bets_first_prescription_voucher_redeemed'
+FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE = 'bets_first_prescription_voucher_redeemed_date'
+BETS_DATE_PRESCRIPTION_THRESHOLD_MET = 'bets_date_prescription_threshold_met'
 
 CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
@@ -189,3 +192,6 @@ USERTYPE_DISPLAYS = {
     'ppia-do': 'District Reviewer',
     'dto': 'District TB Officer',
 }
+
+FDC_PRESCRIPTION_DAYS_THRESHOLD = 168
+NON_FDC_PRESCRIPTION_DAYS_THRESHOLD = 180

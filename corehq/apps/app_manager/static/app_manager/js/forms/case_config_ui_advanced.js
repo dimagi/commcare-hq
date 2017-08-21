@@ -1,7 +1,7 @@
-/*globals $, COMMCAREHQ, _, ko */
-hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
+/*globals $, _, ko */
+hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
     'use strict';
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var DEFAULT_CONDITION = function (type) {
         return {
             type: type,
@@ -40,7 +40,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -52,7 +52,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
@@ -213,7 +213,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
                 });
 
                 $('.hq-help-template').each(function () {
-                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                    hqImport("style/js/main").transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -666,7 +666,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            COMMCAREHQ.transformHelpTemplate($(this), true);
+                            hqImport("style/js/main").transformHelpTemplate($(this), true);
                         });
                     });
                 });
@@ -1256,7 +1256,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
     };
 
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
             var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),
@@ -1265,7 +1265,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
             caseConfig.init();
 
             if (initial_page_data("schedule_options")) {
-                var VisitScheduler = hqImport('app_manager/js/visit_scheduler.js');
+                var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
                 var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));

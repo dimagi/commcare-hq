@@ -6,13 +6,15 @@ function MonthModalController($location, $uibModalInstance) {
 
     vm.months = [];
     vm.years = [];
+    vm.monthsCopy = [];
 
     window.angular.forEach(moment.months(), function(key, value) {
-        vm.months.push({
+        vm.monthsCopy.push({
             name: key,
             id: value + 1,
         });
     });
+
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
@@ -24,12 +26,27 @@ function MonthModalController($location, $uibModalInstance) {
     vm.selectedMonth = $location.search()['month'] !== void(0) ? $location.search()['month'] : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? $location.search()['year'] : new Date().getFullYear();
 
+    vm.months = _.filter(vm.monthsCopy, function(month) {
+        return month.id <= new Date().getMonth() + 1;
+    });
+
     vm.apply = function() {
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,
         });
     };
+
+    vm.onSelectYear = function (item) {
+        if (item.id === new Date().getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function(month) {
+                return month.id <= new Date().getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else {
+            vm.months = vm.monthsCopy;
+        }
+    }
 
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
@@ -47,7 +64,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         if (month && year) {
             return formattedMonth + ' ' + year;
         } else {
-            return 'Search by Month/Year';
+            return 'Month/Year';
         }
     };
 
@@ -76,10 +93,11 @@ MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageSer
 MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
-    var url = hqImport('hqwebapp/js/initial_page_data.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {
+            isOpenModal: '=?',
         },
         bindToController: true,
         require: 'ngModel',

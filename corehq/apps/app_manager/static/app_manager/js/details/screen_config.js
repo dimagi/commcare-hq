@@ -1,8 +1,8 @@
-/*globals $, _, eventize, COMMCAREHQ, DOMPurify */
+/*globals $, _, DOMPurify, hqDefine, hqImport */
 
-hqDefine('app_manager/js/details/screen_config.js', function () {
+hqDefine('app_manager/js/details/screen_config', function () {
     var module = {},
-        uiElement = hqImport('style/js/ui-element.js');
+        uiElement = hqImport('style/js/ui-element');
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
@@ -283,7 +283,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     column extras: enum, late_flag
                 */
                 var that = this;
-                eventize(this);
+                hqImport("style/js/main").eventize(this);
                 this.original = JSON.parse(JSON.stringify(col));
 
                 // Set defaults for normal (non-tab) column attributes
@@ -326,7 +326,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                 ]).val(this.original.model);
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field)
-                   ? COMMCAREHQ.icons.PAPERCLIP : null);
+                   ? 'fa fa-paperclip' : null);
                 this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
@@ -346,7 +346,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             lang = that.screen.langs[i];
                             if (that.original.header[lang]) {
                                 visibleVal = that.original.header[lang]
-                                    + hqImport('style/js/ui_elements/ui-element-langcode-button.js').LANG_DELIN
+                                    + hqImport('style/js/ui_elements/ui-element-langcode-button').LANG_DELIN
                                     + lang;
                                 break;
                             }
@@ -413,7 +413,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
-                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config.js').GraphConfigurationUiElement;
+                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
                 this.graph_extra = new GraphConfigurationUiElement({
                     childCaseTypes: this.screen.childCaseTypes,
                     fixtures: this.screen.fixtures,
@@ -585,7 +585,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             function Screen(spec, config, options) {
                 var i, column, model, property, header,
                     that = this, columns;
-                eventize(this);
+                hqImport("style/js/main").eventize(this);
                 this.type = spec.type;
                 this.saveUrl = options.saveUrl;
                 this.config = config;
@@ -615,12 +615,12 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
                 this.showCaseTileColumn = ko.computed(function () {
-                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                    return that.useCaseTiles() === "yes" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_TILE');
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
                 this.customVariablesViewModel = {
-                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
                     xml: ko.observable(spec[this.columnKey].custom_variables || ""),
                 };
                 this.customVariablesViewModel.xml.subscribe(function(){
@@ -694,7 +694,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     that.initColumnAsColumn(this.columns()[i]);
                 }
 
-                this.saveButton = COMMCAREHQ.SaveButton.init({
+                this.saveButton = hqImport("style/js/main").initSaveButton({
                     unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function () {
                         that.save();
@@ -776,7 +776,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             data: this.serialize(),
                             dataType: 'json',
                             success: function (data) {
-                                var app_manager = hqImport('app_manager/js/app_manager.js');
+                                var app_manager = hqImport('app_manager/js/app_manager');
                                 app_manager.updateDOM(data.update);
                             }
                         });
@@ -967,11 +967,11 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                             fixtures: _.keys(spec.fixture_columns_by_type),
                             containsSortConfiguration: columnType == "short",
                             containsParentConfiguration: columnType == "short",
-                            containsFixtureConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('FIXTURE_CASE_SELECTION')),
+                            containsFixtureConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType == "short",
-                            containsCaseListLookupConfiguration: (columnType == "short" && COMMCAREHQ.toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType == "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP')),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
-                            containsSearchConfiguration: (columnType === "short" && COMMCAREHQ.toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
+                            containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
                             allowsEmptyColumns: columnType == 'long'
@@ -1002,21 +1002,21 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                         }
                     }
                     this.customXMLViewModel = {
-                        enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML'),
+                        enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML'),
                         xml: ko.observable(spec.state.short.custom_xml || "")
                     };
                     this.customXMLViewModel.xml.subscribe(function(v){
                         that.shortScreen.saveButton.fire("change");
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
-                    this.caseListLookup = hqImport("app_manager/js/details/case_list_callout.js").caseListLookupViewModel(
+                    this.caseListLookup = hqImport("app_manager/js/details/case_list_callout").caseListLookupViewModel(
                         $case_list_lookup_el,
                         spec.state.short,
                         spec.lang,
                         this.shortScreen.saveButton
                     );
                     // Set up case search
-                    this.search = hqImport("app_manager/js/details/case_claim.js").searchViewModel(
+                    this.search = hqImport("app_manager/js/details/case_claim").searchViewModel(
                         spec.searchProperties || [],
                         spec.includeClosed,
                         spec.defaultProperties,
@@ -1027,14 +1027,14 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                     );
                 }
                 if (spec.state.long !== undefined) {
-                    var printModule = hqImport("app_manager/js/details/case_detail_print.js"),
+                    var printModule = hqImport("app_manager/js/details/case_detail_print"),
                         printRef = printModule.getPrintRef(),
                         printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
                     this.printTemplateReference = _.extend(printRef, {
                         removePrintTemplate: function() {
                             $.post(
-                                hqImport("hqwebapp/js/initial_page_data.js").reverse("hqmedia_remove_detail_print_template"),
+                                hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_detail_print_template"),
                                 {
                                     module_unique_id: spec.moduleUniqueId,
                                 },
@@ -1077,14 +1077,14 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
             {value: "distance", label: gettext('Distance from current location')}
         ];
 
-        if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "picture", label: gettext('Picture')},
                 {value: "audio", label: gettext('Audio')}
             );
         }
 
-        var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
+        var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
         if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "enum-image", label: gettext('Icon')}
