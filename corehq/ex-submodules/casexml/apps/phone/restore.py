@@ -661,6 +661,15 @@ class RestoreConfig(object):
             device_id=self.params.device_id,
         )
 
+    @property
+    def initial_restore_payload_path_cache(self):
+        return RestorePayloadPathCache(
+            domain=self.domain,
+            user_id=self.restore_user.user_id,
+            sync_log_id='',
+            device_id=self.params.device_id,
+        )
+
     def validate(self):
         try:
             self.restore_state.validate_state()
@@ -670,6 +679,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
+        self.delete_initial_cached_payload_if_necessary()
         self.delete_cached_payload_if_necessary()
 
         cached_response = self.get_cached_response()
@@ -809,6 +819,15 @@ class RestoreConfig(object):
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.restore_payload_path_cache.get_value():
             self.restore_payload_path_cache.invalidate()
+
+    def delete_initial_cached_payload_if_necessary(self):
+        if self.sync_log:
+            # Restores are usually cached by there sync token
+            # but initial restores don't have a sync token,
+            # so they're indistinguishable from each other.
+            # Once a user syncs with a sync token, we're sure their initial sync is stale,
+            # so delete it to avoid a stale payload if they (say) wipe the phone and sync again
+            self.initial_restore_payload_path_cache.invalidate()
 
     def _record_timing(self, status):
         timing = self.timing_context
