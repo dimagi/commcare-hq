@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
     response_class = get_restore_response_class(domain)
-    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
+    # to invalidate all restore cache keys, increment the number below
+    hashable_key = '8-{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
         response_class=response_class.__name__,
         prefix=prefix,
         user=user_id,
