@@ -28,6 +28,10 @@ hqDefine('export/js/models', function () {
         self.schemaProgressText = ko.observable(gettext('Process'));
         self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
+        if (self.include_errors) {
+            self.initiallyIncludeErrors = ko.observable(self.include_errors());
+        }
+
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
