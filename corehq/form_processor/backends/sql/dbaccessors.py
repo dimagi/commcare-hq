@@ -262,12 +262,17 @@ class FormReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
-            [received_on_since, last_id, limit],
-            using=from_db
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = XFormInstanceSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as form_table
+        WHERE (form_table.received_on, form_table.id) > (%s, %s)
+        ORDER BY form_table.received_on, form_table.id
+        LIMIT %s;""".format(
+                table=XFormInstanceSQL._meta.db_table,
+            ),
+            [received_on_since, last_id, limit]
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
 
 
@@ -1125,12 +1130,13 @@ class LedgerReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         modified_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
+        results = LedgerValue.objects.using(from_db).raw(
+            """SELECT * FROM {table}
+        WHERE (last_modified, id) > (%s, %s)
+        ORDER BY last_modified, id
+        LIMIT %s""".format(table=LedgerValue._meta.db_table),
             [modified_since, last_id, limit],
-            using=from_db
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
 
     def doc_to_json(self, doc):
