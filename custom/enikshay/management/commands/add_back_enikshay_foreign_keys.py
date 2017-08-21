@@ -61,8 +61,10 @@ class Command(BaseCommand):
 
     log_file = None
 
-    def log(self, text):
+    def log(self, text, indent=0):
         self.log_file.write(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S: "))
+        for i in range(indent):
+            self.log_file.write('    ')
         self.log_file.write(text)
         self.log_file.write('\n')
 
@@ -78,43 +80,43 @@ class Command(BaseCommand):
     def try_to_add_fk(self, function, db_alias):
         try:
             function(db_alias)
-            self.log("         foreign key added")
+            self.log("foreign key added", 2)
         except Exception as e:
-            self.log("         error adding foreign key: %s" % e)
+            self.log("error adding foreign key: %s" % e, 2)
 
     def handle_locations_sqllocation(self):
-        self.log("         handling locations_sqllocation")
+        self.log("handling locations_sqllocation", 2)
         if foreign_key_exists('default', 'locations_sqllocation', 'parent_id'):
-            self.log("         foreign key exists")
+            self.log("foreign key exists", 2)
         else:
-            self.log("         foreign key DOES NOT exist")
+            self.log("foreign key DOES NOT exist", 2)
             if not self.check_only:
                 self.try_to_add_fk(add_locations_sqllocation_parent_fk, 'default')
 
     def handle_form_processor_xformattachmentsql(self, db_alias):
-        self.log("         handling form_processor_xformattachmentsql")
+        self.log("handling form_processor_xformattachmentsql", 2)
         if foreign_key_exists(db_alias, 'form_processor_xformattachmentsql', 'form_id'):
-            self.log("         foreign key exists")
+            self.log("foreign key exists", 2)
         else:
-            self.log("         foreign key DOES NOT exist")
+            self.log("foreign key DOES NOT exist", 2)
             if not self.check_only:
                 self.try_to_add_fk(add_form_processor_xformattachmentsql_form_id_fk, db_alias)
 
     def handle_form_processor_commcarecaseindexsql(self, db_alias):
-        self.log("         handling form_processor_commcarecaseindexsql")
+        self.log("handling form_processor_commcarecaseindexsql", 2)
         if foreign_key_exists(db_alias, 'form_processor_commcarecaseindexsql', 'case_id'):
-            self.log("         foreign key exists")
+            self.log("foreign key exists", 2)
         else:
-            self.log("         foreign key DOES NOT exist")
+            self.log("foreign key DOES NOT exist", 2)
             if not self.check_only:
                 self.try_to_add_fk(add_form_processor_commcarecaseindexsql_case_id_fk, db_alias)
 
     def handle_form_processor_casetransaction(self, db_alias):
-        self.log("         handling form_processor_casetransaction")
+        self.log("handling form_processor_casetransaction", 2)
         if foreign_key_exists(db_alias, 'form_processor_casetransaction', 'case_id'):
-            self.log("         foreign key exists")
+            self.log("foreign key exists", 2)
         else:
-            self.log("         foreign key DOES NOT exist")
+            self.log("foreign key DOES NOT exist", 2)
             if not self.check_only:
                 self.try_to_add_fk(add_form_processor_casetransaction_case_id_fk, db_alias)
 
@@ -126,11 +128,11 @@ class Command(BaseCommand):
             self.log("running script to add back missing foreign keys")
             self.log("check_only is: %s" % check_only)
 
-            self.log("     handling db: default")
+            self.log("handling db: default", 1)
             self.handle_locations_sqllocation()
 
             for db_alias in get_db_aliases_for_partitioned_query():
-                self.log("     handling db: %s" % db_alias)
+                self.log("handling db: %s" % db_alias, 1)
                 self.handle_form_processor_xformattachmentsql(db_alias)
                 self.handle_form_processor_commcarecaseindexsql(db_alias)
                 self.handle_form_processor_casetransaction(db_alias)
