@@ -9,6 +9,8 @@ from couchforms.models import UnfinishedSubmissionStub
 from hqscripts.generic_queue import GenericEnqueuingOperation
 from corehq.form_processor.tasks import reprocess_submission
 
+ENQUEUING_TIMEOUT = 14 * 86400    # 14 days
+
 
 def _record_datadog_metrics():
     count = UnfinishedSubmissionStub.objects.count()
@@ -22,13 +24,16 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
         return "submission_reprocessing_queue"
 
     def get_enqueuing_timeout(self):
-        return 30  # minutes
+        return ENQUEUING_TIMEOUT
+
+    def get_fetching_interval(self):
+        return 5 * 60
 
     @classmethod
     def get_items_to_be_processed(cls, utcnow):
         _record_datadog_metrics()
-        day_ago = utcnow - timedelta(days=1)
-        queue_filter = Q(saved=False) & (Q(date_queued__isnull=True) | Q(date_queued__lte=day_ago))
+        queued_threshold = utcnow - timedelta(seconds=ENQUEUING_TIMEOUT)
+        queue_filter = Q(saved=False) & (Q(date_queued__isnull=True) | Q(date_queued__lte=queued_threshold))
         query = UnfinishedSubmissionStub.objects.filter(queue_filter).order_by('timestamp')
         stub_ids = list(query.values_list('id', flat=True)[:1000])
         if stub_ids:
