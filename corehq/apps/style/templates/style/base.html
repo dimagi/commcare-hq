@@ -215,6 +215,12 @@
         {% endif %}
         {% endif %}
 
+        <script>
+            // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+            // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+            window.USE_REQUIREJS = {% if request.use_requirejs %}true{% else %}false{% endif %};
+        </script>
+
         {% if less_debug %}
             <!--
                 This is not inside RequireJS because it has no dependencies

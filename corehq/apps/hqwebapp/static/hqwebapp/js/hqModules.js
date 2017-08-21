@@ -46,7 +46,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }
 
     (function(factory) {
-        if (typeof define === 'function' && define.amd) {
+        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {
             if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
