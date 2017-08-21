@@ -58,17 +58,11 @@ def deprecated_synclog_from_restore_payload(restore_payload):
         deprecated_synclog_id_from_restore_payload(restore_payload))
 
 
-def generate_restore_payload(project, user, restore_id="", version=V1, state_hash="",
+def deprecated_generate_restore_payload(project, user, restore_id="", version=V1, state_hash="",
                              items=False, overwrite_cache=False,
                              force_cache=False, **kw):
     """
-    Gets an XML payload suitable for OTA restore.
-
-        user:          who the payload is for
-        restore_id:    last sync token for this user
-        version:       the restore API version
-
-        returns: the xml payload of the sync operation
+    DEPRECATED use result of <MockDevice>.sync() to inspect restore payloads
     """
     return get_restore_config(
         project, user, restore_id, version, state_hash, items, overwrite_cache,

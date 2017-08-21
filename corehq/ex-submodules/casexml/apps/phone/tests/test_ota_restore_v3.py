@@ -3,7 +3,6 @@ import os
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
 from casexml.apps.case.xml import V3
-from casexml.apps.phone.tests.utils import generate_restore_payload
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.tests.util import (

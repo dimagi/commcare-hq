@@ -10,7 +10,7 @@ from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms
 from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import (
     generate_restore_response,
-    generate_restore_payload,
+    deprecated_generate_restore_payload,
     create_restore_user,
     MockDevice,
 )
@@ -58,7 +58,7 @@ class StateHashTest(TestCase):
         self.assertEqual(200, response.status_code)
 
         try:
-            generate_restore_payload(
+            deprecated_generate_restore_payload(
                 self.project, self.user, self.sync_log.get_id,
                 version=V2, state_hash=str(wrong_hash)
             )
@@ -86,14 +86,15 @@ class StateHashTest(TestCase):
         real_hash = CaseStateHash("409c5c597fa2c2a693b769f0d2ad432b")
         bad_hash = CaseStateHash("thisisntright")
         self.assertEqual(real_hash, self.sync_log.get_state_hash())
-        generate_restore_payload(
+        deprecated_generate_restore_payload(
             self.project, self.user, self.sync_log.get_id,
             version=V2, state_hash=str(real_hash)
         )
         
         try:
-            generate_restore_payload(self.project, self.user, self.sync_log.get_id,
-                                     version=V2, state_hash=str(bad_hash))
+            deprecated_generate_restore_payload(
+                self.project, self.user, self.sync_log.get_id,
+                version=V2, state_hash=str(bad_hash))
             self.fail("Call to generate a payload with a bad hash should fail!")
         except BadStateException as e:
             self.assertEqual(real_hash, e.server_hash)

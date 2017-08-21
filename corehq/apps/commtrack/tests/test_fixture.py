@@ -7,7 +7,11 @@ from django.test import TestCase
 
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.tests.utils import generate_restore_payload, create_restore_user, call_fixture_generator
+from casexml.apps.phone.tests.utils import (
+    call_fixture_generator
+    create_restore_user,
+    deprecated_generate_restore_payload,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.products.fixtures import product_fixture_generator
@@ -152,7 +156,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         self._initialize_product_names(len(product_list))
 
         fixture_original = call_fixture_generator(product_fixture_generator, user)[1]
-        generate_restore_payload(self.domain_obj, user)
+        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             expected_xml,
             ElementTree.tostring(fixture_original)
@@ -171,7 +175,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no products synced
         fixture_pre_change = call_fixture_generator(product_fixture_generator, user, last_sync=first_sync)
-        generate_restore_payload(self.domain_obj, user)
+        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
             fixture_pre_change,
@@ -257,7 +261,7 @@ class FixtureTest(TestCase, TestXmlMixin):
 
         fixture_original = call_fixture_generator(program_fixture_generator, user)
 
-        generate_restore_payload(self.domain_obj, user)
+        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertXmlEqual(
             program_xml,
             ElementTree.tostring(fixture_original[0])
@@ -276,7 +280,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         # second sync is before any changes are made, so there should
         # be no programs synced
         fixture_pre_change = call_fixture_generator(program_fixture_generator, user, last_sync=first_sync)
-        generate_restore_payload(self.domain_obj, user)
+        deprecated_generate_restore_payload(self.domain_obj, user)
         self.assertEqual(
             [],
             fixture_pre_change,
