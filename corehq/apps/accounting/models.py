@@ -2260,7 +2260,7 @@ class BillingRecord(BillingRecordBase):
     def _add_product_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
             invoice=self.invoice,
-            line_item__product_rate__product__product_type__isnull=False,
+            line_item__product_rate__isnull=False,
         )
 
         subscription_credits = BillingRecord._get_total_balance(
