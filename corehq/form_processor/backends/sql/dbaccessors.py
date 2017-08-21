@@ -266,10 +266,12 @@ class FormReindexAccessor(ReindexAccessor):
         # using raw query to avoid having to expand the tuple comparison
         results = XFormInstanceSQL.objects.using(from_db).raw(
             """SELECT * FROM {table} as form_table
-        WHERE (form_table.received_on, form_table.id) > (%s, %s)
+        WHERE state & {deleted_state} = {deleted_state} AND
+        (form_table.received_on, form_table.id) > (%s, %s)
         ORDER BY form_table.received_on, form_table.id
         LIMIT %s;""".format(
                 table=XFormInstanceSQL._meta.db_table,
+                deleted_state=XFormInstanceSQL.DELETED
             ),
             [received_on_since, last_id, limit]
         )
