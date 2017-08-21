@@ -114,6 +114,9 @@ class Command(BaseCommand):
         return {
             voucher.get_case_property(VOUCHER_ID): voucher
             for voucher in self.accessor.iter_cases(voucher_ids)
+            if voucher.get_case_property('state') in (
+                'approved', 'paid', 'rejected', 'expired', 'cancelled', 'canceled')
+            or voucher.get_case_property('voucher_approval_status') in ('approved', 'partially_approved')
         }
 
     def write_csv(self, filename, headers, rows):
