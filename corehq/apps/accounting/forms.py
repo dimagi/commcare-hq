@@ -1048,10 +1048,6 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         label="Search for or Create Product"
     )
-    new_product_type = forms.ChoiceField(
-        required=False,
-        choices=SoftwareProductType.CHOICES,
-    )
     product_rates = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -1230,10 +1226,6 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
                 hqcrispy.B3MultiField(
                     "Product Type",
-                    InlineField(
-                        'new_product_type',
-                        data_bind="value: productRates.rateType",
-                    ),
                     crispy.Div(
                         StrictButton(
                             "Create Product",
