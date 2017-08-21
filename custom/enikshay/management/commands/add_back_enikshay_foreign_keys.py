@@ -4,11 +4,18 @@ from django.core.management.base import BaseCommand
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
-def foreign_key_exists(db_alias, table_name, foreign_key_name):
+def foreign_key_exists(db_alias, table_name, foreign_column_key_name):
     cursor = connections[db_alias].cursor()
     cursor.execute(
-        "SELECT 1 FROM pg_constraint WHERE conname = %s AND conrelid = %s::regclass",
-        [foreign_key_name, table_name]
+        "SELECT 1 "
+        "FROM information_schema.table_constraints A "
+        "JOIN information_schema.key_column_usage B "
+        "ON A.constraint_name = B.constraint_name "
+        "AND A.table_name = B.table_name "
+        "WHERE A.table_name = %s "
+        "AND B.column_name = %s"
+        "AND A.constraint_type = 'FOREIGN KEY' ",
+        [table_name, foreign_column_key_name]
     )
     return cursor.fetchone() is not None
 
@@ -77,7 +84,7 @@ class Command(BaseCommand):
 
     def handle_locations_sqllocation(self):
         self.log("         handling locations_sqllocation")
-        if foreign_key_exists('default', 'locations_sqllocation', 'locations_sqlloc_parent_id_2ffc03fb_fk_locations_sqllocation_id'):
+        if foreign_key_exists('default', 'locations_sqllocation', 'parent_id'):
             self.log("         foreign key exists")
         else:
             self.log("         foreign key DOES NOT exist")
@@ -86,7 +93,7 @@ class Command(BaseCommand):
 
     def handle_form_processor_xformattachmentsql(self, db_alias):
         self.log("         handling form_processor_xformattachmentsql")
-        if foreign_key_exists(db_alias, 'form_processor_xformattachmentsql', 'for_form_id_d184240c_fk_form_processor_xforminstancesql_form_id'):
+        if foreign_key_exists(db_alias, 'form_processor_xformattachmentsql', 'form_id'):
             self.log("         foreign key exists")
         else:
             self.log("         foreign key DOES NOT exist")
@@ -95,7 +102,7 @@ class Command(BaseCommand):
 
     def handle_form_processor_commcarecaseindexsql(self, db_alias):
         self.log("         handling form_processor_commcarecaseindexsql")
-        if foreign_key_exists(db_alias, 'form_processor_commcarecaseindexsql', 'form_case_id_be4cb9e1_fk_form_processor_commcarecasesql_case_id'):
+        if foreign_key_exists(db_alias, 'form_processor_commcarecaseindexsql', 'case_id'):
             self.log("         foreign key exists")
         else:
             self.log("         foreign key DOES NOT exist")
@@ -104,7 +111,7 @@ class Command(BaseCommand):
 
     def handle_form_processor_casetransaction(self, db_alias):
         self.log("         handling form_processor_casetransaction")
-        if foreign_key_exists(db_alias, 'form_processor_casetransaction', 'form_case_id_0328b100_fk_form_processor_commcarecasesql_case_id'):
+        if foreign_key_exists(db_alias, 'form_processor_casetransaction', 'case_id'):
             self.log("         foreign key exists")
         else:
             self.log("         foreign key DOES NOT exist")
