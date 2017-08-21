@@ -105,15 +105,6 @@ def generate_restore_response(project, user, restore_id="", version=V1, state_ha
     return config.get_response()
 
 
-def has_cached_payload(sync_log, version):
-    return bool(get_redis_default_cache().get(restore_payload_path_cache_key(
-        domain=sync_log.domain,
-        user_id=sync_log.user_id,
-        version=version,
-        sync_log_id=sync_log._id,
-    )))
-
-
 def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):
     """
     Convenience function for use in unit tests
@@ -270,6 +261,12 @@ class SyncResult(object):
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
 
-    def has_cached_payload(self, *args, **kw):
+    def has_cached_payload(self, version):
         """Check if a cached payload exists for this sync result"""
-        return has_cached_payload(self.log, *args, **kw)
+        key = restore_payload_path_cache_key(
+            domain=self.config.domain,
+            user_id=self.config.restore_user.user_id,
+            sync_log_id=self.restore_id,
+            version=version,
+        )
+        return bool(get_redis_default_cache().get(key))
