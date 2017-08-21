@@ -1,6 +1,6 @@
 from unittest import skip
 from casexml.apps.case.mock import CaseBlock, CaseStructure
-from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
+from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest, PARENT_TYPE
 from casexml.apps.phone.tests.utils import (
     synclog_from_restore_payload,
     generate_restore_payload,
@@ -24,7 +24,7 @@ REFERRED_TO_GROUP = 'other_group'
 REFERRAL_TYPE = 'referral'
 
 
-class SyncPerformanceTest(SyncBaseTest):
+class SyncPerformanceTest(DeprecatedBaseSyncTest):
     """
     Tests the interaction of two users in sync mode doing various things
     """
