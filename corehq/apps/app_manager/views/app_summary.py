@@ -114,17 +114,22 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 def _get_name_map(app):
     name_map = {}
     for module in app.get_modules():
-        keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+        keywords = {'domain': app.domain, 'app_id': app.id, 'module_unique_id': module.unique_id}
         module_url = reverse('view_module', kwargs=keywords)
+
         name_map[module.unique_id] = {
             'module_name': module.name,
             'module_url': module_url,
         }
         for form in module.get_forms():
-            keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+
+            keywords = {'domain': app.domain, 'app_id': app.id,
+                        'module_unique_id': module.unique_id}
             module_url = reverse('view_module', kwargs=keywords)
-            keywords['form_id'] = form.id
+            del keywords['module_unique_id']
+            keywords['form_unique_id'] = form.unique_id
             form_url = reverse('view_form', kwargs=keywords)
+
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,
