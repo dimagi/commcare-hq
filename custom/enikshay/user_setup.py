@@ -422,6 +422,7 @@ class ENikshayLocationForm(LocationForm):
                 location.metadata['private_sector_agency_id'] = private_sector_agency_id
                 location.name = '%s - %s' % (location.name, private_sector_agency_id)
                 location.save()
+        return location
 
 
 def get_new_username_and_id(domain, attempts_remaining=3):
