@@ -1777,7 +1777,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = ['gender', 'age'];
-    vm.dtOptions = DTOptionsBuilder.newOptions().withOption('scrollX', '100%');
+    vm.dtOptions = DTOptionsBuilder
+        .newOptions()
+        .withOption('scrollY', '300px')
+        .withOption('scrollX', '100%')
+        .withOption('scrollCollapse', true)
+        .withFixedColumns({
+            leftColumns: 1,
+        });
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
@@ -2062,7 +2069,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         pse: { route: "/awc_reports/pse", label: "Pre School Education"},
         maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
-        beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
+        beneficiary: { route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
     };
 
     vm.getDisableIndex = function () {

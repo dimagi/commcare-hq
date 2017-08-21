@@ -13,20 +13,8 @@
                 </span>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-7">
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
-        </div>
-        <div class="col-md-1">
-            <div class="row">
-                <div class="col-md-3" style="margin-right: 5px;">
-                    <print-report></print-report>
-                </div>
-                <div class="col-md-3">
-                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
-                     popover-placement="left"
-                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
-                </div>
-            </div>
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">

@@ -81,6 +81,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
             height: Datamap.prototype[vm.type].objects[vm.scope].height,
             geographyConfig: {
+                highlightFillColor: '#00f8ff',
+                highlightBorderColor: '#000000',
+                highlightBorderWidth: 1,
+                highlightBorderOpacity: 1,
                 popupTemplate: function(geography, data) {
                     return vm.templatePopup({
                         loc: {

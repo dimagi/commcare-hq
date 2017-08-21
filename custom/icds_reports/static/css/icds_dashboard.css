@@ -544,3 +544,11 @@ circle {
     font-size: 16px;
     font-weight: bold;
 }
+
+.DTFC_LeftBodyLiner > table > thead:first-child {
+    display: none;
+}
+
+table.no-footer {
+    margin: 0 !important;
+}
