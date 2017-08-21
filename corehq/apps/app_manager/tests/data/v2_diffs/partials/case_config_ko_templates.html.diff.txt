@@ -264,14 +264,14 @@
 -    <div style="margin-right: 1em;"
 -         class="btn btn-info refresh-form-questions pull-right"
 -         data-bind="click: function(data, event){
--                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
+-                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
 -                    analytics.usage('Refresh case management', 'Button Clicked');
 -                    }">
 +  <p class="pull-right">
 +    <button class="btn btn-info refresh-form-questions"
 +            type="button"
 +             data-bind="click: function(data, event){
-+                        refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
++                        refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
 +                        analytics.usage('Refresh case management', 'Button Clicked');
 +                        }">
          <i class="fa fa-refresh"></i>
