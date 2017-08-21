@@ -3678,7 +3678,7 @@ def get_auto_filter_configurations():
         AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
                          _("The user's case sharing group")),
         AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
-        AutoFilterConfig('location_ids', _filter_by_location_ids, _("The user's ALL assigned locations")),
+        AutoFilterConfig('location_ids', _filter_by_location_ids, _("All of the user's assigned locations")),
         AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
                          _("The parent location of the user's assigned location")),
         AutoFilterConfig('username', _filter_by_username, _("The user's username")),
