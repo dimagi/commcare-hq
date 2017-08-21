@@ -140,99 +140,6 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         vm.selectedLocations = new Array(vm.maxLevel);
     };
 
-    var init = function() {
-        if (vm.selectedLocationId && vm.selectedLocationId !== 'all') {
-            locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
-                var locations = data.locations;
-
-                var selectedLocation = data.selected_location;
-
-                var locationsGrouppedByParent = _.groupBy(locations, function(location) {
-                    return location.parent_id || 'root';
-                });
-
-                for (var parentId in locationsGrouppedByParent) {
-                    if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        vm.locationsCache[parentId] = [ALL_OPTION].concat(locationsGrouppedByParent[parentId]);
-                    }
-                }
-
-                initHierarchy();
-
-                var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
-                });
-                vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
-                vm.onSelect(selectedLocation, levelOfSelectedLocation);
-
-                levelOfSelectedLocation -= 1;
-
-                while(levelOfSelectedLocation >= 0) {
-                    var childSelectedId = vm.selectedLocations[levelOfSelectedLocation + 1];
-                    var childSelected = _.find(locations, function(location) {
-                        return location.location_id === childSelectedId.parent_id;
-                    });
-                    vm.selectedLocations[levelOfSelectedLocation] = childSelected;
-                    levelOfSelectedLocation -= 1;
-                }
-            });
-        } else {
-            initHierarchy();
-            locationsService.getRootLocations().then(function(data) {
-                vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
-                vm.selectedLocations[0] = ALL_OPTION;
-            });
-        }
-    };
-
-    init();
-
-
-    vm.getPlaceholder = function() {
-        var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
-
-        if (!selectedLocation) {
-            return 'Search by Location';
-        } else {
-            var locationTypeName = selectedLocation.location_type_name;
-            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
-        }
-    };
-
-    var resetLevelsBelow = function(level) {
-        for (var i = level + 1; i <= vm.maxLevel; i++) {
-            vm.hierarchy[i].selected = null;
-            vm.selectedLocations[i] = null;
-        }
-    };
-
-    vm.onSelect = function($item, level) {
-        resetLevelsBelow(level);
-
-        locationsService.getChildren($item.location_id).then(function(data) {
-            vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
-        });
-        vm.selectedLocations[level + 1] = ALL_OPTION;
-    };
-
-    vm.getLocationsForLevel = function(level) {
-        if (level === 0) {
-            return vm.locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
-                return [];
-            }
-            return vm.locationsCache[selectedLocation.location_id];
-        }
-    };
-
-    var selectedLocationIndex = function() {
-        return _.findLastIndex(vm.selectedLocations, function(location) {
-            return location && location !== ALL_OPTION.location_id && location.location_id !== ALL_OPTION.location_id;
-        });
-    };
-
     vm.open = function () {
         var modalInstance = $uibModal.open({
             animation: vm.animationsEnabled,
@@ -295,9 +202,105 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         });
     };
 
-    if (vm.isOpenModal) {
-        vm.open();
-    }
+    var init = function() {
+        if (vm.selectedLocationId && vm.selectedLocationId !== 'all') {
+            locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+                var locations = data.locations;
+
+                var selectedLocation = data.selected_location;
+
+                var locationsGrouppedByParent = _.groupBy(locations, function(location) {
+                    return location.parent_id || 'root';
+                });
+
+                for (var parentId in locationsGrouppedByParent) {
+                    if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
+                        vm.locationsCache[parentId] = [ALL_OPTION].concat(locationsGrouppedByParent[parentId]);
+                    }
+                }
+
+                initHierarchy();
+
+                var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
+                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
+                });
+                vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
+                vm.onSelect(selectedLocation, levelOfSelectedLocation);
+
+                levelOfSelectedLocation -= 1;
+
+                while(levelOfSelectedLocation >= 0) {
+                    var childSelectedId = vm.selectedLocations[levelOfSelectedLocation + 1];
+                    var childSelected = _.find(locations, function(location) {
+                        return location.location_id === childSelectedId.parent_id;
+                    });
+                    vm.selectedLocations[levelOfSelectedLocation] = childSelected;
+                    levelOfSelectedLocation -= 1;
+                }
+
+
+                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                    vm.open();
+                }
+            });
+        } else {
+            initHierarchy();
+            locationsService.getRootLocations().then(function(data) {
+                vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
+                vm.selectedLocations[0] = ALL_OPTION;
+
+                if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
+                    vm.open();
+                }
+            });
+        }
+
+    };
+
+    vm.getPlaceholder = function() {
+        var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
+
+        if (!selectedLocation) {
+            return 'Location';
+        } else {
+            var locationTypeName = selectedLocation.location_type_name;
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+        }
+    };
+
+    var resetLevelsBelow = function(level) {
+        for (var i = level + 1; i <= vm.maxLevel; i++) {
+            vm.hierarchy[i].selected = null;
+            vm.selectedLocations[i] = null;
+        }
+    };
+
+    vm.onSelect = function($item, level) {
+        resetLevelsBelow(level);
+
+        locationsService.getChildren($item.location_id).then(function(data) {
+            vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
+        });
+        vm.selectedLocations[level + 1] = ALL_OPTION;
+    };
+
+    vm.getLocationsForLevel = function(level) {
+        if (level === 0) {
+            return vm.locationsCache.root;
+        } else {
+            var selectedLocation = vm.selectedLocations[level - 1];
+            if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
+                return [];
+            }
+            return vm.locationsCache[selectedLocation.location_id];
+        }
+    };
+
+    var selectedLocationIndex = function() {
+        return _.findLastIndex(vm.selectedLocations, function(location) {
+            return location && location !== ALL_OPTION.location_id && location.location_id !== ALL_OPTION.location_id;
+        });
+    };
 
     $scope.$watch(function () {
         return $location.search();
@@ -317,6 +320,8 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             }
         }
     }, true);
+
+    init();
 }
 
 LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService'];
