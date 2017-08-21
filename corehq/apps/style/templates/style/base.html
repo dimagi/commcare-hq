@@ -425,6 +425,7 @@
                         "knockout": "{% static 'knockout/dist/knockout.debug' %}",
                         "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
                         "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
+                        {# TODO: do these really need to be here? #}
                         {% if request.use_datatables %}
                         "datatables": "{% static 'datatables/media/js/jquery.dataTables.min' %}",
                         "datatables.fixedColumns": "{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns' %}",
