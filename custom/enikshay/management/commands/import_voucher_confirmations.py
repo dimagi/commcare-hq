@@ -2,11 +2,14 @@ import csv
 
 from django.core.management.base import BaseCommand
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
+
 from custom.enikshay.case_utils import get_person_case_from_voucher, CASE_TYPE_VOUCHER
 from custom.enikshay.const import PERSON_FIRST_NAME, PERSON_LAST_NAME, VOUCHER_ID
 from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
@@ -61,7 +64,7 @@ class Command(BaseCommand):
     def handle(self, domain, filename, **options):
         self.domain = domain
         self.accessor = CaseAccessors(domain)
-        commit = options['commit']
+        self.commit = options['commit']
 
         with open(filename) as f:
             reader = csv.reader(f)
@@ -103,9 +106,7 @@ class Command(BaseCommand):
         self.log_voucher_updates(voucher_updates)
         self.log_unrecognized_vouchers(headers, unrecognized_vouchers)
         self.log_unmodified_vouchers(voucher_ids_to_update)
-
-        if commit:
-            self.commit_updates(voucher_updates)
+        self.update_vouchers(voucher_updates)
 
     @property
     @memoized
@@ -164,5 +165,10 @@ class Command(BaseCommand):
         rows = map(make_row, unmodified_vouchers)
         self.write_csv('updates', headers, rows)
 
-    def commit_updates(self, voucher_updates):
-        pass
+    def update_vouchers(self, voucher_updates):
+        if self.commit:
+            for chunk in chunked(voucher_updates, 100):
+                bulk_update_cases(self.domain, [
+                    (update.case_id, update.properties, False)
+                    for update in chunk
+                ])
