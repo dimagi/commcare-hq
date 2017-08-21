@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 from django.db.models import Q
 from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion, \
-    Subscription, Subscriber, BillingContactInfo, SoftwarePlan
+    Subscription, Subscriber, BillingContactInfo, SoftwarePlan, SoftwareProductType
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
@@ -72,7 +72,7 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
                                     "in this Software Plan Version." % self.name)
         new_product, _ = SoftwareProduct.objects.get_or_create(
             name=self.name,
-            product_type=self.rate_type
+            product_type=SoftwareProductType.COMMCARE,
         )
         return fmt_product_rate_dict(new_product)
 
@@ -132,17 +132,23 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
             products = products.exclude(name__in=self.existing)
         if self.search_string:
             products = products.filter(name__istartswith=self.search_string)
-        return [(p.id, p.name, p.product_type) for p in products.all()]
+        return [(p.id, p.name) for p in products.all()]
 
     def _fmt_success(self, response):
-        return json.dumps({
-            'results': [{
+        def _result_from_response(r):
+            result = {
                 'id': r[0],
                 'name': r[1],
-                'rate_type': r[2],
-                'text': '%s (%s)' % (r[1], r[2]),
                 'isExisting': True,
-            } for r in response]
+            }
+            if len(r) == 3:
+                result['rate_type'] = r[2]
+                result['text'] = '%s (%s)' % (r[1], r[2])
+            else:
+                result['text'] = '%s' % r[1]
+
+        return json.dumps({
+            'results': [_result_from_response(r) for r in response]
         })
 
 
