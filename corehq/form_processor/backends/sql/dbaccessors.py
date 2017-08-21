@@ -238,8 +238,9 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, include_attachments=True, limit_db_aliases=None):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None):
         super(FormReindexAccessor, self).__init__(limit_db_aliases)
+        self.domain = domain
         self.include_attachments = include_attachments
 
     @property
@@ -263,17 +264,24 @@ class FormReindexAccessor(ReindexAccessor):
         received_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
 
+        domain_clause = "form_table.domain = %s AND" if self.domain else ""
+        values = [received_on_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
         # using raw query to avoid having to expand the tuple comparison
         results = XFormInstanceSQL.objects.using(from_db).raw(
             """SELECT * FROM {table} as form_table
-        WHERE state & {deleted_state} = {deleted_state} AND
+        WHERE {domain_clause}
+        state & {deleted_state} = 0 AND
         (form_table.received_on, form_table.id) > (%s, %s)
         ORDER BY form_table.received_on, form_table.id
         LIMIT %s;""".format(
                 table=XFormInstanceSQL._meta.db_table,
+                domain_clause=domain_clause,
                 deleted_state=XFormInstanceSQL.DELETED
             ),
-            [received_on_since, last_id, limit]
+            values
         )
         return list(results)
 
@@ -1113,6 +1121,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerReindexAccessor(ReindexAccessor):
+
+    def __init__(self, domain=None):
+        self.domain = domain
+
     @property
     def model_class(self):
         return LedgerValue
@@ -1132,12 +1144,22 @@ class LedgerReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         modified_since = startkey or datetime.min
         last_id = last_doc_pk or -1
+
+        domain_clause = "domain = %s AND" if self.domain else ""
+        values = [modified_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
         results = LedgerValue.objects.using(from_db).raw(
             """SELECT * FROM {table}
-        WHERE (last_modified, id) > (%s, %s)
+        WHERE {domain_clause}
+        (last_modified, id) > (%s, %s)
         ORDER BY last_modified, id
-        LIMIT %s""".format(table=LedgerValue._meta.db_table),
-            [modified_since, last_id, limit],
+        LIMIT %s""".format(
+                table=LedgerValue._meta.db_table,
+                domain_clause=domain_clause
+            ),
+            values,
         )
         return list(results)
 

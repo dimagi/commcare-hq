@@ -87,6 +87,7 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         ReindexerFactory.resumable_reindexer_args,
         ReindexerFactory.elastic_reindexer_args,
         ReindexerFactory.limit_db_args,
+        ReindexerFactory.domain_arg,
     ]
 
     def build(self):
@@ -95,7 +96,10 @@ class SqlCaseReindexerFactory(ReindexerFactory):
             CASE_INDEX_INFO.index, limit_to_db or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        doc_provider = SqlDocumentProvider(iteration_key, CaseReindexAccessor(limit_db_aliases=limit_db_aliases))
+        domain = self.options.pop('domain', None)
+
+        reindex_accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
+        doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
