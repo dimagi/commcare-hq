@@ -118,6 +118,9 @@ class BaseUnshardedAccessorMixin(object):
     def test_get_doc_count(self):
         self.assertEqual(16, self.accessor_class().get_doc_count('default'))
 
+    def test_get_doc_count_domain(self):
+        self.assertEqual(8, self.accessor_class(domain=self.domain).get_doc_count('default'))
+
 
 class BaseShardedAccessorMixin(object):
     @classmethod

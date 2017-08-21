@@ -8,6 +8,7 @@ from itertools import groupby
 from uuid import UUID
 
 import csiphash
+import re
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -224,16 +225,37 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @property
+    def count_query(self):
+        """Define a custom query to use to get the doc count (only used for filtered reindex.
+        :returns: tuple('query_string', [query values])
+        """
+        return
+
     def get_doc_count(self, from_db):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
-        from_db = 'default' if from_db is None else from_db
-        sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(sql_query.format(self.model_class._meta.db_table))
-            return int(fetchone_as_namedtuple(cursor).reltuples)
+        if not self.domain:
+            from_db = 'default' if from_db is None else from_db
+            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(sql_query.format(self.model_class._meta.db_table))
+                return int(fetchone_as_namedtuple(cursor).reltuples)
+        elif self.count_query:
+            query, values = self.count_query
+            query = 'EXPLAIN {}'.format(query)
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(query, values)
+                for row in cursor.fetchall():
+                    search = re.search(r' rows=(\d+)', row[0])
+                    if search:
+                        return int(search.group(1))
+            return 0
+        else:
+            return 0
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -284,6 +306,16 @@ class FormReindexAccessor(ReindexAccessor):
             values
         )
         return list(results)
+
+    @property
+    def count_query(self):
+        # deletion clause left out on purpose since it throws off the count estimate
+        domain_clause = "form_table.domain = %s" if self.domain else ""
+        return """SELECT * FROM {table} as form_table
+        WHERE {domain_clause}""".format(
+            table=XFormInstanceSQL._meta.db_table,
+            domain_clause=domain_clause,
+        ), [self.domain] if self.domain else []
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -694,6 +726,15 @@ class CaseReindexAccessor(ReindexAccessor):
             values
         )
         return list(results)
+
+    @property
+    def count_query(self):
+        domain_clause = "case_table.domain = %s AND" if self.domain else ""
+        return """SELECT * FROM {table} as case_table
+            WHERE {domain_clause}
+            deleted = %s""".format(
+                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
+        ), [self.domain, False] if self.domain else [False]
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -1167,6 +1208,15 @@ class LedgerReindexAccessor(ReindexAccessor):
         json_doc = doc.to_json()
         json_doc['_id'] = doc.ledger_reference.as_id()
         return json_doc
+
+    @property
+    def count_query(self):
+        domain_clause = "domain = %s" if self.domain else ""
+        return """SELECT * FROM {table}
+                WHERE {domain_clause}""".format(
+            table=LedgerValue._meta.db_table,
+            domain_clause=domain_clause
+        ), [self.domain] if self.domain else []
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
