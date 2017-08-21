@@ -17,8 +17,8 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
 @@ -29,17 +29,17 @@
      {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
-     {% registerurl "edit_report_module" domain app.id module.id %}
-     {% registerurl "validate_module_for_build" domain app.id module.id %}
+     {% registerurl "edit_report_module" domain app.id module.unique_id %}
+     {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -    {% include 'app_manager/v1/partials/mobile_report_configs.html' %}
 +    {% include 'app_manager/v2/partials/module_view_heading.html' %}

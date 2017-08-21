@@ -165,10 +165,11 @@ class TestViews(TestCase):
         content = content[0]
         self.assertEqual(content['copy_of'], self.app.id)
 
-        kwargs['module_id'] = module.id
+        kwargs['module_unique_id'] = module.unique_id
         self._test_status_codes(['view_module'], kwargs)
 
-        kwargs['form_id'] = form.id
+        del kwargs['module_unique_id']
+        kwargs['form_unique_id'] = form.unique_id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
     def test_advanced_module(self, mock):
@@ -177,7 +178,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_report_module(self, mockh):
@@ -186,7 +187,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_shadow_module(self, mockh):
@@ -195,7 +196,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_dashboard(self, mock):

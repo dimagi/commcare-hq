@@ -31,7 +31,7 @@
 +{% block pre_form_content %}
 +    <div class="appmanager-page-actions">
 +        {% include 'app_manager/v2/partials/app_summary_button.html' %}
-+        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
++        <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
 +            <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
 +        </a>
 +    </div>
@@ -64,14 +64,16 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -100,79 +135,21 @@
+@@ -100,81 +135,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
 -    {# CloudCare #}
 -    {% initial_page_data 'app_id' app.id %}
 -    {% initial_page_data 'module_id' module.id %}
+-    {% initial_page_data 'module_unique_id' module.unique_id %}
 -    {% initial_page_data 'form_id' nav_form.id %}
+-    {% initial_page_data 'form_unique_id' nav_form.unique_id %}
 -    {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
 -    {% initial_page_data 'can_preview_form' can_preview_form %}
 -    {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
@@ -105,7 +107,7 @@
 -        {% if not form.form_type == "shadow_form" %}
 -            {% if not form.no_vellum %}
 -            <a id="edit_label" class="btn btn-primary track-usage-link"
--               href="{% url "form_source" domain app.id module.id form.id %}"
+-               href="{% url "form_source" domain app.id form.unique_id %}"
 -               data-category='App Builder' data-action='Open Form' data-label='Edit Label'
 -            >
 -                <i class="fa fa-pencil"></i>
@@ -153,7 +155,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -180,35 +157,36 @@
+@@ -182,35 +157,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -207,7 +209,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -220,75 +198,70 @@
+@@ -222,75 +198,70 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -332,7 +334,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -297,14 +270,15 @@
+@@ -299,14 +270,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -350,7 +352,7 @@
              {% endif %}
          </div>
      </div>
-@@ -312,12 +286,13 @@
+@@ -314,12 +286,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -364,5 +366,5 @@
 -    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
 +    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
      <li>
-         <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+         <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
             data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
