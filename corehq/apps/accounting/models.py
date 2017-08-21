@@ -2669,6 +2669,7 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, product_type=None):
+        assert not (feature_type and product_type)
         return cls.objects.filter(
             account=account, subscription__exact=None
         ).filter(
@@ -2679,6 +2680,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  product_type=None):
+        assert not (feature_type and product_type)
         return cls.objects.filter(
             subscription=subscription,
             feature_type__exact=feature_type,
