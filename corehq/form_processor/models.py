@@ -379,7 +379,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         app_label = "form_processor"
         index_together = [
             ('domain', 'state'),
-            ('domain', 'user_id'),
+            ('domain', 'user_id'),  # could possibly remove this as user_id is ~unique. exception is web users
         ]
 
 
@@ -892,7 +892,8 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     class Meta:
         index_together = [
-            ["domain", "owner_id", "closed"],
+            ["owner_id", "closed"],  # pghero recommended just indexing owner_id, but that's probably because there's few closed cases
+            ["owner_id", "server_modified_on"],
             ["domain", "external_id", "type"],
         ]
         app_label = "form_processor"
@@ -990,7 +991,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     RELATIONSHIP_MAP = {v: k for k, v in RELATIONSHIP_CHOICES}
 
     case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
+        'CommCareCaseSQL', to_field='case_id',
         related_name="index_set", related_query_name="index",
         on_delete=models.CASCADE,
     )
@@ -1048,7 +1049,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
     class Meta:
         index_together = [
-            ["domain", "case"],
             ["domain", "referenced_id"],
         ]
         db_table = CommCareCaseIndexSQL_DB_TABLE
@@ -1415,7 +1415,9 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         (TYPE_TRANSFER, 'transfer'),
     )
 
-    form_id = models.CharField(max_length=255, null=False)
+    # the query is case_id IN (x) AND form_id = (y)
+    # form_id is likely to stay small, but cases will grow as more ledgers happen
+    form_id = models.CharField(max_length=255, null=False, db_index=True)
     server_date = models.DateTimeField()
     report_date = models.DateTimeField()
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
