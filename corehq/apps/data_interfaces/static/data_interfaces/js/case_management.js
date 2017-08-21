@@ -117,8 +117,15 @@ var CaseManagement = function (o) {
 
     self.updateCaseOwners = function (form) {
         var new_owner = $(form).find('#reassign_owner_select').val(),
-            owner_type = $(form).find('#reassign_owner_type_select').val(),
-            $modal = $('#caseManagementStatusModal');
+            $modal = $('#caseManagementStatusModal'),
+            owner_type;
+
+        if (new_owner.startsWith('u')) {
+            owner_type = 'user';
+        } else if (new_owner.startsWith('sg')) {
+            owner_type = 'group';
+        }
+        new_owner = new_owner.slice(3);
 
         if (_.isEmpty(new_owner)) {
             $modal.find('.modal-body').text("Please select an owner");
