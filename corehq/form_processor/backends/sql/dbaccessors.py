@@ -1163,7 +1163,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 class LedgerReindexAccessor(ReindexAccessor):
 
-    def __init__(self, domain=None):
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(LedgerReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
 
     @property
