@@ -152,7 +152,6 @@
                                         <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
                                     </span>
                                     &nbsp;&nbsp;
-                                    {% if has_edit_permissions %}
                                     {% angularjs %}
                                     <div ng-if="isLocationSafeForUser(export)">
                                         <button type="button"
@@ -172,7 +171,6 @@
                                             {% trans "Updating Data, please wait..." %}
                                         </button>
                                     </div>
-                                    {% endif %}
                                 </div>
 
                                 <div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
@@ -201,7 +199,6 @@
                                     </div>
                                 </div>
 
-                                {% if has_edit_permissions %}
                                 <div ng-if="isLocationSafeForUser(export)">
                                 <p class="text-warning"
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
@@ -218,9 +215,7 @@
                                     {% trans "Please check back later for updates. (Page refresh required)" %}
                                 </p>
                                 </div>
-                                {% endif %}
 
-                                {% if has_edit_permissions %}
                                 <div ng-if="isLocationSafeForUser(export)">
                                     <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                         {% blocktrans %}
@@ -276,7 +271,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                             {% endangularjs %}
                         </td>
