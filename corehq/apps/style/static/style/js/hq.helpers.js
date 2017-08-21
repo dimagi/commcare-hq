@@ -53,6 +53,7 @@ window.onerror = function(message, file, line, col, error) {
         line: line,
         stack: error ? error.stack : null
     });
+    console.log(error ? error.stack : null);
     return false; // let default handler run
 };
 
