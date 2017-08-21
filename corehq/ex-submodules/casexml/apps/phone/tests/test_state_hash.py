@@ -5,14 +5,14 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from datetime import datetime
 from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
-from casexml.apps.case.xml import V2
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
 from casexml.apps.phone.tests.utils import (
     generate_restore_response,
-    get_exactly_one_wrapped_sync_log,
     generate_restore_payload,
     create_restore_user,
+    MockDevice,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -36,8 +36,8 @@ class StateHashTest(TestCase):
         delete_all_sync_logs()
 
         # this creates the initial blank sync token in the database
-        generate_restore_payload(self.project, self.user)
-        self.sync_log = get_exactly_one_wrapped_sync_log()
+        device = MockDevice(self.project, self.user)
+        self.sync_log = device.sync(version=V1).log
 
     @classmethod
     def tearDownClass(cls):

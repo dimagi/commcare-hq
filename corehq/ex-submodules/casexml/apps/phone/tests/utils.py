@@ -58,14 +58,6 @@ def deprecated_synclog_from_restore_payload(restore_payload):
         deprecated_synclog_id_from_restore_payload(restore_payload))
 
 
-def get_exactly_one_wrapped_sync_log():
-    """
-    Gets exactly one properly wrapped sync log, or fails hard.
-    """
-    [doc] = list(get_all_sync_logs_docs())
-    return get_sync_log_class_by_format(doc['log_format']).wrap(doc)
-
-
 def generate_restore_payload(project, user, restore_id="", version=V1, state_hash="",
                              items=False, overwrite_cache=False,
                              force_cache=False, **kw):
@@ -151,12 +143,12 @@ def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=
 
 class MockDevice(object):
 
-    def __init__(self, project, user, restore_options,
+    def __init__(self, project, user, restore_options=None,
             sync=False, default_case_type="case", default_owner_id=None):
         self.project = project
         self.user = user
         self.user_id = user.user_id
-        self.restore_options = restore_options
+        self.restore_options = restore_options or {}
         self.case_blocks = []
         self.case_factory = CaseFactory(
             case_defaults={
