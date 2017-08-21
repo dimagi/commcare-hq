@@ -678,16 +678,14 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
             if subscription.date_end is not None:
                 if subscription.is_renewed:
-
-                    next_product = self.get_product_summary(subscription.next_subscription.plan_version,
-                                                             self.account,
-                                                             subscription)
-
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
-                        'price': next_product['monthly_fee'],
+                        'price': (
+                            _("USD %s /month")
+                            % subscription.next_subscription.plan_version.product_rate.monthly_fee)
+                        ,
                     })
 
                 else:
