@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import get_person_case_from_voucher, CASE_TYPE_VOUCHER
 from custom.enikshay.const import PERSON_FIRST_NAME, PERSON_LAST_NAME, VOUCHER_ID
+from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
 from custom.enikshay.integrations.bets.views import VoucherUpdate
 
 
@@ -28,6 +29,23 @@ class Command(BaseCommand):
         'bankName',
         'eventType',
         'case_type',
+    ]
+
+    voucher_api_properties = [
+        'VoucherID',
+        'EventOccurDate',
+        'EventID',
+        'BeneficiaryUUID',
+        'BeneficiaryType',
+        'Location',
+        'Amount',
+        'DTOLocation',
+        'InvestigationType',
+        'PersonId',
+        'AgencyId',
+        'EnikshayApprover',
+        'EnikshayRole',
+        'EnikshayApprovalDate',
     ]
 
     def add_arguments(self, parser):
@@ -106,8 +124,17 @@ class Command(BaseCommand):
             writer.writerows(rows)
 
     def log_voucher_updates(self, voucher_updates):
-        headers = []
-        rows = []
+        headers = ['ReadableID'] + self.voucher_api_properties + self.voucher_update_properties
+
+        def make_row(voucher_update):
+            api_payload = VoucherPayload.create_voucher_payload(voucher_update.voucher)
+            return [voucher_update.voucher.get_case_property(VOUCHER_ID)] + [
+                api_payload[prop] for prop in self.voucher_api_properties
+            ] + [
+                voucher_update[prop] for prop in self.voucher_update_properties
+            ]
+
+        rows = map(make_row, voucher_updates)
         self.write_csv('updates', headers, rows)
 
     def log_unrecognized_vouchers(self, headers, unrecognized_vouchers):
