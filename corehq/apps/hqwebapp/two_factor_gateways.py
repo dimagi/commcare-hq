@@ -28,7 +28,7 @@ class Gateway(object):
 
     def send_sms(self, device, token):
         message = _('Your authentication token is %s') % token
-        self.client.sms.messages.create( # TODO
+        self.client.api.account.messages.create(
             to=device.number.as_e164,
             from_=self.from_number,
             body=message)
@@ -40,7 +40,7 @@ class Gateway(object):
         url = reverse('two_factor:twilio_call_app', kwargs={'token': token})
         url = '%s?%s' % (url, urlencode({'locale': locale}))
         uri = 'https://%s%s' % (Site.objects.get_current().domain, url)
-        self.client.calls.create(to=device.number.as_e164, from_=self.from_number, # TODO
+        self.client.api.account.calls.create(to=device.number.as_e164, from_=self.from_number,
                                  url=uri, method='GET', if_machine='Hangup', timeout=15)
 
 
