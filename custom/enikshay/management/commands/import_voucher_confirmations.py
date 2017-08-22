@@ -81,9 +81,9 @@ class Command(BaseCommand):
                 print "\nAborting."
                 return
 
-            rows = [r for r in reader]
+            rows = list(reader)
 
-        print "Received info on {} vouchers.  Headers are:".format(len(rows) - 1)
+        print "Received info on {} vouchers.  Headers are:".format(len(rows))
         for header in headers:
             print header
 
@@ -221,13 +221,16 @@ class Command(BaseCommand):
                         iter_db.save(record)
                     else:
                         # mark record as canceled
-                        status = "cancelled"
-                        record.cancelled = True
-                        record.succeeded = False
-                        record.failure_reason = ''
-                        record.overall_tries = 0
-                        record.next_check = None
+                        record.add_attempt(RepeatRecordAttempt(
+                            cancelled=True,
+                            datetime=datetime.datetime.utcnow(),
+                            failure_reason="Cancelled during import_voucher_confirmations",
+                            success_response=None,
+                            next_check=None,
+                            succeeded=False,
+                        ))
                         iter_db.save(record)
+
                     already_seen.add(record.payload_id)
                     rows.append([record._id, record.payload_id, status])
 
