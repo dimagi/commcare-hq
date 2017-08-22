@@ -70,8 +70,7 @@ class StockProcessingResult(object):
         """
         # if cases were changed we should purge the sync token cache
         # this ensures that ledger updates will sync back down
-        if self.relevant_cases and self.xform.get_sync_token():
-            self.xform.get_sync_token().invalidate_cached_payloads()
+        pass
 
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])

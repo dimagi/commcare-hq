@@ -213,7 +213,8 @@ class SubmissionPost(object):
         initial_restore_cache_key = restore_payload_path_cache_key(
             domain=self.domain,
             user_id=xform.user_id,
-            version=V2
+            sync_log_id=xform.last_sync_token,
+            device_id=xform.metadata.deviceID if xform.metadata else None
         )
         self._cache.delete(initial_restore_cache_key)
 
