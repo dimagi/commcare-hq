@@ -15,7 +15,6 @@ from .utils import setup_enikshay_locations
 from ..const import DEFAULT_MOBILE_WORKER_ROLE
 from ..user_setup import (
     LOC_TYPES_TO_USER_TYPES,
-    set_user_role,
     validate_usertype,
     get_site_code,
     ENikshayLocationFormSet,
@@ -159,7 +158,6 @@ class TestUserSetupUtils(TestCase):
         validate_usertype(loc_type, 'deo', custom_data)
         self.assertValid(custom_data)
 
-    @mock.patch('custom.enikshay.user_setup.set_user_role', mock.MagicMock)
     def test_signal(self):
         # This test runs the whole callback via a signal as an integration test
         # To verify that it's working, it checks for errors triggered in `validate_usertype`
@@ -198,37 +196,6 @@ class TestUserSetupUtils(TestCase):
         #     domain=self.domain,
         # )
         # self.assertValid(form)
-
-    def test_set_user_role(self):
-        user = self.make_user('lordcommander@nightswatch.onion', 'DTO')
-        data = {
-            'first_name': 'Jeor',
-            'last_name': 'Mormont',
-            'language': '',
-            'loadtest_factor': '',
-            'role': '',
-            'form_type': 'update-user',
-            'email': 'lordcommander@nightswatch.onion',
-        }
-        user_form = UpdateCommCareUserInfoForm(
-            data=data,
-            existing_user=user,
-            domain=self.domain,
-        )
-        self.assertValid(user_form)
-        set_user_role(self.domain, user, 'dto', user_form)
-        # The corresponding role doesn't exist yet!
-        self.assertInvalid(user_form)
-
-        self.make_role('dto')
-        user_form = UpdateCommCareUserInfoForm(
-            data=data,
-            existing_user=user,
-            domain=self.domain,
-        )
-        self.assertValid(user_form)
-        set_user_role(self.domain, user, 'dto', user_form)
-        self.assertValid(user_form)
 
     def test_validate_nikshay_code(self):
         parent = self.locations['CTO']
