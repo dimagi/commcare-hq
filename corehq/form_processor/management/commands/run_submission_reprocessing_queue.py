@@ -9,7 +9,7 @@ from couchforms.models import UnfinishedSubmissionStub
 from hqscripts.generic_queue import GenericEnqueuingOperation
 from corehq.form_processor.tasks import reprocess_submission
 
-ENQUEUING_TIMEOUT = 14 * 86400    # 14 days
+ENQUEUING_TIMEOUT = 14 * 24 * 60    # 14 days (in minutes)
 
 
 def _record_datadog_metrics():
