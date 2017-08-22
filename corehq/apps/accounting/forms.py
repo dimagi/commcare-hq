@@ -1434,33 +1434,26 @@ class SoftwarePlanVersionForm(forms.Form):
     def clean_product_rates(self):
         original_data = self.cleaned_data['product_rates']
         rates = json.loads(original_data)
-        rate_instances = []
         errors = ErrorList()
-        if not rates:
-            raise ValidationError(_("You must specify at least one product rate."))
-        for rate_data in rates:
-            rate_form = ProductRateForm(rate_data)
-            if not rate_form.is_valid():
-                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
-            else:
-                rate_instances.append(self._retrieve_product_rate(rate_form))
+        if len(rates) == 1:
+            raise ValidationError(_("You must specify at exactly one product rate."))
+        rate_data = rates[0]
+        rate_form = ProductRateForm(rate_data)
+        if not rate_form.is_valid():
+            errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            rate_instance = None
+        else:
+            rate_instance = self._retrieve_product_rate(rate_form)
         if errors:
             self._errors.setdefault('product_rates', errors)
 
-        available_types = list(dict(SoftwareProductType.CHOICES).keys())
-        product_types = [r.product.product_type for r in rate_instances]
-        if any([product_types.count(p) > 1 for p in available_types]):
-            raise ValidationError(_(
-                "You may have at most ONE rate per product type "
-                "(CommCare, CommCare Supply, etc.)"
-            ))
-
-        self.new_product_rates = rate_instances
-        rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update
-            and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids([self.plan_version.product_rate])))):
-            self.is_update = True
+        self.new_product_rates = [rate_instance] if rate_instance else []
+        self.is_update = (
+            self.is_update or
+            self.plan_version is None or
+            rate_instance is None or
+            rate_instance.id != self.plan_version.product_rate.id
+        )
         return original_data
 
     def clean_create_new_role(self):
