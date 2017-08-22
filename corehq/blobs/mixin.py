@@ -51,10 +51,14 @@ class BlobMixin(Document):
     _atomic_blobs = None
 
     def _blobdb_bucket(self):
-        if self._id is None:
+        if self.blobdb_bucket_id is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        return join(_get_couchdb_name(type(self)), safe_id(self._id))
+        return join(_get_couchdb_name(type(self)), safe_id(self.blobdb_bucket_id))
+
+    @property
+    def blobdb_bucket_id(self):
+        return self._id
 
     @property
     def blobs(self):
@@ -255,9 +259,20 @@ class BlobHelper(object):
     """
 
     def __init__(self, doc, database):
-        if doc.get("_id") is None:
+        from couchforms.models import all_known_formlike_doc_types
+
+        if doc['doc_type'] in all_known_formlike_doc_types():
+            # XFormError might have its id changed, but the blob bucket id
+            #   will still be orig_id
+            bucket_id = doc.get('orig_id') or doc['_id']
+        else:
+            bucket_id = doc['_id']
+
+        if bucket_id is None:
             raise TypeError("BlobHelper requires a real _id")
-        self._id = doc["_id"]
+
+        self._id = bucket_id
+        self.blobdb_bucket_id = bucket_id
         self.doc = doc
         self.doc_type = doc["doc_type"]
         self.database = database

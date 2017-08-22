@@ -581,13 +581,30 @@ class FormAccessorSQL(AbstractFormAccessor):
         FormAccessorSQL.save_new_form(form)
 
     @staticmethod
-    @transaction.atomic
-    def update_form_problem_and_state(form):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT update_form_problem_and_state(%s, %s, %s)',
-                [form.form_id, form.problem, form.state]
-            )
+    def update_form(form):
+        from corehq.form_processor.change_publishers import publish_form_saved
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        assert form.is_saved(), "this method doesn't support creating unsaved forms"
+
+        db_name = form.db
+        if form.orig_id:
+            old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
+            assert old_db_name == db_name, "this method doesn't support moving the form to new db"
+
+        if form.form_id_updated():
+            attachments = form.original_attachments
+            operations = form.original_operations
+            with transaction.atomic(db_name):
+                form.save()
+                for a in attachments:
+                    a.form = form
+                    a.save()
+                for op in operations:
+                    op.form = form
+                    op.save()
+        else:
+            form.save()
+        publish_form_saved(form)
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):

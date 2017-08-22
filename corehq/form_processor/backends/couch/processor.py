@@ -114,8 +114,8 @@ class FormProcessorCouch(object):
         return xform
 
     @classmethod
-    def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
-        return XFormError.from_xform_instance(instance, error_message, with_new_id=with_new_id)
+    def xformerror_from_xform_instance(self, instance, error_message, replace_form_id=True):
+        return XFormError.from_xform_instance(instance, error_message, replace_form_id=replace_form_id)
 
     @classmethod
     def submission_error_form_instance(cls, domain, instance, message):

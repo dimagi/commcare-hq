@@ -343,12 +343,12 @@ class XFormError(XFormInstance):
     orig_id = StringProperty()
 
     @classmethod
-    def from_xform_instance(cls, instance, error_message, with_new_id=False):
+    def from_xform_instance(cls, instance, error_message, replace_form_id=True):
         instance.__class__ = XFormError
         instance.doc_type = 'XFormError'
         instance.problem = error_message
 
-        if with_new_id:
+        if replace_form_id:
             new_id = uuid.uuid4().hex
             instance.orig_id = instance._id
             instance._id = new_id
@@ -367,6 +367,10 @@ class XFormError(XFormInstance):
     @property
     def is_error(self):
         return True
+
+    @property
+    def blobdb_bucket_id(self):
+        return self.orig_id if self.orig_id else self._id
 
 
 class XFormDuplicate(XFormError):

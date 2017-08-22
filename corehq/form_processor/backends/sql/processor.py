@@ -156,23 +156,26 @@ class FormProcessorSQL(object):
 
     @classmethod
     def assign_new_id(cls, xform):
-        new_id = unicode(uuid.uuid4())
-        xform.form_id = new_id
+        from corehq.sql_db.util import new_id_in_same_dbalias
+        if xform.is_saved():
+            # avoid moving to a separate sharded db
+            xform.form_id = new_id_in_same_dbalias(xform.form_id)
+        else:
+            xform.form_id = unicode(uuid.uuid4())
         return xform
 
     @classmethod
-    def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
+    def xformerror_from_xform_instance(cls, instance, error_message, replace_form_id=True):
         instance.state = XFormInstanceSQL.ERROR
         instance.problem = error_message
 
-        if with_new_id:
+        if replace_form_id:
             orig_id = instance.form_id
             cls.assign_new_id(instance)
             instance.orig_id = orig_id
             if instance.is_saved():
                 # clear the ID since we want to make a new doc
                 instance.id = None
-
         return instance
 
     @classmethod

@@ -1,3 +1,5 @@
+import uuid
+
 from collections import defaultdict
 
 from corehq.sql_db.config import partition_config
@@ -68,6 +70,21 @@ def get_db_alias_for_partitioned_doc(partition_value):
     else:
         db_name = 'default'
     return db_name
+
+
+def new_id_in_same_dbalias(partition_value):
+    """
+    Returns a new partition value that belongs to the same db alias as
+        the given partition value does
+    """
+    old_db_name = get_db_alias_for_partitioned_doc(partition_value)
+    new_db_name = None
+    while new_db_name != old_db_name:
+        # try finding a key till we get the one that belongs to correct shard
+        #   could be slow only if the number of shards are extremely high
+        new_partition_value = unicode(uuid.uuid4())
+        new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
+    return new_partition_value
 
 
 def get_db_aliases_for_partitioned_query():

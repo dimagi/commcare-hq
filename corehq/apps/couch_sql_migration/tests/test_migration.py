@@ -172,7 +172,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_error_with_normal_doc_type_migration(self):
-        submit_form_locally(
+        result = submit_form_locally(
             """<data xmlns="example.com/foo">
                 <meta>
                     <instanceID>im-a-bad-form</instanceID>
@@ -183,7 +183,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             </data>""",
             self.domain_name,
         )
-        form = FormAccessors(self.domain_name).get_form('im-a-bad-form')
+        form = FormAccessors(self.domain_name).get_form(result.xform.form_id)
         form_json = form.to_json()
         form_json['doc_type'] = 'XFormInstance'
         XFormInstance.wrap(form_json).save()

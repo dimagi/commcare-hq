@@ -17,6 +17,7 @@ import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
 from casexml.apps.case.xml import V2
+from corehq.middleware import OPENROSA_VERSION_3, OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -129,6 +130,9 @@ class SubmissionPost(object):
         found_old = scrub_meta(xform)
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
+    def is_openrosa_version3(self):
+        return self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+
     def run(self):
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
@@ -159,6 +163,7 @@ class SubmissionPost(object):
             else:
                 case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
 
+            known_submission_error = None
             with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
@@ -181,6 +186,8 @@ class SubmissionPost(object):
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+                        known_submission_error = '{}: {}'.format(
+                            type(e).__name__, unicode(e))
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
                     except Exception as e:
@@ -199,9 +206,25 @@ class SubmissionPost(object):
                 elif instance.is_error:
                     submission_type = 'error'
 
-            errors = self.process_signals(instance)
-            response = self._get_open_rosa_response(instance, errors)
+            signal_errors = self.process_signals(instance)
+            response = self._get_openrosa_response(
+                instance, signal_errors, known_submission_error
+            )
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+
+    def _get_openrosa_response(self, instance, signal_errors, known_submission_error):
+        if not signal_errors and not instance.is_duplicate and not known_submission_error:
+            response = self.get_success_response()
+        elif instance.is_duplicate or not self.is_openrosa_version3() or signal_errors:
+            response = self.get_failure_response(instance.problem)
+        elif known_submission_error:
+            # return 422 asking mobile to retry for newer openrosa
+            response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
+        else:
+            response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
+
+        self._set_response_headers(response, instance.form_id)
+        return response
 
     @property
     def _cache(self):
@@ -280,6 +303,7 @@ class SubmissionPost(object):
         return self.run().response
 
     def process_signals(self, instance):
+        # send and process 'successful_form_received' signal
         feedback = successful_form_received.send_robust(None, xform=instance)
         errors = []
         for func, resp in feedback:
@@ -291,21 +315,16 @@ class SubmissionPost(object):
                 ) % (func, instance.form_id, type(resp).__name__, error_message))
                 errors.append(error_message)
         if errors:
-            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.formdb.update_form_problem_and_state(instance)
+            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors), replace_form_id=False)
+            self.formdb.update_form(instance)
         return errors
 
-    def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal and not errors:
-            response = self.get_success_response()
-        else:
-            response = self.get_failure_response(instance)
-
+    def _set_response_headers(self, response, form_id):
         # this hack is required for ODK
         response["Location"] = self.location
 
         # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = instance.form_id
+        response['X-CommCareHQ-FormID'] = form_id
         return response
 
     @staticmethod
@@ -314,6 +333,14 @@ class SubmissionPost(object):
             # would have done ✓ but our test Nokias' fonts don't have that character
             message=u'   √   ',
             nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
+
+    @staticmethod
+    def get_failure_response(message):
+        return OpenRosaResponse(
+            message=message,
+            nature=ResponseNature.SUBMIT_ERROR,
             status=201,
         ).response()
 
@@ -327,11 +354,14 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_failure_response(doc):
+    def get_retry_response(message, nature):
+        """
+        Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+        """
         return OpenRosaResponse(
-            message=doc.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=201,
+            message=message,
+            nature=nature,
+            status=422,
         ).response()
 
     @staticmethod
@@ -363,11 +393,12 @@ class SubmissionPost(object):
 def _transform_instance_to_error(interface, e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
+    instance = interface.xformerror_from_xform_instance(instance, error_message)
     logging.exception((
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance.form_id, error_message))
-    return interface.xformerror_from_xform_instance(instance, error_message)
+    return instance
 
 
 def handle_unexpected_error(interface, instance, exception, message=None):
@@ -385,7 +416,7 @@ def _notify_submission_error(interface, instance, exception, message=None):
     from corehq.util.global_request.api import get_request
     request = get_request()
     error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
-    instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
+    instance = interface.xformerror_from_xform_instance(instance, error_message)
     domain = getattr(instance, 'domain', '---')
     message = message or u"Error in case or stock processing"
     details = {

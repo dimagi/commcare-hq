@@ -2,6 +2,7 @@
 from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.middleware import OPENROSA_VERSION_3, OPENROSA_VERSION_HEADER
 from django.test.client import Client
 from django.urls import reverse
 import os
@@ -30,12 +31,15 @@ class SubmissionErrorTest(TestCase):
         self.domain.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
-    def _submit(self, formname):
+    def _submit(self, formname, open_rosa_header=None):
+        open_rosa_header = open_rosa_header or '2.0'
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
-            res = self.client.post(self.url, {
-                "xml_submission_file": f
-            })
+            res = self.client.post(
+                self.url,
+                {"xml_submission_file": f},
+                **{OPENROSA_VERSION_HEADER: open_rosa_header}
+            )
             return file_path, res
 
     def testSubmitBadAttachmentType(self):
@@ -52,6 +56,9 @@ class SubmissionErrorTest(TestCase):
 
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)
+
+        _, res_openrosa3 = self._submit('simple_form.xml', open_rosa_header=OPENROSA_VERSION_3)
+        self.assertEqual(201, res_openrosa3.status_code)
         self.assertIn("Form is a duplicate", res.content)
 
         # make sure we logged it
@@ -62,7 +69,7 @@ class SubmissionErrorTest(TestCase):
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
-    def testSubmissionError(self):
+    def _SubmissionError(self, open_rosa_header=None):
         evil_laugh = "mwa ha ha!"
 
         def fail(sender, xform, **kwargs):
@@ -71,7 +78,7 @@ class SubmissionErrorTest(TestCase):
         successful_form_received.connect(fail)
 
         try:
-            file, res = self._submit("simple_form.xml")
+            file, res = self._submit("simple_form.xml", open_rosa_header=open_rosa_header)
             self.assertEqual(201, res.status_code)
             self.assertIn(evil_laugh, res.content)
 
@@ -82,9 +89,15 @@ class SubmissionErrorTest(TestCase):
             self.assertIn(evil_laugh, log.problem)
             with open(file) as f:
                 self.assertEqual(f.read(), log.get_xml())
-        
+
         finally:
             successful_form_received.disconnect(fail)
+
+    def testSubmissionErrorOpenrosaOld(self):
+        self._SubmissionError()
+
+    def testSubmissionErrorOpenrosa3(self):
+        self._SubmissionError(open_rosa_header=OPENROSA_VERSION_3)
 
     def testSubmitBadXML(self):
         f, path = tmpfile()
