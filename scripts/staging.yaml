@@ -53,7 +53,7 @@ branches:
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
   - bmb/appv2-unique-urls # BMB 8/10
-  - np/billing/remove-product_type-version-form # NP 8/10
+  - np/update/xlrd # NP 8/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
