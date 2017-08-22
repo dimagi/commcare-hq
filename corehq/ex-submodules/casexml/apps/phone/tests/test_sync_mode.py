@@ -151,7 +151,7 @@ class BaseSyncTest(TestCase):
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
 
-class SyncBaseTest(BaseSyncTest):
+class DeprecatedBaseSyncTest(BaseSyncTest):
     """DEPRECATED use BaseSyncTest when making new subclasses
 
     This base class has `self.factory` and `self.sync_log`, which
@@ -159,7 +159,7 @@ class SyncBaseTest(BaseSyncTest):
     """
 
     def setUp(self):
-        super(SyncBaseTest, self).setUp()
+        super(DeprecatedBaseSyncTest, self).setUp()
         self.sync_log = self.device.last_sync.log
         self.factory = self.device.case_factory
         self.factory.form_extras = {

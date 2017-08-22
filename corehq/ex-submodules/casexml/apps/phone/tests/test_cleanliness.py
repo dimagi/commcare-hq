@@ -9,12 +9,12 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_val
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
-class OwnerCleanlinessTest(SyncBaseTest):
+class OwnerCleanlinessTest(DeprecatedBaseSyncTest):
 
     def setUp(self):
         super(OwnerCleanlinessTest, self).setUp()
