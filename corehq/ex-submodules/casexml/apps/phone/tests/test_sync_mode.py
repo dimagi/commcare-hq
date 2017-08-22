@@ -7,9 +7,13 @@ from django.test import TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
-from casexml.apps.phone.tests.utils import MockDevice
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import get_restore_config
+from casexml.apps.phone.tests.utils import (
+    create_restore_user,
+    delete_cached_response,
+    get_restore_config,
+    MockDevice,
+)
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -22,7 +26,6 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
@@ -1278,8 +1281,7 @@ class SyncTokenCachingTest(BaseSyncTest):
         ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        # Delete cached file
-        os.remove(original_payload.get_filename())
+        delete_cached_response(original_payload)
 
         # resyncing should recreate the cache
         next_file = RestoreConfig(

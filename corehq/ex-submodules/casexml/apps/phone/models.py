@@ -16,7 +16,6 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
@@ -297,7 +296,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     @property
     def response_class(self):
-        return get_restore_response_class(self.domain)
+        return get_restore_response_class()
 
     def case_count(self):
         """
