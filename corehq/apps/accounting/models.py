@@ -593,7 +593,7 @@ class SoftwareProduct(models.Model):
         app_label = 'accounting'
 
     def __str__(self):
-        return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
+        return "Software Product '%s'" % self.name
 
     def get_rate(self, default_instance=True):
         try:
