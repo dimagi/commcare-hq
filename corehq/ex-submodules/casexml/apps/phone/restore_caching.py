@@ -1,17 +1,15 @@
 import hashlib
 import logging
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
-from casexml.apps.phone.utils import get_restore_response_class
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 logger = logging.getLogger(__name__)
 
 
 def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
-    response_class = get_restore_response_class(domain)
     # to invalidate all restore cache keys, increment the number below
-    hashable_key = '8-{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
-        response_class=response_class.__name__,
+    hashable_key = '8-{domain}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
+        domain=domain,
         prefix=prefix,
         user=user_id,
         version=version or '',
