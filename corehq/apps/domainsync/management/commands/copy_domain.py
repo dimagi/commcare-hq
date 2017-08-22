@@ -29,6 +29,14 @@ NUM_PROCESSES = 8
 
 
 class Command(BaseCommand):
+    """
+    DEPRECATED/NEEDS WORK - `copy_domain` is basically broken because of
+      - attachments in blobdb
+      - SQL data.
+
+    Scale trello card to update this: https://trello.com/c/OGGrmoGI/16-copydomain
+
+    """
     help = "Copies the contents of a domain to another database. " \
            "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
