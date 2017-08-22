@@ -21,6 +21,7 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -126,6 +127,14 @@ def transform_xform_for_elasticsearch(doc_dict):
 
     if 'backend_id' not in doc_ret:
         doc_ret['backend_id'] = 'couch'
+
+    server_modified_on = doc_ret['received_on']
+    if doc_ret.get('edited_on', None):
+        # doesn't take archiving and unarchiving into account
+        received_on = string_to_utc_datetime(doc_ret['received_on'])
+        edited_on = string_to_utc_datetime(doc_ret['edited_on'])
+        server_modified_on = max(received_on, edited_on).isoformat()
+    doc_ret['server_modified_on'] = server_modified_on
     return doc_ret
 
 

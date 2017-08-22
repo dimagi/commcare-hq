@@ -12,7 +12,7 @@ function ProgressReportController($scope, $location, progressReportService,
     }
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
-    vm.label = "ICDS-CAS Fact Sheet";
+    vm.label = "ICDS-CAS Fact Sheets";
     vm.data = [];
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
@@ -23,6 +23,25 @@ function ProgressReportController($scope, $location, progressReportService,
         vm.showWarning =  vm.now === storageService.getKey('search')['month'];
         vm.loadData();
     });
+
+    $scope.$watch(function() {
+        return vm.selectedLocations;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue || !newValue || newValue.length === 0) {
+            return;
+        }
+        if (newValue.length === 6) {
+            var parent = newValue[3];
+            $location.search('location_id', parent.location_id);
+            $location.search('selectedLocationLevel', 3);
+            $location.search('location_name', parent.name);
+            storageService.setKey('message', true);
+            setTimeout(function() {
+                storageService.setKey('message', false);
+            }, 3000);
+        }
+        return newValue;
+    }, true);
 
     vm.loadData = function () {
         if (!vm.report) {
@@ -61,7 +80,7 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });

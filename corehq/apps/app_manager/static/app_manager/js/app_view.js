@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqDefine, hqImport */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
 hqDefine("app_manager/js/app_view", function() {
     $(function () {
@@ -65,7 +65,7 @@ hqDefine("app_manager/js/app_view", function() {
         if ($('#multimedia-tab').length) {
             var multimediaTab = new MultimediaTab();
             $("#multimedia-tab").koApplyBindings(multimediaTab);
-            var selector = COMMCAREHQ.toggleEnabled('APP_MANAGER_V1') ? '#demand-multimedia' : '[href="#multimedia-tab"]';
+            var selector = hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1') ? '#demand-multimedia' : '[href="#multimedia-tab"]';
             $(selector).on('shown.bs.tab', function () {
                 if (multimediaTab.load_state() === null) {
                     multimediaTab.load_if_necessary();
@@ -74,7 +74,7 @@ hqDefine("app_manager/js/app_view", function() {
         }
 
         // Releases content (v1 only)
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
             var state = "",
                 $main = $("#releases"),
                 $loading = $main.find(".hq-loading").remove(),
@@ -101,7 +101,7 @@ hqDefine("app_manager/js/app_view", function() {
                         state = "loaded";
                         showSpinner = false;
                         $main.html(content);
-                        COMMCAREHQ.initBlock($main);
+                        hqImport("style/js/main").initBlock($main);
                         analytics.workflow('Visited the Release Manager');
 
                         // Main releases/versions tab

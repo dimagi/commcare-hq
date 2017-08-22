@@ -20,6 +20,7 @@ from custom.enikshay.const import (
     FULFILLED_BY_ID,
     FULFILLED_BY_LOCATION_ID,
     AMOUNT_APPROVED,
+    TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
     PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     LAST_VOUCHER_CREATED_BY_ID,
@@ -27,6 +28,7 @@ from custom.enikshay.const import (
     INVESTIGATION_TYPE,
     USERTYPE_DISPLAYS,
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from .const import (
@@ -154,9 +156,29 @@ class IncentivePayload(BETSPayload):
             EnikshayApprovalDate=None,
         )
 
+    @staticmethod
+    def _get_successful_treatment_date(episode_case):
+        completed_date = None
+        if episode_case.get_case_property(TREATMENT_OUTCOME) in ("cured", "treatment_completed"):
+            completed_date = episode_case.get_case_property(TREATMENT_OUTCOME_DATE)
+            if not completed_date:
+                # the treatment_outcome_date property used to be called
+                # "rx_outcome_date", and was changed at some point. Older cases
+                # still have the rx_outcome_date property set.
+                completed_date = episode_case.get_case_property('rx_outcome_date')
+
+        threshold_met_date = episode_case.get_case_property(BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
+
+        if completed_date is None and threshold_met_date is None:
+            raise AssertionError("No treatment completion date found for episode {}. "
+                                 "How was this triggered?".format(episode_case.case_id))
+
+        # We don't know whether the trigger fired because the threshold was met
+        # or because treatment ended.  Just use whichever happened first.
+        return min(filter(None, [completed_date, threshold_met_date]))
+
     @classmethod
     def create_successful_treatment_payload(cls, episode_case):
-        episode_case_properties = episode_case.dynamic_case_properties()
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
         if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
@@ -176,15 +198,9 @@ class IncentivePayload(BETSPayload):
                 related_case_id=person_case.case_id
             )
 
-        event_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE)
-        if not event_date:
-            # the treatment_outcome_date property used to be called
-            # "rx_outcome_date", and was changed at some point. Older cases
-            # still have the rx_outcome_date property set.
-            event_date = episode_case_properties.get('rx_outcome_date')
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
-            EventOccurDate=event_date,
+            EventOccurDate=cls._get_successful_treatment_date(episode_case),
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,

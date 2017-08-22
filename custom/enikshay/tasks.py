@@ -38,6 +38,9 @@ from .const import (
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
     VALID_ADHERENCE_SOURCES,
+    BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
+    FDC_PRESCRIPTION_DAYS_THRESHOLD,
+    NON_FDC_PRESCRIPTION_DAYS_THRESHOLD,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
@@ -556,6 +559,10 @@ class EpisodeVoucherUpdate(object):
 
     def get_prescription_total_days(self):
         prescription_json = {}
+        threshold = (FDC_PRESCRIPTION_DAYS_THRESHOLD
+                     if self.episode.get_case_property("treatment_options") == "fdc"
+                     else NON_FDC_PRESCRIPTION_DAYS_THRESHOLD)
+        threshold_already_met = False
         total_days = 0
         for voucher in self._get_fulfilled_vouchers():
             raw_days_value = voucher.get_case_property('final_prescription_num_days')
@@ -565,8 +572,13 @@ class EpisodeVoucherUpdate(object):
                 prop = "prescription_total_days_threshold_{}".format(num_days)
                 if total_days >= num_days and prop not in prescription_json:
                     prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
-        prescription_json['prescription_total_days'] = total_days
 
+            if total_days >= threshold and not threshold_already_met:
+                prescription_json[BETS_DATE_PRESCRIPTION_THRESHOLD_MET] = \
+                    self._get_fulfilled_voucher_date(voucher)
+                threshold_already_met = True
+
+        prescription_json['prescription_total_days'] = total_days
         return prescription_json
 
     def get_prescription_refill_due_dates(self):

@@ -77,7 +77,7 @@ class Command(BaseCommand):
             help="actually create the cases. Without this flag, it's a dry run."
         )
 
-    def handle(self, domain, dto_id, **options):
+    def handle(self, domain, **options):
         commit = options['commit']
         logger.info("Starting {} migration on {} at {}".format(
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
@@ -242,7 +242,7 @@ class ENikshay2BMigrator(object):
             'area': person.get_case_property('phi_area'),
             'language_code': 'hin',
             'referred_outside_enikshay_date': person.get_case_property('date_referred_out'),
-            'referred_outside_enikshay_by_id': person.get_case_property('date_by_id'),
+            'referred_outside_enikshay_by_id': person.get_case_property('referred_by_id'),
         }
         if episode:
             props.update({
@@ -379,10 +379,12 @@ class ENikshay2BMigrator(object):
         """get last form that set result_recorded to yes"""
         for action in reversed(test.actions):
             for update in get_case_updates(action.form):
-                if update.id == test.case_id:
-                    case_properties = update.get_update_action().dynamic_properties
-                    if case_properties.get('result_recorded') == 'yes':
-                        return action.form.form_data
+                if (
+                    update.id == test.case_id
+                    and update.get_update_action()
+                    and update.get_update_action().dynamic_properties.get('result_recorded') == 'yes'
+                ):
+                    return action.form.form_data
 
     @staticmethod
     def _get_path(path, form_data):

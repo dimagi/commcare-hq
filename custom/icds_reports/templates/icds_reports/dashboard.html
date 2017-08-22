@@ -23,10 +23,12 @@
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
+        <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/fixedcolumns/angular-datatables.fixedcolumns.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-route/angular-route.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
@@ -119,6 +121,28 @@
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
                                     <ul class="nav navbar-nav" role="menu">
+                                        <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
+                                            <span>
+                                                <print-report></print-report>
+                                            </span>
+                                        </li>
+                                        <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
+                                             <span>
+                                                <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
+                                                 popover-placement="left"
+                                                 popover-trigger="'mouseenter'" style="padding: 3px; margin-top: 10px;" class="fa nav-main-icon fa-download fa-2x pointer"></i></a>
+                                            </span>
+                                        </li>
+                                        <li class="dropdown">
+                                            <span id="settingsmenu-projectSettings"
+                                                  ng-click="reportAnIssue()"
+                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
+                                                  data-toggle="dropdown">
+                                                <i class="fa fa-exclamation-triangle nav-main-icon fa-2x" uib-popover-html="'Report an Issue'"
+                                                   popover-placement="left"
+                                                   popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
+                                            </span>
+                                        </li>
                                         <li class="dropdown">
                                             <span id="settingsmenu-projectSettings"
                                                class="dropdown-toggle dropdown-toggle-with-icon pointer"
@@ -163,17 +187,6 @@
                                                     </a>
                                                 </li>
                                             </ul>
-                                        </li>
-                                        <li class="dropdown">
-                                            <span id="settingsmenu-projectSettings"
-                                                  ng-click="reportAnIssue()"
-                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
-                                                  data-toggle="dropdown">
-                                                <i class="fa fa-exclamation-triangle nav-main-icon fa-2x" uib-popover-html="'Report an Issue'"
-                                                   popover-placement="left"
-                                                   popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
-
-                                            </span>
                                         </li>
                                     </ul>
                                 </div>

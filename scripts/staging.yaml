@@ -52,9 +52,8 @@ branches:
   - br/kill-old-cloucare  # Danny 7/21
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
-#  - bmb/appv2-unique-urls # BMB 8/10
+  - bmb/appv2-unique-urls # BMB 8/10
   - np/billing/remove-product_type-version-form # NP 8/10
-  - np/django-transfer # NP 8/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

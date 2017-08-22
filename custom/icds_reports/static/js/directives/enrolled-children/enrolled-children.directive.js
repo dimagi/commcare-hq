@@ -141,6 +141,15 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 axisLabelDistance: 20,
             },
         },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
+        },
     };
 
     vm.moveToLocation = function(loc, index) {

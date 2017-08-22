@@ -892,6 +892,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     class Meta:
         index_together = [
+            ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
         ]

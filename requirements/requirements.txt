@@ -29,7 +29,7 @@ mock==0.8.0
 openpyxl==2.2.5
 Pillow==2.7.0
 phonenumberslite==7.1.0
-psycopg2==2.6.1
+psycopg2==2.7.3
 psycogreen==1.0
 pycrypto==2.6.1
 py-KISSmetrics==1.0.1
@@ -99,3 +99,4 @@ zeep==1.6.0
 ethiopian_date==0.1.1
 architect==0.5.6
 contextlib2==0.5.4
+hiredis==0.2.0

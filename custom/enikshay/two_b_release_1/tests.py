@@ -58,7 +58,7 @@ class TestCreateEnikshayCases(TestCase):
             'person_id': 'person_id',
             'phi_area': 'phi_area',
             'date_referred_out': 'date_referred_out',
-            'date_by_id': 'date_by_id',
+            'referred_by_id': 'referred_by_id',
             'phone_number': '1234567890',
         })
         return person
@@ -193,7 +193,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertDictContainsSubset({
             'area': 'phi_area',
             'referred_outside_enikshay_date': 'date_referred_out',
-            'referred_outside_enikshay_by_id': 'date_by_id',
+            'referred_outside_enikshay_by_id': 'referred_by_id',
             'contact_phone_number': '911234567890',
             'current_episode_type': "confirmed_tb",
             'alcohol_history': "alcohol_history",

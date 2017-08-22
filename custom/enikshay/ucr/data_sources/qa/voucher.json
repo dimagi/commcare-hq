@@ -27,7 +27,7 @@
         "configured_indicators": [
             {
                 "comment": null,
-                "create_index": false,
+                "create_index": true,
                 "display_name": "person_owner_id",
                 "datatype": "string",
                 "type": "expression",
@@ -162,7 +162,7 @@
             },
             {
                 "comment": null,
-                "create_index": false,
+                "create_index": true,
                 "display_name": "date_fulfilled",
                 "datatype": "date",
                 "type": "expression",

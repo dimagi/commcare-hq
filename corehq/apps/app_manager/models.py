@@ -3647,6 +3647,12 @@ def _filter_by_location_id(user, ui_filter):
                               'request_user': user})
 
 
+def _filter_by_location_ids(user, ui_filter):
+    from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
+    return ui_filter.value(**{ui_filter.name: CHOICE_DELIMITER.join(user.assigned_location_ids),
+                              'request_user': user})
+
+
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.raw_username, display=None)
@@ -3672,6 +3678,7 @@ def get_auto_filter_configurations():
         AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
                          _("The user's case sharing group")),
         AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('location_ids', _filter_by_location_ids, _("All of the user's assigned locations")),
         AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
                          _("The parent location of the user's assigned location")),
         AutoFilterConfig('username', _filter_by_username, _("The user's username")),

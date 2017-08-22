@@ -1,4 +1,4 @@
-/* global _, $, COMMCAREHQ, django */
+/* global _, $, django */
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
@@ -379,10 +379,10 @@ var reportBuilder = function () {  // eslint-disable-line
             };
         };
 
-        var button = COMMCAREHQ.SaveButton;
+        var button = hqImport("style/js/main").SaveButton;
         if (config['existingReport']) {
-            button = COMMCAREHQ.makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from COMMCAREHQ.SaveButton
+            button = hqImport("style/js/main").makeSaveButton({
+                // The SAVE text is the only thing that distringuishes this from SaveButton
                 SAVE: django.gettext("Update Report"),
                 SAVING: django.gettext("Saving..."),
                 SAVED: django.gettext("Saved"),

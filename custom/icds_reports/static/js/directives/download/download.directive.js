@@ -145,6 +145,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
+            if (locationType.name === 'state') return 'National';
             return locationType.name;
         }).join(', ');
     };

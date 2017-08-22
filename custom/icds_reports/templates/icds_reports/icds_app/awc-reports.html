@@ -8,32 +8,17 @@
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < -1 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                     <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
                 </span>
             </div>
         </div>
-        <div class="col-md-6">
-            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
-        </div>
-        <div class="col-md-1">
-            <div class="row">
-                <div class="col-md-4">
-                    <print-report></print-report>
-                </div>
-                <div class="col-md-4">
-                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
-                     popover-placement="left"
-                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
-                </div>
-            </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations" is-open-modal="$ctrl.message"></filters>
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div class="alert alert-info" ng-show="$ctrl.message && !$ctrl.myPromise" style="margin-top: 30px;">
-            <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
-        </div>
         <div ng-show="$ctrl.data">
             <div class="row " ng-show="$ctrl.step === 'system_usage'">
                 <kpi data="$ctrl.data.kpi"></kpi>
@@ -81,7 +66,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2">Name</th>
-                            <th rowspan="2">Date of Birth</th>
+                            <th rowspan="2"> Date of Birth</th>
                             <th rowspan="2">Current Age (In Years)</th>
                             <th rowspan="2">1 Year Immunizations Complete</th>
                             <th colspan="4" ng-repeat="month in $ctrl.data.months">
@@ -99,7 +84,7 @@
                         <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
                             <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.month_with_data].case_id)"><span>{$ row[$ctrl.data.month_with_data].person_name $}</span></td>
                             <td>{$ row[$ctrl.data.month_with_data].dob $}</td>
-                            <td>{$ row[$ctrl.data.month_with_data].age $}</td>
+                            <td style="min-width: 80px;">{$ row[$ctrl.data.month_with_data].age $}</td>
                             <td>{$ row[$ctrl.data.month_with_data].fully_immunized_date $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
                                 <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
@@ -159,8 +144,10 @@
                 <h4>Growth Monitoring:</h4>
                 <h4 class="center">Weight For Age:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
-                <h4 class="center">Weight For Height:</h4>
+                <h4 class="center">Height For Age:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
+                <h4 class="center">Weight For Height:</h4>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
         </div>
         </div>
