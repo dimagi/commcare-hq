@@ -184,6 +184,7 @@ class MockDevice(object):
             form = self.case_factory.post_case_blocks(
                 self.case_blocks,
                 form_extras={"last_sync_token": token},
+                user_id=self.user_id,
             )[0]
             self.case_blocks = []
             return form

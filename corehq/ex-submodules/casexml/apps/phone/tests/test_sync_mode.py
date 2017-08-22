@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import MockDevice
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import get_restore_config
@@ -423,7 +424,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.assertEqual(sync.cases, {})
 
         sync.form.archive()
-        self.device.last_sync.log.invalidate_cached_payloads()
+        RestorePayloadPathCache(
+            domain=self.project.name,
+            user_id=self.user_id,
+            sync_log_id=sync.restore_id,
+            device_id=None,
+        ).invalidate()
         self.assertEqual(set(self.device.sync().cases), {case_id})
 
     def testUserLoggedIntoMultipleDevices(self):
