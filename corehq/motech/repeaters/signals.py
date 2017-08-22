@@ -12,7 +12,8 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 def create_form_repeat_records(sender, xform, **kwargs):
     from corehq.motech.repeaters.models import FormRepeater
-    create_repeat_records(FormRepeater, xform)
+    if not xform.is_duplicate:
+        create_repeat_records(FormRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):
@@ -22,7 +23,8 @@ def create_case_repeat_records(sender, case, **kwargs):
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
     from corehq.motech.repeaters.models import ShortFormRepeater
-    create_repeat_records(ShortFormRepeater, xform)
+    if not xform.is_duplicate:
+        create_repeat_records(ShortFormRepeater, xform)
 
 
 def create_repeat_records(repeater_cls, payload):
