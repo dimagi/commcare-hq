@@ -68,8 +68,6 @@ class StockProcessingResult(object):
         """
         Finalize anything else that needs to happen - this runs after models are saved.
         """
-        # if cases were changed we should purge the sync token cache
-        # this ensures that ledger updates will sync back down
         pass
 
 
