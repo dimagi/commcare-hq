@@ -1,4 +1,6 @@
 import csv
+import datetime
+from mock import MagicMock
 
 from django.core.management.base import BaseCommand
 
@@ -6,12 +8,14 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.repeaters.models import RepeatRecord, RepeatRecordAttempt
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 
-from custom.enikshay.case_utils import get_person_case_from_voucher, CASE_TYPE_VOUCHER
-from custom.enikshay.const import PERSON_FIRST_NAME, PERSON_LAST_NAME, VOUCHER_ID
+from custom.enikshay.case_utils import CASE_TYPE_VOUCHER
+from custom.enikshay.const import VOUCHER_ID
 from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
 from custom.enikshay.integrations.bets.views import VoucherUpdate
 
@@ -107,6 +111,7 @@ class Command(BaseCommand):
         self.log_unrecognized_vouchers(headers, unrecognized_vouchers)
         self.log_unmodified_vouchers(voucher_ids_to_update)
         self.update_vouchers(voucher_updates)
+        self.reconcile_repeat_records(voucher_updates)
 
     @property
     @memoized
@@ -172,3 +177,52 @@ class Command(BaseCommand):
                     (update.case_id, update.properties, False)
                     for update in chunk
                 ])
+
+    def reconcile_repeat_records(self, voucher_updates):
+        """
+        Mark updated records as "succeeded", all others as "cancelled"
+        Delete duplicate records if any exist
+        """
+        chemist_voucher_repeater_id = 'be435d3f407bfb1016cc89ebbf8146b1'
+        lab_voucher_repeater_id = 'be435d3f407bfb1016cc89ebbfc42a47'
+
+        already_seen = set()
+        updates_by_voucher_id = {update.id: update for update in voucher_updates}
+
+        headers = ['record_id', 'voucher_id', 'status']
+        rows = []
+
+        get_db = (lambda: IterDB(RepeatRecord.get_db())) if self.commit else MagicMock
+        with get_db() as iter_db:
+            for repeater_id in [chemist_voucher_repeater_id, lab_voucher_repeater_id]:
+                records = iter_repeat_records_by_domain(self.domain, repeater_id=repeater_id)
+                for record in records:
+                    if record.payload_id in already_seen:
+                        status = "deleted"
+                        iter_db.delete(record)
+                    elif record.payload_id in updates_by_voucher_id:
+                        # add successful attempt
+                        status = "succeeded"
+                        attempt = RepeatRecordAttempt(
+                            cancelled=False,
+                            datetime=datetime.datetime.utcnow(),
+                            failure_reason=None,
+                            success_response="Paid offline via import_voucher_confirmations",
+                            next_check=None,
+                            succeeded=True,
+                        )
+                        record.add_attempt(attempt)
+                        iter_db.save(record)
+                    else:
+                        # mark record as canceled
+                        status = "cancelled"
+                        record.cancelled = True
+                        record.succeeded = False
+                        record.failure_reason = ''
+                        record.overall_tries = 0
+                        record.next_check = None
+                        iter_db.save(record)
+                    already_seen.add(record.payload_id)
+                    rows.append([record._id, record.payload_id, status])
+
+        self.write_csv('repeat_records', headers, rows)
