@@ -585,7 +585,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             restore_id=self.sync_log_id, version=V2)
 
         # submit with token
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
         deprecated_check_user_has_case(

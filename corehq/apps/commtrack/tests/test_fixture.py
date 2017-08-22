@@ -5,10 +5,9 @@ from xml.etree import ElementTree
 
 from django.test import TestCase
 
-from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import (
-    call_fixture_generator
+    call_fixture_generator,
     create_restore_user,
     deprecated_generate_restore_payload,
 )

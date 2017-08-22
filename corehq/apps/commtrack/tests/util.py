@@ -1,7 +1,6 @@
 from datetime import datetime
 from lxml import etree
 
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import MockDevice
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from dimagi.utils.couch.database import get_safe_write_kwargs

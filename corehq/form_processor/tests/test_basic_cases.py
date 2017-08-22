@@ -6,7 +6,6 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from mock import patch
 
-from casexml.apps.case.exceptions import CaseValueError
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks

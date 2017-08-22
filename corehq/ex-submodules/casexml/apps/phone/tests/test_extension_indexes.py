@@ -8,7 +8,6 @@ from nose.tools import nottest
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
-from casexml.apps.phone.tests.utils import MockDevice
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 

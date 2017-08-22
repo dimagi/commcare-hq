@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseBlock, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import (
     BaseSyncTest, DeprecatedBaseSyncTest, PARENT_TYPE
 )
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case.xml import V1
 from corehq.apps.groups.models import Group
 from casexml.apps.phone.restore import RestoreConfig

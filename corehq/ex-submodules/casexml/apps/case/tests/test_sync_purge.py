@@ -4,7 +4,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase
 
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
