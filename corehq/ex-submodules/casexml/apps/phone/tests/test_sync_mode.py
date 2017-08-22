@@ -8,6 +8,7 @@ import os
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.tests.utils import (
+    delete_cached_response,
     get_exactly_one_wrapped_sync_log,
     get_next_sync_log,
     generate_restore_payload,
@@ -1356,8 +1357,7 @@ class SyncTokenCachingTest(SyncBaseTest):
         ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        # Delete cached file
-        os.remove(original_payload.get_filename())
+        delete_cached_response(original_payload)
 
         # resyncing should recreate the cache
         next_file = RestoreConfig(
