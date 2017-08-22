@@ -59,6 +59,8 @@ class CacheAccessor(object):
 
 
 class RestorePayloadPathCache(CacheAccessor):
+    timeout = 24 * 60 * 60
+
     def __init__(self, domain, user_id, sync_log_id, device_id):
         self.cache_key = _restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id)
         self.debug_info = ('RestorePayloadPathCache', domain, user_id, sync_log_id, device_id)
