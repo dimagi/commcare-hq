@@ -23,6 +23,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -94,8 +95,7 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
         delete_all_xforms()
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
-        restore_config.cache.clear()
+        get_redis_default_cache().clear()
         super(BaseOtaRestoreTest, self).tearDown()
 
 

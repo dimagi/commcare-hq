@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import (
     create_restore_user,
@@ -85,7 +86,7 @@ class BaseSyncTest(TestCase):
             restore_user=self.user,
             **self.restore_options
         )
-        restore_config.cache.delete(restore_config._restore_cache_key)
+        restore_config.restore_payload_path_cache.invalidate()
         super(BaseSyncTest, self).tearDown()
 
     @classmethod
@@ -426,7 +427,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.assertEqual(sync.cases, {})
 
         sync.form.archive()
-        self.device.last_sync.log.invalidate_cached_payloads()
+        RestorePayloadPathCache(
+            domain=self.project.name,
+            user_id=self.user_id,
+            sync_log_id=sync.restore_id,
+            device_id=None,
+        ).invalidate()
         self.assertEqual(set(self.device.sync().cases), {case_id})
 
     def testUserLoggedIntoMultipleDevices(self):
@@ -1209,11 +1215,6 @@ class SyncTokenCachingTest(BaseSyncTest):
         # a second request with the same config should be exactly the same
         sync2 = self.device.sync(version=V2, restore_id=sync0.log._id)
         self.assertEqual(sync1.payload, sync2.payload)
-
-        # caching a different version should also produce something new
-        sync3 = self.device.sync(version=V1, restore_id=sync0.log._id)
-        self.assertNotEqual(sync1.payload, sync3.payload)
-        self.assertNotEqual(sync1.log._id, sync3.log._id)
 
     def test_initial_cache(self):
         restore_config = RestoreConfig(

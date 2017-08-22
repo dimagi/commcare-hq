@@ -1,14 +1,12 @@
 import uuid
 from django.test import TestCase, SimpleTestCase
-from casexml.apps.case.xml import V1, V2
+from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.restore import RestoreParams, RestoreConfig, restore_payload_path_cache_key
+from casexml.apps.phone.restore import RestoreParams, RestoreConfig
 from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.util.test_utils import flag_enabled
-from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class PhoneFootprintTest(SimpleTestCase):

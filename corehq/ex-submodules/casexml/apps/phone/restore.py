@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import hashlib
 import logging
 import os
 import shutil
@@ -8,16 +7,23 @@ import tempfile
 from io import FileIO
 from cStringIO import StringIO
 from uuid import uuid4
+from distutils.version import LooseVersion
+from datetime import datetime, timedelta
+from wsgiref.util import FileWrapper
+from xml.etree import ElementTree
+
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from distutils.version import LooseVersion
-
 from couchdbkit import ResourceNotFound
+from django.http import HttpResponse, StreamingHttpResponse
+from django.conf import settings
+
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
 )
+from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.timer import TimingContext
@@ -33,24 +39,18 @@ from casexml.apps.phone.models import (
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
-from datetime import datetime, timedelta
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from couchforms.openrosa_response import (
     ResponseNature,
     get_simple_response_xml,
     get_response_element,
 )
 from casexml.apps.case.xml import check_version, V1
-from django.http import HttpResponse, StreamingHttpResponse
-from django.conf import settings
 from casexml.apps.phone.checksum import CaseStateHash
 from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_TIMEOUT,
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
     ASYNC_RETRY_AFTER,
-    ASYNC_RESTORE_CACHE_KEY_PREFIX,
-    RESTORE_CACHE_KEY_PREFIX,
     CLEAN_OWNERS,
     LIVEQUERY,
 )
@@ -59,48 +59,10 @@ from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 
-from wsgiref.util import FileWrapper
-from xml.etree import ElementTree
-
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CASE_SYNC = CLEAN_OWNERS
-
-
-def _restore_cache_key(domain, prefix, user_id, version, sync_log_id, device_id):
-    response_class = get_restore_response_class()
-    hashable_key = '{response_class}-{prefix}-{user}-{version}-{sync_log_id}-{device_id}'.format(
-        response_class=response_class.__name__,
-        prefix=prefix,
-        user=user_id,
-        version=version or '',
-        sync_log_id=sync_log_id or '',
-        device_id=device_id or '',
-    )
-    return hashlib.md5(hashable_key).hexdigest()
-
-
-def restore_payload_path_cache_key(domain, user_id, version=None, sync_log_id=None, device_id=None):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        version=version,
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
-
-
-def async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        version=None,
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
 
 
 def stream_response(payload, headers=None, status=200):
@@ -662,7 +624,6 @@ class RestoreConfig(object):
         self.cache_settings = cache_settings or RestoreCacheSettings()
         self.async = async
 
-        self.version = self.params.version
         self.restore_state = RestoreState(
             self.project,
             self.restore_user,
@@ -678,17 +639,13 @@ class RestoreConfig(object):
         self.timing_context = TimingContext('restore-{}-{}'.format(self.domain, self.restore_user.username))
 
     @property
-    def cache(self):
-        return get_redis_default_cache()
-
-    @property
     @memoized
     def sync_log(self):
         return self.restore_state.last_sync_log
 
     @property
-    def async_cache_key(self):
-        return async_restore_task_id_cache_key(
+    def async_restore_task_id_cache(self):
+        return AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=self.restore_user.user_id,
             sync_log_id=self.sync_log._id if self.sync_log else '',
@@ -696,12 +653,20 @@ class RestoreConfig(object):
         )
 
     @property
-    def _restore_cache_key(self):
-        return restore_payload_path_cache_key(
+    def restore_payload_path_cache(self):
+        return RestorePayloadPathCache(
             domain=self.domain,
             user_id=self.restore_user.user_id,
-            version=self.version,
             sync_log_id=self.sync_log._id if self.sync_log else '',
+            device_id=self.params.device_id,
+        )
+
+    @property
+    def initial_restore_payload_path_cache(self):
+        return RestorePayloadPathCache(
+            domain=self.domain,
+            user_id=self.restore_user.user_id,
+            sync_log_id='',
             device_id=self.params.device_id,
         )
 
@@ -714,6 +679,7 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
+        self.delete_initial_cached_payload_if_necessary()
         self.delete_cached_payload_if_necessary()
 
         cached_response = self.get_cached_response()
@@ -750,14 +716,14 @@ class RestoreConfig(object):
         if self.overwrite_cache:
             return None
 
-        cache_payload_path = self.cache.get(self._restore_cache_key)
+        cache_payload_path = self.restore_payload_path_cache.get_value()
 
         return CachedResponse(self.domain, cache_payload_path)
 
     def _get_asynchronous_payload(self):
         new_task = False
         # fetch the task from celery
-        task_id = self.cache.get(self.async_cache_key)
+        task_id = self.async_restore_task_id_cache.get_value()
         task = AsyncResult(task_id)
         task_exists = task.status == ASYNC_RESTORE_SENT
 
@@ -775,7 +741,7 @@ class RestoreConfig(object):
                 task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
+            self.async_restore_task_id_cache.set_value(task.id)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
@@ -848,11 +814,20 @@ class RestoreConfig(object):
             self._set_cache_in_redis(cache_payload_path)
 
     def _set_cache_in_redis(self, cache_payload_path):
-        self.cache.set(self._restore_cache_key, cache_payload_path, self.cache_timeout)
+        self.restore_payload_path_cache.set_value(cache_payload_path, self.cache_timeout)
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.cache.get(self._restore_cache_key):
-            self.cache.delete(self._restore_cache_key)
+        if self.overwrite_cache and self.restore_payload_path_cache.get_value():
+            self.restore_payload_path_cache.invalidate()
+
+    def delete_initial_cached_payload_if_necessary(self):
+        if self.sync_log:
+            # Restores are usually cached by there sync token
+            # but initial restores don't have a sync token,
+            # so they're indistinguishable from each other.
+            # Once a user syncs with a sync token, we're sure their initial sync is stale,
+            # so delete it to avoid a stale payload if they (say) wipe the phone and sync again
+            self.initial_restore_payload_path_cache.invalidate()
 
     def _record_timing(self, status):
         timing = self.timing_context

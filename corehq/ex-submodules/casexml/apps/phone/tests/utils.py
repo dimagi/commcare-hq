@@ -1,6 +1,6 @@
 from uuid import uuid4
 from xml.etree import ElementTree
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
@@ -12,7 +12,6 @@ from casexml.apps.phone.models import (
 )
 from casexml.apps.phone.restore import (
     BlobRestoreResponse,
-    restore_payload_path_cache_key,
     RestoreCacheSettings,
     RestoreConfig,
     RestoreParams,
@@ -191,6 +190,7 @@ class MockDevice(object):
             form = self.case_factory.post_case_blocks(
                 self.case_blocks,
                 form_extras={"last_sync_token": token},
+                user_id=self.user_id,
             )[0]
             self.case_blocks = []
             return form
@@ -261,13 +261,12 @@ class SyncResult(object):
 
     def has_cached_payload(self, version):
         """Check if a cached payload exists for this sync result"""
-        key = restore_payload_path_cache_key(
+        return bool(RestorePayloadPathCache(
             domain=self.config.domain,
             user_id=self.config.restore_user.user_id,
             sync_log_id=self.restore_id,
-            version=version,
-        )
-        return bool(get_redis_default_cache().get(key))
+            device_id=None,
+        ).get_value())
 
 
 def delete_cached_response(response):

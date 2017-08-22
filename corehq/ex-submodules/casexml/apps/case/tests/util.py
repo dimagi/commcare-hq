@@ -3,6 +3,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import ElementTree
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -125,7 +126,12 @@ def _cached_restore(testcase, user, restore_id="", version=V2,
     assert not hasattr(testcase, 'payload_string'), testcase
 
     if restore_id and purge_restore_cache:
-        SyncLog.get(restore_id).invalidate_cached_payloads()
+        RestorePayloadPathCache(
+            domain=user.domain,
+            user_id=user.user_id,
+            sync_log_id=restore_id,
+            device_id=None,
+        ).invalidate()
 
     testcase.restore_config = RestoreConfig(
         project=user.project,
