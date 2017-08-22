@@ -1207,11 +1207,6 @@ class SyncTokenCachingTest(BaseSyncTest):
         sync2 = self.device.sync(version=V2, restore_id=sync0.log._id)
         self.assertEqual(sync1.payload, sync2.payload)
 
-        # caching a different version should also produce something new
-        sync3 = self.device.sync(version=V1, restore_id=sync0.log._id)
-        self.assertNotEqual(sync1.payload, sync3.payload)
-        self.assertNotEqual(sync1.log._id, sync3.log._id)
-
     def test_initial_cache(self):
         restore_config = RestoreConfig(
             project=self.project,
