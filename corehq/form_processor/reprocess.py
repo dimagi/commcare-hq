@@ -51,10 +51,13 @@ def reprocess_unfinished_stub(stub, save=True):
         save and stub.delete()
         return
 
-    assert form.is_normal
-    result = _reprocess_form(form, save)
-    save and stub.delete()
-    return result
+    if form.is_deleted:
+        save and stub.delete()
+
+    if form.is_normal:
+        result = _reprocess_form(form, save)
+        save and stub.delete()
+        return result
 
 
 def reprocess_xform_error(form):
