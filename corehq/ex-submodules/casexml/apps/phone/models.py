@@ -293,7 +293,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     @property
     def response_class(self):
-        return get_restore_response_class(self.domain)
+        return get_restore_response_class()
 
     def case_count(self):
         """

@@ -2260,7 +2260,7 @@ class BillingRecord(BillingRecordBase):
     def _add_product_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
             invoice=self.invoice,
-            line_item__product_rate__product__product_type__isnull=False,
+            line_item__product_rate__isnull=False,
         )
 
         subscription_credits = BillingRecord._get_total_balance(
@@ -2627,42 +2627,38 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_line_item(cls, line_item):
-        product_type = (
-            line_item.product_rate.product.product_type
-            if line_item.product_rate is not None else None
-        )
+        is_product = line_item.product_rate is not None
         feature_type = (
             line_item.feature_rate.feature.feature_type
             if line_item.feature_rate is not None else None
         )
 
-        for credit_line in cls.get_credits_by_subscription_and_features(
-            line_item.invoice.subscription,
-            product_type=product_type,
-            feature_type=feature_type,
-        ):
-            yield credit_line
+        assert is_product or feature_type
+        assert not (is_product and feature_type)
 
-        if product_type is not None:
-            for credit_line in cls.get_credits_by_subscription_and_features(
-                line_item.invoice.subscription,
-                product_type=SoftwareProductType.ANY,
-            ):
-                yield credit_line
+        if feature_type:
+            return itertools.chain(
+                cls.get_credits_by_subscription_and_features(
+                    line_item.invoice.subscription,
+                    feature_type=feature_type,
+                ),
+                cls.get_credits_for_account(
+                    line_item.invoice.subscription.account,
+                    feature_type=feature_type,
+                )
+            )
 
-        for credit_line in cls.get_credits_for_account(
-            line_item.invoice.subscription.account,
-            product_type=product_type,
-            feature_type=feature_type,
-        ):
-            yield credit_line
-
-        if product_type is not None:
-            for credit_line in cls.get_credits_for_account(
-                line_item.invoice.subscription.account,
-                product_type=SoftwareProductType.ANY,
-            ):
-                yield credit_line
+        if is_product:
+            return itertools.chain(
+                cls.get_credits_by_subscription_and_features(
+                    line_item.invoice.subscription,
+                    product_type=SoftwareProductType.ANY,
+                ),
+                cls.get_credits_for_account(
+                    line_item.invoice.subscription.account,
+                    product_type=SoftwareProductType.ANY,
+                )
+            )
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
@@ -2673,6 +2669,7 @@ class CreditLine(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, product_type=None):
+        assert not (feature_type and product_type)
         return cls.objects.filter(
             account=account, subscription__exact=None
         ).filter(
@@ -2683,6 +2680,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  product_type=None):
+        assert not (feature_type and product_type)
         return cls.objects.filter(
             subscription=subscription,
             feature_type__exact=feature_type,
