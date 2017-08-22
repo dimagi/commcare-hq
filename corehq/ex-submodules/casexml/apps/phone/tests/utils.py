@@ -124,6 +124,7 @@ class MockDevice(object):
         self.restore_options = restore_options or {}
         self.case_blocks = []
         self.case_factory = CaseFactory(
+            self.project.name,
             case_defaults={
                 'user_id': self.user_id,
                 'owner_id': default_owner_id or self.user_id,

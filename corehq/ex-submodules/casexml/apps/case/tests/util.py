@@ -20,9 +20,12 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 TEST_DOMAIN_NAME = 'test-domain'
 
 
-class RestoreCaseBlock(object):
+class _RestoreCaseBlock(object):
     """
     Little shim class for working with XML case blocks in a restore payload
+
+    NOTE the recommended way to inspect case restore payloads is to
+    use <MockDevice>.sync().cases, so don't use this in tests.
     """
 
     def __init__(self, xml_element, version=V2):
@@ -104,30 +107,6 @@ def check_xml_line_by_line(test_case, expected, actual):
         raise
 
 
-def assert_user_has_case(testcase, user, case_id, **kwargs):
-    """DEPRECATED use assertIn(case_id, <MockDevice>.sync().cases)"""
-    return assert_user_has_cases(testcase, user, [case_id], return_single=True, **kwargs)
-
-
-def assert_user_has_cases(testcase, user, case_ids, **kwargs):
-    """DEPRECATED use assertTrue(set(case_ids) <= set(<MockDevice>.sync().cases))"""
-    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
-    return check_user_has_case(testcase, user, case_blocks,
-                               should_have=True, line_by_line=False, **kwargs)
-
-
-def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
-    """DEPRECATED use assertNotIn(case_id, <MockDevice>.sync().cases)"""
-    return assert_user_doesnt_have_cases(testcase, user, [case_id], return_single=True, **kwargs)
-
-
-def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
-    """DEPRECATED use assertFalse(set(case_ids) & set(<MockDevice>.sync().cases))"""
-    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
-    return check_user_has_case(testcase, user, case_blocks,
-                               should_have=False, **kwargs)
-
-
 def get_case_xmlns(version):
     return NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
 
@@ -135,7 +114,7 @@ def get_case_xmlns(version):
 def extract_caseblocks_from_xml(payload_string, version=V2):
     parsed_payload = ElementTree.fromstring(payload_string)
     xml_blocks = parsed_payload.findall('{{{0}}}case'.format(get_case_xmlns(version)))
-    return [RestoreCaseBlock(b, version) for b in xml_blocks]
+    return [_RestoreCaseBlock(b, version) for b in xml_blocks]
 
 
 @contextmanager
@@ -199,7 +178,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
-        case_block = RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
+        case_block = _RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
         case_id = case_block.get_case_id()
         n = 0
 

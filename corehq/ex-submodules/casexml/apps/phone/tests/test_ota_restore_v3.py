@@ -8,13 +8,12 @@ from corehq.apps.domain.models import Domain
 from casexml.apps.case.tests.util import (
     delete_all_cases,
     delete_all_sync_logs,
-    assert_user_has_case,
 )
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import FileRestoreResponse
-from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -34,17 +33,17 @@ class OtaV3RestoreTest(TestCase):
 
     def testUserRestoreWithCase(self):
         restore_user = create_restore_user(domain=self.domain)
-        expected_case_block = CaseBlock(
+        case_id = 'my-case-id'
+        device = MockDevice(self.project, restore_user)
+        device.change_cases(CaseBlock(
             create=True,
-            case_id='my-case-id',
+            case_id=case_id,
             user_id=restore_user.user_id,
             owner_id=restore_user.user_id,
             case_type='test-case-type',
             update={'external_id': 'someexternal'},
-        )
-        _, [case] = post_case_blocks([expected_case_block.as_xml()], {'domain': self.domain})
-
-        assert_user_has_case(self, restore_user, case.case_id)
+        ))
+        self.assertIn(case_id, device.sync().cases)
 
 
 class TestRestoreResponse(SimpleTestCase):

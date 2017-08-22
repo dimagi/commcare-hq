@@ -6,11 +6,9 @@ from itertools import count
 from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseIndex, CaseStructure
-from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
-    assert_user_has_cases, cached_restore
-from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore import LIVEQUERY
-from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
+from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
+from casexml.apps.phone.tests.utils import MockDevice
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 
@@ -38,13 +36,16 @@ def test_generator(skip=False, **test):
         if skip:
             self.skipTest(skip)
         self.build_case_structures(test)
-        desired_cases = test.get('outcome', [])
-        undesired_cases = [case for case in self.get_all_case_names(test) if case not in desired_cases]
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        desired_cases = set(test.get('outcome', []))
+        undesired_cases = {case
+            for case in self.get_all_case_names(test)
+            if case not in desired_cases}
+        sync_log = self.device.last_sync.get_log()
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
-        with cached_restore(self, self.user):
-            assert_user_has_cases(self, self.user, desired_cases)
-            assert_user_doesnt_have_cases(self, self.user, undesired_cases)
+        sync = self.device.sync(restore_id='')
+        self.assertEqual(desired_cases, set(sync.cases))
+        self.assertFalse(undesired_cases & set(sync.cases),
+            "\nunexpected: %r\nactual: %r" % (undesired_cases, set(sync.cases)))
 
     test_func.__name__ = get_test_name(test["name"])
     return test_func
@@ -101,7 +102,7 @@ class TestSequenceMeta(type):
         return type.__new__(mcs, name, bases, dict)
 
 
-class IndexTreeTest(DeprecatedBaseSyncTest):
+class IndexTreeTest(BaseSyncTest):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
     Each testcase is structured as follows:
@@ -171,7 +172,7 @@ class IndexTreeTest(DeprecatedBaseSyncTest):
                 indices=indices[case],
             ))
 
-        self.factory.create_or_update_cases(case_structures)
+        self.device.post_changes(case_structures)
 
 
 @use_sql_backend
