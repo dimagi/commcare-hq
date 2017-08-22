@@ -54,7 +54,6 @@ branches:
   - sk/sessions # sk 7/26
   - bmb/appv2-unique-urls # BMB 8/10
   - np/update/xlutils # NP 8/22
-  - np/pygooglechart # NP 8/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
