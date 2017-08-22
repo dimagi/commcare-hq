@@ -321,7 +321,6 @@ class FundamentalCaseTests(TestCase):
     def test_restore_caches_cleared(self):
         sync_log_id = 'a8cac9222f42480764d6875c908040d5'
         device_id = 'CBNMP7XCGTIIAPCIMNI2KRGY'
-        cache = get_redis_default_cache()
         restore_payload_path_cache = RestorePayloadPathCache(
             domain=DOMAIN,
             user_id='user_id',
