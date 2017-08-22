@@ -118,7 +118,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 
 
 @contextmanager
-def cached_restore(testcase, user, restore_id="", version=V2,
+def _cached_restore(testcase, user, restore_id="", version=V2,
                    purge_restore_cache=False):
     """DEPRECATED use <MockDevice>.sync().cases"""
     assert not hasattr(testcase, 'restore_config'), testcase
@@ -139,7 +139,7 @@ def cached_restore(testcase, user, restore_id="", version=V2,
         del testcase.restore_config, testcase.payload_string
 
 
-def check_user_has_case(testcase, user, case_blocks, should_have=True,
+def deprecated_check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
     """DEPRECATED use <MockDevice>.sync().cases"""
@@ -148,7 +148,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         restore_config = testcase.restore_config
         payload_string = testcase.payload_string
     except AttributeError:
-        with cached_restore(testcase, user, restore_id, version, purge_restore_cache):
+        with _cached_restore(testcase, user, restore_id, version, purge_restore_cache):
             restore_config = testcase.restore_config
             payload_string = testcase.payload_string
 

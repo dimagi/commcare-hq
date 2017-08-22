@@ -27,7 +27,7 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.tests import util
-from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
+from casexml.apps.case.tests.util import check_xml_line_by_line, deprecated_check_user_has_case
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
@@ -580,15 +580,17 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
 
     def testStockSyncToken(self):
         # first restore should not have the updated case
-        check_user_has_case(self, self.restore_user, self.sp_block, should_have=False,
-                            restore_id=self.sync_log_id, version=V2)
+        deprecated_check_user_has_case(
+            self, self.restore_user, self.sp_block, should_have=False,
+            restore_id=self.sync_log_id, version=V2)
 
         # submit with token
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
         # now restore should have the case
-        check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
-                            restore_id=self.sync_log_id, version=V2, line_by_line=False)
+        deprecated_check_user_has_case(
+            self, self.restore_user, self.sp_block, should_have=True,
+            restore_id=self.sync_log_id, version=V2, line_by_line=False)
 
 
 @use_sql_backend
