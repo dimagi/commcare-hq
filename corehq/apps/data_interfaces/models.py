@@ -829,14 +829,23 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             return None
 
         def _add_update_property(name, value, current_case):
-            while name.startswith('parent/'):
-                name = name[7:]
-                # uses first parent if there are multiple
-                parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
-                if parent_cases:
-                    current_case = parent_cases[0]
+            while True:
+                if name.lower().startswith('parent/'):
+                    name = name[7:]
+                    # uses first parent if there are multiple
+                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    if parent_cases:
+                        current_case = parent_cases[0]
+                    else:
+                        return
+                elif name.lower().startswith('host/'):
+                    name = name[5:]
+                    current_case = current_case.host
+                    if not current_case:
+                        return
                 else:
-                    return
+                    break
+
             cases_to_update[current_case.case_id][name] = value
 
         for prop in self.get_properties_to_update():
