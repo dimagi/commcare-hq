@@ -144,7 +144,7 @@ class TestUserSetupUtils(TestCase):
                     value = "hin"
                 bound_data['user_data-{}'.format(slug)] = value
 
-        for slug, _, __ in AGENCY_LOCATION_FIELDS:
+        for slug, _, __ in [('nikshay_code', '', '')] + AGENCY_LOCATION_FIELDS:
             value = location_fields.get(slug, "")
             if slug == 'nikshay_code' and value == "":
                 value = uuid.uuid4().hex
@@ -312,3 +312,11 @@ class TestUserSetupUtils(TestCase):
         user.set_role(self.domain, 'none')
         user.save()
         self.assertFalse(user.get_role(self.domain))
+
+    def test_set_default_agency_role(self):
+        self.make_role(PRIVATE_SECTOR_WORKER_ROLE)
+        parent = self.locations['DTO']
+        form = self.make_new_location_form('sept_of_baelor', 'pcp', parent=parent)
+        self.assertValid(form)
+        form.save()
+        self.assertEqual("Private Sector Worker", form.user.get_role(self.domain).name)
