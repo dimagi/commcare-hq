@@ -572,9 +572,9 @@ def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
     _save_case(domain, case)
 
 
-def set_parent_case(domain, child_case, parent_case):
+def set_parent_case(domain, child_case, parent_case, relationship='child', identifier='parent'):
     server_modified_on = child_case.server_modified_on
-    set_actual_parent_case(domain, child_case, parent_case)
+    set_actual_parent_case(domain, child_case, parent_case, relationship=relationship, identifier=identifier)
 
     child_case = CaseAccessors(domain).get_case(child_case.case_id)
     child_case.server_modified_on = server_modified_on
@@ -875,6 +875,30 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(child, datetime.utcnow()))
 
     @run_with_all_backends
+    def test_host_case_reference(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='host/result',
+            property_value='negative',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as child, \
+                _with_case(self.domain, 'person', datetime.utcnow()) as host:
+
+            hqcase.utils.update_case(self.domain, host.case_id, case_properties={'result': 'negative'})
+            self.assertFalse(rule.criteria_match(child, datetime.utcnow()))
+
+            child = set_parent_case(self.domain, child, host, relationship='extension', identifier='host')
+            self.assertTrue(rule.criteria_match(child, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, host.case_id, case_properties={'result': 'x'})
+            # reset memoized cache
+            child = CaseAccessors(self.domain).get_case(child.case_id)
+            self.assertFalse(rule.criteria_match(child, datetime.utcnow()))
+
+    @run_with_all_backends
     def test_parent_case_closed(self):
         rule = _create_empty_rule(self.domain)
         rule.add_criteria(ClosedParentDefinition)
@@ -1069,6 +1093,38 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
 
             self.assertFalse(child.closed)
             self.assertFalse(parent.closed)
+
+    @run_with_all_backends
+    def test_update_host(self):
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='host/result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='abc',
+            ),
+        ])
+        definition.save()
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as child, \
+                _with_case(self.domain, 'person', datetime.utcnow()) as host:
+
+            child = set_parent_case(self.domain, child, host, relationship='extension', identifier='host')
+            child_dynamic_properties_before = child.dynamic_case_properties()
+
+            self.assertActionResult(rule, 0)
+            result = rule.run_actions_when_case_matches(child)
+            child = CaseAccessors(self.domain).get_case(child.case_id)
+            host = CaseAccessors(self.domain).get_case(host.case_id)
+
+            self.assertTrue(isinstance(result, CaseRuleActionResult))
+            self.assertActionResult(rule, 1, result, CaseRuleActionResult(num_related_updates=1))
+            self.assertEqual(host.get_case_property('result'), 'abc')
+            self.assertEqual(child.dynamic_case_properties(), child_dynamic_properties_before)
+
+            self.assertFalse(child.closed)
+            self.assertFalse(host.closed)
 
     @run_with_all_backends
     def test_update_from_other_case_property(self):
