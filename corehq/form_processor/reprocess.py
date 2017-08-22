@@ -4,11 +4,15 @@ from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 
+from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
+from casexml.apps.case.exceptions import UsesReferrals
 from casexml.apps.case.signals import case_post_save
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.change_publishers import publish_form_saved
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
@@ -90,11 +94,20 @@ def _reprocess_form(form, save=True):
     form.problem = None
 
     interface = FormProcessorInterface(form.domain)
+    accessors = FormAccessors(form.domain)
     cache = interface.casedb_cache(
         domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
     )
     with cache as casedb:
-        case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        try:
+            case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        except (IllegalCaseId, UsesReferrals, MissingProductId,
+                PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+            error_message = '{}: {}'.format(type(e).__name__, unicode(e))
+            form = interface.xformerror_from_xform_instance(form, error_message)
+            accessors.update_form_problem_and_state(form)
+            return ReprocessingResult(form, [], [])
+
         stock_result = case_stock_result.stock_result
         assert stock_result.populated
 
