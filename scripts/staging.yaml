@@ -53,7 +53,7 @@ branches:
   - lwyszomi/icds_side_code # lwyszomi
   - sk/sessions # sk 7/26
   - bmb/appv2-unique-urls # BMB 8/10
-  - np/update/xlrd # NP 8/22
+  - np/update/xlutils # NP 8/22
   - np/pygooglechart # NP 8/22
 submodules:
   submodules/touchforms-src:
