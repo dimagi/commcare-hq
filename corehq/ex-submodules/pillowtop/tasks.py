@@ -2,7 +2,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
 
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
+from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
 from pillowtop.utils import get_all_pillows_json
 
@@ -34,8 +34,8 @@ def pillow_datadog_metrics():
                 processed_offset = pillow['seq']
             else:
                 assert isinstance(pillow['seq'], dict)
-                if len(pillow['seq']) == 0:
-                    # this pillow has never been initialized. 
+                if not pillow['seq']:
+                    # this pillow has never been initialized.
                     # (custom pillows on most environments)
                     continue
                 assert len(pillow['offsets']) == len(pillow['seq'])
