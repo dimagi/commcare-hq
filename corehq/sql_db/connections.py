@@ -55,6 +55,11 @@ class ConnectionManager(object):
 
     def __init__(self):
         self._session_helpers = {}
+        self.db_connection_map = {
+            DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
+            UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
+        }
+        self._populate_connection_map()
 
     def _get_or_create_helper(self, engine_id):
         if engine_id not in self._session_helpers:
@@ -104,27 +109,26 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        db_connection_map = {
-            DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
-            UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
-        }
-        if hasattr(settings, 'ICDS_UCR_DATABASE_ALIAS') and settings.ICDS_UCR_DATABASE_ALIAS in settings.DATABASES:
-            db_connection_map[ICDS_UCR_ENGINE_ID] = \
-                "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
-                    **settings.DATABASES[settings.ICDS_UCR_DATABASE_ALIAS]
-                )
-        if hasattr(
-            settings, 'ICDS_UCR_TEST_DATABASE_ALIAS'
-        ) and settings.ICDS_UCR_TEST_DATABASE_ALIAS in settings.DATABASES:
-            db_connection_map[
-                ICDS_TEST_UCR_ENGINE_ID
-            ] = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
-                **settings.DATABASES[settings.ICDS_UCR_TEST_DATABASE_ALIAS]
-            )
-        for custom_engine_id, custom_db_url in settings.CUSTOM_DATABASES:
-            db_connection_map[custom_engine_id] = custom_db_url
-        return db_connection_map.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
+        return self.db_connection_map.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
 
+    def _populate_connection_map(self):
+        self._add_django_db(ICDS_UCR_ENGINE_ID, 'ICDS_UCR_DATABASE_ALIAS')
+        self._add_django_db(ICDS_TEST_UCR_ENGINE_ID, 'ICDS_UCR_TEST_DATABASE_ALIAS')
+        for custom_engine_id, custom_db_url in settings.CUSTOM_DATABASES:
+            self.db_connection_map[custom_engine_id] = custom_db_url
+
+    def _add_django_db(self, engine_id, django_db_alias):
+        if self._django_db_exists(django_db_alias):
+            connection_string = self._connection_string_from_django(settings.ICDS_UCR_DATABASE_ALIAS)
+            self.db_connection_map[engine_id] = connection_string
+
+    def _connection_string_from_django(self, django_alias):
+        return "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
+                **settings.DATABASES[django_alias]
+            )
+
+    def _django_db_exists(self, django_alias):
+        return getattr(settings, django_alias, None) in settings.DATABASES
 
 connection_manager = ConnectionManager()
 Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
