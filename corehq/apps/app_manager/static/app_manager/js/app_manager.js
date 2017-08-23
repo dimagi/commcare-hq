@@ -225,21 +225,44 @@ hqDefine('app_manager/js/app_manager', function () {
             var pop = this;
             $('.popover-additem').on('click', function (e) {
                 $(pop).popover('hide');
-                var dataType = $(e.target).closest('button').data('type');
-                $('#new-module-type').val(dataType);
-                if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
-                    var form = $('#new-module-form');
-                    if (!form.data('clicked')) {
-                        form.data('clicked', 'true');
-                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                        if (dataType === "case") {
-                            window.analytics.usage("Added Case List Menu");
-                            window.analytics.workflow("Added Case List Menu");
-                        } else if (dataType === "survey") {
-                            window.analytics.usage("Added Surveys Menu");
-                            window.analytics.workflow("Added Surveys Menu");
+                var dataType = $(e.target).closest('button').data('type'),
+                    isForm =  $(e.target).closest('button').data('form-type') !== undefined,
+                    stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
+                    $form;
+
+                if (stopSubmit) return;
+
+                if (isForm) {
+                    var caseAction =  $(e.target).closest('button').data('case-action'),
+                        $popoverContent = $(e.target).closest(".popover-content > *"),
+                        moduleId = $popoverContent.data("module-unique-id"),
+                        $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
+
+                    $form = $popoverContent.find("form");
+                    $form.find("input[name='case_action']").val(caseAction);
+                    $form.find("input[name='form_type']").val(dataType);
+                    if (!$form.data('clicked')) {
+                        $form.data('clicked', 'true');
+                        $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                        $form.submit();
+                    }
+
+                } else {
+                    $('#new-module-type').val(dataType);
+                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
+                        $form = $('#new-module-form');
+                        if (!$form.data('clicked')) {
+                            $form.data('clicked', 'true');
+                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                            if (dataType === "case") {
+                                window.analytics.usage("Added Case List Menu");
+                                window.analytics.workflow("Added Case List Menu");
+                            } else if (dataType === "survey") {
+                                window.analytics.usage("Added Surveys Menu");
+                                window.analytics.workflow("Added Surveys Menu");
+                            }
+                            $form.submit();
                         }
-                        form.submit();
                     }
                 }
             });
@@ -277,46 +300,27 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initNewItemForm = function () {
-        $('.new-module').on('click', function (e) {
-            e.preventDefault();
-            var dataType = $(this).data('type');
-            $('#new-module-type').val(dataType);
-            var form = $('#new-module-form');
-            if (!form.data('clicked')) {
-                form.data('clicked', 'true');
-                $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                form.submit();
-            }
-        });
-
-        $('.new-form').on('click', function (e) {
-            e.preventDefault();
-            var dataType = $(this).data("type");
-            var moduleId = $(this).data("module");
-            var form = $("#form-to-create-new-form-for-module-" + moduleId);
-            $("input[name=form_type]", form).val(dataType);
-            if (!form.data('clicked')) {
-                form.data('clicked', 'true');
-                $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
-                form.submit();
-            }
-        });
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            $(document).on('click', '.js-new-form', function (e) {
+        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
+            $('.new-module').on('click', function (e) {
                 e.preventDefault();
-                var $a = $(this),
-                    $popoverContent = $a.closest(".popover-content > *"),
-                    $form = $popoverContent.find("form"),
-                    action = $a.data("case-action"),
-                    moduleId = $popoverContent.data("module-id"),
-                    $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
-                $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
-                $form.find("input[name='case_action']").val(action);
-                $form.find("input[name='form_type']").val($a.data("form-type"));
-                if (!$form.data('clicked')) {
-                    $form.data('clicked', 'true');
-                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
-                    $form.submit();
+                var dataType = $(this).data('type');
+                $('#new-module-type').val(dataType);
+                var form = $('#new-module-form');
+                if (!form.data('clicked')) {
+                    form.data('clicked', 'true');
+                    $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                    form.submit();
+                }
+            });
+            $('.new-form').on('click', function () {
+                var dataType = $(this).data("type");
+                var moduleId = $(this).data("module");
+                var form = $("#form-to-create-new-form-for-module-" + moduleId);
+                $("input[name=form_type]", form).val(dataType);
+                if (!form.data('clicked')) {
+                    form.data('clicked', 'true');
+                    $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
+                    form.submit();
                 }
             });
         }
@@ -332,6 +336,29 @@ hqDefine('app_manager/js/app_manager', function () {
             _.each(relatedTags, function (related) {
                 $(related).data(name, value);
             });
+        }
+        function resetIndexes($sortable) {
+            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
+                var $sortables = $sortable.children.get(),
+                    i;
+                for (i in $sortables) {
+                    if ($sortables.hasOwnProperty(i)) {
+                        $($sortables[i]).data('index', i);
+                    }
+                }
+            } else {
+                var parentVar = $sortable.data('parentvar');
+                var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
+                _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
+                    $(elem).data('index', i);
+                    var indexVar = $(elem).data('indexvar');
+                    updateRelatedTags($(elem), indexVar, i);
+                    if (parentVar) {
+                        $(elem).data(parentVar, parentValue);
+                        updateRelatedTags($(elem), parentVar, parentValue);
+                    }
+                });
+            }
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
@@ -417,17 +444,30 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
-
                             if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                                 $sortable.sortable('option', 'disabled', true);
+                                if ($form.find('input[name="ajax"]').first().val() === "true") {
+                                    resetIndexes($sortable);
+                                    $.post($form.attr('action'), $form.serialize(), function (data) {
+                                        module.updateDOM(JSON.parse(data).update);
+                                        // re-enable sortable
+                                        $sortable.sortable('option', 'disabled', false);
+                                        $sortable.find('.drag_handle').show(1000);
+                                    });
+                                } else {
+                                    $form.submit();
+                                }
                             } else {
-                                // Show loading screen and disable rearranging
-                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                                $sortable.find('.drag_handle').remove();
+                                resetIndexes($sortable);
+                                if (from_module_id !== to_module_id) {
+                                    var $parentSortable = $sortable.parents(".sortable"),
+                                        $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                                    resetIndexes($fromSortable);
+                                }
+                                $.post($form.attr('action'), $form.serialize(), function () {});
                             }
-                            $form.submit();
                         }
 
                         module.setPublishStatus(true);
