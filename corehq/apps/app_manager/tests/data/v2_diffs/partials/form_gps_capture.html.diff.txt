@@ -1,0 +1,22 @@
+--- 
++++ 
+@@ -7,10 +7,18 @@
+           data-content="{% blocktrans %}On CommCare Android, have this form automatically capture the user's current geo-location.{% endblocktrans %}"
+     ></span>
+ </label>
+-<div id="auto-gps-capture" class="col-sm-4 commcare-feature" data-since-version="2.14">
++<div id="auto-gps-capture" class="col-sm-8 commcare-feature" data-since-version="2.14">
+     {% if app.auto_gps_capture %}
+         <input type="checkbox" value="true" disabled="disabled"
+                data-bind="checked: true"/>
++        <div class="help-block">
++            {% blocktrans %}
++                This appplication is configured to auto capture location for all forms.
++                <br>
++                This can be changed in the application's settings, in the <strong>Advanced Settings</strong> tab,
++                <strong>Android Settings</strong> section.
++            {% endblocktrans %}
++        </div>
+     {% else %}
+          <input type="checkbox" value="true"
+                 data-bind="checked: auto_gps_capture"/>
