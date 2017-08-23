@@ -30,7 +30,7 @@
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "display": "Location",
-                "field": "person_owner_id",
+                "field": "voucher_district_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
