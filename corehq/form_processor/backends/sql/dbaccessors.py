@@ -227,7 +227,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def count_query(self):
-        """Define a custom query to use to get the doc count (only used for filtered reindex.
+        """Define a custom query to use to get the doc count (only used for filtered reindex).
         :returns: tuple('query_string', [query values])
         """
         return
