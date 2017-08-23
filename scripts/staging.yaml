@@ -51,7 +51,6 @@ branches:
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
   - lwyszomi/icds_side_code # lwyszomi
-  - sk/sessions # sk 7/26
   - bmb/appv2-unique-urls # BMB 8/10
   - np/update/xlutils # NP 8/22
   - fixtures-require-js-2017 # Jenny 8/23
@@ -69,6 +68,7 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches: []
+    branches:
+      - sk/optimize  # sk 08/23
   submodules/commcare-translations:
     branches: []
