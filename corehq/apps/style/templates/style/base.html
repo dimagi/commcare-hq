@@ -416,7 +416,7 @@
             <script src="{% static 'requirejs/require.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
-                    baseUrl: "{% static '' %}",
+                    baseUrl: '{{ STATIC_URL }}',
                     paths: {
                         {% include "style/includes/jquery.html" %}
                         {% include "style/includes/core_libraries.html" %}
