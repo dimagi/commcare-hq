@@ -238,9 +238,7 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     day_ago = start - timedelta(days=1)
     # don't requeue anything that's be queued in the past day or has been retired more than 20 times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20).filter(
-        Q(date_queued__isnull=True) | Q(date_queued__lt=day_ago)
-    )[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
         indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
