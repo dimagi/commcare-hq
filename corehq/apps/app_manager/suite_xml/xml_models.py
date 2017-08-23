@@ -157,6 +157,10 @@ class MediaResource(AbstractResource):
     path = StringField('@path')
 
 
+class PracticeUserRestoreResource(AbstractResource):
+    ROOT_NAME = 'user-restore'
+
+
 class Display(OrderedXmlObject):
     ROOT_NAME = 'display'
     ORDER = ('text', 'media_image', 'media_audio')
@@ -716,6 +720,7 @@ class Detail(OrderedXmlObject, IdNode):
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
+    relevant = StringField('@relevant')
 
     def _init_variables(self):
         if self._variables is None:
@@ -817,6 +822,7 @@ class Suite(OrderedXmlObject):
     xform_resources = NodeListField('xform', XFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
     media_resources = NodeListField('locale', MediaResource)
+    practice_user_restore_resources = NodeListField('user-restore', PracticeUserRestoreResource)
 
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)

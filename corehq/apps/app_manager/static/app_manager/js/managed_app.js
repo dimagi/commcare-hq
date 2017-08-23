@@ -1,7 +1,7 @@
 $(function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        init = hqImport('app_manager/js/app_manager.js').init,
-        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
+        init = hqImport('app_manager/js/app_manager').init,
+        v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
         app = initial_page_data('app_subset');
 
     init({
@@ -11,7 +11,7 @@ $(function () {
     });
 
     $('.btn-langcode-preprocessed').each( function () {
-        langcodeTag.button_tag($(this), $(this).text());
+        hqImport('style/js/ui-element').langcode_tag_btn($(this), $(this).text());
         if ($(this).hasClass('langcode-input')) {
             var $langcodeInput = $(this).parent().find("input");
             var that = this;

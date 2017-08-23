@@ -128,3 +128,24 @@ class CommCareFeatureSupportMixin(object):
         Ability to print case detail screen, based on an HTML template, only supported > 2.35
         """
         return self._require_minimum_version('2.35')
+
+    @property
+    def supports_practice_users(self):
+        """
+        Ability to configure practice mobile workers for apps
+        """
+        return self._require_minimum_version('2.26')
+
+    @property
+    def enable_sorted_itemsets(self):
+        """
+        Enable sorted itemsets in the form builder.
+        """
+        return self._require_minimum_version('2.38')
+
+    @property
+    def supports_update_prompts(self):
+        """
+        Ability to configure apk/app update checks
+        """
+        return self._require_minimum_version('2.38')

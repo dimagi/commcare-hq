@@ -1,18 +1,25 @@
 from StringIO import StringIO
+from collections import OrderedDict
 
+import pytz
 from dateutil.rrule import rrule, MONTHLY
+from django.db.models.functions import datetime
+from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import EQ, OR, BETWEEN
 from sqlagg.sorting import OrderBy
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from custom.icds_reports.utils import ICDSMixin
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class BaseIdentification(object):
@@ -133,24 +140,49 @@ class ExportableMixin(object):
             order_by.append(OrderBy(column.slug))
         return order_by
 
-    def to_export(self, format):
+    def to_export(self, format, location):
         export_file = StringIO()
         excel_rows = []
         headers = []
         for column in self.columns:
-            headers.append(column['header'])
+            if isinstance(column, Column):
+                headers.append(column.header)
+            else:
+                headers.append(column['header'])
         excel_rows.append(headers)
         for row in self.get_data():
             row_data = []
             for c in self.columns:
-                cell = row[c['slug']]
+                if isinstance(c, Column):
+                    cell = row[c.slug]
+                else:
+                    cell = row[c['slug']]
                 row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
 
+        utc_now = datetime.datetime.now(pytz.utc)
+        india_now = utc_now.astimezone(india_timezone)
+
+        filters = [['Generated at', india_now.strftime("%H:%M:%S %d %B %Y")]]
+        if location:
+            locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
+            for loc in locs:
+                filters.append([loc.location_type.name.title(), loc.name])
+        if 'aggregation_level' in self.config:
+            levels = ['State', 'District', 'Block', 'Supervisor', 'AWC']
+            filters.append(['Grouped By', levels[self.config['aggregation_level'] - 1]])
+        if 'month' in self.config:
+            date = self.config['month']
+            filters.append(['Month', date.strftime("%B")])
+            filters.append(['Year', date.year])
         excel_data = [
             [
                 self.title,
                 excel_rows
+            ],
+            [
+                'Filters',
+                filters
             ]
         ]
 
@@ -211,7 +243,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 SumColumn('nutrition_status_unweighed')
             ),
             AggregateColumn(
-                '% Children severely underweight (weight for age)',
+                'Percent Children severely underweight (weight for age)',
                 percent_num,
                 [
                     SumColumn('nutrition_status_severely_underweight'),
@@ -220,7 +252,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='severely_underweight'
             ),
             AggregateColumn(
-                '% Children moderately underweight (weight for age)',
+                'Percent Children moderately underweight (weight for age)',
                 percent_num,
                 [
                     SumColumn('nutrition_status_moderately_underweight'),
@@ -229,7 +261,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='moderately_underweight'
             ),
             AggregateColumn(
-                '% Children normal (weight for age)',
+                'Percent Children normal (weight for age)',
                 percent_num,
                 [
                     SumColumn('nutrition_status_normal'),
@@ -238,7 +270,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='status_normal'
             ),
             AggregateColumn(
-                '% children with severe acute malnutrition (weight-for-height)',
+                'Percent children with severe acute malnutrition (weight-for-height)',
                 percent_num,
                 [
                     SumColumn('wasting_severe'),
@@ -247,7 +279,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='wasting_severe'
             ),
             AggregateColumn(
-                '% percent_num children with moderate acute malnutrition (weight-for-height)',
+                'Percent children with moderate acute malnutrition (weight-for-height)',
                 percent_num,
                 [
                     SumColumn('wasting_moderate'),
@@ -256,7 +288,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='wasting_moderate'
             ),
             AggregateColumn(
-                '% children normal (weight-for-age)',
+                'Percent children normal (weight-for-height)',
                 percent_num,
                 [
                     SumColumn('wasting_normal'),
@@ -265,7 +297,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='wasting_normal'
             ),
             AggregateColumn(
-                '% children with severe stunting (height for age)',
+                'Percent children with severe stunting (height for age)',
                 percent_num,
                 [
                     SumColumn('stunting_severe'),
@@ -274,7 +306,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='stunting_severe'
             ),
             AggregateColumn(
-                '% children with moderate stunting (height for age)',
+                'Percent children with moderate stunting (height for age)',
                 percent_num,
                 [
                     SumColumn('stunting_moderate'),
@@ -283,7 +315,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='stunting_moderate'
             ),
             AggregateColumn(
-                '% children with normal (height for age)',
+                'Percent children with normal (height for age)',
                 percent_num,
                 [
                     SumColumn('stunting_normal'),
@@ -292,7 +324,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='stunting_normal'
             ),
             AggregateColumn(
-                '% children immunized with 1st year immunizations',
+                'Percent children immunized with 1st year immunizations ',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumColumn('fully_immunized_on_time'),
@@ -302,7 +334,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='fully_immunized'
             ),
             AggregateColumn(
-                '% children breastfed at birth',
+                'Percent Children breastfed at birth',
                 percent_num,
                 [
                     SumColumn('bf_at_birth'),
@@ -311,7 +343,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='breastfed_at_birth'
             ),
             AggregateColumn(
-                '% children exclusively breastfed',
+                'Percent Children exclusively breastfed',
                 percent_num,
                 [
                     SumColumn('ebf_in_month'),
@@ -320,7 +352,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='exclusively_breastfed'
             ),
             AggregateColumn(
-                '% children initiated appropriate complementary feeding',
+                'Percent Children initiated appropriate complementary feeding',
                 percent_num,
                 [
                     SumColumn('cf_initiation_in_month'),
@@ -329,7 +361,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='cf_initiation'
             ),
             AggregateColumn(
-                '% children complementary feeding',
+                'Perecent children complementary feeding',
                 percent_num,
                 [
                     SumColumn('cf_in_month'),
@@ -338,7 +370,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='complementary_feeding'
             ),
             AggregateColumn(
-                '% children consuming at least 4 food groups',
+                'Percentage of children consuming atleast 4 food groups',
                 percent_num,
                 [
                     SumColumn('cf_diet_diversity'),
@@ -347,7 +379,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='diet_diversity'
             ),
             AggregateColumn(
-                '% children consuming adequate food',
+                'Percentage of children consuming adequate food',
                 percent_num,
                 [
                     SumColumn('cf_diet_quantity'),
@@ -356,7 +388,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='diet_quantity'
             ),
             AggregateColumn(
-                '% children whose mothers handwash before feeding',
+                'Percentage of children whose mothers handwash before feeding',
                 percent_num,
                 [
                     SumColumn('cf_handwashing'),
@@ -444,7 +476,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
             AggregateColumn(
-                '% severe anemic',
+                'Percent of pregnant women who are anemic in given month',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumColumn('anemic_moderate'),
@@ -454,7 +486,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='severe_anemic'
             ),
             AggregateColumn(
-                '% tetanus complete',
+                'Percent tetanus complete',
                 percent_num,
                 [
                     SumColumn('tetanus_complete'),
@@ -463,7 +495,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='tetanus_complete'
             ),
             AggregateColumn(
-                '% women ANC 1 received by delivery',
+                'Percent women ANC 1 recieved by deliveryy',
                 percent_num,
                 [
                     SumColumn('anc1_received_at_delivery'),
@@ -472,7 +504,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='anc_1'
             ),
             AggregateColumn(
-                '% women ANC 2 received by delivery',
+                'Percent women ANC 2 received by delivery',
                 percent_num,
                 [
                     SumColumn('anc2_received_at_delivery'),
@@ -481,7 +513,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='anc_2'
             ),
             AggregateColumn(
-                '% women ANC 3 received by delivery',
+                'Percent women ANC 3 received by delivery',
                 percent_num,
                 [
                     SumColumn('anc3_received_at_delivery'),
@@ -490,7 +522,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='anc_3'
             ),
             AggregateColumn(
-                '% women ANC 4 received by delivery',
+                'Percent women ANC 4 received by delivery',
                 percent_num,
                 [
                     SumColumn('anc4_received_at_delivery'),
@@ -499,7 +531,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='anc_4'
             ),
             AggregateColumn(
-                '% women Resting during pregnancy',
+                'Percent women Resting during pregnancy',
                 percent_num,
                 [
                     SumColumn('resting_during_pregnancy'),
@@ -508,7 +540,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='resting'
             ),
             AggregateColumn(
-                '% eating extra meal during pregnancy',
+                'Percent eating extra meal during pregnancy',
                 percent_num,
                 [
                     SumColumn('extra_meal'),
@@ -517,7 +549,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
                 slug='extra_meal'
             ),
             AggregateColumn(
-                '% trimester 3 women Counselled on immediate EBF during home visit',
+                'Percent trimester 3 women Counselled on immediate EBF during home visit',
                 percent_num,
                 [
                     SumColumn('counsel_immediate_bf'),
@@ -557,66 +589,66 @@ class AggAWCMonthlyDataSource(SqlData):
     def columns(self):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
-            DatabaseColumn(
-                'Number of AWCs Open in Month',
-                SumColumn('num_awcs'),
-                slug='awc_num_open'
-            ),
-            DatabaseColumn(
-                'Number of Household Registration Forms',
-                SumColumn('usage_num_hh_reg')
-            ),
-            DatabaseColumn(
-                'Number of Pregnancy Registration Forms',
-                SumColumn('usage_num_add_pregnancy')
-            ),
-            DatabaseColumn(
-                'Number of PSE Forms with Photo',
-                SumColumn('usage_num_pse_with_image')
-            ),
-            AggregateColumn(
-                'Home Visit - Number of Birth Preparedness Forms',
-                lambda x, y, z: x + y + z,
-                columns=[
-                    SumColumn('usage_num_bp_tri1'),
-                    SumColumn('usage_num_bp_tri2'),
-                    SumColumn('usage_num_bp_tri3')
-                ],
-                slug='num_bp'
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of Delivery Forms',
-                SumColumn('usage_num_delivery')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of PNC Forms',
-                SumColumn('usage_num_pnc')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of EBF Forms',
-                SumColumn('usage_num_ebf')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of CF Forms',
-                SumColumn('usage_num_cf')
-            ),
-            DatabaseColumn(
-                'Number of GM Forms',
-                SumColumn('usage_num_gmp')
-            ),
-            DatabaseColumn(
-                'Number of THR forms',
-                SumColumn('usage_num_thr')
-            ),
-            AggregateColumn(
-                'Number of Due List forms',
-                lambda x, y: x + y,
-                [
-                    SumColumn('usage_num_due_list_ccs'),
-                    SumColumn('usage_num_due_list_child_health')
-                ],
-                slug='due_list'
-            ),
+            # DatabaseColumn(
+            #     'Number of AWCs Open In Month',
+            #     SumColumn('num_awcs'),
+            #     slug='awc_num_open'
+            # ),
+            # DatabaseColumn(
+            #     'Number of Household Registration Forms',
+            #     SumColumn('usage_num_hh_reg')
+            # ),
+            # DatabaseColumn(
+            #     'Number of Pregnancy Registration Forms',
+            #     SumColumn('usage_num_add_pregnancy')
+            # ),
+            # DatabaseColumn(
+            #     'Number of PSE Forms with Photo',
+            #     SumColumn('usage_num_pse_with_image')
+            # ),
+            # AggregateColumn(
+            #     'Home Visit - Number of Birth Preparedness Forms',
+            #     lambda x, y, z: x + y + z,
+            #     columns=[
+            #         SumColumn('usage_num_bp_tri1'),
+            #         SumColumn('usage_num_bp_tri2'),
+            #         SumColumn('usage_num_bp_tri3')
+            #     ],
+            #     slug='num_bp'
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of Delivery Forms',
+            #     SumColumn('usage_num_delivery')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of PNC Forms',
+            #     SumColumn('usage_num_pnc')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of EBF Forms',
+            #     SumColumn('usage_num_ebf')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of CF Forms',
+            #     SumColumn('usage_num_cf')
+            # ),
+            # DatabaseColumn(
+            #     'Number of GM forms',
+            #     SumColumn('usage_num_gmp')
+            # ),
+            # DatabaseColumn(
+            #     'Number of THR forms',
+            #     SumColumn('usage_num_thr')
+            # ),
+            # AggregateColumn(
+            #     'Number of Due List forms',
+            #     lambda x, y: x + y,
+            #     [
+            #         SumColumn('usage_num_due_list_ccs'),
+            #         SumColumn('usage_num_due_list_child_health')
+            #     ],
+            #     slug='due_list'
+            # ),
             DatabaseColumn(
                 'Number of Households',
                 SumColumn('cases_household'),
@@ -626,7 +658,7 @@ class AggAWCMonthlyDataSource(SqlData):
                 SumColumn('cases_person_all')
             ),
             DatabaseColumn(
-                'Total Number of Members Enrolled for Services for services at AWC',
+                'Total Number of Members Enrolled for Services for services at AWC ',
                 SumColumn('cases_person', alias='cases_person')
             ),
             AggregateColumn(
@@ -706,15 +738,6 @@ class AggAWCMonthlyDataSource(SqlData):
                 slug='medicine_kits'
             ),
             AggregateColumn(
-                '% AWCs with Flat Scale',
-                percent_num,
-                [
-                    SumColumn('infra_flat_weighing_scale'),
-                    AliasColumn('awcs')
-                ],
-                slug='flat_weighing_scale'
-            ),
-            AggregateColumn(
                 '% AWCs with Adult Scale',
                 percent_num,
                 [
@@ -727,7 +750,7 @@ class AggAWCMonthlyDataSource(SqlData):
                 '% AWCs with Baby Scale',
                 percent_num,
                 [
-                    SumColumn('infra_baby_weighing_scale'),
+                    SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('awcs')
                 ],
                 slug='baby_weighing_scale'
@@ -736,7 +759,7 @@ class AggAWCMonthlyDataSource(SqlData):
 
 
 class ChildrenExport(ExportableMixin, SqlData):
-    title = 'AWC Infrastructure'
+    title = 'Children'
     table_name = 'agg_child_health_monthly'
 
     @property
@@ -767,7 +790,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'percent_weight_efficiency',
+                'Weighing efficiency',
                 percent,
                 [
                     SumColumn('nutrition_status_weighed'),
@@ -776,12 +799,12 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_weight_efficiency'
             ),
             DatabaseColumn(
-                'total_number_unweighed',
+                'Total number of unweighed children',
                 SumColumn('nutrition_status_unweighed'),
                 slug='total_number_unweighed'
             ),
             AggregateColumn(
-                'percent_severe_underweight',
+                'Percentage of severely underweight children',
                 percent,
                 [
                     SumColumn('nutrition_status_severely_underweight'),
@@ -790,7 +813,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_severe_underweight'
             ),
             AggregateColumn(
-                'percent_moderate_underweight',
+                'Percentage of moderately underweight children',
                 percent,
                 [
                     SumColumn('nutrition_status_moderately_underweight'),
@@ -799,7 +822,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_moderate_underweight'
             ),
             AggregateColumn(
-                'percent_normal_weight',
+                'Percentage of normal weight-for-age children',
                 percent,
                 [
                     SumColumn('nutrition_status_normal'),
@@ -808,7 +831,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_normal_weight'
             ),
             AggregateColumn(
-                'percent_severe_wasting',
+                'Percentage of children with severe wasting',
                 percent,
                 [
                     SumColumn('wasting_severe'),
@@ -817,7 +840,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_severe_wasting'
             ),
             AggregateColumn(
-                'percent_moderate_wasting',
+                'Percentage of children with moderate wasting',
                 percent,
                 [
                     SumColumn('wasting_moderate'),
@@ -826,7 +849,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_moderate_wasting'
             ),
             AggregateColumn(
-                'percent_normal_wasting',
+                'Percentage of children with normal weight-for-height',
                 percent,
                 [
                     SumColumn('wasting_normal'),
@@ -835,7 +858,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_normal_wasting'
             ),
             AggregateColumn(
-                'percent_severe_stunting',
+                'Percentage of children with severe stunting',
                 percent,
                 [
                     SumColumn('stunting_severe'),
@@ -844,7 +867,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_severe_stunting'
             ),
             AggregateColumn(
-                'percent_moderate_stunting',
+                'Percentage of children with moderate stunting',
                 percent,
                 [
                     SumColumn('stunting_moderate'),
@@ -853,7 +876,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_moderate_stunting'
             ),
             AggregateColumn(
-                'percent_normal_stunting',
+                'Percentage of children with normal height-for-age',
                 percent,
                 [
                     SumColumn('stunting_normal'),
@@ -862,7 +885,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_normal_stunting'
             ),
             AggregateColumn(
-                'percent_completed_1year_immunizations',
+                'Percentage of children with completed 1 year immunizations',
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
                     SumColumn('fully_immunized_on_time'),
@@ -872,7 +895,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_completed_1year_immunizations'
             ),
             AggregateColumn(
-                'percent_breastfed_at_birth',
+                'Percentage of children breastfed at birth',
                 percent,
                 [
                     SumColumn('bf_at_birth'),
@@ -881,7 +904,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_breastfed_at_birth'
             ),
             AggregateColumn(
-                'percent_ebf',
+                'Percentage of children with early initiation of breastfeeding',
                 percent,
                 [
                     SumColumn('ebf_in_month'),
@@ -890,7 +913,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_ebf'
             ),
             AggregateColumn(
-                'percent_initiated_on_cf',
+                'Percentage of children initiated complementary feeding (in the past 30 days)',
                 percent,
                 [
                     SumColumn('cf_initiation_in_month'),
@@ -899,7 +922,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_initiated_on_cf'
             ),
             AggregateColumn(
-                'percent_appropriate_cf',
+                'Percentage of children initiated appropriate complementary feeding (cumulative)',
                 percent,
                 [
                     SumColumn('cf_in_month'),
@@ -908,7 +931,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_appropriate_cf'
             ),
             AggregateColumn(
-                'percent_cf_diet_diversity',
+                'Percentage of children receiving complementary feeding with adequate diet diversity',
                 percent,
                 [
                     SumColumn('cf_diet_diversity'),
@@ -917,7 +940,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_cf_diet_diversity'
             ),
             AggregateColumn(
-                'percent_cf_diet_quanity',
+                'Percentage of children receiving complementary feeding with adequate diet quanity',
                 percent,
                 [
                     SumColumn('cf_diet_quantity'),
@@ -926,7 +949,8 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_cf_diet_quanity'
             ),
             AggregateColumn(
-                'percent_cf_handwashing_before_feeding',
+                "Percentage of children receiving complementary feeding "
+                "with appropriate handwashing before feeding",
                 percent,
                 [
                     SumColumn('cf_handwashing'),
@@ -969,11 +993,11 @@ class PregnantWomenExport(ExportableMixin, SqlData):
     def columns(self):
         columns = self.get_columns_by_loc_level
         agg_columns = [
-            DatabaseColumn('Num lactating', SumColumn('lactating'), slug='lactating'),
-            DatabaseColumn('Num pregnant', SumColumn('pregnant'), slug='pregnant'),
-            DatabaseColumn('Num postnatal', SumColumn('postnatal'), slug='postnatal'),
+            DatabaseColumn('Number of lactating women', SumColumn('lactating'), slug='lactating'),
+            DatabaseColumn('Number of pregnant women', SumColumn('pregnant'), slug='pregnant'),
+            DatabaseColumn('Number of postnatal women', SumColumn('postnatal'), slug='postnatal'),
             AggregateColumn(
-                'percent_anemia',
+                'Percentage Anemia',
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
                     SumColumn('anemic_moderate'),
@@ -983,7 +1007,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anemia'
             ),
             AggregateColumn(
-                'percent_tetanus_complete',
+                'Percentage Tetanus Completed',
                 percent,
                 [
                     SumColumn('tetanus_complete'),
@@ -992,7 +1016,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_tetanus_complete'
             ),
             AggregateColumn(
-                'percent_anc1_received_by_delivery',
+                'Percentage of women who received ANC 1 by delivery',
                 percent,
                 [
                     SumColumn('anc1_received_at_delivery'),
@@ -1001,7 +1025,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc1_received_by_delivery'
             ),
             AggregateColumn(
-                'percent_anc2_received_by_delivery',
+                'Percentage of women who received ANC 2 by delivery',
                 percent,
                 [
                     SumColumn('anc2_received_at_delivery'),
@@ -1010,7 +1034,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc2_received_by_delivery'
             ),
             AggregateColumn(
-                'percent_anc3_received_by_delivery',
+                'Percentage of women who received ANC 3 by delivery',
                 percent,
                 [
                     SumColumn('anc3_received_at_delivery'),
@@ -1019,7 +1043,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc3_received_by_delivery'
             ),
             AggregateColumn(
-                'percent_anc4_received_by_delivery',
+                'Percentage of women who received ANC 4 by delivery',
                 percent,
                 [
                     SumColumn('anc4_received_at_delivery'),
@@ -1028,7 +1052,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc4_received_by_delivery'
             ),
             AggregateColumn(
-                'percent_resting_during_pregnancy',
+                'Percentage of women resting during pregnancy',
                 percent,
                 [
                     SumColumn('resting_during_pregnancy'),
@@ -1037,7 +1061,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_resting_during_pregnancy'
             ),
             AggregateColumn(
-                'percent_eating_extra_meal_during_pregnancy',
+                'Percentage of women eating extra meal during pregnancy',
                 percent,
                 [
                     SumColumn('extra_meal'),
@@ -1046,7 +1070,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_eating_extra_meal_during_pregnancy'
             ),
             AggregateColumn(
-                'percent_trimester_3_women_counselled_on_immediate_bf',
+                'Percentage of trimester 3 women counselled on immediate breastfeeding',
                 percent,
                 [
                     SumColumn('counsel_immediate_bf'),
@@ -1120,32 +1144,28 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             DatabaseColumn(
-                'num_children_0_28days_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_0')]),
-                slug='num_children_0_28days_enrolled_for_services'
+                'num_children_0_6mo_enrolled_for_services',
+                SumColumn('valid_in_month', filters=self.filters + [
+                    OR([
+                        EQ('age_tranche', 'age_0'),
+                        EQ('age_tranche', 'age_6')
+                    ])
+                ]),
+                slug='num_children_0_6mo_enrolled_for_services'
             ),
             DatabaseColumn(
-                'num_children_28days6mo_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_6')]),
-                slug='num_children_28days6mo_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_children_6mo1yr_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_12')]),
-                slug='num_children_6mo1yr_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_children_1yr3yr_enrolled_for_services',
+                'num_children_6mo3yr_enrolled_for_services',
                 SumColumn(
                     'valid_in_month',
                     filters=self.filters + [
                         OR([
+                            EQ('age_tranche', 'age_12'),
                             EQ('age_tranche', 'age_24'),
                             EQ('age_tranche', 'age_36')
                         ])
                     ]
                 ),
-                slug='num_children_1yr3yr_enrolled_for_services'
+                slug='num_children_6mo3yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
@@ -1345,79 +1365,71 @@ class DemographicsExport(ExportableMixin):
         columns = self.get_columns_by_loc_level
         return columns + [
             {
-                'header': 'num_households',
+                'header': 'Number of households',
                 'slug': 'num_households'
             },
             {
-                'header': 'num_people',
+                'header': 'Number of people',
                 'slug': 'num_people'
             },
             {
-                'header': 'num_people_enrolled_for_services',
+                'header': 'Number of people enrolled for services',
                 'slug': 'num_people_enrolled_for_services'
             },
             {
-                'header': 'num_people_with_aadhar',
+                'header': 'Number of people with aadhar',
                 'slug': 'num_people_with_aadhar'
             },
             {
-                'header': 'num_pregnant_women',
+                'header': 'Number of pregnant women',
                 'slug': 'num_pregnant_women'
             },
             {
-                'header': 'num_pregnant_women_enrolled_for_services',
+                'header': 'Number of pregnant women enrolled for services',
                 'slug': 'num_pregnant_women_enrolled_for_services'
             },
             {
-                'header': 'num_lactating_women',
+                'header': 'Number of lactating women',
                 'slug': 'num_lactating_women'
             },
             {
-                'header': 'num_lactating_women_enrolled_for_services',
+                'header': 'Number of lactating women enrolled for services',
                 'slug': 'num_lactating_women_enrolled_for_services'
             },
             {
-                'header': 'num_children_0_6years',
+                'header': 'Number of children 0-6 years old',
                 'slug': 'num_children_0_6years'
             },
             {
-                'header': 'num_children_0_6years_enrolled_for_services',
+                'header': 'Number of children 0-6 years old enrolled for services',
                 'slug': 'num_children_0_6years_enrolled_for_services'
             },
             {
-                'header': 'num_children_0_28days_enrolled_for_services',
-                'slug': 'num_children_0_28days_enrolled_for_services'
+                'header': 'Number of children 0-6 months old enrolled for services',
+                'slug': 'num_children_0_6mo_enrolled_for_services'
             },
             {
-                'header': 'num_children_28days6mo_enrolled_for_services',
-                'slug': 'num_children_28days6mo_enrolled_for_services'
+                'header': 'Number of children 6 months to 3 years old enrolled for services',
+                'slug': 'num_children_6mo3yr_enrolled_for_services'
             },
             {
-                'header': 'num_children_6mo1yr_enrolled_for_services',
-                'slug': 'num_children_6mo1yr_enrolled_for_services'
-            },
-            {
-                'header': 'num_children_1yr3yr_enrolled_for_services',
-                'slug': 'num_children_1yr3yr_enrolled_for_services'
-            },
-            {
-                'header': 'num_children_3yr6yr_enrolled_for_services',
+                'header': 'Number of children 3 to 6 years old enrolled for services',
                 'slug': 'num_children_3yr6yr_enrolled_for_services'
             },
             {
-                'header': 'num_adolescent_girls_11yr14yr',
+                'header': 'Number of adolescent girls 11 to 14 years old',
                 'slug': 'num_adolescent_girls_11yr14yr'
             },
             {
-                'header': 'num_adolescent_girls_15yr18yr',
+                'header': 'Number of adolescent girls 15 to 18 years old',
                 'slug': 'num_adolescent_girls_15yr18yr'
             },
             {
-                'header': 'num_adolescent_girls_11yr14yr_enrolled_for_services',
+                'header': 'Number of adolescent girls 11 to 14 years old that are enrolled for services',
                 'slug': 'num_adolescent_girls_11yr14yr_enrolled_for_services'
             },
             {
-                'header': 'num_adolescent_girls_15yr18yr_enrolled_for_services',
+                'header': 'Number of adolescent girls 15 to 18 years old that are enrolled for services',
                 'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
             }
         ]
@@ -1510,7 +1522,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'percent_with_drinking_water',
+                'Percentage AWCs with drinking water',
                 percent,
                 [
                     SumColumn('infra_clean_water'),
@@ -1519,7 +1531,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 slug='percent_with_drinking_water'
             ),
             AggregateColumn(
-                'percent_with_functional_toilet',
+                'Percentage AWCs with functional toilet',
                 percent,
                 [
                     SumColumn('infra_functional_toilet'),
@@ -1528,7 +1540,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 slug='percent_with_functional_toilet'
             ),
             AggregateColumn(
-                'percent_with_medicine_kit',
+                'Percentage AWCs with medicine kit',
                 percent,
                 [
                     SumColumn('infra_medicine_kits'),
@@ -1537,7 +1549,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 slug='percent_with_medicine_kit'
             ),
             AggregateColumn(
-                'percent_adult_scale',
+                'Percentage AWCs with weighing scale: infants',
                 percent,
                 [
                     SumColumn('infra_adult_weighing_scale'),
@@ -1546,7 +1558,7 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 slug='percent_adult_scale'
             ),
             AggregateColumn(
-                'percent_baby_scale',
+                'Percentage AWCs with weighing scale: mother and child',
                 percent,
                 [
                     SumColumn('infra_baby_weighing_scale'),
@@ -1565,273 +1577,445 @@ class ProgressReport(object):
         self.config = config
 
     @property
-    def table_config(self):
+    def new_table_config(self):
         return [
             {
-                'section_title': 'Nutrition Status of Children',
-                'rows_config': [
+                'category': 'maternal_and_child_nutrition',
+                'title': 'Maternal and Child Nutrition',
+                'sections': [
                     {
-                        'header': '% Weighing efficiency (Children <5 weighed)',
-                        'slug': 'status_weighed',
-                        'average': []
-                    },
-                    {
-                        'header': 'Total number Unweighed',
-                        'slug': 'nutrition_status_unweighed'
-                    },
-                    {
-                        'header': '% Children severely underweight (weight for age)',
-                        'slug': 'severely_underweight',
-                        'average': []
-                    },
-                    {
-                        'header': '% Children moderately underweight (weight for age)',
-                        'slug': 'moderately_underweight',
-                        'average': []
-                    },
-                    {
-                        'header': '% Children normal (weight for age)',
-                        'slug': 'status_normal',
-                        'average': []
-                    },
-                    {
-                        'header': '% Percent children with severe acute malnutrition (weight-for-height)',
-                        'slug': 'wasting_severe',
-                        'average': []
-                    },
-                    {
-                        'header': '% Percent children with moderate acute malnutrition (weight-for-height)',
-                        'slug': 'wasting_moderate',
-                        'average': []
-                    },
-                    {
-                        'header': '% children normal (weight-for-age)',
-                        'slug': 'wasting_normal',
-                        'average': []
-                    },
-                    {
-                        'header': '% children with severe stunting (height for age)',
-                        'slug': 'stunting_severe',
-                        'average': []
-                    },
-                    {
-                        'header': '% children with moderate stunting (height for age)',
-                        'slug': 'stunting_moderate',
-                        'average': []
-                    },
-                    {
-                        'header': '% children with normal (height for age)',
-                        'slug': 'stunting_normal',
-                        'average': []
-                    },
-                    {
-                        'header': '% children immunized with 1st year immunizations',
-                        'slug': 'fully_immunized',
-                        'average': []
+                        'section_title': 'Nutrition Status of Children',
+                        'slug': 'nutrition_status_of_children',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Weighing Efficiency (Children <5 weighed)',
+                                'slug': 'status_weighed',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Total number of unweighed children',
+                                'slug': 'nutrition_status_unweighed',
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0 - 5 years who are '
+                                          'severely underweight (weight-for-age)',
+                                'slug': 'severely_underweight',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0-5 years who '
+                                          'are moderately underweight (weight-for-age)',
+                                'slug': 'moderately_underweight',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 0-5 years who are at normal weight-for-age',
+                                'slug': 'status_normal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with severe acute '
+                                          'malnutrition (weight-for-height)',
+                                'slug': 'wasting_severe',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': (
+                                    'Children from 6 - 60 months with moderate '
+                                    'acute malnutrition (weight-for-height)'
+                                ),
+                                'slug': 'wasting_moderate',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with normal weight-for-height',
+                                'slug': 'wasting_normal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
+                                'slug': 'stunting_moderate',
+                                'average': [],
+                                'reverseColors': 'true',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with normal height-for-age',
+                                'slug': 'stunting_normal',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'Child Feeding Indicators',
-                'rows_config': [
+                'category': 'interventions',
+                'title': 'Interventions',
+                'sections': [
                     {
-                        'header': '% children breastfed at birth',
-                        'slug': 'breastfed_at_birth',
-                        'average': []
+                        'section_title': 'Nutrition Status of Children',
+                        'slug': 'nutrition_status_of_children',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children 1 year+ who have recieved complete '
+                                          'immunization required by age 1.',
+                                'slug': 'fully_immunized',
+                                'average': []
+                            }
+                        ]
                     },
                     {
-                        'header': '% children exclusively breastfed',
-                        'slug': 'exclusively_breastfed',
-                        'average': []
-                    },
-                    {
-                        'header': '% children initiated appropriate complementary feeding',
-                        'slug': 'cf_initiation',
-                        'average': []
-                    },
-                    {
-                        'header': '% children complementary feeding',
-                        'slug': 'complementary_feeding',
-                        'average': []
-                    },
-                    {
-                        'header': '% children consuming at least 4 food groups',
-                        'slug': 'diet_diversity',
-                        'average': []
-                    },
-                    {
-                        'header': '% children consuming adequate food',
-                        'slug': 'diet_quantity',
-                        'average': []
-                    },
-                    {
-                        'header': '% children whose mothers handwash before feeding',
-                        'slug': 'handwashing',
-                        'average': []
+                        'section_title': 'Nutrition Status of Pregnant Women',
+                        'slug': 'nutrition_status_of_pregnant_women',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women with tetanus completed',
+                                'slug': 'tetanus_complete',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 1 by delivery',
+                                'slug': 'anc_1',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 2 by delivery',
+                                'slug': 'anc_2',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 3 by delivery',
+                                'slug': 'anc_3',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who received ANC 4 by delivery',
+                                'slug': 'anc_4',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'Nutrition Status of Pregnant Woment',
-                'rows_config': [
+                'category': 'behavior_change',
+                'title': 'Behavior Change',
+                'sections': [
                     {
-                        'header': '% severe anemic',
-                        'slug': 'severe_anemic',
-                        'average': []
+                        'section_title': 'Child Feeding Indicators',
+                        'slug': 'child_feeding_indicators',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children who were put to the breast within one hour of birth.',
+                                'slug': 'breastfed_at_birth',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Infants 0-6 months of age who '
+                                          'are fed exclusively with breast milk.',
+                                'slug': 'exclusively_breastfed',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': (
+                                    "Children between 6 - 8 months given timely introduction to solid, "
+                                    "semi-solid or soft food."
+                                ),
+                                'slug': 'cf_initiation',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months complementary feeding',
+                                'slug': 'complementary_feeding',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months consuming at least 4 food groups',
+                                'slug': 'diet_diversity',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months consuming adequate food',
+                                'slug': 'diet_quantity',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 24 months '
+                                          'whose mothers handwash before feeding',
+                                'slug': 'handwashing',
+                                'average': []
+                            }
+                        ]
                     },
                     {
-                        'header': '% tetanus complete',
-                        'slug': 'tetanus_complete',
-                        'average': []
-                    },
-                    {
-                        'header': '% women ANC 1 received by delivery',
-                        'slug': 'anc_1',
-                        'average': []
-                    },
-                    {
-                        'header': '% women ANC 2 received by delivery',
-                        'slug': 'anc_2',
-                        'average': []
-                    },
-                    {
-                        'header': '% women ANC 3 received by delivery',
-                        'slug': 'anc_3',
-                        'average': []
-                    },
-                    {
-                        'header': '% women ANC 4 received by delivery',
-                        'slug': 'anc_4',
-                        'average': []
-                    },
-                    {
-                        'header': '% women Resting during pregnancy',
-                        'slug': 'resting',
-                        'average': []
-                    },
-                    {
-                        'header': '% eating extra meal during pregnancy',
-                        'slug': 'extra_meal',
-                        'average': []
-                    },
-                    {
-                        'header': '% trimester 3 women Counselled on immediate EBF during home visit',
-                        'slug': 'trimester',
-                        'average': []
+                        'section_title': 'Nutrition Status of Pregnant Women',
+                        'slug': 'nutrition_status_of_pregnant_women',
+                        "rows_config": [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Women resting during pregnancy',
+                                'slug': 'resting',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Women eating an extra meal during pregnancy',
+                                'slug': 'extra_meal',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': (
+                                    "Pregnant women in 3rd trimester counselled "
+                                    "on immediate and exclusive "
+                                    "breastfeeding during home visit"
+                                ),
+                                'slug': 'trimester',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'System Usage',
-                'rows_config': [
-                    {'header': 'Number of AWCs Open in Month', 'slug': 'awc_num_open'},
-                    {'header': 'Number of Household Registration Forms', 'slug': 'usage_num_hh_reg'},
-                    {'header': 'Number of Pregnancy Registration Forms', 'slug': 'usage_num_add_pregnancy'},
-                    {'header': 'Number of PSE Forms with Photo', 'slug': 'usage_num_pse_with_image'},
-                    {'header': 'Home Visit - Number of Birth Preparedness Forms', 'slug': 'num_bp'},
-                    {'header': 'Home Visit - Number of Delivery Forms', 'slug': 'usage_num_delivery'},
-                    {'header': 'Home Visit - Number of PNC Forms', 'slug': 'usage_num_pnc'},
-                    {'header': 'Home Visit - Number of EBF Forms', 'slug': 'usage_num_ebf'},
-                    {'header': 'Home Visit - Number of CF Forms', 'slug': 'usage_num_cf'},
-                    {'header': 'Number of GM Forms', 'slug': 'usage_num_gmp'},
-                    {'header': 'Number of THR forms', 'slug': 'usage_num_thr'},
-                    {'header': 'Number of Due List forms', 'slug': 'due_list'},
-                ]
-            },
-            {
-                'section_title': 'Demographics',
-                'rows_config': [
-                    {'header': 'Number of Households', 'slug': 'cases_household'},
-                    {'header': 'Total Number of Household Members', 'slug': 'cases_person_all'},
+                'category': 'water_sanitation_and_hygiene',
+                'title': 'Water Sanitation And Hygiene',
+                "sections": [
                     {
-                        'header': 'Total Number of Members Enrolled for Services for services at AWC',
-                        'slug': 'cases_person'
-                    },
-                    {'header': 'Percentage of Beneficiaries with Aadhar', 'slug': 'aadhar'},
-                    {'header': 'Total Pregnant women', 'slug': 'cases_ccs_pregnant_all'},
-                    {'header': 'Total Pregnant Women Enrolled for services at AWC', 'slug': 'cases_ccs_pregnant'},
-                    {'header': 'Total Lactating women', 'slug': 'cases_ccs_lactating_all'},
-                    {
-                        'header': 'Total Lactating women registered for services at AWC',
-                        'slug': 'cases_ccs_lactating'
-                    },
-                    {'header': 'Total Children (0-6 years', 'slug': 'cases_child_health_all'},
-                    {
-                        'header': 'Total Chldren (0-6 years) registered for service at AWC',
-                        'slug': 'cases_child_health'
-                    },
-                    {'header': 'Children (0 - 28 Days) Seeking Services', 'slug': 'zero'},
-                    {'header': 'Children (28 Days - 6 mo) Seeking Services', 'slug': 'one'},
-                    {'header': 'Children (6 mo - 1 year) Seeking Services', 'slug': 'two'},
-                    {'header': 'Children (1 year - 3 years) Seeking Services', 'slug': 'three'},
-                    {'header': 'Children (3 years - 6 years) Seeking Services', 'slug': 'four'},
-                    {
-                        'header': 'Adolescent girls (11-14 years)',
-                        'slug': 'cases_person_adolescent_girls_11_14_all'
-                    },
-                    {
-                        'header': 'Adolescent girls (15-18 years)',
-                        'slug': 'cases_person_adolescent_girls_15_18_all'
-                    },
-                    {
-                        'header': 'Adolescent girls (11-14 years) Seeking Services',
-                        'slug': 'cases_person_adolescent_girls_11_14'
-                    },
-                    {
-                        'header': 'Adolescent girls (15-18 years) Seeking Services',
-                        'slug': 'cases_person_adolescent_girls_15_18'
+                        'section_title': 'AWC Infrastructure',
+                        'slug': 'awc_infrastructure',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with clean drinking water',
+                                'slug': 'clean_water',
+                                'average': []
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with functional toilet',
+                                'slug': 'functional_toilet',
+                                'average': []
+                            }
+                        ]
                     }
                 ]
             },
             {
-                'section_title': 'AWC Infrastructure',
-                'rows_config': [
+                'category': 'demographics',
+                'title': 'Demographics',
+                'sections': [
                     {
-                        'header': '% AWCs with Clean Drinking Water',
-                        'slug': 'clean_water',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with functional toilet',
-                        'slug': 'functional_toilet',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Medicine Kit',
-                        'slug': 'medicine_kits',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Flat Scale',
-                        'slug': 'flat_weighing_scale',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Adult Scale',
-                        'slug': 'adult_weighing_scale',
-                        'average': []
-                    },
-                    {
-                        'header': '% AWCs with Baby Scale',
-                        'slug': 'baby_weighing_scale',
-                        'average': []
+                        'section_title': 'Demographics',
+                        'slug': 'demographics',
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Number of Households',
+                                'slug': 'cases_household'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total Number of Household Members',
+                                'slug': 'cases_person_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total number of members enrolled at AWC',
+                                'slug': 'cases_person'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adhaar seeded beneficiaries',
+                                'slug': 'aadhar',
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total pregnant women ',
+                                'slug': 'cases_ccs_pregnant_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total pregnant women enrolled for servics at AWC',
+                                'slug': 'cases_ccs_pregnant'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total lactating women',
+                                'slug': 'cases_ccs_lactating_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total lactating women registered for services at AWC',
+                                'slug': 'cases_ccs_lactating'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total children (0-6 years)',
+                                'slug': 'cases_child_health_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Total chldren (0-6 years) enrolled for ICDS services',
+                                'slug': 'cases_child_health'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (0-28 days)  enrolled for ICDS services',
+                                'slug': 'zero'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (28 days - 6 months)  enrolled for ICDS services',
+                                'slug': 'one'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (6 months - 1 year)  enrolled for ICDS services',
+                                'slug': 'two'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (1 year - 3 years)  enrolled for ICDS services',
+                                'slug': 'three'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children (3 years - 6 years)  enrolled for ICDS services',
+                                'slug': 'four'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (11-14 years)',
+                                'slug': 'cases_person_adolescent_girls_11_14_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (15-18 years)',
+                                'slug': 'cases_person_adolescent_girls_15_18_all'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
+                                'slug': 'cases_person_adolescent_girls_11_14'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
+                                'slug': 'cases_person_adolescent_girls_15_18'
+                            }
+                        ]
                     },
                 ]
             }
         ]
 
-    def get_data(self):
-        health_monthly = AggChildHealthMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        record_monthly = AggCCSRecordMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        awc_monthly = AggAWCMonthlyDataSource(config=self.config, loc_level=self.loc_level).get_data()
-        all_data = []
-        for idx in range(0, len(health_monthly)):
-            data = health_monthly[idx]
-            data.update(record_monthly[idx])
-            data.update(awc_monthly[idx])
-            all_data.append(data)
+    @property
+    def data_sources(self):
+        return {
+            'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            ),
+            'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            ),
+            'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
+                config=self.config,
+                loc_level=self.loc_level
+            )
+        }
 
-        config = self.table_config
+    def _get_collected_sections(self, config_list):
+        sections_by_slug = OrderedDict()
+        for config in config_list:
+            for section in config['sections']:
+                slug = section['slug']
+                if slug not in sections_by_slug:
+                    sections_by_slug[slug] = {
+                        'slug': slug,
+                        'section_title': section['section_title'],
+                        'rows_config': section['rows_config']
+                    }
+                else:
+                    sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
+        return sections_by_slug.values()
+
+    def _get_needed_data_sources(self, config):
+        needed_data_sources = set()
+        for section in config['sections']:
+            for row in section['rows_config']:
+                needed_data_sources.add(row['data_source'])
+        return needed_data_sources
+
+    def _get_all_data(self, data_sources):
+        all_data = []
+        first_data_source = data_sources[0]
+        for idx in range(0, len(first_data_source)):
+            data = first_data_source[idx]
+            for other_data_source in data_sources[1:]:
+                data.update(other_data_source[idx])
+            all_data.append(data)
+        return all_data
+
+    @property
+    def config_list(self):
+        return filter(
+            lambda c: c['category'] == self.config['category'] or self.config['category'] == 'all',
+            self.new_table_config
+        )
+
+    def get_data(self):
+        config_list = self.config_list
+        if not config_list:
+            raise Http404()
+
+        if len(config_list) == 1:
+            config = config_list[0]
+        else:
+            config = {
+                'title': 'All',
+                'sections': self._get_collected_sections(config_list)
+            }
+
+        needed_data_sources = self._get_needed_data_sources(config)
+
+        data_sources = [
+            data_source.get_data()
+            for k, data_source in self.data_sources.iteritems()
+            if k in needed_data_sources
+        ]
+
+        all_data = self._get_all_data(data_sources)
 
         months = [
             dt.strftime("%b %Y") for dt in rrule(
@@ -1840,14 +2024,26 @@ class ProgressReport(object):
                 until=self.config['month'])
         ]
 
-        for row_data in all_data:
-            for section in config:
+        for month in months:
+            data_for_month = False
+            month_data = {}
+            for row_data in all_data:
+                m = row_data['month'].strftime("%b %Y")
+                if month == m:
+                    month_data = row_data
+                    data_for_month = True
+
+            for section in config['sections']:
                 section['months'] = months
                 for row in section['rows_config']:
                     if 'data' not in row:
                         row['data'] = [{'html': row['header']}]
-                    if 'average' in row:
-                        row['average'].append(row_data[row['slug']]['html'])
-                    row['data'].append((row_data[row['slug']] or {'html': 0}))
+
+                    if data_for_month:
+                        if 'average' in row:
+                            row['average'].append(month_data[row['slug']]['html'])
+                        row['data'].append((month_data[row['slug']] or {'html': 0}))
+                    else:
+                        row['data'].append({'html': 0})
 
         return {'config': config}

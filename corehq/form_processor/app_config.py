@@ -5,6 +5,7 @@ class FormProcessorAppConfig(AppConfig):
     name = 'corehq.form_processor'
 
     def ready(self):
+        from corehq.form_processor import tasks  # noqa
         from psycopg2.extensions import register_adapter
         from corehq.form_processor.utils.sql import (
             form_adapter, form_attachment_adapter, form_operation_adapter,

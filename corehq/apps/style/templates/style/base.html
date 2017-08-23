@@ -199,7 +199,7 @@
 
         {% include 'style/includes/analytics_all.html' %}
 
-        {% if is_saas_environment %}
+        {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
         {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
         {% compress js %}
         <script src="{% static 'style/js/drift.js' %}"></script>
@@ -225,7 +225,6 @@
                 };
             </script>
             <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-            {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
     </head>
     <body>
@@ -375,9 +374,21 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
-        <div id="initial-page-data" class="hide">
+        {% block additional_initial_page_data %}
+            {% comment %}
+                fallback place to put initial page data for templates where it's
+                awkward or impossible to include it in another block
+            {% endcomment %}
+        {% endblock %}
+        <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
+        {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
+        <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
         {% endblock %}
         </div>
 
@@ -393,83 +404,19 @@
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        <script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                var $notificationsMenu = $('#js-settingsmenu-notifications');
-                if ($notificationsMenu.length > 0) {
-                    $notificationsMenu.startNotificationsService('{% url 'notifications_service' %}');
-                }
-            });
-        </script>
-        {% endaddtoblock %}
+        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
         {% endif %}
 
         {% include "style/includes/ko.html" %}
-        {% addtoblock js-inline %}
-        <script>
-            /*
-                This is the knockout-based, javascript analog of messages in Django.
-
-                Use the function `alert_user` to make a message appear on the page.
-                This accepts three args, message, emphasis and append.
-                Emphasis corresponds to bootstrap styling, and can be
-                "success", "danger", "info", or "warning".
-                If specified, "append" will cause the message to be appended to the existing notification
-                bubble (as opposed to making a new bubble).
-                NOTE: append will change the class of the alert if it is more severe
-                (success < info < warning < danger)
-
-                alert_user("Awesome job!", "success", true);
-            */
-            function message_alert (message, tags) {
-                var alert_obj = {
-                    "message": ko.observable(message),
-                    "alert_class": ko.observable(
-                        "alert fade in alert-block alert-full page-level-alert message-alert"
-                    )
-                };
-                if (tags) {
-                    alert_obj.alert_class(alert_obj.alert_class() + " " + tags);
-                }
-                return alert_obj;
-            }
-            var message_alerts = ko.observableArray();
-
-            function alert_user (message, emphasis, append) {
-                var tags = "alert-" + emphasis;
-                if (!append || message_alerts().length === 0) {
-                    message_alerts.push(message_alert(message, tags));
-                } else {
-                    var alert = message_alerts()[0];
-                    alert.message(alert.message() + "<br>" + message);
-                    if (!alert.alert_class().includes(tags)) {
-                        alert.alert_class(alert.alert_class() + ' ' + tags);
-                    }
-                }
-            }
-
-            // remove closed alerts from backend model
-            $(document).on('close.bs.alert','.message-alert', function (e) {
-                message_alerts.remove(ko.dataFor(this));
-            });
-
-            var message_element = $("#message-alerts").get(0);
-            ko.cleanNode(message_element);
-            $(message_element).koApplyBindings({
-                alerts: message_alerts
-            });
-
-        </script>
-        {% endaddtoblock %}
+        {% compress js %}
+        <script src="{% static 'style/js/alert_user.js' %}"></script>
+        {% endcompress %}
 
         {% if request.use_angular_js %}
         {% compress js %}
@@ -487,18 +434,6 @@
         {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_select2 or request.use_select2_v4 %}
-        {% addtoblock js-inline %}
-        <script>
-            $(function() {
-                _.each($(".ko-select2"), function(element) {
-                    $(element).select2();
-                });
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_nvd3 %}
@@ -554,7 +489,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if reqeust.maps_prefer_canvas %}
+        {% if request.maps_prefer_canvas %}
         {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
         {% endaddtoblock %}
@@ -576,14 +511,6 @@
 
         {% if request.use_timeago %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
-        {% addtoblock js-inline %}
-        <script>
-            $(function () {
-                $.timeago.settings.allowFuture = true;
-                $(".timeago").timeago();
-            });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_multiselect %}
@@ -592,20 +519,6 @@
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
         <script src="{% static 'style/js/multiselect_utils.js' %}"></script>
         {% endcompress %}
-        {% endif %}
-
-        {% if request.use_blazy %}
-        {# Blazy for async loading images #}
-        {% compress js %}
-            <script src="{% static 'blazy/blazy.js' %}"></script>
-        {% endcompress %}
-        {% addtoblock js-inline %}
-        <script>
-          var hqLazy = new Blazy({
-            container: 'body',
-          });
-        </script>
-        {% endaddtoblock %}
         {% endif %}
 
         {% if request.use_ko_validation %}

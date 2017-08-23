@@ -9,13 +9,13 @@ from corehq.apps.app_manager.exceptions import (
     SuiteValidationError)
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL, CAREPLAN_TASK, USERCASE_ID, USERCASE_TYPE, )
+    USERCASE_ID, USERCASE_TYPE, )
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.app_manager.xform import autoset_owner_id_for_open_case, \
     autoset_owner_id_for_subcase, autoset_owner_id_for_advanced_action
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
-    CaseTypeXpath, ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
+    ItemListFixtureXpath, XPath, ProductInstanceXpath, UserCaseXPath, \
     interpolate_xpath
 from corehq.apps.app_manager.suite_xml.xml_models import *
 
@@ -153,7 +153,6 @@ class EntriesHelper(object):
                 'module_form': self.configure_entry_module_form,
                 'advanced_form': self.configure_entry_advanced_form,
                 'shadow_form': self.configure_entry_advanced_form,
-                'careplan_form': self.configure_entry_careplan_form,
             }[form.form_type]
             config_entry(module, e, form)
 
@@ -807,76 +806,6 @@ class EntriesHelper(object):
                                       get_changed_id(this_datum_meta, parent_datum_meta))
                         this_datum_meta.datum.id = parent_datum_meta.datum.id
                 index += 1
-
-    def configure_entry_careplan_form(self, module, e, form=None, **kwargs):
-        parent_module = self.app.get_module_by_unique_id(module.parent_select.module_id,
-                        error=_("Could not find module '{}' is attached to.").format(module.default_name()))
-        e.datums.append(SessionDatum(
-            id='case_id',
-            nodeset=EntriesHelper.get_nodeset_xpath(parent_module.case_type),
-            value="./@case_id",
-            detail_select=self.details_helper.get_detail_id_safe(parent_module, 'case_short'),
-            detail_confirm=self.details_helper.get_detail_id_safe(parent_module, 'case_long')
-        ))
-
-        def session_datum(datum_id, case_type, parent_ref, parent_val):
-            nodeset = CaseTypeXpath(case_type).case().select(
-                'index/%s' % parent_ref, session_var(parent_val), quote=False
-            ).select('@status', 'open')
-            return SessionDatum(
-                id=datum_id,
-                nodeset=nodeset,
-                value="./@case_id",
-                detail_select=self.details_helper.get_detail_id_safe(module, '%s_short' % case_type),
-                detail_confirm=self.details_helper.get_detail_id_safe(module, '%s_long' % case_type)
-            )
-
-        e.stack = Stack()
-        frame = CreateFrame()
-        e.stack.add_frame(frame)
-        if form.case_type == CAREPLAN_GOAL:
-            if form.mode == 'create':
-                new_goal_id_var = 'case_id_goal_new'
-                e.datums.append(SessionDatum(id=new_goal_id_var, function='uuid()'))
-            elif form.mode == 'update':
-                new_goal_id_var = 'case_id_goal'
-                e.datums.append(session_datum(new_goal_id_var, CAREPLAN_GOAL, 'parent', 'case_id'))
-
-            if not module.display_separately:
-                open_goal = CaseIDXPath(session_var(new_goal_id_var)).case().select('@status', 'open')
-                frame.if_clause = '{count} = 1'.format(count=open_goal.count())
-                frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
-                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                frame.add_command(XPath.string(id_strings.menu_id(module)))
-                frame.add_datum(StackDatum(id='case_id_goal', value=session_var(new_goal_id_var)))
-            else:
-                frame.add_command(XPath.string(id_strings.menu_id(module)))
-                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-
-        elif form.case_type == CAREPLAN_TASK:
-            if not module.display_separately:
-                frame.add_command(XPath.string(id_strings.menu_id(parent_module)))
-                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-                frame.add_command(XPath.string(id_strings.menu_id(module)))
-                frame.add_datum(StackDatum(id='case_id_goal', value=session_var('case_id_goal')))
-                if form.mode == 'update':
-                    count = CaseTypeXpath(CAREPLAN_TASK).case().select(
-                        'index/goal', session_var('case_id_goal'), quote=False
-                    ).select('@status', 'open').count()
-                    frame.if_clause = '{count} >= 1'.format(count=count)
-
-                    frame.add_command(XPath.string(
-                        id_strings.form_command(module.get_form_by_type(CAREPLAN_TASK, 'update'))
-                    ))
-            else:
-                frame.add_command(XPath.string(id_strings.menu_id(module)))
-                frame.add_datum(StackDatum(id='case_id', value=session_var('case_id')))
-
-            if form.mode == 'create':
-                e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
-            elif form.mode == 'update':
-                e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
-                e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
     @staticmethod
     def _get_module_for_persistent_context(detail_module, module_unique_id):

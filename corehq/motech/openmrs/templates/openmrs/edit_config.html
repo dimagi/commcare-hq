@@ -1,0 +1,27 @@
+{% extends 'style/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{# todo: this was just copied from userreports/userreports_base.html #}
+{% block js %}{{ block.super }}
+    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+    <script src="{% static 'userreports/js/base.js' %}"></script>
+{% endblock %}
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+    <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+    <style>
+        .CodeMirror {
+            border: 1px solid #ccc;
+            height: auto;
+            max-width: 800px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
+{% crispy form %}
+{% endblock %}

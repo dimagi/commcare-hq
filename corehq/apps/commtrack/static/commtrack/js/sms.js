@@ -1,10 +1,8 @@
 /*globals hqDefine, ko, $ */
-hqDefine('commtrack/js/sms.js', function () {
+hqDefine('commtrack/js/sms', function () {
     'use strict';
     function CommtrackSettingsViewModel(other_sms_codes) {
-        this.keyword = ko.observable();
         this.actions = ko.observableArray();
-        this.requisition_config = ko.observable();
 
         this.json_payload = ko.observable();
 
@@ -19,11 +17,9 @@ hqDefine('commtrack/js/sms.js', function () {
         ];
 
         this.load = function (data) {
-            this.keyword(data.keyword);
             this.actions($.map(data.actions, function (e) {
                 return new ActionModel(e);
             }));
-            this.requisition_config(new RequisitionConfigModel(data.requisition_config));
         };
 
         var settings = this;
@@ -41,14 +37,6 @@ hqDefine('commtrack/js/sms.js', function () {
 
             var that = this;
             var valid = true;
-
-            if (!this.keyword()) {
-                this.keyword_error('required');
-                valid = false;
-            }
-            if (!this.validate_sms(this, 'keyword', 'command', 'stock_report')) {
-                valid = false;
-            }
 
             $.each(this.actions(), function (i, e) {
                 if (!e.validate(that)) {
@@ -74,8 +62,6 @@ hqDefine('commtrack/js/sms.js', function () {
             $.each(other_sms_codes, function (k, v) {
                 keywords.push({keyword: k, type: v[0], name: 'product "' + v[1] + '"', id: null});
             });
-
-            keywords.push({keyword: this.keyword(), type: 'command', name: 'stock report', id: 'stock_report'});
 
             $.each(this.actions(), function (i, e) {
                 keywords.push({keyword: e.keyword(), type: 'action', name: e.caption(), id: i});
@@ -106,9 +92,7 @@ hqDefine('commtrack/js/sms.js', function () {
 
         this.to_json = function () {
             return {
-                keyword: this.keyword(),
                 actions: $.map(this.actions(), function (e) { return e.to_json(); }),
-                requisition_config: this.requisition_config().to_json(),
             };
         };
     }
@@ -154,37 +138,6 @@ hqDefine('commtrack/js/sms.js', function () {
         };
     }
 
-    function RequisitionConfigModel(data) {
-        // TODO: sort out possibly removing this redundant declaration in js
-        this.action_types = [
-            {label: 'Request', value: 'request'},
-            {label: 'Approval', value: 'approval'},
-            {label: 'Pack', value: 'pack'},
-            {label: 'Receipts (Requisition)', value: 'requisition-receipts'}
-        ];
-
-        this.enabled = ko.observable(data.enabled);
-        this.actions = ko.observableArray($.map(data.actions, function (item) {
-            return new ActionModel(item);
-        }));
-
-        var that = this;
-        this.remove_action = function (action) {
-            that.actions.remove(action);
-        };
-
-        this.new_action = function () {
-            that.actions.push(new ActionModel({}));
-        };
-
-        this.to_json = function () {
-            return {
-                enabled: this.enabled(),
-                actions: $.map(this.actions(), function (e) { return e.to_json(); })
-            };
-        };
-    }
-
     function initCommtrackSettingsView($element, settings, other_sms_codes) {
         var model = new CommtrackSettingsViewModel(other_sms_codes);
         $element.submit(function () {
@@ -196,7 +149,7 @@ hqDefine('commtrack/js/sms.js', function () {
     }
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         var settings = initial_page_data('settings');
         var other_sms_codes = initial_page_data('other_sms_codes');
         initCommtrackSettingsView($('#settings'), settings, other_sms_codes);

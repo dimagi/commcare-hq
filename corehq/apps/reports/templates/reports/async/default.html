@@ -1,43 +1,19 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-{% if show_time_notice %}{% include "style/partials/time_notice.html"%}{% endif %}
+{% if show_time_notice %}{% include "style/partials/time_notice.html" with hide=1 %}{% endif %}
 
 {% block reportcontent %}
-    {% if report.show %}
-        {% if report.slug %}
-            <div class="report-loading-container">
-                <div class="report-loading">
-                    <h4>{% trans "Loading Report" %}</h4>
-                    <i class="fa fa-spin fa-spinner js-loading-spinner"></i>
-                    <h6>{% trans report.title %}</h6>
-                </div>
+    {% if report.slug %}
+        <div class="report-loading-container">
+            <div class="report-loading">
+                <h4>{% trans "Loading Report" %}</h4>
+                <i class="fa fa-spin fa-spinner js-loading-spinner"></i>
+                <h6>{% trans report.title %}</h6>
             </div>
-        {% else %}
-            <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
-        {% endif %}
+        </div>
     {% else %}
-        <h6>
-            <i class="fa fa-info-circle" id="no-viewable-reports"></i>
-            {% trans 'You are not registered to see reports' %}
-        </h6>
-        <script>
-            $(function () {
-                $('.sidebar').hide();
-                $('.hq-double-col').css({background: 'white'});
-                $('#no-viewable-reports').popover({
-                    placement: 'top',
-                    title: "{% trans "We're serious about security" %}",
-                    content: "{% trans "Your project may contain sensitive personal and medical information, so we don't show this data to just anyone. If you think you should have access to your project's reports please contact your project lead." %}"
-                });
-            });
-        </script>
+        <h6 style="text-align: center; margin-top: 200px;">{{ report.title }}</h6>
     {% endif %}
-    <script>
-        $(function() {
-            $('.hq-report-time-notice').addClass('hide');
-            $('.hq-loading').fadeIn();
-        });
-    </script>
 {% endblock %}
 
 {% block js %}
@@ -82,3 +58,9 @@
         </div>
     </div>
 {% endblock %}
+
+<div class="initial-page-data" class="hide">
+{% block initial_page_data %}
+    {# do not override this block, use initial_page_data template tag to populate #}
+{% endblock %}
+</div>

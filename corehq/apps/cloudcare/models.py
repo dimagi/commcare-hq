@@ -1,4 +1,5 @@
 from couchdbkit import ResourceNotFound
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     Document,
@@ -52,7 +53,7 @@ class AppGroup(DocumentSchema):
             }
 
 
-class ApplicationAccess(Document):
+class ApplicationAccess(QuickCachedDocumentMixin, Document):
     """
     This is used to control which users/groups can access which applications on cloudcare.
     """
@@ -62,10 +63,14 @@ class ApplicationAccess(Document):
 
     @classmethod
     def get_by_domain(cls, domain):
-        from corehq.apps.cloudcare.dbaccessors import \
-            get_application_access_for_domain
+        from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
         self = get_application_access_for_domain(domain)
         return self or cls(domain=domain)
+
+    def clear_caches(self):
+        from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
+        get_application_access_for_domain.clear(self.domain)
+        super(ApplicationAccess, self).clear_caches()
 
     def user_can_access_app(self, user, app):
         user_id = user['_id']

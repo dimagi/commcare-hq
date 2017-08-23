@@ -1,4 +1,4 @@
-/* globals alert_user, TEMPLATE_STRINGS */
+/* globals TEMPLATE_STRINGS */
 // for product and user per location selection
 
 var insert_new_user = function(user) {
@@ -19,6 +19,7 @@ $(function() {
     });
 
     form_node.submit(function(event) {
+        var alert_user = hqImport("style/js/alert_user").alert_user;
         event.preventDefault();
         $.ajax({
             type: 'POST',

@@ -147,7 +147,7 @@
             },
             placeholders: {
                 application: 'Select Application',
-                module: 'Select Module',
+                module: 'Select Menu',
                 form: 'Select Form'
             }
         };
@@ -330,7 +330,7 @@
             },
             placeholders: {
                 application: 'Select Application',
-                module: 'Select Module',
+                module: 'Select Menu',
                 form: 'Select Form'
             }
         };

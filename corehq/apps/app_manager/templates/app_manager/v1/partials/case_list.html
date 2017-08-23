@@ -58,7 +58,7 @@
     </div>
     {% endif %}
 
-    <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+    <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
             <label>
                 <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -92,7 +92,7 @@
         {% endwith %}
     {% endif %}
 
-    <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+    <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
             <label>
                 <input type="checkbox" data-bind="checked: enableTilePullDown">
@@ -187,7 +187,7 @@
                         <div data-bind="jqueryElement: textField.ui"></div>
                         <div data-bind="visible: showWarning">
                             <span class="help-block" data-bind="
-                                text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
+                                text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
                             "></span>
                         </div>
                     </td>

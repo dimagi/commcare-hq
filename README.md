@@ -134,7 +134,6 @@ things get REAL slow. Plus if you want to use any javascript compilers like
 Make sure your `localsettings.py` file has the following set:
 ```
 LESS_DEBUG = True
-LESS_WATCH = True  # if you want less.js to watch for changes and compile on the fly!
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 ```
@@ -154,7 +153,6 @@ Cons:
 Make sure your `localsettings.py` file has the following set:
 ```
 LESS_DEBUG = False
-LESS_WATCH = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = False
 
@@ -233,7 +231,6 @@ Do everything from Option 2 for LESS compilers setup.
 Have the following set in `localsettings.py`:
 ```
 LESS_DEBUG = False
-LESS_WATCH = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```

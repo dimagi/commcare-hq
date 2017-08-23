@@ -36,18 +36,18 @@
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
                     <i class="grip sortable-handle" data-bind="
                         if: grip,
-                        css: COMMCAREHQ.icons.GRIP,
+                        css: hqImport('style/js/main').icons.GRIP,
                         style: {cursor: 'move'},
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
                 </td>
                 <!--ko if: !isTab -->
                     <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
-                        <div data-bind="html: hqImport('app_manager/js/detail-screen-config.js').CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
+                        <div data-bind="html: hqImport('app_manager/js/details/screen_config').CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
                         <div data-bind="visible: showWarning">
                             <span class="help-block" data-bind="
-                                text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
+                                text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
                             ">
                             </span>
                         </div>
@@ -64,14 +64,31 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                         </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
+                        {% else %}
                         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
+                        {% endif %}
                             <div data-bind="jqueryElement: nodeset.ui"></div>
                             <span class="help-block"
                                   data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+                        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                        </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+                        {% else %}
                         <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
+                        {% endif %}
                     <!--/ko-->
                 <!--/ko-->
                 <!-- ko if: $parent.showCaseTileColumn() -->
@@ -92,7 +109,7 @@
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
-                        css: COMMCAREHQ.icons.DELETE,
+                        css: hqImport('style/js/main').icons.DELETE,
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

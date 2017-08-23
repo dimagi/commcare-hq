@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,284 +3,293 @@
+@@ -3,318 +3,328 @@
  {% load app_manager_extras %}
  {% load xforms_extras %}
  
@@ -72,7 +72,7 @@
 +            </div>
 +        </div>
 +        {% endif %}
-+        <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
++        <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
 +            <div class="checkbox">
 +                <label>
 +                    <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -106,7 +106,7 @@
 +            {% endwith %}
 +        {% endif %}
 +
-+        <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
++        <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
 +            <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
 +                <label>
 +                    <input type="checkbox" data-bind="checked: enableTilePullDown">
@@ -163,7 +163,7 @@
 -    </div>
 -    {% endif %}
 -
--    <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+-    <div data-bind="visible: useCaseTiles() == 'yes' || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
 -        <div class="checkbox">
 -            <label>
 -                <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -272,7 +272,7 @@
 +                                <div data-bind="jqueryElement: textField.ui"></div>
 +                                <div data-bind="visible: showWarning">
 +                                    <span class="help-block" data-bind="
-+                                        text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
++                                        text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
 +                                    "></span>
 +                                </div>
 +                            </td>
@@ -358,7 +358,7 @@
 -        {% endwith %}
 -    {% endif %}
 -
--    <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+-    <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML')">
 -        <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
 -            <label>
 -                <input type="checkbox" data-bind="checked: enableTilePullDown">
@@ -373,9 +373,7 @@
 -    </div>
 -
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
-+    </div>
-+  </div>
- </div>
+-</div>
 -
 -{% if detail.type == 'case' %}
 -<legend>
@@ -455,7 +453,7 @@
 -                        <div data-bind="jqueryElement: textField.ui"></div>
 -                        <div data-bind="visible: showWarning">
 -                            <span class="help-block" data-bind="
--                                text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
+-                                text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
 -                            "></span>
 -                        </div>
 -                    </td>
@@ -542,33 +540,64 @@
 -    <div class="spacer"></div>
 -
 -{% endif %}
--</div>
++    </div>
++  </div>
+ </div>
  {% endif %}
  
  {% if detail.parent_select %}
--<div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+ <div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
 -    <div data-bind="visible: moduleOptions().length" class="form-horizontal">
 -        <legend>{% trans "Parent Child Selection" %}</legend>
-+<div class="panel panel-appmanager" data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
-+    <div class="panel-heading">
-+        <h4 class="panel-title panel-title-nolink">
-+            {% trans "Parent Child Selection" %}
-+        </h4>
-+    </div>
-+    <div data-bind="visible: moduleOptions().length" class="form-horizontal panel-body">
-         <div class="form-group">
-             <label class="control-label col-sm-2">
-                 {% trans "Select Parent First" %}
-@@ -293,7 +302,7 @@
-         </div>
-         <div class="form-group" data-bind="visible: active">
-             <label class="control-label col-sm-2">
+-        <div class="form-group">
+-            <label class="control-label col-sm-2">
+-                {% trans "Select Parent First" %}
+-            </label>
+-            <div class="col-sm-4 checkbox">
+-                <label>
+-                    <input type="checkbox" data-bind="checked: active"/>
+-                </label>
+-            </div>
+-        </div>
+-        <div class="form-group" data-bind="visible: active">
+-            <label class="control-label col-sm-2">
 -                {% trans "Use Case List from module" %}
-+                {% trans "Use Case List from" %}
-             </label>
-             <div class="col-sm-4">
-                 <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-@@ -306,15 +315,14 @@
+-            </label>
+-            <div class="col-sm-4">
+-                <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+-            </div>
+-        </div>
+-        <div class="spacer"></div>
++    <div class="panel panel-appmanager" data-bind="visible: moduleOptions().length">
++        <div class="panel-heading">
++            <h4 class="panel-title panel-title-nolink">
++                {% trans "Parent Child Selection" %}
++            </h4>
++        </div>
++        <div class="form-horizontal panel-body">
++            <div class="form-group">
++                <label class="control-label col-sm-2">
++                    {% trans "Select Parent First" %}
++                </label>
++                <div class="col-sm-4 checkbox">
++                    <label>
++                        <input type="checkbox" data-bind="checked: active"/>
++                    </label>
++                </div>
++            </div>
++            <div class="form-group" data-bind="visible: active">
++                <label class="control-label col-sm-2">
++                    {% trans "Use Case List from" %}
++                </label>
++                <div class="col-sm-4">
++                    <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
++                </div>
++            </div>
++            <div class="spacer"></div>
++        </div>
+     </div>
+ </div>
+ {% endif %}
  
  {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}

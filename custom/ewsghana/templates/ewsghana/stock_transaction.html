@@ -5,9 +5,9 @@
 {# Copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/templates/reports/standard/base_template.html#L22 #}
 {# and some methods from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/reports.config.js #}
 
-{# Added possibility to export without genereting the whole report. I must copied some methods because we don't have access to override them #}
-{# Main chcange is in getReportParams, I get actual parameters from filter without generating the report. #}
-{% block reports-js-inline %}
+{# Added possibility to export without generating the whole report. I must copied some methods because we don't have access to override them #}
+{# Main change is in getReportParams, I get actual parameters from filter without generating the report. #}
+{% block js-inline %}{{ block.super }}
     <script>
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',

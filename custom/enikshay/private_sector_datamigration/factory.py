@@ -32,8 +32,9 @@ def get_human_friendly_id():
 
 class BeneficiaryCaseFactory(object):
 
-    def __init__(self, domain, beneficiary, location_owner, default_location_owner):
+    def __init__(self, domain, migration_comment, beneficiary, location_owner, default_location_owner):
         self.domain = domain
+        self.migration_comment = migration_comment
         self.beneficiary = beneficiary
         self.location_owner = location_owner
         self.default_location_owner = default_location_owner
@@ -90,6 +91,7 @@ class BeneficiaryCaseFactory(object):
                     'send_alerts': self.beneficiary.send_alerts,
                     'secondary_phone': self.beneficiary.emergencyContactNo,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
                 }
@@ -159,7 +161,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
             creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
             if creating_loc:
-                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+                kwargs['attrs']['update']['registered_by'] = creating_loc.location_id
 
         return CaseStructure(**kwargs)
 
@@ -182,6 +184,7 @@ class BeneficiaryCaseFactory(object):
                     'legacy_stateId': self.beneficiary.stateId,
                     'legacy_wardId': self.beneficiary.wardId,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
                 }
@@ -222,6 +225,7 @@ class BeneficiaryCaseFactory(object):
                     'legacy_stateId': self.beneficiary.stateId,
                     'legacy_wardId': self.beneficiary.wardId,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
                 }
@@ -291,8 +295,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
             creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
             if creating_loc:
-                kwargs['attrs']['update']['created_by_user_id'] = creating_loc.user_id
-                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+                kwargs['attrs']['update']['registered_by'] = creating_loc.location_id
 
         return CaseStructure(**kwargs)
 
@@ -310,6 +313,7 @@ class BeneficiaryCaseFactory(object):
                     'adherence_value': adherence.adherence_value,
                     'name': adherence.doseDate.date(),
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': adherence.adherenceId,
                 }
@@ -343,6 +347,7 @@ class BeneficiaryCaseFactory(object):
                     'name': prescription.productName,
                     'number_of_days_prescribed': prescription.numberOfDaysPrescribed,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': prescription.prescriptionID,
                 }

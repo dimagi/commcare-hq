@@ -124,11 +124,6 @@ nav.appmanager-content {
   }
 }
 
-.appnav-menu > li > .appnav-item a.appnav-title-no-delete {
-  padding-left: @appnav-trash-width;
-  width: @appnav-width;
-}
-
 .appnav-menu > li > .appnav-item a.appnav-title-secondary {
   width: @appnav-width - @appnav-trash-width - @appnav-secondary-width;
 }
@@ -264,6 +259,31 @@ nav.appmanager-content {
     overflow: hidden;
     text-overflow: ellipsis;
     width: 220px;
+  }
+}
+
+.appnav-name-publish {
+  padding: 5px 15px;
+  text-transform: uppercase;
+  color: white;
+  font-size: 10px;
+  line-height: 15px;
+  background-color: @cc-dark-cool-accent-mid;
+  display: block;
+  font-weight: bold;
+  position: relative;
+  &:after {
+    content: '';
+	position: absolute;
+	top: 0;
+	left: 25px;
+	width: 0;
+	height: 0;
+	border: 10px solid transparent;
+	border-bottom-color: @cc-dark-cool-accent-mid;
+	border-top: 0;
+	margin-left: -10px;
+	margin-top: -10px;
   }
 }
 

@@ -3,6 +3,7 @@
         "enikshay"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "episode",
@@ -54,7 +55,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "external_id",
+                "field": "person_id_property",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary ID"
@@ -140,7 +141,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "current_address_ward",
                 "calculate_total": false,
@@ -198,7 +202,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "episode_treating_hospital",
                 "calculate_total": false,
@@ -258,9 +265,12 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
-                "field": "episode_fo",
+                "field": "fo",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Assigned FO"
@@ -280,7 +290,10 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
                 "field": "registered_by",
                 "calculate_total": false,
@@ -364,7 +377,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "diagnostic_tests",
+                "field": "diagnostic_tests_from_case",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Diagnostic Tests"
@@ -417,7 +430,13 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "F": "Initiated on Treatment",
+                        "N": "Not Initiated on Treatment"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "treatment_initiation_status",
                 "calculate_total": false,
@@ -527,7 +546,16 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "99dots": "99DOTS",
+                        "contact_centre": "Contact Centre",
+                        "treatment_supporter": "Treatment Supporter",
+                        "merm": "MERM",
+                        "field_officer": "Field Officer"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "adherence_tracking_mechanism",
                 "calculate_total": false,
@@ -539,19 +567,33 @@
                     "type": "evaluator",
                     "context_variables": {
                         "a": {
+                            "datatype": "date",
                             "type": "property_name",
                             "property_name": "treatment_initiation_date"
                         },
                         "b": {
+                            "datatype": "integer",
                             "type": "property_name",
                             "property_name": "aggregated_score_count_taken"
                         }
                     },
-                    "statement": "round(float(b) / (days(today - a)), 2) if days(today - a) != 0 else ''"
+                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
                 },
                 "type": "expression",
                 "display": "Total Adherence Score",
                 "column_id": "total_adherence_score"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": true,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_outcome_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Treatment Outcome"
             },
             {
                 "sortable": false,
@@ -562,6 +604,7 @@
                 "aggregation": "simple",
                 "field": "aggregated_score_count_taken",
                 "calculate_total": false,
+                "column_id": "aggregated_score_count_taken",
                 "type": "field",
                 "display": "aggregated_score_count_taken"
             },
@@ -569,7 +612,22 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "treatment_regimen_changed": "Treatment Regimen Changed",
+                        "death": "Death",
+                        "cured": "Cured",
+                        "failure": "Failure",
+                        "switched_to_cat_ivv": "Switched to Cat IV/V",
+                        "transferred_to_public_sector": "Transferred to Public Sector",
+                        "not_evaluated": "Not Evaluated",
+                        "lost_to_followup": "Lost to followup",
+                        "loss_to_followup_default": "Loss to followup: default",
+                        "treatment_completed": "Treatment Completed",
+                        "transferred_out": "Transferred Out"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "treatment_outcome",
                 "calculate_total": false,

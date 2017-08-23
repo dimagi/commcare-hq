@@ -1,6 +1,6 @@
 /* globals hqDefine */
-hqDefine('builds/js/edit-builds.js', function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+hqDefine('builds/js/edit-builds', function () {
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         doc = initial_page_data('doc'),
         pretty_doc = JSON.stringify(doc, undefined, 2);
 

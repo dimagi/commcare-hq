@@ -16,7 +16,8 @@ INSERT INTO {{ domain_dim }} (
     domain_last_modified,
     domain_created_on,
     dim_last_modified,
-    dim_created_on
+    dim_created_on,
+    batch_id
 )
 SELECT
     domain_id,
@@ -25,9 +26,9 @@ SELECT
     hr_name,
     creating_user_id,
     project_type,
-    CASE doc_type
-        WHEN 'Domain' THEN false
-        WHEN 'Domain-Deleted' THEN true
+    CASE
+        WHEN doc_type = 'Domain' THEN false
+        WHEN doc_type LIKE 'Domain-Deleted%' THEN true
     END,
     is_active,
     case_sharing,
@@ -44,6 +45,7 @@ SELECT
     domain_last_modified,
     domain_created_on,
     now(),
-    now()
+    now(),
+    '{{ batch_id }}'
 FROM
     {{ domain_staging }}

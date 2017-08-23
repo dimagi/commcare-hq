@@ -13,7 +13,7 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-right checklist">
             <li class="dropdown-header">{% trans "Show" %}</li>
-            {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+            {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
                 <li>
                     <a href="#" data-slug="menu">
                         <i class="fa fa-check"></i>{% trans "Menu" %}
@@ -26,7 +26,7 @@
                 </a>
             </li>
             {% if not module.is_surveys and module.module_type != 'shadow' %}
-               {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
+               {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
                     <li>
                         <a href="#" data-slug="advanced" data-collapse="1">
                             <i class="fa fa-check"></i>{% trans "Advanced" %}
@@ -40,7 +40,7 @@
         {% block settings_fields %}
 
 
-          {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+          {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
           <div class="panel panel-appmanager" data-slug="menu">
             <div class="panel-heading">
               <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
@@ -103,7 +103,7 @@
               </div>
               {% endif %}
 
-              {% if app.advanced_app_builder or module.put_in_root %}
+              {% if add_ons.menu_mode %}
                   <div class="form-group">
                       <label class="col-sm-2 control-label">
                           {% trans "Menu Mode" %}
@@ -184,7 +184,7 @@
           </div>
 
            {% if not module.is_surveys and module.module_type != 'shadow' %}
-             {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
+             {% if add_ons.register_from_case_list or add_ons.case_list_menu_item or module.doc_type == "AdvancedModule" %}
              <div class="panel panel-appmanager" data-slug="advanced">
               <div class="panel-heading">
                 <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>

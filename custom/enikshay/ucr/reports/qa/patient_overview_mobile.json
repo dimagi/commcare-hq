@@ -1,0 +1,206 @@
+{
+    "domains": [
+        "enikshay-reports-qa",
+        "sheel-enikshay"
+    ],
+    "server_environment": [
+        "enikshay",
+        "softlayer"
+    ],
+    "data_source_table": "episode_qa",
+    "report_id": "patient_overview_mobile_qa",
+    "config": {
+        "description": "",
+        "title": "Patient Overview - Mobile (QA)",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
+                "type": "date",
+                "show_all": true,
+                "slug": "date_of_diagnosis"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
+                },
+                "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "episode_type_patient",
+                "slug": "episode_type_patient",
+                "datatype": "integer",
+                "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
+            }
+        ],
+        "columns": [
+            {
+                "display": "Number of total patients",
+                "type": "field",
+                "field": "doc_id",
+                "aggregation": "count",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number Cat I patients",
+                "type": "field",
+                "field": "cat1",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number Cat II patients",
+                "type": "field",
+                "field": "cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of male patients",
+                "type": "field",
+                "field": "male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of female patients",
+                "type": "field",
+                "field": "female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of transgender patients",
+                "type": "field",
+                "field": "transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number pediatric patients (14 and under)",
+                "type": "field",
+                "field": "under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of adult patients (15+)",
+                "type": "field",
+                "field": "over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of patients with HIV",
+                "type": "field",
+                "field": "hiv_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV patients on ART",
+                "type": "field",
+                "field": "hiv_positive_art",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV patients on CPT",
+                "type": "field",
+                "field": "hiv_positive_cpt",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of patients with DM",
+                "type": "field",
+                "field": "diabetic",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

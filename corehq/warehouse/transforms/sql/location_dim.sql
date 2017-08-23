@@ -25,7 +25,8 @@ INSERT INTO {{ location_dim }} (
     dim_last_modified,
     dim_created_on,
     -- TODO: Figure out how to handle deletes when we actually hard deleted the model
-    deleted
+    deleted,
+    batch_id
 )
 
 SELECT
@@ -53,7 +54,8 @@ SELECT
 
     now(),
     now(),
-    false
+    false,
+    '{{ batch_id }}'
 FROM
     {{ location_staging }} as l_table
 INNER JOIN
@@ -65,14 +67,30 @@ ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_
 UPDATE {{ location_dim }} AS location_dim_target
 
 SET
-    location_level_0 = l0.sql_location_id,
-    location_level_1 = l1.sql_location_id,
-    location_level_2 = l2.sql_location_id,
-    location_level_3 = l3.sql_location_id,
-    location_level_4 = l4.sql_location_id,
-    location_level_5 = l5.sql_location_id,
-    location_level_6 = l6.sql_location_id,
-    location_level_7 = l7.sql_location_id,
+    location_level_0 = get_location_level_id(0, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_1 = get_location_level_id(1, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_2 = get_location_level_id(2, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_3 = get_location_level_id(3, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_4 = get_location_level_id(4, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_5 = get_location_level_id(5, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_6 = get_location_level_id(6, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
+    location_level_7 = get_location_level_id(7, l0.sql_location_id, l1.sql_location_id,
+                                            l2.sql_location_id, l3.sql_location_id, l4.sql_location_id,
+                                            l5.sql_location_id, l6.sql_location_id, l7.sql_location_id),
     level = (
         CASE WHEN l0.sql_location_id IS NULL THEN 0 ELSE 1 END +
         CASE WHEN l1.sql_location_id IS NULL THEN 0 ELSE 1 END +

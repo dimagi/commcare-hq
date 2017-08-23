@@ -14,17 +14,16 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
-    Document,
-    DocumentSchema,
-    SchemaProperty,
-    StringListProperty,
-)
-from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DictProperty,
+    Document,
+    DocumentSchema,
     IntegerProperty,
     ListProperty,
+    SchemaProperty,
+    SchemaListProperty,
     StringProperty,
+    StringListProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import (
@@ -64,6 +63,10 @@ from dimagi.utils.modules import to_function
 class ElasticSearchIndexSettings(DocumentSchema):
     refresh_interval = StringProperty(default="5s")
     number_of_shards = IntegerProperty(default=2)
+
+
+class SQLColumnIndexes(DocumentSchema):
+    column_ids = StringListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -111,6 +114,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -349,6 +353,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
+    report_builder_version = StringProperty(default="")
     # `True` if this report was ever edited in the advanced JSON UIs (after June 7, 2016)
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
@@ -747,6 +752,7 @@ class AsyncIndicator(models.Model):
         doc_id = change.id
         doc_type = change.document['doc_type']
         domain = change.document['domain']
+        config_ids = sorted(config_ids)
 
         indicator, created = cls.objects.get_or_create(
             doc_id=doc_id, doc_type=doc_type, domain=domain,
@@ -776,7 +782,7 @@ class AsyncIndicator(models.Model):
                 current_config_ids = set(indicator.indicator_config_ids)
                 config_ids = set(config_ids)
                 if config_ids - current_config_ids:
-                    new_config_ids = list(current_config_ids.union(config_ids))
+                    new_config_ids = sorted(list(current_config_ids.union(config_ids)))
                     indicator.indicator_config_ids = new_config_ids
                     indicator.save()
 

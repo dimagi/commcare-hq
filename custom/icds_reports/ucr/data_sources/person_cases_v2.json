@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -51,7 +52,6 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
-        "create_index": true,
         "type": "expression"
       },
       {
@@ -62,7 +62,6 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
-        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -82,7 +81,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "block_id",
         "expression": {
           "location_id_expression": {
@@ -106,7 +105,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "district_id",
         "expression": {
           "location_id_expression": {
@@ -2190,22 +2189,43 @@
         "column_id": "disabled_speaking_count"
       },
       {
+        "comment": "This filters on both registered status and migration status",
         "column_id": "seeking_services",
         "type": "boolean",
         "filter": {
-          "type": "not",
-          "filter": {
-            "operator": "eq",
-            "type": "boolean_expression",
-            "expression": {
-              "type": "root_doc",
-              "expression": {
-                "property_name": "registered_status",
-                "type": "property_name"
+          "type": "and",
+          "filters": [
+            {
+              "type": "not",
+              "filter": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "property_name": "registered_status",
+                    "type": "property_name"
+                  }
+                },
+                "property_value": "not_registered"
               }
             },
-            "property_value": "not_registered"
-          }
+            {
+              "type": "not",
+              "filter": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "property_name": "migration_status",
+                    "type": "property_name"
+                  }
+                },
+                "property_value": "migrated"
+              }
+            }
+          ]
         }
       },
       {
@@ -2220,37 +2240,87 @@
         "create_index": true,
         "datatype": "date",
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "reduce_items",
-            "aggregation_fn": "first_item",
-            "items_expression": {
-              "type": "filter_items",
-              "items_expression": {
-                "type": "icds_get_case_history_by_date",
-                "xmlns": [
-                  "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
-                  "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
-                  "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
-                ]
+          "type": "conditional",
+          "test": {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "aadhar_number"
               },
-              "filter_expression": {
-                "operator": "eq",
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          "expression_if_true": {
+            "type": "conditional",
+            "test": {
+              "type": "not",
+              "filter": {
+                "operator": "in",
                 "type": "boolean_expression",
                 "expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "update",
-                    "has_aadhar"
-                  ]
+                  "type": "property_name",
+                  "property_name": "aadhar_date"
                 },
-                "property_value": "yes"
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            "expression_if_true": {
+              "type": "property_name",
+              "property_name": "aadhar_date"
+            },
+            "expression_if_false": {
+              "type": "nested",
+              "argument_expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "first_item",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "icds_get_case_history_by_date",
+                    "xmlns": [
+                      "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+                      "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+                      "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+                    ]
+                  },
+                  "filter_expression": {
+                    "type": "not",
+                    "filter": {
+                      "operator": "in",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "update",
+                          "aadhar_number"
+                        ]
+                      },
+                      "property_value": [
+                        "",
+                        null
+                      ]
+                    }
+                  }
+                }
+              },
+              "value_expression": {
+                "type": "property_name",
+                "property_name": "@date_modified"
               }
             }
           },
-          "value_expression": {
+          "expression_if_false": {
             "type": "property_name",
-            "property_name": "@date_modified"
+            "property_name": "no_exist"
           }
         }
       }
@@ -2628,11 +2698,74 @@
         "property_value": null
       }
     },
-    "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 8
-    }
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "block_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "opened_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "date_death"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "opened_on"
+        ]
+      }
+    ]
   }
 }

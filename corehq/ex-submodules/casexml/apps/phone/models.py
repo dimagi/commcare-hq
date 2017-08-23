@@ -2,7 +2,6 @@ from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
 import json
-import itertools
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
@@ -11,15 +10,11 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
-from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
-from casexml.apps.case.xml import V1, V2
-from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 from casexml.apps.phone.utils import get_restore_response_class
@@ -90,6 +85,9 @@ class OTARestoreUser(object):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
 
+    def get_role(self, domain):
+        return self._couch_user.get_role(domain)
+
     def get_sql_locations(self, domain):
         return self._couch_user.get_sql_locations(domain)
 
@@ -122,8 +120,8 @@ class OTARestoreUser(object):
 
     @memoized
     def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
+        from corehq.apps.locations.fixtures import get_location_fixture_queryset
+        return get_location_fixture_queryset(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):
@@ -252,6 +250,7 @@ class SyncLogAssertionError(AssertionError):
 
 LOG_FORMAT_LEGACY = 'legacy'
 LOG_FORMAT_SIMPLIFIED = 'simplified'
+LOG_FORMAT_LIVEQUERY = 'livequery'
 
 
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
@@ -294,7 +293,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     @property
     def response_class(self):
-        return get_restore_response_class(self.domain)
+        return get_restore_response_class()
 
     def case_count(self):
         """
@@ -335,23 +334,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             except ResourceNotFound:
                 self._previous_log_ref = None
         return self._previous_log_ref
-
-    def _cache_key(self, version):
-        from casexml.apps.phone.restore import restore_cache_key
-
-        return restore_cache_key(
-            self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
-            self.user_id,
-            version=version,
-            sync_log_id=self._id,
-        )
-
-    def invalidate_cached_payloads(self):
-        keys = [self._cache_key(version) for version in [V1, V2]]
-
-        for key in keys:
-            get_redis_default_cache().delete(key)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -566,7 +548,6 @@ class SyncLog(AbstractSyncLog):
         if case_list:
             try:
                 self.save()
-                self.invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
@@ -772,7 +753,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def primary_case_ids(self):
         return self.case_ids_on_phone - self.dependent_case_ids_on_phone
 
-    def purge(self, case_id, quiet_errors=False):
+    def purge(self, case_id, xform_id=None):
         """
         This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
         Definitions:
@@ -816,7 +797,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         available = self._get_available_cases(relevant)
         live = self._get_live_cases(available)
         to_remove = (relevant - self.purged_cases) - live
-        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors)
+        self._remove_cases_purge_indices(to_remove, case_id, xform_id)
 
     def _get_relevant_cases(self, case_id):
         """
@@ -885,39 +866,43 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return live
 
-    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors):
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, xform_id):
         """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
 
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
-            self._remove_case(to_remove, all_to_remove, checked_case_id, quiet_errors)
+            self._remove_case(to_remove, all_to_remove, checked_case_id, xform_id)
             for referenced_case in indices.values():
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
                 if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
-                    self.purge(referenced_case, quiet_errors)
+                    self.purge(referenced_case, xform_id)
 
-    def _remove_case(self, to_remove, all_to_remove, checked_case_id, quiet_errors):
+    def _remove_case(self, to_remove, all_to_remove, checked_case_id, xform_id):
         """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
         _get_logger().debug('removing: {}'.format(to_remove))
 
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
         deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
 
-        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, quiet_errors)
+        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, xform_id)
 
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
-            should_fail_softly = quiet_errors or _domain_has_legacy_toggle_set()
+            should_fail_softly = not xform_id or _domain_has_legacy_toggle_set()
             if should_fail_softly:
                 pass
             else:
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
-                _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+                _assert(False, 'case already remove from synclog', {
+                    'case_id': to_remove,
+                    'synclog_id': self._id,
+                    'form_id': xform_id
+                })
         else:
             self.purged_cases.add(to_remove)
 
@@ -925,14 +910,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
             self.dependent_case_ids_on_phone.remove(to_remove)
 
     def _validate_case_removal(self, case_to_remove, all_to_remove,
-                               deleted_indices, checked_case_id, quiet_errors):
+                               deleted_indices, checked_case_id, xform_id):
         """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
         if case_to_remove == checked_case_id:
             return
 
         # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
         # for index in deleted_indices.values():
-        #     if not (quiet_errors or _domain_has_legacy_toggle_set()):
+        #     if xform_id and not _domain_has_legacy_toggle_set():
         #         # unblocking http://manage.dimagi.com/default.asp?185850
         #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
         #                               fail_if_debug=True, include_breadcrumbs=True)
@@ -1101,7 +1086,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
                 # try purging the case
-                self.purge(update.case_id)
+                self.purge(update.case_id, xform_id=xform.form_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
@@ -1122,13 +1107,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     self.last_submitted = datetime.utcnow()
                     self.rev_before_last_submitted = self._rev
                     self.save()
-                    if case_list:
-                        try:
-                            self.invalidate_cached_payloads()
-                        except ResourceConflict:
-                            # this operation is harmless so just blindly retry and don't
-                            # reraise if it goes through the second time
-                            SimplifiedSyncLog.get(self._id).invalidate_cached_payloads()
             except ResourceConflict:
                 logging.exception('doc update conflict saving sync log {id}'.format(
                     id=self._id,
@@ -1146,13 +1124,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id, quiet_errors=True)
+                self.purge(dependent_case_id)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
         """
         Migrate from the old SyncLog format to this one.
         """
+        if other_sync_log.log_format == LOG_FORMAT_LIVEQUERY:
+            raise IncompatibleSyncLogType('Unable to convert from {} to {}'.format(
+                other_sync_log.log_format, LOG_FORMAT_SIMPLIFIED
+            ))
         if isinstance(other_sync_log, SyncLog):
             previous_log_footprint = set(other_sync_log.get_footprint_of_cases_on_phone())
 
@@ -1226,6 +1208,7 @@ def get_sync_log_class_by_format(format):
     return {
         LOG_FORMAT_LEGACY: SyncLog,
         LOG_FORMAT_SIMPLIFIED: SimplifiedSyncLog,
+        LOG_FORMAT_LIVEQUERY: SimplifiedSyncLog,
     }.get(format, SyncLog)
 
 

@@ -91,5 +91,4 @@ class TestLocationDataSource(TestCase):
         since = self.pillow.get_change_feed().get_latest_offsets()
         las_mudas.delete()
         self.pillow.process_changes(since=since, forever=False)
-        # No actual change - deletions are not yet processed
-        self.assertDataSourceAccurate(["Westworld", "Pariah", "Las Mudas", "Blood Arroyo"])
+        self.assertDataSourceAccurate(["Westworld", "Pariah", "Blood Arroyo"])

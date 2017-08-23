@@ -11,7 +11,11 @@ INITIAL_SYNC_CACHE_THRESHOLD = 60  # 1 minute
 INITIAL_ASYNC_TIMEOUT_THRESHOLD = 10
 # The Retry-After header parameter. Ask the phone to retry in this many seconds
 # to see if the task is done.
-ASYNC_RETRY_AFTER = 15
+ASYNC_RETRY_AFTER = 5
 
 ASYNC_RESTORE_CACHE_KEY_PREFIX = "async-restore-task"
 RESTORE_CACHE_KEY_PREFIX = "ota-restore"
+
+# case sync algorithms
+CLEAN_OWNERS = 'clean_owners'
+LIVEQUERY = 'livequery'

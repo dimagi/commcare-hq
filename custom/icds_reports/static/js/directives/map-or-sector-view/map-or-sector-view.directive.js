@@ -1,43 +1,56 @@
 /* global d3 */
 
-function MapOrSectorController($scope) {
+function MapOrSectorController() {
     var vm = this;
+    vm.height = vm.location && vm.location.location_type === 'block' ? 700 : 2000;
 
-    setTimeout(function() {
-        vm.chartOptions = {
-            chart: {
-                type: 'multiBarHorizontalChart',
-                height: vm.data.mapData.chart_data[0].values.length < 8 ? 450 : vm.data.mapData.chart_data[0].values.length * 60,
-                margin: {
-                    bottom: 120,
-                    left: 200,
-                },
-                x: function (d) {
-                    return d[0];
-                },
-                y: function (d) {
-                    return d[1];
-                },
-                showControls: false,
-                showValues: true,
-                duration: 500,
-                xAxis: {
-                    showMaxMin: false,
-                },
-                yAxis: {
-                    tickFormat: function (d) {
-                        return d3.format(".4r")(d);
-                    },
+    vm.chartOptions = {
+        chart: {
+            type: 'multiBarHorizontalChart',
+            height: vm.height,
+            width: 1000,
+            margin: {
+                bottom: 120,
+                left: 200,
+            },
+            x: function (d) {
+                return d[0];
+            },
+            y: function (d) {
+                return d[1];
+            },
+            showControls: false,
+            showValues: false,
+            duration: 500,
+            xAxis: {
+                showMaxMin: false,
+            },
+            yAxis: {
+                tickFormat: function (d) {
+                    return d3.format(".4r")(d);
                 },
             },
-        };
-        $scope.$apply();
-    }, 500);
+            tooltip: function(x, y) {
+                if(!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
+                    return 'NA';
+                }
+
+                return vm.templatePopup({
+                    loc: {
+                        properties: {
+                            name: y,
+                        },
+                    },
+                    row: vm.data.mapData.tooltips_data[y],
+                });
+            },
+        },
+    };
 }
 
-MapOrSectorController.$inject = ['$scope'];
+MapOrSectorController.$inject = [];
 
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 window.angular.module('icdsApp').directive('mapOrSectorView', function() {
     return {
@@ -45,6 +58,8 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
         scope: {
             mode: '@',
             data: '=',
+            templatePopup: '&',
+            location: '=',
         },
         templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
         bindToController: true,

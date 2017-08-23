@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
 function AwcOpenedYesterdayController($routeParams, $location, storageService, systemUsageService) {
@@ -7,11 +7,15 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     vm.step = $routeParams.step;
     vm.filters = [];
 
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.getKey('search'));
+    } else {
+        storageService.setKey('search', $location.search());
+    }
     vm.filtersData = $location.search();
 
     vm.label = "AWCs Opened Yesterday";
-    
+
     vm.steps = {
         'map': {route: '/awc_opened/map', label: 'MapView'},
         'chart': {route: '/awc_opened/chart', label: 'ChartView'},

@@ -1,20 +1,20 @@
 /* globals hqDefine */
-hqDefine('app_manager/js/source_files.js', function() {
+hqDefine('app_manager/js/source_files', function() {
     $(function(){
         $('.toggle-next').click(function(e){
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
     
-        var current_version = hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
-            built_versions = hqImport('hqwebapp/js/initial_page_data.js').get('built_versions'),
+        var current_version = hqImport('hqwebapp/js/initial_page_data').get('current_version'),
+            built_versions = hqImport('hqwebapp/js/initial_page_data').get('built_versions'),
             $form = $("#compare-form"),
             $input = $form.find("input");
     
         built_versions = _.sortBy(_.filter(built_versions, function(v) {
             return v.version != current_version;
         }), function(v) { return parseInt(v.version); }).reverse();
-        version_map = _.indexBy(built_versions, 'version');
+        var version_map = _.indexBy(built_versions, 'version');
     
         $input.select2({
             data: _.map(built_versions, function(v) {
@@ -34,7 +34,7 @@ hqDefine('app_manager/js/source_files.js', function() {
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version].build_id);
+            window.location = hqImport('hqwebapp/js/initial_page_data').reverse('diff', version_map[version].build_id);
         });
     });
 });

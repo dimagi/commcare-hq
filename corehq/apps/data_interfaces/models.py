@@ -5,11 +5,19 @@ from collections import defaultdict
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.es.cases import CaseES
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.messaging.scheduling.const import (
+    VISIT_WINDOW_START,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_DUE_DATE,
+)
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
@@ -28,6 +36,7 @@ from dateutil.parser import parse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.db import models, transaction
@@ -35,10 +44,20 @@ from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from django.utils.translation import ugettext_lazy
 from jsonobject.api import JsonObject
-from jsonobject.properties import StringProperty
+from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
+
+
+def _try_date_conversion(date_or_string):
+    if (
+        isinstance(date_or_string, basestring) and
+        ALLOWED_DATE_REGEX.match(date_or_string)
+    ):
+        date_or_string = parse(date_or_string)
+
+    return date_or_string
 
 
 class AutomaticUpdateRule(models.Model):
@@ -75,6 +94,9 @@ class AutomaticUpdateRule(models.Model):
 
     class RuleError(Exception):
         pass
+
+    def __unicode__(self):
+        return unicode("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
 
     def migrate(self):
         if not self.pk:
@@ -421,6 +443,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_EQUAL = 'EQUAL'
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
+    MATCH_HAS_NO_VALUE = 'HAS_NO_VALUE'
 
     MATCH_CHOICES = (
         MATCH_DAYS_BEFORE,
@@ -428,6 +451,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         MATCH_EQUAL,
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
+        MATCH_HAS_NO_VALUE,
     )
 
     property_name = models.CharField(max_length=126)
@@ -437,16 +461,6 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def get_case_values(self, case):
         values = case.resolve_case_property(self.property_name)
         return [element.value for element in values]
-
-    def _try_date_conversion(self, date_or_string):
-        if (
-            not isinstance(date_or_string, date) and
-            isinstance(date_or_string, basestring) and
-            ALLOWED_DATE_REGEX.match(date_or_string)
-        ):
-            date_or_string = parse(date_or_string)
-
-        return date_or_string
 
     def clean_datetime(self, timestamp):
         if not isinstance(timestamp, datetime):
@@ -461,7 +475,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_days_before(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
-            date_to_check = self._try_date_conversion(date_to_check)
+            date_to_check = _try_date_conversion(date_to_check)
 
             if not isinstance(date_to_check, date):
                 continue
@@ -477,7 +491,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_days_after(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
-            date_to_check = self._try_date_conversion(date_to_check)
+            date_to_check = _try_date_conversion(date_to_check)
 
             if not isinstance(date_to_check, date):
                 continue
@@ -511,6 +525,9 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
         return False
 
+    def check_has_no_value(self, case, now):
+        return not self.check_has_value(case, now)
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_BEFORE: self.check_days_before,
@@ -518,6 +535,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_EQUAL: self.check_equal,
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
+            self.MATCH_HAS_NO_VALUE: self.check_has_no_value,
         }.get(self.match_type)(case, now)
 
 
@@ -590,16 +608,6 @@ class AutomaticUpdateRuleCriteria(models.Model):
         values = case.resolve_case_property(self.property_name)
         return [element.value for element in values]
 
-    def _try_date_conversion(self, date_or_string):
-        if (
-            not isinstance(date_or_string, date) and
-            isinstance(date_or_string, basestring) and
-            ALLOWED_DATE_REGEX.match(date_or_string)
-        ):
-            date_or_string = parse(date_or_string)
-
-        return date_or_string
-
     def clean_datetime(self, timestamp):
         if not isinstance(timestamp, datetime):
             timestamp = datetime.combine(timestamp, time(0, 0))
@@ -613,7 +621,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     def check_days_before(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
-            date_to_check = self._try_date_conversion(date_to_check)
+            date_to_check = _try_date_conversion(date_to_check)
 
             if not isinstance(date_to_check, date):
                 continue
@@ -629,7 +637,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     def check_days_after(self, case, now):
         values = self.get_case_values(case)
         for date_to_check in values:
-            date_to_check = self._try_date_conversion(date_to_check)
+            date_to_check = _try_date_conversion(date_to_check)
 
             if not isinstance(date_to_check, date):
                 continue
@@ -824,14 +832,23 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             return None
 
         def _add_update_property(name, value, current_case):
-            while name.startswith('parent/'):
-                name = name[7:]
-                # uses first parent if there are multiple
-                parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
-                if parent_cases:
-                    current_case = parent_cases[0]
+            while True:
+                if name.lower().startswith('parent/'):
+                    name = name[7:]
+                    # uses first parent if there are multiple
+                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    if parent_cases:
+                        current_case = parent_cases[0]
+                    else:
+                        return
+                elif name.lower().startswith('host/'):
+                    name = name[5:]
+                    current_case = current_case.host
+                    if not current_case:
+                        return
                 else:
-                    return
+                    break
+
             cases_to_update[current_case.case_id][name] = value
 
         for prop in self.get_properties_to_update():
@@ -898,6 +915,106 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         return custom_function(case, rule)
 
 
+class VisitSchedulerIntegrationHelper(object):
+
+    class VisitSchedulerIntegrationException(Exception):
+        pass
+
+    def __init__(self, case, scheduler_module_info):
+        self.case = case
+        self.scheduler_module_info = scheduler_module_info
+
+    @classmethod
+    @quickcache(['domain', 'app_id', 'form_unique_id'], timeout=60 * 60)
+    def get_visit_scheduler_module_and_form(cls, domain, app_id, form_unique_id):
+        app = get_latest_released_app(domain, app_id)
+        if app is None:
+            raise cls.VisitSchedulerIntegrationException("App not found")
+
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            raise cls.VisitSchedulerIntegrationException("Form not found")
+
+        if not isinstance(form, AdvancedForm):
+            raise cls.VisitSchedulerIntegrationException("Expected AdvancedForm")
+
+        if not form.schedule:
+            raise cls.VisitSchedulerIntegrationException("Expected form.schedule")
+
+        if not form.schedule.enabled:
+            raise cls.VisitSchedulerIntegrationException("Expected form.schedule.enabled")
+
+        return form.get_module(), form
+
+    def get_visit_scheduler_form_phase(self, module):
+        for i, phase in enumerate(module.schedule_phases):
+            for form_reference in phase.forms:
+                if form_reference.form_id == self.scheduler_module_info.form_unique_id:
+                    # The indexes are 0-based, but the visit scheduler refers to them as being 1-based
+                    return i + 1, phase
+
+        raise self.VisitSchedulerIntegrationException("Schedule phase not found")
+
+    def calculate_window_date(self, visit, visit_due_date):
+        if self.scheduler_module_info.window_position == VISIT_WINDOW_START:
+            return visit_due_date + timedelta(days=visit.starts)
+        elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
+            if not isinstance(visit.expires, int):
+                raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
+
+            return visit_due_date + timedelta(days=visit.expires)
+        elif self.scheduler_module_info.window_position == VISIT_WINDOW_DUE_DATE:
+            return visit_due_date
+        else:
+            raise self.VisitSchedulerIntegrationException("Unrecognized value for window_position")
+
+    def get_case_current_schedule_phase(self):
+        phase_num = self.case.get_case_property('current_schedule_phase')
+        try:
+            return int(phase_num)
+        except:
+            return None
+
+    def get_visit(self, form):
+        try:
+            visit = form.schedule.visits[self.scheduler_module_info.visit_number]
+        except IndexError:
+            raise self.VisitSchedulerIntegrationException("Visit not found")
+
+        if visit.repeats:
+            raise self.VisitSchedulerIntegrationException("Repeat visits are not supported")
+
+        return visit
+
+    def get_anchor_date(self, anchor_case_property):
+        anchor_date = self.case.get_case_property(anchor_case_property)
+        anchor_date = _try_date_conversion(anchor_date)
+        if isinstance(anchor_date, datetime):
+            anchor_date = anchor_date.date()
+
+        if not isinstance(anchor_date, date):
+            raise self.VisitSchedulerIntegrationException("Unable to get anchor date")
+
+        return anchor_date
+
+    def get_result(self):
+        module, form = self.get_visit_scheduler_module_and_form(
+            self.case.domain,
+            self.scheduler_module_info.app_id,
+            self.scheduler_module_info.form_unique_id
+        )
+
+        form_phase_num, phase = self.get_visit_scheduler_form_phase(module)
+        if form_phase_num != self.get_case_current_schedule_phase():
+            return False, None
+
+        anchor_date = self.get_anchor_date(phase.anchor)
+        visit = self.get_visit(form)
+        visit_due_date = anchor_date + timedelta(days=visit.due)
+        return True, self.calculate_window_date(visit, visit_due_date)
+
+
 class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     alert_schedule = models.ForeignKey('scheduling.AlertSchedule', null=True, on_delete=models.PROTECT)
     timed_schedule = models.ForeignKey('scheduling.TimedSchedule', null=True, on_delete=models.PROTECT)
@@ -910,6 +1027,32 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     # Every time the case property's value changes, the schedule's start date is
     # reset to the current date.
     reset_case_property_name = models.CharField(max_length=126, null=True)
+
+    # A dict with the structure represented by SchedulerModuleInfo;
+    # when enabled=True in this dict, the framework uses info related to the
+    # specified visit number to set the start date for any schedule instances
+    # created from this CreateScheduleInstanceActionDefinition.
+    scheduler_module_info = jsonfield.JSONField(default=dict)
+
+    class SchedulerModuleInfo(JsonObject):
+        # Set to True to enable setting the start date of any schedule instances
+        # based on the visit scheduler info details below
+        enabled = BooleanProperty(default=False)
+
+        # The app that contains the visit scheduler form being referenced
+        app_id = StringProperty()
+
+        # The unique_id of the visit scheduler form in the above app
+        form_unique_id = StringProperty()
+
+        # The visit number from which to pull the start date for any schedule
+        # instances; this should be the 0-based index in the FormSchedule.visits list
+        visit_number = IntegerProperty()
+
+        # VISIT_WINDOW_START - the start date used will be the first date in the window
+        # VISIT_WINDOW_END - the start date used will be the last date in the window
+        # VISIT_WINDOW_DUE_DATE - the start date used will be the due date of the visit
+        window_position = StringProperty(choices=[VISIT_WINDOW_START, VISIT_WINDOW_END, VISIT_WINDOW_DUE_DATE])
 
     @property
     def schedule(self):
@@ -934,23 +1077,62 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
         else:
             raise TypeError("Expected an instance of AlertSchedule or TimedSchedule")
 
+    def notify_scheduler_integration_exception(self, case, scheduler_module_info):
+        details = scheduler_module_info.to_json()
+        details.update({
+            'domain': case.domain,
+            'case_id': case.case_id,
+        })
+        notify_exception(
+            None,
+            message="Error in messaging / visit scheduler integration",
+            details=details
+        )
+
     def when_case_matches(self, case, rule):
         schedule = self.schedule
         if isinstance(schedule, AlertSchedule):
             refresh_case_alert_schedule_instances(case, schedule, self, rule)
         elif isinstance(schedule, TimedSchedule):
-            refresh_case_timed_schedule_instances(case, schedule, self, rule)
+            kwargs = {}
+            scheduler_module_info = self.get_scheduler_module_info()
+            if scheduler_module_info.enabled:
+                try:
+                    case_phase_matches, schedule_instance_start_date = VisitSchedulerIntegrationHelper(case,
+                        scheduler_module_info).get_result()
+                except VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException:
+                    self.notify_scheduler_integration_exception(case, scheduler_module_info)
+                    return CaseRuleActionResult()
+
+                if not case_phase_matches:
+                    self.delete_schedule_instances(case)
+                    return CaseRuleActionResult()
+                else:
+                    kwargs['start_date'] = schedule_instance_start_date
+
+            refresh_case_timed_schedule_instances(case, schedule, self, rule, **kwargs)
 
         return CaseRuleActionResult()
 
     def when_case_does_not_match(self, case, rule):
+        self.delete_schedule_instances(case)
+        return CaseRuleActionResult()
+
+    def delete_schedule_instances(self, case):
         if self.alert_schedule_id:
             get_case_alert_schedule_instances_for_schedule_id(case.case_id, self.alert_schedule_id).delete()
 
         if self.timed_schedule_id:
             get_case_timed_schedule_instances_for_schedule_id(case.case_id, self.timed_schedule_id).delete()
 
-        return CaseRuleActionResult()
+    def get_scheduler_module_info(self):
+        return self.SchedulerModuleInfo(**self.scheduler_module_info)
+
+    def set_scheduler_module_info(self, info):
+        if not isinstance(info, self.SchedulerModuleInfo):
+            raise ValueError("Expected CreateScheduleInstanceActionDefinition.SchedulerModuleInfo")
+
+        self.scheduler_module_info = info.to_json()
 
 
 class AutomaticUpdateAction(models.Model):

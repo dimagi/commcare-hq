@@ -12,6 +12,8 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
     LOCATION_TYPE_STAGING_SLUG,
+    APPLICATION_DIM_SLUG,
+    APPLICATION_STAGING_SLUG
 )
 
 from corehq.sql_db.routers import db_for_read_write
@@ -23,15 +25,20 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 class BaseDim(models.Model, WarehouseTable):
     domain = models.CharField(max_length=255)
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.PROTECT,
+    )
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
-    deleted = models.BooleanField(default=False)
+    deleted = models.BooleanField()
 
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch):
         with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(start_datetime, end_datetime)
+            cls.load(batch)
+        return True
 
     class Meta:
         abstract = True
@@ -81,8 +88,8 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
 
-    case_sharing = models.BooleanField()
-    reporting = models.BooleanField()
+    case_sharing = models.NullBooleanField()
+    reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField()
 
@@ -179,6 +186,7 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
 
     Grain: user_id, location_id
     '''
+    # TODO: Write Update SQL Query
     slug = USER_LOCATION_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
@@ -202,4 +210,21 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [USER_DIM_SLUG, GROUP_DIM_SLUG]
+        return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
+
+
+class ApplicationDim(BaseDim, CustomSQLETLMixin):
+    '''
+    Dimension for Applications
+
+    Grain: application_id
+    '''
+    slug = APPLICATION_DIM_SLUG
+
+    application_id = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    application_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return [APPLICATION_STAGING_SLUG]

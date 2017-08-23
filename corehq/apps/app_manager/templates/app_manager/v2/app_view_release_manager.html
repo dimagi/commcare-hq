@@ -5,7 +5,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-  {% trans "Publish" %} -
+  {% trans "Releases" %} -
     {% if app.name %}
         {{ app.name|html_name }}
     {% else %}
@@ -14,23 +14,42 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/app_view_release_manager.js" %}"></script>
+    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
 {% endblock %}
 
 {% block app_view_tabs %}
+  {% initial_page_data 'ab_test' ab_test %}
   {% initial_page_data 'app_id' app.id %}
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
   {% initial_page_data 'build_profiles' app.build_profiles %}
   {% initial_page_data 'fetch_limit' fetchLimit %}
+  {% initial_page_data 'practice_users' practice_users %}
+  {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
   {% initial_page_data 'intro_only' intro_only %}
   {% initial_page_data 'langs' app.langs %}
   {% initial_page_data 'latest_build_id' latest_build_id %}
   {% initial_page_data 'sms_contacts' sms_contacts %}
+  {% initial_page_data 'confirm' confirm %}
   {% registerurl "app_data_json" app.domain '---' %}
+  {% registerurl "paginate_releases" domain app.id %}
+  {% registerurl "delete_copy" domain app.id %}
+  {% registerurl "download_jad" domain '---' %}
+  {% registerurl "download_jar" domain '---' %}
+  {% registerurl "odk_install" domain '---' %}
+  {% registerurl "odk_media_install" domain '---' %}
+  {% registerurl "download_index" domain '---' %}
+  {% registerurl "release_build" domain app.id '---' %}
+  {% registerurl "save_copy" domain app.id %}
+  {% registerurl "revert_to_copy" domain app.id %}
+  {% registerurl "current_app_version" domain app.id %}
+  {% registerurl "hubspot_click_deploy" %}
+  {% registerurl "download_ccz" app.domain '---' %}
+  {% registerurl "download_multimedia_zip" app.domain '---' %}
+  {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
   <div class="tab-pane" id="releases">
     {% include "app_manager/v2/partials/releases.html" %}
   </div>

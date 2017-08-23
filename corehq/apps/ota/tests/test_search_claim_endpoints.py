@@ -23,7 +23,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.pillows.case_search import get_case_search_reindexer
+from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_INDEX,
@@ -266,7 +266,7 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
-        get_case_search_reindexer(DOMAIN).reindex()
+        CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
 
@@ -402,6 +402,7 @@ class CaseClaimEndpointTests(TestCase):
             '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
+            '<commcare_search_score>xxx</commcare_search_score>'
             '<location_id>None</location_id>'
             '<referrals>None</referrals>'
             '</case>'
@@ -416,8 +417,13 @@ class CaseClaimEndpointTests(TestCase):
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
+        score_regex = re.compile(r'(<commcare_search_score>)(\d+.\d+)(<\/commcare_search_score>)')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(re.sub(DATE_PATTERN, FIXED_DATESTAMP, re.sub(PATTERN, TIMESTAMP, response.content)), known_result)
+        self.assertEqual(
+            score_regex.sub(r'\1xxx\3',
+                            re.sub(DATE_PATTERN, FIXED_DATESTAMP,
+                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+            known_result)
 
     @patch('corehq.apps.es.es_query.run_query')
     def test_search_query_addition(self, run_query_mock):

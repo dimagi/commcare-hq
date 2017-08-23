@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ */
+/* globals hqImport */
 var hqLayout = {};
 
 hqLayout.selector = {
@@ -9,6 +9,7 @@ hqLayout.selector = {
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
     messages: '#hq-messages-container',
+    publishStatus: '#js-publish-status',
 };
 
 hqLayout.values = {
@@ -105,7 +106,7 @@ hqLayout.actions = {
                 }
             }
 
-            if ($content.find("#formdesigner").length && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            if ($content.find("#formdesigner").length && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
                 $content.css("padding-left", 0);
                 $content.css("padding-right", 0);
             }

@@ -10,7 +10,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 
 def report_xform_filter(doc_dict):
@@ -60,14 +60,21 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
     )
 
 
-def get_report_xforms_reindexer():
-    """Returns a reindexer that will only reindex data from enabled domains
-    """
-    domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
-    change_provider = get_domain_form_change_provider(domains=domains)
-    return ElasticPillowReindexer(
-        pillow=get_report_xform_to_elasticsearch_pillow(),
-        change_provider=change_provider,
-        elasticsearch=get_es_new(),
-        index_info=REPORT_XFORM_INDEX_INFO
-    )
+class ReportFormReindexerFactory(ReindexerFactory):
+    slug = 'report-xform'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        """Returns a reindexer that will only reindex data from enabled domains
+        """
+        domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
+        change_provider = get_domain_form_change_provider(domains=domains)
+        return ElasticPillowReindexer(
+            pillow=get_report_xform_to_elasticsearch_pillow(),
+            change_provider=change_provider,
+            elasticsearch=get_es_new(),
+            index_info=REPORT_XFORM_INDEX_INFO,
+            **self.options
+        )

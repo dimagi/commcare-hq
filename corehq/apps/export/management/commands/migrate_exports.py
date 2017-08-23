@@ -89,7 +89,7 @@ class Command(BaseCommand):
 
         send_HTML_email(
             'Export migration results',
-            '{}@{}'.format('brudolph', 'dimagi.com'),
+            '{}@{}'.format('commcarehq-ops+admins', 'dimagi.com'),
 
             '''
             Skipped domains: {} <br />

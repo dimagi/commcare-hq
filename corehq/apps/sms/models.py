@@ -26,7 +26,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 

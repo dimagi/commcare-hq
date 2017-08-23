@@ -25,21 +25,19 @@
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'app_manager/js/form_view.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
-    <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
     {% if module.doc_type == 'AdvancedModule' %}
-        <script src="{% static 'app_manager/js/case-config-ui-advanced.js' %}"></script>
-        <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
-    {% elif module.doc_type == 'CareplanModule' %}
-        <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
+        <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
     {% else %}
-        <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
     {% endif %}
     <style>
         #open-referral-action,
@@ -53,9 +51,7 @@
         }
     </style>
 
-    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
 
     {% include "app_manager/v1/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}
@@ -63,10 +59,10 @@
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
     {% if allow_form_workflow %}
-        <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
     {% endif %}
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-        <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
     {% endif %}
 {% endblock %}
 
@@ -111,11 +107,10 @@
     {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
     {% initial_page_data 'can_preview_form' can_preview_form %}
     {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
-    {% registerurl "cloudcare_main" domain '' %}
     {% registerurl "formplayer_single_app" domain app.id %}
 
     <div id="build_errors"></div>
-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
+    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager').updateDOM(data.update);}" %}
     <br />
     <inline-edit params="
         name: 'comment',
@@ -241,8 +236,6 @@
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
                             {% include 'app_manager/v1/partials/case_config_advanced.html' %}
-                        {% elif module.doc_type == 'CareplanModule' %}
-                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
                         {% else %}
                             {% include 'app_manager/v1/partials/case_config.html' %}
                         {% endif %}

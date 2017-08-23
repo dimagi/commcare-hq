@@ -290,6 +290,10 @@ class SchemaTest(SimpleTestCase):
                 "structure": {
                     "name": {},
                     "role": {},
+                    "first_name": {},
+                    "last_name": {},
+                    "username": {},
+                    "phone_number": {},
                 },
             })
 

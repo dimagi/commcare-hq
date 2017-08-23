@@ -5,6 +5,7 @@ from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import hqnottest
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -28,6 +29,8 @@ CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
+CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
+CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -180,6 +183,15 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
     if not open_referral_cases:
         return None
     if len(open_referral_cases) == 1:
@@ -197,6 +209,15 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
+
+    # Also check for trails on the occurrence
+    occurrence_case_ids = [
+        case.case_id for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_OCCURRENCE and not case.closed
+    ]
+    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
+    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+
     trails_with_server_opened_on = []
     for trail in trail_cases:
         server_opened_on = trail.actions[0].server_date
@@ -328,13 +349,8 @@ def _get_private_locations(person_case):
         )
 
     try:
-        tu_id = person_case.dynamic_case_properties().get('tu_choice')
-        tu_location = SQLLocation.active_objects.get(
-            domain=person_case.domain,
-            location_id=tu_id,
-        )
-        tu_location_nikshay_code = tu_location.metadata['nikshay_code']
-    except (SQLLocation.DoesNotExist, KeyError, AttributeError):
+        tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
+    except KeyError:
         tu_location_nikshay_code = None
 
     try:
@@ -473,3 +489,35 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
 
 def get_prescription_from_voucher(domain, voucher_id):
     return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
+
+
+def get_all_episode_ids(domain):
+    case_accessor = CaseAccessors(domain)
+    case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
+    return case_ids
+
+
+def iter_all_active_person_episode_cases(domain, case_ids):
+    """From a list of case_ids, return all the active episodes and associate person case
+    """
+    case_accessor = CaseAccessors(domain)
+    episode_cases = case_accessor.iter_cases(case_ids)
+    for episode_case in episode_cases:
+        if episode_case.type != CASE_TYPE_EPISODE:
+            continue
+
+        if episode_case.closed:
+            continue
+
+        try:
+            person_case = get_person_case_from_episode(domain, episode_case.case_id)
+        except ENikshayCaseNotFound:
+            continue
+
+        if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+            continue
+
+        if person_case.closed:
+            continue
+
+        yield person_case, episode_case

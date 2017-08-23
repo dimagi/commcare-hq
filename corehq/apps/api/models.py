@@ -113,10 +113,8 @@ class ESXFormInstance(DictObject):
     @property
     def metadata(self):
         from corehq.form_processor.utils import clean_metadata
-        from couchforms.models import Metadata
         if const.TAG_META in self.form_data:
-            return Metadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
-
+            return clean_metadata(self.form_data[const.TAG_META])
         return None
 
     @property
@@ -159,6 +157,15 @@ class ESXFormInstance(DictObject):
     @property
     def name(self):
         return self.form_data.get(const.TAG_NAME, "")
+
+    @property
+    def server_modified_on(self):
+        server_modified_on = self._data.get('server_modified_on', None)
+        if not server_modified_on:
+            server_modified_on = self._data.get('edited_on', None)
+        if not server_modified_on:
+            server_modified_on = self._data['received_on']
+        return server_modified_on
 
 
 class ESCase(DictObject, CaseToXMLMixin):

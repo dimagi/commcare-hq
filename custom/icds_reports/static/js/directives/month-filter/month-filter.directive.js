@@ -4,24 +4,17 @@
 function MonthModalController($location, $uibModalInstance) {
     var vm = this;
 
-    vm.days = [];
-
-    window.angular.forEach(_.range(1,32), function(key) {
-        vm.days.push({
-            name: key,
-            id: key,
-        });
-    });
-
     vm.months = [];
     vm.years = [];
+    vm.monthsCopy = [];
 
     window.angular.forEach(moment.months(), function(key, value) {
-        vm.months.push({
+        vm.monthsCopy.push({
             name: key,
             id: value + 1,
         });
     });
+
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
@@ -32,15 +25,28 @@ function MonthModalController($location, $uibModalInstance) {
 
     vm.selectedMonth = $location.search()['month'] !== void(0) ? $location.search()['month'] : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? $location.search()['year'] : new Date().getFullYear();
-    vm.selectedDay = $location.search()['day'] !== void(0) ? $location.search()['day'] : new Date().getDay();
+
+    vm.months = _.filter(vm.monthsCopy, function(month) {
+        return month.id <= new Date().getMonth() + 1;
+    });
 
     vm.apply = function() {
         $uibModalInstance.close({
             month: vm.selectedMonth,
             year: vm.selectedYear,
-            day: vm.selectedDay,
         });
     };
+
+    vm.onSelectYear = function (item) {
+        if (item.id === new Date().getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function(month) {
+                return month.id <= new Date().getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else {
+            vm.months = vm.monthsCopy;
+        }
+    }
 
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
@@ -49,6 +55,18 @@ function MonthModalController($location, $uibModalInstance) {
 
 function MonthFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
+
+    vm.getPlaceholder = function() {
+        var month = $location.search().month;
+        var year = $location.search().year;
+        var formattedMonth = moment(month, 'MM').format('MMMM');
+
+        if (month && year) {
+            return formattedMonth + ' ' + year;
+        } else {
+            return 'Month/Year';
+        }
+    };
 
     vm.open = function () {
         var modalInstance = $uibModal.open({
@@ -65,8 +83,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
         modalInstance.result.then(function (data) {
             $location.search('month', data['month']);
             $location.search('year', data['year']);
-            $location.search('day', data['day']);
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });
     };
@@ -76,10 +93,11 @@ MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageSer
 MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {
+            isOpenModal: '=?',
         },
         bindToController: true,
         require: 'ngModel',

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -10,21 +9,41 @@ from corehq.pillows.utils import (
     WEB_USER_TYPE,
     MOBILE_USER_TYPE,
 )
+from corehq.warehouse.models import ApplicationDim
+from corehq.warehouse.models import ApplicationStagingTable
 from corehq.warehouse.tests.utils import (
     create_user_staging_record,
     create_location_records_from_tree,
     create_location_staging_record,
-)
+    create_group_staging_record,
+    DEFAULT_BATCH_ID,
+    get_default_batch,
+    create_batch,
+    BaseWarehouseTestCase, create_application_staging_record)
 from corehq.warehouse.models import (
+    Batch,
     UserStagingTable,
     UserDim,
+    GroupStagingTable,
+    GroupDim,
+    UserGroupDim,
     LocationDim,
     LocationStagingTable,
     LocationTypeStagingTable,
 )
 
 
-class TestUserDim(TestCase):
+def setup_module():
+    start = datetime.utcnow() - timedelta(days=3)
+    end = datetime.utcnow() + timedelta(days=3)
+    create_batch(start, end, DEFAULT_BATCH_ID)
+
+
+def teardown_module():
+    Batch.objects.all().delete()
+
+
+class TestUserDim(BaseWarehouseTestCase):
 
     domain = 'user-dim-test'
 
@@ -59,6 +78,7 @@ class TestUserDim(TestCase):
                 username='mobile',
             ),
         ]
+        cls.batch = get_default_batch()
 
     @classmethod
     def tearDownClass(cls):
@@ -69,10 +89,7 @@ class TestUserDim(TestCase):
         super(TestUserDim, cls).tearDownClass()
 
     def test_user_types(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
-
-        UserDim.commit(start, end)
+        UserDim.commit(self.batch)
 
         self.assertEqual(UserDim.objects.count(), 5)
         self.assertEqual(
@@ -97,20 +114,77 @@ class TestUserDim(TestCase):
         )
 
 
-class TestLocationDim(TestCase):
+class TestUserGroupDim(BaseWarehouseTestCase):
+
+    domain = 'user-group-dim-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserGroupDim, cls).setUpClass()
+        cls.blue_dog = create_user_staging_record(cls.domain, username='blue-dog')
+        cls.black_dog = create_user_staging_record(cls.domain, username='black-dog')
+        cls.yellow_cat = create_user_staging_record(cls.domain, username='yellow-cat')
+
+        cls.batch = get_default_batch()
+
+    @classmethod
+    def tearDownClass(cls):
+        GroupStagingTable.clear_records()
+        UserStagingTable.clear_records()
+        GroupDim.clear_records()
+        UserDim.clear_records()
+        UserGroupDim.clear_records()
+        super(TestUserGroupDim, cls).tearDownClass()
+
+    def test_basic_user_group_insert(self):
+        UserDim.commit(self.batch)
+        self.assertEqual(UserDim.objects.count(), 3)
+
+        # Setup group records to have multiple users
+        dogs = create_group_staging_record(
+            self.domain,
+            'dogs',
+            user_ids=[self.blue_dog.user_id, self.black_dog.user_id],
+        )
+        create_group_staging_record(
+            self.domain,
+            'cats',
+            user_ids=[self.yellow_cat.user_id],
+        )
+        GroupDim.commit(self.batch)
+        self.assertEqual(GroupDim.objects.count(), 2)
+
+        UserGroupDim.commit(self.batch)
+        self.assertEqual(UserGroupDim.objects.count(), 3)
+        dog_relations = UserGroupDim.objects.filter(group_dim=GroupDim.objects.get(group_id=dogs.group_id))
+        self.assertEqual(
+            dog_relations.count(),
+            2,
+        )
+        self.assertEqual(
+            set(dog_relations.values_list('user_dim_id', flat=True)),
+            set(UserDim.objects.filter(
+                user_id__in=[self.blue_dog.user_id, self.black_dog.user_id]
+            ).values_list('id', flat=True)),
+        )
+
+
+class TestLocationDim(BaseWarehouseTestCase):
 
     domain = 'location-dim-test'
 
     @classmethod
-    def tearDownClass(cls):
+    def setUpClass(cls):
+        super(TestLocationDim, cls).setUpClass()
+        cls.batch = get_default_batch()
+
+    def tearDown(self):
         LocationStagingTable.clear_records()
         LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
-        super(TestLocationDim, cls).tearDownClass()
+        super(TestLocationDim, self).tearDown()
 
     def test_location_dim(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
         tree = {
             ('Illinois', 'state'): {
                 ('Naperville', 'city'): {
@@ -124,19 +198,24 @@ class TestLocationDim(TestCase):
         self.assertEqual(LocationStagingTable.objects.count(), 4)
         self.assertEqual(LocationTypeStagingTable.objects.count(), 3)
 
-        LocationDim.commit(start, end)
+        LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
         home_location = LocationDim.objects.filter(name='Home').first()
 
         self.assertEqual(
-            home_location.location_level_2,
+            home_location.location_level_0,
             LocationDim.objects.filter(name='Illinois').first().sql_location_id,
         )
         self.assertEqual(
             home_location.location_level_1,
             LocationDim.objects.filter(name='Naperville').first().sql_location_id,
         )
-        self.assertEqual(home_location.location_level_0, home_location.sql_location_id)
+        self.assertEqual(home_location.location_level_2, home_location.sql_location_id)
+        self.assertEqual(home_location.location_level_3, None)
+        self.assertEqual(home_location.location_level_4, None)
+        self.assertEqual(home_location.location_level_5, None)
+        self.assertEqual(home_location.location_level_6, None)
+        self.assertEqual(home_location.location_level_7, None)
 
         self.assertEqual(home_location.level, 2)
         self.assertEqual(home_location.location_type_name, 'home')
@@ -147,8 +226,6 @@ class TestLocationDim(TestCase):
         self.assertEqual(root_location.level, 0)
 
     def test_location_dim_update(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
         tree = {
             ('Illinois', 'state'): {
                 ('Naperville', 'city'): {
@@ -158,7 +235,7 @@ class TestLocationDim(TestCase):
             }
         }
         create_location_records_from_tree(self.domain, tree)
-        LocationDim.commit(start, end)
+        LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
 
         # Let's add one more location under Naperville to ensure that the dim updates
@@ -175,5 +252,31 @@ class TestLocationDim(TestCase):
             location_type_id=home_location.location_type_id,
         )
 
-        LocationDim.commit(start, end)
+        LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 5)
+
+
+class TestAppDim(BaseWarehouseTestCase):
+
+    domain = 'app-dim-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAppDim, cls).setUpClass()
+        cls.batch = get_default_batch()
+
+    @classmethod
+    def tearDownClass(cls):
+        ApplicationDim.clear_records()
+        ApplicationStagingTable.clear_records()
+        super(TestAppDim, cls).tearDownClass()
+
+    def test_app_dim(self):
+        create_application_staging_record(self.domain, 'test-app')
+        create_application_staging_record(self.domain, 'test-deleted', doc_type='Application-Deleted')
+        ApplicationDim.commit(self.batch)
+        self.assertEqual(ApplicationDim.objects.count(), 2)
+        test_app = ApplicationDim.objects.get(name='test-app')
+        self.assertEqual(test_app.deleted, False)
+        deleted_app = ApplicationDim.objects.get(name='test-deleted')
+        self.assertEqual(deleted_app.deleted, True)

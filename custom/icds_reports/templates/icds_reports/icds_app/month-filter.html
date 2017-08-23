@@ -4,17 +4,8 @@
     </div>
     <div class="modal-body" id="modal-body">
         <div class="form-group" style="margin: 20px 50px;">
-            <label for="email">Day (For Testing):</label>
-            <ui-select ng-model="$ctrl.selectedDay" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
-                <ui-select-match placeholder="Day"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                  <ui-select-choices repeat="day.id as day in $ctrl.days | propsFilter: {name: $select.search}">
-                    <div ng-bind-html="day.name | highlight: $select.search"></div>
-                  </ui-select-choices>
-            </ui-select>
-        </div>
-        <div class="form-group" style="margin: 20px 50px;">
             <label for="email">Month:</label>
-            <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+            <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelectMonth($item)">
                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
                     <div ng-bind-html="month.name | highlight: $select.search"></div>
@@ -23,7 +14,7 @@
         </div>
         <div class="form-group" style="margin: 20px 50px;">
             <label for="email">Year:</label>
-            <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+            <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                     <div ng-bind-html="year.name"></div>
@@ -37,6 +28,6 @@
 </script>
 
 <div class="row text-center">
-    <button style="width: 90%;" type="button" class="btn btn-default" ng-click="$ctrl.open()"><i class="fa fa-search"></i> Search by Month/Year</button>
+    <button style="width: 95%;" type="button" class="btn btn-default less-padding" ng-click="$ctrl.open()"><i class="fa fa-search"></i> {$ $ctrl.getPlaceholder() $}</button>
 </div>
 

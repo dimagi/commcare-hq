@@ -2,10 +2,10 @@ import logging
 from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
+from django.conf import settings
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.toggles import ENTERPRISE_OPTIMIZATIONS
 from dimagi.utils.decorators.memoized import memoized
 from ..utils import should_use_sql_backend
 
@@ -102,6 +102,10 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
+    def copy_attachments(self, from_form, to_form):
+        """Copy attachments from one for to another (exlucding form.xml)"""
+        self.processor.copy_attachments(from_form, to_form)
+
     def is_duplicate(self, xform_id, domain=None):
         """
         Check if there is already a form with the given ID. If domain is specified only check for
@@ -116,7 +120,7 @@ class FormProcessorInterface(object):
                 self.processor.is_duplicate(xform_id) or
                 # don't bother checking other DB if there's only one active domain
                 (
-                    not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain) and
+                    not settings.ENTERPRISE_MODE and
                     self.other_db_processor().is_duplicate(xform_id)
                 )
             )
@@ -148,7 +152,7 @@ class FormProcessorInterface(object):
             from corehq.form_processor.submission_post import handle_unexpected_error
             handle_unexpected_error(self, forms.submitted, e, error_message)
             e.sentry_capture = False  # we've already notified
-            raise e
+            raise
 
     def hard_delete_case_and_forms(self, case, xforms):
         domain = case.domain
@@ -198,7 +202,7 @@ class FormProcessorInterface(object):
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain) and not ENTERPRISE_OPTIMIZATIONS.enabled(self.domain):
+        if not couch_sql_migration_in_progress(self.domain) and not settings.ENTERPRISE_MODE:
             # during migration we're copying from one DB to the other so this check will always fail
             if self.other_db_processor().case_exists(case_id):
                 raise IllegalCaseId("Bad case id")

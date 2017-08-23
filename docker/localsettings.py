@@ -52,6 +52,17 @@ if USE_PARTITIONED_DATABASE:
                 'SERIALIZE': False,
             },
         },
+        'warehouse': {
+             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+             'NAME': 'commcarehq_warehouse',
+             'USER': 'commcarehq',
+             'PASSWORD': 'commcarehq',
+             'HOST': 'postgres',
+             'PORT': '5432',
+             'TEST': {
+                 'SERIALIZE': False,
+             },
+         },
     })
 
     PARTITION_DATABASE_CONFIG = {
@@ -68,6 +79,8 @@ if USE_PARTITIONED_DATABASE:
             'postgres': 'localhost'
         }
     }
+
+    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 ####### Couch Config ######
 COUCH_DATABASES = {
@@ -105,7 +118,11 @@ S3_BLOB_DB_SETTINGS = {
     "url": "http://riakcs:9980/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
-    "config": {"connect_timeout": 3, "read_timeout": 5},
+    "config": {
+        "connect_timeout": 3,
+        "read_timeout": 5,
+        "signature_version": "s3"
+    },
 }
 
 KAFKA_URL = 'kafka:9092'
@@ -207,7 +224,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     CELERY_SEND_TASK_ERROR_EMAILS = True
 
     LESS_DEBUG = True
-    LESS_WATCH = False
     COMPRESS_OFFLINE = False
 
     XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'

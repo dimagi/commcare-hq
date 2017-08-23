@@ -77,14 +77,19 @@ def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
                 recipient_id,
                 start_date=start_date,
                 move_to_next_event_not_in_the_past=True,
+                schedule_revision=schedule.memoized_schedule_revision,
             )
             save_timed_schedule_instance(instance)
 
     for key, schedule_instance in existing_instances.iteritems():
         if key not in new_recipients:
             delete_timed_schedule_instance(schedule_instance)
-        elif start_date and start_date != schedule_instance.start_date:
-            schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
+        elif (
+            (start_date and start_date != schedule_instance.start_date) or
+            (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+        ):
+            new_start_date = start_date or schedule_instance.start_date
+            schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
             save_timed_schedule_instance(schedule_instance)
 
 
@@ -164,6 +169,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
                 case_id=case.case_id,
                 rule_id=rule.pk,
                 last_reset_case_property_value=reset_case_property_value,
+                schedule_revision=schedule.memoized_schedule_revision,
             )
             save_case_schedule_instance(instance)
 
@@ -176,8 +182,14 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
                     schedule_instance.recalculate_schedule(schedule)
                     schedule_instance.last_reset_case_property_value = reset_case_property_value
                     save_case_schedule_instance(schedule_instance)
-            elif start_date and start_date != schedule_instance.start_date:
-                schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
+                    continue
+
+            if (
+                (start_date and start_date != schedule_instance.start_date) or
+                (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+            ):
+                new_start_date = start_date or schedule_instance.start_date
+                schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
                 save_case_schedule_instance(schedule_instance)
 
 
@@ -204,23 +216,39 @@ def _handle_schedule_instance(instance, save_function):
 
 @no_result_task(queue='reminder_queue')
 def handle_alert_schedule_instance(schedule_instance_id):
-    instance = get_alert_schedule_instance(schedule_instance_id)
+    try:
+        instance = get_alert_schedule_instance(schedule_instance_id)
+    except AlertScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_alert_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_timed_schedule_instance(schedule_instance_id):
-    instance = get_timed_schedule_instance(schedule_instance_id)
+    try:
+        instance = get_timed_schedule_instance(schedule_instance_id)
+    except TimedScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_timed_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
-    instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+    try:
+        instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+    except CaseAlertScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_case_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
-    instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+    try:
+        instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+    except CaseTimedScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_case_schedule_instance)

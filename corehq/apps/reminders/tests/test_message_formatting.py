@@ -15,6 +15,7 @@ class MessageTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MessageTestCase, cls).setUpClass()
         cls.domain = 'message-formatting-test'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
@@ -26,6 +27,8 @@ class MessageTestCase(TestCase):
             first_name='Mobile',
             last_name='User'
         )
+        cls.mobile_user.add_phone_number('999123')
+        cls.mobile_user.save()
 
         cls.web_user = WebUser.create(
             cls.domain,
@@ -58,6 +61,7 @@ class MessageTestCase(TestCase):
         cls.group.delete()
         cls.location.delete()
         cls.location_type.delete()
+        super(MessageTestCase, cls).tearDownClass()
 
     def test_render_context(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
@@ -107,6 +111,7 @@ class MessageTestCase(TestCase):
             'name': self.mobile_user.raw_username,
             'first_name': self.mobile_user.first_name,
             'last_name': self.mobile_user.last_name,
+            'phone_number': self.mobile_user.default_phone_number,
         }
 
     def get_expected_template_params_for_web(self):
@@ -114,6 +119,7 @@ class MessageTestCase(TestCase):
             'name': self.web_user.username,
             'first_name': self.web_user.first_name,
             'last_name': self.web_user.last_name,
+            'phone_number': '',
         }
 
     def get_expected_template_params_for_group(self):

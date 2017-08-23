@@ -1,14 +1,34 @@
-function MainController($scope, $route, $routeParams, $location) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
+
+    $scope.reportAnIssue = function() {
+        if (reportAnIssueUrl) {
+            $window.location.href = reportAnIssueUrl;
+            return;
+        }
+        $uibModal.open({
+            ariaLabelledBy: 'modal-title',
+            ariaDescribedBy: 'modal-body',
+            templateUrl: 'reportIssueModal.html',
+        });
+    };
 }
 
-MainController.$inject = ['$scope', '$route', '$routeParams', '$location'];
+MainController.$inject = [
+    '$scope',
+    '$route',
+    '$routeParams',
+    '$location',
+    '$uibModal',
+    '$window',
+    'reportAnIssueUrl',
+];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -16,7 +36,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
 
         $routeProvider
             .when("/", {
-                redirectTo : '/program_summary/system_usage',
+                redirectTo : '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
                 template : "<system-usage></system-usage>",
             }).when("/awc_opened", {
@@ -43,11 +63,17 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
             })
-            .when("/breastfeeding", {
-                template : "breastfeeding",
+            .when("/wasting", {
+                redirectTo : "/wasting/map",
             })
-            .when("/exclusive_bf", {
-                template : "exclusive_bf",
+            .when("/wasting/:step", {
+                template : "<prevalence-of-severe></prevalence-of-severe>",
+            })
+            .when("/stunning", {
+                redirectTo : "/stunning/map",
+            })
+            .when("/stunning/:step", {
+                template : "<prevalence-of-stunning></prevalence-of-stunning>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",
@@ -56,7 +82,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "health_tabular_report",
             })
             .when("/awc_reports", {
-                redirectTo : "/awc_reports/system_usage",
+                redirectTo : "/awc_reports/pse",
             })
             .when("/awc_reports/:step", {
                 template : "<awc-reports></awc-reports>",
@@ -66,6 +92,123 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/progress_report", {
                 template : "<progress-report></progress-report>",
+            })
+            .when("/progress_report/:report", {
+                template : "<progress-report></progress-report>",
+            })
+            .when("/exclusive_breastfeeding", {
+                redirectTo : "/exclusive_breastfeeding/map",
+            })
+            .when("/exclusive_breastfeeding/:step", {
+                template: "<exclusive-breastfeeding></exclusive-breastfeeding>",
+            })
+            .when("/low_birth", {
+                redirectTo : "/low_birth/map",
+            })
+            .when("/low_birth/:step", {
+                template : "<newborn-low-weight></newborn-low-weight>",
+            })
+            .when("/early_initiation", {
+                redirectTo : "/early_initiation/map",
+            })
+            .when("/early_initiation/:step", {
+                template : "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
+            })
+            .when("/children_initiated", {
+                redirectTo : "/children_initiated/map",
+            })
+            .when("/children_initiated/:step", {
+                template : "<children-initiated></children-initiated>",
+            })
+            .when("/institutional_deliveries", {
+                redirectTo : "/institutional_deliveries/map",
+            })
+            .when("/institutional_deliveries/:step", {
+                template : "<institutional-deliveries></institutional-deliveries>",
+            })
+            .when("/immunization_coverage", {
+                redirectTo : "/immunization_coverage/map",
+            })
+            .when("/immunization_coverage/:step", {
+                template : "<immunization-coverage></immunization-coverage>",
+            })
+            .when("/awc_daily_status", {
+                redirectTo : "/awc_daily_status/map",
+            })
+            .when("/awc_daily_status/:step", {
+                template : "<awc-daily-status></awc-daily-status>",
+            })
+            .when("/awcs_covered", {
+                redirectTo : "/awcs_covered/map",
+            })
+            .when("/awcs_covered/:step", {
+                template : "<awcs-covered></awcs-covered>",
+            })
+            .when("/registered_household", {
+                redirectTo : "/registered_household/map",
+            })
+            .when("/registered_household/:step", {
+                template : "<registered-household></registered-household>",
+            })
+            .when("/enrolled_children", {
+                redirectTo : "/enrolled_children/map",
+            })
+            .when("/enrolled_children/:step", {
+                template : "<enrolled-children></enrolled-children>",
+            })
+            .when("/enrolled_women", {
+                redirectTo : "/enrolled_women/map",
+            })
+            .when("/enrolled_women/:step", {
+                template : "<enrolled-women></enrolled-women>",
+            })
+            .when("/lactating_enrolled_women", {
+                redirectTo : "/lactating_enrolled_women/map",
+            })
+            .when("/lactating_enrolled_women/:step", {
+                template : "<lactating-enrolled-women></lactating-enrolled-women>",
+            })
+            .when("/adolescent_girls", {
+                redirectTo : "/adolescent_girls/map",
+            })
+            .when("/adolescent_girls/:step", {
+                template : "<adolescent-girls></adolescent-girls>",
+            })
+            .when("/adhaar", {
+                redirectTo : "/adhaar/map",
+            })
+            .when("/adhaar/:step", {
+                template : "<adhaar-beneficiary></adhaar-beneficiary>",
+            })
+            .when("/clean_water", {
+                redirectTo : "/clean_water/map",
+            })
+            .when("/clean_water/:step", {
+                template : "<clean-water></clean-water>",
+            })
+            .when("/functional_toilet", {
+                redirectTo : "/functional_toilet/map",
+            })
+            .when("/functional_toilet/:step", {
+                template : "<functional-toilet></functional-toilet>",
+            })
+            .when("/medicine_kit", {
+                redirectTo : "/medicine_kit/map",
+            })
+            .when("/medicine_kit/:step", {
+                template : "<medicine-kit></medicine-kit>",
+            })
+            .when("/infants_weight_scale", {
+                redirectTo : "/infants_weight_scale/map",
+            })
+            .when("/infants_weight_scale/:step", {
+                template : "<infants-weight-scale></infants-weight-scale>",
+            })
+            .when("/adult_weight_scale", {
+                redirectTo : "/adult_weight_scale/map",
+            })
+            .when("/adult_weight_scale/:step", {
+                template : "<adult-weight-scale></adult-weight-scale>",
             });
     }]);
 

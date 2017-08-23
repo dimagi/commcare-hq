@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
-
+from contextlib import contextmanager
 from datetime import datetime
 
 import pytz
@@ -29,7 +29,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
 from corehq.apps.locations.permissions import conditionally_location_safe
@@ -75,6 +75,7 @@ from no_exceptions.exceptions import Http403
 from corehq.apps.reports.datatables import DataTablesHeader
 
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 5000
+ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 50000
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -94,19 +95,33 @@ def get_filter_values(filters, request_dict, user=None):
         raise UserReportsFilterError(unicode(e))
 
 
-def query_dict_to_dict(query_dict, domain):
+def query_dict_to_dict(query_dict, domain, string_type_params):
     """
     Transform the given QueryDict to a normal dict where each value has been
-    converted from a string to a dict (if the value is JSON).
+    converted from a string to a dict (if the value is JSON). params with values 'true'
+    or 'false' or numbers are casted to respective datatypes, unless the key is specified in string_type_params
     Also add the domain to the dict.
 
     :param query_dict: a QueryDict
     :param domain:
+    :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
-    request_dict = json_request(query_dict, booleans_as_strings=True)
+    request_dict = json_request(query_dict)
     request_dict['domain'] = domain
+
+    # json.loads casts strings 'true'/'false' to booleans, so undo it
+    for key in string_type_params:
+        u_key = unicode(key)  # QueryDict's key/values are unicode strings
+        if u_key in query_dict:
+            request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
+
+
+@contextmanager
+def tmp_report_config(report_config):
+    yield report_config
+    report_config.delete()
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -198,10 +213,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def request_dict(self):
+        string_type_params = [
+            filter.name
+            for filter in self.filters
+            if getattr(filter, 'datatype', 'string') == "string"
+        ]
         if self.request.method == 'GET':
-            return query_dict_to_dict(self.request.GET, self.domain)
+            return query_dict_to_dict(self.request.GET, self.domain, string_type_params)
         elif self.request.method == 'POST':
-            return query_dict_to_dict(self.request.POST, self.domain)
+            return query_dict_to_dict(self.request.POST, self.domain, string_type_params)
 
     @property
     @memoized
@@ -515,12 +535,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             })
 
         raw_rows = list(data.get_data())
-        headers = [column.header for column in self.data_source.columns]
+
+        headers = [
+            column.header
+            for column in self.data_source.inner_columns if column.data_tables_column.visible
+        ]
 
         column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
-            column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
+            if column.visible:
+                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
         rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
         total_rows = [data.get_total_row()] if data.has_total_row else []
@@ -563,11 +588,19 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def excel_export_limit(self):
+        if settings.ENTERPRISE_MODE or self.domain == 'enikshay':
+            return ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+        return UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+    @property
+    @memoized
     def export_too_large(self):
         data = self.data_source
         data.set_filter_values(self.filter_values)
         total_rows = data.get_total_records()
-        return total_rows > UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+        return total_rows > self.excel_export_limit
 
     @property
     @memoized
@@ -589,7 +622,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                     "Report export is limited to {number} rows. "
                     "Please filter the data in your report to "
                     "{number} or fewer rows before exporting"
-                ).format(number=UCR_EXPORT_TO_EXCEL_ROW_LIMIT),
+                ).format(number=self.excel_export_limit),
             })
         return self.render_json_response({
             "export_allowed": True,
@@ -607,6 +640,32 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         temp = StringIO()
         export_from_tables(self.export_table, temp, Format.XLS_2007)
         return export_response(temp, Format.XLS_2007, self.title)
+
+    @classmethod
+    def report_preview_data(cls, domain, temp_report):
+
+        with tmp_report_config(temp_report) as report_config:
+            view = cls(request=HttpRequest())
+            view._domain = domain
+            view._lang = "en"
+            view._report_config_id = report_config._id
+            try:
+                export_table = view.export_table
+                datatables_data = json.loads(view.get_ajax({}).content)
+            except UserReportsError:
+                # User posted an invalid report configuration
+                return None
+            except DataSourceConfigurationNotFoundError:
+                # A temporary data source has probably expired
+                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+                return None
+            else:
+                return {
+                    "table": export_table[0][1],
+                    "map_config": view.spec.map_config,
+                    "chart_configs": view.spec.charts,
+                    "aaData": datatables_data['aaData'],
+                }
 
 
 # Base class for classes that provide custom rendering for UCRs

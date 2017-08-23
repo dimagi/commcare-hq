@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-test",
     "icds-sql",
     "icds-cas",
@@ -10,7 +11,7 @@
     "icds"
   ],
   "report_id": "static-mpr_3i_person_cases",
-  "data_source_table": "static-person_cases",
+  "data_source_table": "static-person_cases_v2",
   "config": {
     "title": "MPR - 3i - Person cases (Static)",
     "description": "",

@@ -4,10 +4,12 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
         "engine_id": "ucr",
         "description": "",
         "base_item_expression": {
@@ -379,30 +381,6 @@
                     }
                 },
                 "column_id": "external_id"
-            },
-            {
-                "display_name": "beneficiary_id",
-                "datatype": "string",
-                "type": "expression",
-                "is_primary_key": false,
-                "transform": {
-                },
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "person_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "beneficiary_id"
             },
             {
                 "display_name": "person/sex",
@@ -1008,7 +986,7 @@
                                 "property_name": "_id"
                             }
                         },
-                        "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                        "xmlns": ["http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3", "http://openrosa.org/formdesigner/9b0763fe2c23426aab2d9042d97e86a6ba943393"],
                         "reverse": true
                     },
                     "value_expression": {
@@ -1083,7 +1061,7 @@
                                     "property_name": "_id"
                                 }
                             },
-                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "xmlns": ["http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F", "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"],
                             "reverse": true
                         },
                         "value_expression": {
@@ -1334,7 +1312,7 @@
                         "argument_expression": {
                             "type": "first_case_form_with_xmlns",
                             "reverse": true,
-                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "xmlns": ["http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F", "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"],
                             "case_id_expression": {
                                 "type": "nested",
                                 "argument_expression": {
@@ -2710,13 +2688,32 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_sample_a",
-                            "sample_a_lab_serial_number"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "microscopy",
+                                    "ql_microscopy",
+                                    "lab_serial_number_a"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_a",
+                                "sample_a_lab_serial_number"
+                            ]
+                        }
                     }
                 }
             },
@@ -2731,13 +2728,31 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_sample_a",
-                            "sample_a_visual_appearance"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "ql_update_specimen_info",
+                                    "sputum_visual_appearance"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_a",
+                                "sample_a_visual_appearance"
+                            ]
+                        }
                     }
                 }
             },
@@ -2752,13 +2767,31 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_sample_b",
-                            "sample_b_visual_appearance"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "ql_update_specimen_info",
+                                    "sputum_visual_appearance"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_b",
+                                "sample_b_visual_appearance"
+                            ]
+                        }
                     }
                 }
             },
@@ -2773,13 +2806,32 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_sample_a",
-                            "sample_a_result"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "microscopy",
+                                    "ql_result",
+                                    "sample_a_result"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                                "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_a",
+                                "sample_a_result"
+                            ]
+                        }
                     }
                 }
             },
@@ -2794,11 +2846,29 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "date_reported"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "ql_update_specimen_info",
+                                    "date_reported"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "date_reported"
+                            ]
+                        }
                     }
                 }
             },
@@ -2813,51 +2883,32 @@
                         "name": "test_result_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "microscopy",
-                            "ql_sample_b",
-                            "sample_b_result"
-                        ]
-                    }
-                }
-            },
-            {
-                "type": "expression",
-                "datatype": "string",
-                "column_id": "sample_receipt_date",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "sample_receipt_form"
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "sample_receipt_date"
-                        ]
-                    }
-                }
-            },
-            {
-                "type": "expression",
-                "datatype": "string",
-                "column_id": "predominant_system_duration",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "suspect_registration"
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "predominant_system_duration"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "microscopy",
+                                    "ql_result",
+                                    "sample_b_result"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_b",
+                                "sample_b_result"
+                            ]
+                        }
                     }
                 }
             },
@@ -4623,7 +4674,7 @@
                         },
                         "map_expression": {
                             "type": "count_case_forms_with_xmlns",
-                            "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                            "xmlns": ["http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F", "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"],
                             "case_id_expression": {
                                 "type": "property_name",
                                 "property_name": "_id"
@@ -4679,7 +4730,7 @@
                         },
                         "map_expression": {
                             "type": "count_case_forms_with_xmlns",
-                            "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                            "xmlns": ["http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3", "http://openrosa.org/formdesigner/9b0763fe2c23426aab2d9042d97e86a6ba943393"],
                             "case_id_expression": {
                                 "type": "property_name",
                                 "property_name": "_id"
@@ -6191,6 +6242,36 @@
                 }
             },
             {
+                "column_id": "patients_with_key_populations",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
                 "display_name": "pediatric_patient",
                 "column_id": "pediatric_patient",
                 "type": "boolean",
@@ -6227,13 +6308,8 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "first_case_form_with_xmlns",
-                        "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
-                        "case_id_expression": {
-                            "type": "named",
-                            "name": "occurrence_id"
-                        }
+                        "type": "named",
+                        "name": "contact_tracing_form"
                     },
                     "value_expression": {
                         "type": "evaluator",
@@ -6271,13 +6347,8 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "first_case_form_with_xmlns",
-                        "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/A800140B-A98B-47BF-A021-E69971A60B40",
-                        "case_id_expression": {
-                            "type": "named",
-                            "name": "occurrence_id"
-                        }
+                        "type": "named",
+                        "name": "contact_tracing_form"
                     },
                     "value_expression": {
                         "type": "evaluator",
@@ -6794,6 +6865,39 @@
                 "is_primary_key": false,
                 "column_id": "treating_provider_id",
                 "transform": {}
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "meta",
+                            "timeEnd"
+                        ]
+                    },
+                    "type": "nested",
+                    "argument_expression": {
+                        "xmlns": "http://openrosa.org/formdesigner/5c6c6ade7697a80df85ed8a74e397744221f4d0f",
+                        "type": "first_case_form_with_xmlns",
+                        "reverse": true,
+                        "case_id_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    }
+                },
+                "column_id": "date_of_registration"
             },
             {
                 "display_name": "",
@@ -8195,30 +8299,6 @@
                 }
             },
             {
-                "datatype": "date",
-                "is_nullable": true,
-                "type": "expression",
-                "is_primary_key": false,
-                "column_id": "date_of_registration",
-                "transform": {},
-                "expression":  {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "first_case_form_with_xmlns",
-                        "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/5c6c6ade7697a80df85ed8a74e397744221f4d0f",
-                        "case_id_expression": {
-                            "type": "property_name",
-                            "property_name": "_id"
-                        }
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": ["form", "meta", "timeEnd"]
-                    }
-                }
-            },
-            {
                 "datatype": "string",
                 "is_nullable": true,
                 "type": "expression",
@@ -8289,17 +8369,102 @@
                 }
             },
             {
+                "comment": null,
+                "create_index": false,
                 "display_name": "aggregated_score_count_taken",
                 "datatype": "string",
-                "is_nullable": true,
                 "type": "expression",
-                "is_primary_key": false,
-                "column_id": "aggregated_score_count_taken",
                 "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
                 "expression": {
+                    "datatype": null,
                     "type": "property_name",
                     "property_name": "aggregated_score_count_taken"
-                }
+                },
+                "column_id": "aggregated_score_count_taken"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_treating_hospital"
+                },
+                "column_id": "episode_treating_hospital"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_fo"
+                },
+                "column_id": "episode_fo"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "registered_by"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "registered_by"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "registered_by_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "registered_by_id"
             }
         ],
         "named_filters": {
@@ -8749,14 +8914,34 @@
                         "type": "named",
                         "name": "test_request_form"
                     },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "ql_request_details",
-                            "purpose_of_testing"
-                        ],
-                        "datatype": "string"
+                    "value_expression":
+                    {
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "ql_request_details",
+                                    "valid",
+                                    "purpose_of_testing"
+                                ],
+                                "datatype": "string"
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "ql_request_details",
+                                "purpose_of_testing"
+                            ],
+                            "datatype": "string"
+                        }
                     }
                 },
                 "type": "boolean_expression",
@@ -8775,13 +8960,32 @@
                                 "name": "test_result_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_sample_a",
-                                    "sample_a_result_value"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_a_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_a",
+                                        "sample_a_result_value"
+                                    ]
+                                }
                             }
                         },
                         "property_value": ["0", "1", "2", "3"]
@@ -8796,13 +9000,32 @@
                                 "name": "test_result_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_sample_b",
-                                    "sample_b_result_value"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_b_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_b",
+                                        "sample_b_result_value"
+                                    ]
+                                }
                             }
                         },
                         "property_value": ["0", "1", "2", "3"]
@@ -8822,13 +9045,32 @@
                                 "name": "test_result_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_sample_a",
-                                    "sample_a_result_value"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_a_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_a",
+                                        "sample_a_result_value"
+                                    ]
+                                }
                             }
                         },
                         "property_value": "-1"
@@ -8843,13 +9085,32 @@
                                 "name": "test_result_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_sample_b",
-                                    "sample_b_result_value"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_b_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_b",
+                                        "sample_b_result_value"
+                                    ]
+                                }
                             }
                         },
                         "property_value": "-1"
@@ -9201,7 +9462,7 @@
                     "argument_expression": {
                         "type": "first_case_form_with_xmlns",
                         "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                        "xmlns": ["http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3", "http://openrosa.org/formdesigner/9b0763fe2c23426aab2d9042d97e86a6ba943393"],
                         "case_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -9211,20 +9472,60 @@
                         "type":"concatenate_strings",
                         "expressions": [
                             {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "cbnaat",
-                                    "mtb_result"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "cbnaat",
+                                            "result",
+                                            "mtb_result"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "cbnaat",
+                                        "mtb_result"
+                                    ]
+                                }
+
                             },
                             {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "cbnaat",
-                                    "rif_resistance_result"
-                                ]
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "cbnaat",
+                                            "result",
+                                            "rif_resistance_result"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "cbnaat",
+                                        "rif_resistance_result"
+                                    ]
+                                }
+
                             }
                         ],
                         "separator": " "
@@ -10077,7 +10378,7 @@
             "latest_microscopy_test_request_form": {
                 "type": "first_case_form_with_xmlns",
                 "reverse": true,
-                "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                "xmlns": ["http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F", "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"],
                 "case_id_expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -10699,7 +11000,7 @@
                 "value_expression": {
                     "type": "first_case_form_with_xmlns",
                     "reverse": true,
-                    "xmlns": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                    "xmlns": ["http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F", "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"],
                     "case_id_expression": {
                         "type": "property_name",
                         "property_name": "_id"
@@ -10745,99 +11046,7 @@
                 "value_expression": {
                     "type": "first_case_form_with_xmlns",
                     "reverse": true,
-                    "xmlns": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
-                    "case_id_expression": {
-                        "type": "property_name",
-                        "property_name": "_id"
-                    }
-                }
-            },
-            "sample_receipt_form": {
-                "type": "nested",
-                "argument_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "get_subcases",
-                            "case_id_expression": {
-                                "value_expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                },
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "array_index",
-                                    "array_expression": {
-                                        "datatype": null,
-                                        "type": "property_name",
-                                        "property_name": "indices"
-                                    },
-                                    "index_expression": {
-                                        "type": "constant",
-                                        "constant": 0
-                                    }
-                                }
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "opened_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
-                },
-                "value_expression": {
-                    "type": "first_case_form_with_xmlns",
-                    "reverse": true,
-                    "xmlns": "http://openrosa.org/formdesigner/B139DDFB-13C5-4E89-8BE6-E74ACB9FCBBE",
-                    "case_id_expression": {
-                        "type": "property_name",
-                        "property_name": "_id"
-                    }
-                }
-            },
-            "suspect_registration": {
-                "type": "nested",
-                "argument_expression": {
-                    "type": "reduce_items",
-                    "items_expression": {
-                        "type": "sort_items",
-                        "items_expression": {
-                            "type": "get_subcases",
-                            "case_id_expression": {
-                                "value_expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "referenced_id"
-                                },
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "array_index",
-                                    "array_expression": {
-                                        "datatype": null,
-                                        "type": "property_name",
-                                        "property_name": "indices"
-                                    },
-                                    "index_expression": {
-                                        "type": "constant",
-                                        "constant": 0
-                                    }
-                                }
-                            }
-                        },
-                        "sort_expression": {
-                            "type": "property_name",
-                            "property_name": "opened_on"
-                        }
-                    },
-                    "aggregation_fn": "last_item"
-                },
-                "value_expression": {
-                    "type": "first_case_form_with_xmlns",
-                    "reverse": true,
-                    "xmlns": "http://openrosa.org/formdesigner/1953B000-3BB5-4A6C-B5BB-D60BD17028D0",
+                    "xmlns": ["http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3", "http://openrosa.org/formdesigner/9b0763fe2c23426aab2d9042d97e86a6ba943393"],
                     "case_id_expression": {
                         "type": "property_name",
                         "property_name": "_id"
@@ -10882,7 +11091,10 @@
                 },
                 "value_expression": {
                     "type": "first_case_form_with_xmlns",
-                    "xmlns": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                    "xmlns": [
+                        "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                        "http://openrosa.org/formdesigner/165b7800619420536dc4dd5d8a5afad05d47a65d"
+                    ],
                     "case_id_expression": {
                         "type": "property_name",
                         "property_name": "_id"
@@ -10892,7 +11104,10 @@
             "complete_treatment_form": {
                 "type": "first_case_form_with_xmlns",
                 "reverse": true,
-                "xmlns": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                "xmlns": [
+                    "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                    "http://openrosa.org/formdesigner/165b7800619420536dc4dd5d8a5afad05d47a65d"
+                ],
                 "case_id_expression": {
                     "type": "property_name",
                     "property_name": "_id"
@@ -10914,12 +11129,8 @@
             "key_populations": {
                 "value_expression": {
                     "datatype": "string",
-                    "type": "property_path",
-                    "property_path": [
-                        "form",
-                        "ql_patient_details",
-                        "key_populations"
-                    ]
+                    "type": "property_name",
+                    "property_name": "key_populations"
                 },
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",

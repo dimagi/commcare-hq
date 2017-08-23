@@ -1,4 +1,4 @@
-hqDefine('users/js/roles.js', function () {
+hqDefine('users/js/roles', function () {
     var RolesViewModel = function (o) {
         'use strict';
         var self = this,
@@ -16,6 +16,17 @@ hqDefine('users/js/roles.js', function () {
                             path: report.path,
                             name: report.name,
                             value: data.permissions.view_report_list.indexOf(report.path) !== -1,
+                        };
+                    }),
+                };
+
+                data.webAppsPermissions = {
+                    all: data.permissions.view_web_apps,
+                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
+                        return {
+                            path: app._id,
+                            name: app.name,
+                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
                         };
                     }),
                 };
@@ -45,12 +56,20 @@ hqDefine('users/js/roles.js', function () {
                     return report.path;
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
+
+                data.permissions.view_web_apps = data.webAppsPermissions.all;
+                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
+                    return app.value;
+                }), function (app) {
+                    return app.path;
+                });
                 return data;
             },
         };
 
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.webAppsList = o.webAppsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {

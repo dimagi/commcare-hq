@@ -21,14 +21,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
             id: year,
         });
     }
-
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
-
+    vm.now = new Date().getMonth() + 1;
     vm.levels = [
         {id: 1, name: 'State'},
         {id: 2, name: 'District'},
@@ -36,6 +35,8 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 4, name: 'Supervisor'},
         {id: 5, name: 'AWC'},
     ];
+
+    vm.groupByLevels = [];
 
     vm.formats = [
         {id: 'csv', name: 'CSV'},
@@ -46,7 +47,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
         {id: 3, name: 'Demographics'},
-        {id: 4, name: 'System Usage'},
+        // {id: 4, name: 'System Usage'}, For now disable this option
         {id: 5, name: 'AWC Infrastructure'},
     ];
 
@@ -121,12 +122,22 @@ function DownloadController($location, locationHierarchy, locationsService, user
                     vm.selectedLocations[levelOfSelectedLocation] = childSelected.parent_id;
                     levelOfSelectedLocation -= 1;
                 }
+
+                var levels = [];
+                window.angular.forEach(vm.levels, function (value) {
+                    if (value.id > selectedLocationIndex()) {
+                        levels.push(value);
+                    }
+                });
+                vm.groupByLevels = levels;
+                vm.selectedLevel = selectedLocationIndex() + 1;
             });
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
                 locationsCache.root = data.locations;
             });
+            vm.groupByLevels = vm.levels;
         }
     };
 
@@ -134,6 +145,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
+            if (locationType.name === 'state') return 'National';
             return locationType.name;
         }).join(', ');
     };
@@ -167,7 +179,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         if (vm.userLocationId === null) {
             return false;
         }
-        return selectedLocationIndex() !== -1 && selectedLocationIndex() >= level;
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key === userLocationId) {
+                i = value;
+            }
+        });
+        return selectedLocationIndex() !== -1 && i >= level;
     };
 
     vm.onSelect = function($item, level) {
@@ -176,6 +194,14 @@ function DownloadController($location, locationHierarchy, locationsService, user
         locationsService.getChildren($item.location_id).then(function(data) {
             locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
         });
+        var levels = [];
+        window.angular.forEach(vm.levels, function (value) {
+            if (value.id > selectedLocationIndex()) {
+                levels.push(value);
+            }
+        });
+        vm.groupByLevels = levels;
+        vm.selectedLevel = selectedLocationIndex() + 1;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
@@ -189,7 +215,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

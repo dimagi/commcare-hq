@@ -1,14 +1,14 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin
+from dimagi.utils.post import parse_SOAP_response
+from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.repeaters.signals import create_repeat_records
+from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
@@ -20,8 +20,8 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+    DSTB_EPISODE_TYPE,
 )
-from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.nikshay.repeater_generator import \
     NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
     NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
@@ -66,10 +66,10 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
             except ENikshayCaseNotFound:
                 return False
-
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
+                episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
@@ -179,7 +179,9 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
-                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
+                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
+                    test_case_properties.get('rft_general') in ['diagnosis_dstb', 'diagnosis_drtb'] or
+                    test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case)
@@ -215,12 +217,35 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            episode_case_properties.get('nikshay_registered', 'false') == 'false' and
+            episode_case_properties.get('private_nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
+            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
+
+    def handle_response(self, result, repeat_record):
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+            return attempt
+        # A successful response returns a Nikshay ID like 00001
+        # Failures also return with status code 200 and some message like
+        # Dublicate Entry or Invalid data format
+        # (Dublicate is not a typo)
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            result,
+        )
+        if isinstance(message, basestring) and message.isdigit():
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        return attempt
 
 
 def person_hiv_status_changed(case):

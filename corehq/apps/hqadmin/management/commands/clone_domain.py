@@ -14,7 +14,7 @@ types = [
     "feature_flags",
     'fixtures',
     'locations',
-    'types_only'
+    'location_types',
     'products',
     'ucr',
     'apps',
@@ -68,9 +68,13 @@ class Command(BaseCommand):
         if self._clone_type(options, 'fixtures'):
             self.copy_fixtures()
 
-        if self._clone_type(options, 'locations'):
-            types_only = self._clone_type(options, 'types_only')
+        copy_locations = self._clone_type(options, 'locations')
+        copy_location_types = self._clone_type(options, 'location_types')
+        if copy_location_types:
+            types_only = not copy_locations
             self.copy_locations(types_only)
+        elif copy_locations:
+            raise CommandError("You can't copy locations by excluding types")
 
         if self._clone_type(options, 'products'):
             self.copy_products()
@@ -287,9 +291,9 @@ class Command(BaseCommand):
                 self.save_sql_copy(action, self.new_domain)
 
     def copy_repeaters(self):
-        from corehq.apps.repeaters.models import Repeater
-        from corehq.apps.repeaters.utils import get_all_repeater_types
-        from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+        from corehq.motech.repeaters.models import Repeater
+        from corehq.motech.repeaters.utils import get_all_repeater_types
+        from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
         for repeater in get_repeaters_by_domain(self.existing_domain):
             self.save_couch_copy(repeater, self.new_domain)
 

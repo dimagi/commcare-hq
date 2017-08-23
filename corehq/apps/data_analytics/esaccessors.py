@@ -1,7 +1,6 @@
 import datetime
 
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation, \
-    TopHitsAggregation
+from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.hqadmin.reporting.reports import (
@@ -12,7 +11,7 @@ from corehq.apps.data_analytics.const import DEFAULT_EXPERIENCED_THRESHOLD
 from dimagi.utils.dates import add_months
 
 
-def get_app_submission_breakdown_es(domain_name, monthspan):
+def get_app_submission_breakdown_es(domain_name, monthspan, user_ids=None):
     # takes > 1 m to load at 50k worker scale
     terms = [
         AggregationTerm('app_id', 'app_id'),
@@ -20,10 +19,12 @@ def get_app_submission_breakdown_es(domain_name, monthspan):
         AggregationTerm('user_id', 'form.meta.userID'),
         AggregationTerm('username', 'form.meta.username'),
     ]
-    query = FormES().domain(domain_name).submitted(
+    query = FormES(es_instance_alias='export').domain(domain_name).submitted(
         gte=monthspan.startdate,
         lt=monthspan.computed_enddate,
     )
+    if user_ids is not None:
+        query = query.user_id(user_ids)
     return NestedTermAggregationsHelper(base_query=query, terms=terms).get_data()
 
 

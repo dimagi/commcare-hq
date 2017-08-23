@@ -4,6 +4,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "config": {
@@ -84,12 +85,31 @@
                                 "type": "named",
                                 "name": "test_update_form"
                             },
-                            "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "number_of_samples_accepted"
-                                ]
+                            "value_expression":
+
+                            {
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "record_samples_received",
+                                            "number_of_samples_accepted"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "number_of_samples_accepted"
+                                    ]
+                                }
                             }
                         },
                         "property_value": 0
@@ -379,12 +399,8 @@
                         "name": "episode_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "ql_patient_details",
-                            "key_populations"
-                        ]
+                        "type": "property_name",
+                        "property_name": "key_populations"
                     }
                 }
             },
@@ -752,14 +768,31 @@
                         "name": "test_update_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "update_test_result",
-                            "microscopy",
-                            "ql_result",
-                            "sample_a_visual_appearance"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "ql_update_specimen_info",
+                                    "sputum_visual_appearance"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_a",
+                                "sample_a_visual_appearance"
+                            ]
+                        }
                     }
                 }
             },
@@ -774,14 +807,32 @@
                         "name": "test_update_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "update_test_result",
-                            "microscopy",
-                            "ql_result",
-                            "sample_a_result"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "microscopy",
+                                    "ql_result",
+                                    "sample_a_result"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                                "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_a",
+                                "sample_a_result"
+                            ]
+                        }
                     }
                 }
             },
@@ -796,14 +847,31 @@
                         "name": "test_update_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "update_test_result",
-                            "microscopy",
-                            "ql_result",
-                            "sample_b_visual_appearance"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "ql_update_specimen_info",
+                                    "sputum_visual_appearance"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_b",
+                                "sample_b_visual_appearance"
+                            ]
+                        }
                     }
                 }
             },
@@ -818,14 +886,32 @@
                         "name": "test_update_form"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "update_test_result",
-                            "microscopy",
-                            "ql_result",
-                            "sample_b_result"
-                        ]
+                        "type": "switch",
+                        "switch_on": {
+                            "type": "property_name",
+                            "property_name": "app_id"
+                        },
+                        "cases": {
+                            "53ace399d17cd846017ef17ffbd6d26d": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "microscopy",
+                                    "ql_result",
+                                    "sample_b_result"
+                                ]
+                            }
+                        },
+                        "default": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "microscopy",
+                                "ql_sample_b",
+                                "sample_b_result"
+                            ]
+                        }
                     }
                 }
             },
@@ -929,8 +1015,8 @@
                             "operator": "in",
                             "type": "boolean_expression",
                             "expression": {
-                                "type": "property_path",
-                                "property_path": ["form", "test_type_value"]
+                                "type": "property_name",
+                                "property_name": "test_type_value"
                             },
                             "property_value": ["microscopy-zn", "microscopy-fluorescent"]
                         },
@@ -939,12 +1025,30 @@
                             "constant": "sputum"
                         },
                         "expression_if_false": {
-                            "type": "property_path",
-                            "property_path": [
-                                "form",
-                                "update_test_result",
-                                "specimen_type"
-                            ]
+                            "type": "switch",
+                            "switch_on": {
+                                "type": "property_name",
+                                "property_name": "app_id"
+                            },
+                            "cases": {
+                                "53ace399d17cd846017ef17ffbd6d26d": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "update_test_result",
+                                        "ql_update_specimen_info",
+                                        "specimen_type"
+                                    ]
+                                }
+                            },
+                            "default": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "update_test_result",
+                                    "specimen_type"
+                                ]
+                            }
                         }
                     }
                 }
@@ -974,12 +1078,16 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "person",
-                                    "tu_name"
-                                ]
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "type": "named",
+                                    "name": "person_id"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "tu_name"
+                                }
                             }
                         },
                         {
@@ -1230,14 +1338,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_a_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_a",
+                                        "sample_a_result_value"
+                                    ]
+                                }
                             }
                         },
                         "b": {
@@ -1247,14 +1373,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_b_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_b",
+                                        "sample_b_result_value"
+                                    ]
+                                }
                             }
                         }
                     }
@@ -1275,14 +1419,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_a_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_a",
+                                        "sample_a_result_value"
+                                    ]
+                                }
                             }
                         },
                         "b": {
@@ -1292,14 +1454,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_b_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_b",
+                                        "sample_b_result_value"
+                                    ]
+                                }
                             }
                         }
                     }
@@ -1320,14 +1500,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_a_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_a_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_a",
+                                        "sample_a_result_value"
+                                    ]
+                                }
                             }
                         },
                         "b": {
@@ -1337,14 +1535,32 @@
                                 "name": "test_update_form"
                             },
                             "value_expression": {
-                                "type": "property_path",
-                                "property_path": [
-                                    "form",
-                                    "microscopy",
-                                    "ql_result",
-                                    "sample_b_result_value"
-                                ],
-                                "datatype": "integer"
+                                "type": "switch",
+                                "switch_on": {
+                                    "type": "property_name",
+                                    "property_name": "app_id"
+                                },
+                                "cases": {
+                                    "53ace399d17cd846017ef17ffbd6d26d": {
+                                        "type": "property_path",
+                                        "property_path": [
+                                            "form",
+                                            "update_test_result",
+                                            "microscopy",
+                                            "ql_result",
+                                            "sample_b_result_value"
+                                        ]
+                                    }
+                                },
+                                "default": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "microscopy",
+                                        "ql_sample_b",
+                                        "sample_b_result_value"
+                                    ]
+                                }
                             }
                         }
                     }
@@ -2722,12 +2938,15 @@
                         },
                         "filter_expression": {
                             "type": "boolean_expression",
-                            "operator": "eq",
+                            "operator": "in",
                             "expression": {
                                 "type": "property_name",
                                 "property_name": "xmlns"
                             },
-                            "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                            "property_value": [
+                                "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F",
+                                "http://openrosa.org/formdesigner/2849fa316ea368841517b997b265f1d52772a860"
+                            ]
                         }
                     },
                     "sort_expression": {
@@ -2752,42 +2971,15 @@
                         },
                         "filter_expression": {
                             "type": "boolean_expression",
-                            "operator": "eq",
+                            "operator": "in",
                             "expression": {
                                 "type": "property_name",
                                 "property_name": "xmlns"
                             },
-                            "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
-                        }
-                    },
-                    "sort_expression": {
-                        "type": "property_name",
-                        "property_name": "received_on"
-                    }
-                },
-                "aggregation_fn": "last_item"
-            },
-            "sample_receipt_form": {
-                "type": "reduce_items",
-                "items_expression": {
-                    "type": "sort_items",
-                    "items_expression": {
-                        "type": "filter_items",
-                        "items_expression": {
-                            "type": "get_case_forms",
-                            "case_id_expression": {
-                                "type": "property_name",
-                                "property_name": "_id"
-                            }
-                        },
-                        "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "xmlns"
-                            },
-                            "property_value": "http://openrosa.org/formdesigner/B139DDFB-13C5-4E89-8BE6-E74ACB9FCBBE"
+                            "property_value": [
+                                "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3",
+                                "http://openrosa.org/formdesigner/9b0763fe2c23426aab2d9042d97e86a6ba943393"
+                            ]
                         }
                     },
                     "sort_expression": {
@@ -2840,76 +3032,6 @@
                         }
                     }
                 }
-            },
-            "person_registration_form": {
-                "type": "reduce_items",
-                "items_expression": {
-                    "type": "sort_items",
-                    "items_expression": {
-                        "type": "filter_items",
-                        "items_expression": {
-                            "type": "get_case_forms",
-                            "case_id_expression": {
-                                "value_expression": {
-                                    "type": "nested",
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "type": "property_name",
-                                        "property_name": "referenced_id"
-                                    },
-                                    "argument_expression": {
-                                        "type": "array_index",
-                                        "array_expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "indices"
-                                        },
-                                        "index_expression": {
-                                            "type": "constant",
-                                            "constant": 0
-                                        }
-                                    }
-                                },
-                                "type": "related_doc",
-                                "related_doc_type": "CommCareCase",
-                                "doc_id_expression": {
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "type": "property_name",
-                                        "property_name": "referenced_id"
-                                    },
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "array_index",
-                                        "array_expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "indices"
-                                        },
-                                        "index_expression": {
-                                            "type": "constant",
-                                            "constant": 0
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "xmlns"
-                            },
-                            "property_value": "http://openrosa.org/formdesigner/D11C7CAF-A409-4236-8314-380B0353514D"
-                        }
-                    },
-                    "sort_expression": {
-                        "type": "property_name",
-                        "property_name": "received_on"
-                    }
-                },
-                "aggregation_fn": "last_item"
             },
             "episode_case": {
                 "type": "reduce_items",
@@ -3051,12 +3173,15 @@
                         },
                         "filter_expression": {
                             "type": "boolean_expression",
-                            "operator": "eq",
+                            "operator": "in",
                             "expression": {
                                 "type": "property_name",
                                 "property_name": "xmlns"
                             },
-                            "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+                            "property_value": [
+                                "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4",
+                                "http://openrosa.org/formdesigner/165b7800619420536dc4dd5d8a5afad05d47a65d"
+                            ]
                         }
                     },
                     "sort_expression": {

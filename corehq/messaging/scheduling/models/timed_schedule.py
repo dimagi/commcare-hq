@@ -1,4 +1,6 @@
 import calendar
+import hashlib
+import json
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
@@ -12,8 +14,37 @@ class TimedSchedule(Schedule):
     REPEAT_INDEFINITELY = -1
     MONTHLY = -1
 
+    ANY_DAY = -1
+    MONDAY = 0
+    TUESDAY = 1
+    WEDNESDAY = 2
+    THURSDAY = 3
+    FRIDAY = 4
+    SATURDAY = 5
+    SUNDAY = 6
+
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
+    start_offset = models.IntegerField(default=0)
+    start_day_of_week = models.IntegerField(default=ANY_DAY)
+
+    @property
+    @memoized
+    def memoized_schedule_revision(self):
+        """
+        The schedule revision is a hash of all information pertaining to
+        scheduling. Information unrelated to scheduling, such as the content
+        being sent at each event, is excluded. This is mainly used to determine
+        when a TimedScheduleInstance should recalculate its schedule.
+        """
+        schedule_info = json.dumps([
+            self.schedule_length,
+            self.total_iterations,
+            self.start_offset,
+            self.start_day_of_week,
+            [[e.day, e.time.strftime('%H:%M:%S')] for e in self.memoized_events],
+        ])
+        return hashlib.md5(schedule_info).hexdigest()
 
     @property
     @memoized
@@ -38,12 +69,29 @@ class TimedSchedule(Schedule):
         self.set_next_event_due_timestamp(instance)
 
         if (
-            not self.schedule_length == self.MONTHLY and
+            self.schedule_length != self.MONTHLY and
             not start_date and
             instance.next_event_due < util.utcnow()
         ):
-            instance.start_date += timedelta(days=1)
-            instance.next_event_due += timedelta(days=1)
+            if self.start_day_of_week == self.ANY_DAY:
+                instance.start_date += timedelta(days=1)
+                instance.next_event_due += timedelta(days=1)
+            else:
+                instance.start_date += timedelta(days=7)
+                instance.next_event_due += timedelta(days=7)
+
+    def get_start_date_with_start_offsets(self, instance):
+        start_date_with_start_offsets = instance.start_date + timedelta(days=self.start_offset)
+
+        if self.start_day_of_week != self.ANY_DAY:
+            if self.start_day_of_week < self.MONDAY or self.start_day_of_week > self.SUNDAY:
+                raise ValueError("Expected start_day_of_week to be between 0 and 6 for schedule %s" %
+                    self.schedule_id)
+
+            while start_date_with_start_offsets.weekday() != self.start_day_of_week:
+                start_date_with_start_offsets += timedelta(days=1)
+
+        return start_date_with_start_offsets
 
     def get_local_next_event_due_timestamp(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
@@ -53,12 +101,13 @@ class TimedSchedule(Schedule):
         )
 
         return datetime.combine(
-            instance.start_date + timedelta(days=days_since_start_date),
+            self.get_start_date_with_start_offsets(instance) + timedelta(days=days_since_start_date),
             current_event.time
         )
 
     def get_local_next_event_due_timestamp_for_monthly_schedule(self, instance):
         target_date = None
+        start_date_with_offset = instance.start_date + timedelta(days=self.start_offset)
 
         while target_date is None:
             current_event = self.memoized_events[instance.current_event_num]
@@ -74,8 +123,8 @@ class TimedSchedule(Schedule):
             year_offset = (instance.schedule_iteration_num - 1) / 12
             month_offset = (instance.schedule_iteration_num - 1) % 12
 
-            year = instance.start_date.year + year_offset
-            month = instance.start_date.month + month_offset
+            year = start_date_with_offset.year + year_offset
+            month = start_date_with_offset.month + month_offset
 
             days_in_month = calendar.monthrange(year, month)[1]
             if current_event.day > 0:
@@ -124,13 +173,18 @@ class TimedSchedule(Schedule):
             instance.active = False
 
     @classmethod
-    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY):
+    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY,
+            start_offset=0, start_day_of_week=ANY_DAY):
         schedule = cls(domain=domain)
-        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations)
+        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations,
+            start_offset=start_offset, start_day_of_week=start_day_of_week)
         return schedule
 
-    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY):
+    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
+            start_day_of_week=ANY_DAY):
         with transaction.atomic():
+            self.start_offset = start_offset
+            self.start_day_of_week = start_day_of_week
             self.schedule_length = 1
             self.total_iterations = total_iterations
             self.save()

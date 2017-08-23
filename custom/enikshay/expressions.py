@@ -1,5 +1,8 @@
+import hashlib
+
 from jsonobject import DefaultProperty, BooleanProperty
 from jsonobject.properties import ListProperty, StringProperty
+import six
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
@@ -14,7 +17,7 @@ from dimagi.utils.dates import force_to_datetime
 
 class FirstCaseFormWithXmlns(JsonObject):
     type = TypeProperty('first_case_form_with_xmlns')
-    xmlns = StringProperty(required=True)
+    xmlns = DefaultProperty(required=True)
     case_id_expression = DefaultProperty(required=True)
     reverse = BooleanProperty(default=False)
 
@@ -22,6 +25,8 @@ class FirstCaseFormWithXmlns(JsonObject):
         self._case_id_expression = case_id_expression
 
     def __call__(self, item, context=None):
+        assert isinstance(self.xmlns, (six.string_types, list))
+
         case_id = self._case_id_expression(item, context)
 
         if not case_id:
@@ -33,13 +38,15 @@ class FirstCaseFormWithXmlns(JsonObject):
     def _get_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id, self.xmlns, self.reverse)
+        xmlns = [self.xmlns] if isinstance(self.xmlns, six.string_types) else self.xmlns
+
+        cache_key = (self.__class__.__name__, case_id, hashlib.md5(','.join(xmlns)).hexdigest(), self.reverse)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
         xforms = FormProcessorInterface(domain).get_case_forms(case_id)
         xforms = sorted(
-            [form for form in xforms if form.xmlns == self.xmlns and form.domain == domain],
+            [form for form in xforms if form.xmlns in xmlns and form.domain == domain],
             key=lambda x: x.received_on
         )
         if not xforms:
@@ -62,13 +69,15 @@ def first_case_form_with_xmlns_expression(spec, context):
 
 class CountCaseFormsWithXmlns(JsonObject):
     type = TypeProperty('count_case_forms_with_xmlns')
-    xmlns = StringProperty(required=True)
+    xmlns = DefaultProperty(required=True)
     case_id_expression = DefaultProperty(required=True)
 
     def configure(self, case_id_expression):
         self._case_id_expression = case_id_expression
 
     def __call__(self, item, context=None):
+        assert isinstance(self.xmlns, (six.string_types, list))
+
         case_id = self._case_id_expression(item, context)
 
         if not case_id:
@@ -80,12 +89,14 @@ class CountCaseFormsWithXmlns(JsonObject):
     def _count_forms(self, case_id, context):
         domain = context.root_doc['domain']
 
-        cache_key = (self.__class__.__name__, case_id, self.xmlns)
+        xmlns = [self.xmlns] if isinstance(self.xmlns, six.string_types) else self.xmlns
+
+        cache_key = (self.__class__.__name__, case_id, hashlib.md5(','.join(xmlns)).hexdigest())
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
         xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        count = len([form for form in xforms if form.xmlns == self.xmlns and form.domain == domain])
+        count = len([form for form in xforms if form.xmlns in xmlns and form.domain == domain])
         context.set_cache_value(cache_key, count)
         return count
 
@@ -232,7 +243,7 @@ class DateOfReferral(ReferralExpressionBase):
     type = TypeProperty('enikshay_date_of_referral')
 
     def _handle_referral_case(self, referral):
-        return referral.dynamic_case_properties().get("date_of_referral")
+        return referral.dynamic_case_properties().get("referral_initiated_date")
 
     def _handle_trail_case(self, context, trail, domain):
         referral_id = trail.dynamic_case_properties().get("referral_id")

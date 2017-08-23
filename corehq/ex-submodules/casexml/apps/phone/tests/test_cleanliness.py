@@ -9,12 +9,12 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags, hint_still_val
 from casexml.apps.phone.data_providers.case.clean_owners import pop_ids
 from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdError
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
+from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)
-class OwnerCleanlinessTest(SyncBaseTest):
+class OwnerCleanlinessTest(DeprecatedBaseSyncTest):
 
     def setUp(self):
         super(OwnerCleanlinessTest, self).setUp()
@@ -480,6 +480,44 @@ class OwnerCleanlinessTest(SyncBaseTest):
         self.assertFalse(self._owner_cleanliness_for_id(owner_1).is_clean)
         self.assertFalse(self._owner_cleanliness_for_id(owner_2).is_clean)
         self.assertEqual(host.case_id, self.owner_cleanliness.hint)
+        self._verify_set_cleanliness_flags()
+
+    def test_extension_of_parent(self):
+        # child case owned by owner
+        # parent case not owned
+        # parent has extension also not owned
+        other_owner = uuid.uuid4().hex
+        parent = CaseStructure(
+            case_id='parent_owned_by_other_owner',
+            attrs={'create': True, 'owner_id': other_owner}
+        )
+
+        child = CaseStructure(
+            case_id='child_owned_by_owner',
+            attrs={'create': True, 'owner_id': self.owner_id},
+            indices=[
+                CaseIndex(
+                    parent,
+                    identifier="retainer",
+                ),
+            ]
+        )
+        extension = CaseStructure(
+            case_id="extension_owned_by_other_owner",
+            attrs={'owner_id': other_owner},
+            indices=[
+                CaseIndex(
+                    parent,
+                    relationship=CASE_INDEX_EXTENSION,
+                    identifier="host_1",
+                ),
+            ]
+        )
+        self.factory.create_or_update_case(extension)
+        self.factory.create_or_update_case(child)
+        self.assert_owner_dirty()
+        self.assertTrue(self._owner_cleanliness_for_id(other_owner).is_clean)
+        self.assertEqual(child.case_id, self.owner_cleanliness.hint)
         self._verify_set_cleanliness_flags()
 
 

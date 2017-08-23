@@ -4,8 +4,8 @@ import datetime
 import socket
 from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -15,6 +15,8 @@ from custom.enikshay.const import (
     TREATMENT_START_DATE,
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
+    DSTB_EPISODE_TYPE,
+    PERSON_CASE_2B_VERSION,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -23,7 +25,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test)
+    get_lab_referral_from_test, get_occurrence_case_from_episode)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -86,6 +88,12 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "IP_FROM": server_ip,
         }
 
+    def use_2b_app_structure(self, person_case, episode_case):
+        return (
+            episode_case.dynamic_case_properties().get('episode_type') == DSTB_EPISODE_TYPE and
+            person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION
+        )
+
 
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
     deprecated_format_names = ('case_json',)
@@ -97,7 +105,10 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
-
+        occurence_case = None
+        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
+        if use_2b_app_structure:
+            occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "dotcenter": "NA",
@@ -108,7 +119,8 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
         except NikshayLocationNotFound as e:
             _save_error_message(person_case.domain, person_case.case_id, e)
-        properties_dict.update(_get_episode_case_properties(episode_case_properties))
+        properties_dict.update(_get_episode_case_properties(
+            episode_case_properties, occurence_case, person_case, use_2b_app_structure))
         return json.dumps(properties_dict)
 
     def handle_success(self, response, payload_doc, repeat_record):
@@ -243,9 +255,12 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
+        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
 
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
-            test_case, test_case_properties)
+            test_case, test_case_properties, occurence_case,
+            use_2b_app_structure
+        )
 
         test_reported_on = _format_date_or_null_date(test_case_properties, 'date_reported')
         properties_dict = self._base_properties(repeat_record)
@@ -263,12 +278,13 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         return json.dumps(properties_dict)
 
-    def _get_mandatory_fields(self, test_case, test_case_properties):
+    def _get_mandatory_fields(self, test_case, test_case_properties, occurence_case, use_2b_app_structure):
         # list of fields that we want the case to have and should raise an exception if its missing or not in
         # expected state to highlight missing essentials in repeat records. Check added here instead of
         # allow_to_forward to bring to notice these records instead of silently ignoring them
-        interval_id = self._get_interval_id(test_case_properties.get('purpose_of_testing'),
-                                            test_case_properties.get('follow_up_test_reason'))
+        interval_id = self._get_interval_id(
+            test_case_properties, use_2b_app_structure
+        )
 
         dmc_code = self._get_dmc_code(test_case, test_case_properties)
         lab_serial_number = test_case_properties.get('lab_serial_number')
@@ -290,8 +306,14 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         elif test_result_grade == 'scanty':
             return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)
 
-    def _get_interval_id(self, testing_purpose, follow_up_test_reason):
-        if testing_purpose == 'diagnostic':
+    def _get_interval_id(self, test_case_properties, use_2b_app_structure):
+        if use_2b_app_structure:
+            testing_purpose = test_case_properties.get('rft_general')
+            follow_up_test_reason = test_case_properties.get('rft_dstb_followup')
+        else:
+            testing_purpose = test_case_properties.get('purpose_of_testing')
+            follow_up_test_reason = test_case_properties.get('follow_up_test_reason')
+        if testing_purpose in ['diagnostic', 'diagnosis_dstb', 'diagnosis_drtb']:
             interval_id = 0
         else:
             interval_id = purpose_of_testing.get(follow_up_test_reason, None)
@@ -395,36 +417,35 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
         }
 
     def handle_success(self, response, payload_doc, repeat_record):
-        # A successful response returns a Nikshay ID like 00001
-        # Failures also return with status code 200 and some message like
-        # Dublicate Entry or Invalid data format
-        # (Dublicate is not a typo)
         message = parse_SOAP_response(
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
-            response
+            response,
         )
         try:
-            if isinstance(message, basestring) and message.isdigit():
-                health_facility_id = self._get_person_locations(payload_doc).pcp
-                nikshay_id = '-'.join([health_facility_id, message])
-                update_case(
-                    payload_doc.domain,
-                    payload_doc.case_id,
-                    {
-                        "private_nikshay_registered": "true",
-                        "nikshay_id": nikshay_id,
-                        "private_nikshay_error": "",
-                    },
-                    external_id=nikshay_id,
-                )
-            else:
-                self.handle_failure(message, payload_doc, repeat_record)
-        except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            health_facility_id = self._get_person_locations(payload_doc).pcp
+        except NikshayLocationNotFound as e:
+            self.handle_exception(e, repeat_record)
+        else:
+            nikshay_id = '-'.join([health_facility_id, message])
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "private_nikshay_registered": "true",
+                    "nikshay_id": nikshay_id,
+                    "private_nikshay_error": "",
+                },
+                external_id=nikshay_id,
+            )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response,
+        )
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 
@@ -471,7 +492,8 @@ def _get_person_case_properties(person_case, person_case_properties):
     person_properties = {
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
-        "page": person_case_properties.get('age', ''),
+        # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+        "page": person_case_properties.get('age', '') or person_case_properties.get('age_entered', ''),
         "paddress": person_case_properties.get('current_address', ''),
         "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
@@ -492,7 +514,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     return person_properties
 
 
-def _get_episode_case_properties(episode_case_properties):
+def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure):
     """
     :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
     'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
@@ -500,7 +522,16 @@ def _get_episode_case_properties(episode_case_properties):
     """
     episode_properties = {}
 
-    episode_site_choice = episode_case_properties.get('site_choice', None)
+    if use_new_2b_structure:
+        occurence_case_properties = occurence_case.dynamic_case_properties()
+        episode_site_choice = occurence_case_properties.get('site_choice')
+        patient_occupation = person_case.dynamic_case_properties().get('occupation', 'other')
+        episode_disease_classification = occurence_case_properties.get('disease_classification', '')
+    else:
+        episode_site_choice = episode_case_properties.get('site_choice')
+        patient_occupation = episode_case_properties.get('occupation', 'other')
+        episode_disease_classification = episode_case_properties.get('disease_classification', '')
+
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
         episode_properties["sitedetail"] = site_detail
@@ -512,15 +543,16 @@ def _get_episode_case_properties(episode_case_properties):
         episode_date = datetime.date.today()
 
     episode_year = episode_date.year
+
     episode_properties.update({
         "poccupation": occupation.get(
-            episode_case_properties.get('occupation', 'other'),
+            patient_occupation,
             occupation['other']
         ),
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
         "disease_classification": disease_classification.get(
-            episode_case_properties.get('disease_classification', ''),
+            episode_disease_classification,
             ''
         ),
         "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
@@ -549,7 +581,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: error,
+            error_field: unicode(error),
         },
     )
 

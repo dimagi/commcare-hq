@@ -56,9 +56,9 @@ class CaseProcessingResult(object):
 
     def close_extensions(self, case_db):
         from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = list(self.extensions_to_close)
+        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
         if extensions_to_close:
-            return close_cases(list(self.extensions_to_close), self.domain, SYSTEM_USER_ID, case_db)
+            return close_cases(extensions_to_close, self.domain, SYSTEM_USER_ID, case_db)
 
     def commit_dirtiness_flags(self):
         """
@@ -272,8 +272,8 @@ def _validate_indices(case_db, cases):
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version
                             _soft_assert(
-                                commcare_version < LooseVersion("2.35"),
-                                "Invalid Case Index in CC version >= 2.35", {
+                                commcare_version < LooseVersion("2.38"),
+                                "Invalid Case Index in CC version >= 2.38", {
                                     'domain': case_db.domain,
                                     'xform_id': xform.form_id,
                                     'missing_case_id': index.referenced_id,
@@ -302,7 +302,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 def get_extensions_to_close(case, domain):
     if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return CaseAccessors(domain).get_extension_chain([case.case_id])
+        return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
     else:
         return set()
 
