@@ -52,7 +52,6 @@ branches:
   - br/kill-old-cloucare  # Danny 7/21
   - lwyszomi/icds_side_code # lwyszomi
   - bmb/appv2-unique-urls # BMB 8/10
-  - np/update/xlutils # NP 8/22
   - fixtures-require-js-2017 # Jenny 8/23
 submodules:
   submodules/touchforms-src:
