@@ -82,14 +82,6 @@
                 "field": "is_enrolled_in_private",
                 "type": "pre",
                 "slug": "is_enrolled_in_private"
-            },
-            {
-                "pre_value": 1,
-                "datatype": "integer",
-                "display": null,
-                "field": "not_dstb_to_drtb_transition_no_initiation",
-                "type": "pre",
-                "slug": "not_dstb_to_drtb_transition_no_initiation"
             }
         ],
         "columns": [
