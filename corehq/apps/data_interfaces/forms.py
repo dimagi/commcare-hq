@@ -52,13 +52,14 @@ def validate_case_property_name(value):
         raise ValidationError(_("Please specify a case property name."))
 
     value = value.strip()
-    property_name = re.sub('^(parent/)+', '', value)
+    property_name = re.sub('^(parent/|host/)+', '', value)
     if not property_name:
         raise ValidationError(_("Please specify a case property name."))
 
     if '/' in property_name:
         raise ValidationError(
-            _("Case property reference cannot contain '/' unless referencing the parent case with 'parent/'")
+            _("Case property reference cannot contain '/' unless referencing the parent "
+              "or host case with 'parent/' or 'host/'")
         )
 
     if not re.match('^[a-zA-Z0-9_-]+$', property_name):
