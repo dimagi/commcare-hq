@@ -11,7 +11,6 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
 from django.db.models import Count, F, Min
-from django.db.models import Q
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
@@ -237,11 +236,13 @@ def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     day_ago = start - timedelta(days=1)
-    # don't requeue anything that's be queued in the past day or has been retired more than 20 times
+    # don't requeue anything that has been retired more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
-        indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+        # don't requeue anything that's be queued in the past day
+        if not indicator.date_queued or indicator.date_queued < day_ago:
+             indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
     for k, indicators in indicators_by_domain_doc_type.items():
         _queue_indicators(indicators)
