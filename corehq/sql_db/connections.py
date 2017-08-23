@@ -11,8 +11,8 @@ UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
 
-def create_engine(connection_string=None):
-    connection_string = connection_string or settings.SQL_REPORTING_DATABASE_URL
+
+def create_engine(connection_string):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
@@ -109,7 +109,8 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        return self.db_connection_map.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
+        connection_string = self.db_connection_map.get(engine_id)
+        return connection_string or self.db_connection_map['default']
 
     def _populate_connection_map(self):
         self._add_django_db(ICDS_UCR_ENGINE_ID, 'ICDS_UCR_DATABASE_ALIAS')
@@ -142,3 +143,13 @@ def _close_connections(**kwargs):
     connection_manager.close_scoped_sessions()
 
 signals.request_finished.connect(_close_connections)
+
+
+@contextmanager
+def override_engine(engine_id, connection_url):
+    original_url = connection_manager.get_connection_string(engine_id)
+    connection_manager.db_connection_map[engine_id] = connection_url
+    try:
+        yield
+    finally:
+        connection_manager.db_connection_map[engine_id] = original_url

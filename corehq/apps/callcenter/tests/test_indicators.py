@@ -1,7 +1,5 @@
-import uuid
 from collections import namedtuple
 
-from django.conf import settings
 from django.test.utils import override_settings
 from mock import patch
 
@@ -20,7 +18,7 @@ from django.core import cache
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
 CASE_TYPE = 'cc_flw'
@@ -590,7 +588,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         self.cc_domain, self.cc_user = create_domain_and_user(self.domain_name, 'user_ucr')
 
         self.ucr_db_name = 'cchq_ucr_tests'
-        db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
+        db_conn_parts = connection_manager.get_connection_string('default').split('/')
         db_conn_parts[-1] = self.ucr_db_name
         self.ucr_db_url = '/'.join(db_conn_parts)
 
@@ -610,7 +608,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_standard_indicators(self, mock):
-        with override_settings(UCR_DATABASE_URL=self.ucr_db_url):
+        with override_engine('ucr', self.ucr_db_url):
             load_data(self.cc_domain.name, self.cc_user.user_id)
 
             indicator_set = CallCenterIndicators(

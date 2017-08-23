@@ -1,6 +1,7 @@
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.sql_db.connections import connection_manager
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.checkpoints.util import get_machine_id
@@ -28,10 +29,7 @@ class FluffPillowProcessor(PillowProcessor):
     def get_sql_engine(cls):
         engine = getattr(cls, '_engine', None)
         if not engine:
-            import sqlalchemy
-            from django.conf import settings
-            engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
-            cls._engine = engine
+            cls._engine = connection_manager.get_engine('default')
         return engine
 
     def _assert_valid(self):
