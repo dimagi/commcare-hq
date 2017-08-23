@@ -375,10 +375,6 @@ def async_indicators_metrics():
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
 
-    # Don't use ORM summing because it would attempt to get every value in DB
-    unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    datadog_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
-
 
 def _indicator_metrics(date_created=None):
     """
