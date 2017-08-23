@@ -10,16 +10,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type')
-        parser.add_argument('--limit', type=int, default=-1)
 
-    def handle(self, domain, case_type, limit, **options):
+    def handle(self, domain, case_type, **options):
         print("Fetching case ids for %s/%s ..." % (domain, case_type))
         case_ids = CaseAccessors(domain).get_case_ids_in_domain(case_type)
 
         print("Creating tasks...")
-        if limit > 0:
-            case_ids = case_ids[:limit]
-            print("Limiting to %s tasks..." % limit)
-
         for case_id in with_progress_bar(case_ids):
             sync_case_for_messaging.delay(domain, case_id)
