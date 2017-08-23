@@ -27,7 +27,7 @@ class JsonLinesSerializer(JsonSerializer):
         json_kwargs = copy(self.json_kwargs)
         json_kwargs['cls'] = CommCareJSONEncoder
         json.dump(self.get_dump_object(obj), self.stream,
-                  **self.json_kwargs)
+                  **json_kwargs)
         self.stream.write("\n")
         self._current = None
 
