@@ -16,7 +16,6 @@ from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
 from django.template.loader import get_template
-from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
@@ -854,14 +853,14 @@ class SupplyPointSelectWidget(forms.Widget):
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
             'id': self.id,
             'name': name,
             'value': ','.join(loc.location_id for loc in locations),
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
-        }))
+        })
 
 
 class PrimaryLocationWidget(forms.Widget):
@@ -880,12 +879,12 @@ class PrimaryLocationWidget(forms.Widget):
         self.source_css_id = source_css_id
 
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/drilldown_location_widget.html').render(Context({
+        return get_template('locations/manage/partials/drilldown_location_widget.html').render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
             'value': value or ''
-        }))
+        })
 
 
 class CommtrackUserForm(forms.Form):

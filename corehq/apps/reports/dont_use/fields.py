@@ -2,7 +2,6 @@
 DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
-from django.template.context import Context
 from django.template.loader import render_to_string
 import pytz
 import warnings
@@ -27,7 +26,7 @@ class ReportField(object):
             ),
             DeprecationWarning,
         )
-        self.context = Context()
+        self.context = {}
         self.request = request
         self.domain = domain
         self.timezone = timezone
