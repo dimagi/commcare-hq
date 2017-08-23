@@ -69,7 +69,7 @@ class ICDSData(object):
         return static_report_configuration
 
     def data(self):
-        return self.report_config.get_data()
+        return self.report_config.data_source._get_data().values()
 
 
 class ICDSMixin(object):
