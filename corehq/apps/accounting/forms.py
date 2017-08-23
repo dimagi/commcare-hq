@@ -1435,7 +1435,7 @@ class SoftwarePlanVersionForm(forms.Form):
         original_data = self.cleaned_data['product_rates']
         rates = json.loads(original_data)
         errors = ErrorList()
-        if len(rates) == 1:
+        if len(rates) != 1:
             raise ValidationError(_("You must specify at exactly one product rate."))
         rate_data = rates[0]
         rate_form = ProductRateForm(rate_data)
