@@ -50,10 +50,9 @@ class ConnectionManagerTests(SimpleTestCase):
 
     def test_replicas(self):
         reporting_dbs = {
-            'default': 'default',
             'ucr': {
                 'DJANGO_ALIAS': 'ucr',
-                'READ_REPLICAS': ['other']
+                'READ_REPLICAS': ['other', 'default']
             },
         }
         with override_settings(REPORTING_DATABASES=reporting_dbs):
@@ -63,7 +62,15 @@ class ConnectionManagerTests(SimpleTestCase):
                 'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
                 'other': 'postgresql+psycopg2://:@localhost:5432/other',
             })
-            self.assertEqual(manager.replica_mapping, {
-                'default': [],
-                'ucr': ['other']
-            })
+
+            self.assertEqual(
+                ['other', 'default', 'other', 'default'],
+                [manager.get_read_replica_engine_id('ucr') for i in range(4)]
+             )
+
+        with override_settings(REPORTING_DATABASES={'default': 'default'}):
+            manager = ConnectionManager()
+            self.assertEqual(
+                ['default', 'default', 'default'],
+                [manager.get_read_replica_engine_id('default') for i in range(3)]
+             )

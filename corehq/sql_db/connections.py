@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from urllib import urlencode
 
+import itertools
 from django.conf import settings
 import sqlalchemy
 from sqlalchemy.orm.scoping import scoped_session
@@ -85,6 +86,12 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
+    def get_read_replica_engine_id(self, engine_id):
+        replicas = self.replica_mapping.get(engine_id, [])
+        if replicas:
+            return next(replicas)
+        return engine_id
+
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
             helper.Session.remove()
@@ -117,17 +124,18 @@ class ConnectionManager(object):
             self._populate_from_legacy_settings()
         else:
             for engine_id, db_config in reporting_db_config.items():
-                replicas = []
+                db_alias = db_config
+                replicas = None
                 if isinstance(db_config, dict):
                     db_alias = db_config['DJANGO_ALIAS']
                     replicas = db_config.get('READ_REPLICAS', [])
-                else:
-                    db_alias = db_config
+
                 self._add_django_db(engine_id, db_alias)
-                self.replica_mapping[engine_id] = replicas
-                for replica in replicas:
-                    assert replica not in self.db_connection_map, replica
-                    self._add_django_db(replica, replica)
+                if replicas:
+                    self.replica_mapping[engine_id] = itertools.cycle(replicas)
+                    for replica in replicas:
+                        assert replica not in self.db_connection_map, replica
+                        self._add_django_db(replica, replica)
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')
