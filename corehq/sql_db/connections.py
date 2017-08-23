@@ -174,8 +174,8 @@ class ConnectionManager(object):
         db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
 
         return "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
-                **db_settings
-            )
+            **db_settings
+        )
 
     def _get_db_alias_from_settings_key(self, db_alias_settings_key):
         db_alias = getattr(settings, db_alias_settings_key, None)

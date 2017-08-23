@@ -14,6 +14,7 @@ def _get_db_config(db_name):
         'PORT': '5432',
     }
 
+
 DATABASES = {
     'default': _get_db_config('default'),
     'ucr': _get_db_config('ucr'),
@@ -66,11 +67,11 @@ class ConnectionManagerTests(SimpleTestCase):
             self.assertEqual(
                 ['other', 'default', 'other', 'default'],
                 [manager.get_read_replica_engine_id('ucr') for i in range(4)]
-             )
+            )
 
         with override_settings(REPORTING_DATABASES={'default': 'default'}):
             manager = ConnectionManager()
             self.assertEqual(
                 ['default', 'default', 'default'],
                 [manager.get_read_replica_engine_id('default') for i in range(3)]
-             )
+            )
