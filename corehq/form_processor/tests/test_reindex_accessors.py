@@ -60,7 +60,7 @@ class BaseReindexAccessorTest(object):
         return self.accessor_class().get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
 
     def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
-        return self.accessor_class(domain).get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
+        return self.accessor_class(domain=domain).get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
 
     def test_get_docs(self):
         docs = self._get_docs(None)
@@ -74,6 +74,19 @@ class BaseReindexAccessorTest(object):
                          set(self.second_batch_global))
 
         self.assertEqual(0, len(self._get_docs(self.end)))
+
+    def test_get_docs_for_domain(self):
+        docs = self._get_docs_for_domain(self.domain, None)
+        self.assertEqual(len(self.all_doc_ids_domain), len(docs))
+        self.assertEqual(set(self._get_doc_ids(docs)),
+                         set(self.all_doc_ids_domain))
+
+        docs = self._get_docs_for_domain(self.domain, self.middle)
+        self.assertEqual(len(self.second_batch_domain), len(docs))
+        self.assertEqual(set(self._get_doc_ids(docs)),
+                         set(self.second_batch_domain))
+
+        self.assertEqual(0, len(self._get_docs_for_domain(self.domain, self.end)))
 
 
 class BaseUnshardedAccessorMixin(object):
@@ -105,6 +118,9 @@ class BaseUnshardedAccessorMixin(object):
     def test_get_doc_count(self):
         self.assertEqual(16, self.accessor_class().get_doc_count('default'))
 
+    def test_get_doc_count_domain(self):
+        self.assertEqual(8, self.accessor_class(domain=self.domain).get_doc_count('default'))
+
 
 class BaseShardedAccessorMixin(object):
     @classmethod
@@ -132,7 +148,7 @@ class BaseShardedAccessorMixin(object):
         return all_docs
 
     def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
-        accessor = self.accessor_class(domain)
+        accessor = self.accessor_class(domain=domain)
         return self._get_docs_from_accessor(accessor, start, last_doc_pk, limit)
 
     def test_get_doc_count(self):
@@ -159,19 +175,6 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_last_modified_date(cls, doc):
         return doc.server_modified_on
-
-    def test_get_docs_for_domain(self):
-        docs = self._get_docs_for_domain(self.domain, None)
-        self.assertEqual(len(self.all_doc_ids_domain), len(docs))
-        self.assertEqual(set(self._get_doc_ids(docs)),
-                         set(self.all_doc_ids_domain))
-
-        docs = self._get_docs_for_domain(self.domain, self.middle)
-        self.assertEqual(len(self.second_batch_domain), len(docs))
-        self.assertEqual(set(self._get_doc_ids(docs)),
-                         set(self.second_batch_domain))
-
-        self.assertEqual(0, len(self._get_docs_for_domain(self.domain, self.end)))
 
 
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):

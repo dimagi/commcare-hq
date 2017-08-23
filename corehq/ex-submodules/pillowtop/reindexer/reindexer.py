@@ -90,6 +90,13 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
             help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
         )
 
+    @staticmethod
+    def domain_arg(parser):
+        parser.add_argument(
+            '--domain',
+            dest='domain',
+        )
+
 
 class PillowReindexer(Reindexer):
     def __init__(self, pillow):
