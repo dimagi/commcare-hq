@@ -1383,6 +1383,12 @@ class JRResourceProperty(StringProperty):
 
 
 class CustomIcon(DocumentSchema):
+    """
+    A custom icon to display next to a module or a form.
+    The property "form" identifies what kind of icon this would be, for ex: badge
+    One can set either a simple text to display or
+    an xpath expression to be evaluated for example count of cases within.
+    """
     form = StringProperty()
     text = DictProperty(unicode)
     xpath = StringProperty()
