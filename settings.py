@@ -820,8 +820,14 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-SQL_REPORTING_DATABASE_URL = None
-UCR_DATABASE_URL = None
+# mapping of report engine IDs to database configurations
+# values must be an alias of a DB in the Django DB configuration
+# or a dict of the format:
+# {'DJANGO_ALIAS': 'alias', 'READ_REPLICAS': ['alias1', 'alias2']
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default'
+}
 
 # Override this in localsettings to specify custom reporting databases
 CUSTOM_DATABASES = {}
@@ -1274,22 +1280,6 @@ else:
 
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
-
-### Reporting database - use same DB as main database
-
-db_settings = DATABASES["default"].copy()
-db_settings['PORT'] = db_settings.get('PORT', '5432')
-options = db_settings.get('OPTIONS')
-db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-
-if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
-    SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
-        **db_settings
-    )
-
-if not UCR_DATABASE_URL or UNIT_TESTING:
-    # by default just use the reporting DB for UCRs
-    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
 
 if USE_PARTITIONED_DATABASE:
     DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
