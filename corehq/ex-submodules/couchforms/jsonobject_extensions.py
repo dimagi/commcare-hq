@@ -72,14 +72,14 @@ class GeoPointProperty(JsonProperty):
             raise BadValueError("GeoPoint format expects 4 decimals: {!r}"
                                 .format(obj))
         try:
-            latitude = _canonical_decimal(latitude)
-            longitude = _canonical_decimal(longitude)
             # this should eventually be removed once it's fixed on the mobile
             # the mobile sometimes submits in scientific notation
             # but only comes up for very small values
             # http://manage.dimagi.com/default.asp?159863
+            latitude = _canonical_decimal_round_tiny_exp(latitude)
+            longitude = _canonical_decimal_round_tiny_exp(longitude)
             altitude = _canonical_decimal_round_tiny_exp(altitude)
-            accuracy = _canonical_decimal(accuracy)
+            accuracy = _canonical_decimal_round_tiny_exp(accuracy)
         except ValueError:
             raise BadValueError("{!r} is not a valid format GeoPoint format"
                                 .format(obj))
