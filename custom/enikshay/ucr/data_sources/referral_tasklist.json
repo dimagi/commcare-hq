@@ -1,0 +1,278 @@
+{
+  "domains": [
+    "enikshay",
+    "sheel-enikshay",
+    "enikshay-reports-qa"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "config": {
+    "referenced_doc_type": "CommCareCase",
+    "asynchronous": true,
+    "engine_id": "ucr",
+    "description": "",
+    "base_item_expression": {
+    },
+    "table_id": "referral_tasklist",
+    "display_name": "referral (task list)",
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": "string",
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "referral"
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "date opened",
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "opened_on"
+        },
+        "column_id": "date_opened"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "date of referral",
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "coalesce",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referral_initiated_date"
+          },
+          "default_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "date_of_referral"
+          }
+        },
+        "column_id": "date_of_referral"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "closed",
+        "datatype": "integer",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "closed"
+        },
+        "column_id": "closed"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "person_name",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "person_name",
+        "expression": {
+          "datatype": null,
+          "type": "named",
+          "name": "person_name"
+        }
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "owner_id",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "owner_id"
+        },
+        "column_id": "owner_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "TU ID",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "tu_id"
+        },
+        "column_id": "tu_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "DTO ID",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "dto_id"
+        },
+        "column_id": "dto_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "awating_claim",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "awaiting_claim"
+        },
+        "column_id": "awaiting_claim"
+      }
+    ],
+    "named_expressions": {
+      "host_host_id": {
+        "value_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "array_index",
+            "array_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "indices"
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          }
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "named",
+          "name": "host_id"
+        }
+      },
+      "person_name": {
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "name"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "named",
+          "name": "person_id"
+        }
+      },
+      "dto_id": {
+        "location_id_expression": {
+          "type": "named",
+          "name": "tu_id"
+        },
+        "type": "location_parent_id"
+      },
+      "tu_id": {
+        "location_id_expression": {
+          "type": "named",
+          "name": "owner_id"
+        },
+        "type": "location_parent_id"
+      },
+      "person_id": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "type"
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "named",
+              "name": "host_id"
+            }
+          },
+          "property_value": "person"
+        },
+        "expression_if_true": {
+          "type": "named",
+          "name": "host_id"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "named",
+          "name": "host_host_id"
+        }
+      },
+      "host_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "indices"
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      "owner_id": {
+        "type": "property_name",
+        "property_name": "owner_id"
+      }
+    },
+    "named_filters": {}
+  }
+}
+
+
