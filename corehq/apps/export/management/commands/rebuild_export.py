@@ -63,7 +63,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('export_id')
         parser.add_argument(
-            '--page-size',
+            '--chunksize',
             type=int,
             dest='page_size',
             default=10000,
