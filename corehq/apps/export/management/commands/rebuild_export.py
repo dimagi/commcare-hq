@@ -193,6 +193,7 @@ class LoggingProgressTracker(object):
 def _output_progress(queue):
     page_progress = {}
     progress = total = 0
+    start = time.time()
     while total == 0 or progress < total:
         pages = page_progress.keys() or [1]
         try:
@@ -203,5 +204,17 @@ def _output_progress(queue):
             pass
         total = sum(val.total for val in page_progress.values())
         progress = sum(val.progress for val in page_progress.values())
+        elapsed = time.time() - start
+        docs_per_second = progress / elapsed
+        docs_remaining = total - progress
+        try:
+            time_remaining = docs_remaining / docs_per_second
+            estimated_remaining = str(timedelta(seconds=time_remaining)).split('.')[0]
+        except ArithmeticError:
+            estimated_remaining = 'unknown'
         if total > 0:
-            print('{} of {} processed'.format(progress, total))
+            elapsed = str(timedelta(seconds=elapsed)).split('.')[0]
+            print('{} of {} processed in {} (Estimated completion in {}) '
+                  '(Avg processing rate: {} docs per sec)'.format(
+                progress, total, elapsed, estimated_remaining, int(docs_per_second)
+            ))
