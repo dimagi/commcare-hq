@@ -236,7 +236,7 @@ class AutomaticUpdateRule(models.Model):
                  .case_type(case_type)
                  .is_closed(closed=False)
                  .exclude_source()
-                 .size(chunk_size))
+                 .size(100))
 
         if boundary_date:
             query = query.server_modified_range(lte=boundary_date)
