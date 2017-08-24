@@ -361,7 +361,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         text_locale_partial = '<locale id="{custom_icon_locale}"/>'.format(custom_icon_locale=custom_icon_locale)
 
         # check for text locale
-        custom_icon_block = custom_icon_block_template.format(locale_id=locale_id, locale_or_xpath=text_locale_partial)
+        custom_icon_block = custom_icon_block_template.format(locale_id=locale_id,
+                                                              locale_or_xpath=text_locale_partial)
         self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xml_node)
         self._assert_app_strings_available(self.app, 'en')
 
