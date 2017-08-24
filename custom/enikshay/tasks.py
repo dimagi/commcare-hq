@@ -66,6 +66,10 @@ def enikshay_task(self):
 
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
+        if toggles.DATA_MIGRATION.enabled(domain):
+            # Don't run this on the india cluster anymore
+            continue
+
         try:
             updater = EpisodeUpdater(domain, task_id=task_id)
             updater.run()
