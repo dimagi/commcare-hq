@@ -130,6 +130,17 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertNotEqual(repeat_record.payload_id, '1234')
 
     @run_with_all_backends
+    def test_skip_duplicates(self):
+        """
+        Ensure that submitting a duplicate form does not create extra RepeatRecords
+        """
+        self.assertEqual(len(RepeatRecord.all()), 2)
+        # this form is already submitted during setUp so a second submission should be a duplicate
+        form = self.post_xml(self.xform_xml, self.domain).xform
+        self.assertTrue(form.is_duplicate)
+        self.assertEqual(len(RepeatRecord.all()), 2)
+
+    @run_with_all_backends
     def test_repeater_failed_sends(self):
         """
         This tests records that fail are requeued later
