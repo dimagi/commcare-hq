@@ -352,6 +352,11 @@ h4 {
 
 .dropdown {
     padding: 2px;
+    margin-right: 2px;
+}
+
+.light-grey {
+    color: #9d9d9d;
 }
 
 .title {
