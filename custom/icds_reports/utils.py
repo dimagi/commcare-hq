@@ -646,7 +646,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'awcs'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('Number of AWCs Open yesterday'),
@@ -656,7 +657,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(daily_yesterday, 'daily_attendance'),
                     'all': get_value(daily_yesterday, 'awcs'),
                     'format': 'div',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'awc_daily_status'
                 }
             ],
             [
@@ -667,7 +669,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'supervisors'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('Blocks covered'),
@@ -676,7 +679,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'blocks'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
             ],
             [
@@ -688,7 +692,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'districts'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 }
                 ,
                 {
@@ -698,7 +703,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'states'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 }
             ]
         ]
@@ -745,7 +751,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'household'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'registered_household'
                 },
                 {
                     'label': _('Children (0-6 years)'),
@@ -758,7 +765,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'child_health_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'enrolled_children'
                 }
             ],
             [
@@ -789,7 +797,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'enrolled_women'
                 }
             ], [
                 {
@@ -816,7 +825,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'lactating_enrolled_women'
                 }
             ], [
                 {
@@ -847,7 +857,7 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'redirect': 'adolescent_girls'
                 }
             ], [
                 {
@@ -888,7 +898,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
                     'format': 'percent_and_div',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'adhaar'
                 }
             ]
         ]
@@ -939,7 +950,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'clean_water'
                 },
                 {
                     'label': _("AWCs with Functional Toilet"),
@@ -959,7 +971,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'functional_toilet'
                 }
             ],
             [
@@ -990,7 +1003,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'medicine_kit'
                 }
             ],
             [
@@ -1012,7 +1026,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'infant_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'infants_weight_scale'
                 },
                 {
                     'label': _('AWCs with Weighing Scale: Mother and Child'),
@@ -1032,7 +1047,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'adult_weight_scale'
                 }
             ],
             # [
