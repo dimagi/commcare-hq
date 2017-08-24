@@ -5,7 +5,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.template import Template
+from django.template import Context, Template
 
 
 class SupervisorConfCommand(BaseCommand):
@@ -36,7 +36,7 @@ class SupervisorConfCommand(BaseCommand):
         )
 
     def render_configuration_file(self, conf_template_string, params):
-        return Template(conf_template_string).render(params)
+        return Template(conf_template_string).render(Context(params))
 
     def handle(self, **options):
         self.conf_file_template = options['conf_file']
