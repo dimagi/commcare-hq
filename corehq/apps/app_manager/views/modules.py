@@ -431,12 +431,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("custom_icon_form"):
-        text_body = request.POST.get("custom_icon_text_body")
-        xpath = request.POST.get("custom_icon_xpath")
+        icon_text_body = request.POST.get("custom_icon_text_body")
+        icon_xpath = request.POST.get("custom_icon_xpath")
+        icon_form = request.POST.get("custom_icon_form")
         # if there is a request to set custom icon
-        if request.POST.get("custom_icon_form"):
+        if icon_form:
             # both present or both absent
-            if (text_body and xpath) or (not text_body and not xpath):
+            if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
                 return json_response(
                     {'message': _("Please enter either text body or xpath for custom icon")},
                     status_code=400
@@ -444,14 +445,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             # a module should have just one custom icon for now
             # so this just adds a new one with params or replaces the existing one with new params
             module_custom_icon = (module.custom_icon if module.custom_icon else CustomIcon())
-            module_custom_icon.text[lang] = request.POST.get("custom_icon_text_body")
+            module_custom_icon.text[lang] = icon_text_body
             # jquery serialize returns a "On" in case the checkbox is checked and nothing otherwise
-            module_custom_icon.xpath = request.POST.get("custom_icon_xpath")
-            module_custom_icon.form = request.POST.get("custom_icon_form")
+            module_custom_icon.xpath = icon_xpath
+            module_custom_icon.form = icon_form
             module.custom_icons = [module_custom_icon]
 
         # if there is a request to unset custom icon
-        if not request.POST.get("custom_icon_form") and module.custom_icon:
+        if not icon_form and module.custom_icon:
             module.custom_icons = []
 
     if should_edit("case_type"):
