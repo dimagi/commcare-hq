@@ -460,6 +460,8 @@ class CommCareAccountForm(forms.Form):
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-lg-3'
+        self.helper.field_class = 'col-lg-9'
         self.helper.layout = Layout(
             Fieldset(
                 _("Mobile Worker's Primary Information"),
