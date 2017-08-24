@@ -446,7 +446,12 @@ class CommCareAccountForm(forms.Form):
     username = forms.CharField(required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
-    phone_number = forms.CharField(max_length=80, required=False)
+    phone_number = forms.CharField(
+        max_length=80,
+        required=False,
+        help_text=ugettext_lazy("Please enter number, including "
+                                "international code, in digits only.")
+    )
 
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
@@ -455,18 +460,15 @@ class CommCareAccountForm(forms.Form):
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-lg-3'
+        self.helper.field_class = 'col-lg-9'
         self.helper.layout = Layout(
             Fieldset(
-                'Create new Mobile Worker account',
+                _("Mobile Worker's Primary Information"),
                 'username',
                 'password',
                 'password_2',
                 'phone_number',
-                Div(
-                    Div(HTML("Please enter number, including international code, in digits only."),
-                        css_class="controls"),
-                    css_class="control-group"
-                )
             )
         )
 
