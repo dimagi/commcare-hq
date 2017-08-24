@@ -53,6 +53,7 @@ DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
 CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
 cache = get_redis_client()
 
+
 @periodic_task(
     bind=True,
     run_every=crontab(hour=0, minute=0),  # every day at midnight
