@@ -35,7 +35,8 @@ requirejs.config({
             "vellum/uploader", 
             "vellum/window", 
             "vellum/polyfills", 
-            "vellum/copy-paste"
+            "vellum/copy-paste", 
+            "vellum/commander"
         ]
     }
 });
@@ -67,6 +68,7 @@ define([
     'vellum/uploader',
     'vellum/window',
     'vellum/polyfills',
-    'vellum/copy-paste'
+    'vellum/copy-paste',
+    'vellum/commander'
 ], function () {});
 
