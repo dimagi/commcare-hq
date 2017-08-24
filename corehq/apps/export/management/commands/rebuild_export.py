@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.export import _get_export_documents, ExportFile, _save_export_payload, _Writer
+from corehq.apps.export.export import _get_export_documents, ExportFile, _save_export_payload, _Writer, get_export_size
 from corehq.apps.export.export import _write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
@@ -87,11 +87,12 @@ class Command(BaseCommand):
         export_instance = get_properly_wrapped_export_instance(export_id)
         is_zip = isinstance(get_writer(export_instance.export_format), ZippedExportWriter)
         filters = export_instance.get_filters()
+        total_docs = get_export_size(export_instance, filters)
 
         results = []
         progress_queue = multiprocessing.Queue()
 
-        progress = multiprocessing.Process(target=_output_progress, args=(progress_queue,))
+        progress = multiprocessing.Process(target=_output_progress, args=(progress_queue, total_docs))
         progress.start()
 
         def _process_page(pool, output):
@@ -105,7 +106,7 @@ class Command(BaseCommand):
 
         pool = multiprocessing.Pool(processes=processes, initializer=_set_queue, initargs=[progress_queue])
         dump_output = DumpOutput(export_id)
-        print('Starting data dump')
+        print('Starting data dump of {} docs'.format(total_docs))
         with dump_output:
             for index, doc in enumerate(_get_export_documents(export_instance, filters)):
                 dump_output.write(doc)
@@ -190,11 +191,11 @@ class LoggingProgressTracker(object):
                     print('[{}] {} of {} complete'.format(self.name, current, total))
 
 
-def _output_progress(queue):
+def _output_progress(queue, total_docs):
     page_progress = {}
-    progress = total = 0
+    progress = total_dumped = 0
     start = time.time()
-    while total == 0 or progress < total:
+    while total_dumped == 0 or progress < total_dumped:
         pages = page_progress.keys() or [1]
         try:
             for p in pages:
@@ -202,19 +203,26 @@ def _output_progress(queue):
                 page_progress[value.page] = value
         except Empty:
             pass
-        total = sum(val.total for val in page_progress.values())
+        total_dumped = sum(val.total for val in page_progress.values())
         progress = sum(val.progress for val in page_progress.values())
         elapsed = time.time() - start
         docs_per_second = progress / elapsed
-        docs_remaining = total - progress
+        docs_remaining = total_docs - progress
         try:
             time_remaining = docs_remaining / docs_per_second
-            estimated_remaining = str(timedelta(seconds=time_remaining)).split('.')[0]
+            time_remaining = str(timedelta(seconds=time_remaining)).split('.')[0]
         except ArithmeticError:
-            estimated_remaining = 'unknown'
-        if total > 0:
+            time_remaining = 'unknown'
+        if total_dumped > 0:
             elapsed = str(timedelta(seconds=elapsed)).split('.')[0]
-            print('{} of {} processed in {} (Estimated completion in {}) '
-                  '(Avg processing rate: {} docs per sec)'.format(
-                progress, total, elapsed, estimated_remaining, int(docs_per_second)
-            ))
+            print(
+                '{progress} of {total} ({dumped} dumped) processed in {elapsed} '
+                '(Estimated completion in {remaining}) '
+                '(Avg processing rate: {rate} docs per sec)'.format(
+                    progress=progress,
+                    total=total_docs,
+                    dumped=total_dumped,
+                    elapsed=elapsed,
+                    remaining=time_remaining,
+                    rate=int(docs_per_second)
+                ))
