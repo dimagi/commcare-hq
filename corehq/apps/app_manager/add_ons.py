@@ -182,7 +182,7 @@ def show(slug, request, app, module=None, form=None):
         return True
 
     # Show if app has no add-ons and domain was created before add-ons were released
-    if not app.add_ons:
+    if not app.add_ons and slug != 'custom_icon_badges':
         domain = Domain.get_by_name(app.domain)
         if (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE:
             return True
