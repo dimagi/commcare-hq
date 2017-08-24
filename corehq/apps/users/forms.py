@@ -457,7 +457,7 @@ class CommCareAccountForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
-                'Create new Mobile Worker account',
+                _("Mobile Worker's Primary Information"),
                 'username',
                 'password',
                 'password_2',
