@@ -53,7 +53,6 @@ branches:
   - lwyszomi/icds_side_code # lwyszomi
   - bmb/appv2-unique-urls # BMB 8/10
   - fixtures-require-js-2017 # Jenny 8/23
-  - np/render # NP 8/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
