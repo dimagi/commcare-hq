@@ -1,15 +1,18 @@
 from __future__ import print_function
 
+import gzip
 import json
 import multiprocessing
 import os
+import tempfile
 import zipfile
 
 import time
 from Queue import Empty
 from collections import namedtuple
 
-from django.core.management.base import BaseCommand
+from datetime import datetime, timedelta
+from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import _get_export_documents, ExportFile, _save_export_payload, _Writer
@@ -33,13 +36,13 @@ class DumpOutput(object):
     def _new_file(self):
         if self.file:
             self.file.close()
-        self.filename = '{}_dump_{}.json'.format(self.export_id, self.page)
-        self.file = open(self.filename, 'w')
+        self.path = tempfile.mktemp()
+        self.file = gzip.open(self.path, 'wb')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
         self.file = None
-        self.filename = None
+        self.path = None
 
     def next_page(self):
         self.page += 1
@@ -89,7 +92,8 @@ class Command(BaseCommand):
         progress.start()
 
         def _process_page(pool, output):
-            args = export_instance, output.page, output.filename, output.page_size
+            args = export_instance, output.page, output.path, output.page_size
+            progress_queue.put(ProgressValue(output.page, 0, output.page_size))
             results.append(pool.apply_async(run_export, args=args))
             print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
 
@@ -108,47 +112,50 @@ class Command(BaseCommand):
             if dump_output.page_size:
                 _process_page(pool, dump_output)
 
-        progress.join()
         export_files = [p.get() for p in results]
+        try:
+            progress.terminate()
+        except:
+            pass
 
         print('Processing complete')
 
         print('Compiling final file')
-        final_filename = '{}_final.zip'.format(export_id)
+        final_path = tempfile.mktemp()
         base_name = safe_filename(export_instance.name or 'Export')
-        with zipfile.ZipFile(final_filename, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             for page, file in export_files:
                 print('  Adding page {} to final file'.format(page))
                 if is_zip:
                     with zipfile.ZipFile(file.path, 'r') as page_file:
-                        for filename in page_file.namelist():
-                            prefix, suffix = filename.rsplit('/', 1)
-                            z.writestr('{}/{}_{}'.format(prefix, page, suffix), page_file.open(filename).read())
+                        for path in page_file.namelist():
+                            prefix, suffix = path.rsplit('/', 1)
+                            z.writestr('{}/{}_{}'.format(prefix, page, suffix), page_file.open(path).read())
                 else:
                     z.write(file.path, '{}_{}'.format(base_name, page))
 
         print('Uploading final export')
-        with open(final_filename, 'r') as payload:
+        with open(final_path, 'r') as payload:
             _save_export_payload(export_instance, payload)
-        os.remove(final_filename)
+        os.remove(final_path)
 
 
-def run_export(export_instance, page_number, dump_filename, doc_count):
-    print('  Processing page {} started'.format(page_number))
-    docs = _get_export_documents_from_file(dump_filename, doc_count)
+def run_export(export_instance, page_number, dump_path, doc_count):
+    print('    Processing page {} started'.format(page_number))
+    docs = _get_export_documents_from_file(dump_path, doc_count)
     update_frequency = min(1000, int(doc_count / 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, run_export.queue, update_frequency)
     export_file = get_export_file(export_instance, docs, progress_tracker)
     run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
-    os.remove(dump_filename)
     return page_number, export_file
 
 
-def _get_export_documents_from_file(dump_filename, doc_count):
+def _get_export_documents_from_file(dump_path, doc_count):
     def _doc_iter():
-        with open(dump_filename, 'r') as f:
+        with gzip.open(dump_path) as f:
             for line in f.readlines():
                 yield json.loads(line)
+        os.remove(dump_path)
 
     return ScanResult(doc_count, _doc_iter())
 
