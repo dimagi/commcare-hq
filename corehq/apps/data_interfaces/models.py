@@ -19,6 +19,7 @@ from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_END,
     VISIT_WINDOW_DUE_DATE,
 )
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
@@ -209,6 +210,13 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_case_ids(cls, domain, case_type, boundary_date=None):
+        if should_use_sql_backend(domain):
+            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date)
+        else:
+            return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
+
+    @classmethod
+    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -220,6 +228,24 @@ class AutomaticUpdateRule(models.Model):
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         return run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id'])
+
+    @classmethod
+    def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
+        query = (CaseES()
+                 .domain(domain)
+                 .case_type(case_type)
+                 .is_closed(closed=False)
+                 .exclude_source()
+                 .size(chunk_size))
+
+        if boundary_date:
+            query = query.server_modified_range(lte=boundary_date)
+
+        for case_id in query.scroll():
+            if not isinstance(case_id, basestring):
+                raise ValueError("Something is wrong with the query, expected ids only")
+
+            yield case_id
 
     def activate(self, active=True):
         self.active = active
