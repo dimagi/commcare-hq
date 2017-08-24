@@ -17,6 +17,8 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
+
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
     get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
@@ -85,7 +87,6 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
-from corehq import feature_previews
 
 
 @no_conflict_require_POST
@@ -596,7 +597,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
     }
-    if feature_previews.CUSTOM_ICON_BADGES.enabled(request.domain):
+    if add_ons.show("custom_icon_badges", request, form.get_app()):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):

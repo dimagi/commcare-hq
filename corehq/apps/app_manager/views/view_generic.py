@@ -43,7 +43,6 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     ReportModule,
     CustomIcon)
-from corehq import feature_previews
 from django_prbac.utils import has_privilege
 
 
@@ -239,7 +238,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             }
         })
         context['module_icon'] = None
-        if feature_previews.CUSTOM_ICON_BADGES.enabled(request.domain):
+        if add_ons.show("custom_icon_badges", request, module.get_app()):
             context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
         try:
             context['multimedia']['references'] = app.get_references()

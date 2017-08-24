@@ -130,12 +130,3 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     ),
     privilege=LOOKUP_TABLES,
 )
-
-
-CUSTOM_ICON_BADGES = FeaturePreview(
-    slug='custom_icon_badges',
-    label=_("Custom Icon Badges for modules and forms"),
-    description=_(
-        "Allow to configure supported icon badges for modules and forms"
-    ),
-)

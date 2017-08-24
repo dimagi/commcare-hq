@@ -128,6 +128,10 @@ _ADD_ONS = {
         name=_("New Case Lists Created Empty"),
         description=_("When adding a new case list, don't include a registration and followup form."),
     ),
+    "custom_icon_badges": AddOn(
+        name=_("Custom Icon Badges for modules and forms"),
+        description=_("Allow to configure supported icon badges for modules and forms")
+    ),
 }
 
 _LAYOUT = [
