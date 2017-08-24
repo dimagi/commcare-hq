@@ -24,7 +24,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
@@ -350,31 +350,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
     if should_edit("custom_icon_form"):
-        icon_text_body = request.POST.get("custom_icon_text_body")
-        icon_xpath = request.POST.get("custom_icon_xpath")
-        icon_form = request.POST.get("custom_icon_form")
-
-        # if there is a request to set custom icon
-        if icon_form:
-            # validate that only of either text or xpath should be present
-            if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-                return json_response(
-                    {'message': _("Please enter either text body or xpath for custom icon")},
-                    status_code=400
-                )
-            # a form should have just one custom icon for now
-            # so this just adds a new one with params or replaces the existing one with new params
-            form_custom_icon = (form.custom_icon if form.custom_icon else CustomIcon())
-            form_custom_icon.form = icon_form
-            form_custom_icon.text[lang] = icon_text_body
-            form_custom_icon.xpath = icon_xpath
-
-            form.custom_icons = [form_custom_icon]
-
-        # if there is a request to unset custom icon
-        if not icon_form and form.custom_icon:
-            form.custom_icons = []
-
+        error_message = handle_custom_icon_edits(request, form, lang)
+        if error_message:
+            return json_response(
+                {'message': error_message},
+                status_code=400
+            )
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
