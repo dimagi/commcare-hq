@@ -5,9 +5,12 @@ from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
+from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
 from corehq.toggles import LINKED_APPS
+
+from .util import get_commcare_builds
 
 
 class CopyApplicationForm(forms.Form):
@@ -97,12 +100,22 @@ class PromptUpdateSettingsForm(forms.Form):
         )
     )
 
+    apk_version = forms.ChoiceField(
+        label=ugettext_lazy("Apk Version?")
+    )
+
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
         app_id = kwargs.pop('app_id')
+        request_user = kwargs.pop('request_user')
         super(PromptUpdateSettingsForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
 
+        self.fields['apk_version'].choices = [
+            (build.to_string(), 'CommCare {}'.format(build.get_label()))
+            for build in get_commcare_builds(request_user)
+        ] + [('wrong', 'bad')]
+
+        self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.form_class = 'form-horizontal'
         self.helper.form_action = reverse(
@@ -111,13 +124,20 @@ class PromptUpdateSettingsForm(forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.field_style = 'ganggs'
         self.helper.form_text_inline = True
 
+        show_version_select = kwargs.get('initial', {}).get('apk_prompt', 'off') != 'off'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Manage Update Settings"),
+                crispy.Field(
+                    'apk_prompt',
+                    # hide 'apk_version' depending on whether app_prompt is off or not
+                    onchange='$("#apk_version_id")[$("#id_apk_prompt").val() == "off"? "hide": "show"]()',
+                ),
+                crispy.Div('apk_version', style=('' if show_version_select else "display: none;"), css_id="apk_version_id"),
                 crispy.Field('app_prompt'),
-                crispy.Field('apk_prompt'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -129,11 +149,20 @@ class PromptUpdateSettingsForm(forms.Form):
         )
 
     @classmethod
-    def from_app(cls, app):
+    def from_app(cls, app, request_user):
         if app.is_remote_app() or not app.enable_update_prompts:
             return None
         app_config = app.global_app_config
-        return cls(domain=app.domain, app_id=app.id, initial={
+        return cls(domain=app.domain, app_id=app.id, request_user=request_user, initial={
             'app_prompt': app_config.app_prompt,
             'apk_prompt': app_config.apk_prompt,
+            'apk_version': app_config.apk_version.to_string()
         })
+
+    def clean_apk_version(self):
+        apk_version = self.cleaned_data['apk_version']
+        try:
+            return BuildSpec.from_string(apk_version)
+        except ValueError:
+            raise forms.ValidationError(
+                _('Invalid APK version %(version)s'), params={'version': apk_version})

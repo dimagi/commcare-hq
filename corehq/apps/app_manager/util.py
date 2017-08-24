@@ -329,9 +329,16 @@ def version_key(ver):
 
 
 def get_commcare_versions(request_user):
-    versions = [i.build.version for i in CommCareBuildConfig.fetch().menu
-                if request_user.is_superuser or not i.superuser_only]
+    versions = [i.version for i in get_commcare_builds(request_user)]
     return sorted(versions, key=version_key)
+
+
+def get_commcare_builds(request_user):
+    return [
+        i.build
+        for i in CommCareBuildConfig.fetch().menu
+        if request_user.is_superuser or not i.superuser_only
+    ]
 
 
 def actions_use_usercase(actions):

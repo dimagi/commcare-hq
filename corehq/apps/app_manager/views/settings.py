@@ -1,8 +1,9 @@
 import json
 from collections import defaultdict
 
+from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.views.generic.edit import FormView
@@ -87,11 +88,18 @@ class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
         kwargs = super(PromptSettingsUpdateView, self).get_form_kwargs()
         kwargs.update({'domain': self.domain})
         kwargs.update({'app_id': self.app_id})
+        kwargs.update({'request_user': self.request.couch_user})
         return kwargs
 
     def form_valid(self, form):
         config = self.app.global_app_config
         config.app_prompt = form.cleaned_data['app_prompt']
         config.apk_prompt = form.cleaned_data['apk_prompt']
+        config.apk_version = form.cleaned_data['apk_version']
         config.save()
         return super(PromptSettingsUpdateView, self).form_valid(form)
+
+    def form_invalid(self, form):
+        # Not a great UX, but this is just a guard against fabricated POST
+        messages.error(self.request, form.errors)
+        return HttpResponseRedirect(self.success_url)

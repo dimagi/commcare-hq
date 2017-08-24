@@ -6273,6 +6273,9 @@ class GlobalAppConfig(Document):
         default="off"
     )
 
+    # corresponding versions to which user should be prompted to update to
+    apk_version = SchemaProperty(BuildSpec)
+
     @classmethod
     def for_app(cls, app):
         """
