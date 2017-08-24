@@ -29,6 +29,10 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
     else:
         tag = lambda lang: ""
     for lang in langs:
+        # "name[lang] is not None" added to avoid empty lang tag in case of empty value for a field.
+        # When a value like {'en': ''} is passed to trans it returns [en] which then gets added
+        # as value on the input field and is visible in the text box.
+        # Ref: https://github.com/dimagi/commcare-hq/pull/16871/commits/14453f4482f6580adc9619a8ad3efb39d5cf37a2
         if lang in name and name[lang] is not None:
             n = unicode(name[lang])
             if escape:
