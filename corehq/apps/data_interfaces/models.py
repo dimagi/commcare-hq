@@ -13,6 +13,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -27,6 +28,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
+from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -40,6 +42,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Q
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from django.utils.translation import ugettext_lazy
@@ -206,35 +209,17 @@ class AutomaticUpdateRule(models.Model):
 
     @classmethod
     def get_case_ids(cls, domain, case_type, boundary_date=None):
-        """
-        Retrieves the case ids in chunks, yielding a list of case ids each time
-        until there are none left.
-        """
-        chunk_size = 100
-
-        query = (CaseES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .is_closed(closed=False)
-                 .exclude_source()
-                 .size(chunk_size))
+        q_expression = Q(
+            domain=domain,
+            type=case_type,
+            closed=False,
+            deleted=False,
+        )
 
         if boundary_date:
-            query = query.server_modified_range(lte=boundary_date)
+            q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
-        result = []
-
-        for case_id in query.scroll():
-            if not isinstance(case_id, basestring):
-                raise ValueError("Something is wrong with the query, expected ids only")
-
-            result.append(case_id)
-            if len(result) >= chunk_size:
-                yield result
-                result = []
-
-        if result:
-            yield result
+        return run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id'])
 
     def activate(self, active=True):
         self.active = active
