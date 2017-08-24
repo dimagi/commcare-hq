@@ -54,13 +54,15 @@ branches:
   - bmb/appv2-unique-urls # BMB 8/10
   - fixtures-require-js-2017 # Jenny 8/23
   - np/billing/kill-product_type-softwareproduct # NP 8/24
+  - np/11.1 # NP 8/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches: []
+    branches:
+      - np/111 # NP 8/24
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
