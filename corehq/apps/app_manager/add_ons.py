@@ -252,6 +252,6 @@ def init_app(request, app):
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
 
             # Turn on if this domain was created prior to add-ons release
-            if slug != 'empty_case_lists' and slug not in previews:
+            if slug != 'empty_case_lists' and slug != 'custom_icon_badges' and slug not in previews:
                 enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable
