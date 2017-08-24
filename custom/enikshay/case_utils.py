@@ -313,10 +313,12 @@ def get_person_locations(person_case):
 def _get_public_locations(person_case):
     PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
-        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+        phi_location = SQLLocation.active_objects.get(domain=person_case.domain,
+                                                      location_id=person_case.diagnosing_facility_id)
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            """Location with id {location_id} not found.
+            This is the diagnosing facility id for person with id: {person_id}"""
             .format(location_id=person_case.owner_id, person_id=person_case.case_id)
         )
 
