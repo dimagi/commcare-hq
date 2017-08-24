@@ -910,8 +910,6 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             form = CommCareAccountForm(data, domain=self.domain)
         else:
             form = CommCareAccountForm(domain=self.domain)
-
-        form.fields['phone_number'].required = True
         return form
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
