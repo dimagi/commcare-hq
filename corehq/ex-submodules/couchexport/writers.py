@@ -9,7 +9,6 @@ import json
 import bz2
 from collections import OrderedDict
 
-from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
 
@@ -112,7 +111,7 @@ class CsvFileWriter(ExportFileWriter):
 class PartialHtmlFileWriter(ExportFileWriter):
 
     def _write_from_template(self, context):
-        self._file.write(self.template.render(Context(context)).encode('utf-8'))
+        self._file.write(self.template.render(context).encode('utf-8'))
 
     def _open(self):
         self.template = get_template("couchexport/html_export.html")
