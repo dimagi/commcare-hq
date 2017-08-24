@@ -45,7 +45,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         'uid': form_id,
         'username': username,
         'user_id': user_id or "",
-        'device_id': device_id,
+        'device_id': device_id or "",
     })
     form_extras = form_extras or {}
 
