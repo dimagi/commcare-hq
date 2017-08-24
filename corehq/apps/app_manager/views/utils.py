@@ -14,6 +14,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
 
 from corehq.apps.app_manager.util import update_unique_ids
+from corehq import feature_previews
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -235,25 +236,26 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    icon_text_body = request.POST.get("custom_icon_text_body")
-    icon_xpath = request.POST.get("custom_icon_xpath")
-    icon_form = request.POST.get("custom_icon_form")
+    if feature_previews.CUSTOM_ICON_BADGES.enabled(request.domain):
+        icon_text_body = request.POST.get("custom_icon_text_body")
+        icon_xpath = request.POST.get("custom_icon_xpath")
+        icon_form = request.POST.get("custom_icon_form")
 
-    # if there is a request to set custom icon
-    if icon_form:
-        # validate that only of either text or xpath should be present
-        if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
-            return _("Please enter either text body or xpath for custom icon")
+        # if there is a request to set custom icon
+        if icon_form:
+            # validate that only of either text or xpath should be present
+            if (icon_text_body and icon_xpath) or (not icon_text_body and not icon_xpath):
+                return _("Please enter either text body or xpath for custom icon")
 
-        # a form should have just one custom icon for now
-        # so this just adds a new one with params or replaces the existing one with new params
-        form_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
-        form_custom_icon.form = icon_form
-        form_custom_icon.text[lang] = icon_text_body
-        form_custom_icon.xpath = icon_xpath
+            # a form should have just one custom icon for now
+            # so this just adds a new one with params or replaces the existing one with new params
+            form_custom_icon = (form_or_module.custom_icon if form_or_module.custom_icon else CustomIcon())
+            form_custom_icon.form = icon_form
+            form_custom_icon.text[lang] = icon_text_body
+            form_custom_icon.xpath = icon_xpath
 
-        form_or_module.custom_icons = [form_custom_icon]
+            form_or_module.custom_icons = [form_custom_icon]
 
-    # if there is a request to unset custom icon
-    if not icon_form and form_or_module.custom_icon:
-        form_or_module.custom_icons = []
+        # if there is a request to unset custom icon
+        if not icon_form and form_or_module.custom_icon:
+            form_or_module.custom_icons = []

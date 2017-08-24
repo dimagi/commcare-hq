@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     ReportModule,
     CustomIcon)
+from corehq import feature_previews
 from django_prbac.utils import has_privilege
 
 
@@ -237,7 +238,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
             }
         })
-        context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
+        context['module_icon'] = None
+        if feature_previews.CUSTOM_ICON_BADGES.enabled(request.domain):
+            context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
         try:
             context['multimedia']['references'] = app.get_references()
         except ReportConfigurationNotFoundError:
