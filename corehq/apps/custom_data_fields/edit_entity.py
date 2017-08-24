@@ -127,8 +127,8 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-sm-3 col-md-2'
-        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-sm-9 col-md-8 col-lg-6'
+        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
+        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-lg-9'
 
         additional_fields = []
         if field_names:
