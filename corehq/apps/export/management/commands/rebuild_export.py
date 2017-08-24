@@ -59,7 +59,7 @@ ProgressValue = namedtuple('ProgressValue', 'page progress total')
 
 
 class Command(BaseCommand):
-    help = "Migrates old exports to new ones"
+    help = "Rebuild a saved export using multiple processes"
 
     def add_arguments(self, parser):
         parser.add_argument('export_id')
