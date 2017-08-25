@@ -18,8 +18,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError, AppEditingError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
@@ -783,11 +782,7 @@ def rearrange(request, domain, app_id, key):
         if "forms" == key:
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
-            try:
-                app_manager_v2 = not toggles.APP_MANAGER_V1.enabled(request.user.username)
-                app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
-            except ConflictingCaseTypeError:
-                messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+            app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
