@@ -376,7 +376,7 @@ def confirm_domain(request, guid=None):
 
     requested_domain = Domain.get_by_name(req.domain)
     view_name = "dashboard_default"
-    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and not domain_has_apps(req.domain):
+    if not domain_has_apps(req.domain):
         view_name = "default_new_app"
 
     # Has guid already been confirmed?
