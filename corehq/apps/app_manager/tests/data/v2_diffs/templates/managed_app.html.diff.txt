@@ -21,7 +21,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,277 +29,165 @@
+@@ -25,277 +29,163 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -58,13 +58,11 @@
              </a>
 -        </li>
 +          </h2>
-+          {% if not intro_only %}
 +          <div id="js-publish-status"
 +               class="appnav-name-publish"
 +               style="display: none;">
 +            {% trans "Updates Available to Publish" %}
 +          </div>
-+          {% endif %}
 +      </div>
  
 -        {% if show_live_preview and can_preview_form %}
