@@ -79,7 +79,7 @@
         },
         "transform": {},
         "is_primary_key": false,
-        "is_nullable": false,
+        "is_nullable": true,
         "type": "expression",
         "column_id": "owner_id"
       },
@@ -103,7 +103,7 @@
         },
         "is_primary_key": false,
         "transform": {},
-        "is_nullable": false,
+        "is_nullable": true,
         "type": "expression",
         "column_id": "owner_name"
       },
