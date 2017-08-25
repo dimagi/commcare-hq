@@ -130,6 +130,8 @@ class Command(BaseCommand):
         base_name = safe_filename(export_instance.name or 'Export')
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             for page, export_path in export_files:
+                if not export_path:  # might be None
+                    continue
                 print('  Adding page {} to final file'.format(page))
                 if is_zip:
                     with zipfile.ZipFile(export_path, 'r') as page_file:
@@ -153,7 +155,7 @@ def run_export(export_instance, page_number, dump_path, doc_count):
     export_file = get_export_file(export_instance, docs, progress_tracker)
     run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
     print('    Processing page {} complete'.format(page_number))
-    return page_number, export_file.path
+    return page_number, export_file.path or ''  # suspect that perhaps this is None sometimes
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
