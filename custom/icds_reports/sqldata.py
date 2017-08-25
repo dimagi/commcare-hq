@@ -7,7 +7,7 @@ from django.db.models.functions import datetime
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -18,6 +18,7 @@ from custom.icds_reports.utils import ICDSMixin
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
+from dimagi.utils.decorators.memoized import memoized
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -102,12 +103,12 @@ class BasePopulation(ICDSMixin):
             ]
 
 
-def percent(x, y):
-    return "%.2f %%" % ((x or 0) * 100 / float(y or 1))
-
-
 def percent_num(x, y):
     return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
 
 
 class ExportableMixin(object):
@@ -188,6 +189,37 @@ class ExportableMixin(object):
 
         export_from_tables(excel_data, export_file, format)
         return export_response(export_file, format, self.title)
+
+
+class NationalAggregationDataSource(SqlData):
+
+    def __init__(self, config, data_source=None):
+        super(NationalAggregationDataSource, self).__init__(config)
+        self.data_source = data_source
+
+    @property
+    def table_name(self):
+        return self.data_source.table_name
+
+    @property
+    def engine_id(self):
+        return self.data_source.engine_id
+
+    @property
+    def filters(self):
+        return [
+            RawFilter('aggregation_level = 1'),
+            EQFilter('month', 'previous_month')
+        ]
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def columns(self):
+        # drop month column because we always fetch data here for previous month
+        return self.data_source.columns[1:]
 
 
 class AggChildHealthMonthlyDataSource(SqlData):
@@ -1955,6 +1987,10 @@ class ProgressReport(object):
             )
         }
 
+    @memoized
+    def get_data_for_national_aggregatation(self, data_source_name):
+        return NationalAggregationDataSource(self.config, self.data_sources[data_source_name]).get_data()
+
     def _get_collected_sections(self, config_list):
         sections_by_slug = OrderedDict()
         for config in config_list:
@@ -2041,7 +2077,9 @@ class ProgressReport(object):
 
                     if data_for_month:
                         if 'average' in row:
-                            row['average'].append(month_data[row['slug']]['html'])
+                            row['average'] = self.get_data_for_national_aggregatation(
+                                row['data_source']
+                            )[0][row['slug']]
                         row['data'].append((month_data[row['slug']] or {'html': 0}))
                     else:
                         row['data'].append({'html': 0})

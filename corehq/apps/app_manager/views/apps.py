@@ -123,13 +123,8 @@ def default_new_app(request, domain):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
 
-    if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
-        template = load_app_template("case_management")
-        app = import_app_util(template, domain)
-        app.name = "Untitled Application"
-    else:
-        lang = 'en'
-        app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    lang = 'en'
+    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
     add_ons.init_app(request, app)
 
     if request.project.secure_submissions:
@@ -378,8 +373,6 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
-        identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
