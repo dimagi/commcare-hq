@@ -139,15 +139,15 @@ def get_releases_context(request, domain, app_id):
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
         })
-        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
-            if not toggles.USER_TESTING_SIMPLIFY.enabled_for_request(request):
-                ab = ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request)
-                context.update({
-                    'ab_test': ab.context,
-                    'show_video': ab.version == ab_tests.APP_BUILDER_VIDEO_ON,
-                })
-            if len(app.modules) == 0:
-                context.update({'intro_only': True})
+        if not toggles.USER_TESTING_SIMPLIFY.enabled_for_request(request):
+            ab = ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request)
+            context.update({
+                'ab_test': ab.context,
+                'show_video': ab.version == ab_tests.APP_BUILDER_VIDEO_ON,
+            })
+        if len(app.modules) == 0:
+            context.update({'intro_only': True})
+
         # Multimedia is not supported for remote applications at this time.
         try:
             multimedia_state = app.check_media_state()
