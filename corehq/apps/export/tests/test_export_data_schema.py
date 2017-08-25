@@ -1287,3 +1287,44 @@ class TestOrderingOfSchemas(SimpleTestCase):
                 GeopointItem(path=[PathNode(name='one')]),
             ],
         )
+
+
+class TestFormExportSubcases(TestCase, TestXmlMixin):
+    """
+    These tests operate on an MCH app which uses various means of creating cases.
+    We care most about module 0 ("Mothers") > form 1 ("Followup Form")
+    The primary case type is "mom" - this form updates mom cases, but doesn't create them
+    This form creates a single "voucher" case using the normal case management interface
+        case_name is set to /data/voucher-name
+    This form creates "baby" cases in a repeat group also using the normal case management interface
+        case_name is set to /data/babies/whats_the_babys_name
+    A "prescription" case can also be created using save-to-case.
+        case_name is /data/prescription/prescription_name
+        the save-to-case node is /data/prescription/prescription
+    """
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    domain = 'app_with_subcases'
+    app_json_file = 'app_with_subcases'
+    form_xmlns = "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestFormExportSubcases, cls).setUpClass()
+        cls.app = Application.wrap(cls.get_json(cls.app_json_file))
+        with drop_connected_signals(app_post_save):
+            cls.app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        delete_all_export_data_schemas()
+        super(TestFormExportSubcases, cls).tearDownClass()
+
+    def test(self):
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.app._id,
+            self.form_xmlns,
+            only_process_current_builds=True,
+        )
