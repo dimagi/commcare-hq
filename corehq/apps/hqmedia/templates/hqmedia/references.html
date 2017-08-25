@@ -49,7 +49,7 @@
         $('.preview-media').tooltip();
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
+    {% include 'app_manager/v2/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
 
 {% block page_name %}
