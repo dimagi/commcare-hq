@@ -633,8 +633,9 @@
                 "display_name": "microbiological_test_lab_serial_number",
                 "datatype": "string",
                 "expression": {
-                    "type": "constant",
-                    "constant": ""
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "diagnosis_test_lab_serial_number"
                 },
                 "transform": {},
                 "is_primary_key": false,
@@ -649,9 +650,15 @@
                 "datatype": "string",
                 "expression": {
                     "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "case_definition"
+                        },
+                        "type": "boolean_expression",
                         "comment": null,
-                        "type": "named",
-                        "name": "microbiological_test"
+                        "property_value": "microbiological"
                     },
                     "expression_if_true": {
                         "datatype": null,
@@ -676,8 +683,9 @@
                 "display_name": "microbiological_result",
                 "datatype": "string",
                 "expression": {
-                    "type": "constant",
-                    "constant": ""
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "diagnosis_test_summary"
                 },
                 "transform": {},
                 "is_primary_key": false,
