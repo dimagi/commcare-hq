@@ -115,8 +115,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
-        var previewApp = hqImport('app_manager/js/preview_app');
-
         if (initial_page_data('form_uses_cases')) {
             // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
             var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
