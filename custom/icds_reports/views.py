@@ -439,7 +439,7 @@ class AwcReportsView(View):
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)
-        location = request.GET.get('location_id', None)
+        location = "d5d0fce5e73ff2b04417f40bd2bc84c7"
         aggregation_level = 5
 
         config = {
@@ -469,6 +469,7 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
+                tuple(month.timetuple())[:3],
                 self.kwargs.get('domain')
             )
         elif step == 'maternal_child':
