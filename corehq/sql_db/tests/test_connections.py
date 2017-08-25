@@ -26,11 +26,11 @@ DATABASES = {
 
 @override_settings(DATABASES=DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
-    @override_settings(SQL_REPORTING_DATABASE_URL='sql-url', UCR_DATABASE_URL='ucr-url', REPORTING_DATABASES=None)
+    @override_settings(UCR_DATABASE_URL='ucr-url', REPORTING_DATABASES=None)
     def test_legacy_settings(self):
         manager = ConnectionManager()
         self.assertEqual(manager.db_connection_map, {
-            'default': 'sql-url',
+            'default': 'postgresql+psycopg2://:@localhost:5432/default',
             'ucr': 'ucr-url',
         })
 
