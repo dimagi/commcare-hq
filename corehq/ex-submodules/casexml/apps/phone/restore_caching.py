@@ -6,39 +6,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 logger = logging.getLogger(__name__)
 
 
-def _restore_cache_key(domain, prefix, user_id, sync_log_id, device_id):
-    # to invalidate all restore cache keys, increment the number below
-    hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id}'.format(
-        domain=domain,
-        prefix=prefix,
-        user=user_id,
-        sync_log_id=sync_log_id or '',
-        device_id=device_id or '',
-    )
-    return hashlib.md5(hashable_key).hexdigest()
-
-
-def _restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
-
-
-def _async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id):
-    return _restore_cache_key(
-        domain=domain,
-        prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
-        user_id=user_id,
-        sync_log_id=sync_log_id,
-        device_id=device_id,
-    )
-
-
-class CacheAccessor(object):
+class _CacheAccessor(object):
     cache_key = None
     timeout = None
     debug_info = None
@@ -58,17 +26,41 @@ class CacheAccessor(object):
         get_redis_default_cache().delete(self.cache_key)
 
 
-class RestorePayloadPathCache(CacheAccessor):
+class RestorePayloadPathCache(_CacheAccessor):
     timeout = 24 * 60 * 60
 
     def __init__(self, domain, user_id, sync_log_id, device_id):
-        self.cache_key = _restore_payload_path_cache_key(domain, user_id, sync_log_id, device_id)
+        self.cache_key = self._make_cache_key(domain, user_id, sync_log_id, device_id)
         self.debug_info = ('RestorePayloadPathCache', domain, user_id, sync_log_id, device_id)
 
+    @staticmethod
+    def _make_cache_key(domain, user_id, sync_log_id, device_id):
+        # to invalidate all restore cache keys, increment the number below
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id}'.format(
+            domain=domain,
+            prefix=RESTORE_CACHE_KEY_PREFIX,
+            user=user_id,
+            sync_log_id=sync_log_id or '',
+            device_id=device_id or '',
+        )
+        return hashlib.md5(hashable_key).hexdigest()
 
-class AsyncRestoreTaskIdCache(CacheAccessor):
+
+class AsyncRestoreTaskIdCache(_CacheAccessor):
     timeout = 24 * 60 * 60
 
     def __init__(self, domain, user_id, sync_log_id, device_id):
-        self.cache_key = _async_restore_task_id_cache_key(domain, user_id, sync_log_id, device_id)
+        self.cache_key = self._make_cache_key(domain, user_id, sync_log_id, device_id)
         self.debug_info = ('AsyncRestoreTaskIdCache', domain, user_id, sync_log_id, device_id)
+
+    @staticmethod
+    def _make_cache_key(domain, user_id, sync_log_id, device_id):
+        # to invalidate all restore cache keys, increment the number below
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id}'.format(
+            domain=domain,
+            prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
+            user=user_id,
+            sync_log_id=sync_log_id or '',
+            device_id=device_id or '',
+        )
+        return hashlib.md5(hashable_key).hexdigest()
