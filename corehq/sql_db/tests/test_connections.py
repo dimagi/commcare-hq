@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
@@ -49,11 +51,11 @@ class ConnectionManagerTests(SimpleTestCase):
             'other': 'postgresql+psycopg2://:@localhost:5432/other',
         })
 
-    def test_replicas(self):
+    def test_read_load_balancing(self):
         reporting_dbs = {
             'ucr': {
-                'DJANGO_ALIAS': 'ucr',
-                'READ_REPLICAS': ['other', 'default']
+                'WRITE': 'ucr',
+                'READ': [('ucr', 8), ('other', 1), ('default', 1)]
             },
         }
         with override_settings(REPORTING_DATABASES=reporting_dbs):
@@ -64,14 +66,21 @@ class ConnectionManagerTests(SimpleTestCase):
                 'other': 'postgresql+psycopg2://:@localhost:5432/other',
             })
 
-            self.assertEqual(
-                ['other', 'default', 'other', 'default'],
-                [manager.get_read_replica_engine_id('ucr') for i in range(4)]
-            )
+            # test that load balancing works with a 15% margin for randomness
+            total_requests = 10000
+            randomness_margin = total_requests * 0.015
+            total_weighting = sum(db[1] for db in reporting_dbs['ucr']['READ'])
+            expected = {
+                alias: weight * total_requests / total_weighting
+                for alias, weight in reporting_dbs['ucr']['READ']
+            }
+            balanced = Counter(manager.get_load_balanced_read_engine_id('ucr') for i in range(total_requests))
+            for db, requests in balanced.items():
+                self.assertAlmostEqual(requests, expected[db], delta=randomness_margin)
 
         with override_settings(REPORTING_DATABASES={'default': 'default'}):
             manager = ConnectionManager()
             self.assertEqual(
                 ['default', 'default', 'default'],
-                [manager.get_read_replica_engine_id('default') for i in range(3)]
+                [manager.get_load_balanced_read_engine_id('default') for i in range(3)]
             )

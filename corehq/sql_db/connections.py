@@ -1,3 +1,4 @@
+import random
 from contextlib import contextmanager
 from urllib import urlencode
 
@@ -58,7 +59,7 @@ class ConnectionManager(object):
     def __init__(self):
         self._session_helpers = {}
         self.db_connection_map = {}
-        self.replica_mapping = {}
+        self.read_database_mapping = {}
         self._populate_connection_map()
 
     def _get_or_create_helper(self, engine_id):
@@ -86,10 +87,10 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_read_replica_engine_id(self, engine_id):
-        replicas = self.replica_mapping.get(engine_id, [])
-        if replicas:
-            return next(replicas)
+    def get_load_balanced_read_engine_id(self, engine_id):
+        read_dbs = self.read_database_mapping.get(engine_id, [])
+        if read_dbs:
+            return random.choice(read_dbs)
         return engine_id
 
     def close_scoped_sessions(self):
@@ -124,18 +125,23 @@ class ConnectionManager(object):
             self._populate_from_legacy_settings()
         else:
             for engine_id, db_config in reporting_db_config.items():
-                db_alias = db_config
-                replicas = None
+                write_db = db_config
+                read = None
                 if isinstance(db_config, dict):
-                    db_alias = db_config['DJANGO_ALIAS']
-                    replicas = db_config.get('READ_REPLICAS', [])
+                    write_db = db_config['WRITE']
+                    read = db_config['READ']
+                    for db_alias, weighting in read:
+                        assert isinstance(weighting, int), 'weighting must be int'
+                        assert db_alias in settings.DATABASES, db_alias
 
-                self._add_django_db(engine_id, db_alias)
-                if replicas:
-                    self.replica_mapping[engine_id] = itertools.cycle(replicas)
-                    for replica in replicas:
-                        assert replica not in self.db_connection_map, replica
-                        self._add_django_db(replica, replica)
+                self._add_django_db(engine_id, write_db)
+                if read:
+                    self.read_database_mapping[engine_id] = []
+                    for read_db, weighting in read:
+                        assert read_db == write_db or read_db not in self.db_connection_map, read_db
+                        self.read_database_mapping[engine_id].extend([read_db] * weighting)
+                        if read_db != write_db:
+                            self._add_django_db(read_db, read_db)
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')

@@ -822,8 +822,11 @@ STRIPE_PRIVATE_KEY = ''
 
 # mapping of report engine IDs to database configurations
 # values must be an alias of a DB in the Django DB configuration
-# or a dict of the format:
-# {'DJANGO_ALIAS': 'alias', 'READ_REPLICAS': ['alias1', 'alias2']
+# or a dict of the following format:
+# {
+#     'WRITE': 'django_db_alias',
+#     'READ': [('django_db_alias', query_weighting_int), (...)]
+# }
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default'
