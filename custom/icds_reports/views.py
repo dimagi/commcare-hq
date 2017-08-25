@@ -559,6 +559,7 @@ class ProgressReportView(View):
         config = {
             'aggregation_level': aggregation_level,
             'month': this_month,
+            'previous_month': date.today().replace(day=1) - relativedelta(months=1),
             'two_before': two_before,
             'category': request.GET.get('category')
         }
