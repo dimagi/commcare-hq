@@ -1,5 +1,6 @@
-import mock
 from datetime import datetime
+import mock
+import uuid
 from django.test import TestCase, override_settings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
@@ -12,10 +13,15 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.util import format_username
 from .utils import setup_enikshay_locations
-from ..const import DEFAULT_MOBILE_WORKER_ROLE
+from ..const import (
+    DEFAULT_MOBILE_WORKER_ROLE,
+    PRIVATE_SECTOR_WORKER_ROLE,
+    AGENCY_LOCATION_TYPES,
+    AGENCY_LOCATION_FIELDS,
+    AGENCY_USER_FIELDS,
+)
 from ..user_setup import (
     LOC_TYPES_TO_USER_TYPES,
-    set_user_role,
     validate_usertype,
     get_site_code,
     ENikshayLocationFormSet,
@@ -38,6 +44,11 @@ class TestUserSetupUtils(TestCase):
         cls.domain_obj.save()
         cls.location_types, cls.locations = setup_enikshay_locations(cls.domain)
 
+        for location_type in cls.location_types.values():
+            if location_type.code in AGENCY_LOCATION_TYPES:
+                location_type.has_user = True
+                location_type.save()
+
         # set up data fields
         user_fields = CustomDataFieldsDefinition.get_or_create(
             cls.domain, CUSTOM_USER_DATA_FIELD_TYPE)
@@ -47,12 +58,18 @@ class TestUserSetupUtils(TestCase):
             CustomDataField(slug='usertype', is_multiple_choice=True, choices=usertypes),
             CustomDataField(slug='is_test'),
             CustomDataField(slug='nikshay_id'),
+        ] + [
+            CustomDataField(slug=slug, is_required=False) for slug, _, __ in AGENCY_USER_FIELDS
         ]
         user_fields.save()
 
         location_fields = CustomDataFieldsDefinition.get_or_create(
             cls.domain, LocationFieldsView.field_type)
-        location_fields.fields = [CustomDataField(slug='nikshay_code', is_required=True)]
+        location_fields.fields = [
+            CustomDataField(slug='nikshay_code', is_required=True)
+        ] + [
+            CustomDataField(slug=slug) for slug, _, __ in AGENCY_LOCATION_FIELDS
+        ]
         location_fields.save()
 
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
@@ -107,32 +124,41 @@ class TestUserSetupUtils(TestCase):
         role.save()
         self.addCleanup(role.delete)
 
-    def make_new_location_form(self, name, location_type, parent, nikshay_code):
+    def _get_form_bound_data(self, location_name, location_type, location_fields, user_fields):
+        user_fields = {} if user_fields is None else user_fields
+        location_fields = {} if location_fields is None else location_fields
+
+        bound_data = {
+            "location_type": location_type,
+            "name": location_name,
+            "location_user-password": "1234",
+            "form_type": "location-settings",
+        }
+
+        if location_type in AGENCY_LOCATION_TYPES:
+            for slug, _, __ in AGENCY_USER_FIELDS:
+                value = user_fields.get(slug, "")
+                if slug == 'contact_phone_number' and value == "":
+                    value = "911234567890"
+                if slug == 'language_code' and value == "":
+                    value = "hin"
+                bound_data['user_data-{}'.format(slug)] = value
+
+        for slug, _, __ in [('nikshay_code', '', '')] + AGENCY_LOCATION_FIELDS:
+            value = location_fields.get(slug, "")
+            if slug == 'nikshay_code' and value == "":
+                value = uuid.uuid4().hex
+            bound_data['data-field-{}'.format(slug)] = value
+
+        return bound_data
+
+    def make_new_location_form(self, location_name, location_type, parent, location_fields=None, user_fields=None):
+        bound_data = self._get_form_bound_data(location_name, location_type, location_fields, user_fields)
         return ENikshayLocationFormSet(
             location=SQLLocation(domain=self.domain, parent=parent),
-            bound_data={'name': name,
-                        'location_type': self.location_types[location_type],
-                        'data-field-nikshay_code': nikshay_code},
-            request_user=self.web_user,
-            is_new=True,
-        )
-
-    def make_edit_location_form(self, location, data):
-        bound_data = {
-            'name': location.name,
-            'site_code': location.site_code,
-            'data-field-nikshay_code': location.metadata.get('nikshay_code'),
-            'coordinates': '',
-            'parent_id': '',
-            'external_id': '',
-            'location_type': location.location_type.code,
-        }
-        bound_data.update(data)
-        return ENikshayLocationFormSet(
-            location=None,
             bound_data=bound_data,
             request_user=self.web_user,
-            is_new=False,
+            is_new=True,
         )
 
     def test_validate_usertype(self):
@@ -159,7 +185,6 @@ class TestUserSetupUtils(TestCase):
         validate_usertype(loc_type, 'deo', custom_data)
         self.assertValid(custom_data)
 
-    @mock.patch('custom.enikshay.user_setup.set_user_role', mock.MagicMock)
     def test_signal(self):
         # This test runs the whole callback via a signal as an integration test
         # To verify that it's working, it checks for errors triggered in `validate_usertype`
@@ -199,45 +224,16 @@ class TestUserSetupUtils(TestCase):
         # )
         # self.assertValid(form)
 
-    def test_set_user_role(self):
-        user = self.make_user('lordcommander@nightswatch.onion', 'DTO')
-        data = {
-            'first_name': 'Jeor',
-            'last_name': 'Mormont',
-            'language': '',
-            'loadtest_factor': '',
-            'role': '',
-            'form_type': 'update-user',
-            'email': 'lordcommander@nightswatch.onion',
-        }
-        user_form = UpdateCommCareUserInfoForm(
-            data=data,
-            existing_user=user,
-            domain=self.domain,
-        )
-        self.assertValid(user_form)
-        set_user_role(self.domain, user, 'dto', user_form)
-        # The corresponding role doesn't exist yet!
-        self.assertInvalid(user_form)
-
-        self.make_role('dto')
-        user_form = UpdateCommCareUserInfoForm(
-            data=data,
-            existing_user=user,
-            domain=self.domain,
-        )
-        self.assertValid(user_form)
-        set_user_role(self.domain, user, 'dto', user_form)
-        self.assertValid(user_form)
-
     def test_validate_nikshay_code(self):
         parent = self.locations['CTO']
-        form = self.make_new_location_form('winterfell', 'dto', parent=parent, nikshay_code='123')
+        form = self.make_new_location_form('winterfell', 'dto', parent=parent,
+                                           location_fields={'nikshay_code': '123'})
         self.assertValid(form)
         form.save()
 
         # Making a new location with the same parent and nikshay_code should fail
-        form = self.make_new_location_form('castle_black', 'dto', parent=parent, nikshay_code='123')
+        form = self.make_new_location_form('castle_black', 'dto', parent=parent,
+                                           location_fields={'nikshay_code': '123'})
         self.assertInvalid(form)
 
     def test_issuer_id(self):
@@ -316,3 +312,11 @@ class TestUserSetupUtils(TestCase):
         user.set_role(self.domain, 'none')
         user.save()
         self.assertFalse(user.get_role(self.domain))
+
+    def test_set_default_agency_role(self):
+        self.make_role(PRIVATE_SECTOR_WORKER_ROLE)
+        parent = self.locations['DTO']
+        form = self.make_new_location_form('sept_of_baelor', 'pcp', parent=parent)
+        self.assertValid(form)
+        form.save()
+        self.assertEqual("Private Sector Worker", form.user.get_role(self.domain).name)

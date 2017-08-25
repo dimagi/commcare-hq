@@ -1197,14 +1197,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BLOBDB_RESTORE = PredictablyRandomToggle(
-    'blobdb_restore',
-    "Blobdb restore",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-)
-
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',

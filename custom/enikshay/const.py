@@ -109,6 +109,14 @@ INVESTIGATION_TYPE = "investigation_type"
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
 
 DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
+PRIVATE_SECTOR_WORKER_ROLE = "Private Sector Worker"
+
+AGENCY_LOCATION_TYPES = {
+    'pcc': "Chemist",
+    'pcp': "MBBS Provider",
+    'pac': "AYUSH/Other Provider",
+    'plc': "Private Lab",
+}
 
 AGENCY_USER_FIELDS = [
     # (slug, label, choices)

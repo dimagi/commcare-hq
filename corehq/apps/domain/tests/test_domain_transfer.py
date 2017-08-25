@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 from datetime import datetime
+from mock import patch
 
-from django.core import mail
 from django.urls import reverse
 from django.test import TestCase
 from django.test.client import Client
@@ -107,11 +107,12 @@ class TestTransferDomainModel(BaseDomainTest):
         self.assertTrue(self.transfer.to_user.is_member_of(self.domain))
 
     def test_send_transfer_request(self):
-        self.transfer.send_transfer_request()
+        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+            self.transfer.send_transfer_request()
 
-        self.assertIsNotNone(self.transfer.transfer_guid)
-        self.assertEqual(len(mail.outbox), 2,
-                         "Should send an email to both requester and requestee")
+            self.assertIsNotNone(self.transfer.transfer_guid)
+            self.assertEqual(patched_send_HTML_email.call_count, 2,
+                             "Should send an email to both requester and requestee")
 
     def test_get_active_transfer(self):
         res = TransferDomainRequest.get_active_transfer(self.domain, self.user.username)
@@ -230,11 +231,12 @@ class TestTransferDomainIntegration(BaseDomainTest):
         form.data['to_username'] = self.muggle.username
 
         # Post the form data
-        resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]),
-                                form.data, follow=True)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(mail.outbox), 2,
-                         "Should send an email to both requester and requestee")
+        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+            resp = self.client.post(reverse(TransferDomainView.urlname, args=[self.domain.name]),
+                                    form.data, follow=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(patched_send_HTML_email.call_count, 2,
+                             msg="Should send an email to both requester and requestee")
 
         transfer = TransferDomainRequest.objects.get(to_username=self.muggle.username,
                                                      from_username=self.user.username,
@@ -250,9 +252,9 @@ class TestTransferDomainIntegration(BaseDomainTest):
         self.assertIsNotNone(resp.context['transfer'])
 
         # Finally accept the transfer
-        mail.outbox = []  # Clear outbox
-        resp = self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
-        self.assertEqual(len(mail.outbox), 1, "Send an email to Dimagi to confirm")
+        with patch('corehq.apps.hqwebapp.tasks.send_HTML_email') as patched_send_HTML_email:
+            self.client.post(reverse('activate_transfer_domain', args=[transfer.transfer_guid]), follow=True)
+            self.assertEqual(patched_send_HTML_email.call_count, 1, msg="Send an email to Dimagi to confirm")
 
         # Reload from DB
         user = WebUser.get_by_username(self.user.username)

@@ -31,6 +31,8 @@ class Command(BaseCommand):
                         location_id = user.location_id
                 else:
                     location_id = recipient.owner_id
+            elif isinstance(recipient, CommCareUser):
+                location_id = recipient.location_id
 
             self.recipient_id_to_location_id[sms.couch_recipient] = location_id
 

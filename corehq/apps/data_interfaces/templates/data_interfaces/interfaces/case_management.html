@@ -11,8 +11,6 @@
         $.getScript("{% static 'data_interfaces/js/case_management.js' %}")
     ).done(function () {
         var OPTIONS = {
-            users: {{ users|JSON }},
-            groups: {{ groups|JSON }},
             receiverUrl: '{% url "receiver_secure_post" domain %}',
             enddate: '{{ datespan.enddate_param_utc }}',
             webUserID: '{{ request.couch_user.userID }}',
@@ -54,7 +52,30 @@
             }
         }, 1000);
 
-        $('#reassign_owner_select').select2();
+        $('#reassign_owner_select').select2({
+            ajax: {
+                url: '{% url "case_list_options" domain %}',
+                data: function (term, page) {
+                    return {
+                        q: term
+                    };
+                },
+                dataType: 'json',
+                quietMillis: 250,
+                results: function (data, page) {
+                    return {
+                        total: data.total,
+                        results: (data.results
+                            // white list groups and users
+                            .filter(function(o) {
+                                return o.id.startsWith('u__') || o.id.startsWith('sg__');
+                            })
+                        )
+                    };
+                },
+                cache: true
+            }
+        });
     });
     </script>
 {% endblock %}
@@ -63,20 +84,12 @@
     <div id="case-management">
         <div class="row">
             <form class="well form-inline" style="margin: 1em; display: none;" data-bind="submit: updateCaseOwners, caseReassignmentForm: selected_cases">
-                    <label for="reassign_owner_type_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
-                    <select name="reassign_owner_type"
-                            id="reassign_owner_type_select"
-                            class="form-control"
-                            data-bind="options: owner_types,
-                                       grabUniqueDefault: selected_owner_types,
-                                       event: {change: changeNewOwnerType}"></select>
-                    <label for="reassign_owner_select" class="inline" data-bind="visible: should_show_owners"> {% trans 'named' %} </label>
+                    <label for="reassign_owner_select" class="inline">{% trans 'Reassign selected cases to' %} </label>
                     <span data-bind="visible: should_show_owners">
-                        <select name="reassign_owner"
+                        <input type="hidden" name="reassign_owner"
                             id="reassign_owner_select"
                             style="width: 300px;"
                             data-bind="grabUniqueDefault: selected_owners,
-                                       options: available_owners,
                                        optionsText: 'name',
                                        optionsValue: 'ownerid',
                                        optionsCaption: '{% trans 'Select New Owner...' %}',
@@ -89,7 +102,6 @@
                         disabled="disabled"
                         data-bind="visible: !is_submit_enabled()"
                         class="btn btn-default">{% trans 'Reassign' %}</button>
-                <div class="help-block" data-bind="visible: is_only_user_reassign">{% trans 'Note: No groups with Case Sharing are available.' %}</div>
             </form>
         </div>
         {{ block.super }}

@@ -40,7 +40,7 @@ def get_async_restore_payload(restore_config):
     response = restore_config.generate_payload(async_task=current_task)
 
     # delete the task id from the task, since the payload can now be fetched from the cache
-    restore_config.cache.delete(restore_config.async_cache_key)
+    restore_config.async_restore_task_id_cache.invalidate()
 
     return response
 

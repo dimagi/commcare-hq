@@ -128,6 +128,10 @@ _ADD_ONS = {
         name=_("New Case Lists Created Empty"),
         description=_("When adding a new case list, don't include a registration and followup form."),
     ),
+    "custom_icon_badges": AddOn(
+        name=_("Custom Icon Badges for modules and forms"),
+        description=_("Allow to configure supported icon badges for modules and forms")
+    ),
 }
 
 _LAYOUT = [
@@ -143,7 +147,8 @@ _LAYOUT = [
         "collapse": True,
         "name": _("Mobile Experience"),
         "description": _("Improve the user experience of your mobile workers"),
-        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list"],
+        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list",
+                  "custom_icon_badges"],
     },
     {
         "slug": "xpath",
@@ -178,7 +183,7 @@ def show(slug, request, app, module=None, form=None):
         return True
 
     # Show if app has no add-ons and domain was created before add-ons were released
-    if not app.add_ons:
+    if not app.add_ons and slug != 'custom_icon_badges':
         domain = Domain.get_by_name(app.domain)
         if (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE:
             return True
@@ -248,6 +253,6 @@ def init_app(request, app):
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
 
             # Turn on if this domain was created prior to add-ons release
-            if slug != 'empty_case_lists' and slug not in previews:
+            if slug != 'empty_case_lists' and slug != 'custom_icon_badges' and slug not in previews:
                 enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable

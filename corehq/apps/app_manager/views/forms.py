@@ -17,6 +17,8 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
+
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
     get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
@@ -24,7 +26,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
@@ -79,6 +81,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_FORM,
     CustomInstance,
     CaseReferences,
+    CustomIcon,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -348,6 +351,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
+    if should_edit("custom_icon_form"):
+        error_message = handle_custom_icon_edits(request, form, lang)
+        if error_message:
+            return json_response(
+                {'message': error_message},
+                status_code=400
+            )
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -599,8 +609,11 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
         ],
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
+        'form_icon': None,
     }
+    if add_ons.show("custom_icon_badges", request, form.get_app()):
+        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
         request.guided_tour = tours.NEW_APP.get_tour_data()

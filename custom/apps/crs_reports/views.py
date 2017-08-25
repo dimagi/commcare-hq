@@ -8,7 +8,6 @@ from corehq.apps.reports.views import require_case_view_permission
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from corehq.apps.users.models import CommCareUser
 from django.template.loader import get_template
-from django.template import Context
 from django.http import HttpResponse
 # import weasyprint
 from custom.apps.crs_reports import MOTHER_POSTPARTUM_VISIT_FORM_XMLNS, BABY_POSTPARTUM_VISIT_FORM_XMLNS
@@ -28,10 +27,8 @@ def render_to_pdf(request, domain, case_id, report_slug):
     template = get_template("crs_reports/partials/mothers_form_reports_template.html")
 
     context_dict = get_dict_to_report(domain, case_id, report_slug)
-    context = Context(context_dict)
-    html = template.render(context)
+    template.render(context_dict)
     response = HttpResponse(content_type="application/pdf")
-    # weasyprint.HTML(string=html).write_pdf(response)
     return response
 
 

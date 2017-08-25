@@ -4,3 +4,6 @@
 {% if not EXCLUDE_AUDIO %}
     {% include "app_manager/v2/partials/nav_menu_media_single_type.html" with type="audio" slug=multimedia.upload_managers.audio.slug label=AUDIO_LABEL %}
 {% endif %}
+{% if custom_icon %}
+    {% include "app_manager/v2/partials/custom_icon.html" with type="image" custom_icon=custom_icon%}
+{% endif %}

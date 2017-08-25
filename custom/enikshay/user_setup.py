@@ -19,8 +19,14 @@ from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
-from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS, DEFAULT_MOBILE_WORKER_ROLE
-from .models import IssuerId
+from .const import (
+    AGENCY_LOCATION_FIELDS,
+    AGENCY_LOCATION_TYPES,
+    AGENCY_USER_FIELDS,
+    DEFAULT_MOBILE_WORKER_ROLE,
+    PRIVATE_SECTOR_WORKER_ROLE,
+)
+from .models import AgencyIdCounter, IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -68,7 +74,7 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         usertype = custom_data.form.cleaned_data['usertype']
         validate_usertype(location_type, usertype, custom_data)
         if new_user_form:
-            set_user_role(domain, user, usertype, new_user_form)
+            pass
         else:
             validate_role_unchanged(domain, user, update_user_form)
 
@@ -83,23 +89,6 @@ def validate_usertype(location_type, usertype, custom_data):
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
-
-
-def set_user_role(domain, user, usertype, user_form):
-    """Auto-assign mobile workers a role based on usertype"""
-    from corehq.apps.users.models import UserRole
-    roles = UserRole.by_domain_and_name(domain, usertype)
-    if len(roles) == 0:
-        msg = _("There is no role called '{}', you cannot create this user "
-                "until that role is created.").format(usertype)
-        user_form.add_error(None, msg)
-    elif len(roles) > 1:
-        msg = _("There are more than one roles called '{}', please delete or "
-                "rename one.").format(usertype)
-        user_form.add_error(None, msg)
-    else:
-        role = roles[0]
-        user.set_role(domain, role.get_qualified_id())
 
 
 def validate_role_unchanged(domain, user, user_form):
@@ -412,6 +401,19 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
         return super(ENikshayUserLocationDataEditor, self)._make_field(field)
 
 
+class ENikshayLocationForm(LocationForm):
+
+    def save(self, metadata):
+        location = super(ENikshayLocationForm, self).save(metadata)
+        if location.location_type.code in ['pcp', 'pac', 'plc', 'pcc']:
+            if not location.metadata.get('private_sector_agency_id'):
+                private_sector_agency_id = str(AgencyIdCounter.get_new_agency_id())
+                location.metadata['private_sector_agency_id'] = private_sector_agency_id
+                location.name = '%s - %s' % (location.name, private_sector_agency_id)
+                location.save()
+        return location
+
+
 def get_new_username_and_id(domain, attempts_remaining=3):
     if attempts_remaining <= 0:
         raise AssertionError(
@@ -431,7 +433,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
-    _location_form_class = LocationForm
+    _location_form_class = ENikshayLocationForm
     _location_data_editor = ENikshayUserLocationDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayLocationUserDataEditor
@@ -482,6 +484,24 @@ class ENikshayLocationFormSet(LocationFormSet):
         self.set_available_tests()
 
         return all(form.is_valid() for form in self.forms)
+
+    def save(self):
+        if self.location_form.cleaned_data['location_type_object'].code in AGENCY_LOCATION_TYPES:
+            self._set_user_role(self.user, PRIVATE_SECTOR_WORKER_ROLE)
+        super(ENikshayLocationFormSet, self).save()
+
+    def _set_user_role(self, user, role_name):
+        from corehq.apps.users.models import UserRole
+        roles = UserRole.by_domain_and_name(self.domain, role_name)
+        if len(roles) == 0:
+            raise AssertionError("There is no user role '{}', did someone change the name?"
+                                 .format(role_name))
+        elif len(roles) > 1:
+            raise AssertionError("There are more than one roles called '{}', please delete or "
+                                 "rename one.".format(role_name))
+        else:
+            role = roles[0]
+            user.set_role(self.domain, role.get_qualified_id())
 
     def set_site_code(self):
         # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc

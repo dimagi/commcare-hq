@@ -172,7 +172,7 @@
 +          </div>
 +          {% endif %}
 +
-+           <div class="panel panel-appmanager" data-slug="multimedia">
++          <div class="panel panel-appmanager" data-slug="multimedia">
 +            <div class="panel-heading">
 +              <h4 class="panel-title panel-title-nolink">{% trans "Multimedia" %}</h4>
              </div>
@@ -188,7 +188,7 @@
 -                    <option value="true"{% if module.put_in_root %} selected{% endif %}>{% trans "Display only forms" %}</option>
 -                </select>
 +            <div class="panel-body">
-+              {% include "app_manager/v2/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
++              {% include "app_manager/v2/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" custom_icon=module_icon %}
              </div>
 -        </div>
 +          </div>

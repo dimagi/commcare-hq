@@ -209,6 +209,8 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
+    xpath = NodeField('xpath', Xpath)
+    xpath_function = XPathField('xpath/@function')
 
 
 class LocalizedMediaDisplay(XmlObject):
@@ -221,8 +223,8 @@ class TextOrDisplay(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', LocalizedMediaDisplay)
 
-    def __init__(self, node=None, context=None,
-                 menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
+    def __init__(self, node=None, context=None, custom_icon_locale_id=None, custom_icon_form=None,
+                 custom_icon_xpath=None, menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
                  media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
         text = Text(locale_id=menu_locale_id) if menu_locale_id else None
@@ -239,6 +241,12 @@ class TextOrDisplay(XmlObject):
                 form_name='audio'
             ))
 
+        if (custom_icon_locale_id or custom_icon_xpath) and custom_icon_form:
+            media_text.append(MediaText(
+                locale=(LocaleId(locale_id=custom_icon_locale_id) if custom_icon_locale_id else None),
+                xpath_function=(custom_icon_xpath if custom_icon_xpath else None),
+                form_name=custom_icon_form
+            ))
         if media_text:
             self.display = LocalizedMediaDisplay(
                 media_text=[text] + media_text if text else media_text

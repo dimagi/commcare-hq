@@ -140,11 +140,12 @@ def get_releases_context(request, domain, app_id):
             'enable_update_prompts': app.enable_update_prompts,
         })
         if not toggles.APP_MANAGER_V1.enabled(request.user.username):
-            ab = ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request)
-            context.update({
-                'ab_test': ab.context,
-                'show_video': ab.version == ab_tests.APP_BUILDER_VIDEO_ON,
-            })
+            if not toggles.USER_TESTING_SIMPLIFY.enabled_for_request(request):
+                ab = ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request)
+                context.update({
+                    'ab_test': ab.context,
+                    'show_video': ab.version == ab_tests.APP_BUILDER_VIDEO_ON,
+                })
             if toggles.APP_MANAGER_V2_TEMPLATE_APPS.enabled(domain):
                 if app.version <= 2:
                     context.update({'intro_only': True})

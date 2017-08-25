@@ -889,8 +889,9 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
             if excel_importer:
                 excel_importer.add_progress()
             if loc.do_delete:
-                # keep track of to be deleted items to delete them in top-to-bottom order
-                to_be_deleted.append(loc.db_object)
+                if not loc.is_new:
+                    # keep track of to be deleted items to delete them in top-to-bottom order
+                    to_be_deleted.append(loc.db_object)
             elif loc.needs_save:
                 loc_object = loc.db_object
                 loc_object.location_type = types_by_code.get(loc.location_type)

@@ -221,6 +221,12 @@ class AbstractCommCareCase(CaseToXMLMixin):
                 parent._resolve_case_property(property_name[7:], result)
             return
 
+        if property_name.lower().startswith('host/'):
+            host = self.host
+            if host:
+                host._resolve_case_property(property_name[5:], result)
+            return
+
         result.append(CasePropertyResult(
             self,
             self.to_json().get(property_name)

@@ -1,14 +1,12 @@
 import uuid
 from django.test import TestCase, SimpleTestCase
-from casexml.apps.case.xml import V1, V2
+from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.phone.restore import RestoreParams, RestoreConfig, restore_payload_path_cache_key
-from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload
+from casexml.apps.phone.restore import RestoreParams, RestoreConfig
+from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
-from corehq.util.test_utils import flag_enabled
-from corehq.form_processor.tests.utils import use_sql_backend
 
 
 class PhoneFootprintTest(SimpleTestCase):
@@ -78,20 +76,6 @@ class PhoneFootprintTest(SimpleTestCase):
         self.assertEqual(0, len(log.get_footprint_of_cases_on_phone()))
 
 
-class SimpleCachingResponseTest(SimpleTestCase):
-
-    def test_switch_restore_response(self):
-        '''
-        Ensures that when switching from using a FileRestoreResponse to a
-        BlobRestoreResponse that we don't use the old FileRestoreResponse
-        cache
-        '''
-        key1 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
-        with flag_enabled('BLOBDB_RESTORE'):
-            key2 = restore_payload_path_cache_key(domain='domain', user_id='user_id')
-        self.assertNotEqual(key1, key2)
-
-
 class SyncLogModelTest(TestCase):
     domain = 'sync-log-model-test'
 
@@ -109,8 +93,8 @@ class SyncLogModelTest(TestCase):
 
     def test_basic_properties(self):
         # kick off a restore to generate the sync log
-        generate_restore_payload(self.project, self.restore_user, items=True)
-        sync_log = SyncLog.last_for_user(self.restore_user.user_id)
+        device = MockDevice(self.project, self.restore_user)
+        sync_log = device.sync(version=V1, items=True).log
         self.assertEqual(self.restore_user.user_id, sync_log.user_id)
         self.assertEqual(self.restore_user.domain, sync_log.domain)
 

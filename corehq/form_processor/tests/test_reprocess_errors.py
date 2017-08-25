@@ -53,8 +53,9 @@ class ReprocessXFormErrorsTest(TestCase):
         self.assertEqual(1, len(error_forms))
 
         form = error_forms[0]
-        with self.assertRaises(InvalidCaseIndex):
-            reprocess_xform_error(form)
+        reprocess_xform_error(form)
+        error_forms = form_accessors.get_forms_by_type('XFormError', 10)
+        self.assertEqual(1, len(error_forms))
 
         case = CaseBlock(
             create=True,

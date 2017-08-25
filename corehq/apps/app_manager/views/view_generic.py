@@ -43,7 +43,7 @@ from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     ModuleNotFoundException,
     ReportModule,
-)
+    CustomIcon)
 from django_prbac.utils import has_privilege
 
 
@@ -261,6 +261,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
             }
         })
+        context['module_icon'] = None
+        if add_ons.show("custom_icon_badges", request, module.get_app()):
+            context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
         try:
             context['multimedia']['references'] = app.get_references()
         except ReportConfigurationNotFoundError:
