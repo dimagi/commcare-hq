@@ -4,7 +4,6 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps, \
     require_can_edit_apps
 from corehq.apps.app_manager.xform import XForm, validate_xform
-from corehq.apps.app_manager.util import get_app_manager_template
 from corehq.util.view_utils import set_file_download
 
 
@@ -34,13 +33,6 @@ def multimedia_list_download(request, domain, app_id):
 
 @require_deploy_apps
 def multimedia_ajax(request, domain, app_id):
-
-    template = get_app_manager_template(
-        request.user,
-        'app_manager/v1/partials/multimedia_ajax.html',
-        'app_manager/v2/partials/multimedia_ajax.html',
-    )
-
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
         multimedia_state = app.check_media_state()
@@ -49,6 +41,6 @@ def multimedia_ajax(request, domain, app_id):
             'domain': domain,
             'app': app,
         }
-        return render(request, template, context)
+        return render(request, "app_manager/v2/partials/multimedia_ajax.html", context)
     else:
         raise Http404()

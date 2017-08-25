@@ -28,10 +28,7 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
     ProcessAudioFileUploadView,
 )
-from corehq.apps.app_manager.util import (
-    get_commcare_versions,
-    get_app_manager_template,
-)
+from corehq.apps.app_manager.util import (get_commcare_versions)
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.cloudcare.utils import should_show_preview_app
@@ -81,12 +78,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         if app.application_version == APP_V1:
             _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-            template = get_app_manager_template(
-                request.user,
-                'app_manager/v1/no_longer_supported.html',
-                'app_manager/v2/no_longer_supported.html',
-            )
-            return render(request, template, {
+            return render(request, "app_manager/v2/no_longer_supported.html", {
                 'domain': domain,
                 'app': app,
             })
@@ -149,16 +141,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     elif app:
         context.update(get_app_view_context(request, app))
 
-        v2_template = ('app_manager/v2/app_view_release_manager.html'
+        template = ('app_manager/v2/app_view_release_manager.html'
                        if release_manager
                        else 'app_manager/v2/app_view_settings.html')
-
-        template = get_app_manager_template(
-            request.user,
-            'app_manager/v1/app_view.html',
-            v2_template
-        )
-
         if release_manager:
             context.update(get_releases_context(request, domain, app_id))
         context.update({

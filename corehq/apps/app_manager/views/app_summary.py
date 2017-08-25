@@ -10,7 +10,7 @@ from django.views.generic import View
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.util import get_app_manager_template, get_form_data
+from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
@@ -26,15 +26,10 @@ from couchexport.shortcuts import export_response
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/v1/summary.html'
+    template_name = 'app_manager/v2/summary.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
-        self.template_name = get_app_manager_template(
-            request.user,
-            self.template_name,
-            'app_manager/v2/summary.html',
-        )
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property

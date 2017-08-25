@@ -32,7 +32,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     prefix_usercase_properties,
     module_offers_search,
-    module_case_hierarchy_has_circular_reference, get_app_manager_template)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
@@ -68,23 +68,11 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(user, module):
     if isinstance(module, AdvancedModule):
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view_advanced.html",
-            "app_manager/v2/module_view_advanced.html",
-        )
+        return "app_manager/v2/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return get_app_manager_template(
-            user,
-            'app_manager/v1/module_view_report.html',
-            'app_manager/v2/module_view_report.html',
-        )
+        return "app_manager/v2/module_view_report.html"
     else:
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view.html",
-            "app_manager/v2/module_view.html",
-        )
+        return "app_manager/v2/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):
@@ -890,18 +878,14 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string(get_app_manager_template(
-            request.user,
-            'app_manager/v1/partials/build_errors.html',
-            'app_manager/v2/partials/build_errors.html',
-        ), {
+    response_html = render_to_string("app_manager/v2/partials/build_errors.html", {
         'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang
+        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})

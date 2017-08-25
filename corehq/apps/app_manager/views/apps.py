@@ -42,7 +42,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
-    get_app_manager_template,
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.domain.models import Domain
@@ -415,11 +414,7 @@ def export_gzip(req, domain, app_id):
 
 @require_can_edit_apps
 def import_app(request, domain):
-    template = get_app_manager_template(
-        request.user,
-        "app_manager/v1/import_app.html",
-        "app_manager/v2/import_app.html",
-    )
+    template = "app_manager/v2/import_app.html"
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
