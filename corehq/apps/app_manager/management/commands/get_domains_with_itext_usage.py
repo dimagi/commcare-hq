@@ -30,7 +30,7 @@ class Command(BaseCommand):
                     for form in module.get_forms():
                         try:
                             xform = form.wrapped_xform()
-                        except Exception as e:
+                        except Exception:
                             errors.append(ItextFetchError(domain, app.get_id, form.get_unique_id()))
                             continue
                         total_refs = len(xform.media_references(form=itext_type))
