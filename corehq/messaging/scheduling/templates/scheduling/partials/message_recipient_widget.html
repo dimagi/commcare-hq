@@ -23,11 +23,11 @@ $("#{{ id }}").select2({
     },
     initSelection: function(element, callback) {
         callback({{ initial_data|JSON }});
-        $(element).trigger('select-ready');
     },
     formatResult: function(e) { return e.name; },
-    formatSelection: function(e) { return e.name; }
+    formatSelection: function(e) { return e.name; },
 });
+$("#{{ id }}").select2("readonly", {{ readonly|BOOL }});
 
 });
 
