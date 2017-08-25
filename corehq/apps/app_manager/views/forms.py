@@ -675,7 +675,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         })
 
     context.update({'case_config_options': case_config_options})
-    return "app_manager/v2/form_view.html", context
+    return "app_manager/form_view.html", context
 
 
 @require_can_edit_apps
@@ -741,7 +741,7 @@ def xform_display(request, domain, form_unique_id):
 
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
-        return render(request, "app_manager/v2/xform_display.html", {
+        return render(request, "app_manager/xform_display.html", {
             'questions': questions_in_hierarchy(questions)
         })
     else:

@@ -366,7 +366,7 @@ def download_index(request, domain, app_id):
             extra_tags='html'
         )
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
-    return render(request, "app_manager/v2/download_index.html", {
+    return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
         'supports_j2me': request.app.build_spec.supports_j2me(),
@@ -395,7 +395,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
         if form.form_type == "shadow_form":
             # Don't display the blank form error if its a shadow form
             errors = [e for e in errors if e['type'] != "blank form"]
-        response_html = render_to_string("app_manager/v2/partials/build_errors.html", {
+        response_html = render_to_string("app_manager/partials/build_errors.html", {
             'request': request,
             'app': app,
             'form': form,

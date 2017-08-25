@@ -26,7 +26,7 @@ from couchexport.shortcuts import export_response
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/v2/summary.html'
+    template_name = 'app_manager/summary.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):

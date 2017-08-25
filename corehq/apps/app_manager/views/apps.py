@@ -414,7 +414,7 @@ def export_gzip(req, domain, app_id):
 
 @require_can_edit_apps
 def import_app(request, domain):
-    template = "app_manager/v2/import_app.html"
+    template = "app_manager/import_app.html"
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')

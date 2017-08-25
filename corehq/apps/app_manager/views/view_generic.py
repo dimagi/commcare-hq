@@ -78,7 +78,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         if app.application_version == APP_V1:
             _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-            return render(request, "app_manager/v2/no_longer_supported.html", {
+            return render(request, "app_manager/no_longer_supported.html", {
                 'domain': domain,
                 'app': app,
             })
@@ -141,9 +141,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     elif app:
         context.update(get_app_view_context(request, app))
 
-        template = ('app_manager/v2/app_view_release_manager.html'
+        template = ('app_manager/app_view_release_manager.html'
                        if release_manager
-                       else 'app_manager/v2/app_view_settings.html')
+                       else 'app_manager/app_view_settings.html')
         if release_manager:
             context.update(get_releases_context(request, domain, app_id))
         context.update({

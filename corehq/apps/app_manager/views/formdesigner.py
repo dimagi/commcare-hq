@@ -262,7 +262,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         ),
     })
 
-    response = render(request, "app_manager/v2/form_designer.html", context)
+    response = render(request, "app_manager/form_designer.html", context)
     return response
 
 

@@ -98,7 +98,7 @@ def direct_ccz(request, domain):
         errors = None
 
     if errors:
-        error_html = render_to_string("app_manager/v2/partials/build_errors.html", {
+        error_html = render_to_string("app_manager/partials/build_errors.html", {
             'request': request,
             'app': app,
             'build_errors': errors,
