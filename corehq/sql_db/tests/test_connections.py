@@ -66,9 +66,9 @@ class ConnectionManagerTests(SimpleTestCase):
                 'other': 'postgresql+psycopg2://:@localhost:5432/other',
             })
 
-            # test that load balancing works with a 15% margin for randomness
+            # test that load balancing works with a 10% margin for randomness
             total_requests = 10000
-            randomness_margin = total_requests * 0.015
+            randomness_margin = total_requests * 0.1
             total_weighting = sum(db[1] for db in reporting_dbs['ucr']['READ'])
             expected = {
                 alias: weight * total_requests / total_weighting
