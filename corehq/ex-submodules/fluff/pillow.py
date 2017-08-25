@@ -30,7 +30,7 @@ class FluffPillowProcessor(PillowProcessor):
         engine = getattr(cls, '_engine', None)
         if not engine:
             cls._engine = connection_manager.get_engine('default')
-        return engine
+        return cls._engine
 
     def _assert_valid(self):
         assert self.domains
