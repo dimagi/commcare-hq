@@ -80,7 +80,7 @@
           "type": "expression",
           "transform": {},
           "is_primary_key": false,
-          "is_nullable": false,
+          "is_nullable": true,
           "expression": {
             "value_expression": {
               "datatype": null,
