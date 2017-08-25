@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from dateutil.rrule import rrule, DAILY, MONTHLY, WEEKLY
+from dateutil.rrule import rrule, DAILY, MONTHLY
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -1605,30 +1605,34 @@ def get_awc_reports_pse(config, month, domain):
             ]
         ],
         'charts': [
-            [{
-                'key': 'AWC Days Open per week',
-                'values': [
-                    dict(
-                        x=key,
-                        y=value
-                    ) for key, value in open_count_chart.iteritems()
-                ],
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": BLUE
-            }],
-            [{
-                'key': 'PSE- Average Weekly Attendance',
-                'values': [
-                    dict(
-                        x=key,
-                        y=(sum(value) / len(value))
-                    ) for key, value in attended_children_chart.iteritems()
-                ],
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": BLUE
-            },]
+            [
+                {
+                    'key': 'AWC Days Open per week',
+                    'values': [
+                        dict(
+                            x=x_val,
+                            y=y_val
+                        ) for x_val, y_val in open_count_chart.iteritems()
+                    ],
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": BLUE
+                }
+            ],
+            [
+                {
+                    'key': 'PSE- Average Weekly Attendance',
+                    'values': [
+                        dict(
+                            x=x_val,
+                            y=(sum(y_val) / len(y_val))
+                        ) for x_val, y_val in attended_children_chart.iteritems()
+                    ],
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": BLUE
+                },
+            ]
         ],
         'map': {
             'markers': map_data,

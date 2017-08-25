@@ -1918,7 +1918,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     axisLabel: '',
                     tickFormat: function(d) {
                         return d3.format('.2f')(d);
-                    }
+                    },
                 },
             },
         };
