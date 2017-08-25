@@ -439,7 +439,7 @@ class AwcReportsView(View):
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)
-        location = "d5d0fce5e73ff2b04417f40bd2bc84c7"
+        location = request.GET.get('location_id', None)
         aggregation_level = 5
 
         config = {
