@@ -144,9 +144,6 @@ class ConnectionManager(object):
 
         self._add_django_db_from_settings_key(ICDS_UCR_ENGINE_ID, 'ICDS_UCR_DATABASE_ALIAS')
         self._add_django_db_from_settings_key(ICDS_TEST_UCR_ENGINE_ID, 'ICDS_UCR_TEST_DATABASE_ALIAS')
-        for custom_engine_id, custom_db_url in settings.CUSTOM_DATABASES:
-            assert custom_engine_id not in self.db_connection_map, custom_engine_id
-            self.db_connection_map[custom_engine_id] = custom_db_url
 
     def _populate_from_legacy_settings(self):
         sql_reporting_db_url = getattr(settings, 'SQL_REPORTING_DATABASE_URL', None)

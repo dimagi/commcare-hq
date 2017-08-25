@@ -71,11 +71,6 @@ if USE_PARTITIONED_DATABASE:
         },
     })
 
-# Custom databases can be used to configure a separate database for specific UCR data sources
-# The key is what you will reference in the datasource, e.g. 'custom_ucr_database'
-# The value is the sql connection string "postgresql://%(USER)s:%(PASSWORD)s@%(HOST)s:%(PORT)s/commcarehq_reporting" % DATABASES['default']
-CUSTOM_DATABASES = {}
-
 ####### Couch Config ######
 COUCH_HTTPS = False # recommended production value is True if enabling https
 COUCH_SERVER_ROOT = '127.0.0.1:5984' #6984 for https couch

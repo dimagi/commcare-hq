@@ -829,9 +829,6 @@ REPORTING_DATABASES = {
     'ucr': 'default'
 }
 
-# Override this in localsettings to specify custom reporting databases
-CUSTOM_DATABASES = {}
-
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
 
 USE_PARTITIONED_DATABASE = False
