@@ -220,11 +220,12 @@ def _output_progress(queue, total_docs):
         if total_dumped > 0:
             elapsed = str(timedelta(seconds=elapsed)).split('.')[0]
             print(
-                '{progress} of {total} ({dumped} dumped) processed in {elapsed} '
+                '{progress} of {total} ({percent}%) ({dumped} dumped) processed in {elapsed} '
                 '(Estimated completion in {remaining}) '
                 '(Avg processing rate: {rate} docs per sec)'.format(
                     progress=progress,
                     total=total_docs,
+                    percent=int(progress * 100 / total_docs),
                     dumped=total_dumped,
                     elapsed=elapsed,
                     remaining=time_remaining,
