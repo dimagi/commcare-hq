@@ -20,7 +20,7 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
+from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
@@ -59,7 +59,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -405,7 +405,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
-        "display_style": None
+        "display_style": None,
+        "custom_icon_form": None,
+        "custom_icon_text_body": None,
+        "custom_icon_xpath": None,
     }
 
     if attr not in attributes:
@@ -427,6 +430,14 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     module = app.get_module(module_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
+    if should_edit("custom_icon_form"):
+        error_message = handle_custom_icon_edits(request, module, lang)
+        if error_message:
+            return json_response(
+                {'message': error_message},
+                status_code=400
+            )
+
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):

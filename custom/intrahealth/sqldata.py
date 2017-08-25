@@ -555,7 +555,8 @@ class TauxConsommationData(BaseSqlData):
                                       MeanColumn('stock_total', alias="stock"),
                                       format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
-                                       [AliasColumn('stock'), AliasColumn('consumption')]))
+                                       [AliasColumn('stock'), AliasColumn('consumption')],
+                                       slug='taux-consommation'))
         return columns
 
     def calculate_total_row(self, rows):

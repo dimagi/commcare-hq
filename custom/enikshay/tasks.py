@@ -53,12 +53,12 @@ DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
 CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
 cache = get_redis_client()
 
-# ToDo: Enable post migration
-# @periodic_task(
-#     bind=True,
-#     run_every=crontab(hour=0, minute=0),  # every day at midnight
-#     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
-# )
+
+@periodic_task(
+    bind=True,
+    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
+)
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
@@ -67,6 +67,10 @@ def enikshay_task(self):
 
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
+        if toggles.DATA_MIGRATION.enabled(domain):
+            # Don't run this on the india cluster anymore
+            continue
+
         try:
             updater = EpisodeUpdater(domain, task_id=task_id)
             updater.run()

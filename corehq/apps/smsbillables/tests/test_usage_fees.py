@@ -92,7 +92,7 @@ class TestUsageFee(TestCase):
                     )
 
     @patch(
-        'twilio.rest.resources.messages.Messages.get',
+        'twilio.rest.api.v2010.account.message.MessageList.get',
         lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
     )
     def test_twilio_multipart_usage_charge(self):

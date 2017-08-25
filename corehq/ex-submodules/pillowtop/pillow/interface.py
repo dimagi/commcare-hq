@@ -176,26 +176,6 @@ class PillowBase(object):
             ])
 
     def _record_change_in_datadog(self, change, timer):
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-        change_feed = self.get_change_feed()
-        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
-        current_offsets = change_feed.get_latest_offsets()
-
-        tags = [
-            'pillow_name:{}'.format(self.get_name()),
-            'feed_type:{}'.format('kafka' if isinstance(change_feed, KafkaChangeFeed) else 'couch')
-        ]
-        for topic, value in current_seq.iteritems():
-            tags_with_topic = tags + [_topic_for_ddog(topic), ]
-            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=tags_with_topic)
-            if topic in current_offsets:
-                needs_processing = current_offsets[topic] - value
-                datadog_gauge('commcare.change_feed.need_processing', needs_processing, tags=tags_with_topic)
-
-        for topic, offset in current_offsets.iteritems():
-            tags_with_topic = tags + [_topic_for_ddog(topic), ]
-            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=tags_with_topic)
-
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
     def _record_change_success_in_datadog(self, change):
