@@ -4,6 +4,9 @@ import sys
 from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.domain.models import Domain
+import logging
+
+logger = logging.getLogger('itextlog')
 
 ItextFetchError = namedtuple('ItextFetchError', 'domain app form')
 
@@ -16,8 +19,17 @@ class Command(BaseCommand):
             'itext_type',
             help='audio, expanded-audio, video, etc.',
         )
+        parser.add_argument(
+            'log_file',
+        )
 
-    def handle(self, itext_type, **options):
+    def handle(self, itext_type, log_file, **options):
+
+        hdlr = logging.FileHandler(log_file)
+        formatter = logging.Formatter('%(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
+
         domains = [row['key'] for row in Domain.get_all(include_docs=False)]
         domain_data = {}
         errors = []
@@ -49,21 +61,19 @@ class Command(BaseCommand):
                     'total_refs': sum([a['total_refs'] for a in app_data.values()]),
                     'total_forms': sum([a['total_forms'] for a in app_data.values()]),
                 }
-        print('\n\n')
-        print('DOMAINS USING "{}"'.format(itext_type))
-        print('domain name\t# apps\t# forms\t# references')
+        logger.info('DOMAINS USING "{}"'.format(itext_type))
+        logger.info('domain name\t# apps\t# forms\t# references')
         for domain, data in domain_data.items():
-            print('{}\t{}\t{}\t{}'.format(
+            logger.info('{}\t{}\t{}\t{}'.format(
                 domain,
                 data['total_apps'],
                 data['total_forms'],
                 data['total_refs']
             ))
 
-        print('\n\nERRORS')
+            logger.info('\n\nERRORS')
         for error in errors:
-            print('Error getting form {} in app {} from domain {}'.format(
+            logger.info('Error getting form {} in app {} from domain {}'.format(
                 error.form, error.app, error.domain
             ))
 
-        print('\n\n')
