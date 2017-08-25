@@ -10,7 +10,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Institutional deliveries";
+    vm.label = "Institutional deliveries";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/institutional_deliveries/map', label: 'Map'},

@@ -10,7 +10,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Children initiated appropriate complementary feeding";
+    vm.label = "Children initiated appropriate complementary feeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/children_initiated/map', label: 'Map'},

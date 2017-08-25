@@ -324,7 +324,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='stunting_normal'
             ),
             AggregateColumn(
-                'Percent children immunized with 1st year immunizations ',
+                'Percent children immunized with 1st year immunizations',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumColumn('fully_immunized_on_time'),

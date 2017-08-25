@@ -10,7 +10,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Medicine Kit";
+    vm.label = "AWCs with Medicine Kit";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/medicine_kit/map', label: 'Map'},

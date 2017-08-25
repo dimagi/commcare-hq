@@ -381,7 +381,7 @@ def get_maternal_child_data(config):
         'records': [
             [
                 {
-                    'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
+                    'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                         "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
@@ -512,7 +512,7 @@ def get_maternal_child_data(config):
                     'redirect': 'early_initiation'
                 },
                 {
-                    'label': _('Exclusive breastfeeding'),
+                    'label': _('Exclusive Breastfeeding'),
                     'help_text': _((
                         "Percentage of children between 0 - 6 months exclusively breastfed. An infant is "
                         "exclusively breastfed if they recieve only breastmilk with no additional food, "
@@ -539,7 +539,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('Children initiated appropriate complementary feeding'),
+                    'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': _((
                         "Percentage of children between 6 - 8 months given timely introduction to solid or "
                         "semi-solid food. Timely intiation of complementary feeding in addition to "
@@ -564,7 +564,7 @@ def get_maternal_child_data(config):
                     'redirect': 'children_initiated'
                 },
                 {
-                    'label': _('Institutional deliveries'),
+                    'label': _('Institutional Deliveries'),
                     'help_text': _((
                         "Percentage of pregant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
@@ -843,8 +843,8 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Adolescent Girls (11-14 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 14 years) who are registered'),
+                    'label': _('Adolescent Girls (11-18 years)'),
+                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
                     'percent': percent_increase(
                         'person_adolescent_all',
                         yesterday_data,
@@ -861,9 +861,9 @@ def get_demographics_data(yesterday, config):
                 }
             ], [
                 {
-                    'label': _('Adolescent Girls (11-14 years) enrolled for ICDS services'),
+                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
                     'help_text': _((
-                        "Total number of adolescent girls (11 - 14 years) "
+                        "Total number of adolescent girls (11 - 18 years) "
                         "who are registered and enrolled for ICDS services"
                     )),
                     'percent': percent_increase(
@@ -881,7 +881,7 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('% Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar seeded beneficaries'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
@@ -1612,7 +1612,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Wasting (weight-for-height)'),
+                    'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -1633,7 +1633,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             ],
             [
                 {
-                    'label': _('% Stunting (height-for-age)'),
+                    'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard "
                         "deviations of the WHO Child Growth Standards median. Stunting in children is a "
@@ -1652,7 +1652,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Newborns with Low Birth Weight'),
+                    'label': _('Newborns with Low Birth Weight'),
                     'help_text': None,
                     'percent': percent_diff(
                         'low_birth',
@@ -1668,7 +1668,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             ],
             [
                 {
-                    'label': _('% Early Initiation of Breastfeeding'),
+                    'label': _('Early Initiation of Breastfeeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'birth',
@@ -1682,7 +1682,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Exclusive breastfeeding'),
+                    'label': _('Exclusive breastfeeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'month_ebf',
@@ -1698,7 +1698,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             ],
             [
                 {
-                    'label': _('% Children initiated appropriate complementary feeding'),
+                    'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'month_cf',
@@ -1712,7 +1712,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Immunization coverage (at age 1 year)'),
+                    'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
                         "Percentage of children 1 year+ who have recieved complete immunization as per "
                         "National Immunization Schedule of India required by age 1"

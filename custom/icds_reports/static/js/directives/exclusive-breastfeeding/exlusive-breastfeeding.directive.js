@@ -10,7 +10,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Exclusive Breastfeeding";
+    vm.label = "Exclusive Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/exclusive_breastfeeding/map', label: 'Map'},

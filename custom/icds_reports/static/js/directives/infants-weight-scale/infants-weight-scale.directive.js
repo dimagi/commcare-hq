@@ -10,7 +10,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Weighing Scale: Infants";
+    vm.label = "AWCs with Weighing Scale: Infants";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/infants_weight_scale/map', label: 'Map'},

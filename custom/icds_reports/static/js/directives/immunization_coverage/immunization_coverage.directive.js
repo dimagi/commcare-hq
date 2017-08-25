@@ -10,7 +10,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Immunization coverage (at age 1 year)";
+    vm.label = "Immunization coverage (at age 1 year)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/immunization_coverage/map', label: 'Map'},
