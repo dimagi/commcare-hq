@@ -911,6 +911,8 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 ASYNC_INDICATORS_TO_QUEUE = 10000
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
+MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
 from env_settings import *
 
 try:
@@ -1561,8 +1563,6 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_CF_VISITS_COMPLETE":
         "custom.icds.messaging.custom_content.cf_visits_complete",
 }
-
-MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
 # Used by the old reminders framework
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
