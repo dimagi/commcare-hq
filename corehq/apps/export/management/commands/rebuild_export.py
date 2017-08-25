@@ -198,9 +198,11 @@ def _output_progress(queue, total_docs):
     progress = total_dumped = 0
     start = time.time()
     while total_dumped == 0 or progress < total_dumped:
-        pages = page_progress.keys() or [1]
         try:
-            for p in pages:
+            poll_start = time.time()
+            while True:
+                if (time.time() - poll_start) > 20:
+                    break
                 value = queue.get(timeout=10)
                 page_progress[value.page] = value
         except Empty:
