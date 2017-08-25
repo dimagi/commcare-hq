@@ -96,6 +96,7 @@ class PromptSettingsUpdateView(FormView, ApplicationViewMixin):
         config.app_prompt = form.cleaned_data['app_prompt']
         config.apk_prompt = form.cleaned_data['apk_prompt']
         config.apk_version = form.cleaned_data['apk_version']
+        config.app_version = form.cleaned_data['app_version']
         config.save()
         return super(PromptSettingsUpdateView, self).form_valid(form)
 

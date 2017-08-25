@@ -6279,6 +6279,7 @@ class GlobalAppConfig(Document):
 
     # corresponding versions to which user should be prompted to update to
     apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
+    app_version = IntegerProperty(default=LATEST_APP_VALUE)
 
     @classmethod
     def for_app(cls, app):
