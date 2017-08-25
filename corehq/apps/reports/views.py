@@ -9,6 +9,8 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.locations.permissions import conditionally_location_safe, \
+    report_class_is_location_safe
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
@@ -2008,6 +2010,16 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
+def _is_location_safe_report_class(request, domain, export_hash, format):
+    cache = get_redis_client()
+
+    content = cache.get(export_hash)
+    if content is not None:
+        report_class, report_file = content
+        return report_class_is_location_safe(report_class)
+
+
+@conditionally_location_safe(_is_location_safe_report_class)
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
