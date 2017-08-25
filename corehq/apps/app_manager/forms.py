@@ -10,6 +10,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
 from corehq.toggles import LINKED_APPS
 
+from .models import LATEST_APK_VALUE
 from .util import get_commcare_builds
 
 
@@ -110,10 +111,10 @@ class PromptUpdateSettingsForm(forms.Form):
         request_user = kwargs.pop('request_user')
         super(PromptUpdateSettingsForm, self).__init__(*args, **kwargs)
 
-        self.fields['apk_version'].choices = [
+        self.fields['apk_version'].choices = [(LATEST_APK_VALUE, 'Latest Released Build')] +[
             (build.to_string(), 'CommCare {}'.format(build.get_label()))
             for build in get_commcare_builds(request_user)
-        ] + [('wrong', 'bad')]
+        ]
 
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
@@ -156,13 +157,16 @@ class PromptUpdateSettingsForm(forms.Form):
         return cls(domain=app.domain, app_id=app.id, request_user=request_user, initial={
             'app_prompt': app_config.app_prompt,
             'apk_prompt': app_config.apk_prompt,
-            'apk_version': app_config.apk_version.to_string()
+            'apk_version': app_config.apk_version
         })
 
     def clean_apk_version(self):
         apk_version = self.cleaned_data['apk_version']
+        if apk_version == LATEST_APK_VALUE:
+            return apk_version
         try:
-            return BuildSpec.from_string(apk_version)
+            BuildSpec.from_string(apk_version)
+            return apk_version
         except ValueError:
             raise forms.ValidationError(
                 _('Invalid APK version %(version)s'), params={'version': apk_version})
