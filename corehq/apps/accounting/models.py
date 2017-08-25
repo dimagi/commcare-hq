@@ -586,14 +586,13 @@ class SoftwareProduct(models.Model):
     Specifies a product name that can be included in a subscription. e.g. CommTrack Pro, CommCare Community, etc.
     """
     name = models.CharField(max_length=40, unique=True)
-    product_type = models.CharField(max_length=25, db_index=True, choices=SoftwareProductType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'accounting'
 
     def __str__(self):
-        return "Software Product '%s' of type '%s'" % (self.name, self.product_type)
+        return "Software Product '%s'" % self.name
 
     def get_rate(self, default_instance=True):
         try:
