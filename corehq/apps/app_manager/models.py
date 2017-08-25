@@ -1027,7 +1027,11 @@ class FormBase(DocumentSchema):
         meta = {
             'form_type': self.form_type,
             'module': module.get_module_info() if module else {},
-            'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
+            'form': {
+                "id": self.id if hasattr(self, 'id') else None,
+                "name": self.name,
+                'unique_id': self.unique_id,
+            }
         }
 
         xml_valid = False
@@ -2339,6 +2343,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         return {
             'id': self.id,
             'name': self.name,
+            'unique_id': self.unique_id,
         }
 
     def get_app(self):
