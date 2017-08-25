@@ -469,7 +469,6 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
             )
-        raise Exception()
         if show_es_issue:
             messages.error(
                 self.request,
