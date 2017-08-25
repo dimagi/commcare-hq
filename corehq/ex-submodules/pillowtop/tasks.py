@@ -4,7 +4,11 @@ from django.conf import settings
 
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.decorators import serial_task
+from corehq.util.soft_assert import soft_assert
 from pillowtop.utils import get_all_pillows_json
+
+
+_assert = soft_assert("{}@{}".format('jemord', 'dimagi.com'))
 
 
 @periodic_task(run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
@@ -28,17 +32,19 @@ def pillow_datadog_metrics():
 
         for topic_name, offset in pillow['offsets'].items():
             if _is_couch(pillow):
-                assert isinstance(pillow['seq'], int)
-                assert len(pillow['offsets']) == 1
+                if not isinstance(pillow['seq'], int) or len(pillow['offsets']) != 1:
+                    _assert(False, "Unexpected couch pillow format {}".format(pillow['name']))
+                    continue
                 tags_with_topic = tags + ['topic:{}'.format(topic_name)]
                 processed_offset = pillow['seq']
             else:
-                assert isinstance(pillow['seq'], dict)
+                if not isinstance(pillow['seq'], dict) or len(pillow['offsets']) != len(pillow['seq']):
+                    _assert(False, "Unexpected kafka pillow format {}".format(pillow['name']))
+                    continue
                 if not pillow['seq']:
                     # this pillow has never been initialized.
                     # (custom pillows on most environments)
                     continue
-                assert len(pillow['offsets']) == len(pillow['seq'])
                 topic, partition = topic_name.split(',')
                 tags_with_topic = tags + ['topic:{}-{}'.format(topic, partition)]
                 processed_offset = pillow['seq'][topic_name]
