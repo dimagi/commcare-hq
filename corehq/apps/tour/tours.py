@@ -26,8 +26,3 @@ class StaticGuidedTour(object):
 
     def is_enabled(self, user):
         return not GuidedTour.has_seen_tour(user, self.slug)
-
-
-NEW_APP = StaticGuidedTour(
-    'new_app', 'tour/config/new_app.html'
-)

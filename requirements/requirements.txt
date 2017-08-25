@@ -63,7 +63,7 @@ reportlab==3.0
 stripe==1.12.2
 django-compressor==2.1
 django-angular==0.7.16
-Pycco==0.3.0
+Pycco==0.5.1
 django-mptt==0.8.7
 jsonpath-rw==1.4.0
 pip>=6.1.1

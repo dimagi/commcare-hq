@@ -54,7 +54,19 @@ def _uses_detail_format(module, column_format):
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
 
-_RELEASE_DATE = datetime(2017, 7, 31, 20)
+# Apps that were created before add-ons were released get the original set of add-ons enabled
+# automatically, so they wouldn't get functionality suddenly turned off during the release.
+def _grandfathered(slug, app):
+    release_date = datetime(2017, 7, 31, 20)
+    if slug not in [
+        "conditional_form_actions", "subcases", "case_list_menu_item", "enum_image", "menu_mode",
+        "register_from_case_list", "display_conditions", "conditional_enum", "calc_xpaths",
+        "advanced_itemsets", "case_detail_overwrite",
+    ]:
+        return False
+    domain = Domain.get_by_name(app.domain)
+    return (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < release_date
+
 
 _ADD_ONS = {
     "advanced_itemsets": AddOn(
@@ -182,11 +194,8 @@ def show(slug, request, app, module=None, form=None):
     if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
         return True
 
-    # Show if app has no add-ons and domain was created before add-ons were released
-    if not app.add_ons and slug != 'custom_icon_badges':
-        domain = Domain.get_by_name(app.domain)
-        if (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE:
-            return True
+    if _grandfathered(slug, app):
+        return True
 
     # Show if add-on has been enabled for app
     show = slug in app.add_ons and app.add_ons[slug]
@@ -252,7 +261,5 @@ def init_app(request, app):
             enable = enable or any([add_on.used_in_module(m) for m in app.modules])
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
 
-            # Turn on if this domain was created prior to add-ons release
-            if slug != 'empty_case_lists' and slug != 'custom_icon_badges' and slug not in previews:
-                enable = enable or (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < _RELEASE_DATE
+            enable = enable or _grandfathered(slug, app)
         app.add_ons[slug] = enable
