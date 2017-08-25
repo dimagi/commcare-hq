@@ -2,7 +2,6 @@ import random
 from contextlib import contextmanager
 from urllib import urlencode
 
-import itertools
 from django.conf import settings
 import sqlalchemy
 from sqlalchemy.orm.scoping import scoped_session

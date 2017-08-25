@@ -1,7 +1,3 @@
-import random
-
-from django.conf import settings
-
 from corehq.sql_db.connections import connection_manager
 
 
