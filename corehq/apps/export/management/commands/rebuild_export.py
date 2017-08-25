@@ -129,15 +129,15 @@ class Command(BaseCommand):
         final_path = tempfile.mktemp()
         base_name = safe_filename(export_instance.name or 'Export')
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
-            for page, file in export_files:
+            for page, export_path in export_files:
                 print('  Adding page {} to final file'.format(page))
                 if is_zip:
-                    with zipfile.ZipFile(file.path, 'r') as page_file:
+                    with zipfile.ZipFile(export_path, 'r') as page_file:
                         for path in page_file.namelist():
                             prefix, suffix = path.rsplit('/', 1)
                             z.writestr('{}/{}_{}'.format(prefix, page, suffix), page_file.open(path).read())
                 else:
-                    z.write(file.path, '{}_{}'.format(base_name, page))
+                    z.write(export_path, '{}_{}'.format(base_name, page))
 
         print('Uploading final export')
         with open(final_path, 'r') as payload:
@@ -152,7 +152,8 @@ def run_export(export_instance, page_number, dump_path, doc_count):
     progress_tracker = LoggingProgressTracker(page_number, run_export.queue, update_frequency)
     export_file = get_export_file(export_instance, docs, progress_tracker)
     run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
-    return page_number, export_file
+    print('    Processing page {} complete'.format(page_number))
+    return page_number, export_file.path
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
