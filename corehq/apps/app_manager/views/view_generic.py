@@ -141,9 +141,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     elif app:
         context.update(get_app_view_context(request, app))
 
-        template = ('app_manager/app_view_release_manager.html'
-                       if release_manager
-                       else 'app_manager/app_view_settings.html')
+        template = 'app_manager/app_view_settings.html'
+        if release_manager:
+            template = 'app_manager/app_view_release_manager.html'
         if release_manager:
             context.update(get_releases_context(request, domain, app_id))
         context.update({
