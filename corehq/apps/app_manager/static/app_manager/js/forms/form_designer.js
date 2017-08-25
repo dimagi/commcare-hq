@@ -1,8 +1,7 @@
 /* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
     $(function() {
-        var v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
@@ -31,26 +30,22 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         });
 
         // Add callbacks to core, which has already been provided by the server
-        if (v2) {
-            VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
-                formLoadingCallback: function() {
-                    $('#formdesigner').addClass('loading');
-                },
-                formLoadedCallback: function() {
-                    $('#formdesigner').removeClass('loading');
-                    $('#formdesigner .fd-content-left .fd-head-text').before(
-                        $('#fd-hq-edit-formname-button').html()
-                    );
-                },
-            });
-        }
+        VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
+            formLoadingCallback: function() {
+                $('#formdesigner').addClass('loading');
+            },
+            formLoadedCallback: function() {
+                $('#formdesigner').removeClass('loading');
+                $('#formdesigner .fd-content-left .fd-head-text').before(
+                    $('#fd-hq-edit-formname-button').html()
+                );
+            },
+        });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
             onFormSave: function(data) {
                 var app_manager = hqImport('app_manager/js/app_manager');
                 app_manager.updateDOM(data.update);
-                if (v2) {
-                    $('.js-preview-toggle').removeAttr('disabled');
-                }
+                $('.js-preview-toggle').removeAttr('disabled');
                 if (initial_page_data("days_since_created")) {
                     analytics.workflow('Saved the Form Builder within first 24 hours');
                 }
@@ -101,10 +96,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         require(["jquery", "jquery.vellum", "moment"], function ($) {
             $(function () {
                 $("#edit").hide();
-                if (!v2) {
-                    $('#hq-footer').hide();
-                }
-
+                $('#hq-footer').hide();
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
 
                 var notification_options = initial_page_data("notification_options");
@@ -123,50 +115,48 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
-        if (v2) {
-            var previewApp = hqImport('app_manager/js/preview_app');
+        var previewApp = hqImport('app_manager/js/preview_app');
 
-            if (initial_page_data('form_uses_cases')) {
-                // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-                var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                    attempts = attempts || 0;
-                    if ($(selector).length) {
-                        var $toggleParent = $(selector);
-                        $toggleParent.prepend(layout);
-                        callback();
-                    } else if (attempts <= 30) {
-                        // give up appending element after waiting 30 seconds to load
-                        setTimeout(function () {
-                            _prependTemplateToSelector(selector, layout, attempts++, callback);
-                        }, 1000);
-                    }
-                };
-                _prependTemplateToSelector(
-                    '.fd-form-actions',
-                    $('#js-fd-manage-case').html(),
-                    0,
-                    function () {
-                    }
-                );
-            }
-
-            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
-                editDetails = hqImport('app_manager/js/forms/edit_form_details');
-            editDetails.initName(
-                initial_page_data("form_name"),
-                reverse("edit_form_attr", "name")
+        if (initial_page_data('form_uses_cases')) {
+            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
+            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
+                attempts = attempts || 0;
+                if ($(selector).length) {
+                    var $toggleParent = $(selector);
+                    $toggleParent.prepend(layout);
+                    callback();
+                } else if (attempts <= 30) {
+                    // give up appending element after waiting 30 seconds to load
+                    setTimeout(function () {
+                        _prependTemplateToSelector(selector, layout, attempts++, callback);
+                    }, 1000);
+                }
+            };
+            _prependTemplateToSelector(
+                '.fd-form-actions',
+                $('#js-fd-manage-case').html(),
+                0,
+                function () {
+                }
             );
-            editDetails.initComment(
-                initial_page_data("form_comment").replace(/\\n/g, "\n"),
-                reverse("edit_form_attr", "comment")
-            );
-            editDetails.setUpdateCallbackFn(function (name) {
-                $('#formdesigner .fd-content-left .fd-head-text').text(name);
-                $('.variable-form_name').text(name);
-                hqImport('app_manager/js/app_manager').updatePageTitle(name);
-                $('#edit-form-name-modal').modal('hide');
-            });
-            $('#edit-form-name-modal').koApplyBindings(editDetails);
         }
+
+        var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+            editDetails = hqImport('app_manager/js/forms/edit_form_details');
+        editDetails.initName(
+            initial_page_data("form_name"),
+            reverse("edit_form_attr", "name")
+        );
+        editDetails.initComment(
+            initial_page_data("form_comment").replace(/\\n/g, "\n"),
+            reverse("edit_form_attr", "comment")
+        );
+        editDetails.setUpdateCallbackFn(function (name) {
+            $('#formdesigner .fd-content-left .fd-head-text').text(name);
+            $('.variable-form_name').text(name);
+            hqImport('app_manager/js/app_manager').updatePageTitle(name);
+            $('#edit-form-name-modal').modal('hide');
+        });
+        $('#edit-form-name-modal').koApplyBindings(editDetails);
     });
 });
