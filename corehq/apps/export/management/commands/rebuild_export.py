@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import gzip
 import json
+import logging
 import multiprocessing
 import os
 import tempfile
@@ -11,6 +12,7 @@ from Queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 
+from django.core.management import color_style
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
@@ -22,6 +24,9 @@ from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
+
+
+logger = logging.getLogger(__name__)
 
 
 class DumpOutput(object):
@@ -56,6 +61,10 @@ class DumpOutput(object):
 
 
 ProgressValue = namedtuple('ProgressValue', 'page progress total')
+
+Result = namedtuple('Result', 'success page export_path')
+
+style = color_style()
 
 
 class Command(BaseCommand):
@@ -99,7 +108,7 @@ class Command(BaseCommand):
         def _process_page(pool, output):
             args = export_instance, output.page, output.path, output.page_size
             progress_queue.put(ProgressValue(output.page, 0, output.page_size))
-            results.append(pool.apply_async(run_export, args=args))
+            results.append(pool.apply_async(run_export_safe, args=args))
             print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
 
         def _set_queue(queue):
@@ -117,7 +126,14 @@ class Command(BaseCommand):
             if dump_output.page_size:
                 _process_page(pool, dump_output)
 
-        export_files = [p.get() for p in results]
+        export_results = []
+        for res in results:
+            try:
+                export_results.append(res.get())
+            except Exception:
+                logger.exception("Error getting results")
+                export_results.append(Result(False, None, None))
+
         try:
             progress.terminate()
         except:
@@ -129,22 +145,38 @@ class Command(BaseCommand):
         final_path = tempfile.mktemp()
         base_name = safe_filename(export_instance.name or 'Export')
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
-            for page, export_path in export_files:
-                if not export_path:  # might be None
+            for result in export_results:
+                if not result.success:
+                    print(style.ERROR('  Error in page {} so not added to final output'.format(result.page)))
                     continue
-                print('  Adding page {} to final file'.format(page))
+
+                print('  Adding page {} to final file'.format(result.page))
                 if is_zip:
-                    with zipfile.ZipFile(export_path, 'r') as page_file:
+                    with zipfile.ZipFile(result.export_path, 'r') as page_file:
                         for path in page_file.namelist():
                             prefix, suffix = path.rsplit('/', 1)
-                            z.writestr('{}/{}_{}'.format(prefix, page, suffix), page_file.open(path).read())
+                            z.writestr('{}/{}_{}'.format(prefix, result.page, suffix), page_file.open(path).read())
                 else:
-                    z.write(export_path, '{}_{}'.format(base_name, page))
+                    z.write(result.export_path, '{}_{}'.format(base_name, result.page))
 
         print('Uploading final export')
         with open(final_path, 'r') as payload:
             _save_export_payload(export_instance, payload)
         os.remove(final_path)
+        self.stdout.write(self.style.SUCCESS('...'))
+
+
+def run_export_safe(export_instance, page_number, dump_path, doc_count):
+    tries = 1
+    while tries < 3:
+        try:
+            return run_export(export_instance, page_number, dump_path, doc_count)
+        except Exception:
+            tries += 1
+            logger.exception("Error processing page {}".format(page_number))
+
+    print(style.ERROR('    Unable to process page {} after {} tries'.format(page_number, tries)))
+    return Result(False, page_number, None)
 
 
 def run_export(export_instance, page_number, dump_path, doc_count):
@@ -155,7 +187,7 @@ def run_export(export_instance, page_number, dump_path, doc_count):
     export_file = get_export_file(export_instance, docs, progress_tracker)
     run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
     print('    Processing page {} complete'.format(page_number))
-    return page_number, export_file.path or ''  # suspect that perhaps this is None sometimes
+    return Result(True, page_number, export_file.path)
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
