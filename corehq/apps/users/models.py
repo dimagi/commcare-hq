@@ -894,6 +894,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     class InvalidID(Exception):
         pass
 
+    class UnsuportedOperation(Exception):
+        pass
+
     def __repr__(self):
         # copied from jsonobject/base.py
         name = self.__class__.__name__
@@ -1354,20 +1357,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def to_be_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
-
-    def change_username(self, username):
-        if username == self.username:
-            return
-
-        if User.objects.filter(username=username).exists():
-            raise self.Inconsistent("User with username %s already exists" % username)
-
-        django_user = self.get_django_user()
-        django_user.DO_NOT_SAVE_COUCH_USER = True
-        django_user.username = username
-        django_user.save()
-        self.username = username
-        self.save()
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
