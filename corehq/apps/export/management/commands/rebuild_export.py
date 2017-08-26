@@ -117,22 +117,35 @@ class Command(BaseCommand):
         pool = multiprocessing.Pool(processes=processes, initializer=_set_queue, initargs=[progress_queue])
         dump_output = DumpOutput(export_id)
         print('Starting data dump of {} docs'.format(total_docs))
-        with dump_output:
-            for index, doc in enumerate(_get_export_documents(export_instance, filters)):
-                dump_output.write(doc)
-                if dump_output.page_size == page_size:
-                    _process_page(pool, dump_output)
-                    dump_output.next_page()
-            if dump_output.page_size:
-                _process_page(pool, dump_output)
 
-        export_results = []
-        for res in results:
-            try:
-                export_results.append(res.get())
-            except Exception:
-                logger.exception("Error getting results")
-                export_results.append(Result(False, None, None))
+        try:
+            with dump_output:
+                for index, doc in enumerate(_get_export_documents(export_instance, filters)):
+                    dump_output.write(doc)
+                    if dump_output.page_size == page_size:
+                        _process_page(pool, dump_output)
+                        dump_output.next_page()
+                if dump_output.page_size:
+                    _process_page(pool, dump_output)
+
+            export_results = []
+            while results:
+                result = results[0]
+                try:
+                    export_results.append(result.get(timeout=5))
+                    results.pop(0)
+                except KeyboardInterrupt:
+                    raise
+                except multiprocessing.TimeoutError:
+                    pass
+                except Exception:
+                    logger.exception("Error getting results")
+                    export_results.append(Result(False, None, None))
+                    results.pop(0)
+        except KeyboardInterrupt:
+            for p in multiprocessing.active_children():
+                p.terminate()
+            raise
 
         try:
             progress.terminate()
@@ -163,12 +176,12 @@ class Command(BaseCommand):
         with open(final_path, 'r') as payload:
             _save_export_payload(export_instance, payload)
         os.remove(final_path)
-        self.stdout.write(self.style.SUCCESS('...'))
+        self.stdout.write(self.style.SUCCESS('Rebuild Complete'))
 
 
 def run_export_safe(export_instance, page_number, dump_path, doc_count):
     tries = 1
-    while tries < 3:
+    while tries <= 3:
         try:
             return run_export(export_instance, page_number, dump_path, doc_count)
         except Exception:
