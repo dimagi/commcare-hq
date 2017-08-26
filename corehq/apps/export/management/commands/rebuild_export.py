@@ -158,12 +158,13 @@ class Command(BaseCommand):
         final_path = tempfile.mktemp()
         base_name = safe_filename(export_instance.name or 'Export')
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+            pages = len(export_results)
             for result in export_results:
                 if not result.success:
                     print(style.ERROR('  Error in page {} so not added to final output'.format(result.page)))
                     continue
 
-                print('  Adding page {} to final file'.format(result.page))
+                print('  Adding page {} of {} to final file'.format(result.page, pages))
                 if is_zip:
                     with zipfile.ZipFile(result.export_path, 'r') as page_file:
                         for path in page_file.namelist():
