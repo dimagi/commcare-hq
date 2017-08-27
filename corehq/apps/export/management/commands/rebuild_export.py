@@ -62,7 +62,14 @@ class DumpOutput(object):
 
 ProgressValue = namedtuple('ProgressValue', 'page progress total')
 
-Result = namedtuple('Result', 'success page export_path')
+SuccessResult = namedtuple('SuccessResult', 'success page export_path')
+RetryResult = namedtuple('RetryResult', 'page path page_size retry_count')
+
+
+class QueuedResult(namedtuple('QueuedResult', 'async_result page path page_size retry_count')):
+    def as_retry(self):
+        return RetryResult(self.page, self.path, self.page_size, self.retry_count + 1)
+
 
 style = color_style()
 
@@ -106,10 +113,16 @@ class Command(BaseCommand):
         progress.start()
 
         def _process_page(pool, output):
-            args = export_instance, output.page, output.path, output.page_size
-            progress_queue.put(ProgressValue(output.page, 0, output.page_size))
-            results.append(pool.apply_async(run_export_safe, args=args))
-            print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
+            retry_count = 0
+            if isinstance(output, RetryResult):
+                retry_count = output.retry_count
+            else:
+                progress_queue.put(ProgressValue(output.page, 0, output.page_size))
+                print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
+
+            args = export_instance, output.page, output.path, output.page_size, retry_count
+            result = pool.apply_async(run_export_safe, args=args)
+            results.append(QueuedResult(result, output.page, output.path, output.page_size, retry_count))
 
         def _set_queue(queue):
             run_export.queue = queue
@@ -130,18 +143,29 @@ class Command(BaseCommand):
 
             export_results = []
             while results:
-                result = results[0]
+                queued_result = results[0]
                 try:
-                    export_results.append(result.get(timeout=5))
+                    result = queued_result.async_result.get(timeout=5)
                     results.pop(0)
+                    if isinstance(result, SuccessResult):
+                        export_results.append(result)
+                    elif result.retry_count < 3:
+                        # retry
+                        print('Retry:', result)
+                        _process_page(pool, result)
+                    else:
+                        export_results.append(result)
                 except KeyboardInterrupt:
                     raise
                 except multiprocessing.TimeoutError:
                     pass
                 except Exception:
-                    logger.exception("Error getting results")
-                    export_results.append(Result(False, None, None))
+                    logger.exception("Error getting results: %s", queued_result)
                     results.pop(0)
+                    if queued_result.retry_count < 3:
+                        _process_page(pool, queued_result.as_retry())
+                    else:
+                        export_results.append(queued_result.as_retry())
         except KeyboardInterrupt:
             for p in multiprocessing.active_children():
                 p.terminate()
@@ -160,8 +184,12 @@ class Command(BaseCommand):
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             pages = len(export_results)
             for result in export_results:
-                if not result.success:
+                if not isinstance(result, SuccessResult):
                     print(style.ERROR('  Error in page {} so not added to final output'.format(result.page)))
+                    if isinstance(result, RetryResult) and os.path.exists(result.path):
+                        raw_dump_path = result.path
+                        print('    Adding raw dump of page {} to final output'.format(result.page))
+                        z.write(raw_dump_path, 'unprocessed/page_{}.json.gz'.format(result.page), zipfile.ZIP_STORED)
                     continue
 
                 print('  Adding page {} of {} to final file'.format(result.page, pages))
@@ -180,17 +208,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Rebuild Complete'))
 
 
-def run_export_safe(export_instance, page_number, dump_path, doc_count):
-    tries = 1
-    while tries <= 3:
-        try:
-            return run_export(export_instance, page_number, dump_path, doc_count)
-        except Exception:
-            tries += 1
-            logger.exception("Error processing page {}".format(page_number))
+def run_export_safe(export_instance, page_number, dump_path, doc_count, retry_count=0):
+    try:
+        return run_export(export_instance, page_number, dump_path, doc_count)
+    except Exception:
+        logger.exception("Error processing page {}".format(page_number))
 
+    tries = retry_count + 1
     print(style.ERROR('    Unable to process page {} after {} tries'.format(page_number, tries)))
-    return Result(False, page_number, None)
+    return RetryResult(page_number, dump_path, doc_count, tries)
 
 
 def run_export(export_instance, page_number, dump_path, doc_count):
@@ -201,7 +227,7 @@ def run_export(export_instance, page_number, dump_path, doc_count):
     export_file = get_export_file(export_instance, docs, progress_tracker)
     run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
     print('    Processing page {} complete'.format(page_number))
-    return Result(True, page_number, export_file.path)
+    return SuccessResult(True, page_number, export_file.path)
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
