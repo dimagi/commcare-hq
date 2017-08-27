@@ -200,6 +200,7 @@ class Command(BaseCommand):
 
 
 def run_export_safe(export_instance, page_number, dump_path, doc_count, attempts):
+    print('    Processing page {} started (attempt {})'.format(page_number, attempts))
     try:
         return run_export(export_instance, page_number, dump_path, doc_count)
     except Exception:
@@ -208,7 +209,6 @@ def run_export_safe(export_instance, page_number, dump_path, doc_count, attempts
 
 
 def run_export(export_instance, page_number, dump_path, doc_count):
-    print('    Processing page {} started'.format(page_number))
     docs = _get_export_documents_from_file(dump_path, doc_count)
     update_frequency = min(1000, int(doc_count / 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, run_export.queue, update_frequency)
@@ -249,10 +249,7 @@ class LoggingProgressTracker(object):
         total = meta.get('total', 0)
         if current is not None:
             if current % self.update_frequency == 0:
-                if self.progress_queue:
-                    self.progress_queue.put(ProgressValue(self.name, current, total))
-                else:
-                    print('[{}] {} of {} complete'.format(self.name, current, total))
+                self.progress_queue.put(ProgressValue(self.name, current, total))
 
 
 def _output_progress(queue, total_docs):
