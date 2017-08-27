@@ -624,27 +624,34 @@ class LatestAppInfo(object):
         self.get_latest_app_version.clear(self)
 
     def get_latest_apk_version(self):
+        from corehq.apps.app_manager.models import LATEST_APK_VALUE
         from corehq.apps.builds.utils import get_default_build_spec
         if self.app.global_app_config.apk_prompt == "off":
             return {}
         else:
-            value = get_default_build_spec().version
-            if self.app.global_app_config.apk_prompt == "on":
-                return {"value": value, "force": False}
-            elif self.app.global_app_config.apk_prompt == "forced":
-                return {"value": value, "force": True}
+            configured_version = self.app.global_app_config.apk_version
+            if configured_version == LATEST_APK_VALUE:
+                value = get_default_build_spec().version
+            else:
+                value = configured_version
+            force = self.app.global_app_config.apk_prompt == "forced"
+            return {"value": value, "force": force}
 
     @quickcache(vary_on=['self.app_id'])
     def get_latest_app_version(self):
+        from corehq.apps.app_manager.models import LATEST_APP_VALUE
         if self.app.global_app_config.app_prompt == "off":
             return {}
         else:
-            if not self.app or not self.app.is_released:
-                return {}
-            if self.app.global_app_config.app_prompt == "on":
-                return {"value": self.app.version, "force": False}
-            elif self.app.global_app_config.app_prompt == "forced":
-                return {"value": self.app.version, "force": True}
+            force = self.app.global_app_config.app_prompt == "forced"
+            app_version = self.app.global_app_config.app_version
+            if app_version != LATEST_APP_VALUE:
+                return {"value": app_version, "force": force}
+            else:
+                if not self.app or not self.app.is_released:
+                    return {}
+                else:
+                    return {"value": self.app.version, "force": force}
 
     def get_info(self):
         return {
