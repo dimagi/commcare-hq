@@ -113,9 +113,9 @@ class Command(BaseCommand):
         def _process_page(pool, output):
             attempts = getattr(output, 'retry_count', 0) + 1
             if attempts == 1:
-                progress_queue.put(ProgressValue(output.page, 0, output.page_size))
                 print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
 
+            progress_queue.put(ProgressValue(output.page, 0, output.page_size))
             args = export_instance, output.page, output.path, output.page_size, attempts
             result = pool.apply_async(run_export_safe, args=args)
             results.append(QueuedResult(result, output.page, output.path, output.page_size, attempts))
