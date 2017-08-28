@@ -1,0 +1,180 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Followup Form</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7" uiVersion="1" version="1" name="Followup Form">
+					<voucher-name/>
+					<how_are_you_today/>
+					<is_this_a_delivery/>
+					<how_many_babies/>
+					<babies jr:template="">
+						<whats_the_babys_name/>
+						<eye_color/>
+					</babies>
+					<add_a_prescription/>
+					<prescription>
+						<prescription vellum:case_type="prescription" vellum:role="SaveToCase">
+							<case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" date_modified="" user_id="">
+								<create>
+									<case_name/>
+									<case_type/>
+								</create>
+								<update>
+									<number_of_babies/>
+								</update>
+							</case>
+						</prescription>
+						<prescription_name/>
+					</prescription>
+				</data>
+			</instance>
+			<instance src="jr://instance/casedb" id="casedb"/>
+			<instance src="jr://instance/session" id="commcaresession"/>
+			<bind vellum:nodeset="#form/voucher-name" nodeset="/data/voucher-name" vellum:calculate="concat(#case/case_name, format-date(today(), &quot;%Y-%m-%d&quot;))" calculate="concat(instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/case_name, format-date(today(), &quot;%Y-%m-%d&quot;))"/>
+			<bind vellum:nodeset="#form/how_are_you_today" nodeset="/data/how_are_you_today"/>
+			<bind vellum:nodeset="#form/is_this_a_delivery" nodeset="/data/is_this_a_delivery" required="true()"/>
+			<bind vellum:nodeset="#form/how_many_babies" nodeset="/data/how_many_babies" type="xsd:int" vellum:relevant="#form/is_this_a_delivery = 'yes'" relevant="/data/is_this_a_delivery = 'yes'"/>
+			<bind vellum:nodeset="#form/babies" nodeset="/data/babies" vellum:relevant="#form/is_this_a_delivery = 'yes'" relevant="/data/is_this_a_delivery = 'yes'"/>
+			<bind vellum:nodeset="#form/babies/whats_the_babys_name" nodeset="/data/babies/whats_the_babys_name" type="xsd:string" required="true()"/>
+			<bind vellum:nodeset="#form/babies/eye_color" nodeset="/data/babies/eye_color"/>
+			<bind vellum:nodeset="#form/add_a_prescription" nodeset="/data/add_a_prescription"/>
+			<bind vellum:nodeset="#form/prescription" nodeset="/data/prescription"/>
+			<bind nodeset="/data/prescription/prescription/case/create/case_name" vellum:calculate="#form/prescription/prescription_name" calculate="/data/prescription/prescription_name"/>
+			<bind nodeset="/data/prescription/prescription/case/create/case_type" calculate="'prescription'"/>
+			<bind nodeset="/data/prescription/prescription/case/update/number_of_babies" vellum:calculate="#form/how_many_babies" calculate="/data/how_many_babies"/>
+			<bind nodeset="/data/prescription/prescription/case/@date_modified" calculate="/data/meta/timeEnd" type="xsd:dateTime"/>
+			<bind nodeset="/data/prescription/prescription/case/@user_id" calculate="instance('commcaresession')/session/context/userid"/>
+			<bind vellum:nodeset="#form/prescription/prescription_name" nodeset="/data/prescription/prescription_name" vellum:calculate="concat(#case/case_name, &quot;-prescription-&quot;, format-date(today(), &quot;%Y-%m-%d&quot;))" calculate="concat(instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/case_name, &quot;-prescription-&quot;, format-date(today(), &quot;%Y-%m-%d&quot;))"/>
+			<setvalue event="xforms-ready" ref="/data/prescription/prescription/case/@case_id" value="uuid()"/>
+			<itext>
+				<translation lang="en" default="">
+					<text id="how_are_you_today-label">
+						<value>How are you today?</value>
+					</text>
+					<text id="how_are_you_today-fine_thanks-label">
+						<value>Fine, thanks</value>
+					</text>
+					<text id="is_this_a_delivery-label">
+						<value>Is this a delivery?</value>
+					</text>
+					<text id="is_this_a_delivery-yes-label">
+						<value>yes</value>
+					</text>
+					<text id="is_this_a_delivery-no-label">
+						<value>no</value>
+					</text>
+					<text id="how_many_babies-label">
+						<value>How many babies?</value>
+					</text>
+					<text id="babies-label">
+						<value>Babies</value>
+					</text>
+					<text id="babies/whats_the_babys_name-label">
+						<value>What's the baby's name?</value>
+					</text>
+					<text id="babies/eye_color-label">
+						<value>Eye color?</value>
+					</text>
+					<text id="babies/eye_color-brown-label">
+						<value>Brown</value>
+					</text>
+					<text id="babies/eye_color-blue-label">
+						<value>Blue</value>
+					</text>
+					<text id="babies/eye_color-green-label">
+						<value>Green</value>
+					</text>
+					<text id="babies/eye_color-hazel-label">
+						<value>Hazel</value>
+					</text>
+					<text id="babies/eye_color-purple-label">
+						<value>Purple</value>
+					</text>
+					<text id="add_a_prescription-label">
+						<value>Add a prescription?</value>
+					</text>
+					<text id="add_a_prescription-yes-label">
+						<value>yes</value>
+					</text>
+					<text id="add_a_prescription-no-label">
+						<value>no</value>
+					</text>
+					<text id="prescription-label">
+						<value>prescription</value>
+					</text>
+				</translation>
+			</itext>
+		</model>
+		<vellum:hashtags>{"#case/case_name":null}</vellum:hashtags>
+		<vellum:hashtagTransforms>{"prefixes":{"#case/":"instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/"}}</vellum:hashtagTransforms>
+	</h:head>
+	<h:body>
+		<select vellum:ref="#form/how_are_you_today" ref="/data/how_are_you_today">
+			<label ref="jr:itext('how_are_you_today-label')"/>
+			<item>
+				<label ref="jr:itext('how_are_you_today-fine_thanks-label')"/>
+				<value>fine_thanks</value>
+			</item>
+		</select>
+		<select1 vellum:ref="#form/is_this_a_delivery" ref="/data/is_this_a_delivery">
+			<label ref="jr:itext('is_this_a_delivery-label')"/>
+			<item>
+				<label ref="jr:itext('is_this_a_delivery-yes-label')"/>
+				<value>yes</value>
+			</item>
+			<item>
+				<label ref="jr:itext('is_this_a_delivery-no-label')"/>
+				<value>no</value>
+			</item>
+		</select1>
+		<input vellum:ref="#form/how_many_babies" ref="/data/how_many_babies">
+			<label ref="jr:itext('how_many_babies-label')"/>
+		</input>
+		<group>
+			<label ref="jr:itext('babies-label')"/>
+			<repeat vellum:jr__count="#form/how_many_babies" jr:count="/data/how_many_babies" jr:noAddRemove="true()" vellum:nodeset="#form/babies" nodeset="/data/babies">
+				<input vellum:ref="#form/babies/whats_the_babys_name" ref="/data/babies/whats_the_babys_name">
+					<label ref="jr:itext('babies/whats_the_babys_name-label')"/>
+				</input>
+				<select1 vellum:ref="#form/babies/eye_color" ref="/data/babies/eye_color">
+					<label ref="jr:itext('babies/eye_color-label')"/>
+					<item>
+						<label ref="jr:itext('babies/eye_color-brown-label')"/>
+						<value>brown</value>
+					</item>
+					<item>
+						<label ref="jr:itext('babies/eye_color-blue-label')"/>
+						<value>blue</value>
+					</item>
+					<item>
+						<label ref="jr:itext('babies/eye_color-green-label')"/>
+						<value>green</value>
+					</item>
+					<item>
+						<label ref="jr:itext('babies/eye_color-hazel-label')"/>
+						<value>hazel</value>
+					</item>
+					<item>
+						<label ref="jr:itext('babies/eye_color-purple-label')"/>
+						<value>purple</value>
+					</item>
+				</select1>
+			</repeat>
+		</group>
+		<select1 vellum:ref="#form/add_a_prescription" ref="/data/add_a_prescription">
+			<label ref="jr:itext('add_a_prescription-label')"/>
+			<item>
+				<label ref="jr:itext('add_a_prescription-yes-label')"/>
+				<value>yes</value>
+			</item>
+			<item>
+				<label ref="jr:itext('add_a_prescription-no-label')"/>
+				<value>no</value>
+			</item>
+		</select1>
+		<group vellum:ref="#form/prescription" ref="/data/prescription">
+			<label ref="jr:itext('prescription-label')"/>
+		</group>
+	</h:body>
+</h:html>
