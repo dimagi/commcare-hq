@@ -147,13 +147,17 @@ class PromptUpdateSettingsForm(forms.Form):
                     # hide 'apk_version' depending on whether app_prompt is off or not
                     onchange='$("#apk_version_id")[$("#id_apk_prompt").val() == "off"? "hide": "show"]()',
                 ),
-                crispy.Div('apk_version', style=('' if show_apk_version_select else "display: none;"), css_id="apk_version_id"),
+                crispy.Div(
+                    'apk_version',
+                    style=('' if show_apk_version_select else "display: none;"), css_id="apk_version_id"),
                 crispy.Field(
                     'app_prompt',
                     # hide 'app_version' depending on whether app_prompt is off or not
                     onchange='$("#app_version_id")[$("#id_app_prompt").val() == "off"? "hide": "show"]()',
                 ),
-                crispy.Div('app_version', style=('' if show_app_version_select else "display: none;"), css_id="app_version_id"),
+                crispy.Div(
+                    'app_version',
+                    style=('' if show_app_version_select else "display: none;"), css_id="app_version_id"),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
