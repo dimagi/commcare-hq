@@ -10,8 +10,9 @@ from Queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    ExportFile, _get_writer, _save_export_payload)
+    ExportFile, _get_writer, _save_export_payload, get_export_size, _get_export_documents)
 from corehq.apps.export.export import _write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
@@ -27,6 +28,66 @@ ProgressValue = namedtuple('ProgressValue', 'page progress total')
 SuccessResult = namedtuple('SuccessResult', 'success page export_path')
 RetryResult = namedtuple('RetryResult', 'page path page_size retry_count')
 QueuedResult = namedtuple('QueuedResult', 'async_result page path page_size retry_count')
+
+
+class DumpOutput(object):
+    """Helper class to paginate raw export output"""
+    def __init__(self, export_id):
+        self.export_id = export_id
+        self.page = 0
+        self.page_size = 0
+        self.file = None
+
+    def __enter__(self):
+        self._new_file()
+
+    def _new_file(self):
+        if self.file:
+            self.file.close()
+        self.path = tempfile.mktemp()
+        self.file = gzip.open(self.path, 'wb')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+        self.file = None
+        self.path = None
+
+    def next_page(self):
+        self.page += 1
+        self.page_size = 0
+        self._new_file()
+
+    def write(self, doc):
+        self.page_size += 1
+        self.file.write('{}\n'.format(json.dumps(doc)))
+
+
+def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
+    assert num_processes > 0
+
+    def _log_page_dumped(dump_output):
+        logger.info('  Dump page {} complete: {} docs'.format(dump_output.page, dump_output.page_size))
+
+    export_instance = get_properly_wrapped_export_instance(export_id)
+    filters = export_instance.get_filters()
+    total_docs = get_export_size(export_instance, filters)
+
+    logger.info('Starting data dump of {} docs'.format(total_docs))
+    exporter = MultithreadedExporter(export_instance, total_docs, num_processes)
+    dump_output = DumpOutput(export_id)
+    with exporter:
+        with dump_output:
+            for index, doc in enumerate(_get_export_documents(export_instance, filters)):
+                dump_output.write(doc)
+                if dump_output.page_size == page_size:
+                    _log_page_dumped(dump_output)
+                    exporter.process_page(dump_output)
+                    dump_output.next_page()
+            if dump_output.page_size:
+                _log_page_dumped(dump_output)
+                exporter.process_page(dump_output)
+
+        exporter.wait_till_completion()
 
 
 def run_export_with_logging(export_instance, page_number, dump_path, doc_count, attempts):
