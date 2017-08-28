@@ -127,7 +127,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
     LocationXpathValidationError,
@@ -5728,11 +5727,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
         """
-        The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the rearrangement (confusingly) goes through anyway.
+        The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
@@ -5744,7 +5741,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if app_manager_v2 and not isinstance(form, AdvancedForm):
+            if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5757,9 +5754,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type and not app_manager_v2:
-            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
-            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         return update_unique_ids(source)

@@ -1,7 +1,6 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         init = hqImport('app_manager/js/app_manager').init,
-        v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
         app = initial_page_data('app_subset');
 
     init({
@@ -28,38 +27,18 @@ $(function () {
 
     if (app.doc_type === 'Application') {
         $('[data-toggle="tooltip"]').tooltip();
-        if (v2) {
-            $('.edit-form-li').each(function () {
-                var $this = $(this);
-                if (initial_page_data('formdesigner') || !$this.hasClass("active")) {
-                    var $pencil = $this.find('.edit-form-pencil');
+        $('.edit-form-li').each(function () {
+            var $this = $(this);
+            if (initial_page_data('formdesigner') || !$this.hasClass("active")) {
+                var $pencil = $this.find('.edit-form-pencil');
+                $pencil.addClass('no-data');
+                $this.hover(function() {
+                    $pencil.removeClass('no-data');
+                }, function() {
                     $pencil.addClass('no-data');
-                    $this.hover(function() {
-                        $pencil.removeClass('no-data');
-                    }, function() {
-                        $pencil.addClass('no-data');
-                    });
-                }
-            });
-        } else {
-            $('.edit-form-pencil').tooltip({
-                title: gettext("Edit in form builder"),
-                placement: 'auto'
-            });
-
-            $('.edit-form-li').each(function () {
-                var $this = $(this);
-                if (!initial_page_data('formdesigner') || !$this.hasClass("active")) {
-                    var $pencil = $this.find('.edit-form-pencil');
-                    $pencil.addClass('no-data');
-                    $this.hover(function() {
-                        $pencil.removeClass('no-data');
-                    }, function() {
-                        $pencil.addClass('no-data');
-                    });
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     // https://github.com/twitter/bootstrap/issues/6122
