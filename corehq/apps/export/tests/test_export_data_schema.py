@@ -158,7 +158,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             ),
         ]
 
-        schema = FormExportDataSchema._generate_schema_from_subcases(
+        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
             XForm(form_xml),
             repeats_with_subcases,
             ['en'],
@@ -1286,111 +1286,4 @@ class TestOrderingOfSchemas(SimpleTestCase):
                 ScalarItem(path=[PathNode(name='three')]),
                 GeopointItem(path=[PathNode(name='one')]),
             ],
-        )
-
-
-class TestFormExportSubcases(TestCase, TestXmlMixin):
-    """
-    These tests operate on an MCH app which uses various means of creating cases.
-    We care most about module 0 ("Mothers") > form 1 ("Followup Form")
-    The primary case type is "mom" - this form updates mom cases, but doesn't create them
-    This form creates a single "voucher" case using the normal case management interface
-        case_name is set to /data/voucher-name
-    This form creates "baby" cases in a repeat group also using the normal case management interface
-        case_name is set to /data/babies/whats_the_babys_name
-    A "prescription" case can also be created using save-to-case.
-        case_name is /data/prescription/prescription_name
-        the save-to-case node is /data/prescription/prescription
-    """
-    file_path = ['data']
-    root = os.path.dirname(__file__)
-    domain = 'app_with_subcases'
-    app_json_file = 'app_with_subcases'
-    form_xml_file = 'app_with_subcases_form'
-    form_xmlns = "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestFormExportSubcases, cls).setUpClass()
-        cls.app = Application.wrap(cls.get_json(cls.app_json_file))
-        cls.xform = XForm(cls.get_xml(cls.form_xml_file))
-        with drop_connected_signals(app_post_save):
-            cls.app.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.delete()
-        delete_all_export_data_schemas()
-        super(TestFormExportSubcases, cls).tearDownClass()
-
-    def assertContainsPaths(self, paths, export_group_schema):
-        """
-        paths should be of the form ["form.question1", "form.group.question2"]
-        """
-        actual_paths = {
-            ".".join(node.name for node in item.path)
-            for item in export_group_schema.items
-        }
-        missing = set(paths) - actual_paths
-        if missing:
-            raise AssertionError("Contains paths:\n  {}\nMissing paths:\n  {}"
-                                 .format('\n  '.join(actual_paths), '\n  '.join(missing)))
-
-    def test(self):
-        with patch('corehq.apps.app_manager.models.FormBase.wrapped_xform', lambda _: self.xform):
-            schema = FormExportDataSchema.generate_schema_from_builds(
-                self.domain,
-                self.app._id,
-                self.form_xmlns,
-                only_process_current_builds=True,
-            )
-
-        for group_schema in schema.group_schemas:
-            # group_schema is an instance of ExportGroupSchem
-            # group_schema.items is an array of ExportItems subclasses
-            path = [node.name for node in group_schema.path]
-            if path == []:
-                main_group_schema = group_schema
-            elif path == ['form', 'babies']:
-                baby_repeat_group_schema = group_schema
-            elif path == ['form', 'subcase_0']:
-                voucher_subcase_schema = group_schema
-
-        self.assertContainsPaths(
-            [
-                # Verify that a simple form question appears in the schema
-                'form.how_are_you_today',
-
-                # Verify that the main parent case updates appear (case type "mom")
-                'form.case.update.last_status',
-            ],
-            main_group_schema
-        )
-
-        # Verify that we see updates from subcases in repeat groups (case type "baby")
-        self.assertContainsPaths(
-            [
-                'form.babies.case.@case_id',
-                'form.babies.case.@date_modified',
-                'form.babies.case.@user_id',
-                'form.babies.case.create.case_name',
-                'form.babies.case.create.case_type',
-                'form.babies.case.create.owner_id',
-                'form.babies.case.update.eye_color',
-            ],
-            baby_repeat_group_schema
-        )
-
-        # Verify that we see updates from subcases not in repeat groups (case type "voucher")
-        self.assertContainsPaths(
-            [
-                'form.subcase_0.case.@case_id',
-                'form.subcase_0.case.@date_modified',
-                'form.subcase_0.case.@user_id',
-                'form.subcase_0.case.create.case_name',
-                'form.subcase_0.case.create.case_type',
-                'form.subcase_0.case.create.owner_id',
-                'form.subcase_0.case.update.how_many_babies',
-            ],
-            voucher_subcase_schema,
         )
