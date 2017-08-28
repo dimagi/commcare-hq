@@ -1,3 +1,14 @@
+"""
+This package contains classes and function for processing ExportInstances using
+multiple threads.
+
+To rebuild an export run the following:
+
+    rebuild_export_mutithreaded(export_instance_id, num_threads, page_size)
+
+You can also use the MultithreadedExporter class to have more control over the process.
+See the 'process_skipped_pages' management command for an example.
+"""
 import gzip
 import json
 import logging
