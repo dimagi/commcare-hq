@@ -1583,19 +1583,15 @@ class FormExportDataSchema(ExportDataSchema):
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
         xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
-        open_case_actions = OrderedSet()
+        subcase_actions = OrderedSet()
         for form in forms:
             if isinstance(form.actions, AdvancedFormActions):
                 actions = form.actions.open_cases
             else:
                 actions = form.actions.subcases
             for action in actions:
-                open_case_actions.add(action)
+                subcase_actions.add(action)
 
-        repeats_with_subcases = {
-            open_case_action for open_case_action in open_case_actions
-            if open_case_action.repeat_context
-        }
         xform_schema = cls._generate_schema_from_xform(
             xform,
             case_updates,
@@ -1604,26 +1600,25 @@ class FormExportDataSchema(ExportDataSchema):
             app.version,
         )
         schemas = [current_schema, xform_schema]
-        if repeats_with_subcases:
-            repeat_case_schema = cls._generate_schema_from_repeat_subcases(
+        if subcase_actions:
+            subcases_schema = cls._generate_schema_from_subcases(
                 xform,
-                repeats_with_subcases,
+                subcase_actions,
                 app.langs,
                 app.copy_of or app._id,  # If it's not a copy, must be current
                 app.version,
             )
-            schemas.append(repeat_case_schema)
+            schemas.append(subcases_schema)
 
         return cls._merge_schemas(*schemas)
 
     @classmethod
-    def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
+    def _generate_schema_from_subcases(cls, xform, subcase_actions, langs, app_id, app_version):
         """
-        This generates a FormExportDataSchema for repeat groups that generate subcases.
+        This generates a FormExportDataSchema for subcases.
 
         :param xform: An XForm instance
-        :param repeats_with_subcases: A list of OpenSubCaseAction classes that have a
-            repeat_context.
+        :param subcase_actions: A list of OpenSubCaseAction classes
         :param langs: An array of application languages
         :param app_id: The app_id of the corresponding app
         :param app_version: The build number of the app
@@ -1640,33 +1635,41 @@ class FormExportDataSchema(ExportDataSchema):
                 last_occurrences={app_id: app_version},
             ))
 
-        for subcase_action in repeats_with_subcases:
+        for subcase_number, subcase_action in enumerate(subcase_actions):
+            root_path = (subcase_action.repeat_context
+                         if subcase_action.repeat_context
+                         else "/data/subcase_{}".format(subcase_number))
+
             group_schema = ExportGroupSchema(
-                path=_question_path_to_path_nodes(subcase_action.repeat_context, repeats),
+                path=_question_path_to_path_nodes(root_path, repeats),
                 last_occurrences={app_id: app_version},
             )
+
             # Add case attributes
             for case_attribute in CASE_ATTRIBUTES:
-                path = u'{}/case/{}'.format(subcase_action.repeat_context, case_attribute)
+                path = u'{}/case/{}'.format(root_path, case_attribute)
                 _add_to_group_schema(group_schema, path, u'case.{}'.format(case_attribute))
 
             # Add case updates
             for case_property, case_path in subcase_action.case_properties.iteritems():
-                # This removes the repeat part of the path. For example, if inside
-                # a repeat group that has the following path:
-                #
-                # /data/repeat/other_group/question
-                #
-                # We want to create a path that looks like:
-                #
-                # /data/repeat/case/update/other_group/question
-                path_suffix = case_path[len(subcase_action.repeat_context):]
-                path = u'{}/case/update{}'.format(subcase_action.repeat_context, path_suffix)
+                if subcase_action.repeat_context:
+                    # This removes the repeat part of the path. For example, if inside
+                    # a repeat group that has the following path:
+                    #
+                    # /data/repeat/other_group/question
+                    #
+                    # We want to create a path that looks like:
+                    #
+                    # /data/repeat/case/update/other_group/question
+                    path_suffix = case_path[len(subcase_action.repeat_context) + 1:]
+                else:
+                    path_suffix = case_property
+                path = u'{}/case/update/{}'.format(root_path, path_suffix)
                 _add_to_group_schema(group_schema, path, u'case.update.{}'.format(case_property))
 
             # Add case create properties
             for case_create_element in CASE_CREATE_ELEMENTS:
-                path = u'{}/case/create/{}'.format(subcase_action.repeat_context, case_create_element)
+                path = u'{}/case/create/{}'.format(root_path, case_create_element)
                 _add_to_group_schema(group_schema, path, u'case.create.{}'.format(case_create_element))
 
             schema.group_schemas.append(group_schema)
