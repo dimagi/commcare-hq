@@ -265,7 +265,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             if duration_seen >= total_duration / 2:
                 break
 
-        for domain, duration in top_half_domains:
+        for domain, duration in top_half_domains.items():
             datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
                 'domain:{}'.format(domain)
             ])
