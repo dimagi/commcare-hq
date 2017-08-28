@@ -54,6 +54,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             [],
+            [],
             ['en'],
             self.app_id,
             1
@@ -75,6 +76,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             [],
+            [],
             ['en'],
             self.app_id,
             1
@@ -93,6 +95,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
+            [],
             [],
             ['en'],
             self.app_id,
@@ -124,6 +127,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         form_xml = self.get_xml('multiple_choice_form')
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
+            [],
             [],
             ['en'],
             self.app_id,
@@ -192,6 +196,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         form_xml = self.get_xml('stock_form')
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
+            [],
             [],
             ['en'],
             self.app_id,
@@ -328,12 +333,14 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         schema = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml),
             [],
+            [],
             ['en'],
             self.app_id,
             1
         )
         schema2 = FormExportDataSchema._generate_schema_from_xform(
             XForm(form_xml2),
+            [],
             [],
             ['en'],
             self.app_id,

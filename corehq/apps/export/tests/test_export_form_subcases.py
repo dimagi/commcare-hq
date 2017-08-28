@@ -81,8 +81,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 main_group_schema = group_schema
             elif path == ['form', 'babies']:
                 baby_repeat_group_schema = group_schema
-            elif path == ['form', 'subcase_0']:
-                voucher_subcase_schema = group_schema
 
         self.assertContainsPaths(
             [
@@ -91,6 +89,15 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
 
                 # Verify that the main parent case updates appear (case type "mom")
                 'form.case.update.last_status',
+
+                # # Verify that we see updates from subcases not in repeat groups (case type "voucher")
+                'form.subcase_0.case.@case_id',
+                'form.subcase_0.case.@date_modified',
+                'form.subcase_0.case.@user_id',
+                'form.subcase_0.case.create.case_name',
+                'form.subcase_0.case.create.case_type',
+                'form.subcase_0.case.create.owner_id',
+                'form.subcase_0.case.update.how_many_babies',
             ],
             main_group_schema
         )
@@ -107,20 +114,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 'form.babies.case.update.eye_color',
             ],
             baby_repeat_group_schema
-        )
-
-        # Verify that we see updates from subcases not in repeat groups (case type "voucher")
-        self.assertContainsPaths(
-            [
-                'form.subcase_0.case.@case_id',
-                'form.subcase_0.case.@date_modified',
-                'form.subcase_0.case.@user_id',
-                'form.subcase_0.case.create.case_name',
-                'form.subcase_0.case.create.case_type',
-                'form.subcase_0.case.create.owner_id',
-                'form.subcase_0.case.update.how_many_babies',
-            ],
-            voucher_subcase_schema,
         )
 
         instance = FormExportInstance.generate_instance_from_schema(schema)
@@ -166,7 +159,17 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "form.prescription.prescription.case.create.case_name": "Petunia-prescription-2017-08-28",
             "form.prescription.prescription.case.create.case_type": "prescription",
             "form.prescription.prescription.case.update.number_of_babies": "2",
-            "form.prescription.prescription_name": "Petunia-prescription-2017-08-28"
+            "form.prescription.prescription_name": "Petunia-prescription-2017-08-28",
+
+            # non-repeating subcase actions
+            "form.subcase_0.case.@case_id": "003a2222-acb9-4111-9d3e-1cc7cd0d0687",
+            "form.subcase_0.case.@date_modified": "2017-08-28 20:21:28",
+            "form.subcase_0.case.@user_id": "853a24735ba89a3019ced7e3153dc60d",
+            "form.subcase_0.case.create.case_name": "Petunia2017-08-28",
+            "form.subcase_0.case.create.case_type": "voucher",
+            "form.subcase_0.case.create.owner_id": "853a24735ba89a3019ced7e3153dc60d",
+            "form.subcase_0.case.update.how_many_babies": "2",
+
         }, get_form_data('Forms')[0])
 
         self.assertDictContainsSubset({
