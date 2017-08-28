@@ -1522,7 +1522,7 @@ class Subscription(models.Model):
         context = {
             'domain': domain,
             'end_date': end_date,
-            'client_reminder_email_date': end_date - datetime.timedelta(days=30),
+            'client_reminder_email_date': (self.end_date - datetime.timedelta(days=30)).strftime(USER_DATE_FORMAT),
             'contacts': ', '.join(self._reminder_email_contacts(domain)),
             'dimagi_contact': email,
         }
