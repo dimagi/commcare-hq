@@ -1,0 +1,111 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block stylesheets %}
+<style type="text/css">
+    #report-list th .hq-help {
+        line-height: 13px;
+    }
+</style>
+{% endblock %}
+
+<ul class="nav nav-tabs">
+    <li class="active"><a href="#settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+    <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
+</ul>
+
+<div class="spacer"></div>
+
+<div class="save-button-holder clearfix">
+    <div data-bind="saveButton: saveButton" id="save-button"></div>
+</div>
+
+<div class="tab-content">
+    <div class="tab-pane active" id="settings">
+        <div class="form-horizontal">
+            <fieldset>
+                {% include "app_manager/partials/module_filter.html" with ko_value="currentModuleFilter" %}
+                {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="tab-pane" id="reports">
+        <fieldset>
+            <table class="table" id="report-list">
+                <thead>
+                    <tr class="row">
+                        <th></th>
+                        <th>{% trans "Report" %}</th>
+                        <th>{% trans "Display Text" %}</th>
+                        <th>{% trans "Description" %}</th>
+                        <th>
+                            {% trans "Data Table" %}
+                            <span class="hq-help-template"
+                                data-title="Data Table"
+                                data-content="If checked, the phone will show a tab with a summary table containing the data for this report."
+                                data-placement="left"
+                            ></span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody data-bind="sortable: { data: reports, as: 'report' }">
+                    <tr class="row"
+                        data-bind="attr: {'data-order': _sortableOrder}">
+                        <td>
+                            <i class="grip sortable-handle" data-bind="css: hqImport('style/js/main').icons.GRIP, style: {cursor: 'move'}"></i>
+                        </td>
+                        <td>
+                            <select class="form-control"
+                                    data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
+                            </select>
+                            {% include 'app_manager/partials/filter_configs.html' %}
+                            {% include 'app_manager/partials/graph_configs.html' %}
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" data-bind="value: display">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control"
+                                   data-bind="value: xpathDescription, visible: useXpathDescription">
+                            <input type="text" class="form-control"
+                                   data-bind="value: localizedDescription, visible: !useXpathDescription()">
+                            <label>
+                                <input type="checkbox" data-bind="checked: useXpathDescription">
+                                {% trans "Use xpath expression" %}
+                            </label>
+                            <div data-bind="visible: useXpathDescription" class="help-block">
+                                <p>
+                                    <i class="fa fa-warning"></i>
+                                    {% trans "Must be a valid xpath expression." %}
+                                </p>
+                                <p>
+                                    <i class="fa fa-warning"></i>
+                                    {% trans "Not localizable." %}
+                                </p>
+                            </div>
+                        </td>
+                        <td>
+                            <label>
+                                <input type="checkbox" data-bind="checked: showDataTable">
+                            </label>
+                        </td>
+                        <td>
+                            <i title="{% trans 'Delete' %}" style="cursor: pointer;"
+                               data-bind="
+                                click: $root.removeReport,
+                                css: hqImport('style/js/main').icons.DELETE
+                            "></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-default" data-bind="click: addReport" id="add-report-btn">
+                <i class="fa fa-plus"></i>
+                {% trans "Add Report" %}
+            </button>
+        </fieldset>
+    </div>
+
+</div>

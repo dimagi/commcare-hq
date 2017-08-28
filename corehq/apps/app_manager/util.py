@@ -495,21 +495,6 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_app_manager_template(user, v1, v2):
-    """
-    Given the user, a template string v1, and a template string v2,
-    return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
-
-    :param user: WebUser
-    :param v1: String, template name for V1
-    :param v2: String, template name for V2
-    :return: String, either v1 or v2 depending on toggle
-    """
-    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
-        return v1
-    return v2
-
-
 def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
     from corehq.apps.app_manager.models import ShadowForm

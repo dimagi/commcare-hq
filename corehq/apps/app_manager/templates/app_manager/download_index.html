@@ -1,0 +1,67 @@
+{% extends "app_manager/source_files.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+        <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>
+    {% endcompress %}
+{% endblock stylesheets %} 
+
+{% block page_title %}
+    {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
+{% endblock page_title %}
+
+{% block downloads %}
+    <h2>Downloads</h2>
+    <table class="table table-condensed">
+        {% if supports_j2me %}
+        <tr>
+            <td>{% url "download_jad" app.domain app.id as url %}<a href="{{ url }}">CommCare.jad</a></td>
+        </tr>
+        <tr>
+            <td>{% url "download_jar" app.domain app.id as url %}<a href="{{ url }}">CommCare.jar</a></td>
+        </tr>
+        {% endif %}
+        <tr>
+            <td>
+                <a href="#download_ccz" data-toggle="modal" onclick="download_application_zip()">CommCare.ccz</a>
+            </td>
+        </tr>
+    </table>
+{% endblock downloads %}
+
+{% block file_description %}
+    <a href="{{ file.name }}" target="_blank"><i class="fa fa-external-link"></i></a>
+{% endblock file_description %}
+
+{% block file_source %}
+    <pre class="prettyprint linenums">{{ file.source|force_escape }}</pre>
+{% endblock file_source %}
+
+{% block post_files %}
+    {% if app.copy_of and not files %}
+        <div class="alert alert-info">
+            This build was made before I knew how to save the files for a specific build.
+            To see this view for the current not-yet-built version of this app,
+            <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
+        </div>
+    {% endif %}
+{% endblock post_files %}
+
+{% block modals %}
+    {{ block.super }}
+    {% url "download_ccz" app.domain app.id as ccz_url %}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block js-inline %}
+    {{ block.super }}
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=default"></script>
+{% endblock js-inline %}

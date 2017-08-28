@@ -45,7 +45,6 @@ from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
-    get_app_manager_template,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -673,12 +672,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         })
 
     context.update({'case_config_options': case_config_options})
-    template = get_app_manager_template(
-        request.user,
-        "app_manager/v1/form_view.html",
-        "app_manager/v2/form_view.html",
-    )
-    return template, context
+    return "app_manager/form_view.html", context
 
 
 @require_can_edit_apps
@@ -744,12 +738,7 @@ def xform_display(request, domain, form_unique_id):
 
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
-        template = get_app_manager_template(
-            request.user,
-            'app_manager/v1/xform_display.html',
-            'app_manager/v2/xform_display.html',
-        )
-        return render(request, template, {
+        return render(request, "app_manager/xform_display.html", {
             'questions': questions_in_hierarchy(questions)
         })
     else:
