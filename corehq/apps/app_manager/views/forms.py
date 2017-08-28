@@ -573,7 +573,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
-        'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
         'allow_form_workflow': True,

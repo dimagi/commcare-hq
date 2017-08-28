@@ -95,44 +95,14 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     module.init = function (args) {
-
         _initCommcareVersion(args);
         _initSaveButtons();
         _initMenuItemSorting();
         _initLangs();
         _initNewItemForm();
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            // legacy JS
-            $('#form-tabs').show();
-            $('#forms').tab('show');
-
-            $('select.applications').change(function () {
-                var url = $(this).find('option:selected').attr('value');
-                $(document).attr('location', url);
-            });
-
-            // Auto set input and select values according to the following 'div.immutable'
-            $('select').each(function () {
-                var val = $(this).next('div.immutable').text();
-                if (val) {
-                    $(this).find('option').prop('selected', false);
-                    $(this).find('option[value="' + val + '"]').prop('selected', true);
-                }
-            });
-            $('input[type="text"]').each(function () {
-                var val = $(this).next('div.immutable').text();
-                if (val) {
-                    $(this).attr('value', val);
-                }
-            });
-        } else {
-            _initResponsiveMenus();
-            _initAddItemPopovers();
-            _initPublishStatus();
-        }
-
-
+        _initResponsiveMenus();
+        _initAddItemPopovers();
+        _initPublishStatus();
     };
 
     /**
@@ -301,25 +271,23 @@ hqDefine('app_manager/js/app_manager', function () {
                 form.submit();
             }
         });
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            $(document).on('click', '.js-new-form', function (e) {
-                e.preventDefault();
-                var $a = $(this),
-                    $popoverContent = $a.closest(".popover-content > *"),
-                    $form = $popoverContent.find("form"),
-                    action = $a.data("case-action"),
-                    moduleId = $popoverContent.data("module-id"),
-                    $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
-                $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
-                $form.find("input[name='case_action']").val(action);
-                $form.find("input[name='form_type']").val($a.data("form-type"));
-                if (!$form.data('clicked')) {
-                    $form.data('clicked', 'true');
-                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
-                    $form.submit();
-                }
-            });
-        }
+        $(document).on('click', '.js-new-form', function (e) {
+            e.preventDefault();
+            var $a = $(this),
+                $popoverContent = $a.closest(".popover-content > *"),
+                $form = $popoverContent.find("form"),
+                action = $a.data("case-action"),
+                moduleId = $popoverContent.data("module-id"),
+                $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
+            $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
+            $form.find("input[name='case_action']").val(action);
+            $form.find("input[name='form_type']").val($a.data("form-type"));
+            if (!$form.data('clicked')) {
+                $form.data('clicked', 'true');
+                $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                $form.submit();
+            }
+        });
     };
 
     /**
@@ -348,13 +316,11 @@ hqDefine('app_manager/js/app_manager', function () {
             }
         });
 
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            $('.js-appnav-drag-module').on('mouseenter', function() {
-                $(this).closest('.js-sorted-li').addClass('appnav-highlight');
-            }).on('mouseleave', function () {
-                $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
-            });
-        }
+        $('.js-appnav-drag-module').on('mouseenter', function() {
+            $(this).closest('.js-sorted-li').addClass('appnav-highlight');
+        }).on('mouseleave', function () {
+            $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
+        });
         $('.sortable').each(function () {
             var $sortable = $(this);
             var sorting_forms = $sortable.hasClass('sortable-forms');
@@ -418,15 +384,9 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
 
-                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                                // disable sortable
-                                $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
-                                $sortable.sortable('option', 'disabled', true);
-                            } else {
-                                // Show loading screen and disable rearranging
-                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                                $sortable.find('.drag_handle').remove();
-                            }
+                            // Show loading screen and disable rearranging
+                            $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                            $sortable.find('.drag_handle').remove();
                             $form.submit();
                         }
 
@@ -471,9 +431,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                hqImport("app_manager/js/section_changer").attachToForm($form);
-            }
+            hqImport("app_manager/js/section_changer").attachToForm($form);
         });
     };
 
