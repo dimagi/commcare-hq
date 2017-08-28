@@ -2,17 +2,16 @@ from __future__ import print_function
 
 import multiprocessing
 import os
+import re
 import shutil
 import tempfile
 import zipfile
-
-import re
-import sh
 from datetime import datetime
+
+import sh
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.export import _save_export_payload
 from corehq.apps.export.multithreaded import (
     SuccessResult, MultithreadedExporter, RetryResult,
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)

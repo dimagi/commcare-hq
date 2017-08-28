@@ -6,7 +6,6 @@ import logging
 import multiprocessing
 import tempfile
 
-from django.core.management import color_style
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
