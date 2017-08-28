@@ -8,6 +8,15 @@ To rebuild an export run the following:
 
 You can also use the MultithreadedExporter class to have more control over the process.
 See the 'process_skipped_pages' management command for an example.
+
+The export works as follows:
+  * Dump raw docs from ES into files of size N docs
+  * Once each file is complete add it to a multiprocessing Queue
+  * Pool of X processes listen to queue and process the dump file
+  * Results returned back to the main process
+    * Unsuccessful results can be retried
+  * Add successful pages to final ZIP archive
+  * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
 import gzip
 import json
