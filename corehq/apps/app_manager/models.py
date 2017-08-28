@@ -1457,7 +1457,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def custom_icon_form_and_text_by_language(self, lang):
         custom_icon = self.custom_icon
         if custom_icon:
-            return custom_icon.form, custom_icon.text[lang]
+            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
+            return custom_icon.form, custom_icon_text
         return None, None
 
     def _set_media(self, media_attr, lang, media_path):
