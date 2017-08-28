@@ -42,6 +42,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
+        if __debug__:
+            raise CommandError("You should run this with 'pythong -O'")
+
         export_id = options.pop('export_id')
         export_archive_path = options.pop('export_path')
         processes = options.pop('processes')
