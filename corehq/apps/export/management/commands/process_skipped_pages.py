@@ -24,7 +24,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('export_id')
         parser.add_argument(
-            'export_path',
+            '--export_path',
             help='Path to export ZIP',
         )
         parser.add_argument(
@@ -49,10 +49,18 @@ class Command(BaseCommand):
         processes = options.pop('processes')
         force_upload = options.pop('force_upload')
 
-        if not os.path.exists(export_archive_path):
-            raise CommandError("Export path missing: {}".format(export_archive_path))
-
         export_instance = get_properly_wrapped_export_instance(export_id)
+
+        if not export_archive_path or not os.path.exists(export_archive_path):
+            confirm = raw_input(
+                u"""
+                No export archive provided. Do you want to download the latest one? [y/N]
+                """
+            )
+            if not confirm == "y":
+                raise CommandError("Export path missing: {}".format(export_archive_path))
+
+            export_archive_path = self._download_export(export_instance)
 
         extract_to = tempfile.mkdtemp()
         total_docs, unprocessed_pages = self._get_unprocessed_pages(export_archive_path, extract_to)
@@ -80,6 +88,16 @@ class Command(BaseCommand):
             )
         shutil.rmtree(extract_to)
         self.stdout.write(self.style.SUCCESS('Rebuild Complete and payload uploaded'))
+
+    def _download_export(self, export_instance):
+        export_archive_path = '{}_{}.zip'.format(
+            safe_filename(export_instance.name or 'Export'),
+            datetime.utcnow().isoformat()
+        )
+        payload = export_instance.get_payload(stream=True)
+        with open(export_archive_path, 'w') as download:
+            shutil.copyfileobj(payload, download)
+        return export_archive_path
 
     def compile_final_zip(self, error_pages, export_archive_path, export_instance, successful_pages):
         final_dir, orig_name = os.path.split(export_archive_path)
