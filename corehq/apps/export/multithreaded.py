@@ -25,12 +25,34 @@ logger = logging.getLogger(__name__)
 
 
 ProgressValue = namedtuple('ProgressValue', 'page progress total')
-SuccessResult = namedtuple('SuccessResult', 'success page export_path')
-RetryResult = namedtuple('RetryResult', 'page path page_size retry_count')
-QueuedResult = namedtuple('QueuedResult', 'async_result page path page_size retry_count')
 
 
-class DumpOutput(object):
+class BaseResult(object):
+    success = False
+
+    def __init__(self, page_number, page_path, page_size):
+        self.page = page_number
+        self.path = page_path
+        self.page_size = page_size
+
+
+class SuccessResult(BaseResult):
+    success = True
+
+
+class RetryResult(BaseResult):
+    def __init__(self, page_number, page_path, page_size, retry_count):
+        super(RetryResult, self).__init__(page_number, page_path, page_size)
+        self.retry_count = retry_count
+
+
+class QueuedResult(RetryResult):
+    def __init__(self, async_result, page_number, page_path, page_size, retry_count):
+        super(QueuedResult, self).__init__(page_number, page_path, page_size, retry_count)
+        self.async_result = async_result
+
+
+class OutputPaginator(object):
     """Helper class to paginate raw export output"""
     def __init__(self, export_id):
         self.export_id = export_id
@@ -61,12 +83,15 @@ class DumpOutput(object):
         self.page_size += 1
         self.file.write('{}\n'.format(json.dumps(doc)))
 
+    def get_result(self):
+        return RetryResult(self.page, self.path, self.page_size, 0)
+
 
 def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
     assert num_processes > 0
 
-    def _log_page_dumped(dump_output):
-        logger.info('  Dump page {} complete: {} docs'.format(dump_output.page, dump_output.page_size))
+    def _log_page_dumped(paginator):
+        logger.info('  Dump page {} complete: {} docs'.format(paginator.page, paginator.page_size))
 
     export_instance = get_properly_wrapped_export_instance(export_id)
     filters = export_instance.get_filters()
@@ -74,18 +99,18 @@ def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
 
     logger.info('Starting data dump of {} docs'.format(total_docs))
     exporter = MultithreadedExporter(export_instance, total_docs, num_processes)
-    dump_output = DumpOutput(export_id)
+    paginator = OutputPaginator(export_id)
     with exporter:
-        with dump_output:
+        with paginator:
             for index, doc in enumerate(_get_export_documents(export_instance, filters)):
-                dump_output.write(doc)
-                if dump_output.page_size == page_size:
-                    _log_page_dumped(dump_output)
-                    exporter.process_page(dump_output)
-                    dump_output.next_page()
-            if dump_output.page_size:
-                _log_page_dumped(dump_output)
-                exporter.process_page(dump_output)
+                paginator.write(doc)
+                if paginator.page_size == page_size:
+                    _log_page_dumped(paginator)
+                    exporter.process_page(paginator.get_result())
+                    paginator.next_page()
+            if paginator.page_size:
+                _log_page_dumped(paginator)
+                exporter.process_page(paginator.get_result())
 
         exporter.wait_till_completion()
 
@@ -113,7 +138,7 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
 def run_export(export_instance, page_number, dump_path, doc_count, progress_tracker=None):
     docs = _get_export_documents_from_file(dump_path, doc_count)
     export_file = get_export_file(export_instance, docs, progress_tracker)
-    return SuccessResult(True, page_number, export_file.path)
+    return SuccessResult(page_number, export_file.path, doc_count)
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
@@ -201,7 +226,7 @@ class MultithreadedExporter(object):
                            - path: path to raw data dump
                            - page_size: number of docs in raw data dump
         """
-        attempts = getattr(page_info, 'retry_count', 0) + 1
+        attempts = page_info.retry_count + 1
         self.progress_queue.put(ProgressValue(page_info.page, 0, page_info.page_size))
         args = self.export_instance, page_info.page, page_info.path, page_info.page_size, attempts
         result = self.pool.apply_async(self.export_function, args=args)
@@ -259,7 +284,7 @@ class MultithreadedExporter(object):
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
             pages = len(export_results)
             for result in export_results:
-                if not isinstance(result, SuccessResult):
+                if not result.success:
                     logger.error('  Error in page %s so not added to final output', result.page)
                     if os.path.exists(result.path):
                         raw_dump_path = result.path
@@ -270,9 +295,9 @@ class MultithreadedExporter(object):
 
                 logger.info('  Adding page {} of {} to final file'.format(result.page, pages))
                 if self.is_zip:
-                    _add_compressed_page_to_zip(final_zip, result.page, result.export_path)
+                    _add_compressed_page_to_zip(final_zip, result.page, result.path)
                 else:
-                    final_zip.write(result.export_path, '{}_{}'.format(base_name, result.page))
+                    final_zip.write(result.path, '{}_{}'.format(base_name, result.page))
 
         return final_path
 

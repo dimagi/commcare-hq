@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         if __debug__:
-            raise CommandError("You should run this with 'pythong -O'")
+            raise CommandError("You should run this with 'python -O'")
 
         export_id = options.pop('export_id')
         page_size = options.pop('page_size')

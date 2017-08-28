@@ -13,7 +13,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.multithreaded import (
-    SuccessResult, MultithreadedExporter, RetryResult,
+    MultithreadedExporter, RetryResult,
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         if __debug__:
-            raise CommandError("You should run this with 'pythong -O'")
+            raise CommandError("You should run this with 'python -O'")
 
         export_id = options.pop('export_id')
         export_archive_path = options.pop('export_path')
@@ -93,7 +93,7 @@ class Command(BaseCommand):
         with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
             for result in successful_pages:
                 print('  Adding page {} to final file'.format(result.page))
-                _add_compressed_page_to_zip(final_zip, result.page, result.export_path)
+                _add_compressed_page_to_zip(final_zip, result.page, result.path)
 
             print('  Adding original export pages and unprocessed pages final file')
 
@@ -112,10 +112,10 @@ class Command(BaseCommand):
         for page_path, page_number, doc_count in unprocessed_pages:
             exporter.process_page(RetryResult(page_number, page_path, doc_count, 0))
         export_results = exporter.get_results(retries_per_page=0)
-        successful_pages = [res for res in export_results if isinstance(res, SuccessResult)]
+        successful_pages = [res for res in export_results if res.success]
         error_pages = {
             '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, res.page)
-            for res in export_results if not isinstance(res, SuccessResult)
+            for res in export_results if not res.success
         }
         return error_pages, successful_pages
 
