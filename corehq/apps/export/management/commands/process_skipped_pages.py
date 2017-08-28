@@ -13,9 +13,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import _save_export_payload
-from corehq.apps.export.management.commands.rebuild_export import (
-    SuccessResult, MultithreadedExporter, RetryResult
-)
+from corehq.apps.export.multithreaded import (
+    SuccessResult, MultithreadedExporter, RetryResult,
+    UNPROCESSED_PAGES_DIR)
 from corehq.util.files import safe_filename
 
 
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         print('Extracting unprocessed pages')
         with zipfile.ZipFile(export_archive_path, 'r') as zipref:
             for member in zipref.namelist():
-                if member.startswith('unprocessed'):
+                if member.startswith(UNPROCESSED_PAGES_DIR):
                     zipref.extract(member, extract_to)
 
         unprocessed_path = os.path.join(extract_to, 'unprocessed')
@@ -88,7 +88,7 @@ class Command(BaseCommand):
 
         print('{} pages still to process'.format(len(unprocessed_pages)))
 
-        exporter = MultithreadedExporter(processes, export_instance, total_docs)
+        exporter = MultithreadedExporter(export_instance, total_docs, processes)
         exporter.start()
         for page_path, page_number, doc_count in unprocessed_pages:
             exporter.process_page(RetryResult(page_number, page_path, doc_count, 0))
@@ -97,7 +97,7 @@ class Command(BaseCommand):
 
         successful_pages = [res for res in export_results if isinstance(res, SuccessResult)]
         error_pages = {
-            'unprocessed/page_{}.json.gz'.format(res.page)
+            '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, res.page)
             for res in export_results if not isinstance(res, SuccessResult)
         }
 
@@ -119,11 +119,14 @@ class Command(BaseCommand):
                             prefix, result.page, suffix), page_file.open(path).read()
                         )
 
+            print('  Adding original export pages and unprocessed pages final file')
             with zipfile.ZipFile(export_archive_path, 'r') as original_export:
                 for member in original_export.namelist():
                     if member.startswith(export_name):
+                        # add original export page
                         final_zip.writestr(member, original_export.read(member))
                     elif member in error_pages:
+                        # add in any raw data that we weren't able to process
                         final_zip.writestr(member, original_export.read(member))
 
         if force_upload or not error_pages:

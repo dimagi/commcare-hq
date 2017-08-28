@@ -283,7 +283,7 @@ class _PaginatedWriter(object):
         return self._path
 
 
-def _get_writer(export_instances):
+def _get_writer(export_instances, allow_pagination=True):
     """
     Return a new _Writer
     """
@@ -292,7 +292,7 @@ def _get_writer(export_instances):
         format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
-    if PAGINATED_EXPORTS.enabled(export_instances[0].domain):
+    if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
         writer = _PaginatedWriter(legacy_writer)
     else:
         writer = _Writer(legacy_writer)
@@ -317,7 +317,6 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
     """
-
     writer = _get_writer(export_instances)
     with writer.open(export_instances):
         for export_instance in export_instances:
