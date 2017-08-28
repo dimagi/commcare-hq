@@ -4,6 +4,7 @@ from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -18,8 +19,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.style.decorators import use_daterangepicker
-from corehq.apps.users.models import Permissions
-from custom.icds_reports.const import LocationTypes, APP_ID
+from corehq.apps.users.models import Permissions, UserRole
+from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -1217,7 +1218,7 @@ class AdultWeightScaleView(View):
         })
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
     urlname = 'aggregation_script_page'
@@ -1225,7 +1226,16 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+        couch_user = self.request.couch_user
+        domain = self.domain
+        domain_membership = couch_user.get_domain_membership(domain)
+        bhd_role = UserRole.by_domain_and_name(
+            domain, BHD_ROLE
+        )
+        if couch_user.is_domain_admin(domain) or (bhd_role or bhd_role[0].get_id == domain_membership.role_id):
+            return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+        else:
+            raise PermissionDenied()
 
     def section_url(self):
         return
