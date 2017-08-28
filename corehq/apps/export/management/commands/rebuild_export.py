@@ -64,8 +64,6 @@ ProgressValue = namedtuple('ProgressValue', 'page progress total')
 
 SuccessResult = namedtuple('SuccessResult', 'success page export_path')
 RetryResult = namedtuple('RetryResult', 'page path page_size retry_count')
-
-
 QueuedResult = namedtuple('QueuedResult', 'async_result page path page_size retry_count')
 
 
@@ -104,69 +102,21 @@ class Command(BaseCommand):
         filters = export_instance.get_filters()
         total_docs = get_export_size(export_instance, filters)
 
-        results = []
-        progress_queue = multiprocessing.Queue()
-
-        progress = multiprocessing.Process(target=_output_progress, args=(progress_queue, total_docs))
-        progress.start()
-
-        def _process_page(pool, output):
-            attempts = getattr(output, 'retry_count', 0) + 1
-            if attempts == 1:
-                print('  Dump page {} complete: {} docs'.format(output.page, output.page_size))
-
-            progress_queue.put(ProgressValue(output.page, 0, output.page_size))
-            args = export_instance, output.page, output.path, output.page_size, attempts
-            result = pool.apply_async(run_export_safe, args=args)
-            results.append(QueuedResult(result, output.page, output.path, output.page_size, attempts))
-
-        def _set_queue(queue):
-            run_export.queue = queue
-
-        pool = multiprocessing.Pool(processes=processes, initializer=_set_queue, initargs=[progress_queue])
+        exporter = MultithreadedExporter(processes, export_instance, total_docs)
         dump_output = DumpOutput(export_id)
         print('Starting data dump of {} docs'.format(total_docs))
 
-        try:
+        with exporter:
             with dump_output:
                 for index, doc in enumerate(_get_export_documents(export_instance, filters)):
                     dump_output.write(doc)
                     if dump_output.page_size == page_size:
-                        _process_page(pool, dump_output)
+                        exporter.process_page(dump_output)
                         dump_output.next_page()
                 if dump_output.page_size:
-                    _process_page(pool, dump_output)
+                    exporter.process_page(dump_output)
 
-            export_results = []
-            while results:
-                queued_result = results[0]
-                try:
-                    export_results.append(queued_result.async_result.get(timeout=5))
-                    results.pop(0)
-                except KeyboardInterrupt:
-                    raise
-                except multiprocessing.TimeoutError:
-                    pass
-                except Exception:
-                    logger.exception("Error getting results: %s", queued_result)
-                    print(style.ERROR('    Unable to process page {} after {} tries'.format(
-                        queued_result.page, queued_result.retry_count))
-                    )
-                    results.pop(0)
-                    if queued_result.retry_count < 3:
-                        _process_page(pool, queued_result)
-                    else:
-                        export_results.append(queued_result)
-        except KeyboardInterrupt:
-            for p in multiprocessing.active_children():
-                p.terminate()
-            raise
-
-        try:
-            progress.terminate()
-        except:
-            pass
-
+        export_results = exporter.get_results()
         print('Processing complete')
 
         print('Compiling final file')
@@ -209,11 +159,14 @@ def run_export_safe(export_instance, page_number, dump_path, doc_count, attempts
 
 
 def run_export(export_instance, page_number, dump_path, doc_count):
+    async_queue = getattr(run_export, 'queue', None)
+
     docs = _get_export_documents_from_file(dump_path, doc_count)
     update_frequency = min(1000, int(doc_count / 10) or 1)
-    progress_tracker = LoggingProgressTracker(page_number, run_export.queue, update_frequency)
+    progress_tracker = LoggingProgressTracker(page_number, async_queue, update_frequency)
     export_file = get_export_file(export_instance, docs, progress_tracker)
-    run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
+    if async_queue:
+        run_export.queue.put(ProgressValue(page_number, doc_count, doc_count))  # just to make sure we set progress to 100%
     print('    Processing page {} complete'.format(page_number))
     return SuccessResult(True, page_number, export_file.path)
 
@@ -249,7 +202,87 @@ class LoggingProgressTracker(object):
         total = meta.get('total', 0)
         if current is not None:
             if current % self.update_frequency == 0:
-                self.progress_queue.put(ProgressValue(self.name, current, total))
+                if self.progress_queue:
+                    self.progress_queue.put(ProgressValue(self.name, current, total))
+                else:
+                    print('[{}] {} of {} complete'.format(self.name, current, total))
+
+
+class MultithreadedExporter(object):
+    def __init__(self, num_processes, export_instance, total_docs):
+        self.export_instance = export_instance
+        self.results = []
+        self.progress_queue = multiprocessing.Queue()
+        self.progress = multiprocessing.Process(target=_output_progress, args=(self.progress_queue, total_docs))
+
+        def _set_queue(queue):
+            run_export.queue = queue
+        self.pool = multiprocessing.Pool(
+            processes=num_processes,
+            initializer=_set_queue,
+            initargs=[self.progress_queue]
+        )
+
+        self.export_results = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type and exc_val:
+            self.stop()
+
+    def start(self):
+        self.progress.start()
+
+    def process_page(self, page_info):
+        """
+        :param page_info: object with attributes:
+                           - page: page number (int)
+                           - path: path to raw data dump
+                           - page_size: number of docs in raw data dump
+        """
+        attempts = getattr(page_info, 'retry_count', 0) + 1
+        if attempts == 1:
+            print('  Dump page {} complete: {} docs'.format(page_info.page, page_info.page_size))
+
+        self.progress_queue.put(ProgressValue(page_info.page, 0, page_info.page_size))
+        args = self.export_instance, page_info.page, page_info.path, page_info.page_size, attempts
+        result = self.pool.apply_async(run_export_safe, args=args)
+        self.results.append(QueuedResult(result, page_info.page, page_info.path, page_info.page_size, attempts))
+
+    def get_results(self, retries_per_page=3):
+        try:
+            while self.results:
+                queued_result = self.results[0]
+                try:
+                    self.export_results.append(queued_result.async_result.get(timeout=5))
+                    self.results.pop(0)
+                except KeyboardInterrupt:
+                    raise
+                except multiprocessing.TimeoutError:
+                    pass
+                except Exception:
+                    logger.exception("Error getting results: %s", queued_result)
+                    print(style.ERROR('    Unable to process page {} after {} tries'.format(
+                        queued_result.page, queued_result.retry_count))
+                    )
+                    self.results.pop(0)
+                    if queued_result.retry_count < retries_per_page:
+                        self.process_page(queued_result)
+                    else:
+                        self.export_results.append(queued_result)
+        finally:
+            self.stop()
+
+        return self.export_results
+
+    def stop(self):
+        self.pool.terminate()
+        self.progress.terminate()
+
+        for p in multiprocessing.active_children():
+            p.terminate()
 
 
 def _output_progress(queue, total_docs):
