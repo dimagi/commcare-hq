@@ -121,7 +121,7 @@
         },
         "is_primary_key": false,
         "transform": {},
-        "is_nullable": false,
+        "is_nullable": true,
         "type": "expression",
         "column_id": "location_type"
       },

@@ -104,7 +104,7 @@
           "type": "expression",
           "transform": {},
           "is_primary_key": false,
-          "is_nullable": false,
+          "is_nullable": true,
           "expression": {
             "location_id_expression": {
               "type": "named",
