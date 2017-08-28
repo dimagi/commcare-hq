@@ -918,40 +918,35 @@ def new_module(request, domain, app_id):
     module_type = request.POST.get('module_type', 'case')
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
-
-        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
-            if module_type == 'case':
-                name = name or 'Case List'
-            else:
-                name = name or 'Surveys'
+        if module_type == 'case':
+            name = name or 'Case List'
+        else:
+            name = name or 'Surveys'
 
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V1.enabled(request.user.username):
-            app.new_form(module_id, "Untitled Form", lang)
-        else:
-            unstructured = add_ons.show("empty_case_lists", request, app)
-            if module_type == 'case':
-                if not unstructured:
-                    form_id = 0
-
-                    # registration form
-                    register = app.new_form(module_id, _("Registration Form"), lang)
-                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                    register.actions.update_case = UpdateCaseAction(
-                        condition=FormActionCondition(type='always'))
-
-                    # one followup form
-                    followup = app.new_form(module_id, _("Followup Form"), lang)
-                    followup.requires = "case"
-                    followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
-
-                _init_module_case_type(module)
-            else:
+        unstructured = add_ons.show("empty_case_lists", request, app)
+        if module_type == 'case':
+            if not unstructured:
                 form_id = 0
-                app.new_form(module_id, _("Survey"), lang)
+
+                # registration form
+                register = app.new_form(module_id, _("Registration Form"), lang)
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                register.actions.update_case = UpdateCaseAction(
+                    condition=FormActionCondition(type='always'))
+
+                # one followup form
+                followup = app.new_form(module_id, _("Followup Form"), lang)
+                followup.requires = "case"
+                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+
+            _init_module_case_type(module)
+        else:
+            form_id = 0
+            app.new_form(module_id, _("Survey"), lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,

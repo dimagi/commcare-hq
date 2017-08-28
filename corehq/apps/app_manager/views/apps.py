@@ -18,8 +18,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError, AppEditingError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
@@ -94,8 +93,6 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V1.enabled(request.user.username):
-        return back_to_main(request, domain)
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
@@ -476,8 +473,7 @@ def app_settings(request, domain, app_id=None):
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id,
-                        release_manager=(not toggles.APP_MANAGER_V1.enabled(request.user.username)))
+    return view_generic(request, domain, app_id, release_manager=True)
 
 
 @no_conflict_require_POST
@@ -786,22 +782,11 @@ def rearrange(request, domain, app_id, key):
         if "forms" == key:
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
-            try:
-                app_manager_v2 = not toggles.APP_MANAGER_V1.enabled(request.user.username)
-                app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
-            except ConflictingCaseTypeError:
-                messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+            app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V1.enabled(request.user.username):
-            messages.error(request, _(
-                'The form cannot be moved into the desired module.'
-            ))
-        else:
-            messages.error(request, _(
-                'The form can not be moved into the desired menu.'
-            ))
+        messages.error(request, _('The form can not be moved into the desired menu.'))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
         messages.error(request, _(
@@ -835,8 +820,6 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        _('You have successfully removed User Case Properties from this application.')
-        if toggles.APP_MANAGER_V1.enabled(request.user.username) else
         _('You have successfully removed User Properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)

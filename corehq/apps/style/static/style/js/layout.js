@@ -105,11 +105,6 @@ hqLayout.actions = {
                     $content.css('min-height', $sidebar.outerHeight() + 'px');
                 }
             }
-
-            if ($content.find("#formdesigner").length && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                $content.css("padding-left", 0);
-                $content.css("padding-right", 0);
-            }
         }
     },
     balanceWidths: function () {

@@ -387,7 +387,7 @@ def new_form(request, domain, app_id, module_id):
     else:
         form = app.new_form(module_id, name, lang)
 
-    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and form_type != "shadow":
+    if form_type != "shadow":
         if case_action == 'update':
             form.requires = 'case'
             form.actions.update_case = UpdateCaseAction(

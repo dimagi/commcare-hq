@@ -165,12 +165,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        if toggles.APP_MANAGER_V1.enabled(request.user.username):
-            from corehq.apps.dashboard.views import NewUserDashboardView
-            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
-        else:
-            from corehq.apps.dashboard.views import DomainDashboardView
-            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
+        from corehq.apps.dashboard.views import DomainDashboardView
+        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
