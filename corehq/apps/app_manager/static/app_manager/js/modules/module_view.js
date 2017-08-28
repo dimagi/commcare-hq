@@ -1,7 +1,6 @@
 /*globals $, hqImport, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        v2 = !hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
@@ -9,7 +8,7 @@ $(function () {
     hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Module Settings"));
 
     // Set up details
-    if (!v2 || moduleBrief.case_type) {
+    if (moduleBrief.case_type) {
         var state = hqImport('app_manager/js/details/screen_config').state;
         var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').DetailScreenConfig;
         state.requires_case_details(moduleBrief.requires_case_details);
@@ -73,7 +72,7 @@ $(function () {
             $el.val(valueNoSpaces);
             $el.caret('pos', pos);
         }
-        if (v2 && !valueNoSpaces) {
+        if (!valueNoSpaces) {
             $el.closest('.form-group').addClass('has-error');
             showCaseTypeError(
                 gettext("Case type is required.")

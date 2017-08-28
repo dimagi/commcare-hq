@@ -116,8 +116,12 @@ def _ensure_product_and_rate(monthly_fee, edition, verbose, apps):
     if verbose:
         log_accounting_info('Ensuring Products and Product Rates')
 
-    product_type = SoftwareProductType.COMMCARE
-    product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
+    product = SoftwareProduct(name='CommCare %s' % edition)
+
+    # TODO - remove after product_type column is dropped and migrations are squashed
+    if hasattr(product, 'product_type'):
+        product.product_type = SoftwareProductType.COMMCARE
+
     if edition == SoftwarePlanEdition.ENTERPRISE:
         product.name = "Dimagi Only %s" % product.name
 

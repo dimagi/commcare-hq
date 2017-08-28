@@ -19,7 +19,7 @@ django-tastypie==0.14.0
 djangorestframework==3.5.4
 elasticsearch==1.9.0
 #egenix-mx-base==3.2.8
-eulxml==0.18.0
+eulxml==1.1.3
 feedparser==5.1.3
 ghdiff==0.4
 gunicorn==19.4
@@ -33,7 +33,7 @@ psycopg2==2.7.3
 psycogreen==1.0
 pycrypto==2.6.1
 py-KISSmetrics==1.0.1
-https://github.com/dimagi/files/raw/master/python-requirements/pygooglechart-0.3.0.tar.gz
+pygooglechart==0.4.0
 python-dateutil==1.5
 python-magic==0.4.13
 pytz==2015.6
@@ -41,9 +41,8 @@ PyYAML==3.12
 requests==2.10.0
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
-xlutils==1.4.1
 Unidecode==0.04.20
-xlrd==0.7.3
+xlrd==1.0.0
 simplejson==2.6.1
 sh==1.09
 gevent==1.0.2
@@ -58,13 +57,13 @@ sqlagg==0.8.0
 django-redis==4.2
 redis==2.10.5
 # WeasyPrint==0.20.2
-twilio==5.6.0
+twilio==6.5.1
 django-countries==4.6
 reportlab==3.0
 stripe==1.12.2
 django-compressor==2.1
 django-angular==0.7.16
-Pycco==0.3.0
+Pycco==0.5.1
 django-mptt==0.8.7
 jsonpath-rw==1.4.0
 pip>=6.1.1
@@ -73,7 +72,7 @@ Pygments==2.0.2
 tinys3==0.1.12
 django-formtools==2.0
 django-otp==0.3.13
-django-two-factor-auth==1.6.0
+django-two-factor-auth==1.6.2
 datadog==0.15.0
 django-websocket-redis==0.5.0
 django-redis-sessions==0.5.6
@@ -99,3 +98,5 @@ zeep==1.6.0
 ethiopian_date==0.1.1
 architect==0.5.6
 contextlib2==0.5.4
+hiredis==0.2.0
+xlwt==1.3.0

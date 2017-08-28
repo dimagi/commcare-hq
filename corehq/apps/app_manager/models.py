@@ -127,7 +127,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
     LocationXpathValidationError,
@@ -1382,6 +1381,18 @@ class JRResourceProperty(StringProperty):
         return value
 
 
+class CustomIcon(DocumentSchema):
+    """
+    A custom icon to display next to a module or a form.
+    The property "form" identifies what kind of icon this would be, for ex: badge
+    One can set either a simple text to display or
+    an xpath expression to be evaluated for example count of cases within.
+    """
+    form = StringProperty()
+    text = DictProperty(unicode)
+    xpath = StringProperty()
+
+
 class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
@@ -1389,6 +1400,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
+    custom_icons = SchemaListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -1441,6 +1453,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def audio_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def custom_icon_form_and_text_by_language(self, lang):
+        custom_icon = self.custom_icon
+        if custom_icon:
+            return custom_icon.form, custom_icon.text[lang]
+        return None, None
 
     def _set_media(self, media_attr, lang, media_path):
         """
@@ -1496,6 +1514,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         if for_default:
             return self.audio_by_language(lang, strict=False)
+
+    @property
+    def custom_icon(self):
+        if self.custom_icons:
+            return self.custom_icons[0]
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
@@ -3647,6 +3670,12 @@ def _filter_by_location_id(user, ui_filter):
                               'request_user': user})
 
 
+def _filter_by_location_ids(user, ui_filter):
+    from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
+    return ui_filter.value(**{ui_filter.name: CHOICE_DELIMITER.join(user.assigned_location_ids),
+                              'request_user': user})
+
+
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.raw_username, display=None)
@@ -3672,6 +3701,7 @@ def get_auto_filter_configurations():
         AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
                          _("The user's case sharing group")),
         AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('location_ids', _filter_by_location_ids, _("All of the user's assigned locations")),
         AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
                          _("The parent location of the user's assigned location")),
         AutoFilterConfig('username', _filter_by_username, _("The user's username")),
@@ -5697,11 +5727,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
         """
-        The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the rearrangement (confusingly) goes through anyway.
+        The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
@@ -5713,7 +5741,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if app_manager_v2 and not isinstance(form, AdvancedForm):
+            if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5726,9 +5754,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type and not app_manager_v2:
-            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
-            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         return update_unique_ids(source)

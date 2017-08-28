@@ -1890,6 +1890,38 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
             },
         };
+        vm.lineChartOptions = {
+            chart: {
+                type: 'lineChart',
+                height: 450,
+                width: 1100,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 50,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d.x;
+                },
+                y: function (d) {
+                    return d.y;
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 500,
+                xAxis: {
+                    axisLabel: 'Weeks',
+                },
+                yAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.format('.2f')(d);
+                    },
+                },
+            },
+        };
         $scope.$apply();
     }, 1000);
 

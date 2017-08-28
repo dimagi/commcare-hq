@@ -135,7 +135,7 @@
                     </div>
 
                 {% if export_instance.type == 'form' %}
-                    <div class="checkbox">
+                    <div class="checkbox" {% if not request|toggle_enabled:'SUPPORT' %}data-bind="visible: initiallyIncludeErrors"{% endif %}>
                         <label>
                             <input type="checkbox" id="include-errors-checkbox" data-bind="checked: include_errors" />
                             {% trans "Include duplicates and other unprocessed forms" %}

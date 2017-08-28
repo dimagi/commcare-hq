@@ -7,9 +7,14 @@ from django.test import TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
-from casexml.apps.phone.tests.utils import MockDevice
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import get_restore_config
+from casexml.apps.phone.tests.utils import (
+    create_restore_user,
+    delete_cached_response,
+    get_restore_config,
+    MockDevice,
+)
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -22,7 +27,6 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.models import (
     AbstractSyncLog,
     get_properly_wrapped_sync_log,
@@ -82,7 +86,7 @@ class BaseSyncTest(TestCase):
             restore_user=self.user,
             **self.restore_options
         )
-        restore_config.cache.delete(restore_config._restore_cache_key)
+        restore_config.restore_payload_path_cache.invalidate()
         super(BaseSyncTest, self).tearDown()
 
     @classmethod
@@ -151,7 +155,7 @@ class BaseSyncTest(TestCase):
             self._testUpdate(migrated_sync_log, case_id_map, dependent_case_id_map)
 
 
-class SyncBaseTest(BaseSyncTest):
+class DeprecatedBaseSyncTest(BaseSyncTest):
     """DEPRECATED use BaseSyncTest when making new subclasses
 
     This base class has `self.factory` and `self.sync_log`, which
@@ -159,7 +163,7 @@ class SyncBaseTest(BaseSyncTest):
     """
 
     def setUp(self):
-        super(SyncBaseTest, self).setUp()
+        super(DeprecatedBaseSyncTest, self).setUp()
         self.sync_log = self.device.last_sync.log
         self.factory = self.device.case_factory
         self.factory.form_extras = {
@@ -423,7 +427,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.assertEqual(sync.cases, {})
 
         sync.form.archive()
-        self.device.last_sync.log.invalidate_cached_payloads()
+        RestorePayloadPathCache(
+            domain=self.project.name,
+            user_id=self.user_id,
+            sync_log_id=sync.restore_id,
+            device_id=None,
+        ).invalidate()
         self.assertEqual(set(self.device.sync().cases), {case_id})
 
     def testUserLoggedIntoMultipleDevices(self):
@@ -1207,11 +1216,6 @@ class SyncTokenCachingTest(BaseSyncTest):
         sync2 = self.device.sync(version=V2, restore_id=sync0.log._id)
         self.assertEqual(sync1.payload, sync2.payload)
 
-        # caching a different version should also produce something new
-        sync3 = self.device.sync(version=V1, restore_id=sync0.log._id)
-        self.assertNotEqual(sync1.payload, sync3.payload)
-        self.assertNotEqual(sync1.log._id, sync3.log._id)
-
     def test_initial_cache(self):
         restore_config = RestoreConfig(
             project=self.project,
@@ -1278,8 +1282,7 @@ class SyncTokenCachingTest(BaseSyncTest):
         ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        # Delete cached file
-        os.remove(original_payload.get_filename())
+        delete_cached_response(original_payload)
 
         # resyncing should recreate the cache
         next_file = RestoreConfig(

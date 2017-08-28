@@ -1,12 +1,6 @@
-from corehq.toggles import BLOBDB_RESTORE
-
-
-def get_restore_response_class(domain):
-    from casexml.apps.phone.restore import BlobRestoreResponse, FileRestoreResponse
-
-    if BLOBDB_RESTORE.enabled(domain):
-        return BlobRestoreResponse
-    return FileRestoreResponse
+def get_restore_response_class():
+    from casexml.apps.phone.restore import BlobRestoreResponse
+    return BlobRestoreResponse
 
 
 def delete_sync_logs(before_date, limit=1000):

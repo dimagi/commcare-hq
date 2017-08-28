@@ -820,11 +820,17 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-SQL_REPORTING_DATABASE_URL = None
-UCR_DATABASE_URL = None
-
-# Override this in localsettings to specify custom reporting databases
-CUSTOM_DATABASES = {}
+# mapping of report engine IDs to database configurations
+# values must be an alias of a DB in the Django DB configuration
+# or a dict of the following format:
+# {
+#     'WRITE': 'django_db_alias',
+#     'READ': [('django_db_alias', query_weighting_int), (...)]
+# }
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default'
+}
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
 
@@ -910,6 +916,8 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
 DAYS_TO_KEEP_DEVICE_LOGS = 60
+
+MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
 from env_settings import *
 
@@ -1275,22 +1283,6 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-### Reporting database - use same DB as main database
-
-db_settings = DATABASES["default"].copy()
-db_settings['PORT'] = db_settings.get('PORT', '5432')
-options = db_settings.get('OPTIONS')
-db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
-
-if not SQL_REPORTING_DATABASE_URL or UNIT_TESTING:
-    SQL_REPORTING_DATABASE_URL = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
-        **db_settings
-    )
-
-if not UCR_DATABASE_URL or UNIT_TESTING:
-    # by default just use the reporting DB for UCRs
-    UCR_DATABASE_URL = SQL_REPORTING_DATABASE_URL
-
 if USE_PARTITIONED_DATABASE:
     DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
 else:
@@ -1562,8 +1554,6 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
         "custom.icds.messaging.custom_content.cf_visits_complete",
 }
 
-MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-
 # Used by the old reminders framework
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'HOST_CASE_OWNER_LOCATION':
@@ -1687,22 +1677,6 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
             'params': {
                 'ucr_division': '0f'
-            }
-        },
-        {
-            'name': 'kafka-ucr-main-08',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
-            'params': {
-                'ucr_division': '08'
-            }
-        },
-        {
-            'name': 'kafka-ucr-main-9f',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_pillow',
-            'params': {
-                'ucr_division': '9f'
             }
         },
         {
@@ -1964,9 +1938,12 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 

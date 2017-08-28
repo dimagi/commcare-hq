@@ -1,7 +1,8 @@
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.tasks import sync_case_for_messaging
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -10,16 +11,31 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('case_type')
-        parser.add_argument('--limit', type=int, default=-1)
+        parser.add_argument('--start-from-db', dest='start_from_db')
 
-    def handle(self, domain, case_type, limit, **options):
-        print("Fetching case ids for %s/%s ..." % (domain, case_type))
-        case_ids = CaseAccessors(domain).get_case_ids_in_domain(case_type)
+    def handle(self, domain, case_type, start_from_db=None, **options):
+        print("Resyncing messaging models for %s/%s ..." % (domain, case_type))
 
-        print("Creating tasks...")
-        if limit > 0:
-            case_ids = case_ids[:limit]
-            print("Limiting to %s tasks..." % limit)
+        db_aliases = get_db_aliases_for_partitioned_query()
+        db_aliases.sort()
+        if start_from_db:
+            if start_from_db not in db_aliases:
+                raise CommandError("DB alias not recognized: %s" % start_from_db)
 
-        for case_id in with_progress_bar(case_ids):
-            sync_case_for_messaging.delay(domain, case_id)
+            index = db_aliases.index(start_from_db)
+            db_aliases = db_aliases[index:]
+
+        print("Iterating over databases: %s" % db_aliases)
+
+        for db_alias in db_aliases:
+            print("")
+            print("Creating tasks for cases in %s ..." % db_alias)
+            case_ids = list(
+                CommCareCaseSQL
+                .objects
+                .using(db_alias)
+                .filter(domain=domain, type=case_type, deleted=False)
+                .values_list('case_id', flat=True)
+            )
+            for case_id in with_progress_bar(case_ids):
+                sync_case_for_messaging.delay(domain, case_id)

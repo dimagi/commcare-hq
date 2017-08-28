@@ -22,7 +22,7 @@ from corehq.sql_db.connections import connection_manager
 class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData):
     @property
     def engine_id(self):
-        return get_engine_id(self.config)
+        return get_engine_id(self.config, allow_read_replicas=True)
 
     @property
     def filters(self):

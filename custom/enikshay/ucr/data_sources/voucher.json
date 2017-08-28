@@ -54,6 +54,22 @@
             },
             {
                 "comment": null,
+                "create_index": true,
+                "display_name": "voucher_district_id",
+                "datatype": "string",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_district_id"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "voucher_district_id"
+            },
+            {
+                "comment": null,
                 "create_index": false,
                 "display_name": "voucher_fulfilled_by_user_type",
                 "datatype": "string",

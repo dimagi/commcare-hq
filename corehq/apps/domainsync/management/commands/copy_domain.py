@@ -2,6 +2,7 @@ from __future__ import print_function
 from multiprocessing import Process, Queue
 import sys
 import os
+from urlparse import urlparse
 from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -28,6 +29,14 @@ NUM_PROCESSES = 8
 
 
 class Command(BaseCommand):
+    """
+    DEPRECATED/NEEDS WORK - `copy_domain` is basically broken because of
+      - attachments in blobdb
+      - SQL data.
+
+    Scale trello card to update this: https://trello.com/c/OGGrmoGI/16-copydomain
+
+    """
     help = "Copies the contents of a domain to another database. " \
            "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
@@ -124,6 +133,18 @@ class Command(BaseCommand):
                 print("In {} db".format(sourcedb_name or "the main"))
                 yield sourcedb_name, sourcedb
 
+    def _get_couch_database_configs_from_string(self, db_string):
+        sourcedb_parse_result = urlparse(db_string)
+        return CouchConfig({
+            'default': {
+                'COUCH_HTTPS': sourcedb_parse_result.scheme == 'https',
+                'COUCH_SERVER_ROOT': sourcedb_parse_result.hostname,
+                'COUCH_USERNAME': sourcedb_parse_result.username,
+                'COUCH_PASSWORD': sourcedb_parse_result.password,
+                'COUCH_DATABASE_NAME': sourcedb_parse_result.path.lstrip('/')
+            }
+        })
+
     def handle(self, sourcedb, domain, targetdb, **options):
         # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         self.exclude_dbs = (
@@ -133,7 +154,7 @@ class Command(BaseCommand):
             # todo: missing domain/docs, but probably want to add back
             'meta',
         )
-        self.source_couch = source_couch = CouchConfig(sourcedb)
+        self.source_couch = source_couch = self._get_couch_database_configs_from_string(sourcedb)
         simulate = options['simulate']
         exclude_attachments = options['exclude_attachments']
         self.run_multi_process = options['run_multi_process']

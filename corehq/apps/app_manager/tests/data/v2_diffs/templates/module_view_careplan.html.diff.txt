@@ -1,8 +1,0 @@
---- 
-+++ 
-@@ -1,4 +1,4 @@
--{% extends "app_manager/v1/module_view.html" %}
-+{% extends "app_manager/v2/module_view.html" %}
- {% load xforms_extras %}
- {% load hq_shared_tags %}
- {% load i18n %}

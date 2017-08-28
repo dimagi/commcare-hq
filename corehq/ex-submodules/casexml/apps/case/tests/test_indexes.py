@@ -6,7 +6,7 @@ from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from casexml.apps.case.tests.util import check_user_has_case
+from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
@@ -98,7 +98,7 @@ class IndexTest(TestCase):
         ).as_xml()
 
         post_case_blocks([create_index], domain=self.project.name)
-        check_user_has_case(self, self.user, create_index)
+        deprecated_check_user_has_case(self, self.user, create_index)
 
         # Step 2. Update the case to delete <mom> and create <dad>
 
@@ -123,7 +123,7 @@ class IndexTest(TestCase):
 
         post_case_blocks([update_index], domain=self.project.name)
 
-        check_user_has_case(self, self.user, update_index_expected)
+        deprecated_check_user_has_case(self, self.user, update_index_expected)
 
         # Step 3. Put <mom> back
 
@@ -148,7 +148,7 @@ class IndexTest(TestCase):
 
         post_case_blocks([update_index], domain=self.project.name)
 
-        check_user_has_case(self, self.user, update_index_expected)
+        deprecated_check_user_has_case(self, self.user, update_index_expected)
 
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
@@ -164,7 +164,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', parent_case_id, 'extension')},
         ).as_xml()
         post_case_blocks([create_index], domain=self.project.name)
-        check_user_has_case(self, self.user, create_index)
+        deprecated_check_user_has_case(self, self.user, create_index)
 
 
 @use_sql_backend

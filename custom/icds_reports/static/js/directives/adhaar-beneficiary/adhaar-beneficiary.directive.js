@@ -10,7 +10,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Adhaar seeded beneficaries";
+    vm.label = "Adhaar seeded beneficaries";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adhaar/map', label: 'Map'},

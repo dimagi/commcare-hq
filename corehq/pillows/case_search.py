@@ -183,8 +183,8 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
         assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
-        iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}".format(
-            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all'
+        iteration_key = "CaseSearchResumableToElasticsearchPillow_{}_reindexer_{}_{}".format(
+            CASE_SEARCH_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
         )
         limit_db_aliases = [limit_to_db] if limit_to_db else None
         accessor = CaseReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)

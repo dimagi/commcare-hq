@@ -10,7 +10,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Early Initiation of Breastfeeding";
+    vm.label = "Early Initiation of Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/early_initiation/map', label: 'Map'},

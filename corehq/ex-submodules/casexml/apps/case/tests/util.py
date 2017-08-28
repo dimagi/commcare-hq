@@ -3,6 +3,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import ElementTree
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -20,9 +21,12 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 TEST_DOMAIN_NAME = 'test-domain'
 
 
-class RestoreCaseBlock(object):
+class _RestoreCaseBlock(object):
     """
     Little shim class for working with XML case blocks in a restore payload
+
+    NOTE the recommended way to inspect case restore payloads is to
+    use <MockDevice>.sync().cases, so don't use this in tests.
     """
 
     def __init__(self, xml_element, version=V2):
@@ -104,30 +108,6 @@ def check_xml_line_by_line(test_case, expected, actual):
         raise
 
 
-def assert_user_has_case(testcase, user, case_id, **kwargs):
-    """DEPRECATED use assertIn(case_id, <MockDevice>.sync().cases)"""
-    return assert_user_has_cases(testcase, user, [case_id], return_single=True, **kwargs)
-
-
-def assert_user_has_cases(testcase, user, case_ids, **kwargs):
-    """DEPRECATED use assertTrue(set(case_ids) <= set(<MockDevice>.sync().cases))"""
-    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
-    return check_user_has_case(testcase, user, case_blocks,
-                               should_have=True, line_by_line=False, **kwargs)
-
-
-def assert_user_doesnt_have_case(testcase, user, case_id, **kwargs):
-    """DEPRECATED use assertNotIn(case_id, <MockDevice>.sync().cases)"""
-    return assert_user_doesnt_have_cases(testcase, user, [case_id], return_single=True, **kwargs)
-
-
-def assert_user_doesnt_have_cases(testcase, user, case_ids, **kwargs):
-    """DEPRECATED use assertFalse(set(case_ids) & set(<MockDevice>.sync().cases))"""
-    case_blocks = [CaseBlock(case_id=case_id).as_xml() for case_id in case_ids]
-    return check_user_has_case(testcase, user, case_blocks,
-                               should_have=False, **kwargs)
-
-
 def get_case_xmlns(version):
     return NS_VERSION_MAP.get(version, 'http://openrosa.org/http/response')
 
@@ -135,18 +115,23 @@ def get_case_xmlns(version):
 def extract_caseblocks_from_xml(payload_string, version=V2):
     parsed_payload = ElementTree.fromstring(payload_string)
     xml_blocks = parsed_payload.findall('{{{0}}}case'.format(get_case_xmlns(version)))
-    return [RestoreCaseBlock(b, version) for b in xml_blocks]
+    return [_RestoreCaseBlock(b, version) for b in xml_blocks]
 
 
 @contextmanager
-def cached_restore(testcase, user, restore_id="", version=V2,
+def _cached_restore(testcase, user, restore_id="", version=V2,
                    purge_restore_cache=False):
     """DEPRECATED use <MockDevice>.sync().cases"""
     assert not hasattr(testcase, 'restore_config'), testcase
     assert not hasattr(testcase, 'payload_string'), testcase
 
     if restore_id and purge_restore_cache:
-        SyncLog.get(restore_id).invalidate_cached_payloads()
+        RestorePayloadPathCache(
+            domain=user.domain,
+            user_id=user.user_id,
+            sync_log_id=restore_id,
+            device_id=None,
+        ).invalidate()
 
     testcase.restore_config = RestoreConfig(
         project=user.project,
@@ -160,7 +145,7 @@ def cached_restore(testcase, user, restore_id="", version=V2,
         del testcase.restore_config, testcase.payload_string
 
 
-def check_user_has_case(testcase, user, case_blocks, should_have=True,
+def deprecated_check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
     """DEPRECATED use <MockDevice>.sync().cases"""
@@ -169,7 +154,7 @@ def check_user_has_case(testcase, user, case_blocks, should_have=True,
         restore_config = testcase.restore_config
         payload_string = testcase.payload_string
     except AttributeError:
-        with cached_restore(testcase, user, restore_id, version, purge_restore_cache):
+        with _cached_restore(testcase, user, restore_id, version, purge_restore_cache):
             restore_config = testcase.restore_config
             payload_string = testcase.payload_string
 
@@ -199,7 +184,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
 
     def check_block(case_block):
         case_block.set('xmlns', XMLNS)
-        case_block = RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
+        case_block = _RestoreCaseBlock(ElementTree.fromstring(ElementTree.tostring(case_block)), version=version)
         case_id = case_block.get_case_id()
         n = 0
 

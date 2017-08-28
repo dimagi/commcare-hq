@@ -6,7 +6,7 @@ import os
 
 from django.db import connections
 from django.conf import settings
-from django.template import Context, engines
+from django.template import engines
 
 from corehq.warehouse.utils import django_batch_records
 from corehq.sql_db.routers import db_for_read_write
@@ -116,4 +116,4 @@ def _render_template(path, context):
         template_string = f.read()
 
     template = engines['django'].from_string(template_string)
-    return template.render(Context(context))
+    return template.render(context)

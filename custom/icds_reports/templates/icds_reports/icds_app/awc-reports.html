@@ -20,19 +20,19 @@
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-show="$ctrl.data">
-            <div class="row " ng-show="$ctrl.step === 'system_usage'">
-                <kpi data="$ctrl.data.kpi"></kpi>
-            </div>
-            <div class="row black" ng-show="$ctrl.step === 'pse'">
-                <div class="row no-margin" ng-repeat="chart in $ctrl.data.charts">
-                    <h2 class="center">{$ chart[0].key $}</h2>
-                    <nvd3 options="$ctrl.chartOptions" data="chart" class="with-3d-shadow with-transitions"></nvd3>
-                </div>
+            <div class="row" ng-show="$ctrl.step === 'pse'">
                 <div class="row no-margin">
+                    <kpi data="$ctrl.data.kpi"></kpi>
+                </div>
+                <div class="row no-margin black" ng-repeat="chart in $ctrl.data.charts">
+                    <h2 class="center">{$ chart[0].key $}</h2>
+                    <nvd3 options="$ctrl.lineChartOptions" data="chart" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+                <div class="row no-margin black">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
                 </div>
-                <div class="row no-margin">
+                <div class="row no-margin black">
                     <h2 class="center">PSE Photo Submissions</h2>
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">

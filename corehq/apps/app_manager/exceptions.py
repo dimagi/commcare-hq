@@ -39,10 +39,6 @@ class RearrangeError(AppEditingError):
     pass
 
 
-class ConflictingCaseTypeError(AppEditingError):
-    pass
-
-
 class XFormException(AppManagerException):
     pass
 

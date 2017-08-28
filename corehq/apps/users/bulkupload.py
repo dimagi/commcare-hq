@@ -465,7 +465,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                                 'somehow in domain %(domain)r'
                             ) % {'username': user.username, 'domain': user.domain})
                         if username and user.username != username:
-                            user.change_username(username)
+                            raise UserUploadError(_(
+                                'Changing usernames is not supported: %(username)r to %(new_username)r'
+                            ) % {'username': user.username, 'new_username': username})
                         if is_password(password):
                             user.set_password(password)
                         status_row['flag'] = 'updated'

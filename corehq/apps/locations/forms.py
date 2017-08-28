@@ -4,7 +4,6 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
@@ -39,10 +38,10 @@ class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
-        ).render(Context({
+        ).render({
             'name': name,
             'value': value,
-        }))
+        })
 
 
 class LocTypeWidget(forms.Widget):
@@ -50,10 +49,10 @@ class LocTypeWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
-        ).render(Context({
+        ).render({
             'name': name,
             'value': value,
-        }))
+        })
 
 
 class LocationForm(forms.Form):

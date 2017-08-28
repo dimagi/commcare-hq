@@ -1,13 +1,13 @@
 from django.conf import settings
 from tastypie.authorization import ReadOnlyAuthorization
-from tastypie.throttle import CacheThrottle
+from tastypie.throttle import CacheDBThrottle
 
 from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.api.serializers import CustomXMLSerializer
 from corehq.toggles import API_THROTTLE_WHITELIST
 
 
-class HQThrottle(CacheThrottle):
+class HQThrottle(CacheDBThrottle):
 
     def should_be_throttled(self, identifier, **kwargs):
         if API_THROTTLE_WHITELIST.enabled(identifier):

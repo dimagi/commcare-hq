@@ -1,6 +1,6 @@
 from corehq.apps.sms.models import MigrationStatus
 from django.conf import settings
-from django.template import Context, Template
+from django.template import Template
 import os
 
 
@@ -45,10 +45,10 @@ class MigrationInfo(object):
                    to complete the migrations referenced by migration_names.
         """
         self.migration_names = migration_names
-        self.context = Context({
+        self.context = {
             'tag_name': tag_name,
             'commands': commands,
-        })
+        }
 
 
 class MigrationException(Exception):

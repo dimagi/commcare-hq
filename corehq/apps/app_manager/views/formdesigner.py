@@ -30,7 +30,6 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.util import (
-    get_app_manager_template,
     app_callout_templates,
     is_usercase_in_use,
 )
@@ -188,27 +187,26 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'invalidCaseProperties': ['name'],
     }
 
-    if not toggles.APP_MANAGER_V1.enabled(request.user.username):
-        if form.get_action_type() == 'open':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
-                'formIconClass': 'fcc fcc-app-createform',
-            })
-        elif form.get_action_type() == 'close':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-close',
-                'formIconClass': 'fcc fcc-app-completeform',
-            })
-        elif form.get_action_type() == 'update':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-followup',
-                'formIconClass': 'fcc fcc-app-updateform',
-            })
-        else:
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-survey',
-                'formIconClass': 'fa fa-file-o',
-            })
+    if form.get_action_type() == 'open':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
+            'formIconClass': 'fcc fcc-app-createform',
+        })
+    elif form.get_action_type() == 'close':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-close',
+            'formIconClass': 'fcc fcc-app-completeform',
+        })
+    elif form.get_action_type() == 'update':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-followup',
+            'formIconClass': 'fcc fcc-app-updateform',
+        })
+    else:
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-survey',
+            'formIconClass': 'fa fa-file-o',
+        })
 
     vellum_options = {
         'core': core,
@@ -263,13 +261,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         ),
     })
 
-    template = get_app_manager_template(
-        request.user,
-        'app_manager/v1/form_designer.html',
-        'app_manager/v2/form_designer.html',
-    )
-
-    response = render(request, template, context)
+    response = render(request, "app_manager/form_designer.html", context)
     return response
 
 
