@@ -625,6 +625,7 @@ class LatestAppInfo(object):
 
     def get_latest_apk_version(self):
         from corehq.apps.app_manager.models import LATEST_APK_VALUE
+        from corehq.apps.builds.models import BuildSpec
         from corehq.apps.builds.utils import get_default_build_spec
         if self.app.global_app_config.apk_prompt == "off":
             return {}
@@ -633,7 +634,7 @@ class LatestAppInfo(object):
             if configured_version == LATEST_APK_VALUE:
                 value = get_default_build_spec().version
             else:
-                value = configured_version
+                value = BuildSpec.from_string(configured_version).version
             force = self.app.global_app_config.apk_prompt == "forced"
             return {"value": value, "force": force}
 

@@ -107,11 +107,11 @@ class TestLatestAppInfo(TestCase):
             )
 
     def test_apk_prompt_preset(self):
-        preset_apk = 'some.specific.version'
+        preset_apk = '2.20.0/latest'  # some random version
         test_cases = [
             ('off', {}),
-            ('on', {'value': preset_apk, 'force': False}),
-            ('forced', {'value': preset_apk, 'force': True}),
+            ('on', {'value': '2.20.0', 'force': False}),
+            ('forced', {'value': '2.20.0', 'force': True}),
         ]
         app_config = self.app.global_app_config
         app_config.apk_version = preset_apk
