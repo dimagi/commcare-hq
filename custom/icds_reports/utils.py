@@ -381,7 +381,7 @@ def get_maternal_child_data(config):
         'records': [
             [
                 {
-                    'label': _('Prevalence of Underweight Children (Weight-for-Age)'),
+                    'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                         "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
@@ -512,7 +512,7 @@ def get_maternal_child_data(config):
                     'redirect': 'early_initiation'
                 },
                 {
-                    'label': _('Exclusive breastfeeding'),
+                    'label': _('Exclusive Breastfeeding'),
                     'help_text': _((
                         "Percentage of children between 0 - 6 months exclusively breastfed. An infant is "
                         "exclusively breastfed if they recieve only breastmilk with no additional food, "
@@ -539,7 +539,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('Children initiated appropriate complementary feeding'),
+                    'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': _((
                         "Percentage of children between 6 - 8 months given timely introduction to solid or "
                         "semi-solid food. Timely intiation of complementary feeding in addition to "
@@ -564,7 +564,7 @@ def get_maternal_child_data(config):
                     'redirect': 'children_initiated'
                 },
                 {
-                    'label': _('Institutional deliveries'),
+                    'label': _('Institutional Deliveries'),
                     'help_text': _((
                         "Percentage of pregant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
@@ -646,7 +646,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'awcs'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('Number of AWCs Open yesterday'),
@@ -656,7 +657,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(daily_yesterday, 'daily_attendance'),
                     'all': get_value(daily_yesterday, 'awcs'),
                     'format': 'div',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'awc_daily_status'
                 }
             ],
             [
@@ -667,7 +669,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'supervisors'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('Blocks covered'),
@@ -676,7 +679,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'blocks'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 },
             ],
             [
@@ -688,7 +692,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'districts'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 }
                 ,
                 {
@@ -698,7 +703,8 @@ def get_cas_reach_data(yesterday, config):
                     'value': get_value(awc_this_month_data, 'states'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'awcs_covered'
                 }
             ]
         ]
@@ -722,8 +728,8 @@ def get_demographics_data(yesterday, config):
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
-            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
             all_persons=Sum('cases_person')
         )
@@ -745,7 +751,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'household'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'registered_household'
                 },
                 {
                     'label': _('Children (0-6 years)'),
@@ -758,7 +765,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'child_health_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'enrolled_children'
                 }
             ],
             [
@@ -789,7 +797,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'enrolled_women'
                 }
             ], [
                 {
@@ -816,7 +825,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'lactating_enrolled_women'
                 }
             ], [
                 {
@@ -833,8 +843,8 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Adolescent Girls (11-14 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 14 years) who are registered'),
+                    'label': _('Adolescent Girls (11-18 years)'),
+                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
                     'percent': percent_increase(
                         'person_adolescent_all',
                         yesterday_data,
@@ -847,13 +857,13 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'redirect': 'adolescent_girls'
                 }
             ], [
                 {
-                    'label': _('Adolescent Girls (11-14 years) enrolled for ICDS services'),
+                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
                     'help_text': _((
-                        "Total number of adolescent girls (11 - 14 years) "
+                        "Total number of adolescent girls (11 - 18 years) "
                         "who are registered and enrolled for ICDS services"
                     )),
                     'percent': percent_increase(
@@ -871,7 +881,7 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('% Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar seeded beneficaries'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
@@ -888,7 +898,8 @@ def get_demographics_data(yesterday, config):
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
                     'format': 'percent_and_div',
-                    'frequency': 'day'
+                    'frequency': 'day',
+                    'redirect': 'adhaar'
                 }
             ]
         ]
@@ -939,7 +950,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'clean_water'
                 },
                 {
                     'label': _("AWCs with Functional Toilet"),
@@ -959,7 +971,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'functional_toilet'
                 }
             ],
             [
@@ -990,7 +1003,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'medicine_kit'
                 }
             ],
             [
@@ -1012,7 +1026,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'infant_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'infants_weight_scale'
                 },
                 {
                     'label': _('AWCs with Weighing Scale: Mother and Child'),
@@ -1032,7 +1047,8 @@ def get_awc_infrastructure_data(config):
                     'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
-                    'frequency': 'month'
+                    'frequency': 'month',
+                    'redirect': 'adult_weight_scale'
                 }
             ],
             # [
@@ -1466,14 +1482,46 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
     }
 
 
-def get_awc_reports_pse(config, domain):
+def get_awc_reports_pse(config, month, domain):
     now = datetime.utcnow()
-    last_30_days = (now - timedelta(days=30))
+    last_30_days = (now - relativedelta(days=30))
+    selected_month = datetime(*month)
+    last_months = (selected_month - relativedelta(months=1))
+    last_three_months = (selected_month - relativedelta(months=3))
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_30_days, now), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
+
+    kpi_data_tm = AggAwcMonthly.objects.filter(
+        month=selected_month, **config
+    ).values('awc_name').annotate(
+        days_open=Sum('awc_days_open')
+    )
+    kpi_data_lm = AggAwcMonthly.objects.filter(
+        month=last_months, **config
+    ).values('awc_name').annotate(
+        days_open=Sum('awc_days_open')
+    )
+
+    chart_data = DailyAttendanceView.objects.filter(
+        pse_date__range=(last_three_months, selected_month), **config
+    ).values('awc_name', 'pse_date', 'attended_children_percent').annotate(
+        open_count=Sum('awc_open_count'),
+    ).order_by('pse_date')
+
+    open_count_chart = {}
+    attended_children_chart = {}
+    for chart_row in chart_data:
+        pse_week = chart_row['pse_date'].isocalendar()[1]
+        if pse_week in open_count_chart:
+            open_count_chart[pse_week] += chart_row['open_count']
+            attended_children_chart[pse_week].append(chart_row['attended_children_percent'])
+        else:
+            open_count_chart[pse_week] = chart_row['open_count']
+            attended_children_chart[pse_week] = [chart_row['attended_children_percent']]
+
 
     map_data = {}
 
@@ -1531,6 +1579,61 @@ def get_awc_reports_pse(config, domain):
         images.append(tmp_image)
 
     return {
+        'kpi': [
+            [
+                {
+                    'label': _('AWC Days Open'),
+                    'help_text': _((
+                        "Total number of days the AWC is open in the given month. The AWC is expected "
+                        "to be open 6 days a week (Not on Sundays and public holidays)"
+                    )),
+                    'percent': percent_increase(
+                        'days_open',
+                        kpi_data_tm,
+                        kpi_data_lm,
+                    ),
+                    'value': get_value(kpi_data_tm, 'days_open'),
+                    'all': '',
+                    'format': 'number',
+                    'frequency': 'month',
+                    'color': 'green' if percent_increase(
+                        'days_open',
+                        kpi_data_tm,
+                        kpi_data_lm,
+                    ) > 0 else 'red',
+                }
+            ]
+        ],
+        'charts': [
+            [
+                {
+                    'key': 'AWC Days Open per week',
+                    'values': [
+                        dict(
+                            x=x_val,
+                            y=y_val
+                        ) for x_val, y_val in open_count_chart.iteritems()
+                    ],
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": BLUE
+                }
+            ],
+            [
+                {
+                    'key': 'PSE- Average Weekly Attendance',
+                    'values': [
+                        dict(
+                            x=x_val,
+                            y=(sum(y_val) / len(y_val))
+                        ) for x_val, y_val in attended_children_chart.iteritems()
+                    ],
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": BLUE
+                },
+            ]
+        ],
         'map': {
             'markers': map_data,
         },
@@ -1568,11 +1671,23 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             ebf=Sum('ebf_eligible'),
             month_cf=Sum('cf_initiation_in_month'),
             cf=Sum('cf_initiation_eligible')
+        )
 
+    def get_weight_efficiency(date):
+        return AggAwcMonthly.objects.filter(
+            month=date, **config
+        ).values(
+            'month', 'aggregation_level', 'awc_name'
+        ).annotate(
+            wer_weight=Sum('wer_weighed'),
+            wer_eli=Sum('wer_eligible')
         )
 
     this_month_data = get_data_for(datetime(*month))
     prev_month_data = get_data_for(datetime(*prev_month))
+
+    this_month_data_we = get_weight_efficiency(datetime(*month))
+    prev_month_data_we = get_weight_efficiency(datetime(*prev_month))
 
     return {
         'kpi': [
@@ -1590,13 +1705,19 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'valid_in_month'
                     ),
+                    'color': 'red' if percent_diff(
+                        'underweight',
+                        this_month_data,
+                        prev_month_data,
+                        'valid_in_month'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Wasting (weight-for-height)'),
+                    'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -1609,6 +1730,12 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'height'
                     ),
+                    'color': 'red' if percent_diff(
+                        'wasting',
+                        this_month_data,
+                        prev_month_data,
+                        'height'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'height'),
                     'format': 'percent_and_div',
@@ -1617,7 +1744,7 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             ],
             [
                 {
-                    'label': _('% Stunting (height-for-age)'),
+                    'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard "
                         "deviations of the WHO Child Growth Standards median. Stunting in children is a "
@@ -1630,13 +1757,45 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'height'
                     ),
+                    'color': 'red' if percent_diff(
+                        'stunting',
+                        this_month_data,
+                        prev_month_data,
+                        'height'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
                 {
-                    'label': _('% Newborns with Low Birth Weight'),
+                    'label': _('Weighing Efficiency'),
+                    'help_text': _((
+                        "Percentage of children (0-5 years) who have been weighed of "
+                        "total children enrolled for ICDS services"
+                    )),
+                    'percent': percent_diff(
+                        'wer_weight',
+                        this_month_data_we,
+                        prev_month_data_we,
+                        'wer_eli'
+                    ),
+                    'color': 'red' if percent_diff(
+                        'wer_weight',
+                        this_month_data_we,
+                        prev_month_data_we,
+                        'wer_eli'
+                    ) > 0 else 'green',
+                    'value': get_value(this_month_data_we, 'wer_weight'),
+                    'all': get_value(this_month_data_we, 'wer_eli'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
+                },
+
+            ],
+            [
+                {
+                    'label': _('Newborns with Low Birth Weight'),
                     'help_text': None,
                     'percent': percent_diff(
                         'low_birth',
@@ -1644,15 +1803,19 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'born'
                     ),
+                    'color': 'red' if percent_diff(
+                        'low_birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
-            ],
-            [
                 {
-                    'label': _('% Early Initiation of Breastfeeding'),
+                    'label': _('Early Initiation of Breastfeeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'birth',
@@ -1660,13 +1823,21 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'born'
                     ),
+                    'color': 'green' if percent_diff(
+                        'birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'birth'),
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
+            ],
+            [
                 {
-                    'label': _('% Exclusive breastfeeding'),
+                    'label': _('Exclusive breastfeeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'month_ebf',
@@ -1674,15 +1845,19 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'ebf'
                     ),
+                    'color': 'green' if percent_diff(
+                        'month_ebf',
+                        this_month_data,
+                        prev_month_data,
+                        'ebf'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'month_ebf'),
                     'all': get_value(this_month_data, 'ebf'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
-            ],
-            [
                 {
-                    'label': _('% Children initiated appropriate complementary feeding'),
+                    'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': None,
                     'percent': percent_diff(
                         'month_cf',
@@ -1690,13 +1865,21 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'cf'
                     ),
+                    'color': 'green' if percent_diff(
+                        'month_cf',
+                        this_month_data,
+                        prev_month_data,
+                        'cf'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'month_cf'),
                     'all': get_value(this_month_data, 'cf'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
+            ],
+            [
                 {
-                    'label': _('% Immunization coverage (at age 1 year)'),
+                    'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
                         "Percentage of children 1 year+ who have recieved complete immunization as per "
                         "National Immunization Schedule of India required by age 1"
@@ -1707,6 +1890,12 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                         prev_month_data,
                         'eligible'
                     ),
+                    'color': 'green' if percent_diff(
+                        'immunized',
+                        this_month_data,
+                        prev_month_data,
+                        'eligible'
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data, 'immunized'),
                     'all': get_value(this_month_data, 'eligible'),
                     'format': 'percent_and_div',
@@ -1757,11 +1946,16 @@ def get_awc_report_demographics(config, month):
             'aggregation_level'
         ).annotate(
             household=Sum('cases_household'),
+            child_health=Sum('cases_child_health'),
+            child_health_all=Sum('cases_child_health_all'),
             ccs_pregnant=Sum('cases_ccs_pregnant'),
-            ccs_lactating=Sum('cases_ccs_lactating'),
-            adolescent=Sum('cases_person_adolescent_girls_11_18'),
-            has_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_cases=Sum('cases_person')
+            ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
+            css_lactating=Sum('cases_ccs_lactating'),
+            css_lactating_all=Sum('cases_ccs_lactating_all'),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
+            person_aadhaar=Sum('cases_person_has_aadhaar'),
+            all_persons=Sum('cases_person')
         )
 
     yesterday = datetime.now() - relativedelta(days=1)
@@ -1787,20 +1981,60 @@ def get_awc_report_demographics(config, month):
                         kpi_yesterday,
                         kpi_two_days_ago,
                     ),
+                    'color': 'green' if percent_increase(
+                        'household',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
                     'value': get_value(kpi_yesterday, 'household'),
                     'all': '',
                     'format': 'number',
                     'frequency': 'month'
                 },
                 {
+                    'label': _('Children (0-6 years)'),
+                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
+                    'percent': percent_increase('child_health_all', kpi_yesterday, kpi_two_days_ago),
+                    'color': 'green' if percent_increase(
+                        'child_health_all',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'child_health_all'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day',
+                    'redirect': 'enrolled_children'
+                }
+            ],
+            [
+                {
+                    'label': _('Children (0-6 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Total number of children registered between the age of 0 - 6 years "
+                        "and enrolled for ICDS services"
+                    )),
+                    'percent': percent_increase('child_health', kpi_yesterday, kpi_two_days_ago),
+                    'color': 'green' if percent_increase(
+                        'child_health',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'child_health'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                },
+                {
                     'label': _('Pregnant Women'),
                     'help_text': _("Total number of pregnant women registered"),
                     'percent': percent_increase(
-                        'ccs_pregnant',
+                        'ccs_pregnant_all',
                         kpi_yesterday,
                         kpi_two_days_ago,
                     ),
-                    'value': get_value(kpi_yesterday, 'ccs_pregnant'),
+                    'color': 'green' if percent_increase(
+                        'ccs_pregnant_all',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'ccs_pregnant_all'),
                     'all': '',
                     'format': 'number',
                     'frequency': 'day'
@@ -1808,15 +2042,47 @@ def get_awc_report_demographics(config, month):
             ],
             [
                 {
+                    'label': _('Pregnant Women enrolled for ICDS services'),
+                    'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
+                    'percent': percent_increase('ccs_pregnant', kpi_yesterday, kpi_two_days_ago),
+                    'color': 'green' if percent_increase(
+                        'ccs_pregnant',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'ccs_pregnant'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                },
+                {
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
                     'percent': percent_increase(
-                        'ccs_lactating',
+                        'css_lactating_all',
                         kpi_yesterday,
                         kpi_two_days_ago
                     ),
-                    'value': get_value(kpi_yesterday, 'ccs_lactating'),
+                    'color': 'green' if percent_increase(
+                        'css_lactating_all',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'css_lactating_all'),
                     'all': '',
+                    'format': 'number',
+                    'frequency': 'day'
+                },
+            ],
+            [
+                {
+                    'label': _('Lactating Women enrolled for ICDS services'),
+                    'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
+                    'percent': percent_increase('css_lactating', kpi_yesterday, kpi_two_days_ago),
+                    'color': 'green' if percent_increase(
+                        'css_lactating',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'css_lactating'),
+                    'all': None,
                     'format': 'number',
                     'frequency': 'day'
                 },
@@ -1824,11 +2090,15 @@ def get_awc_report_demographics(config, month):
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls who are registered'),
                     'percent': percent_increase(
-                        'adolescent',
+                        'person_adolescent_all',
                         kpi_yesterday,
                         kpi_two_days_ago,
                     ),
-                    'value': get_value(kpi_yesterday, 'adolescent'),
+                    'color': 'green' if percent_increase(
+                        'person_adolescent_all',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'person_adolescent_all'),
                     'all': '',
                     'format': 'number',
                     'frequency': 'day'
@@ -1836,17 +2106,37 @@ def get_awc_report_demographics(config, month):
             ],
             [
                 {
-                    'label': _('% Adhaar seeded beneficaries'),
+                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Total number of adolescent girls (11 - 18 years) "
+                        "who are registered and enrolled for ICDS services"
+                    )),
+                    'percent': percent_increase(
+                        'person_adolescent',
+                        kpi_yesterday,
+                        kpi_two_days_ago
+                    ),
+                    'color': 'green' if percent_increase(
+                        'person_adolescent',
+                        kpi_yesterday,
+                        kpi_two_days_ago) > 0 else 'red',
+                    'value': get_value(kpi_yesterday, 'person_adolescent'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                },
+                {
+                    'label': _('Percent Adhaar seeded beneficaries'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
                     'percent': percent_diff(
-                        'has_aadhaar',
+                        'person_aadhaar',
                         kpi_yesterday,
                         kpi_two_days_ago,
                         'all_cases'
                     ),
-                    'value': get_value(kpi_yesterday, 'has_aadhaar'),
+                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
                     'all': get_value(kpi_yesterday, 'all_cases'),
                     'format': 'div',
                     'frequency': 'day'

@@ -47,7 +47,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
         {id: 3, name: 'Demographics'},
-        // {id: 4, name: 'System Usage'}, For now disable this option
+        {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
     ];
 

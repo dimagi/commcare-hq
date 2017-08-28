@@ -27,9 +27,12 @@
         </div>
         <div ng-if="!$ctrl.report">
             <div class="row">
+                <h2 class="black center" style="margin-bottom: 10px">ICDS-CAS Outcomes</h2>
+            </div>
+            <div class="row">
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
-                        <img src="{% static 'img/maternal_and_child.png' %}"/>
+                        <img style="width: 152px;" src="{% static 'img/maternal_and_child.png' %}"/>
                         <div class="caption">Maternal and Child Nutrition</div>
                     </div>
                 </div>
@@ -41,7 +44,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #ff8400;"  ng-click="$ctrl.goToReport('behavior_change')">
-                        <img src="{% static 'img/behavior_change.png' %}"/>
+                        <img style="width: 152px;" src="{% static 'img/behavior_change.png' %}"/>
                         <div class="caption">Behavior Change</div>
                     </div>
                 </div>

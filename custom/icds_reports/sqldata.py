@@ -356,7 +356,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 slug='stunting_normal'
             ),
             AggregateColumn(
-                'Percent children immunized with 1st year immunizations ',
+                'Percent children immunized with 1st year immunizations',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumColumn('fully_immunized_on_time'),
@@ -1490,20 +1490,24 @@ class SystemUsageExport(ExportableMixin, SqlData):
     def columns(self):
         columns = self.get_columns_by_loc_level
         agg_columns = [
-            DatabaseColumn('num_awc_open', SumColumn('num_awcs'), slug='num_awc_open'),
-            DatabaseColumn('num_hh_reg_forms', SumColumn('usage_num_hh_reg'), slug='num_hh_reg_forms'),
             DatabaseColumn(
-                'num_add_pregnancy_forms',
+                'Number of days AWC was open in the given month',
+                SumColumn('awc_num_open'),
+                format_fn=lambda x: (x or 0),
+                slug='num_awc_open'
+            ),
+            DatabaseColumn(
+                'Number of household registration forms',
+                SumColumn('usage_num_hh_reg'),
+                slug='num_hh_reg_forms'
+            ),
+            DatabaseColumn(
+                'Number of add pregnancy forms',
                 SumColumn('usage_num_add_pregnancy'),
                 slug='num_add_pregnancy_forms'
             ),
-            DatabaseColumn(
-                'num_pse_forms_with_image',
-                SumColumn('usage_num_pse_with_image'),
-                slug='num_pse_forms_with_image'
-            ),
             AggregateColumn(
-                'num_bp_forms',
+                'Number of birth preparedness forms',
                 lambda x, y, z: x + y + z,
                 [
                     SumColumn('usage_num_bp_tri1'),
@@ -1512,14 +1516,34 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 ],
                 slug='num_bp_forms'
             ),
-            DatabaseColumn('num_delivery_forms', SumColumn('usage_num_delivery'), slug='num_delivery_forms'),
-            DatabaseColumn('num_pnc_forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
-            DatabaseColumn('num_ebf_forms', SumColumn('usage_num_ebf'), slug='num_ebf_forms'),
-            DatabaseColumn('num_cf_forms', SumColumn('usage_num_cf'), slug='num_cf_forms'),
-            DatabaseColumn('num_gmp_forms', SumColumn('usage_num_gmp'), slug='num_gmp_forms'),
-            DatabaseColumn('num_thr_forms', SumColumn('usage_num_thr'), slug='num_thr_forms'),
+            DatabaseColumn(
+                'Number of birth preparedness forms',
+                SumColumn('usage_num_delivery'),
+                slug='num_delivery_forms'
+            ),
+            DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
+            DatabaseColumn(
+                'Number of early initiation of breastfeeding forms',
+                SumColumn('usage_num_ebf'),
+                slug='num_ebf_forms'
+            ),
+            DatabaseColumn(
+                'Number of complementary feeding forms',
+                SumColumn('usage_num_cf'),
+                slug='num_cf_forms'
+            ),
+            DatabaseColumn(
+                'Number of growth monitoring forms',
+                SumColumn('usage_num_gmp'),
+                slug='num_gmp_forms'
+            ),
+            DatabaseColumn(
+                'Number of take home rations forms',
+                SumColumn('usage_num_thr'),
+                slug='num_thr_forms'
+            ),
             AggregateColumn(
-                'num_due_list_forms',
+                'Number of due list forms',
                 lambda x, y: x + y,
                 [
                     SumColumn('usage_num_due_list_ccs'),

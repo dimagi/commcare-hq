@@ -10,7 +10,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with functional toilet";
+    vm.label = "AWCs with Functional Toilet";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/functional_toilet/map', label: 'Map'},

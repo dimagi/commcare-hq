@@ -470,6 +470,7 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
+                tuple(month.timetuple())[:3],
                 self.kwargs.get('domain')
             )
         elif step == 'maternal_child':

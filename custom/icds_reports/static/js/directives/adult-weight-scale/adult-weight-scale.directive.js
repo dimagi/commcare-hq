@@ -10,7 +10,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Weighing Scale: Mother and Child";
+    vm.label = "AWCs with Weighing Scale: Mother and Child";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adult_weight_scale/map', label: 'Map'},
