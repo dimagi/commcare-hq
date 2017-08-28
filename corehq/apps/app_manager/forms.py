@@ -103,10 +103,10 @@ class PromptUpdateSettingsForm(forms.Form):
     )
 
     apk_version = forms.ChoiceField(
-        label=ugettext_lazy("Apk Version?")
+        label=ugettext_lazy("CommCare Version")
     )
     app_version = forms.ChoiceField(
-        label=ugettext_lazy("App Version?")
+        label=ugettext_lazy("Application Version")
     )
 
     def __init__(self, *args, **kwargs):
@@ -121,7 +121,8 @@ class PromptUpdateSettingsForm(forms.Form):
         ]
 
         self.fields['app_version'].choices = [(LATEST_APP_VALUE, 'Latest Released Version')] + [
-            (app.version, 'Version {}'.format(app.version)) for app in get_all_built_app_ids_and_versions(domain, app_id)[0:10]
+            (app.version, 'Version {}'.format(app.version))
+            for app in get_all_built_app_ids_and_versions(domain, app_id)[0:10]
         ]
 
         self.helper = FormHelper()
