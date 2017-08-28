@@ -4,23 +4,16 @@ import gzip
 import json
 import logging
 import multiprocessing
-import os
 import tempfile
-import zipfile
-from collections import namedtuple
 
 from django.core.management import color_style
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    _get_export_documents, _save_export_payload, get_export_size
+    _get_export_documents, get_export_size
 )
-from corehq.apps.export.multithreaded import MultithreadedExporter, SuccessResult
-from corehq.util.files import safe_filename
-from couchexport.export import get_writer
-from couchexport.writers import ZippedExportWriter
-
+from corehq.apps.export.multithreaded import MultithreadedExporter
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +47,6 @@ class DumpOutput(object):
     def write(self, doc):
         self.page_size += 1
         self.file.write('{}\n'.format(json.dumps(doc)))
-
-
-style = color_style()
 
 
 class Command(BaseCommand):

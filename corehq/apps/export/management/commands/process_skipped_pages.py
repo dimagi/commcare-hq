@@ -15,7 +15,7 @@ from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import _save_export_payload
 from corehq.apps.export.multithreaded import (
     SuccessResult, MultithreadedExporter, RetryResult,
-    UNPROCESSED_PAGES_DIR)
+    UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 
 
@@ -53,16 +53,81 @@ class Command(BaseCommand):
         export_instance = get_properly_wrapped_export_instance(export_id)
 
         extract_to = tempfile.mkdtemp()
+        total_docs, unprocessed_pages = self._get_unprocessed_pages(export_archive_path, extract_to)
+
+        print('{} pages still to process'.format(len(unprocessed_pages)))
+
+        exporter = MultithreadedExporter(export_instance, total_docs, processes)
+        error_pages, successful_pages = self._process_pages(
+            exporter, unprocessed_pages
+        )
+
+        final_path = self.compile_final_zip(
+            error_pages, export_archive_path, export_instance, successful_pages
+        )
+
+        if force_upload or not error_pages:
+            print('Uploading final archive', '(forced)' if force_upload and error_pages else '')
+            exporter.upload(final_path, clean=not error_pages)
+        else:
+            print(self.style.ERROR(
+                'Not all pages processed successfully.\n'
+                'You can re-run the command on the final archive to try again: {}\n'
+                'NOTE: final archive not uploaded. '
+                'Use --force-upload to upload even with errors'.format(final_path))
+            )
+        shutil.rmtree(extract_to)
+        self.stdout.write(self.style.SUCCESS('Rebuild Complete and payload uploaded'))
+
+    def compile_final_zip(self, error_pages, export_archive_path, export_instance, successful_pages):
+        final_dir, orig_name = os.path.split(export_archive_path)
+        if not error_pages:
+            fd, final_path = tempfile.mkstemp()
+        else:
+            final_name = 'INCOMPLETE_{}_{}.zip'.format(orig_name, datetime.utcnow().isoformat())
+            final_path = os.path.join(final_dir, final_name)
+        print('Recompiling export')
+        export_name = safe_filename(export_instance.name or 'Export')
+        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
+            for result in successful_pages:
+                print('  Adding page {} to final file'.format(result.page))
+                _add_compressed_page_to_zip(final_zip, result.page, result.export_path)
+
+            print('  Adding original export pages and unprocessed pages final file')
+
+            def _include_member(member):
+                # add original export pages and any raw data that we weren't able to process
+                add = member.startswith(export_name) or member in error_pages
+                if add:
+                    print('    {}'.format(member))
+                return add
+
+            _copy_files_from_zip_to_zip(final_zip, export_archive_path, _include_member)
+        return final_path
+
+    def _process_pages(self, exporter, unprocessed_pages):
+        exporter.start()
+        for page_path, page_number, doc_count in unprocessed_pages:
+            exporter.process_page(RetryResult(page_number, page_path, doc_count, 0))
+        export_results = exporter.get_results(retries_per_page=0)
+        successful_pages = [res for res in export_results if isinstance(res, SuccessResult)]
+        error_pages = {
+            '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, res.page)
+            for res in export_results if not isinstance(res, SuccessResult)
+        }
+        return error_pages, successful_pages
+
+    def _get_unprocessed_pages(self, export_archive_path, extract_to_path):
         print('Extracting unprocessed pages')
         with zipfile.ZipFile(export_archive_path, 'r') as zipref:
             for member in zipref.namelist():
                 if member.startswith(UNPROCESSED_PAGES_DIR):
-                    zipref.extract(member, extract_to)
+                    zipref.extract(member, extract_to_path)
 
-        unprocessed_path = os.path.join(extract_to, 'unprocessed')
+        unprocessed_path = os.path.join(extract_to_path, UNPROCESSED_PAGES_DIR)
         if not os.path.exists(unprocessed_path):
-            print(self.style.ERROR('Export has no unprocessed pages.'))
-            shutil.rmtree(extract_to)
+            shutil.rmtree(extract_to_path)
+            raise CommandError('Export has no unprocessed pages.')
 
         unprocessed_pages = []
         total_docs = 0
@@ -78,69 +143,14 @@ class Command(BaseCommand):
             total_docs += doc_count
             unprocessed_pages.append((page_path, page_number, doc_count))
 
-        export_name = safe_filename(export_instance.name or 'Export')
-        if not os.path.exists(os.path.join(extract_to, export_name)):
-            os.mkdir(os.path.join(extract_to, export_name))
-
         if not unprocessed_pages:
-            print('No pages left to process')
-            return
+            raise CommandError('No pages left to process')
 
-        print('{} pages still to process'.format(len(unprocessed_pages)))
+        return total_docs, unprocessed_pages
 
-        exporter = MultithreadedExporter(export_instance, total_docs, processes)
-        exporter.start()
-        for page_path, page_number, doc_count in unprocessed_pages:
-            exporter.process_page(RetryResult(page_number, page_path, doc_count, 0))
 
-        export_results = exporter.get_results(retries_per_page=0)
-
-        successful_pages = [res for res in export_results if isinstance(res, SuccessResult)]
-        error_pages = {
-            '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, res.page)
-            for res in export_results if not isinstance(res, SuccessResult)
-        }
-
-        final_dir, orig_name = os.path.split(export_archive_path)
-        if not error_pages:
-            fd, final_path = tempfile.mkstemp()
-        else:
-            final_name = 'INCOMPLETE_{}_{}.zip'.format(orig_name, datetime.utcnow().isoformat())
-            final_path = os.path.join(final_dir, final_name)
-        print('Recompiling export')
-
-        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
-            for result in successful_pages:
-                print('  Adding page {} to final file'.format(result.page))
-                with zipfile.ZipFile(result.export_path, 'r') as page_file:
-                    for path in page_file.namelist():
-                        prefix, suffix = path.rsplit('/', 1)
-                        final_zip.writestr('{}/{}_{}'.format(
-                            prefix, result.page, suffix), page_file.open(path).read()
-                        )
-
-            print('  Adding original export pages and unprocessed pages final file')
-            with zipfile.ZipFile(export_archive_path, 'r') as original_export:
-                for member in original_export.namelist():
-                    if member.startswith(export_name):
-                        # add original export page
-                        final_zip.writestr(member, original_export.read(member))
-                    elif member in error_pages:
-                        # add in any raw data that we weren't able to process
-                        final_zip.writestr(member, original_export.read(member))
-
-        if force_upload or not error_pages:
-            print('Uploading final archive', '(forced)' if force_upload else '')
-            with open(final_path, 'r') as payload:
-                _save_export_payload(export_instance, payload)
-        if not error_pages:
-            os.remove(final_path)
-        else:
-            print(self.style.ERROR(
-                'Not all pages processed successfully.\n'
-                'You can re-run the command on the final archive to try again: {}\n'
-                'NOTE: final archive not uploaded. '
-                'Use --force-upload to upload even with errors'.format(final_path))
-            )
-        shutil.rmtree(extract_to)
-        self.stdout.write(self.style.SUCCESS('Rebuild Complete and payload uploaded'))
+def _copy_files_from_zip_to_zip(to_zip, from_zip_path, include_filter=None):
+    with zipfile.ZipFile(from_zip_path, 'r') as from_zip:
+        for member in from_zip.namelist():
+            if not include_filter or include_filter(member):
+                to_zip.writestr(member, from_zip.read(member))

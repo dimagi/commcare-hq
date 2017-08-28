@@ -195,7 +195,7 @@ class MultithreadedExporter(object):
     def build_final_export(self, export_results):
         final_path = tempfile.mktemp()
         base_name = safe_filename(self.export_instance.name or 'Export')
-        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
             pages = len(export_results)
             for result in export_results:
                 if not isinstance(result, SuccessResult):
@@ -204,17 +204,14 @@ class MultithreadedExporter(object):
                         raw_dump_path = result.path
                         logger.info('    Adding raw dump of page %s to final output', result.page)
                         destination = '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, result.page)
-                        z.write(raw_dump_path, destination, zipfile.ZIP_STORED)
+                        final_zip.write(raw_dump_path, destination, zipfile.ZIP_STORED)
                     continue
 
                 logger.info('  Adding page {} of {} to final file'.format(result.page, pages))
                 if self.is_zip:
-                    with zipfile.ZipFile(result.export_path, 'r') as page_file:
-                        for path in page_file.namelist():
-                            prefix, suffix = path.rsplit('/', 1)
-                            z.writestr('{}/{}_{}'.format(prefix, result.page, suffix), page_file.open(path).read())
+                    _add_compressed_page_to_zip(final_zip, result.page, result.export_path)
                 else:
-                    z.write(result.export_path, '{}_{}'.format(base_name, result.page))
+                    final_zip.write(result.export_path, '{}_{}'.format(base_name, result.page))
 
         return final_path
 
@@ -224,6 +221,15 @@ class MultithreadedExporter(object):
             _save_export_payload(self.export_instance, payload)
         if clean:
             os.remove(final_path)
+
+
+def _add_compressed_page_to_zip(zip_file, page_number, zip_path_to_add):
+    with zipfile.ZipFile(zip_path_to_add, 'r') as page_file:
+        for path in page_file.namelist():
+            prefix, suffix = path.rsplit('/', 1)
+            zip_file.writestr('{}/{}_{}'.format(
+                prefix, page_number, suffix), page_file.open(path).read()
+            )
 
 
 def _output_progress(queue, total_docs):
