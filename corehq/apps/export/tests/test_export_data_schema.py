@@ -158,7 +158,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             ),
         ]
 
-        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
+        schema = FormExportDataSchema._generate_schema_from_subcases(
             XForm(form_xml),
             repeats_with_subcases,
             ['en'],
