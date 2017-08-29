@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util, Formplayer */
+/*global FormplayerFrontend, Formplayer */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
