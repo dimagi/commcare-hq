@@ -90,6 +90,15 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 # Verify that the main parent case updates appear (case type "mom")
                 'form.case.update.last_status',
 
+                # Verify that we see case updates for save-to-case cases
+                # These are already in the form schema, so they get interpreted like any other question
+                'form.prescription.prescription.case.close',
+                'form.prescription.prescription.case.create.case_name',
+                'form.prescription.prescription.case.create.case_type',
+                'form.prescription.prescription.case.update.number_of_babies',
+                'form.prescription.prescription_name',
+                'form.prescription.prescription.case.index.parent',
+
                 # # Verify that we see updates from subcases not in repeat groups (case type "voucher")
                 'form.subcase_0.case.@case_id',
                 'form.subcase_0.case.@date_modified',
@@ -146,43 +155,51 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "create.owner_id": "---",
 
             # normal form questions
-            "form.add_a_prescription": "yes",
+            "form.add_a_prescription": "yes_then_close",
             "form.how_are_you_today": "fine_thanks",
             "form.how_many_babies": "2",
             "form.is_this_a_delivery": "yes",
-            "form.voucher-name": "Petunia2017-08-28",
+            "form.voucher-name": "Petunia2017-08-29",
 
             # standard case update
             "form.case.update.last_status": "fine_thanks",
 
             # save-to-case properties
-            "form.prescription.prescription.case.create.case_name": "Petunia-prescription-2017-08-28",
+            "form.prescription.prescription.case.create.case_name": "Petunia-prescription-2017-08-29",
             "form.prescription.prescription.case.create.case_type": "prescription",
             "form.prescription.prescription.case.update.number_of_babies": "2",
-            "form.prescription.prescription_name": "Petunia-prescription-2017-08-28",
+            "form.prescription.prescription_name": "Petunia-prescription-2017-08-29",
+            "form.prescription.prescription.case.index.parent": "71626d9c-2d05-491f-81d9-becf8566618a",
 
             # non-repeating subcase actions
-            "form.subcase_0.case.@case_id": "003a2222-acb9-4111-9d3e-1cc7cd0d0687",
-            "form.subcase_0.case.@date_modified": "2017-08-28 20:21:28",
+            "form.subcase_0.case.@case_id": "16954d55-a9be-40dd-98a8-dc7fae9c7ed6",
+            "form.subcase_0.case.@date_modified": "2017-08-29 11:19:40",
             "form.subcase_0.case.@user_id": "853a24735ba89a3019ced7e3153dc60d",
-            "form.subcase_0.case.create.case_name": "Petunia2017-08-28",
+            "form.subcase_0.case.create.case_name": "Petunia2017-08-29",
             "form.subcase_0.case.create.case_type": "voucher",
             "form.subcase_0.case.create.owner_id": "853a24735ba89a3019ced7e3153dc60d",
             "form.subcase_0.case.update.how_many_babies": "2",
+            "form.subcase_0.case.index.parent.#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+            "form.subcase_0.case.index.parent.@case_type": "mom",
 
         }, get_form_data('Forms')[0])
 
         self.assertDictContainsSubset({
-            "form.babies.eye_color": "blue",
+
+            "form.babies.eye_color": "brown",
             "form.babies.whats_the_babys_name": "Bob",
 
-            "form.babies.case.@case_id": "601b6d19-db70-4878-8b93-aeeb99982d3f",
-            "form.babies.case.@date_modified": "2017-08-28 20:21:28",
+            "form.babies.case.@case_id": "5539bd9d-d5d6-44c8-8f78-6915f16b6907",
+            "form.babies.case.@date_modified": "2017-08-29 11:19:40",
             "form.babies.case.@user_id": "853a24735ba89a3019ced7e3153dc60d",
 
             "form.babies.case.create.case_name": "Bob",
             "form.babies.case.create.case_type": "baby",
             "form.babies.case.create.owner_id": "853a24735ba89a3019ced7e3153dc60d",
 
-            "form.babies.case.update.eye_color": "blue",
+            "form.babies.case.index.parent.#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+            "form.babies.case.index.parent.@case_type": "mom",
+
+            "form.babies.case.update.eye_color": "brown",
+
         }, get_form_data('Repeat- babies')[0])

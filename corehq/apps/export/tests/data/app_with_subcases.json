@@ -75,11 +75,11 @@
             "id": "VhyRzprSwvg"
         },
         "b44edb0f6b73b69e08f1aeda3b32163a679560b4.xml": {
-            "content_length": 8243,
+            "content_length": 8900,
             "content_type": "application/xml",
-            "digest": "md5-nroqO4g8B25FK1HRzr2isA==",
+            "digest": "md5-MW680GgfPhkQFVx2wconww==",
             "doc_type": "BlobMeta",
-            "id": "ooHf1AI4dXU"
+            "id": "G5hhq6ApQBc"
         },
         "c32f4618bce93fbc34077da7b968586c6adb0e7e.xml": {
             "content_length": 1480,
@@ -109,7 +109,7 @@
     "langs": [
         "en"
     ],
-    "last_modified": "2017-08-28T15:34:30.454093Z",
+    "last_modified": "2017-08-29T11:16:47.300285Z",
     "linked_whitelist": [],
     "logo_refs": {},
     "media_language_map": {},
@@ -474,7 +474,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_path": "/data/how_are_you_today"
                         },
                         "open_referral": {
                             "condition": {
@@ -612,7 +612,7 @@
                         "save": {
                             "/data/prescription/prescription": {
                                 "case_type": "prescription",
-                                "close": false,
+                                "close": true,
                                 "create": true,
                                 "doc_type": "CaseSaveReference",
                                 "properties": [
@@ -641,6 +641,7 @@
                     "schedule_form_id": null,
                     "show_count": false,
                     "unique_id": "b44edb0f6b73b69e08f1aeda3b32163a679560b4",
+                    "validation_cache": null,
                     "version": null,
                     "xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
                 }
@@ -1624,5 +1625,5 @@
     "use_j2me_endpoint": false,
     "user_type": null,
     "vellum_case_management": true,
-    "version": 48
+    "version": 50
 }

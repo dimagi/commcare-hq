@@ -7,6 +7,7 @@ from itertools import groupby
 from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.datastructures import OrderedSet
@@ -41,7 +42,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_app,
 )
-from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp
+from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -1654,6 +1655,13 @@ class FormExportDataSchema(ExportDataSchema):
         for case_create_element in CASE_CREATE_ELEMENTS:
             path = u'{}/case/create/{}'.format(root_path, case_create_element)
             _add_to_group_schema(path, u'case.create.{}'.format(case_create_element))
+
+        # Add extension case information
+        if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
+            for prop in ('#text', '@case_type',):
+                identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship]
+                path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
+                _add_to_group_schema(path, u'case.index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):

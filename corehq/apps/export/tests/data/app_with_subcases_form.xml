@@ -23,6 +23,10 @@
 								<update>
 									<number_of_babies/>
 								</update>
+								<close/>
+								<index>
+									<parent case_type="mom" relationship="child"/>
+								</index>
 							</case>
 						</prescription>
 						<prescription_name/>
@@ -43,6 +47,8 @@
 			<bind nodeset="/data/prescription/prescription/case/create/case_name" vellum:calculate="#form/prescription/prescription_name" calculate="/data/prescription/prescription_name"/>
 			<bind nodeset="/data/prescription/prescription/case/create/case_type" calculate="'prescription'"/>
 			<bind nodeset="/data/prescription/prescription/case/update/number_of_babies" vellum:calculate="#form/how_many_babies" calculate="/data/how_many_babies"/>
+			<bind nodeset="/data/prescription/prescription/case/close" vellum:relevant="#form/add_a_prescription = 'yes_then_close'" relevant="/data/add_a_prescription = 'yes_then_close'"/>
+			<bind nodeset="/data/prescription/prescription/case/index/parent" calculate="instance('commcaresession')/session/data/case_id"/>
 			<bind nodeset="/data/prescription/prescription/case/@date_modified" calculate="/data/meta/timeEnd" type="xsd:dateTime"/>
 			<bind nodeset="/data/prescription/prescription/case/@user_id" calculate="instance('commcaresession')/session/context/userid"/>
 			<bind vellum:nodeset="#form/prescription/prescription_name" nodeset="/data/prescription/prescription_name" vellum:calculate="concat(#case/case_name, &quot;-prescription-&quot;, format-date(today(), &quot;%Y-%m-%d&quot;))" calculate="concat(instance('casedb')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/case_name, &quot;-prescription-&quot;, format-date(today(), &quot;%Y-%m-%d&quot;))"/>
@@ -96,6 +102,9 @@
 					</text>
 					<text id="add_a_prescription-yes-label">
 						<value>yes</value>
+					</text>
+					<text id="add_a_prescription-yes_then_close-label">
+						<value>yes, then close</value>
 					</text>
 					<text id="add_a_prescription-no-label">
 						<value>no</value>
@@ -167,6 +176,10 @@
 			<item>
 				<label ref="jr:itext('add_a_prescription-yes-label')"/>
 				<value>yes</value>
+			</item>
+			<item>
+				<label ref="jr:itext('add_a_prescription-yes_then_close-label')"/>
+				<value>yes_then_close</value>
 			</item>
 			<item>
 				<label ref="jr:itext('add_a_prescription-no-label')"/>
