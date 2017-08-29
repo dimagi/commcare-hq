@@ -12,8 +12,8 @@ from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.decorators import serial_task
+from dimagi.utils.chunked import chunked
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -98,15 +98,15 @@ def recalculate_stagnant_cases():
 
     case_accessor = CaseAccessors(domain)
     num_stagnant_cases = len(stagnant_cases)
-
-    for i, case_id in enumerate(stagnant_cases):
-        try:
-            case = case_accessor.get_case(case_id)
-        except CaseNotFound:
-            celery_task_logger.error("Case {} was not found".format(case_id))
-        publish_case_saved(case, send_post_save_signal=False)
-        if i % 100 == 0:
-            celery_task_logger.info("Resaved %d / %d cases".format(i, num_stagnant_cases))
+    current_case_num = 0
+    for case_ids in chunked(case_ids, 100):
+        current_case_num += len(case_ids)
+        cases = case_accessor.get_cases(case_ids)
+        for case in cases:
+            publish_case_saved(case, send_post_save_signal=False)
+        celery_task_logger.info(
+            "Resaved %d / %d cases".format(current_case_num, num_stagnant_cases)
+        )
 
 
 def _find_stagnant_cases(adapter):
