@@ -107,7 +107,7 @@ def safe_hard_delete(case):
     interface.hard_delete_case_and_forms(case, forms)
 
 
-def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
+def claim_case(domain, owner_id, host_id, host_type=None, host_name=None, device_id=None):
     """
     Claim a case identified by host_id for claimant identified by owner_id.
 
@@ -133,7 +133,7 @@ def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
             )
         }
     ).as_xml()
-    post_case_blocks([claim_case_block], {'domain': domain})
+    post_case_blocks([claim_case_block], {'domain': domain}, device_id=device_id)
     return claim_id
 
 

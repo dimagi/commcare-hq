@@ -204,7 +204,8 @@ class EpisodeUpdater(object):
         assert episode_case.domain == self.domain
         update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
         if update_json:
-            update_case(self.domain, episode_case.case_id, update_json)
+            update_case(self.domain, episode_case.case_id, update_json,
+                        device_id="%s.%s" % (__name__, type(self).__name__))
 
     def _get_case_ids(self):
         case_accessor = CaseAccessors(self.domain)
