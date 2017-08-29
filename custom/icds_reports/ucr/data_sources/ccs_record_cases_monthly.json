@@ -2990,7 +2990,8 @@
     "sql_column_indexes": [
       {"column_ids": ["awc_id", "month"]},
       {"column_ids": ["supervisor_id", "month"]},
-      {"column_ids": ["block_id", "month"]}
+      {"column_ids": ["block_id", "month"]},
+      {"column_ids": ["inserted_at"]}
     ]
   }
 }

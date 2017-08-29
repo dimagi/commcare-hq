@@ -2591,6 +2591,9 @@
       },
       {
         "column_ids": ["block_id", "month"]
+      },
+      {
+          "column_ids": ["inserted_at"]
       }
     ]
   }
