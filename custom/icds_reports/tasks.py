@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 
@@ -8,6 +8,11 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import connections
 
+from corehq.apps.userreports.models import get_datasource_config
+from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.decorators import serial_task
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -63,3 +68,52 @@ def move_ucr_data_into_aggregation_tables(date=None):
                 sql_to_execute = sql_file.read()
                 cursor.execute(sql_to_execute, {"date": date.strftime('%Y-%m-%d')})
             celery_task_logger.info("Ended icds reports update_daily_aggregate_table")
+
+
+@periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
+def recalculate_stagnant_cases():
+    domain = 'icds-cas'
+    config_ids = [
+        'static-icds-cas-static-ccs_record_cases_monthly',
+        'static-icds-cas-static-ccs_record_cases_monthly_v2',
+        'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
+        'static-icds-cas-static-child_cases_monthly',
+        'static-icds-cas-static-child_cases_monthly_v2',
+        'static-icds-cas-static-child_cases_monthly_tableau_v2',
+    ]
+
+    stagnant_cases = set()
+
+    for config_id in config_ids:
+        config, is_static = get_datasource_config(config_id, domain)
+        adapter = get_indicator_adapter(config)
+        case_ids = _find_stagnant_cases(adapter)
+        celery_task_logger.info(
+            "Found {} stagnant cases in config {}".format(len(case_ids), config_id)
+        )
+        stagnant_cases = stagnant_cases.union(set(case_ids))
+        celery_task_logger.info(
+            "Total number of stagant cases is now {}".format(len(stagnant_cases))
+        )
+
+    case_accessor = CaseAccessors(domain)
+    num_stagnant_cases = len(stagnant_cases)
+
+    for i, case_id in enumerate(stagnant_cases):
+        try:
+            case = case_accessor.get_case(case_id)
+        except CaseNotFound:
+            celery_task_logger.error("Case {} was not found".format(case_id))
+        publish_case_saved(case)
+        if i % 100 == 0:
+            celery_task_logger.info("Resaved %d / %d cases".format(i, num_stagnant_cases))
+
+
+def _find_stagnant_cases(adapter):
+    stagnant_date = datetime.utcnow() - timedelta(days=45)
+    table = adapter.get_table()
+    query = adapter.get_query_object()
+    query = query.with_entities(table.columns.doc_id).filter(
+        table.columns.inserted_at <= stagnant_date
+    ).distinct()
+    return query.all()
