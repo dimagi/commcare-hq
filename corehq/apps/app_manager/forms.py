@@ -134,7 +134,6 @@ class PromptUpdateSettingsForm(forms.Form):
 
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.field_style = 'ganggs'
         self.helper.form_text_inline = True
 
         show_apk_version_select = kwargs.get('initial', {}).get('apk_prompt', 'off') != 'off'
@@ -149,6 +148,7 @@ class PromptUpdateSettingsForm(forms.Form):
                 ),
                 crispy.Div(
                     'apk_version',
+                    # initial show/hide value
                     style=('' if show_apk_version_select else "display: none;"), css_id="apk_version_id"),
                 crispy.Field(
                     'app_prompt',
@@ -157,6 +157,7 @@ class PromptUpdateSettingsForm(forms.Form):
                 ),
                 crispy.Div(
                     'app_version',
+                    # initial show/hide value
                     style=('' if show_app_version_select else "display: none;"), css_id="app_version_id"),
             ),
             hqcrispy.FormActions(
