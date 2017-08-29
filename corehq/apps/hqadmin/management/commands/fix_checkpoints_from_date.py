@@ -103,12 +103,13 @@ class Command(BaseCommand):
             else:
                 diff = 'from: {}\nto  : {}'.format(old_seq, new_seq)
 
+            pillow_id = pillow.pillow_id
             if old_seq == new_seq:
-                print('Sequences are identical, moving on.')
+                print('Sequences for {} are identical, moving on.'.format(pillow_id))
                 continue
 
-            if confirm("\nReset checkpoint for '{}' pillow:\n\n{}\n".format(
-                    pillow.pillow_id, diff
+            if confirm("\nReset checkpoint for '{}' pillow to sequence from  {}:\n\n{}\n".format(
+                    pillow_id, historical_checkpoint.date_updated, diff
             )):
                 pillow.checkpoint.update_to(new_seq)
-                print("Checkpoint for {} updated".format(pillow.pillow_id))
+                print(self.style.SUCCESS("Checkpoint for {} updated\n".format(pillow_id)))
