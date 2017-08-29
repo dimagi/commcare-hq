@@ -32,6 +32,8 @@ class Command(BaseCommand):
         if migration_name is not None:
             args.append(migration_name)
         for db_alias in settings.DATABASES.keys():
+            if db_alias == 'icds-ucr-standby':
+                continue
             print('\n======================= Migrating DB: {} ======================='.format(db_alias))
             call_options = copy(options)
             call_options['database'] = db_alias
