@@ -132,8 +132,9 @@ WebFormSession.prototype.isOneQuestionPerScreen = function() {
  * @param {Object} requestParams - request parameters to be sent
  * @param {function} callback - function to be called on success
  * @param {boolean} blocking - whether the request should be blocking
+ * @param {function} failureCallback - function to be called on failure
  */
-WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking) {
+WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
@@ -169,7 +170,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             self.handleSuccess(resp, requestParams.action, callback);
         },
         error: function(resp, textStatus) {
-            self.handleFailure(resp, requestParams.action, textStatus);
+            self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
         },
     });
 };
@@ -210,17 +211,24 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
     }
 };
 
-WebFormSession.prototype.handleFailure = function(resp, action, textStatus) {
+WebFormSession.prototype.handleFailure = function(resp, action, textStatus, failureCallback) {
     var errorMessage;
-    if (textStatus === 'timeout') {
+    if (resp.status === 423) {
+        errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
+    } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
     } else if (resp.hasOwnProperty('responseJSON')) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
+    }
+    if (failureCallback) {
+        failureCallback();
     }
     this.onerror({
         human_readable_message: errorMessage
     });
     this.onLoadingComplete();
+    $.publish('session.block', false);
+    this.blockingRequestInProgress = false;
 };
 
 /*
@@ -319,6 +327,11 @@ WebFormSession.prototype.answerQuestion = function(q) {
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
+        }, false, function () {
+            q.serverError(
+                gettext("An issue on the server prevented this answer from being saved. " +
+                    "To retry later, click on the error symbol."));
+            q.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         });
 };
 
