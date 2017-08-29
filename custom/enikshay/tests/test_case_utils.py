@@ -26,6 +26,8 @@ from custom.enikshay.case_utils import (
     get_private_diagnostic_test_cases_from_episode,
 )
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
@@ -198,6 +200,18 @@ class TestGetPersonLocations(ENikshayCaseStructureMixin, ENikshayLocationStructu
             'phi': self.phi.metadata['nikshay_code'],
         }
         self.assertEqual(expected_locations, get_person_locations(person_case)._asdict())
+
+        update_case(self.domain, self.episode_id, {
+            "diagnosing_facility_id": person_case.owner_id
+        })
+        person_case.owner_id = ARCHIVED_CASE_OWNER_ID
+        person_case.save()
+
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        with self.assertRaises(NikshayLocationNotFound):
+            get_person_locations(person_case)
+        self.assertEqual(expected_locations, get_person_locations(person_case, episode_case)._asdict())
 
     def test_nikshay_location_not_found(self):
         self.assign_person_to_location("-")
