@@ -92,6 +92,8 @@ class OutputPaginator(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
+        if exc_type is not None:
+            os.remove(self.path)
         self.file = None
         self.path = None
 
