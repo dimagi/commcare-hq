@@ -592,7 +592,7 @@ Formplayer.Errors = {
         "Please make sure you are connected to the " +
         "Internet in order to submit your form.",
     LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
-        'Please try again later.')
+        'Please try again later.'),
 };
 
 Formplayer.Utils.touchformsError = function(message) {

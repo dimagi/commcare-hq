@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend, Util, Formplayer */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
@@ -39,7 +39,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     }
                 },
                 error: function (_, response) {
-                    if (response.status == 423) {
+                    if (response.status === 423) {
                         FormplayerFrontend.trigger(
                             'showError',
                             Formplayer.Errors.LOCK_TIMEOUT_ERROR
