@@ -5,7 +5,7 @@ import multiprocessing
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.export.multithreaded import rebuild_export_mutithreaded
+from corehq.apps.export.multiprocess import rebuild_export_mutiprocess
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,6 @@ class Command(BaseCommand):
         page_size = options.pop('page_size')
         processes = options.pop('processes')
 
-        rebuild_export_mutithreaded(export_id, processes, page_size)
+        rebuild_export_mutiprocess(export_id, processes, page_size)
 
         self.stdout.write(self.style.SUCCESS('Rebuild Complete'))

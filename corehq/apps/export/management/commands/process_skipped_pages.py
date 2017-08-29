@@ -12,8 +12,8 @@ import sh
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.multithreaded import (
-    MultithreadedExporter, RetryResult,
+from corehq.apps.export.multiprocess import (
+    MultiprocessExporter, RetryResult,
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
 
@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
         print('{} pages still to process'.format(len(unprocessed_pages)))
 
-        exporter = MultithreadedExporter(export_instance, total_docs, processes)
+        exporter = MultiprocessExporter(export_instance, total_docs, processes)
         error_pages, successful_pages = self._process_pages(
             exporter, unprocessed_pages
         )

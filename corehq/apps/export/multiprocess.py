@@ -1,12 +1,12 @@
 """
 This package contains classes and function for processing ExportInstances using
-multiple threads.
+multiple processes.
 
 To rebuild an export run the following:
 
-    rebuild_export_mutithreaded(export_instance_id, num_threads, page_size)
+    rebuild_export_mutiprocess(export_instance_id, num_processes, page_size)
 
-You can also use the MultithreadedExporter class to have more control over the process.
+You can also use the MultiprocessExporter class to have more control over the process.
 See the 'process_skipped_pages' management command for an example.
 
 The export works as follows:
@@ -110,7 +110,7 @@ class OutputPaginator(object):
         return RetryResult(self.page, self.path, self.page_size, 0)
 
 
-def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
+def rebuild_export_mutiprocess(export_id, num_processes, page_size=100000):
     assert num_processes > 0
 
     def _log_page_dumped(paginator):
@@ -121,7 +121,7 @@ def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
     total_docs = get_export_size(export_instance, filters)
 
     logger.info('Starting data dump of {} docs'.format(total_docs))
-    exporter = MultithreadedExporter(export_instance, total_docs, num_processes)
+    exporter = MultiprocessExporter(export_instance, total_docs, num_processes)
     paginator = OutputPaginator(export_id)
     with exporter, paginator:
         for index, doc in enumerate(_get_export_documents(export_instance, filters)):
@@ -207,8 +207,8 @@ class LoggingProgressTracker(object):
                     logger.info('[{}] {} of {} complete'.format(self.name, current, total))
 
 
-class MultithreadedExporter(object):
-    """Helper class to manage multi-threaded exporting"""
+class MultiprocessExporter(object):
+    """Helper class to manage multi-process exporting"""
 
     def __init__(self, export_instance, total_docs, num_processes):
         self.export_instance = export_instance
