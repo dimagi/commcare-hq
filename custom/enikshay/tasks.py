@@ -124,6 +124,7 @@ class EpisodeUpdater(object):
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
+        device_id = "%s.%s" % (__name__, type(self).__name__)
         update_count = 0
         noupdate_count = 0
         error_count = 0
@@ -160,14 +161,14 @@ class EpisodeUpdater(object):
                 else:
                     noupdate_count += 1
                 if len(updates) >= batch_size:
-                    bulk_update_cases(self.domain, updates)
+                    bulk_update_cases(self.domain, updates, device_id)
                     updates = []
                     batches_processed += 1
 
                 self.update_status(t, success_count, error_count, total_count, batches_processed, errors)
 
             if len(updates) > 0:
-                bulk_update_cases(self.domain, updates)
+                bulk_update_cases(self.domain, updates, device_id)
 
         summary = (
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "

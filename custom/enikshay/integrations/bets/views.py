@@ -184,9 +184,8 @@ def payment_confirmation(request, domain):
         return json_response({"error": e.message}, status_code=e.status_code)
 
     bulk_update_cases(domain, [
-        (update.case_id, update.properties, False)
-        for update in updates
-    ])
+        (update.case_id, update.properties, False) for update in updates
+    ], __name__ + ".payment_confirmation")
     return json_response({'status': SUCCESS})
 
 

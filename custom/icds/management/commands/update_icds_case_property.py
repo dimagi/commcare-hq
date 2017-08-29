@@ -27,7 +27,8 @@ class Command(BaseCommand):
             for rows in chunked(reader, 100):
                 updates = [(case_id, {case_prop_name: prop}, False) for case_id, prop in rows]
                 try:
-                    xform, cases = bulk_update_cases(self.domain, updates)
+                    xform, cases = bulk_update_cases(
+                        self.domain, updates, self.__module__)
                     log.write(xform.form_id + '\n')
                 except Exception as e:
                     print('error')

@@ -254,7 +254,7 @@ def update_case(domain, case_id, case_properties=None, close=False,
     )
 
 
-def bulk_update_cases(domain, case_changes, device_id=None):
+def bulk_update_cases(domain, case_changes, device_id):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
