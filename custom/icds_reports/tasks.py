@@ -104,7 +104,7 @@ def recalculate_stagnant_cases():
             case = case_accessor.get_case(case_id)
         except CaseNotFound:
             celery_task_logger.error("Case {} was not found".format(case_id))
-        publish_case_saved(case)
+        publish_case_saved(case, send_post_save_signal=False)
         if i % 100 == 0:
             celery_task_logger.info("Resaved %d / %d cases".format(i, num_stagnant_cases))
 
