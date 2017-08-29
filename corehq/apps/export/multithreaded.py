@@ -313,6 +313,7 @@ class MultithreadedExporter(object):
                         logger.info('    Adding raw dump of page %s to final output', result.page)
                         destination = '{}/page_{}.json.gz'.format(UNPROCESSED_PAGES_DIR, result.page)
                         final_zip.write(raw_dump_path, destination, zipfile.ZIP_STORED)
+                        os.remove(raw_dump_path)
                     continue
 
                 logger.info('  Adding page {} of {} to final file'.format(result.page, pages))
