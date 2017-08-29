@@ -53,7 +53,7 @@ branches:
   - lwyszomi/icds_side_code # lwyszomi
   - bmb/appv2-unique-urls # BMB 8/10
 #  - fixtures-require-js-2017 # Jenny 8/23
-  - ee1a27a3d7b42d3d073c27583e8f8426fb31176d # Jenny 8/29
+  - jls/temp-requirejs # Jenny 8/29
   - np/billing/kill-product_type-softwareproduct # NP 8/24
   - np/11.1 # NP 8/24
   - np/pycco # NP 8/24
