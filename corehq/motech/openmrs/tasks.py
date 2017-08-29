@@ -8,7 +8,8 @@ from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime
 import bz2
-from celery.task import task
+from celery.schedules import crontab
+from celery.task import task, periodic_task
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -55,12 +56,18 @@ def get_caseblock(patient, case_type, owner_id):
     )
 
 
-def import_patients_to_domain(domain_name):
+def import_patients_to_domain(domain_name, force=False):
+    """
+    Iterates OpenmrsImporters of a domain, and imports patients
+
+    :param domain_name: The name of the domain
+    :param force: Import regardless of the configured import frequency / today's date
+    """
     today = datetime.today()
     for importer in get_openmrs_importers_by_domain(domain_name):
-        if importer.import_frequency == IMPORT_FREQUENCY_WEEKLY and today.weekday() != 1:
+        if not force and importer.import_frequency == IMPORT_FREQUENCY_WEEKLY and today.weekday() != 1:
             continue  # Import on Tuesdays
-        if importer.import_frequency == IMPORT_FREQUENCY_MONTHLY and today.day != 1:
+        if not force and importer.import_frequency == IMPORT_FREQUENCY_MONTHLY and today.day != 1:
             continue  # Import on the first of the month
         # TODO: ^^^ Make those configurable
 
@@ -88,7 +95,10 @@ def import_patients_to_domain(domain_name):
         )
 
 
-@task(queue='background_queue')
+@periodic_task(
+    run_every=crontab(minute=4, hour=4),
+    queue='background_queue'
+)
 def import_patients():
     """
     Uses the Reporting REST API to import patients
