@@ -329,8 +329,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
             }
         }, false, function () {
             q.serverError(
-                gettext("An issue on the server prevented this answer from being saved. " +
-                    "To retry later, click on the error symbol."));
+                gettext("We were unable to save this answer. Please try again later."));
             q.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         });
 };
