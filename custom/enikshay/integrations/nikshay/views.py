@@ -1,4 +1,4 @@
-from corehq.apps.repeaters.views import (
+from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
     AddCustomSOAPCaseRepeaterView,
     AddCustomSOAPLocationRepaterView,

@@ -1,0 +1,709 @@
+{
+    "domains": [
+        "enikshay",
+        "enikshay-reports-qa",
+        "sheel-enikshay"
+    ],
+    "server_environment": [
+        "enikshay",
+        "softlayer"
+    ],
+    "data_source_table": "episode_drtb",
+    "report_id": "rntcp_pmdt_treatment_register",
+    "config": {
+        "description": "",
+        "title": "RNTCP PMDT Treatment Register",
+        "sort_expression": [],
+        "visible": true,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "required": false,
+                "datatype": "datetime",
+                "show_all": true,
+                "display": "Date of Treatment Initiation",
+                "field": "treatment_initiation_date",
+                "type": "date",
+                "slug": "treatment_initiation_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "fields": [
+                    "person_owner_id",
+                    "treatment_initiating_drtb_center",
+                    "first_secondary_owner_owner_id",
+                    "second_secondary_owner_owner_id"
+                ],
+                "display": "Location",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "order_by_hierarchy": true,
+                    "show_full_path": true
+                },
+                "type": "multi_field_dynamic_choice_list",
+                "slug": "village"
+            },
+            {
+                "pre_value": 1,
+                "datatype": "integer",
+                "display": null,
+                "field": "treatment_public",
+                "type": "pre",
+                "slug": "treatment_public"
+            },
+            {
+                "pre_value": "confirmed_drtb",
+                "datatype": "string",
+                "display": null,
+                "field": "episode_type",
+                "type": "pre",
+                "slug": "episode_type"
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_enrolled_in_private",
+                "type": "pre",
+                "slug": "is_enrolled_in_private"
+            }
+        ],
+        "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "pmdt_tb_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "PMDT TB Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "nikshay_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Nikshay ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Full Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "sex",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Gender"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "age_entered",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Age in Years"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "complete_address_and_mobile_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Complete Address and Mobile Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "height",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Height"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "weight",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Weight"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "person_owner_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Name of Health Facility"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "tu_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Name of TU"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "district_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Name of District"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "drtb_center",
+                "calculate_total": false,
+                "type": "field",
+                "display": "DRTB Centre"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "extra_pulmonary, abdominal": " Extra Pulmonary, Abdominal",
+                        "extra_pulmonary, lymph_node": " Extra Pulmonary, Lymph Node",
+                        "extra_pulmonary, spine": "Extra Pulmonary, Spine",
+                        "extra_pulmonary": "Extra Pulmonary",
+                        "extra_pulmonary_brain": "Extra Pulmonary, Brain",
+                        "extra_pulmonary, other": "Extra Pulmonary, Other",
+                        "pulmonary": "Pulmonary",
+                        "extra_pulmonary, pleural_effusion": "Extra Pulmonary, Pleural Effusion"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "site_of_disease",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Site of Disease"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "new": "New",
+                        "recurrent": "Recurrent",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Lost to Follow Up",
+                        "other_previously_treated": "Other Previously Treated"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "patient_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient Type"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "follow_up_sm_ve_ip": "Follow Up Sm+ve at end IP",
+                        "extended_dst": "Extended DST",
+                        "discordance_resolution": "Discordance Resolution",
+                        " private_referral": "Private Referral",
+                        "mdr_at_diagnosis": "MDR TB at Diagnosis",
+                        "contact_of_mdr_rr": "Contact of MDR/RR TB"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "rft_drtb_diagnosis",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Reason for Testing"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "r_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "R"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "h_inha",
+                "calculate_total": false,
+                "type": "field",
+                "display": "H (inhA)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "h_katg",
+                "calculate_total": false,
+                "type": "field",
+                "display": "H (katG)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "s_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "S"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "e_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "E"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "z_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Z"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "km_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Km"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cm_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Cm"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "am_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Am"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "lfx_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lfx"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "mfx05_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Mfx (0.5)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "mfx20_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Mfx (2)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "eto_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Eto"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "pas_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "PAS"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "lzd_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lzd"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cfz_drug",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Cfz"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "mdr": "Multi Drug Resistant",
+                        "mr": "Mono Drug Resistance",
+                        "pdr": "Poly Drug Resistance",
+                        "rr": "Rif Resistant",
+                        "xdr": "Extensive Drug Resistance"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "type_of_drtb_patient",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Type of DRTB patient"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "new_drug_mdr_rr_fq_sli": "Regimen with New Drug for MDR-TB Regimen + FQ/SLI Resistance",
+                        "inh_poly_mono": "Regimen for INH mono/poly resistant TB",
+                        "mdr_rr_fq_sli": "Modified Regimen for MDR/RR-TB + FQ/SLI Resistance",
+                        "new_mixed_pattern": "Regimen with New Drug for mixed pattern resistance",
+                        "xdr": "Regimen for XDR TB",
+                        "new_fail_mdr": " Regimen with New Drug for failures of regimen for MDR TB",
+                        "new_fail_xdr": "Regimen with New Drug for failures of regimen for XDR-TB",
+                        "mixed_pattern": "Modified Regimen for Mixed Pattern Resistance",
+                        "mdr_rr": "Regimen for MDR/RR TB",
+                        "new_xdr": "Regimen with New Drug for XDR-TB",
+                        "short_regimen": "Shorter Regimen"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "treatment_regimen",
+                "calculate_total": false,
+                "type": "field",
+                "display": "DRTB Regimen"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_initiation_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Treatment Initiation"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "culture_at_1_6_months",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Culture Results Months 1-6"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "culture_at_7_12_months",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Culture Results Months 7-12"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "culture_at_13_20_months",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Culture Results Months 13-20"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "culture_at_21_30_months",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Culture Results Months 21-30"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "sputum_at_1_6_months",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow up Sputum Results Months 1-6"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "hiv_test_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activites) Date of Test"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "hiv_program_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activites) PID number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "reactive": "Reactive",
+                        "unknown": "Unknown",
+                        "non_reactive": "Non Reactive"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "hiv_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activites) HIV Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cpt_initiation_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activites) Date of CPT Initiation"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "art_initiation_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activites) Date of ART Initiation"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "unknown": "Unknown",
+                        "non_diabetic": "Non Diabetic",
+                        "diabetic": "Diabetic"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "diabetes_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "(TB/HIV collaborative activities) Diabetes Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "adr_history",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Adverse Drug Reactions"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "treatment_failure_culture_non_reversion": "Treatment Failure - Culture Non Reversion",
+                        "cured": "Cured",
+                        "treatment_complete": "Treatment Complete",
+                        "treatment_failure_culture_reversion": "Treatment Failure - Culture Reversion",
+                        "treatment_failure_adverse_drug_reaction": "Treatment Failure - Adverse Drug Reaction",
+                        "not_evaluated": "Not Evaluated",
+                        "regimen_changed": "Regimen Changed",
+                        "pediatric_failure_to_respond": "Pediatric failure to respond",
+                        "treatment_failure_additional_drug_resistance": "Treatment Failure - Additional Drug Resistance",
+                        "invalid_registration": "Invalid Registration",
+                        "loss_to_follow_up": "Loss to follow up",
+                        "died": "Patient Died"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "treatment_outcome",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_outcome_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Outcome Date"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "prev_drtb_center_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Remarks"
+            }
+        ]
+    }
+}

@@ -138,7 +138,7 @@ def handle_outgoing(msg):
     orig_phone_number = None
 
     if use_load_balancing:
-        orig_phone_number = backend.get_next_phone_number()
+        orig_phone_number = backend.get_next_phone_number(msg.phone_number)
 
     if use_rate_limit:
         if use_load_balancing:

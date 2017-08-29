@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/download_async_modal.js', function () {
+hqDefine('app_manager/js/download_async_modal', function () {
     var AsyncDownloader = function($el){
         "use strict";
         var self = this;
@@ -91,5 +91,12 @@ hqDefine('app_manager/js/download_async_modal.js', function () {
 
         self.init();
     };
+
+    window.download_application_zip = function() {
+        var $modal = $(".download-async-modal"),
+            downloader = new AsyncDownloader($modal);
+        downloader.generateDownload($modal.data("url"));
+    };
+
     return {AsyncDownloader: AsyncDownloader};
 });

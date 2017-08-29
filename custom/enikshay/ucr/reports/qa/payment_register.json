@@ -1,0 +1,230 @@
+{
+    "domains": [
+        "enikshay-reports-qa"
+    ],
+    "server_environment": [
+        "enikshay",
+        "softlayer"
+    ],
+    "data_source_table": "voucher_qa",
+    "report_id": "payment_register_qa",
+    "config": {
+        "description": "",
+        "title": "Payment Register",
+        "sort_expression": [],
+        "visible": true,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Voucher Validation Date",
+                "field": "date_fulfilled",
+                "type": "date",
+                "slug": "date_fulfilled"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
+                },
+                "display": "Location"
+            },
+            {
+                "pre_value": "true",
+                "datatype": "string",
+                "display": null,
+                "field": "enrolled_in_private",
+                "type": "pre",
+                "slug": "enrolled_in_private"
+            }
+        ],
+        "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "voucher_fulfilled_by_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Provider Id"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "voucher_fulfilled_by_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Provider Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "voucher_fulfilled_by_user_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Provider Type"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Beneficiary ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "voucher_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "date_fulfilled",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Transaction/Voucher Validation Date"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "state",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "validation_mode",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher Validation Mode"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "date_issued",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher Issued Date"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "issued_amount",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Issued Amount"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "validated_amount_system",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Validated Amount (System)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "validated_amount_as_per_chemist",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Validated Amount (as per chemist)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "validated_amount_marked_up",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Validated Amount (Marked Up)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "amount_approved",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Approved Amount"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "voucher_approval_status",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "date_approved",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Approved Date"
+            }
+        ]
+    }
+}

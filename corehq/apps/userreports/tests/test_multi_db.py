@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 import uuid
-from django.conf import settings
 from django.test import TestCase
-from mock import patch
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -21,21 +19,12 @@ class UCRMultiDBTest(TestCase):
     def setUpClass(cls):
         super(UCRMultiDBTest, cls).setUpClass()
         cls.db2_name = 'cchq_ucr_tests'
-        db_conn_parts = settings.SQL_REPORTING_DATABASE_URL.split('/')
+        db_conn_parts = connections.connection_manager.get_connection_string('default').split('/')
         db_conn_parts[-1] = cls.db2_name
         cls.db2_url = '/'.join(db_conn_parts)
 
-        # setup patches
-        cls.connection_string_patch = patch('corehq.sql_db.connections.connection_manager.get_connection_string')
-
-        def connection_string_for_engine(engine_id):
-            if engine_id == 'engine-1':
-                return settings.SQL_REPORTING_DATABASE_URL
-            else:
-                return cls.db2_url
-
-        mock_manager = cls.connection_string_patch.start()
-        mock_manager.side_effect = connection_string_for_engine
+        cls.context_manager = connections.override_engine('engine-2', cls.db2_url)
+        cls.context_manager.__enter__()
 
         # setup data sources
         data_source_template = get_sample_data_source()
@@ -61,8 +50,7 @@ class UCRMultiDBTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # unpatch
-        cls.connection_string_patch.stop()
+        cls.context_manager.__exit__(None, None, None)
 
         # delete data sources
         cls.ds_1.delete()
@@ -85,13 +73,14 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual('engine-1', get_engine_id(self.ds_1))
         self.assertEqual('engine-2', get_engine_id(self.ds_2))
 
-        self.assertEqual(settings.SQL_REPORTING_DATABASE_URL,
+        self.assertEqual(connections.connection_manager.get_connection_string('default'),
                          connections.connection_manager.get_connection_string('engine-1'))
         self.assertEqual(self.db2_url,
                          connections.connection_manager.get_connection_string('engine-2'))
 
         self.assertNotEqual(str(self.ds1_adapter.engine.url), str(self.ds2_adapter.engine.url))
-        self.assertEqual(settings.SQL_REPORTING_DATABASE_URL, str(self.ds1_adapter.engine.url))
+        self.assertEqual(connections.connection_manager.get_connection_string('default'),
+                         str(self.ds1_adapter.engine.url))
         self.assertEqual(self.db2_url, str(self.ds2_adapter.engine.url))
 
     def test_pillow_save_to_multiple_databases(self):

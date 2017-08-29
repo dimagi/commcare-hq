@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-test",
     "icds-sql",
     "icds-cas"
@@ -34,7 +35,9 @@
         "display": "Filter by Block",
         "field": "block_id",
         "type": "location_drilldown",
-        "slug": "block_id"
+        "slug": "block_id",
+        "include_descendants": true,
+        "max_drilldown_levels": 3
       },
       {
         "compare_as_string": false,
@@ -160,7 +163,20 @@
         "aggregation": "simple"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      },
+      {
+        "field": "district_id",
+        "order": "DESC"
+      },
+      {
+        "field": "block_id",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

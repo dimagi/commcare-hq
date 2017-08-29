@@ -3,12 +3,13 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.elastic import stream_es_query, get_es_new, ES_META
+from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
+from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory
 
 
 class GroupsToUsersProcessor(PillowProcessor):
@@ -23,11 +24,13 @@ class GroupsToUsersProcessor(PillowProcessor):
             update_es_user_with_groups(change.get_document(), self._es)
 
 
-def get_group_to_user_pillow(pillow_id='GroupToUserPillow', **kwargs):
+def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, [topics.GROUP])
     processor = GroupsToUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[topics.GROUP], group_id='groups-to-users')
+    change_feed = KafkaChangeFeed(
+        topics=[topics.GROUP], group_id='groups-to-users', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -67,30 +70,46 @@ def update_es_user_with_groups(group_doc, es_client=None):
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
             es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
 
+    for user_source in stream_user_sources(group_doc.get("removed_users", [])):
+        if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
+            user_source.group_ids.remove(group_doc["_id"])
+            user_source.group_names.remove(group_doc["name"])
+            doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
+            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
+
 
 UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])
 
 
 def stream_user_sources(user_ids):
-    q = {"filter": {"and": [{"terms": {"_id": user_ids}}]}}
-    for result in stream_es_query(es_index='users', q=q, fields=["__group_ids", "__group_names"]):
-        group_ids = result.get('fields', {}).get("__group_ids", [])
+    results = (
+        UserES()
+        .user_ids(user_ids)
+        .fields(['_id', '__group_ids', '__group_names'])
+        .scroll()
+    )
+
+    for result in results:
+        group_ids = result.get('__group_ids', [])
         group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
-        group_names = result.get('fields', {}).get("__group_names", [])
+        group_names = result.get('__group_names', [])
         group_names = set(group_names) if isinstance(group_names, list) else {group_names}
         yield UserSource(result['_id'], group_ids, group_names)
 
 
-def get_groups_to_user_reindexer():
-    return PillowChangeProviderReindexer(
-        pillow=get_group_to_user_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=Group.get_db(),
-            view_name='all_docs/by_doc_type',
-            view_kwargs={
-                'startkey': ['Group'],
-                'endkey': ['Group', {}],
-                'include_docs': True,
-            }
-        ),
-    )
+class GroupToUserReindexerFactory(ReindexerFactory):
+    slug = 'groups-to-user'
+
+    def build(self):
+        return PillowChangeProviderReindexer(
+            pillow=get_group_to_user_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=Group.get_db(),
+                view_name='all_docs/by_doc_type',
+                view_kwargs={
+                    'startkey': ['Group'],
+                    'endkey': ['Group', {}],
+                    'include_docs': True,
+                }
+            ),
+        )

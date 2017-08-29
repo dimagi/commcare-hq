@@ -1,7 +1,5 @@
 import json
-import logging
 import os
-from StringIO import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -13,25 +11,23 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.util import add_odk_profile_after_build, \
-    get_app_manager_template
+from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
-                    "If error persists, please contact us at commcarehq-support@dimagi.com")
+                      "If error persists, please contact us at commcarehq-support@dimagi.com")
 
 
 @safe_download
@@ -41,7 +37,10 @@ def download_odk_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -51,14 +50,17 @@ def download_odk_profile(request, domain, app_id):
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
     )
 
 
-@safe_download
+@safe_cached_download
 def download_suite(request, domain, app_id):
     """
     See Application.create_suite
@@ -72,7 +74,7 @@ def download_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
     See Application.create_media_suite
@@ -86,7 +88,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -97,7 +99,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
@@ -116,7 +118,7 @@ def download_xform(request, domain, app_id, module_id, form_id):
         return response
 
 
-@safe_download
+@safe_cached_download
 def download_jad(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -138,7 +140,7 @@ def download_jad(request, domain, app_id):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_jar(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -175,7 +177,7 @@ def download_test_jar(request):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
     See ApplicationBase.fetch_jar
@@ -191,7 +193,11 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
-    zip_name = 'commcare.ccz'
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.ccz'.format(self.app.version)
+
     include_index_files = True
 
     def check_before_zipping(self):
@@ -200,7 +206,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_download
+@safe_cached_download
 def download_file(request, domain, app_id, path):
     if path == "app.json":
         return JsonResponse(request.app.to_json())
@@ -234,36 +240,25 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        obj = CachedObject('{id}::{path}'.format(
-            id=request.app._id,
-            path=full_path,
-        ))
-        if not obj.is_cached():
-            #lazily create language profiles to avoid slowing initial build
-            try:
-                payload = request.app.fetch_attachment(full_path)
-            except ResourceNotFound:
-                if build_profile in request.app.build_profiles and build_profile_access:
-                    try:
-                        # look for file guaranteed to exist if profile is created
-                        request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                    except ResourceNotFound:
-                        request.app.create_build_files(save=True, build_profile_id=build_profile)
-                        request.app.save()
-                        payload = request.app.fetch_attachment(full_path)
-                    else:
-                        # if profile.xml is found the profile has been built and its a bad request
-                        raise
+        # lazily create language profiles to avoid slowing initial build
+        try:
+            payload = request.app.fetch_attachment(full_path)
+        except ResourceNotFound:
+            if build_profile in request.app.build_profiles and build_profile_access:
+                try:
+                    # look for file guaranteed to exist if profile is created
+                    request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+                except ResourceNotFound:
+                    request.app.create_build_files(save=True, build_profile_id=build_profile)
+                    request.app.save()
+                    payload = request.app.fetch_attachment(full_path)
                 else:
+                    # if profile.xml is found the profile has been built and its a bad request
                     raise
-            if type(payload) is unicode:
-                payload = payload.encode('utf-8')
-            buffer = StringIO(payload)
-            metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=None)
-        else:
-            _, buffer = obj.get()
-            payload = buffer.getvalue()
+            else:
+                raise
+        if type(payload) is unicode:
+            payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
@@ -319,7 +314,10 @@ def download_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile()
     )
@@ -328,9 +326,21 @@ def download_profile(request, domain, app_id):
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(with_media=True)
+    )
+
+
+@safe_cached_download
+def download_practice_user_restore(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
+    return HttpResponse(
+        request.app.create_practice_user_restore()
     )
 
 
@@ -341,12 +351,6 @@ def download_index(request, domain, app_id):
     all the resource files that will end up zipped into the jar.
 
     """
-    template = get_app_manager_template(
-        request.user,
-        "app_manager/v1/download_index.html",
-        "app_manager/v2/download_index.html",
-    )
-
     files = []
     try:
         files = source_files(request.app)
@@ -357,13 +361,12 @@ def download_index(request, domain, app_id):
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ),
             extra_tags='html'
         )
     built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
-    return render(request, template, {
+    return render(request, "app_manager/download_index.html", {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
         'supports_j2me': request.app.build_spec.supports_j2me(),
@@ -387,28 +390,21 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors] and not form.form_type == "shadow_form":
-        response_html = ("" if toggles.APP_MANAGER_V2.enabled(request.user.username)
-                         else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
+        response_html = ""
     else:
         if form.form_type == "shadow_form":
             # Don't display the blank form error if its a shadow form
             errors = [e for e in errors if e['type'] != "blank form"]
-        response_html = render_to_string(
-            get_app_manager_template(
-                request.user,
-                'app_manager/v1/partials/build_errors.html',
-                'app_manager/v2/partials/build_errors.html',
-            ), {
-                'request': request,
-                'app': app,
-                'form': form,
-                'build_errors': errors,
-                'not_actual_build': True,
-                'domain': domain,
-                'langs': langs,
-                'lang': lang
-            }
-        )
+        response_html = render_to_string("app_manager/partials/build_errors.html", {
+            'request': request,
+            'app': app,
+            'form': form,
+            'build_errors': errors,
+            'not_actual_build': True,
+            'domain': domain,
+            'langs': langs,
+            'lang': lang
+        })
 
     if ajax:
         return json_response({

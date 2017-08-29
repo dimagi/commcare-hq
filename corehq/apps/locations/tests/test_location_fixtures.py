@@ -18,7 +18,6 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
-from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
@@ -31,7 +30,7 @@ from .util import (
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
     flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
     _get_location_data_fields
-from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
+from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
 
 
 class FixtureHasLocationsMixin(TestXmlMixin):
@@ -238,7 +237,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_same_level(self):
         # I want a list of all the counties, but only the cities in my county
-        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'])
         location_type = self.locations['Boston'].location_type
 
         # Get all the counties
@@ -253,7 +252,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_lower_level(self):
         # I want all all the cities, but am at the state level
-        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
 
         # Get all the cities
@@ -283,6 +282,85 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
         expected_schema = extract_xml_partial(expected_result, './schema')
         self.assertXmlEqual(expected_schema, schema)
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
+    def setUp(self):
+        super(ForkedHierarchiesTest, self).setUp()
+        self.domain = 'test'
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.addCleanup(self.domain_obj.delete)
+
+        self.user = create_restore_user(self.domain, 'user', '123')
+
+        location_type_structure = [
+            LocationTypeStructure('ctd', [
+                LocationTypeStructure('sto', [
+                    LocationTypeStructure('cto', [
+                        LocationTypeStructure('dto', [
+                            LocationTypeStructure('tu', [
+                                LocationTypeStructure('phi', []),
+                                LocationTypeStructure('dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationTypeStructure('drtb', []),
+                    LocationTypeStructure('cdst', []),
+                ])
+            ])
+        ]
+        location_structure = [
+            LocationStructure('CTD', 'ctd', [
+                LocationStructure('STO', 'sto', [
+                    LocationStructure('CTO', 'cto', [
+                        LocationStructure('DTO', 'dto', [
+                            LocationStructure('TU', 'tu', [
+                                LocationStructure('PHI', 'phi', []),
+                                LocationStructure('DMC', 'dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationStructure('DRTB', 'drtb', []),
+                    LocationStructure('CDST', 'cdst', []),
+                ]),
+                LocationStructure('STO1', 'sto', [
+                    LocationStructure('CTO1', 'cto', [
+                        LocationStructure('DTO1', 'dto', [
+                            LocationStructure('TU1', 'tu', [
+                                LocationStructure('PHI1', 'phi', []),
+                                LocationStructure('DMC1', 'dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationStructure('DRTB1', 'drtb', []),
+                    LocationStructure('CDST1', 'cdst', []),
+                ])
+            ])
+        ]
+
+        location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
+        setup_location_types_with_structure(self.domain, location_type_structure),
+        self.locations = setup_locations_with_structure(self.domain, location_structure, location_metadata)
+
+    def tearDown(self):
+        super(ForkedHierarchiesTest, self).tearDown()
+        delete_all_users()
+
+    def test_include_without_expanding_includes_all_ancestors(self):
+        self.user._couch_user.set_location(self.locations['DTO'])
+        location_type = self.locations['DTO'].location_type
+
+        location_type.include_without_expanding = self.locations['DTO'].location_type
+        location_type.save()
+
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1])
+
+        for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
+            self.assertTrue(location_name in fixture)
+
+        for location_name in ('PHI1', 'TU1', 'DMC1'):
+            self.assertFalse(location_name in fixture)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
@@ -540,39 +618,37 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertFalse(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
         self.location_type.shares_cases = True
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertTrue(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
     def test_archiving_location_should_resync(self):
         """
         When locations are archived, we should resync them
         """
-        couch_location = Location(
+        location = make_location(
             domain=self.domain,
             name='winterfell',
             location_type=self.location_type.name,
         )
-        couch_location.save()
+        location.save()
         after_save = datetime.utcnow()
-        location = SQLLocation.objects.last()
-        self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
 
         # archive the location
@@ -580,12 +656,12 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
 
 

@@ -4,17 +4,18 @@ from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
 from corehq.toggles import EXPORT_NO_SORT
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
-    query = (FormES()
+    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
-            .app(app_id)
             .xmlns(xmlns)
             .remove_default_filter('has_user'))
 
+    if app_id:
+        query = query.app(app_id)
     if not EXPORT_NO_SORT.enabled(domain):
         query = query.sort("received_on")
 
@@ -25,7 +26,7 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    query = (CaseES()
+    query = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .case_type(case_type))
 
@@ -36,7 +37,7 @@ def get_case_export_base_query(domain, case_type):
 
 
 def get_sms_export_base_query(domain):
-    return (SMSES()
+    return (SMSES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .processed_or_incoming_messages()
             .sort("date"))

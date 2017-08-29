@@ -4,11 +4,6 @@
 This email is a receipt for your prepayment of {{ amount }} for credits to your project {{ project }}.
 {% endblocktrans %}
 
-{% for item in items %}
-    {{item.type}}: {{item.amount}}
-{% endfor %}
-    {% trans 'Total' %}: {{ amount }}
-
 {% trans 'Payment Date' %}: {{ date_paid }}
 {% trans 'Transaction No.' %}: {{ transaction_id }}
 

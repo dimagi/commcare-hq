@@ -166,3 +166,8 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queu
                     self.retry(exc=e)
         return _inner
     return decorator
+
+
+def hqnottest(func):
+    func.__test__ = False
+    return func

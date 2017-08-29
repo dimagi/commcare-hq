@@ -8,7 +8,7 @@ from corehq.apps.data_interfaces.models import (
     AUTO_UPDATE_XMLNS,
 )
 from corehq.util.decorators import serial_task
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from django.conf import settings
@@ -70,7 +70,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 def run_case_update_rules(now=None):
     domains = (AutomaticUpdateRule
                .objects
-               .filter(active=True, deleted=False)
+               .filter(active=True, deleted=False, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
@@ -99,6 +99,14 @@ def run_rules_for_case(case, rules, now):
     return aggregated_result
 
 
+def check_data_migration_in_progress(domain, last_migration_check_time):
+    utcnow = datetime.utcnow()
+    if last_migration_check_time is None or (utcnow - last_migration_check_time) > timedelta(minutes=1):
+        return DATA_MIGRATION.enabled(domain), utcnow
+
+    return False, last_migration_check_time
+
+
 @serial_task(
     '{domain}',
     timeout=36 * 60 * 60,
@@ -108,6 +116,7 @@ def run_rules_for_case(case, rules, now):
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
+    last_migration_check_time = None
     run_record = DomainCaseRuleRun.objects.create(
         domain=domain,
         started_on=start_run,
@@ -116,26 +125,29 @@ def run_case_update_rules_for_domain(domain, now=None):
     cases_checked = 0
     case_update_result = CaseRuleActionResult()
 
-    all_rules = AutomaticUpdateRule.by_domain(domain)
+    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_id_chunks = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
+        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date))
 
-        for case_ids in case_id_chunks:
-            for case in CaseAccessors(domain).iter_cases(case_ids):
-                time_elapsed = datetime.utcnow() - start_run
-                if (
-                    time_elapsed.seconds > HALT_AFTER or
-                    case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN
-                ):
-                    run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
-                    notify_error("Halting rule run for domain %s." % domain)
-                    return
+        for case in CaseAccessors(domain).iter_cases(case_ids):
+            migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
+                last_migration_check_time)
 
-                case_update_result.add_result(run_rules_for_case(case, rules, now))
-                cases_checked += 1
+            time_elapsed = datetime.utcnow() - start_run
+            if (
+                time_elapsed.seconds > HALT_AFTER or
+                case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN or
+                migration_in_progress
+            ):
+                run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
+                notify_error("Halting rule run for domain %s." % domain)
+                return
+
+            case_update_result.add_result(run_rules_for_case(case, rules, now))
+            cases_checked += 1
 
         for rule in rules:
             rule.last_run = now
@@ -153,6 +165,7 @@ def run_case_update_rules_on_save(case):
             last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
-            rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
+            rules = AutomaticUpdateRule.by_domain(case.domain,
+                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
             run_rules_for_case(case, rules, now)

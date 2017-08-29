@@ -1,22 +1,10 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
         "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6"
+        "enikshay-reports-qa"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "episode",
@@ -46,7 +34,9 @@
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
-                    "type": "location"
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
                 "display": "Location"
             }
@@ -255,6 +245,17 @@
                     "aggregation": "sum",
                     "field": "contacts_screened"
                 }
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "sum",
+                "field": "patients_with_key_populations",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Number of TB cases (all forms) notified among key affected populations/high risk groups (HIV, prisoners/migrants/ refugees. I DPs)"
             }
         ]
     }

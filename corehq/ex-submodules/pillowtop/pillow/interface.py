@@ -3,8 +3,7 @@ from datetime import datetime
 
 import sys
 
-from corehq.util.soft_assert import soft_assert
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
@@ -18,6 +17,8 @@ def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
     if isinstance(topic, TopicAndPartition):
         return 'topic:{}-{}'.format(topic.topic, topic.partition)
+    elif isinstance(topic, tuple) and len(topic) == 2:
+        return 'topic:{}-{}'.format(topic[0], topic[1])
     else:
         return 'topic:{}'.format(topic)
 
@@ -28,9 +29,8 @@ class PillowRuntimeContext(object):
     so that other functions can use it without maintaining global state on the class.
     """
 
-    def __init__(self, changes_seen=0, do_set_checkpoint=True):
+    def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
-        self.do_set_checkpoint = do_set_checkpoint
 
 
 class PillowBase(object):
@@ -98,7 +98,7 @@ class PillowBase(object):
         """
         Process changes from the changes stream.
         """
-        context = PillowRuntimeContext(changes_seen=0, do_set_checkpoint=True)
+        context = PillowRuntimeContext(changes_seen=0)
         try:
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
@@ -175,26 +175,6 @@ class PillowBase(object):
             ])
 
     def _record_change_in_datadog(self, change, timer):
-        from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-        change_feed = self.get_change_feed()
-        current_seq = self._normalize_sequence(change_feed.get_processed_offsets())
-        current_offsets = change_feed.get_latest_offsets()
-
-        tags = [
-            'pillow_name:{}'.format(self.get_name()),
-            'feed_type:{}'.format('kafka' if isinstance(change_feed, KafkaChangeFeed) else 'couch')
-        ]
-        for topic, value in current_seq.iteritems():
-            tags_with_topic = tags + [_topic_for_ddog(topic), ]
-            datadog_gauge('commcare.change_feed.processed_offsets', value, tags=tags_with_topic)
-            if topic in current_offsets:
-                needs_processing = current_offsets[topic] - value
-                datadog_gauge('commcare.change_feed.need_processing', needs_processing, tags=tags_with_topic)
-
-        for topic, offset in current_offsets.iteritems():
-            tags_with_topic = tags + [_topic_for_ddog(topic), ]
-            datadog_gauge('commcare.change_feed.current_offsets', offset, tags=tags_with_topic)
-
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
     def _record_change_success_in_datadog(self, change):
@@ -219,7 +199,7 @@ class PillowBase(object):
             ])
 
             if timer:
-                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
+                datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
@@ -291,7 +271,7 @@ def handle_pillow_error(pillow, change, exception):
         error_id = error.id
 
     pillow_logging.exception(
-        "[%s] Error on change: %s, %s. Logged as: %s" % (
+        u"[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,

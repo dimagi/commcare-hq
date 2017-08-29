@@ -1,15 +1,18 @@
 # coding: utf-8
-from django.test import TestCase
+import os
+from django.test import TestCase, SimpleTestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import Mock
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.reports.util import create_export_filter
+from corehq.apps.reports.util import create_export_filter, validate_xform_for_edit
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.app_manager.xform import XForm
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup, TestFileMixin
 from pillowtop.es_utils import initialize_index_and_mapping
 
 DOMAIN = 'test_domain'
@@ -55,3 +58,14 @@ class ReportUtilTests(TestCase):
             filter_.dumps(),
             '[{"function": "corehq.apps.reports.util.case_users_filter", "kwargs": {"users": ["' +
             self.user.user_id + '"], "groups": []}}]')
+
+
+class TestValidateXFormForEdit(SimpleTestCase, TestFileMixin):
+    file_path = ('edit_forms',)
+    root = os.path.dirname(__file__)
+
+    def test_bad_calculate(self):
+        source = self.get_xml('bad_calculate')
+        xform = XForm(source)
+        with self.assertRaises(EditFormValidationError):
+            validate_xform_for_edit(xform)

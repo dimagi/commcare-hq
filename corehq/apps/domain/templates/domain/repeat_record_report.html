@@ -6,13 +6,13 @@
 <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"
 />{% endblock stylesheets %}
 
-{% compress js %}
 {% block js %}{{ block.super }}
+{% compress js %}
 <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
 <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
 <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
-{% endblock js %}
 {% endcompress %}
+{% endblock js %}
 
 {% block js-inline %}{{ block.super }}
 <script>
@@ -139,8 +139,10 @@
           });
     });
 </script>
-{% endblock js-inline %} {% block modals %}{{ block.super }}
-<!-- View Repeat Record Modal -->
+{% endblock js-inline %}
+
+{% block modals %}{{ block.super }}
+<!-- "View Payload" Modal -->
 <div class="modal fade" id="view-record-payload-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -161,7 +163,7 @@
     </div>
 </div>
 
-<!-- Modal for repeat resend errors -->
+<!-- Modal for "Resend Payload" errors -->
 <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

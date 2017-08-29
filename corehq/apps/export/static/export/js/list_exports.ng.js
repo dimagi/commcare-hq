@@ -173,7 +173,7 @@
 
         $scope.$watch("formData.date_range", function(newDateRange) {
             if (!newDateRange) {
-                $scope.formData.date_range = "last7";
+                $scope.formData.date_range = "since";
             } else {
                 self._clearSubmitError();
             }

@@ -35,7 +35,8 @@ requirejs.config({
             "vellum/uploader", 
             "vellum/window", 
             "vellum/polyfills", 
-            "vellum/copy-paste"
+            "vellum/copy-paste", 
+            "vellum/commander"
         ]
     }
 });
@@ -43,6 +44,13 @@ requirejs.config({
 // stubs (stubModules build option puts them in exclude.js, which is removed)
 define('css/css', {});
 define('less/less', {});
+
+if (!window.gettext) {
+    window.gettext = function (arg) { return arg; };
+    window.ngettext = function (singular, plural, count) {
+        return count === 1 ? singular : plural;
+    };
+}
 
 define([
     'jquery',
@@ -60,6 +68,7 @@ define([
     'vellum/uploader',
     'vellum/window',
     'vellum/polyfills',
-    'vellum/copy-paste'
+    'vellum/copy-paste',
+    'vellum/commander'
 ], function () {});
 

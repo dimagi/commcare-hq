@@ -68,6 +68,7 @@ class BaseReportColumn(JsonObject):
     column_id = StringProperty(required=True)
     display = DefaultProperty()
     description = StringProperty()
+    visible = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, obj):
@@ -179,7 +180,8 @@ class FieldColumn(ReportColumn):
                 sortable=self.sortable,
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
-                help_text=self.description
+                help_text=self.description,
+                visible=self.visible
             )
         ])
 

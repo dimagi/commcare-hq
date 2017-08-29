@@ -12,20 +12,16 @@ from corehq.apps.accounting.models import (
     CreditLine,
     Invoice,
     PaymentRecord,
-    SoftwareProductType,
-    FeatureType,
     PreOrPostPay,
     StripePaymentMethod,
     LastPayment
 )
-from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     log_accounting_error,
     log_accounting_info,
 )
 from corehq.const import USER_DATE_FORMAT
-import six
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
@@ -302,14 +298,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     def __init__(self, payment_method, domain, account, subscription=None, post_data=None):
         super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
-        self.features = [{'type': feature_type[0],
-                          'amount': Decimal(post_data.get(feature_type[0], 0))}
-                         for feature_type in FeatureType.CHOICES
-                         if Decimal(post_data.get(feature_type[0], 0)) > 0]
-        self.products = [{'type': product_type[0],
-                          'amount': Decimal(post_data.get(product_type[0], 0))}
-                         for product_type in SoftwareProductType.CHOICES
-                         if Decimal(post_data.get(product_type[0], 0)) > 0]
         if Decimal(post_data.get('general_credit', 0)) > 0:
             self.general_credits = {
                 'type': 'general_credit',
@@ -324,24 +312,7 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        credit_types = [six.text_type(product['type']) for product in self._humanized_products()]
-        credit_types += [six.text_type(feature['type']) for feature in self._humanized_features()]
-        return _("Credits: {credit_types} for {sub_or_account}").format(
-            credit_types=", ".join(credit_types),
-            sub_or_account=("Subscription %s" % self.subscription
-                            if self.subscription is None
-                            else "Account %s" % self.account.id)
-        )
-
-    def _humanized_features(self):
-        return [{'type': get_feature_name(feature['type'], SoftwareProductType.COMMCARE),
-                 'amount': fmt_dollar_amount(feature['amount'])}
-                for feature in self.features]
-
-    def _humanized_products(self):
-        return [{'type': product['type'],
-                 'amount': fmt_dollar_amount(product['amount'])}
-                for product in self.products]
+        return str(self.subscription)
 
     def get_charge_amount(self, request):
         return Decimal(request.POST['amount'])
@@ -361,45 +332,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
         account.save()
 
     def update_credits(self, payment_record):
-        for feature in self.features:
-            feature_amount = feature['amount']
-            if feature_amount >= 0.5:
-                self.credit_lines.append(CreditLine.add_credit(
-                    feature_amount,
-                    account=self.account,
-                    subscription=self.subscription,
-                    feature_type=feature['type'],
-                    payment_record=payment_record,
-                ))
-            else:
-                log_accounting_error(
-                    "{account} tried to make a payment for {feature} for less than $0.5."
-                    "You should follow up with them."
-                    .format(
-                        account=self.account,
-                        feature=feature['type']
-                    )
-                )
-        for product in self.products:
-            plan_amount = product['amount']
-            if plan_amount >= 0.5:
-                self.credit_lines.append(CreditLine.add_credit(
-                    plan_amount,
-                    account=self.account,
-                    subscription=self.subscription,
-                    product_type=SoftwareProductType.ANY,
-                    payment_record=payment_record,
-                ))
-            else:
-                log_accounting_error(
-                    "{account} tried to make a payment for {product} for less than $0.5."
-                    "You should follow up with them."
-                    .format(
-                        account=self.account,
-                        product=product['type']
-                    )
-                )
-
         if self.general_credits:
             amount = self.general_credits['amount']
             if amount >= 0.5:
@@ -427,13 +359,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                              for cline in self.credit_lines]
             })
         return response
-
-    def get_email_context(self):
-        context = super(CreditStripePaymentHandler, self).get_email_context()
-        context.update({
-            'items': self._humanized_products() + self._humanized_features()
-        })
-        return context
 
 
 class AutoPayInvoicePaymentHandler(object):

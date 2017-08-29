@@ -2,6 +2,7 @@ ES_META = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
+            "number_of_replicas": 0,
             "analysis": {
                 "analyzer": {
                     "default": {
@@ -53,6 +54,8 @@ ES_META = {
 
     'hqusers': {
         "settings": {
+            "number_of_shards": 2,
+            "number_of_replicas": 1,
             "analysis": {
                 "analyzer": {
                     "default": {
@@ -103,5 +106,76 @@ ES_META = {
                 },
             },
         }
+    },
+
+    'swiss': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 0,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
+
+    'l10k': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 0,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
+
+    'staging': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 0,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
+    'enikshay': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 0,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
     },
 }

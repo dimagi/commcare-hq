@@ -1,7 +1,7 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-APP_INDEX = es_index("hqapps_2016-10-20_1835")
+APP_INDEX = es_index("hqapps_2017-05-22_1426")
 APP_MAPPING={'_meta': {'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -67,9 +67,7 @@ APP_MAPPING={'_meta': {'created': None},
                 'is_released': {'type': 'boolean'},
                 'langs': {'type': 'string'},
                 'modules': {'dynamic': False,
-                            'properties': {'case_label': {'dynamic': False,
-                                                          'type': 'object'},
-                                           'case_list': {'dynamic': False,
+                            'properties': {'case_list': {'dynamic': False,
                                                          'properties': {'doc_type': {'index': 'not_analyzed',
                                                                                      'type': 'string'},
                                                                         'label': {'dynamic': False,
@@ -272,8 +270,6 @@ APP_MAPPING={'_meta': {'created': None},
                                                                             'relationship': {'type': 'string'}},
                                                              'type': 'object'},
                                            'put_in_root': {'type': 'boolean'},
-                                           'referral_label': {'dynamic': False,
-                                                              'type': 'object'},
                                            'referral_list': {'dynamic': False,
                                                              'properties': {'doc_type': {'index': 'not_analyzed',
                                                                                          'type': 'string'},

@@ -5,10 +5,12 @@ from django.template.response import TemplateResponse
 
 # External imports
 from django.utils.deprecation import MiddlewareMixin
-from corehq.apps.accounting.exceptions import AccountingError
-from corehq.apps.accounting.models import Subscription
+
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    Subscription,
+)
 from corehq.toggles import DATA_MIGRATION
-from django_prbac.models import Role
 
 
 class CCHQPRBACMiddleware(MiddlewareMixin):
@@ -32,26 +34,25 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
 
     @classmethod
     def apply_prbac(cls, request):
-        if hasattr(request, 'domain'):
-            try:
-                plan_version, subscription = Subscription.get_subscribed_plan_by_domain(request.domain)
-                request.role = plan_version.role
-                request.plan = plan_version
-                request.subscription = subscription
-                return None
-            except AccountingError:
-                pass
-        privilege = Role.get_privilege('community_plan_v1')
-        if privilege is not None:
-            request.role = privilege.role
+        subscription = (
+            Subscription.get_active_subscription_by_domain(request.domain)
+            if hasattr(request, 'domain') else None
+        )
+        if subscription:
+            plan_version = subscription.plan_version
+            request.role = plan_version.role
+            request.plan = plan_version
+            request.subscription = subscription
         else:
-            request.role = Role()  # A fresh Role() has no privileges
+            plan_version = DefaultProductPlan.get_default_plan_version()
+            request.role = plan_version.role
+            request.plan = plan_version
 
 
 class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
-        if hasattr(request, 'domain'):
+        if hasattr(request, 'domain') and getattr(response, '_remember_domain', True):
             self.remember_domain_visit(request, response)
         return response
 
@@ -75,5 +76,8 @@ class DomainMigrationMiddleware(MiddlewareMixin):
                     request=request,
                     template='domain/data_migration_in_progress.html',
                     status=503,
+                    context={
+                        'domain': request.domain
+                    }
                 )
         return None

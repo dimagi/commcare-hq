@@ -1,6 +1,6 @@
 describe('Form Workflow', function() {
     var workflow;
-    var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
+    var FormWorkflow = hqImport('app_manager/js/forms/form_workflow').FormWorkflow;
 
     describe('#workflowOptions', function() {
         beforeEach(function() {
@@ -8,7 +8,7 @@ describe('Form Workflow', function() {
                 options = {};
 
             labels[FormWorkflow.Values.DEFAULT] = 'Home Screen';
-            labels[FormWorkflow.Values.ROOT] = 'Module Menu';
+            labels[FormWorkflow.Values.ROOT] = 'First Menu';
             options = {
                 labels: labels,
                 workflow: FormWorkflow.Values.ROOT,
@@ -35,7 +35,7 @@ describe('Form Workflow', function() {
 
             assert.equal(options.length, 2);
             root = _.find(options, function(d) { return d.value === FormWorkflow.Values.ROOT; });
-            assert.equal(root.label, 'Module Menu');
+            assert.equal(root.label, 'First Menu');
             assert.equal(root.value, FormWorkflow.Values.ROOT);
         });
     });

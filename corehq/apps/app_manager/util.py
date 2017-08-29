@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 from copy import deepcopy, copy
+from couchdbkit import ResourceNotFound
 import json
 import os
 import uuid
@@ -10,30 +11,28 @@ import yaml
 from django.urls import reverse
 from couchdbkit.exceptions import DocTypeError
 from django.core.cache import cache
+from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
-    get_apps_in_domain
+    get_apps_in_domain, get_app
 )
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
-    CT_REQUISITION_MODE_3,
-    CT_LEDGER_STOCK,
-    CT_LEDGER_REQUESTED,
-    CT_REQUISITION_MODE_4,
-    CT_LEDGER_APPROVED,
-    CT_LEDGER_PREFIX,
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
     USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.users.models import CommCareUser
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 
 
@@ -122,37 +121,44 @@ def split_path(path):
 
 
 def save_xform(app, form, xml):
-    def change_xmlns(xform, replacing):
+
+    def change_xmlns(xform, old_xmlns, new_xmlns):
         data = xform.data_node.render()
-        xmlns = "http://openrosa.org/formdesigner/%s" % form.get_unique_id()
-        data = data.replace(replacing, xmlns, 1)
+        data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
-        xml = xform.render()
-        return xform, xml
+        return xform.render()
 
     try:
         xform = XForm(xml)
     except XFormException:
         pass
     else:
-        duplicates = app.get_xmlns_map()[xform.data_node.tag_xmlns]
-        for duplicate in duplicates:
-            if form == duplicate:
-                continue
-            else:
-                xform, xml = change_xmlns(xform, xform.data_node.tag_xmlns)
-                break
-
         GENERIC_XMLNS = "http://www.w3.org/2002/xforms"
-        if not xform.data_node.tag_xmlns or xform.data_node.tag_xmlns == GENERIC_XMLNS:  #no xmlns
-            xform, xml = change_xmlns(xform, GENERIC_XMLNS)
+        # we assume form.get_unique_id() is unique across all of HQ and
+        # therefore is suitable to create an XMLNS that will not confict
+        # with any other form
+        uid = form.get_unique_id()
+        tag_xmlns = xform.data_node.tag_xmlns
+        new_xmlns = form.xmlns or "http://openrosa.org/formdesigner/%s" % uid
+        if not tag_xmlns or tag_xmlns == GENERIC_XMLNS:  # no xmlns
+            xml = change_xmlns(xform, GENERIC_XMLNS, new_xmlns)
+        else:
+            forms = [form_
+                for form_ in app.get_xmlns_map().get(tag_xmlns, [])
+                if form_.form_type != 'shadow_form']
+            if len(forms) > 1 or (len(forms) == 1 and forms[0] is not form):
+                if new_xmlns == tag_xmlns:
+                    new_xmlns = "http://openrosa.org/formdesigner/%s" % uid
+                # form most likely created by app.copy_form(...)
+                # or form is being updated with source copied from other form
+                xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
     form.source = xml
 
-    # For registration forms, assume that the first question is the case name
-    # unless something else has been specified
     if form.is_registration_form():
+        # For registration forms, assume that the first question is the
+        # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
             path = form.actions.open_case.name_path
@@ -162,6 +168,8 @@ def save_xform(app, form, xml):
                     path = None
             if not path and len(questions):
                 form.actions.open_case.name_path = questions[0]['value']
+
+    return xml
 
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
@@ -220,6 +228,8 @@ def get_settings_values(app):
     hq_settings['build_spec'] = app.build_spec.to_string()
     # the admin_password hash shouldn't be sent to the client
     hq_settings.pop('admin_password', None)
+    # convert int to string
+    hq_settings['mobile_ucr_sync_interval'] = str(hq_settings.get('mobile_ucr_sync_interval', 'none'))
 
     domain = Domain.get_by_name(app.domain)
     return {
@@ -281,27 +291,6 @@ def all_apps_by_domain(domain):
         yield get_correct_app_class(doc).wrap(doc)
 
 
-def new_careplan_module(app, name, lang, target_module):
-    from corehq.apps.app_manager.models import CareplanModule, CareplanGoalForm, CareplanTaskForm
-    module = app.add_module(CareplanModule.new_module(
-        name,
-        lang,
-        target_module.unique_id,
-        target_module.case_type
-    ))
-
-    forms = [form_class.new_form(lang, name, mode)
-                for form_class in [CareplanGoalForm, CareplanTaskForm]
-                for mode in ['create', 'update']]
-
-    for form, source in forms:
-        module.forms.append(form)
-        form = module.get_form(-1)
-        form.source = source
-
-    return module
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
@@ -311,16 +300,6 @@ def languages_mapping():
         mapping["default"] = ["Default Language"]
         cache.set('__languages_mapping', mapping, 12*60*60)
     return mapping
-
-
-def commtrack_ledger_sections(mode):
-    sections = [CT_LEDGER_STOCK]
-    if mode == CT_REQUISITION_MODE_3:
-        sections += [CT_LEDGER_REQUESTED]
-    elif mode == CT_REQUISITION_MODE_4:
-        sections += [CT_LEDGER_REQUESTED, CT_LEDGER_APPROVED]
-
-    return ['{}{}'.format(CT_LEDGER_PREFIX, s) for s in sections]
 
 
 def version_key(ver):
@@ -412,14 +391,14 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_unique_ids(app_source):
+def update_unique_ids(app_source, id_map=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
 
-    def change_form_unique_id(form):
+    def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = random_hex()
+        new_unique_id = map.get(form['xmlns'], random_hex())
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -431,10 +410,12 @@ def update_unique_ids(app_source):
         del app_source['user_registration']
 
     id_changes = {}
+    if id_map is None:
+        id_map = {}
     for m, module in enumerate(app_source['modules']):
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
-            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f])
+            new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
             id_changes[old_id] = new_id
 
     for reference_path in form_id_references:
@@ -514,23 +495,9 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_app_manager_template(user, v1, v2):
-    """
-    Given the user, a template string v1, and a template string v2,
-    return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
-
-    :param user: WebUser
-    :param v1: String, template name for V1
-    :param v2: String, template name for V2
-    :return: String, either v1 or v2 depending on toggle
-    """
-    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
-        return v2
-    return v1
-
-
-def get_form_data(domain, app):
+def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+    from corehq.apps.app_manager.models import ShadowForm
 
     modules = []
     errors = []
@@ -544,7 +511,10 @@ def get_form_data(domain, app):
             'is_surveys': module.is_surveys,
         }
 
-        for form in module.get_forms():
+        form_list = module.get_forms()
+        if not include_shadow_forms:
+            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
+        for form in form_list:
             form_meta = {
                 'id': form.unique_id,
                 'name': form.name,
@@ -572,3 +542,90 @@ def get_form_data(domain, app):
         module_meta['forms'] = forms
         modules.append(module_meta)
     return modules, errors
+
+
+def get_and_assert_practice_user_in_domain(practice_user_id, domain):
+    # raises PracticeUserException if CommCareUser with practice_user_id is not a practice mode user
+    #   or if user doesn't belong to domain
+    try:
+        user = CommCareUser.get(practice_user_id)
+        if not user.domain == domain:
+            raise ResourceNotFound
+    except ResourceNotFound:
+        raise PracticeUserException(
+            _("Practice User with id {id} not found, please make sure you have not deleted this user").format(
+                id=practice_user_id)
+        )
+    if not user.is_demo_user:
+        raise PracticeUserException(
+            _("User {username} is not a practice user, please turn on practice mode for this user").format(
+                username=user.username)
+        )
+    if user.is_deleted():
+        raise PracticeUserException(
+            _("User {username} has been deleted, you can't use that user as practice user").format(
+                username=user.username)
+        )
+    if not user.is_active:
+        raise PracticeUserException(
+            _("User {username} has been deactivated, you can't use that user as practice user").format(
+                username=user.username)
+        )
+    return user
+
+
+class LatestAppInfo(object):
+
+    def __init__(self, brief_app_id, domain):
+        """
+        Wrapper to get latest app version and CommCare APK version info
+
+        args:
+            brief_app_id: id of an app that is not copy (to facilitate quickcaching)
+
+        raises Http404 error if id is not valid
+        raises assertion error if an id of app copy is passed
+        """
+        self.app_id = brief_app_id
+        self.domain = domain
+
+    @property
+    @memoized
+    def app(self):
+        app = get_app(self.domain, self.app_id, latest=True, target='release')
+        # quickache based on a copy app_id will have to be updated too fast
+        is_app_id_brief = self.app_id == (app.copy_of or app.id)
+        assert is_app_id_brief, "this class doesn't handle copy app ids"
+        return app
+
+    def clear_caches(self):
+        self.get_latest_app_version.clear(self)
+
+    def get_latest_apk_version(self):
+        from corehq.apps.builds.utils import get_default_build_spec
+        if self.app.global_app_config.apk_prompt == "off":
+            return {}
+        else:
+            value = get_default_build_spec().version
+            if self.app.global_app_config.apk_prompt == "on":
+                return {"value": value, "force": False}
+            elif self.app.global_app_config.apk_prompt == "forced":
+                return {"value": value, "force": True}
+
+    @quickcache(vary_on=['self.app_id'])
+    def get_latest_app_version(self):
+        if self.app.global_app_config.app_prompt == "off":
+            return {}
+        else:
+            if not self.app or not self.app.is_released:
+                return {}
+            if self.app.global_app_config.app_prompt == "on":
+                return {"value": self.app.version, "force": False}
+            elif self.app.global_app_config.app_prompt == "forced":
+                return {"value": self.app.version, "force": True}
+
+    def get_info(self):
+        return {
+            "latest_apk_version": self.get_latest_apk_version(),
+            "latest_ccz_version": self.get_latest_app_version(),
+        }

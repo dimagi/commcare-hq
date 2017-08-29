@@ -11,6 +11,7 @@ from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
@@ -51,7 +52,7 @@ class PillowtopReindexerTest(TestCase):
         ensure_index_deleted(DOMAIN_INDEX)
         name = 'reindex-test-domain'
         create_domain(name)
-        call_command('ptop_reindexer_v2', 'domain', cleanup=True, noinput=True)
+        reindex_and_clean('domain')
         results = DomainES().run()
         self.assertEqual(1, results.total, results.hits)
         domain_doc = results.hits[0]
@@ -65,7 +66,7 @@ class PillowtopReindexerTest(TestCase):
         case = _create_and_save_a_case()
 
         index_id = 'sql-case' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'case'
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
+        reindex_and_clean(index_id, reset=True)
 
         self._assert_case_is_in_es(case)
 
@@ -79,14 +80,14 @@ class PillowtopReindexerTest(TestCase):
 
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
-        call_command('ptop_reindexer_v2', 'case-search')
+        reindex_and_clean('case-search')
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
         CaseSearchConfig.objects.create(domain=self.domain, enabled=True)
         self.addCleanup(CaseSearchConfig.objects.all().delete)
-        call_command('ptop_reindexer_v2', 'case-search')
+        reindex_and_clean('case-search')
 
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
@@ -97,7 +98,7 @@ class PillowtopReindexerTest(TestCase):
         form = create_and_save_a_form(DOMAIN)
 
         index_id = 'sql-form' if settings.TESTS_SHOULD_USE_SQL_BACKEND else 'form'
-        call_command('ptop_reindexer_v2', index_id, cleanup=True, noinput=True, reset=True)
+        reindex_and_clean(index_id, reset=True)
 
         self._assert_form_is_in_es(form)
 
@@ -145,17 +146,27 @@ class CheckpointCreationTest(TestCase):
     ('report-xform', 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
+    # checks that checkpoipnts are set to the latest checkpoints after reindexing
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
-        call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
+
+        # set the offets to something obviously wrong
+        current_offsets = pillow.checkpoint.get_current_sequence_as_dict()
+        bad_offsets = {tp: (offset + 38014) for tp, offset in current_offsets.items()}
+        pillow.checkpoint.update_to(bad_offsets)
+        self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+        self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+
+        reindex_and_clean(reindex_id)
         pillow = get_pillow_by_name(pillow_name)
-        self.assertNotEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+        self.assertNotEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         self.assertEqual(
             pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
             pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_as_dict(),
         )
 
 
@@ -170,15 +181,34 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
     # reindexers
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
-        call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
+
+        # set these to something obviously wrong
+        current_offsets = pillow.checkpoint.get_current_sequence_as_dict()
+        bad_offsets = {tp: (offset + 38014) for tp, offset in current_offsets.items()}
+        pillow.checkpoint.update_to(bad_offsets)
+        self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+        self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+        reindex_and_clean(reindex_id)
+
+        # make sure they are still bad
         pillow = get_pillow_by_name(pillow_name)
-        self.assertEqual(
-            random_seq,
-            pillow.checkpoint.get_current_sequence_id(),
+        self.assertNotEqual(
+            current_offsets,
+            pillow.checkpoint.get_current_sequence_as_dict(),
         )
+        self.assertEqual(
+            bad_offsets,
+            pillow.checkpoint.get_current_sequence_as_dict(),
+        )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_as_dict(),
+        )
+
 
 class UserReindexerTest(TestCase):
 
@@ -200,13 +230,13 @@ class UserReindexerTest(TestCase):
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
         CommCareUser.create(DOMAIN, username, 'secret')
-        call_command('ptop_reindexer_v2', 'user', cleanup=True, noinput=True)
+        reindex_and_clean('user')
         self._assert_user_in_es(username)
 
     def test_web_user_reindexer_v2(self):
         username = 'test-v2@example.com'
         WebUser.create(DOMAIN, username, 'secret')
-        call_command('ptop_reindexer_v2', 'user', cleanup=True, noinput=True)
+        reindex_and_clean('user')
         self._assert_user_in_es(username, is_webuser=True)
 
     def _assert_user_in_es(self, username, is_webuser=False):
@@ -240,7 +270,7 @@ class GroupReindexerTest(TestCase):
     def test_group_reindexer(self):
         group = Group(domain=DOMAIN, name='g1')
         group.save()
-        call_command('ptop_reindexer_v2', 'group', cleanup=True, noinput=True)
+        reindex_and_clean('group')
         self._assert_group_in_es(group)
 
     def _assert_group_in_es(self, group):

@@ -4,10 +4,9 @@ from django.template.loader import render_to_string
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 
-from corehq.apps.app_manager.util import get_app_manager_template
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response
-from soil import DownloadBase
+from soil import FileDownload
 
 from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.app_manager.views.utils import get_langs
@@ -99,13 +98,7 @@ def direct_ccz(request, domain):
         errors = None
 
     if errors:
-        lang, langs = get_langs(request, app)
-        template = get_app_manager_template(
-            request.user,
-            'app_manager/v1/partials/build_errors.html',
-            'app_manager/v2/partials/build_errors.html'
-        )
-        error_html = render_to_string(template, {
+        error_html = render_to_string("app_manager/partials/build_errors.html", {
             'request': request,
             'app': app,
             'build_errors': errors,
@@ -119,7 +112,7 @@ def direct_ccz(request, domain):
         )
 
     app.set_media_versions(None)
-    download = DownloadBase()
+    download = FileDownload(u'application-{}-{}'.format(app_id, version))
     errors = build_application_zip(
         include_multimedia_files=include_multimedia,
         include_index_files=True,
@@ -134,4 +127,4 @@ def direct_ccz(request, domain):
             errors,
             status_code=400,
         )
-    return DownloadBase.get(download.download_id).toHttpResponse()
+    return FileDownload.get(download.download_id).toHttpResponse()

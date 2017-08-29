@@ -421,7 +421,7 @@ class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
 class SplitStringExpressionSpec(JsonObject):
     type = TypeProperty('split_string')
     string_expression = DictProperty(required=True)
-    index_expression = DefaultProperty(required=True)
+    index_expression = DefaultProperty(required=False)
     delimiter = StringProperty(required=False)
 
     def configure(self, string_expression, index_expression):
@@ -433,12 +433,15 @@ class SplitStringExpressionSpec(JsonObject):
         if not isinstance(string_value, six.string_types):
             return None
 
-        index_value = self._index_expression(item, context)
-        if not isinstance(index_value, int):
-            return None
+        index_value = None
+        if self.index_expression is not None:
+            index_value = self._index_expression(item, context)
+            if not isinstance(index_value, int):
+                return None
 
         try:
-            return string_value.split(self.delimiter)[index_value]
+            split = string_value.split(self.delimiter)
+            return split[index_value] if index_value is not None else split
         except IndexError:
             return None
 

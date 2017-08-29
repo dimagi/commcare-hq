@@ -66,11 +66,12 @@ def fmt_product_rate_dict(product, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
     """
+    from corehq.apps.accounting.models import SoftwareProductType
     if product_rate is None:
         product_rate = product.get_rate()
     return {
         'name': product.name,
-        'product_type': product.product_type,
+        'product_type': SoftwareProductType.COMMCARE,
         'product_id': product.id,
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),
@@ -119,7 +120,7 @@ def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
-        plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
+        plan_version = Subscription.get_subscribed_plan_by_domain(domain)
         privilege = Role.get_privilege(privilege_slug, assignment)
         if privilege is None:
             return False
@@ -132,10 +133,10 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
-@quickcache(['domain'], timeout=15 * 60)
-def domain_is_on_trial(domain):
+@quickcache(['domain_name'], timeout=15 * 60)
+def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
-    subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+    subscription = Subscription.get_active_subscription_by_domain(domain_name)
     return subscription.is_trial
 
 
@@ -326,4 +327,18 @@ def log_removed_grants(priv_slugs, dry_run=False):
         logger.info("%sRemoving privileges: %s",
             ("[DRY RUN] " if dry_run else ""),
             ", ".join(g.to_role.slug for g in grants),
+        )
+
+
+def get_account_name_from_default_name(default_name):
+    from corehq.apps.accounting.models import BillingAccount
+    if not BillingAccount.objects.filter(name=default_name).exists():
+        return default_name
+    else:
+        matching_regex_count = BillingAccount.objects.filter(
+            name__iregex=r'^%s \(\d+\)$' % default_name,
+        ).count()
+        return '%s (%d)' % (
+            default_name,
+            matching_regex_count + 1
         )

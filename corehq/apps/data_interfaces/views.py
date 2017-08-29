@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
@@ -67,9 +67,13 @@ def default(request, domain):
 
 def default_data_view_url(request, domain):
     from corehq.apps.export.views import (
-        FormExportListView, CaseExportListView,
-        DeIdFormExportListView, user_can_view_deid_exports
+        CaseExportListView,
+        DataFileDownloadList,
+        DeIdFormExportListView,
+        FormExportListView,
+        user_can_view_deid_exports,
     )
+
     if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
     elif can_view_case_exports(request.couch_user, domain):
@@ -77,6 +81,9 @@ def default_data_view_url(request, domain):
 
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
+
+    if can_download_data_files(domain):
+        return reverse(DataFileDownloadList.urlname, args=[domain])
 
     raise Http404()
 
@@ -651,19 +658,18 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         start = (page - 1) * limit
         stop = limit * page
 
-        rules = AutomaticUpdateRule.objects.filter(
-            domain=self.domain,
-            deleted=False
-        ).order_by('name')[start:stop]
+        rules = AutomaticUpdateRule.by_domain(
+            self.domain,
+            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            active_only=False,
+        )
 
-        total = AutomaticUpdateRule.objects.filter(
-            domain=self.domain,
-            deleted=False
-        ).count()
+        rule_page = rules.order_by('name')[start:stop]
+        total = rules.count()
 
         return {
             'response': {
-                'itemList': map(self._format_rule, rules),
+                'itemList': map(self._format_rule, rule_page),
                 'total': total,
                 'page': page,
             },
@@ -696,7 +702,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             }
 
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=rule_id)
+            rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
             return {
                 'error': _("Rule not found."),
@@ -800,6 +806,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 active=True,
                 server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
                 filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             )
             self.create_criteria(rule)
             self.create_actions(rule)
@@ -832,7 +839,8 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
     @memoized
     def rule(self):
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()
 
@@ -1011,6 +1019,7 @@ class AddCaseRuleView(DataInterfaceSection):
                         domain=self.domain,
                         active=True,
                         migrated=True,
+                        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
                     )
 
                 rule.name = self.rule_form.cleaned_data['name']
@@ -1038,7 +1047,8 @@ class EditCaseRuleView(AddCaseRuleView):
     @memoized
     def initial_rule(self):
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()
 

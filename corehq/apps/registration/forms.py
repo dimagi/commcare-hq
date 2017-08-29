@@ -12,7 +12,7 @@ from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
 from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.analytics.tasks import track_workflow
-
+from corehq.apps.hqwebapp.utils import decode_password
 
 # https://docs.djangoproject.com/en/dev/topics/i18n/translation/#other-uses-of-lazy-in-delayed-translations
 from django.utils.functional import lazy
@@ -186,7 +186,7 @@ class RegisterWebUserForm(forms.Form):
         return data
 
     def clean_password(self):
-        return clean_password(self.cleaned_data.get('password'))
+        return clean_password(decode_password(self.cleaned_data.get('password')))
 
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
@@ -351,7 +351,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False,
+            self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
                                                           widget=SupplyPointSelectWidget(domain.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)

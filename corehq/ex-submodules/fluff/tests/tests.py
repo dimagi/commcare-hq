@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
+
+from corehq.sql_db.connections import connection_manager
 from pillowtop.feed.couch import change_from_couch_row
 
 import sqlalchemy
@@ -80,10 +82,11 @@ class FluffTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(FluffTest, cls).setUpClass()
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
         cls.previous_signal_receivers = indicator_document_updated.receivers
         indicator_document_updated.receivers = []
-        cls.engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+        cls.engine = connection_manager.get_engine('default')
 
     def setUp(self):
         self.fakedb = FakeCouchDb()
@@ -98,6 +101,7 @@ class FluffTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         indicator_document_updated.receivers = cls.previous_signal_receivers
+        super(FluffTest, cls).tearDownClass()
 
     def tearDown(self):
         with self.engine.begin() as connection:

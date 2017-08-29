@@ -21,6 +21,12 @@ from couchforms.models import doc_types, XFormInstance
 
 
 class Command(BaseCommand):
+    help = """
+    Step 1: Run with '--MIGRATE'
+    Step 2a: If no diffs or diffs acceptable run with '--COMMIT'
+    Step 2b: If diffs, use '--show-diffs' to view diffs
+    Step 3: Run with '--blow-away' to abort
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('domain')

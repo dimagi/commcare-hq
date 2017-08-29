@@ -29,11 +29,7 @@ class CmdLineParametersPlugin(Plugin):
             choices=['reset', 'flush', 'migrate', 'teardown'],
             help=REUSE_DB_HELP,
         )
-        parser.add_option(
-            "--collect-only",
-            action="store_true",
-            default=False,
-        )
+        # --collect-only is a built-in option, adding it here causes a warning
 
     def configure(self, options, conf):
         for option in ['reusedb', 'collect_only']:

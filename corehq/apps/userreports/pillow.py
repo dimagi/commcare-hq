@@ -1,30 +1,32 @@
 from __future__ import absolute_import
 
-from collections import defaultdict
-from datetime import datetime, timedelta
 import hashlib
+from collections import defaultdict, Counter
+from datetime import datetime, timedelta
 
+import six
 from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
-import six
 
-from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
+from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError, UserReportsWarning
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 from fluff.signals import (
-    apply_index_changes,
+    migrate_tables,
     get_migration_context,
-    get_tables_with_index_changes,
+    get_tables_to_migrate,
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
@@ -36,8 +38,6 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
-_slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
 class PillowConfigError(Exception):
@@ -51,17 +51,12 @@ def time_ucr_process_change(method):
         te = datetime.now()
         seconds = (te - ts).total_seconds()
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
-            table = args[1]
-            doc = args[2]
+            table = args[2]
+            doc = args[3]
             log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)
-            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
-                email_message = u"UCR data source {} is taking too long to process".format(
-                    table.config._id
-                )
-                _slow_ucr_assert(False, email_message)
         return result
     return timed
 
@@ -135,7 +130,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, can_handle_laboratory=True)
+                get_indicator_adapter(config, can_handle_laboratory=True, raise_errors=True)
             )
 
         self.rebuild_tables_if_necessary()
@@ -185,9 +180,9 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
-            tables_with_index_changes -= tables_to_rebuild
-            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
+            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+            tables_to_migrate -= tables_to_rebuild
+            migrate_tables(engine, raw_diffs, tables_to_migrate)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators
@@ -207,23 +202,29 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
+    domain_timing_context = Counter()
+
     @time_ucr_process_change
-    def _save_doc_to_table(self, table, doc, eval_context):
+    def _save_doc_to_table(self, domain, table, doc, eval_context):
         # best effort will swallow errors in the table
-        table.best_effort_save(doc, eval_context)
+        try:
+            table.best_effort_save(doc, eval_context)
+        except UserReportsWarning:
+            # remove it until the next bootstrap call
+            self.table_adapters_by_domain[domain].remove(table)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
-        if change.deleted:
-            # we don't currently support hard-deletions at all.
-            # we may want to change this at some later date but seem ok for now.
-            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
-            return
 
         domain = change.metadata.domain
-        if not domain:
+        if not domain or domain not in self.table_adapters_by_domain:
             # if no domain we won't save to any UCR table
             return
+
+        if change.deleted:
+            adapters = list(self.table_adapters_by_domain[domain])
+            for table in adapters:
+                table.delete({'_id': change.metadata.document_id})
 
         async_tables = []
         doc = change.get_document()
@@ -233,19 +234,42 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         if doc is None:
             return
 
-        eval_context = EvaluationContext(doc)
-        for table in self.table_adapters_by_domain[domain]:
-            if table.config.filter(doc):
-                if table.run_asynchronous:
-                    async_tables.append(table.config._id)
-                else:
-                    self._save_doc_to_table(table, doc, eval_context)
-                    eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc):
-                table.delete(doc)
+        with TimingContext() as timer:
+            eval_context = EvaluationContext(doc)
+            # make copy to avoid modifying list during iteration
+            adapters = list(self.table_adapters_by_domain[domain])
+            for table in adapters:
+                if table.config.filter(doc):
+                    if table.run_asynchronous:
+                        async_tables.append(table.config._id)
+                    else:
+                        self._save_doc_to_table(domain, table, doc, eval_context)
+                        eval_context.reset_iteration()
+                elif table.config.deleted_filter(doc) or table.doc_exists(doc):
+                    table.delete(doc)
 
-        if async_tables:
-            AsyncIndicator.update_indicators(change, async_tables)
+            if async_tables:
+                AsyncIndicator.update_indicators(change, async_tables)
+
+        self.domain_timing_context.update(**{
+            domain: timer.duration
+        })
+
+    def checkpoint_updated(self):
+        total_duration = sum(self.domain_timing_context.values())
+        duration_seen = 0
+        top_half_domains = {}
+        for domain, duration in self.domain_timing_context.most_common():
+            top_half_domains[domain] = duration
+            duration_seen += duration
+            if duration_seen >= total_duration / 2:
+                break
+
+        for domain, duration in top_half_domains.items():
+            datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
+                'domain:{}'.format(domain)
+            ])
+        self.domain_timing_context.clear()
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
@@ -259,12 +283,13 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     retry_errors = False
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num):
-        change_feed = PartitionedKafkaChangeFeed(
+        change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
+            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+            checkpoint_callback=processor
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,

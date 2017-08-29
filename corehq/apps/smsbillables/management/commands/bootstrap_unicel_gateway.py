@@ -25,8 +25,6 @@ def bootstrap_unicel_gateway(apps):
 
 class Command(BaseCommand):
     help = "bootstrap Unicel gateway fees"
-    args = ""
-    label = ""
 
-    def handle(self, *labels, **options):
+    def handle(self, *args, **options):
         bootstrap_unicel_gateway(None)

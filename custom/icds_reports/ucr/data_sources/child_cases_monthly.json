@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -158,8 +159,7 @@
             "property_name": "owner_id"
           }
         },
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": null,
@@ -179,8 +179,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": null,
@@ -3455,9 +3454,13 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "month"]},
+      {"column_ids": ["district_id", "month"]},
+      {"column_ids": ["supervisor_id", "month"]},
+      {"column_ids": ["block_id", "age_in_months"]},
+      {"column_ids": ["supervisor_id", "age_in_months"]},
+      {"column_ids": ["awc_id", "age_in_months"]}
+    ]
   }
 }

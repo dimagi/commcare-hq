@@ -1,6 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.const import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper, get_instances_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,

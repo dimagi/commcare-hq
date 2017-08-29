@@ -1,5 +1,5 @@
-/* globals COMMCAREHQ */
-hqDefine("reminders/js/reminders.manage.js", function() {
+/* globals hqImport */
+hqDefine("reminders/js/reminders.manage", function() {
     var ManageRemindersViewModel = function (
         initial,
         choices,
@@ -152,6 +152,9 @@ hqDefine("reminders/js/reminders.manage.js", function() {
         });
     
         self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
+        self.use_custom_user_data_filter = ko.observable(initial.use_custom_user_data_filter);
+        self.custom_user_data_filter_field = ko.observable(initial.custom_user_data_filter_field);
+        self.custom_user_data_filter_value = ko.observable(initial.custom_user_data_filter_value);
     
         self.is_trial_project = initial.is_trial_project;
         self.displayed_email_trial_message = false;
@@ -275,7 +278,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
     
         self.refreshEventsListUI = function () {
             $('.hq-help-template').each(function () {
-                COMMCAREHQ.transformHelpTemplate($(this), true);
+                hqImport("style/js/main").transformHelpTemplate($(this), true);
             });
             $('[data-timeset="true"]').each(function () {
                 $(this).timepicker({
@@ -507,7 +510,7 @@ hqDefine("reminders/js/reminders.manage.js", function() {
     };
 
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
             manageRemindersModel = new ManageRemindersViewModel(
                 initial_page_data("current_values"),
                 initial_page_data("relevant_choices"),

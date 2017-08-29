@@ -31,7 +31,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     if (menuResponse.appId === null || menuResponse.appId === undefined) {
                         FormplayerFrontend.request('showError', "Response did not contain appId even though it was" +
                             "required. If this persists, please report an issue to CommCareHQ");
-                        FormplayerFrontend.trigger("apps:list", options.apps);
+                        FormplayerFrontend.trigger("apps:list");
                         return;
                     }
                     urlObject.appId = menuResponse.appId;
@@ -44,10 +44,12 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
         },
 
-        selectDetail: function(caseId, detailIndex) {
+        selectDetail: function(caseId, detailIndex, isPersistent) {
             var urlObject = Util.currentUrlToObject();
-            urlObject.addStep(caseId);
-            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject);
+            if (!isPersistent) {
+                urlObject.addStep(caseId);
+            }
+            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
             }).fail(function() {
@@ -106,21 +108,43 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 },
             });
 
-            if (model.isPersistentDetail) {
-                $('#select-case').hide();
-            } else {
-                $('#select-case').show();
-            }
-            
             $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", caseId);
             });
             $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
             $('#case-detail-modal').modal('show');
+
+            if (model.isPersistentDetail) {
+                $('#case-detail-modal').find('#select-case').hide();
+            } else {
+                $('#case-detail-modal').find('#select-case').show();
+            }
         },
 
         getDetailList: function (detailObject) {
+
+            if (detailObject.get('entities')) {
+                var entities = detailObject.get('entities');
+                var listModel = [];
+                // we need to map the details and headers JSON to a list for a Backbone Collection
+                for (var i = 0; i < entities.length; i++) {
+                    var listObj = {};
+                    listObj.data = entities[i].data;
+                    listObj.id = i;
+                    listModel.push(listObj);
+                }
+                var listCollection = new Backbone.Collection();
+                listCollection.reset(listModel);
+                var menuData = {
+                    collection: listCollection,
+                    headers: detailObject.get('headers'),
+                    styles: detailObject.get('styles'),
+                    title: detailObject.get('title'),
+                };
+                return new Menus.Views.CaseListDetailView(menuData);
+            }
+
             var headers = detailObject.get('headers');
             var details = detailObject.get('details');
             var styles = detailObject.get('styles');
@@ -157,13 +181,14 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
             // Style the grid (IE each tile has 6 rows, 12 columns)
             $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
-            return new Menus.Views.CaseTileView({
+            return new Menus.Views.PersistentCaseTileView({
                 model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
                 prefix: 'persistent',
+                hasInlineTile: detailObject.hasInlineTile,
             });
         },
     };

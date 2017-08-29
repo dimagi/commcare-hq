@@ -12,7 +12,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
-from corehq.apps.notifications.models import Notification, LastSeenNotification, IllegalModelStateException
+from corehq.apps.notifications.models import Notification, LastSeenNotification, \
+    IllegalModelStateException, DismissedUINotify
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -55,6 +56,15 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
             raise JSONResponseException(e.message)
         return {
             'activated': notification.activated
+        }
+
+    @allow_remote_invocation
+    def dismiss_ui_notify(self, in_data):
+        if 'slug' not in in_data:
+            raise JSONResponseException('slug for ui notify is required')
+        DismissedUINotify.dismiss_notification(self.request.user, in_data['slug'])
+        return {
+            'dismissed': DismissedUINotify.is_notification_dismissed(self.request.user, in_data['slug'])
         }
 
 

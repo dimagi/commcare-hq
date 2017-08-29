@@ -1,0 +1,94 @@
+<div class="map-chart">
+    <div class="row no-margin fixes-filters">
+        <div class="col-md-5">
+            <div class="row">
+                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
+                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
+            </div>
+            <div class="row">
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
+        </div>
+    </div>
+    <div class="report-content" cg-busy="$ctrl.myPromise">
+        <div ng-if="$ctrl.message" class="alert alert-info">
+            <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
+        </div>
+        <div class="row black" ng-if="$ctrl.step === 'map'">
+            <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
+                <map-or-sector-view template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location"></map-or-sector-view>
+            </div>
+        </div>
+        <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
+            <div class="row" style="width: 100% !important;">
+                <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+            </div>
+            <div ng-if="$ctrl.showNational()" class="row">
+                <div class="col-md-6">
+                    <div class="small-table">
+                        <div class="small-table-title">
+                            <span>Top 5 {$ $ctrl.location_type $}s</span>
+                            <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
+                                popover-placement="top"
+                                popover-trigger="'mouseenter'"></i>
+                        </div>
+                        <div class="small-table-record" ng-repeat="top in $ctrl.top_three">
+                            <span class="circle-green" ng-bind="$index + 1"></span>
+                            <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
+                            <span style="font-size: 30px;"> - </span>
+                            <span style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="small-table">
+                        <div class="small-table-title">
+                            <span>Bottom 5 {$ $ctrl.location_type $}s</span>
+                            <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
+                                popover-placement="top"
+                                popover-trigger="'mouseenter'"></i>
+                        </div>
+                        <div class="small-table-record" ng-repeat="bottom in $ctrl.bottom_three">
+                            <span class="circle-red" ng-bind="5 - $index"></span>
+                            <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
+                            <span style="font-size: 30px;"> - </span>
+                            <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div ng-if="!$ctrl.showNational()" class="row">
+                <div class="col-md-12">
+                    <div class="small-table">
+                        <div class="small-table-title">
+                            <span>{$ $ctrl.location_type $}s Ranking</span>
+                            <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
+                                popover-placement="top"
+                                popover-trigger="'mouseenter'"></i>
+                        </div>
+                        <div class="small-table-record" ng-repeat="loc in $ctrl.all_locations">
+                            <span class="circle-green" ng-bind="$index + 1"></span>
+                            <span style="font-size: 30px;" ng-bind="loc.loc_name"></span>
+                            <span style="font-size: 30px;"> - </span>
+                            <span style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row fixed-dots">
+        <div class="dot-menu">
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+            </div>
+        </div>
+    </div>
+</div>

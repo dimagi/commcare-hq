@@ -4,10 +4,15 @@
 {% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 
+{% block title %}
+    {% if not creates_new_location %}{{ location.name }} :{% endif %}
+    {{ block.super }}
+{% endblock title %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'locations/js/location_drilldown.async.js' %}"></script>
     <script src="{% static 'locations/js/location.js' %}"></script>
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    {% include 'style/includes/ui_element_js.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -151,65 +156,75 @@
 
       <div class="tab-content">
         <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
-          <form id="loc_form" class="form form-horizontal" name="product" method="post">
-            {% bootstrap_form_errors form %}
-            {% crispy form.location_form %}
 
-            {% crispy form.custom_location_data.form %}
+          <div class="panel panel-modern-gray panel-form-only">
+            <div class="panel-body">
+              <form id="loc_form" class="form form-horizontal" name="product" method="post">
+                {% bootstrap_form_errors form %}
+                {% crispy form.location_form %}
 
-            {% if form.user_form %}
-            <!-- ko if: has_user -->
-            {% crispy form.user_form %}
-            {% crispy form.custom_user_data.form %}
-            <!-- /ko -->
-            {% endif %}
+                {% crispy form.custom_location_data.form %}
 
-            <input type="hidden" name="form_type" value="location-settings" />
+                {% if form.user_form %}
+                <!-- ko if: has_user -->
+                {% crispy form.user_form %}
+                {% crispy form.custom_user_data.form %}
+                <!-- /ko -->
+                {% endif %}
 
-            {% if consumption %}
-              <legend>{% trans "Default monthly consumption values" %}</legend>
-              {% for code, amount in consumption %}
-                <div class="form-group">
-                  <label class="col-sm-3 col-md-4 col-lg-2 control-label">{{ code }}</label>
-                  <div class="col-sm-4 col-md-5 col-lg-3 controls">
-                    <span class="form-control uneditable-input">
-                      {{ amount }}
-                    </span>
+                <input type="hidden" name="form_type" value="location-settings" />
+
+                {% if consumption %}
+                  <legend>{% trans "Default monthly consumption values" %}</legend>
+                  {% for code, amount in consumption %}
+                    <div class="form-group">
+                      <label class="col-sm-3 col-md-4 col-lg-2 control-label">{{ code }}</label>
+                      <div class="col-sm-4 col-md-5 col-lg-3 controls">
+                        <span class="form-control uneditable-input">
+                          {{ amount }}
+                        </span>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+
+                <div class="form-actions">
+                  <div class="col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
+                    <button type="submit" class="btn btn-primary">
+                      {% if location.get_id %}
+                        {% trans 'Update' %}
+                      {% else %}
+                        {% trans 'Create' %}
+                      {% endif %}
+                      {% trans 'Location' %}
+                    </button>
                   </div>
                 </div>
-              {% endfor %}
-            {% endif %}
-
-            <div class="form-actions">
-              <div class="col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
-                <button type="submit" class="btn btn-primary">
-                  {% if location.get_id %}
-                    {% trans 'Update' %}
-                  {% else %}
-                    {% trans 'Create' %}
-                  {% endif %}
-                  {% trans 'Location' %}
-                </button>
-              </div>
+              </form>
             </div>
-          </form>
+          </div>
+
         </div>
 
         {% if users_per_location_form %}
           <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
             <div class="row">
               <div class="col-sm-12">
-                <form class="form-horizontal disable-on-submit" id="edit_users" action="" method='post'>
-                  {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
-                  <div class="btn-toolbar">
-                    <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
-                      {% trans "Create new user at this location" %}
-                    </a>
+                {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
+                <p>
+                  <a href="#new_user" role="button" class="btn btn-info" data-toggle="modal">
+                    <i class="fa fa-plus"></i> {% trans "Create Mobile Worker at this Location" %}
+                  </a>
+                </p>
+                {% endif %}
+                <div class="panel panel-modern-gray panel-form-only">
+                  <div class="panel-body">
+                    <form class="form-horizontal disable-on-submit" id="edit_users" action="" method='post'>
+                      {% crispy users_per_location_form %}
+                      <input type="hidden" name="form_type" value="location-users" />
+                    </form>
                   </div>
-                  {% endif %}
-                  {% crispy users_per_location_form %}
-                  <input type="hidden" name="form_type" value="location-users" />
-                </form>
+                </div>
               </div>
             </div>
           </div>
@@ -219,10 +234,14 @@
           <div class="tab-pane" id="products">
             <div class="row">
               <div class="col-sm-12">
-                <form class="form-horizontal disable-on-submit" id="edit_products" action="" method='post'>
-                  <input type="hidden" name="form_type" value="location-products" />
-                  {% crispy products_per_location_form %}
-                </form>
+                <div class="panel panel-modern-gray panel-form-only">
+                  <div class="panel-body">
+                    <form class="form-horizontal disable-on-submit" id="edit_products" action="" method='post'>
+                      <input type="hidden" name="form_type" value="location-products" />
+                      {% crispy products_per_location_form %}
+                    </form>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -262,13 +281,17 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">{% trans "New User" %}</h3>
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">{% trans "New Mobile Worker at This Location" %}</h4>
                 </div>
-                <div class="modal-body">
-                    <form class="form form-horizontal" method="post" id="add_commcare_account_form"
-                          action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
-                    </form>
-                </div>
+                <form class="form form-horizontal" method="post" id="add_commcare_account_form"
+                      action="{% url "new_mobile_worker_modal" domain %}?location_id={{ location.get_id }}">
+                </form>
             </div>
         </div>
     </div>

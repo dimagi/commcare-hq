@@ -456,180 +456,6 @@ Question.prototype.fromJS = function(json) {
 }
 
 
-Formplayer.ViewModels.CloudCareDebugger = function() {
-    var self = this;
-
-    self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
-    self.isMinimized = ko.observable(true);
-    self.instanceXml = ko.observable('');
-    self.formattedQuestionsHtml = ko.observable('');
-
-    // Whether or not the debugger is in the middle of updating from an ajax request
-    self.updating = ko.observable(false);
-
-    self.toggleState = function() {
-        self.isMinimized(!self.isMinimized());
-        // Wait to set the content heigh until after the CSS animation has completed.
-        // In order to support multiple heights, we set the height with javascript since
-        // a div inside a fixed position element cannot scroll unless a height is explicitly set.
-        setTimeout(self.setContentHeight, 1001);
-
-        if (!self.isMinimized()) {
-            self.updating(true);
-            $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
-        }
-        window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
-    };
-    self.collapseNavbar = function() {
-        $('.navbar-collapse').collapse('hide');
-    };
-
-    self.updateDebugger = function(resp) {
-        self.updating(false);
-        self.formattedQuestionsHtml(resp.formattedQuestions);
-        self.instanceXml(resp.instanceXml);
-        self.evalXPath.autocomplete(resp.questionList);
-        self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
-    };
-
-    $.unsubscribe('debugger.update');
-    $.subscribe('debugger.update', function(e) {
-        if (!self.isMinimized()) {
-            self.updating(true);
-            $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
-        }
-    });
-
-    self.setContentHeight = function() {
-        var contentHeight;
-        if (self.isMinimized()) {
-            $('.debugger-content').outerHeight(0);
-        } else {
-            contentHeight = ($('.debugger').outerHeight() -
-                $('.debugger-tab-title').outerHeight() -
-                $('.debugger-navbar').outerHeight());
-            $('.debugger-content').outerHeight(contentHeight);
-        }
-    };
-
-    self.instanceXml.subscribe(function(newXml) {
-        var codeMirror,
-            $instanceTab = $('#debugger-xml-instance-tab');
-
-        codeMirror = CodeMirror(function(el) {
-            $('#xml-viewer-pretty').html(el);
-        }, {
-            value: newXml,
-            mode: 'xml',
-            viewportMargin: Infinity,
-            readOnly: true,
-            lineNumbers: true,
-        });
-        $instanceTab.off('shown.bs.tab');
-        $instanceTab.on('shown.bs.tab', function() {
-            codeMirror.refresh();
-        });
-    });
-
-    // Called afterRender, ensures that the debugger takes the whole screen
-    self.adjustWidth = function() {
-        var $debug = $('#instance-xml-home'),
-            $body = $('body');
-
-        $debug.width($body.width());
-    };
-};
-
-Formplayer.ViewModels.EvaluateXPath = function() {
-    var self = this;
-    self.xpath = ko.observable('');
-    self.selectedXPath = ko.observable('');
-    self.recentXPathQueries = ko.observableArray();
-    self.$xpath = null;
-    self.result = ko.observable('');
-    self.success = ko.observable(true);
-    self.onSubmitXPath = function() {
-        self.evaluate(self.xpath());
-    };
-    self.onClickSelectedXPath = function() {
-        if (self.selectedXPath()) {
-            self.evaluate(self.selectedXPath());
-            self.selectedXPath('');
-        }
-    };
-    self.onClickSavedQuery = function(query) {
-        self.xpath(query.xpath);
-    };
-    self.evaluate = function(xpath) {
-        var callback = function(result, status) {
-            self.result(result);
-            self.success(status === "accepted");
-        };
-        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
-        window.analytics.workflow('[app-preview] User evaluated XPath');
-    };
-
-    self.isSuccess = function(query) {
-        return query.status === 'accepted';
-    };
-
-    self.onMouseUp = function() {
-        var text = window.getSelection().toString();
-        self.selectedXPath(text);
-    };
-
-    self.matcher = function(flag, subtext) {
-        var match, regexp, currentQuery;
-        // Match text that starts with the flag and then looks like a path.
-        regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
-        match = regexp.exec(subtext);
-        if (!match) {
-            return null;
-        }
-        currentQuery = match[2]
-        if (currentQuery.length < 2) {
-            return null;
-        }
-        return currentQuery;
-    };
-
-    /**
-     * Set autocomplete for xpath input.
-     *
-     * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
-     */
-    self.autocomplete = function(autocompleteData) {
-        self.$xpath = $('#xpath');
-        self.$xpath.atwho('destroy');
-        self.$xpath.atwho('setIframe', window.frameElement, true);
-        self.$xpath.off('inserted.atwho');
-        self.$xpath.on('inserted.atwho', function(atwhoEvent, $li, e) {
-            var input = atwhoEvent.currentTarget
-
-            // Move cursor back one so we are inbetween the parenthesis
-            if (input.setSelectionRange && $li.data().itemData.type === 'Function') {
-                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
-            }
-        });
-        self.$xpath.atwho({
-            at: '',
-            suffix: '',
-            data: autocompleteData,
-            searchKey: 'value',
-            maxLen: Infinity,
-            highlightFirst: false,
-            displayTpl: function(d) {
-                var icon = Formplayer.Utils.getIconFromType(d.type);
-                return '<li><i class="' + icon + '"></i> ${value}</li>';
-            },
-            insertTpl: '${value}',
-            callbacks: {
-                matcher: self.matcher,
-            },
-        });
-    };
-};
-
 /**
  * Used to compare if questions are equal to each other by looking at their index
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
@@ -793,13 +619,20 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
+        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
     $div.koApplyBindings(form);
 
     if ($debug.length) {
-        cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
+        cloudCareDebugger = new CloudCareDebugger({
+            baseUrl: formJSON.xform_url,
+            formSessionId: formJSON.session_id,
+            username: formJSON.username,
+            restoreAs: formJSON.restoreAs,
+            domain: formJSON.domain,
+        });
         ko.cleanNode($debug[0]);
         $debug.koApplyBindings(cloudCareDebugger);
     }
@@ -807,82 +640,6 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     return form;
 };
 
-
-Formplayer.Utils.getIconFromType = function(type) {
-    var icon = '';
-    switch (type) {
-    case 'Trigger':
-        icon = 'fcc fcc-fd-variable';
-        break;
-    case 'Text':
-        icon = 'fcc fcc-fd-text';
-        break;
-    case 'PhoneNumber':
-        icon = 'fa fa-signal';
-        break;
-    case 'Secret':
-        icon = 'fa fa-key';
-        break;
-    case 'Integer':
-        icon = 'fcc fcc-fd-numeric';
-        break;
-    case 'Audio':
-        icon = 'fcc fcc-fd-audio-capture';
-        break;
-    case 'Image':
-        icon = 'fa fa-camera';
-        break;
-    case 'Video':
-        icon = 'fa fa-video-camera';
-        break;
-    case 'Signature':
-        icon = 'fcc fcc-fd-signature';
-        break;
-    case 'Geopoint':
-        icon = 'fa fa-map-marker';
-        break;
-    case 'Barcode Scan':
-        icon = 'fa fa-barcode';
-        break;
-    case 'Date':
-        icon = 'fa fa-calendar';
-        break;
-    case 'Date and Time':
-        icon = 'fcc fcc-fd-datetime';
-        break;
-    case 'Time':
-        icon = 'fcc fcc-fa-clock-o';
-        break;
-    case 'Select':
-        icon = 'fcc fcc-fd-single-select';
-        break;
-    case 'Double':
-        icon = 'fcc fcc-fd-decimal';
-        break;
-    case 'Label':
-        icon = 'fa fa-tag';
-        break;
-    case 'MSelect':
-        icon = 'fcc fcc-fd-multi-select';
-        break;
-    case 'Multiple Choice':
-        icon = 'fcc fcc-fd-single-select';
-        break;
-    case 'Group':
-        icon = 'fa fa-folder-open';
-        break;
-    case 'Question List':
-        icon = 'fa fa-reorder';
-        break;
-    case 'Repeat Group':
-        icon = 'fa fa-retweet';
-        break;
-    case 'Function':
-        icon = 'fa fa-calculator';
-        break;
-    }
-    return icon;
-};
 
 RegExp.escape= function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');

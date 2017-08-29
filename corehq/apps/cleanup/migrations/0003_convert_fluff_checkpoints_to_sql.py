@@ -9,7 +9,6 @@ from corehq.sql_db.operations import HqRunPython
 def migrate_fluff_pillows(apps, schema_editor):
     fluff_pillow_names = [
         "CareBiharFluffPillow",
-        "OpmUserFluffPillow",
         "UnicefMalawiFluffPillow",
         # "MalariaConsortiumFluffPillow",  # migrated in 0002
         "AncHmisCaseFluffPillow",

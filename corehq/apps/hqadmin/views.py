@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -20,13 +21,16 @@ from django.http import (
     JsonResponse,
     StreamingHttpResponse,
 )
+from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
+from rest_framework.authtoken.models import Token
 from restkit import Resource
 from restkit.errors import Unauthorized
 
@@ -48,6 +52,7 @@ from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
@@ -61,9 +66,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
-from corehq.toggles import any_toggle_enabled, SUPPORT
+from corehq.toggles import any_toggle_enabled, SUPPORT, ANONYMOUS_WEB_APPS_USAGE
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
+from corehq.util.hmac_request import validate_request_hmac
 from corehq.util.supervisord.api import (
     PillowtopSupervisorApi,
     SupervisorException,
@@ -72,6 +78,7 @@ from corehq.util.supervisord.api import (
 )
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
+from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
@@ -90,7 +97,7 @@ from .forms import (
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
-from .utils import get_celery_stats
+from .utils import get_celery_stats, get_django_user_from_session_key
 
 
 @require_superuser
@@ -378,7 +385,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
-        context['elastic'] = escheck.check_es_cluster_health()
+        context['cluster_health'] = escheck.check_es_cluster_health()
 
         return context
 
@@ -453,6 +460,8 @@ class AdminRestoreView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
 
+    def _validate_user_access(self, user):
+        return True
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
@@ -466,6 +475,9 @@ class AdminRestoreView(TemplateView):
         self.user = CommCareUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
+
+        if not self._validate_user_access(self.user):
+            raise Http404()
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -497,13 +509,16 @@ class AdminRestoreView(TemplateView):
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            num_locations = len(
+                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
+                                    .format(RESPONSE_XMLNS)))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
                 xml_payload = E.error(response.content)
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
-                xml_payload = response.content
+                xml_payload = etree.fromstring(response.content)
             else:
                 message = _('Unexpected restore response {}: {}. '
                             'If you believe this is a bug please report an issue.').format(response.status_code,
@@ -511,6 +526,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
@@ -518,6 +534,7 @@ class AdminRestoreView(TemplateView):
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
+            'num_locations': num_locations,
         })
         return context
 
@@ -530,8 +547,12 @@ class DomainAdminRestoreView(AdminRestoreView):
 
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
-    def get(self, request, *args, **kwargs):
-        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(DomainAdminRestoreView, self).get(request, **kwargs)
+
+    def _validate_user_access(self, user):
+        return self.domain == user.domain
 
 
 @require_POST
@@ -631,7 +652,7 @@ class _Db(object):
     def get(self, record_id):
         try:
             return self._getter(record_id)
-        except (XFormNotFound, CaseNotFound):
+        except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
 
 
@@ -645,6 +666,11 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
         CommCareCaseSQL._meta.db_table,
         lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
         CommCareCaseSQL.__name__
+    ),
+    _Db(
+        SQLLocation._meta.db_table,
+        lambda id_: SQLLocation.objects.get(location_id=id_).to_json(),
+        SQLLocation.__name__
     ),
 ])
 
@@ -1055,8 +1081,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
         return None
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_changed_receiver
-        from corehq.apps.sms.signals import case_changed_receiver as sms_case_changed_receiver
+        from corehq.messaging.signals import messaging_case_changed_receiver
 
         if self.form.is_valid():
             case_ids = self.form.cleaned_data['case_ids']
@@ -1067,8 +1092,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                 if not case or case.doc_type != 'CommCareCase':
                     case_ids_not_processed.append(case_id)
                 else:
-                    reminders_case_changed_receiver(None, case)
-                    sms_case_changed_receiver(None, case)
+                    messaging_case_changed_receiver(None, case)
                     case_ids_processed.append(case_id)
 
             if case_ids_processed:
@@ -1113,3 +1137,68 @@ class WebUserDataView(View):
             return JsonResponse(data)
         else:
             return HttpResponse('Only web users can access this endpoint', status=400)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True), name='dispatch')
+class SessionDetailsView(View):
+    """
+    Internal API to allow formplayer to get the Django user ID
+    from the session key.
+
+    Authentication is done by HMAC signing of the request body:
+
+        secret = settings.FORMPLAYER_INTERNAL_AUTH_KEY
+        data = '{"session_id": "123"}'
+        digest = base64.b64encode(hmac.new(secret, data, hashlib.sha256).digest())
+        requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
+    """
+    urlname = 'session_details'
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except ValueError:
+            return HttpResponseBadRequest()
+
+        if not data or not isinstance(data, dict):
+            return HttpResponseBadRequest()
+
+        session_id = data.get('sessionId', None)
+        domain = data.get('domain', None)
+        if not session_id:
+            return HttpResponseBadRequest()
+
+        auth_token = None
+        anonymous = False
+        user = get_django_user_from_session_key(session_id)
+        if user:
+            couch_user = CouchUser.get_by_username(user.username)
+            if not couch_user:
+                raise Http404
+        elif domain and ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
+            user, couch_user, auth_token = self._get_anonymous_user_details(domain)
+            anonymous = True
+        else:
+            raise Http404
+
+        return JsonResponse({
+            'username': user.username,
+            'djangoUserId': user.pk,
+            'superUser': user.is_superuser,
+            'authToken': auth_token,
+            'domains': couch_user.domains,
+            'anonymous': anonymous
+        })
+
+    def _get_anonymous_user_details(self, domain):
+        couch_user = CouchUser.get_anonymous_mobile_worker(domain)
+        if not couch_user:
+            raise Http404
+        user = couch_user.get_django_user()
+        try:
+            auth_token = user.auth_token.key
+        except Token.DoesNotExist:
+            raise Http404  # anonymous user must have an auth token
+        return user, couch_user, auth_token

@@ -13,10 +13,10 @@ from django.http import (
     HttpResponseForbidden,
 )
 import sys
+from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
-from casexml.apps.case.xml import V2
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -25,7 +25,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
-from casexml.apps.phone.const import ASYNC_RESTORE_CACHE_KEY_PREFIX, RESTORE_CACHE_KEY_PREFIX
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -34,7 +33,6 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception
 from phonelog.utils import process_device_log
 
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
@@ -139,7 +137,7 @@ class SubmissionPost(object):
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
-        self._invalidate_caches(submitted_form.user_id)
+        self._invalidate_caches(submitted_form)
         submission_type = None
 
         if submitted_form.is_submission_error_log:
@@ -183,6 +181,7 @@ class SubmissionPost(object):
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
+                        submission_type = 'error'
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -203,35 +202,35 @@ class SubmissionPost(object):
             response = self._get_open_rosa_response(instance, errors)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
-    @property
-    def _cache(self):
-        return get_redis_default_cache()
+    def _invalidate_caches(self, xform):
+        for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
+            self._invalidate_restore_payload_path_cache(xform, device_id)
+            if ASYNC_RESTORE.enabled(self.domain):
+                self._invalidate_async_restore_task_id_cache(xform, device_id)
 
-    @property
-    def _restore_cache_key(self):
-        from casexml.apps.phone.restore import restore_cache_key
-        return restore_cache_key
-
-    def _invalidate_caches(self, user_id):
+    def _invalidate_restore_payload_path_cache(self, xform, device_id):
         """invalidate cached initial restores"""
-        initial_restore_cache_key = self._restore_cache_key(
-            self.domain,
-            RESTORE_CACHE_KEY_PREFIX,
-            user_id,
-            version=V2
+        restore_payload_path_cache = RestorePayloadPathCache(
+            domain=self.domain,
+            user_id=xform.user_id,
+            sync_log_id=xform.last_sync_token,
+            device_id=device_id,
         )
-        self._cache.delete(initial_restore_cache_key)
+        restore_payload_path_cache.invalidate()
 
-        if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_caches(user_id)
+    def _invalidate_async_restore_task_id_cache(self, xform, device_id):
+        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
+            domain=self.domain,
+            user_id=xform.user_id,
+            sync_log_id=self.last_sync_token,
+            device_id=device_id,
+        )
 
-    def _invalidate_async_caches(self, user_id):
-        cache_key = self._restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, user_id)
-        task_id = self._cache.get(cache_key)
+        task_id = async_restore_task_id_cache.get_value()
 
         if task_id is not None:
             revoke_celery_task(task_id)
-            self._cache.delete(cache_key)
+            async_restore_task_id_cache.invalidate()
 
     def save_processed_models(self, xforms, case_stock_result):
         from casexml.apps.case.signals import case_post_save
@@ -262,7 +261,10 @@ class SubmissionPost(object):
         case_result = process_cases_with_casedb(xforms, case_db)
         stock_result = process_stock(xforms, case_db)
 
-        cases = case_db.get_cases_for_saving(instance.received_on)
+        modified_on_date = instance.received_on
+        if getattr(instance, 'edited_on', None) and instance.edited_on > instance.received_on:
+            modified_on_date = instance.edited_on
+        cases = case_db.get_cases_for_saving(modified_on_date)
         stock_result.populate_models()
 
         return CaseStockProcessingResult(
@@ -291,8 +293,8 @@ class SubmissionPost(object):
         return errors
 
     def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal:
-            response = self.get_success_response(instance, errors)
+        if instance.is_normal and not errors:
+            response = self.get_success_response()
         else:
             response = self.get_failure_response(instance)
 
@@ -304,22 +306,13 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response(doc, errors):
-
-        if errors:
-            response = OpenRosaResponse(
-                message=doc.problem,
-                nature=ResponseNature.SUBMIT_ERROR,
-                status=201,
-            ).response()
-        else:
-            response = OpenRosaResponse(
-                # would have done ✓ but our test Nokias' fonts don't have that character
-                message=u'   √   ',
-                nature=ResponseNature.SUBMIT_SUCCESS,
-                status=201,
-            ).response()
-        return response
+    def get_success_response():
+        return OpenRosaResponse(
+            # would have done ✓ but our test Nokias' fonts don't have that character
+            message=u'   √   ',
+            nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
 
     @staticmethod
     def submission_ignored_response():

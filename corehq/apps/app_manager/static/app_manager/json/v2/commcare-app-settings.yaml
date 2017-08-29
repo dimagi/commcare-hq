@@ -38,6 +38,13 @@
   since: {qwerty: '2.6', 'custom-keys': '1.3'}
   requires: "{hq.platform}='nokia/s40'||{hq.platform}='nokia/s60'"
 
+- id: practice_mobile_worker_id
+  name: 'Practice Mobile Worker'
+  widget: select
+  since: '2.26'
+  privilege: 'practice_mobile_workers'
+  description: "Select the mobile worker to use as a practice user for this application"
+
 # RemoteApp Only
 - id: profile_url
   name: "Profile URL"
@@ -95,20 +102,6 @@
   permission: "cloudcare"
   toggle: ANONYMOUS_WEB_APPS_USAGE
 
-- id: commtrack_requisition_mode
-  name: "CommCare Supply Requisition Mode"
-  description: "CommCare Supply Requisition Mode"
-  description_format: html
-  requires: "{$parent.commtrack_enabled}=true"
-  values: ['disabled', '3-step', '4-step']
-  value_names:
-   - "Disable Requisitions"
-   - "3 Step Requisitions (Requisition -> Fulfillment -> Receipt)"
-   - "4 Step Requisitions (Requisition -> Approval -> Fulfillment -> Receipt)"
-  hide_if_not_enabled: true
-  preview: true
-  since: "2.0"
-
 - id: use_custom_suite
   name: "Custom Suite File"
   widget: bool
@@ -124,6 +117,7 @@
 
 - id: admin_password
   name: "Admin Password"
+  description: Must correspond to the password format specified below.
   widget: password
   hide_if_not_enabled: true
 
@@ -171,3 +165,11 @@
   value_names: ['List', 'Grid', 'Enable Menu Display Setting Per-Module']
   default: 'none'
   since: '2.24'
+
+- id: mobile_ucr_sync_interval
+  name: Mobile Reports Update Frequency
+  description: Minimum duration between updates to mobile report data (hours).
+  toggle: MOBILE_UCR
+  values: ['none', '0', '1', '2', '4', '6', '8', '12', '24']
+  value_names: ['Use project level setting', 'Update on every sync', '1 hour', '2 hours', '4 hours', '6 hours', '8 hours', '12 hours', '24 hours']
+  default: 'none'

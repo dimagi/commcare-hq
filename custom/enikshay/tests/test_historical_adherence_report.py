@@ -92,6 +92,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
             "/a/{}/reports/custom/historical_adherence/?episode_id={}".format(self.domain, self.episode_id)
         )
         request.couch_user = MagicMock()
+        request.datespan = MagicMock()
         return HistoricalAdherenceReport(request, domain=self.domain)
 
     def assert_icon(self, date, icon):
@@ -150,3 +151,17 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         self.assertTrue(
             report.show_unexpected_image(cases_dict[date], date),
         )
+
+    def test_run_report(self):
+        self.create_case_structure()
+        date = datetime.date(2017, 1, 3)  # A Tuesday
+
+        self.create_adherence_case(date, "enikshay", adherence_value="directly_observed_dose")
+
+        report = self._get_report()
+        context = report.report_context
+        self.assertEqual(context['patient_name'], self.person.attrs['update']['name'])
+        self.assertEqual(context['treatment_phase'], "")
+        self.assertEqual(context['doses'], 1)
+        self.assertEqual(context['adherence_schedule'], 'Daily')
+        self.assertEqual(context['patient_type'], 'Treatment after loss to follow up (LFU)')

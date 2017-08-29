@@ -124,10 +124,7 @@ class AbstractXFormInstance(object):
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
             except ResourceNotFound:
-                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
-                    self.last_sync_token, self.form_id, self.domain,
-                ))
-                raise
+                pass
         return None
 
 
@@ -222,6 +219,12 @@ class AbstractCommCareCase(CaseToXMLMixin):
             parents = self.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
             for parent in parents:
                 parent._resolve_case_property(property_name[7:], result)
+            return
+
+        if property_name.lower().startswith('host/'):
+            host = self.host
+            if host:
+                host._resolve_case_property(property_name[5:], result)
             return
 
         result.append(CasePropertyResult(

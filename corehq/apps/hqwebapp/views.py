@@ -55,28 +55,46 @@ from corehq.apps.domain.decorators import require_superuser, login_and_domain_re
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from corehq.apps.dropbox.models import DropboxUploadHelper
-from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
 from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
 
 
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
     return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
+
+
+def format_traceback_the_way_python_does(type, exc, tb):
+    """
+    Returns a traceback that looks like the one python gives you in the shell, e.g.
+
+    Traceback (most recent call last):
+      File "<stdin>", line 2, in <module>
+    NameError: name 'name' is not defined
+    """
+
+    return u'Traceback (most recent call last):\n{}{}: {}'.format(
+        ''.join(traceback.format_tb(tb)),
+        type.__name__,
+        unicode(exc)
+    )
 
 
 def server_error(request, template_name='500.html'):
@@ -90,7 +108,7 @@ def server_error(request, template_name='500.html'):
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
 
-    traceback_text = ''.join(traceback.format_tb(tb))
+    traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
@@ -385,6 +403,7 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return context
 
 
@@ -451,6 +470,8 @@ def dropbox_upload(request, download_id):
                 download_id=download_id,
                 user=request.user,
             )
+        except DropboxInvalidToken:
+            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
         except DropboxUploadAlreadyInProgress:
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(
@@ -495,14 +516,14 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
-    log_counter(JSERROR_COUNT, {
-        'os': os,
-        'browser_version': browser_version,
-        'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
-        'bot': bot,
-    })
+    datadog_counter(JSERROR_COUNT, tags=[
+        u'os:{}'.format(os),
+        u'browser_version:{}'.format(browser_version),
+        u'browser_name:{}'.format(browser_name),
+        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        u'file:{}'.format(request.POST.get('filename')),
+        u'bot:{}'.format(bot),
+    ])
 
     return HttpResponse('')
 
@@ -619,7 +640,6 @@ def bug_report(req):
                          "Please fix this ASAP (as if you wouldn't anyway)...")
         traceback_info = cache.cache.get(report['500traceback'])
         cache.cache.delete(report['500traceback'])
-        traceback_info = "Traceback of this 500: \n%s" % traceback_info
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
     email = EmailMessage(
@@ -1076,6 +1096,20 @@ def quick_find(request):
             domain = doc.domain
             return deal_with_doc(doc, domain, get_object_info)
 
+    for django_model in (SQLLocation,):
+        try:
+            if hasattr(django_model, 'by_id') and callable(django_model.by_id):
+                doc = django_model.by_id(query)
+            else:
+                doc = django_model.objects.get(pk=query)
+        except django_model.DoesNotExist:
+            continue
+        else:
+            if doc is None:
+                continue
+            domain = doc.domain
+            return deal_with_doc(doc, domain, get_object_info)
+
     raise Http404()
 
 
@@ -1117,7 +1151,7 @@ class MaintenanceAlertsView(BasePageView):
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
-            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
     @property

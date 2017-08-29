@@ -29,7 +29,11 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
     else:
         tag = lambda lang: ""
     for lang in langs:
-        if lang in name and name[lang]:
+        # "name[lang] is not None" added to avoid empty lang tag in case of empty value for a field.
+        # When a value like {'en': ''} is passed to trans it returns [en] which then gets added
+        # as value on the input field and is visible in the text box.
+        # Ref: https://github.com/dimagi/commcare-hq/pull/16871/commits/14453f4482f6580adc9619a8ad3efb39d5cf37a2
+        if lang in name and name[lang] is not None:
             n = unicode(name[lang])
             if escape:
                 n = html.escape(n)
@@ -78,7 +82,8 @@ def input_trans(name, langs=None, input_name='name'):
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass='', postSave=''):
+def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
+        containerClass='', iconClass='', readOnlyClass=''):
     template = '''
         <inline-edit params="
             name: 'name',
@@ -88,31 +93,12 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
+            containerClass: '{}',
+            iconClass: '{}',
             readOnlyClass: '{}',
             postSave: {},
         "></inline-edit>
-    '''.format(url, saveValueName, readOnlyClass, postSave)
-    return _input_trans(template, name, langs=langs, allow_blank=False)
-
-
-@register.simple_tag
-def inline_edit_trans_v2(
-        name, langs=None, url='', saveValueName='', containerClass='',
-        postSave='', iconClass=''):
-    template = '''
-        <inline-edit-v2 params="
-            name: 'name',
-            value: '%(value)s',
-            placeholder: '%(placeholder)s',
-            nodeName: 'input',
-            lang: '%(lang)s',
-            url: '{}',
-            saveValueName: '{}',
-            containerClass: '{}',
-            postSave: {},
-            iconClass: '{}',
-        "></inline-edit-v2>
-    '''.format(url, saveValueName, containerClass, postSave, iconClass)
+    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave)
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 

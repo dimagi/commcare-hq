@@ -1,12 +1,11 @@
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from custom.bihar.calculations.types import DoneDueCalculator, TotalCalculator
 from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group
 from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
-from django.utils.datastructures import SortedDict
 
 
 # static config - should this eventually live in the DB?
@@ -275,6 +274,7 @@ class IndicatorConfig(object):
 class IndicatorSet(object):
 
     def __init__(self, spec):
+        from django.utils.datastructures import SortedDict
         self.slug = spec["slug"]
         self.name = spec["name"]
         self.indicators = SortedDict()

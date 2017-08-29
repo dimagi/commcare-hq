@@ -1,8 +1,6 @@
 # coding=utf-8
 from django.test.testcases import TestCase
 
-from django.conf import settings
-
 from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, make_location
@@ -27,8 +25,7 @@ class IntraHealthTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(IntraHealthTestCase, cls).setUpClass()
-        cls.session_helper = connection_manager.get_session_helper(settings.SQL_REPORTING_DATABASE_URL)
-        cls.engine = cls.session_helper.engine
+        cls.engine = connection_manager.get_engine('default')
 
         cls.domain = create_domain(TEST_DOMAIN)
         cls.region_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'Région')

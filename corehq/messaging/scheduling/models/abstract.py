@@ -1,6 +1,9 @@
+import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
+from corehq.apps.reminders.util import get_one_way_number_for_recipient
+from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
     UnknownContentType,
@@ -21,6 +24,13 @@ class Schedule(models.Model):
     # If None, the list of languages defined in the project for messaging will be
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)
+
+    # If True, the framework looks for a backend named TEST to send messages for
+    # this schedule.
+    is_test = models.BooleanField(default=True)
+
+    # This metadata will be passed to any messages generated from this schedule.
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
 
     class Meta:
         abstract = True
@@ -44,6 +54,7 @@ class ContentForeignKeyMixin(models.Model):
     email_content = models.ForeignKey('scheduling.EmailContent', null=True, on_delete=models.CASCADE)
     sms_survey_content = models.ForeignKey('scheduling.SMSSurveyContent', null=True, on_delete=models.CASCADE)
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
+    custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
@@ -58,6 +69,8 @@ class ContentForeignKeyMixin(models.Model):
             return self.sms_survey_content
         elif self.ivr_survey_content_id:
             return self.ivr_survey_content
+        elif self.custom_content_id:
+            return self.custom_content
 
         raise NoAvailableContent()
 
@@ -73,12 +86,13 @@ class ContentForeignKeyMixin(models.Model):
     @content.setter
     def content(self, value):
         from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent)
+            SMSSurveyContent, IVRSurveyContent, CustomContent)
 
         self.sms_content = None
         self.email_content = None
         self.sms_survey_content = None
         self.ivr_survey_content = None
+        self.custom_content = None
 
         if isinstance(value, SMSContent):
             self.sms_content = value
@@ -88,6 +102,8 @@ class ContentForeignKeyMixin(models.Model):
             self.sms_survey_content = value
         elif isinstance(value, IVRSurveyContent):
             self.ivr_survey_content = value
+        elif isinstance(value, CustomContent):
+            self.custom_content = value
         else:
             raise UnknownContentType()
 
@@ -106,7 +122,22 @@ class Content(models.Model):
     class Meta:
         abstract = True
 
-    def send(self, recipient):
+    @classmethod
+    def get_one_way_phone_number(cls, recipient):
+        phone_number = get_one_way_number_for_recipient(recipient)
+
+        if not phone_number and isinstance(recipient, CommCareUser):
+            if recipient.memoized_usercase:
+                phone_number = get_one_way_number_for_recipient(recipient.memoized_usercase)
+
+        if not phone_number or len(phone_number) <= 3:
+            # Avoid processing phone numbers that are obviously fake to
+            # save on processing time
+            return None
+
+        return phone_number
+
+    def send(self, recipient, schedule_instance):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.

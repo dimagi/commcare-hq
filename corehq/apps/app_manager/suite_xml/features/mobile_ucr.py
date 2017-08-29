@@ -1,6 +1,5 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
-    MobileSelectFilter
+from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
@@ -123,7 +122,7 @@ def get_data_path(config, domain):
 def _get_summary_details(config, domain, module):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        from corehq.apps.app_manager.models import GraphConfiguration
+        from corehq.apps.app_manager.models import GraphConfiguration, GraphSeries
 
         def _locale_config(key):
             return id_strings.mobile_ucr_configuration(
@@ -150,8 +149,16 @@ def _get_summary_details(config, domain, module):
 
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
-                config.migrate_graph_configs(domain)
-                graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration())
+                graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration(
+                    series=[GraphSeries() for c in chart_config.y_axis_columns],
+                ))
+
+                # Reconcile graph_config.series with any additions/deletions in chart_config.y_axis_columns
+                while len(chart_config.y_axis_columns) > len(graph_config.series):
+                    graph_config.series.append(GraphSeries())
+                if len(chart_config.y_axis_columns) < len(graph_config.series):
+                    graph_config.series = graph_config.series[:len(chart_config.y_axis_columns)]
+
                 for index, column in enumerate(chart_config.y_axis_columns):
                     graph_config.series[index].data_path = (
                         graph_config.series[index].data_path or

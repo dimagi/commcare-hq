@@ -1,3 +1,4 @@
+# coding: utf-8
 from copy import deepcopy
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -5,7 +6,8 @@ from lxml import etree
 from mock import patch
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
+from corehq.apps.app_manager.models import Application, Module, GraphConfiguration, \
+    GraphSeries, ReportModule, ReportAppConfig, CustomIcon
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
@@ -110,7 +112,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
 
         report_app_config = ReportAppConfig(report_id=report._id,
-                                            header={'en': 'CommBugz'})
+                                            header={'en': 'CommBugz'},
+                                            complete_graph_configs={
+                                                chart.chart_id: GraphConfiguration(
+                                                    series=[GraphSeries() for c in chart.y_axis_columns],
+                                                )
+                                                for chart in report.charts
+                                            })
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
@@ -225,6 +233,11 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_icon_translations(self.app, self.module, icon_locale)
         self._test_correct_audio_translations(self.app, self.module, audio_locale)
 
+    def test_custom_icons_in_modules(self):
+        self._test_custom_icon_in_suite(
+            self.module, "modules.m0",
+            id_strings.module_custom_icon_locale, "./menu[@id='m0']/display")
+
     def test_case_list_form_media(self):
         app = AppFactory.case_list_form_app_factory().app
         app.build_spec = self.min_spec
@@ -247,6 +260,11 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         audio_locale = id_strings.case_list_form_audio_locale(app.get_module(0))
         self._test_correct_icon_translations(app, app.get_module(0).case_list_form, icon_locale)
         self._test_correct_audio_translations(app, app.get_module(0).case_list_form, audio_locale)
+
+    def test_custom_icons_in_forms(self):
+        self._test_custom_icon_in_suite(
+            self.form, "forms.m0f0",
+            id_strings.form_custom_icon_locale, "./entry/command[@id='m0-f0']/")
 
     def test_case_list_menu_media(self):
         self.module.case_list.show = True
@@ -316,3 +334,50 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # assert that <lang>/app_strings.txt contains media_locale_id=media_path
         app_strings = commcare_translations.loads(app.create_app_strings(lang))
         self.assertEqual(app_strings[media_locale_id], media_path)
+
+    def _test_custom_icon_in_suite(self, form_or_module, locale_id, custom_icon_locale_method, xml_node):
+        """
+        :param form_or_module: form or module for which to test
+        :param locale_id: text locale id in display block for form or module
+        :param custom_icon_locale_method: method to find locale id in app strings for custom icon
+        :param xml_node: where to find the xml partial for comparison
+        """
+        custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': u'चित्र'})
+        form_or_module.custom_icons = [custom_icon]
+
+        custom_icon_block_template = """
+            <partial>
+                <display>
+                    <text>
+                        <locale id="{locale_id}"/>
+                    </text>
+                    <text form="badge">
+                        {locale_or_xpath}
+                    </text>
+                </display>
+            </partial>
+        """
+        custom_icon_locale = custom_icon_locale_method(form_or_module, custom_icon.form)
+        text_locale_partial = '<locale id="{custom_icon_locale}"/>'.format(custom_icon_locale=custom_icon_locale)
+
+        # check for text locale
+        custom_icon_block = custom_icon_block_template.format(locale_id=locale_id,
+                                                              locale_or_xpath=text_locale_partial)
+        self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xml_node)
+        self._assert_app_strings_available(self.app, 'en')
+
+        # check for translation for text locale
+        self._assert_valid_media_translation(self.app, 'hin', custom_icon_locale, custom_icon.text['hin'])
+
+        # check for default in case of missing translation
+        self._assert_valid_media_translation(self.app, 'secret', custom_icon_locale, custom_icon.text['en'])
+
+        # check for xpath being set for custom icon
+        custom_icon.xpath = "if(1=1, 'a', 'b')"
+        custom_icon.text = {}
+        form_or_module.custom_icons = [custom_icon]
+        custom_icon_block = custom_icon_block_template.format(
+            locale_id=locale_id,
+            locale_or_xpath='<xpath function="{xpath}"/>'.format(xpath=custom_icon.xpath)
+        )
+        self.assertXmlPartialEqual(custom_icon_block, self.app.create_suite(), xml_node)

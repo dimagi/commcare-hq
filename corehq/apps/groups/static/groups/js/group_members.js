@@ -1,21 +1,10 @@
-/* globals django, uiElement */
-hqDefine("groups/js/group_members.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-
-    // Multiselect widget
-    $(function () {
-        var multiselect_utils = hqImport('style/js/multiselect_utils');
-        multiselect_utils.createFullMultiselectWidget(
-            'id_selected_ids',
-            django.gettext("Available Workers"),
-            django.gettext("Workers in Group"),
-            django.gettext("Search Workers...")
-        );
-    });
+/* globals django */
+hqDefine("groups/js/group_members", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
     $(function () {
         // custom data
-        var customDataEditor = uiElement.map_list(initial_page_data("group_id"), gettext("Group Information"));
+        var customDataEditor = hqImport('style/js/ui-element').map_list(initial_page_data("group_id"), gettext("Group Information"));
         customDataEditor.val(initial_page_data("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));
@@ -66,7 +55,7 @@ hqDefine("groups/js/group_members.js", function() {
             return;
         });
 
-        function outcome(isSuccess, name, id, gaEventLabel) {
+        function outcome(isSuccess, name, id, gaEventLabel, additionalCallback) {
             return function() {
                 var alertClass, message;
                 if (isSuccess) {
@@ -81,6 +70,11 @@ hqDefine("groups/js/group_members.js", function() {
                 $('#save-alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
                 $('#save-alert').html(message).show();
                 $('#editGroupSettings').modal('hide');
+
+                if (_.isFunction(additionalCallback)) {
+                    additionalCallback();
+                }
+
                 if (gaEventLabel){
                     ga_track_event('Editing Group', gaEventLabel, initial_page_data("group_id"));
                 }
@@ -89,10 +83,19 @@ hqDefine("groups/js/group_members.js", function() {
 
         $(function() {
             $('#edit_membership').submit(function() {
+                var _showMembershipUpdating = function () {
+                        $('#edit_membership').fadeOut();
+                        $('#membership_updating').fadeIn();
+                    },
+                    _hideMembershipUpdating = function () {
+                        $('#edit_membership').fadeIn();
+                        $('#membership_updating').fadeOut();
+                    };
+                _showMembershipUpdating();
                 $(this).find(':button').prop('disabled', true);
                 $(this).ajaxSubmit({
-                    success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership"),
-                    error: outcome(false, "Group membership", "#edit_membership"),
+                    success: outcome(true, "Group membership", "#edit_membership", "Edit Group Membership", _hideMembershipUpdating),
+                    error: outcome(false, "Group membership", "#edit_membership", _hideMembershipUpdating),
                 });
                 return false;
             });

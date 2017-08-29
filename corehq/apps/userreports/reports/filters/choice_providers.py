@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from django.utils.translation import ugettext
+from sqlalchemy import or_
 
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.es import GroupES, UserES
@@ -186,6 +187,41 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         return []
 
 
+class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
+
+    @property
+    def _sql_columns(self):
+        try:
+            return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
+        except KeyError as e:
+            raise ColumnNotFoundError(e.message)
+
+    def get_values_for_query(self, query_context):
+        query = self._adapter.session_helper.Session.query(*self._sql_columns)
+        if query_context.query:
+            query = query.filter(
+                or_(
+                    *[
+                        sql_column.ilike(u"%{}%".format(query_context.query))
+                        for sql_column in self._sql_columns
+                    ]
+                )
+            )
+
+        query = (query.distinct().order_by(*self._sql_columns).limit(query_context.limit)
+                 .offset(query_context.offset))
+        try:
+            result = []
+            for row in query:
+                for value in row:
+                    if query_context and query_context.query.lower() not in value.lower():
+                        continue
+                    result.append(value)
+            return result
+        except ProgrammingError:
+            return []
+
+
 class LocationChoiceProvider(ChainableChoiceProvider):
 
     location_safe = True
@@ -249,8 +285,18 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
     def _locations_to_choices(self, locations):
+        cached_path_display = {}  # works best if self.order_by_hierarchy == True
+
         def display(loc):
-            return loc.get_path_display() if self.show_full_path else loc.display_name
+            if self.show_full_path:
+                if loc.parent_id in cached_path_display:
+                    path_display = '{}/{}'.format(cached_path_display[loc.parent_id], loc.name)
+                else:
+                    path_display = loc.get_path_display()
+                cached_path_display[loc.id] = path_display
+                return path_display
+            else:
+                return loc.display_name
         return [Choice(loc.location_id, display(loc)) for loc in locations]
 
 

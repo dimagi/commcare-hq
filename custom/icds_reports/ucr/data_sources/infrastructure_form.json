@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -1296,19 +1297,6 @@
                 ]
               },
               "property_value": "3"
-            },
-            {
-              "operator": "eq",
-              "type": "boolean_expression",
-              "expression": {
-                "datatype": "string",
-                "type": "property_path",
-                "property_path": [
-                  "form",
-                  "source_drinking_water"
-                ]
-              },
-              "property_value": "5"
             }
           ]
         },
@@ -1365,10 +1353,6 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    }
+    "engine_id": "icds-ucr"
   }
 }

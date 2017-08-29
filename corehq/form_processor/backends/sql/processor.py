@@ -1,6 +1,7 @@
 import datetime
 import logging
 import uuid
+from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
@@ -46,6 +47,21 @@ class FormProcessorSQL(object):
         xform.unsaved_attachments = xform_attachments
 
     @classmethod
+    def copy_attachments(cls, from_form, to_form):
+        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        for name, att in from_form.attachments.items():
+            to_form.unsaved_attachments.append(XFormAttachmentSQL(
+                name=att.name,
+                attachment_id=uuid.uuid4(),
+                content_type=att.content_type,
+                content_length=att.content_length,
+                properties=att.properties,
+                blob_id=att.blob_id,
+                blob_bucket=att.blobdb_bucket(),
+                md5=att.md5,
+            ))
+
+    @classmethod
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 
@@ -74,8 +90,22 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        with transaction.atomic():
-            logging.debug('Beginning atomic commit\n')
+        db_names = {processed_forms.submitted.db}
+        if processed_forms.deprecated:
+            db_names |= {processed_forms.deprecated.db}
+
+        if cases:
+            db_names |= {case.db for case in cases}
+
+        if stock_result:
+            db_names |= {
+                ledger_value.db for ledger_value in stock_result.models_to_save
+            }
+
+        with ExitStack() as stack:
+            for db_name in db_names:
+                stack.enter_context(transaction.atomic(db_name))
+
             # Save deprecated form first to avoid ID conflicts
             if processed_forms.deprecated:
                 FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
@@ -87,7 +117,7 @@ class FormProcessorSQL(object):
 
             if stock_result:
                 ledgers_to_save = stock_result.models_to_save
-                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
+                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
         if publish_to_kafka:
             cls._publish_changes(processed_forms, cases, stock_result)
@@ -191,7 +221,9 @@ class FormProcessorSQL(object):
                     is_creation = True
                     case_db.set(case_id, case)
                 previous_owner = case.owner_id
-                case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
+                case, _ = FormProcessorSQL._rebuild_case_from_transactions(
+                    case, rebuild_detail, updated_xforms=xforms
+                )
                 if case:
                     touched_cases[case.case_id] = CaseUpdateMetadata(
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
@@ -220,9 +252,11 @@ class FormProcessorSQL(object):
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
-        case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+        case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
         if case.is_deleted and not found:
             return None
+
+        case.server_modified_on = rebuild_transaction.server_date
         CaseAccessorSQL.save_case(case)
         publish_case_saved(case)
         return case
@@ -233,6 +267,8 @@ class FormProcessorSQL(object):
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
+        if updated_xforms:
+            rebuild_transaction.server_date = updated_xforms[0].edited_on
         unarchived_form_id = None
         if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
             # we're rebuilding because a form was un-archived
@@ -240,7 +276,7 @@ class FormProcessorSQL(object):
         strategy.rebuild_from_transactions(
             transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id
         )
-        return case
+        return case, rebuild_transaction
 
     @staticmethod
     def get_case_forms(case_id):

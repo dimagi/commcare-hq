@@ -5,14 +5,16 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
-
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
-{% if strong_mobile_passwords and not hide_password_feedback %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'registration/js/password.js' %}"></script>
-{% endif %}
+    {% include 'style/includes/ui_element_js.html' %}
+    {% if strong_mobile_passwords and not hide_password_feedback %}
+        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+        <script src="{% static 'registration/js/password.js' %}"></script>
+    {% endif %}
+    {% if implement_password_obfuscation %}
+        {% include "nic_compliance/password_encoder.html" %}
+    {% endif %}
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 

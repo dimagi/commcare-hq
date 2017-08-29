@@ -964,9 +964,11 @@ class FormExportSchema(HQExportSchema):
     def uses_cases(self):
         if not self.app or isinstance(self.app, RemoteApp):
             return False
-        form = self.app.get_form_by_xmlns(self.xmlns)
-        if form and isinstance(form, Form):
-            return bool(form.active_actions())
+        forms = self.app.get_forms_by_xmlns(self.xmlns)
+        for form in forms:
+            if isinstance(form, Form):
+                if bool(form.active_actions()):
+                    return True
         return False
 
 

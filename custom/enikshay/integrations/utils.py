@@ -7,6 +7,10 @@ from custom.enikshay.case_utils import (
     get_lab_referral_from_test,
     get_person_case_from_voucher)
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+from custom.enikshay.const import (
+    PERSON_CASE_2B_VERSION,
+    REAL_DATASET_PROPERTY_VALUE,
+)
 
 
 def case_was_created(case):
@@ -29,6 +33,8 @@ def _is_submission_from_test_location(case_id, owner_id):
 def is_valid_person_submission(person_case):
     if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
         return False
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
+        return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
 
@@ -37,6 +43,8 @@ def is_valid_episode_submission(episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case)
     except ENikshayCaseNotFound:
         return False
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
+        return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
 
@@ -70,6 +78,9 @@ def is_valid_archived_submission(episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case)
     except ENikshayCaseNotFound:
         return False
+    if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
+        return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
+
     owner_id = person_case.owner_id
     if owner_id == ARCHIVED_CASE_OWNER_ID:
         owner_id = person_case.dynamic_case_properties().get('last_owner', None)
@@ -85,12 +96,16 @@ def case_properties_changed(case, case_properties):
     if last_case_action.is_case_create:
         return False
 
-    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
+    update_actions = [
+        update.get_update_action() for update in get_case_updates(last_case_action.form)
+        if update.id == case.case_id
+    ]
     property_changed = any(
         action for action in update_actions
         if isinstance(action, CaseUpdateAction)
-        and any(
-            case_property in action.dynamic_properties for case_property in case_properties
+        and (
+            any(case_property in action.dynamic_properties for case_property in case_properties)
+            or ("owner_id" in case_properties and action.owner_id)
         )
     )
     return property_changed

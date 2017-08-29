@@ -20,7 +20,10 @@ class FormMetadata(JsonObject):
 class Command(BaseCommand):
     help = "Save all form XML documents and attachments for a domain to a folder on disk. " \
            "Use ``import_domain_forms_raw`` to reload the forms into CommCareHQ."
-    args = "domain folder_path"
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('folder_path')
 
     def handle(self, domain, folder_path, **options):
         if os.path.exists(folder_path):

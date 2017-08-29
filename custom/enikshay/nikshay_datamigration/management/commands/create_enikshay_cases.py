@@ -1,11 +1,13 @@
 import logging
 
-from django.core.management import BaseCommand
+from django.conf import settings
+from django.core.management import BaseCommand, CommandError
 from django.db.models import Q
 import mock
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
+from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
 from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
@@ -26,6 +28,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('migration_comment')
         parser.add_argument(
             '--start',
             dest='start',
@@ -58,13 +61,18 @@ class Command(BaseCommand):
             type=str,
         )
         parser.add_argument(
-            '--nikshay_id',
-            dest='nikshay_id',
+            '--nikshay_ids',
+            dest='nikshay_ids',
             default=None,
+            metavar='nikshay_id',
+            nargs='+',
         )
 
     @mock_ownership_cleanliness_checks()
-    def handle(self, domain, **options):
+    def handle(self, domain, migration_comment, **options):
+        if not settings.UNIT_TESTING:
+            raise CommandError('must migrate case data from phone_number to contact_phone_number before running')
+
         base_query = PatientDetail.objects.order_by('scode', 'Dtocode', 'Tbunitcode', 'PHI')
 
         if options['location_codes']:
@@ -82,8 +90,8 @@ class Command(BaseCommand):
                 location_filter = location_filter | q
             base_query = base_query.filter(location_filter)
 
-        if options['nikshay_id']:
-            base_query = base_query.filter(PregId=options['nikshay_id'])
+        if options['nikshay_ids']:
+            base_query = base_query.filter(PregId__in=options['nikshay_ids'])
 
         start = options['start']
         limit = options['limit']
@@ -101,6 +109,7 @@ class Command(BaseCommand):
         counter = 0
         num_succeeded = 0
         num_failed = 0
+        num_matching_case_not_migrated = 0
         logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
         factory = CaseFactory(domain=domain)
@@ -110,9 +119,16 @@ class Command(BaseCommand):
             counter += 1
             try:
                 case_factory = EnikshayCaseFactory(
-                    domain, patient_detail, nikshay_codes_to_location, test_phi
+                    domain, migration_comment, patient_detail, nikshay_codes_to_location, test_phi
                 )
                 case_structures.extend(case_factory.get_case_structures_to_create())
+            except MatchingNikshayIdCaseNotMigrated:
+                num_matching_case_not_migrated += 1
+                logger.error(
+                    'Matching case not migrated for %d of %d.  Nikshay ID=%s' % (
+                        counter, total, patient_detail.PregId
+                    )
+                )
             except Exception:
                 num_failed += 1
                 logger.error(
@@ -143,6 +159,7 @@ class Command(BaseCommand):
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)
+        logger.info('Number of cases matched but not migrated: %d.' % num_matching_case_not_migrated)
 
         # since we circumvented cleanliness checks just call this at the end
         logger.info('Setting cleanliness flags')

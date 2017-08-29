@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-test",
     "icds-sql",
     "icds-cas"
@@ -34,7 +35,8 @@
         "display": "Filter by State",
         "field": "state_id",
         "type": "location_drilldown",
-        "slug": "state_id"
+        "slug": "state_id",
+        "max_drilldown_levels": 1
       }
     ],
     "columns": [
@@ -81,7 +83,12 @@
         "display": "Resolved"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

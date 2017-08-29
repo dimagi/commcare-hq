@@ -2,8 +2,16 @@
 /* eslint-env mocha */
 describe('Render a case list', function () {
     var Menus = FormplayerFrontend.Menus;
-    var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures.js");
+    var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
+        var server;
+        beforeEach(function() {
+            server = sinon.useFakeXMLHttpRequest();
+        });
+
+        afterEach(function() {
+            server.restore();
+        });
 
         it('Should parse a case list response to a CaseListView', function () {
             var caseListView = Menus.Util.getMenuView(fixtures.caseList);

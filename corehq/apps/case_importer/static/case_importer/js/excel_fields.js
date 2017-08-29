@@ -1,4 +1,4 @@
-hqDefine('case_importer/js/excel_fields.js', function () {
+hqDefine('case_importer/js/excel_fields', function () {
     function ExcelFieldRows(excelFields, caseFieldSpecs) {
         var self = {
             excelFields: excelFields,

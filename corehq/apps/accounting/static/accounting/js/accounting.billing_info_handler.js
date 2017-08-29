@@ -1,5 +1,5 @@
 /* globals django */
-hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
+hqDefine('accounting/js/accounting.billing_info_handler', function () {
     var AsyncSelect2Handler = function (field, multiple) {
         'use strict';
         var self = this;
@@ -106,6 +106,7 @@ hqDefine('accounting/js/accounting.billing_info_handler.js', function () {
             var handler = new EmailSelect2Handler($(input).attr("name"));
             handler.init();
         });
+        $(".ko-email-select2").removeAttr('required');
 
         _.each($(".ko-async-select2"), function(input) {
             var handler = new AsyncSelect2Handler($(input).attr("name"));

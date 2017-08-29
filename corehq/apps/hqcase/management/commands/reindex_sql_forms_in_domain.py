@@ -1,13 +1,12 @@
 from __future__ import print_function
-from dimagi.utils.chunked import chunked
 from django.core.management import BaseCommand
 
 from corehq.form_processor.backends.sql.dbaccessors import *
-from corehq.pillows.xform import *
+from corehq.pillows.xform import SqlFormReindexerFactory
 
 
 def reindex_sql_forms_in_domain(domain):
-    reindexer = get_sql_form_reindexer()
+    reindexer = SqlFormReindexerFactory().build()
 
     for state, _ in XFormInstanceSQL.STATES:
         all_doc_ids = FormAccessorSQL.get_form_ids_in_domain_by_state(domain, state)
@@ -20,8 +19,10 @@ def reindex_sql_forms_in_domain(domain):
 
 
 class Command(BaseCommand):
-    args = 'domain'
     help = 'Reindex a pillowtop index'
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
 
     def handle(self, domain, *args, **options):
         reindex_sql_forms_in_domain(domain)

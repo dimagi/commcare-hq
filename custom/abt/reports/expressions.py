@@ -52,10 +52,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
     @classmethod
     @quickcache(['app_id', 'xmlns', 'lang'])
     def _get_questions(cls, app_id, xmlns, lang):
-        form = Application.get(app_id).get_form_by_xmlns(xmlns)
-        return {
-            q['value']: q for q in form.get_questions([lang], include_groups=True)
-        }
+        questions = Application.get(app_id).get_questions(xmlns, [lang], include_groups=True)
+        return {q['value']: q for q in questions}
 
     @classmethod
     def _get_question_options(cls, item, question_path):
@@ -106,6 +104,8 @@ class AbtSupervisorExpressionSpec(JsonObject):
         """
         Return the language in which this row should be rendered.
         """
+        if item.get("domain", None) in ("airsmadagascar", "abtmali"):
+            return "fra"
         country = cls._get_val(item, ["location_data", "country"])
         if country in ["Senegal", u'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:
             return "fra"

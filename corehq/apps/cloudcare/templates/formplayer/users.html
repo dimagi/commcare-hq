@@ -68,17 +68,24 @@
         </div>
     </td>
     <td class="module-column module-column-name">
+        {% if request|toggle_enabled:"ENIKSHAY"%}
+            {% include 'enikshay/login_as/list.html' %}
+        {% else %}
         <h3>
             <b><%= username %></b>
             <span><%= first_name + ' ' + last_name %></span>
-            <i><small><%= location ? location.name : '' %><small></i>
+            <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
         </h3>
+        {% endif %}
     </td>
 </script>
 
 <script type="text/template" id="user-data-template">
     <table class="table module-table module-table-casedetail">
         <tbody>
+        {% if request|toggle_enabled:"ENIKSHAY"%}
+            {% include 'enikshay/login_as/detail.html' %}
+        {% else %}
             <tr>
                 <th>{% trans "Name" %}</th>
                 <td><%= user.first_name + ' ' + user.last_name %></td>
@@ -98,13 +105,14 @@
                 <td><%= user.dateRegistered %></td>
             </tr>
         <% _.each(user.customFields, function(value, key) { %>
-            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack')) { %>
+            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
             <tr>
                 <th><%= key %></th>
                 <td><%= value %></td>
             </tr>
             <% } %>
         <% }) %>
+        {% endif %}
         </tbody>
     </table>
 

@@ -92,12 +92,24 @@ profile the expensive data sources.
 Parallel Processors
 ~~~~~~~~~~~~~~~~~~~
 
-The UCR pillows currently have options to split the pillow into multiple. They
+To scale UCR Pillows horizontally do the following:
+
+1. Look for what pillows are behind. This can be found in the change feed
+   dashboard or the hq admin system info page.
+2. Ensure you have enough resources on the pillow server to scale the pillows
+   This can be found through datadog.
+3. Decide what topics need to have added partitions in kafka. There is no way
+   to scale a couch pillow horizontally. You can also not remove partitions so
+   you should attempt scaling in small increments. Also attempt to make sure
+   pillows are able to split partitions easily. It's easiest to use powers of 2
+4. Run `./manage.py add_kafka_partition <topic> <number partitions to have>`
+5. In the commcare-hq-deploy repo change num_processes to the pillows you want
+   to scale. Merge this PR and update the submodule in hq
+6. On the next deploy multiple processes will be used when starting pillows
+
+The UCR pillows also have options to split the pillow into multiple. They
 include `ucr_divsion`, `include_ucrs` and `exclude_ucrs`. Look to the pillow
 code for more information on these.
-
-Soon it will be possible to add partitions to kafka topics, which will be the
-preferred way to horizontally scale pillows.
 
 Rewound Checkpoint
 ~~~~~~~~~~~~~~~~~~

@@ -37,25 +37,6 @@ def get_prefixed(field_dict, prefix):
     }
 
 
-def _make_field(field):
-    if field.choices:
-        if not field.is_multiple_choice:
-            choice_field = forms.ChoiceField(
-                label=field.label,
-                required=field.is_required,
-                choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
-            )
-        else:
-            choice_field = forms.MultipleChoiceField(
-                label=field.label,
-                required=field.is_required,
-                choices=[(c, c) for c in field.choices],
-                widget=Select2MultipleChoiceWidget
-            )
-        return choice_field
-    return forms.CharField(label=field.label, required=field.is_required)
-
-
 class CustomDataEditor(object):
     """
     Tool to edit the data for a particular entity, like for an individual user.
@@ -102,6 +83,24 @@ class CustomDataEditor(object):
         self.form.is_valid()
         return dict(cleaned_data, **system_data)
 
+    def _make_field(self, field):
+        if field.choices:
+            if not field.is_multiple_choice:
+                choice_field = forms.ChoiceField(
+                    label=field.label,
+                    required=field.is_required,
+                    choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+                )
+            else:
+                choice_field = forms.MultipleChoiceField(
+                    label=field.label,
+                    required=field.is_required,
+                    choices=[(c, c) for c in field.choices],
+                    widget=Select2MultipleChoiceWidget
+                )
+            return choice_field
+        return forms.CharField(label=field.label, required=field.is_required)
+
     @property
     @memoized
     def fields(self):
@@ -110,7 +109,7 @@ class CustomDataEditor(object):
     def init_form(self, post_dict=None):
         fields = OrderedDict()
         for field in self.fields:
-            fields[field.slug] = _make_field(field)
+            fields[field.slug] = self._make_field(field)
 
         if self.angular_model:
             field_names = [
@@ -128,8 +127,8 @@ class CustomDataEditor(object):
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-sm-3 col-md-2'
-        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-sm-9 col-md-8 col-lg-6'
+        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
+        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-lg-9'
 
         additional_fields = []
         if field_names:

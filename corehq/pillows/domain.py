@@ -11,7 +11,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 
 def transform_domain_for_elasticsearch(doc_dict):
@@ -29,15 +29,18 @@ def transform_domain_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', **kwargs):
+def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_processes=1,
+                                             process_num=0, **kwargs):
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO, [topics.DOMAIN])
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,
         doc_prep_fn=transform_domain_for_elasticsearch
     )
-    change_feed = KafkaChangeFeed(topics=[topics.DOMAIN], group_id='domains-to-es')
+    change_feed = KafkaChangeFeed(
+        topics=[topics.DOMAIN], group_id='domains-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -49,18 +52,25 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', **kw
     )
 
 
-def get_domain_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_domain_kafka_to_elasticsearch_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=Domain.get_db(),
-            view_name='all_docs/by_doc_type',
-            view_kwargs={
-                'startkey': ['Domain'],
-                'endkey': ['Domain', {}],
-                'include_docs': True,
-            }
-        ),
-        elasticsearch=get_es_new(),
-        index_info=DOMAIN_INDEX_INFO,
-    )
+class DomainReindexerFactory(ReindexerFactory):
+    slug = 'domain'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        return ElasticPillowReindexer(
+            pillow=get_domain_kafka_to_elasticsearch_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=Domain.get_db(),
+                view_name='all_docs/by_doc_type',
+                view_kwargs={
+                    'startkey': ['Domain'],
+                    'endkey': ['Domain', {}],
+                    'include_docs': True,
+                }
+            ),
+            elasticsearch=get_es_new(),
+            index_info=DOMAIN_INDEX_INFO,
+            **self.options
+        )

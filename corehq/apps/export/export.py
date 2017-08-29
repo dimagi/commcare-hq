@@ -1,6 +1,8 @@
 import contextlib
 import os
 import tempfile
+import time
+import sys
 from collections import Counter
 
 import datetime
@@ -13,6 +15,7 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -326,9 +329,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 
 
 def _get_export_documents(export_instance, filters):
-    query = _get_base_query(export_instance)
-    for filter in filters:
-        query = query.filter(filter.to_es_filter())
+    query = _get_export_query(export_instance, filters)
     # size here limits each scroll request, not the total number of results
     # We believe we can occasionally hit the 5m limit to process a single scroll window
     # with a window size of 1000 (https://manage.dimagi.com/default.asp?248384).
@@ -336,8 +337,15 @@ def _get_export_documents(export_instance, filters):
     return query.size(500).scroll()
 
 
+def _get_export_query(export_instance, filters):
+    query = _get_base_query(export_instance)
+    for filter in filters:
+        query = query.filter(filter.to_es_filter())
+    return query
+
+
 def get_export_size(export_instance, filters):
-    return _get_export_documents(export_instance, filters).count
+    return _get_export_query(export_instance, filters).count()
 
 
 def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
@@ -354,20 +362,73 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
+    start = _time_in_milliseconds()
+    total_bytes = 0
+    total_rows = 0
+    compute_total = 0
+    write_total = 0
+
     for row_number, doc in enumerate(documents):
+        total_bytes += sys.getsizeof(doc)
         for table in export_instance.selected_tables:
+            compute_start = _time_in_milliseconds()
             rows = table.get_rows(
                 doc,
                 row_number,
                 split_columns=export_instance.split_multiselects,
                 transform_dates=export_instance.transform_dates,
             )
+            compute_total += _time_in_milliseconds() - compute_start
+
+            write_start = _time_in_milliseconds()
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
                 writer.write(table, row)
+            write_total += _time_in_milliseconds() - write_start
+
+            total_rows += len(rows)
+
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+
+    end = _time_in_milliseconds()
+    tags = ['format:{}'.format(writer.format)]
+    _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
+    _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
+    _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
+
+
+def _time_in_milliseconds():
+    return int(time.time() * 1000)
+
+
+def _record_datadog_export_compute_rows(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.compute_export_rows_duration', tags)
+
+
+def _record_datadog_export_write_rows(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.write_export_rows_duration', tags)
+
+
+def _record_datadog_export_duration(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.export_duration', tags)
+
+
+def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
+    datadog_histogram(metric, duration, tags=tags)
+    if doc_bytes:
+        datadog_histogram(
+            '{}_normalized_by_size'.format(metric),
+            duration / doc_bytes,
+            tags=tags,
+        )
+    if n_rows:
+        datadog_histogram(
+            '{}_normalized_by_rows'.format(metric),
+            duration / n_rows,
+            tags=tags,
+        )
 
 
 def _get_base_query(export_instance):

@@ -5,26 +5,40 @@
 
 {% block navigation_extra %}
 {% angularjs %}
-    <li role="presentation" ng-class="{ 'active' : allSelected()}">
-        <a ng-click="filterList()">{% trans "All Forms" %}</a>
-        <div class="well">
-            <ul class="nav nav-hq-sidebar">
-                <li ng-repeat="module in modules" role="presentation" ng-class="{ 'active' : moduleSelected(module)}">
-                    <a ng-click="filterList(module)"><i class="hq-icon fa fa-folder-open"></i>
-                        {% verbatim %}{{ getFormModuleLabel(module) }}{% endverbatim %}
-                    </a>
-                    <div class="well">
-                        <ul class="nav nav-hq-sidebar">
-                            <li ng-repeat="form in module.forms" ng-class="{ 'active' : formSearch.id === form.id }">
-                                <a ng-click="filterList(module, form)">
-                                    {% verbatim %}{{ getFormModuleLabel(form) }}{% endverbatim %}
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-            </ul>
+    <li role="presentation">
+        <div class="appnav-item" ng-class="{ 'active' : allSelected()}">
+            <a ng-click="filterList()"
+               class="appnav-link-full">
+              <i class="fa fa-search appnav-primary-icon"></i>
+              <span>{% trans "View All Forms" %}</span>
+            </a>
         </div>
+    </li>
+    <li ng-repeat="module in modules" role="presentation">
+
+        <div class="appnav-item" ng-class="{ 'active' : moduleSelected(module)}">
+          <a ng-click="filterList(module)"
+               class="appnav-link-full">
+              {% verbatim %}
+              <i class="{{ getModuleIcon(module) }} appnav-primary-icon"></i>
+            <span>{{ getFormModuleLabel(module) }}</span>
+            {% endverbatim %}
+          </a>
+        </div>
+        <ul class="appnav-menu appnav-menu-nested">
+            <li ng-repeat="form in module.forms">
+                <div class="appnav-item"
+                     ng-class="{ 'active' : formSearch.id === form.id }">
+                  <a ng-click="filterList(module, form)"
+                     class="appnav-link-full">
+                      {% verbatim %}
+                      <i class="{{ getModuleFormIcon(form) }} appnav-primary-icon"></i>
+                      <span>{{ getFormModuleLabel(form) }}</span>
+                      {% endverbatim %}
+                  </a>
+                </div>
+            </li>
+        </ul>
     </li>
 {% endangularjs %}
 {% endblock %}
@@ -32,7 +46,10 @@
 {% block content %}
 {% angularjs %}
     <div class="page-header" style="margin-top: 0;">
-        <h1 style="font-size: 1.8em;">{% trans "Form Summary" %}</h1>
+        <h3>
+          <i class="fa fa-file-text-o"></i>
+          {% trans "Form Summary" %}</h1>
+        </h3>
         <div class="row">
             <div class="col-xs-3">
                 <form class="form-inline" role="form">
@@ -73,7 +90,13 @@
                                 ng-click="showRelevance = !showRelevance"
                                 ng-class="{ 'active' : showRelevance }">
                             <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Display Conditions" %}
+                            &nbsp;{% trans "Display" %}
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showConstraints = !showConstraints"
+                                ng-class="{ 'active': showConstraints }">
+                            <i class="fa fa-ban" ng-class="showConstraints ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Validation" %}
                         </button>
                         <button type="button" class="btn btn-default"
                                 ng-click="showComments = !showComments"
@@ -110,14 +133,16 @@
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
                  <h4>
-                     <i class="hq-icon fa fa-folder-open"></i> {% verbatim %}<a ng-href="{{ getModuleUrl(module.id, lang) }}">{{ getFormModuleLabel(module) }}</a>{% endverbatim %}
+                     {% verbatim %}<i class="hq-icon {{ getModuleIcon(module) }}"></i> <a ng-href="{{ getModuleUrl(module.id, lang) }}">{{ getFormModuleLabel(module) }}</a>{% endverbatim %}
                      <span class="text-muted" ng-show="showComments"> &nbsp; {{ module.short_comment }}</span>
                  </h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
                     <h5>
-                        {% verbatim %}<a ng-href="{{ getFormUrl(form.id, lang) }}"> {{ getFormModuleLabel(form) }}</a>{% endverbatim %}
+                        {% verbatim %}<a ng-href="{{ getFormUrl(form.id, lang) }}">
+                            <i class="hq-icon {{ getModuleFormIcon(form) }}"></i> {{ getFormModuleLabel(form) }}
+                        </a>{% endverbatim %}
                         <span class="text-muted" ng-show="showComments"> &nbsp; {{ form.short_comment }}</span>
                     </h5>
                         <ol>
@@ -145,6 +170,11 @@
                                 <ul class="fa-ul" ng-if="question.relevant" ng-show="showRelevance">
                                     <li>
                                         <i class="fa-li fa fa-code-fork text-muted"></i> {{ question.relevant }}
+                                    </li>
+                                </ul>
+                                <ul class="fa-ul" ng-if="question.constraint" ng-show="showConstraints">
+                                    <li>
+                                        <i class="fa-li fa fa-ban text-muted"></i> {{ question.constraint }}
                                     </li>
                                 </ul>
                             </li>

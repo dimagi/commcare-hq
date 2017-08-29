@@ -7,13 +7,13 @@
 {% endblock %}
 
 {% block dependencies %}
-<script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
-<script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
+<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+<script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
 <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-<script src="{% static 'app_manager/js/releases.js' %}"></script>
+<script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
 <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
-<script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
-<script src="{% static 'app_manager/js/app_diff.js' %}"></script>
+<script src="{% static 'app_manager/js/summary/app_summary.ng.js' %}"></script>
+<script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
@@ -25,5 +25,5 @@
 {% endblock %}
 
 {% block fixtures %}
-{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal-test' %}
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal-test' %}
 {% endblock %}

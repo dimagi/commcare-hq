@@ -1,8 +1,11 @@
 from __future__ import print_function
 
-from gevent import monkey; monkey.patch_all()
-from corehq.pillows.utils import get_all_expected_es_indices
+from gevent import monkey
+monkey.patch_all()
 
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
+
+from corehq.pillows.utils import get_all_expected_es_indices
 
 from corehq.elastic import get_es_new
 
@@ -13,7 +16,6 @@ from django.core.mail import mail_admins
 from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
 from django.core.management.base import BaseCommand
-from django.core.management import call_command
 from django.conf import settings
 
 
@@ -22,33 +24,22 @@ def get_reindex_commands(alias_name):
     # to lists of management commands or functions
     # that should be used to rebuild the index from scratch
     pillow_command_map = {
-        'hqdomains': [('ptop_reindexer_v2', {'index': 'domain'})],
-        'hqcases': [
-            ('ptop_reindexer_v2', {'index': 'case'}),
-            ('ptop_reindexer_v2', {'index': 'sql-case'}),
-        ],
-        'xforms': [
-            ('ptop_reindexer_v2', {'index': 'form'}),
-            ('ptop_reindexer_v2', {'index': 'sql-form'}),
-        ],
+        'hqdomains': ['domain'],
+        'hqcases': ['case', 'sql-case'],
+        'xforms': ['form', 'sql-form'],
         # groupstousers indexing must happen after all users are indexed
         'hqusers': [
-            ('ptop_reindexer_v2', {'index': 'user'}),
+            'user',
             add_demo_user_to_user_index,
-            ('ptop_reindexer_v2', {'index': 'groups-to-user'}),
+            'groups-to-user',
         ],
-        'hqapps': [
-            ('ptop_reindexer_v2', {'index': 'app'})
-        ],
-        'hqgroups': [('ptop_reindexer_v2', {'index': 'group'})],
-        'report_xforms': [('ptop_reindexer_v2', {'index': 'report-xform'})],
-        'report_cases': [('ptop_reindexer_v2', {'index': 'report-case'})],
-        'case_search': [('ptop_reindexer_v2', {'index': 'case-search'})],
-        'ledgers': [
-            ('ptop_reindexer_v2', {'index': 'ledger-v1'}),
-            ('ptop_reindexer_v2', {'index': 'ledger-v2'}),
-        ],
-        'smslogs': [('ptop_reindexer_v2', {'index': 'sms'})],
+        'hqapps': ['app'],
+        'hqgroups': ['group'],
+        'report_xforms': ['report-xform'],
+        'report_cases': ['report-case'],
+        'case_search': ['case-search'],
+        'ledgers': ['ledger-v1', 'ledger-v2'],
+        'smslogs': ['sms'],
     }
     return pillow_command_map.get(alias_name, [])
 
@@ -58,16 +49,8 @@ def do_reindex(alias_name, reset):
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
         if isinstance(reindex_command, basestring):
-            call_command(reindex_command, **{'noinput': True, 'bulk': True})
-        elif isinstance(reindex_command, (tuple, list)):
             kwargs = {"reset": True} if reset else {}
-            reindex_command, command_kwargs = reindex_command
-            kwargs.update(command_kwargs)
-            if reindex_command == 'ptop_reindexer_v2':
-                index = kwargs.pop('index')
-                call_command(reindex_command, index, **kwargs)
-            else:
-                call_command(reindex_command, **kwargs)
+            FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
         else:
             reindex_command()
     print("Pillow preindex finished %s" % alias_name)

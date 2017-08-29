@@ -8,6 +8,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string
 
 from casexml.apps.case import const
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -24,9 +25,9 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 ]
 
 
-def submit_case_blocks(case_blocks, domain, username="system", user_id="",
+def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
                        xmlns=SYSTEM_FORM_XMLNS, attachments=None,
-                       form_id=None, form_extras=None, case_db=None):
+                       form_id=None, form_extras=None, case_db=None, device_id=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
@@ -43,7 +44,8 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id="",
         'time': now,
         'uid': form_id,
         'username': username,
-        'user_id': user_id,
+        'user_id': user_id or "",
+        'device_id': device_id or "",
     })
     form_extras = form_extras or {}
 
@@ -203,6 +205,18 @@ def submit_case_block_from_template(domain, template, context, xmlns=None, user_
     return submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
 
 
+def _get_update_or_close_case_block(case_id, case_properties=None, close=False):
+    kwargs = {
+        'create': False,
+        'user_id': SYSTEM_USER_ID,
+        'close': close,
+    }
+    if case_properties:
+        kwargs['update'] = case_properties
+
+    return CaseBlock(case_id, **kwargs)
+
+
 def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     """
     Updates or closes a case (or both) by submitting a form.
@@ -213,14 +227,17 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     close - True to close the case, False otherwise
     xmlns - pass in an xmlns to use it instead of the default
     """
-    context = {
-        'case_id': case_id,
-        'date_modified': json_format_datetime(datetime.datetime.utcnow()),
-        'user_id': SYSTEM_USER_ID,
-        'case_properties': case_properties,
-        'close': close,
-    }
-    return submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
+    kwargs = {}
+    if xmlns:
+        kwargs['xmlns'] = xmlns
+
+    caseblock = _get_update_or_close_case_block(case_id, case_properties, close)
+    return submit_case_blocks(
+        ElementTree.tostring(caseblock.as_xml()),
+        domain,
+        user_id=SYSTEM_USER_ID,
+        **kwargs
+    )
 
 
 def bulk_update_cases(domain, case_changes):
@@ -235,16 +252,9 @@ def bulk_update_cases(domain, case_changes):
     """
     case_blocks = []
     for case_id, case_properties, close in case_changes:
-        context = {
-            'case_id': case_id,
-            'date_modified': json_format_datetime(datetime.datetime.utcnow()),
-            'user_id': SYSTEM_USER_ID,
-            'case_properties': case_properties,
-            'close': close
-        }
-        case_block = render_to_string('hqcase/xml/update_case.xml', context)
+        case_block = _get_update_or_close_case_block(case_id, case_properties, close)
         # Ensure the XML is formatted properly
         # An exception is raised if not
-        case_block = ElementTree.tostring(ElementTree.XML(case_block))
+        case_block = ElementTree.tostring(case_block.as_xml())
         case_blocks.append(case_block)
     return submit_case_blocks(case_blocks, domain)

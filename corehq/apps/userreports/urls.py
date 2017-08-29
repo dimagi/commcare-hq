@@ -17,12 +17,13 @@ from corehq.apps.userreports.views import (
     rebuild_data_source,
     resume_building_data_source,
     build_data_source_in_place,
+    recalculate_data_source,
     export_data_source,
     data_source_status,
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
-    undelete_data_source, undelete_report)
+    undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -53,6 +54,8 @@ urlpatterns = [
         name='resume_build'),
     url(r'^data_sources/build_in_place/(?P<config_id>[\w-]+)/$', build_data_source_in_place,
         name='build_in_place'),
+    url(r'^data_sources/recalculate/(?P<config_id>[\w-]+)/$', recalculate_data_source,
+        name='recalculate_data_source'),
     url(r'^data_sources/preview/(?P<config_id>[\w-]+)/$',
         PreviewDataSourceView.as_view(),
         name=PreviewDataSourceView.urlname),
@@ -62,8 +65,12 @@ urlpatterns = [
         name='configurable_data_source_status'),
     url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
         name='expression_debugger'),
+    url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),
+        name='data_source_debugger'),
 
     # apis
-    url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', choice_list_api, name='choice_list_api'),
+    url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$',
+        choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
+    url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
 ]

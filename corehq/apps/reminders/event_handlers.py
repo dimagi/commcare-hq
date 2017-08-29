@@ -93,6 +93,7 @@ def _get_web_user_template_info(user):
         'name': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 
@@ -101,6 +102,7 @@ def _get_mobile_user_template_info(user):
         'name': user.raw_username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 
@@ -142,6 +144,12 @@ def _add_parent_case_to_template_params(case, result):
         result['case']['parent'] = _get_obj_template_info(parent_case)
 
 
+def _add_host_case_to_template_params(case, result):
+    host_case = case.host
+    if host_case:
+        result['case']['host'] = _get_obj_template_info(host_case)
+
+
 def _add_owner_to_template_params(case, result):
     owner = get_wrapped_owner(get_owner_id(case))
     if owner:
@@ -156,6 +164,10 @@ def _add_modified_by_to_template_params(case, result):
 
     if modified_by:
         result['case']['last_modified_by'] = _get_obj_template_info(modified_by)
+
+
+def _add_recipient_to_template_params(recipient, result):
+    result['recipient'] = _get_obj_template_info(recipient)
 
 
 def get_message_template_params(case=None):
@@ -185,6 +197,7 @@ def get_message_template_params(case=None):
     if case:
         _add_case_to_template_params(case, result)
         _add_parent_case_to_template_params(case, result)
+        _add_host_case_to_template_params(case, result)
         _add_owner_to_template_params(case, result)
         _add_modified_by_to_template_params(case, result)
     return result
@@ -216,6 +229,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
 
     domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
+        _add_recipient_to_template_params(recipient, template_params)
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
         try:
@@ -493,6 +507,7 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
         return
 
     for recipient in recipients:
+        _add_recipient_to_template_params(recipient, template_params)
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
         try:

@@ -14,13 +14,14 @@ from corehq.apps.app_manager.app_schemas.session_schema import get_session_schem
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
 from corehq.apps.app_manager.exceptions import AppManagerException
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
-from corehq import toggles, privileges, feature_previews
+from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -29,7 +30,6 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.util import (
-    get_app_manager_template,
     app_callout_templates,
     is_usercase_in_use,
 )
@@ -45,9 +45,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
-from corehq.apps.tour import tours
-from corehq.apps.analytics import ab_tests
-from corehq.apps.domain.models import Domain
+from corehq.util.context_processors import websockets_override
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +55,10 @@ logger = logging.getLogger(__name__)
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     def _form_uses_case(module, form):
-        return module and module.case_type and form.requires_case()
+        return (
+            (module and module.case_type and form.requires_case()) or
+            is_usercase_in_use(domain)
+        )
 
     def _form_is_basic(form):
         return form.doc_type == 'Form'
@@ -101,9 +102,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
-    vellum_features = toggles.toggles_dict(username=request.user.username,
-                                           domain=domain)
-    vellum_features.update(feature_previews.previews_dict(domain))
+    vellum_features = toggles.toggles_dict(username=request.user.username, domain=domain)
+    vellum_features.update({'advanced_itemsets': add_ons.show("advanced_itemsets", request, app)})
     include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
@@ -113,6 +113,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
         'rich_text': True,
+        'sorted_itemsets': app.enable_sorted_itemsets,
     })
 
     has_schedule = (
@@ -133,9 +134,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
-        request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
-
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
@@ -143,12 +141,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'nav_form': form,
         'formdesigner': True,
         'include_fullstory': include_fullstory,
-        'notifications_enabled': request.user.is_superuser,
-        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': should_show_preview_app(
             request,
@@ -192,27 +187,26 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'invalidCaseProperties': ['name'],
     }
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        if form.get_action_type() == 'open':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
-                'formIconClass': 'fcc fcc-app-createform',
-            })
-        elif form.get_action_type() == 'close':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-close',
-                'formIconClass': 'fcc fcc-app-completeform',
-            })
-        elif form.get_action_type() == 'update':
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-followup',
-                'formIconClass': 'fcc fcc-app-updateform',
-            })
-        else:
-            core.update({
-                'defaultHelpTextTemplateId': '#fd-hq-helptext-survey',
-                'formIconClass': 'fa fa-file-o',
-            })
+    if form.get_action_type() == 'open':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
+            'formIconClass': 'fcc fcc-app-createform',
+        })
+    elif form.get_action_type() == 'close':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-close',
+            'formIconClass': 'fcc fcc-app-completeform',
+        })
+    elif form.get_action_type() == 'update':
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-followup',
+            'formIconClass': 'fcc fcc-app-updateform',
+        })
+    else:
+        core.update({
+            'defaultHelpTextTemplateId': '#fd-hq-helptext-survey',
+            'formIconClass': 'fa fa-file-o',
+        })
 
     vellum_options = {
         'core': core,
@@ -241,12 +235,25 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
     })
 
+    if request.user.is_superuser:
+        notification_options = websockets_override(request)
+        if notification_options['WS4REDIS_HEARTBEAT'] in ['null', 'undefined']:
+            notification_options['WS4REDIS_HEARTBEAT'] = None
+        notification_options.update({
+            'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
+            'user_id': request.couch_user.get_id,
+        })
+        context.update({'notification_options': notification_options})
+
     if not settings.VELLUM_DEBUG:
         context.update({'requirejs_url': "app_manager/js/vellum/src"})
     elif settings.VELLUM_DEBUG == "dev-min":
         context.update({'requirejs_url': "formdesigner/_build/src"})
     else:
         context.update({'requirejs_url': "formdesigner/src"})
+
+    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
+
     context.update({
         'requirejs_args': 'version={}{}'.format(
             cachebuster("app_manager/js/vellum/src/main-components.js"),
@@ -254,13 +261,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         ),
     })
 
-    template = get_app_manager_template(
-        request.user,
-        'app_manager/v1/form_designer.html',
-        'app_manager/v2/form_designer.html',
-    )
-
-    response = render(request, template, context)
+    response = render(request, "app_manager/form_designer.html", context)
     return response
 
 

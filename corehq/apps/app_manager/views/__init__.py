@@ -4,23 +4,6 @@ from corehq.apps.app_manager.views.translations import (
     download_bulk_app_translations,
     upload_bulk_app_translations,
 )
-from corehq.apps.app_manager.views.download import (
-    download_app_strings,
-    download_file,
-    download_index,
-    download_jad,
-    download_jar,
-    download_media_profile,
-    download_media_suite,
-    download_odk_media_profile,
-    download_odk_profile,
-    download_profile,
-    download_raw_jar,
-    download_suite,
-    download_test_jar,
-    download_xform,
-    DownloadCCZ,
-)
 from corehq.apps.app_manager.views.app_summary import (
     AppDataView,
     AppSummaryView,
@@ -35,12 +18,11 @@ from corehq.apps.app_manager.views.apps import (
     copy_app,
     default_new_app,
     delete_app,
-    delete_app_lang,
     drop_user_case,
     edit_app_attr,
     edit_app_langs,
     edit_app_ui_translations,
-    formdefs,
+    edit_add_ons,
     get_app_ui_translations,
     import_app,
     new_app,
@@ -64,6 +46,7 @@ from corehq.apps.app_manager.views.download import (
     download_jad,
     download_jar,
     download_media_profile,
+    download_practice_user_restore,
     download_media_suite,
     download_odk_media_profile,
     download_odk_profile,
@@ -77,20 +60,14 @@ from corehq.apps.app_manager.views.download import (
 )
 from corehq.apps.app_manager.views.forms import (
     copy_form,
-    copy_form_by_form_index,
     delete_form,
     edit_advanced_form_actions,
-    edit_careplan_form_actions,
     edit_form_actions,
-    edit_advanced_form_actions_by_form_index,
-    edit_careplan_form_actions_by_form_index,
-    edit_form_actions_by_form_index,
     edit_form_attr,
     edit_form_attr_api,
     form_casexml,
     get_form_datums,
     get_xform_source,
-    get_xform_source_by_form_index,
     new_form,
     patch_xform,
     undo_delete_form,
@@ -133,12 +110,12 @@ from corehq.apps.app_manager.views.releases import (
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,
     edit_visit_schedule,
-    edit_visit_schedule_by_form_index,
 )
 from corehq.apps.app_manager.views.settings import (
     commcare_profile,
     edit_commcare_profile,
     edit_commcare_settings,
+    PromptSettingsUpdateView,
 )
 from corehq.apps.app_manager.views.translations import (
     download_bulk_app_translations,

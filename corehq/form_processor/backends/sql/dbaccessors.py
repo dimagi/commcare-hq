@@ -8,13 +8,17 @@ from itertools import groupby
 from uuid import UUID
 
 import csiphash
+import re
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
+from django.db.models import Q
+from django.db.models.functions import Greatest
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
+    XFormSaveError,
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
@@ -35,25 +39,17 @@ from corehq.form_processor.models import (
     CommCareCaseSQL,
     XFormAttachmentSQL,
     XFormOperationSQL,
-    CommCareCaseIndexSQL_DB_TABLE,
-    CaseAttachmentSQL_DB_TABLE,
-    LedgerTransaction_DB_TABLE,
-    LedgerValue_DB_TABLE,
     LedgerValue,
     LedgerTransaction,
 )
 from corehq.form_processor.utils.sql import (
     fetchone_as_namedtuple,
-    fetchall_as_namedtuple,
-    case_adapter,
-    case_transaction_adapter,
-    case_index_adapter,
-    case_attachment_adapter
+    fetchall_as_namedtuple
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.util import split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
-from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
 
 doc_type_to_state = {
@@ -168,20 +164,26 @@ class ShardAccessor(object):
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
     startkey_min_value = datetime.min
 
+    def __init__(self, limit_db_aliases=None):
+        self.limit_db_aliases = limit_db_aliases
+
     def is_sharded(self):
         """
         :return: True the django model is sharded, otherwise false.
         """
-        from corehq.form_processor.models import RestrictedManager
         from corehq.sql_db.models import PartitionedModel
-        return (
-            isinstance(self.model_class.objects, RestrictedManager) or
-            issubclass(self.model_class, PartitionedModel)
-        )
+        return issubclass(self.model_class, PartitionedModel)
 
     @property
     def sql_db_aliases(self):
-        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        if self.limit_db_aliases:
+            db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
+            assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(
+                all_db_aliases, self.limit_db_aliases
+            )
+            return db_aliases
+        return all_db_aliases
 
     @abstractproperty
     def model_class(self):
@@ -223,21 +225,42 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @property
+    def count_query(self):
+        """Define a custom query to use to get the doc count (only used for filtered reindex).
+        :returns: tuple('query_string', [query values])
+        """
+        return
+
     def get_doc_count(self, from_db):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
-        from_db = 'default' if from_db is None else from_db
-        sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(sql_query.format(self.model_class._meta.db_table))
-            return int(fetchone_as_namedtuple(cursor).reltuples)
+        if self.count_query:
+            query, values = self.count_query
+            query = 'EXPLAIN {}'.format(query)
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(query, values)
+                for row in cursor.fetchall():
+                    search = re.search(r' rows=(\d+)', row[0])
+                    if search:
+                        return int(search.group(1))
+            return 0
+        else:
+            from_db = 'default' if from_db is None else from_db
+            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(sql_query.format(self.model_class._meta.db_table))
+                return int(fetchone_as_namedtuple(cursor).reltuples)
 
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, include_attachments=True):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None):
+        super(FormReindexAccessor, self).__init__(limit_db_aliases)
+        self.domain = domain
         self.include_attachments = include_attachments
 
     @property
@@ -260,13 +283,35 @@ class FormReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
-            [received_on_since, last_id, limit],
-            using=from_db
+
+        domain_clause = "form_table.domain = %s AND" if self.domain else ""
+        values = [received_on_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = XFormInstanceSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as form_table
+        WHERE {domain_clause}
+        state & {deleted_state} = 0 AND
+        (form_table.received_on, form_table.id) > (%s, %s)
+        ORDER BY form_table.received_on, form_table.id
+        LIMIT %s;""".format(
+                table=XFormInstanceSQL._meta.db_table,
+                domain_clause=domain_clause,
+                deleted_state=XFormInstanceSQL.DELETED
+            ),
+            values
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
+
+    @property
+    def count_query(self):
+        # deletion clause left out on purpose since it throws off the count estimate
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=XFormInstanceSQL._meta.db_table,
+            ), [self.domain]
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -274,22 +319,49 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_form(form_id):
         try:
-            return FormAccessorSQL.get_forms([form_id])[0]
-        except IndexError:
+            return XFormInstanceSQL.objects.partitioned_get(form_id)
+        except XFormInstanceSQL.DoesNotExist:
             raise XFormNotFound
 
     @staticmethod
     def get_forms(form_ids, ordered=False):
         assert isinstance(form_ids, list)
-        forms = RawQuerySetWrapper(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        if not form_ids:
+            return []
+        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
     @staticmethod
     def get_attachments(form_id):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
+
+    @staticmethod
+    def iter_forms_by_last_modified(start_datetime, end_datetime):
+        '''
+        Returns all forms that have been modified within a time range. The start date is
+        exclusive while the end date is inclusive (start_datetime, end_datetime].
+
+        NOTE: This does not include archived forms
+
+        :param start_datetime: The start date of which modified forms must be greater than
+        :param end_datetime: The end date of which modified forms must be less than or equal to
+
+        :returns: An iterator of XFormInstanceSQL objects
+        '''
+        from corehq.sql_db.util import run_query_across_partitioned_databases
+
+        annotate = {
+            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
+        }
+
+        return run_query_across_partitioned_databases(
+            XFormInstanceSQL,
+            Q(last_modified__gt=start_datetime),
+            annotate=annotate,
+        )
 
     @staticmethod
     def get_with_attachments(form_id):
@@ -325,6 +397,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
         assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
         forms = list(FormAccessorSQL.get_forms(form_ids))
 
         # attachments are already sorted by form_id in SQL
@@ -337,7 +411,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
@@ -368,10 +442,13 @@ class FormAccessorSQL(AbstractFormAccessor):
         if delete_attachments:
             attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
-            results = fetchall_as_namedtuple(cursor)
-            deleted_count = sum([result.deleted_count for result in results])
+        deleted_count = 0
+        for db_name, split_form_ids in split_list_by_db_partition(form_ids):
+            # cascade should delete the attachments and operations
+            _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
+                domain=domain, form_id__in=split_form_ids
+            ).delete()
+            deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
 
         if delete_attachments:
             attachments_to_delete = attachments
@@ -399,13 +476,16 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_attachments_for_forms(form_ids, ordered=False):
-        attachments = RawQuerySetWrapper(XFormAttachmentSQL.objects.raw(
+        assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
+        attachments = list(XFormAttachmentSQL.objects.raw(
             'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
         ))
 
         if ordered:
-            attachments = _order_list(form_ids, attachments, 'form_id')
+            _sort_with_id_list(attachments, form_ids, 'form_id')
 
         return attachments
 
@@ -425,6 +505,8 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
+        from corehq.form_processor.change_publishers import publish_form_saved
+
         assert isinstance(form_ids, list)
         problem = 'Restored on {}'.format(datetime.utcnow())
         with get_cursor(XFormInstanceSQL) as cursor:
@@ -433,7 +515,14 @@ class FormAccessorSQL(AbstractFormAccessor):
                 [domain, form_ids, problem]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            return_value = sum([result.affected_count for result in results])
+
+        for form_ids_chunk in chunked(form_ids, 500):
+            forms = FormAccessorSQL.get_forms(list(form_ids_chunk))
+            for form in forms:
+                publish_form_saved(form)
+
+        return return_value
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
@@ -457,8 +546,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
+        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form))
+        case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
@@ -469,24 +559,36 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
+
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
             for unsaved_attachment in unsaved_attachments:
-                unsaved_attachment.form = form
+                if unsaved_attachment.is_saved():
+                    raise XFormSaveError(
+                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
+                    )
+                unsaved_attachment.form_id = form.form_id
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
-            operation.form = form
+            if operation.is_saved():
+                raise XFormSaveError(
+                    'XFormOperationSQL {} has already been saved'.format(operation.id)
+                )
+            operation.form_id = form.form_id
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
-                [form.form_id, form, unsaved_attachments, operations]
-            )
-            result = fetchone_as_namedtuple(cursor)
-            form.id = result.form_pk
+        try:
+            with transaction.atomic(using=form.db, savepoint=False):
+                form.save()
+                for attachment in unsaved_attachments:
+                    attachment.save()
+
+                for operation in operations:
+                    operation.save()
+        except InternalError as e:
+            raise XFormSaveError(e)
 
         try:
             del form.unsaved_attachments
@@ -578,6 +680,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
 
 class CaseReindexAccessor(ReindexAccessor):
+    """
+    :param: domain: If supplied the accessor will restrict results to only that domain
+    """
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
+        self.domain = domain
+
     @property
     def model_class(self):
         return CommCareCaseSQL
@@ -595,13 +704,31 @@ class CaseReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         server_modified_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
-            [server_modified_on_since, last_id, limit],
-            using=from_db
+        domain_clause = "case_table.domain = %s AND" if self.domain else ""
+        values = [False, server_modified_on_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = CommCareCaseSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as case_table
+            WHERE {domain_clause}
+            deleted = %s AND
+            (case_table.server_modified_on, case_table.id) > (%s, %s)
+            ORDER BY case_table.server_modified_on, case_table.id
+            LIMIT %s;""".format(
+                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
+            ),
+            values
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
+
+    @property
+    def count_query(self):
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s AND deleted = %s""".format(
+                    table=CommCareCaseSQL._meta.db_table
+            ), [self.domain, False]
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -609,24 +736,30 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_case(case_id):
         try:
-            return CommCareCaseSQL.objects.raw('SELECT * from get_case_by_id(%s)', [case_id])[0]
-        except IndexError:
+            return CommCareCaseSQL.objects.partitioned_get(case_id)
+        except CommCareCaseSQL.DoesNotExist:
             raise CaseNotFound
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
         assert isinstance(case_ids, list)
-        cases = RawQuerySetWrapper(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        if not case_ids:
+            return []
+        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+
         if ordered:
-            cases = _order_list(case_ids, cases, 'case_id')
+            _sort_with_id_list(cases, case_ids, 'case_id')
+
+        if prefetched_indices:
+            cases_by_id = {case.case_id: case for case in cases}
+            _attach_prefetch_models(
+                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
 
         return cases
 
     @staticmethod
     def case_exists(case_id):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-        db = get_db_alias_for_partitioned_doc(case_id)
-        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
+        return CommCareCaseSQL.objects.partitioned_query(case_id).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -660,6 +793,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+
         indexes = CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_all_reverse_indices(%s, %s)',
             [domain, case_ids]
@@ -679,6 +815,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
         """
+        if not case_ids:
+            return []
+
         with get_cursor(CommCareCaseIndexSQL) as cursor:
             cursor.execute(
                 'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
@@ -690,6 +829,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
 
         cases = list(CommCareCaseSQL.objects.raw(
             'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
@@ -786,53 +927,49 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    @transaction.atomic
     def save_case(case):
-        transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
+        transactions_to_save = case.get_live_tracked_models(CaseTransaction)
 
         indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
-
-        for index in indices_to_save_or_update:
-            index.domain = case.domain  # ensure domain is set on indices
-
-        # cast arrays that can be empty to appropriate type
-        query = """SELECT case_pk FROM save_case_and_related_models(
-            %s, %s, %s, %s::{}[], %s::{}[], %s::INTEGER[], %s::INTEGER[]
-        )"""
-        query = query.format(CommCareCaseIndexSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE)
-        with get_cursor(CommCareCaseSQL) as cursor:
-            try:
-                cursor.execute(query, [
-                    case.case_id,
-                    case,
-                    transactions_to_save,
-                    indices_to_save_or_update,
-                    attachments_to_save,
-                    index_ids_to_delete,
-                    attachment_ids_to_delete
-                ])
-                result = fetchone_as_namedtuple(cursor)
-                case.id = result.case_pk
-            except InternalError as e:
-                if logging.root.isEnabledFor(logging.DEBUG):
-                    msg = 'save_case_and_related_models called with args: \n{}, {}, {}, {} ,{} ,{}'.format(
-                        case_adapter(case).getquoted(),
-                        [case_transaction_adapter(t).getquoted() for t in transactions_to_save],
-                        [case_index_adapter(i).getquoted() for i in indices_to_save_or_update],
-                        [case_attachment_adapter(a).getquoted() for a in attachments_to_save],
-                        index_ids_to_delete,
-                        attachment_ids_to_delete
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    """Updating attachments is not supported.
+                    case id={}, attachment id={}""".format(
+                        case.case_id, attachment.attachment_id
                     )
-                    logging.debug(msg)
-                raise CaseSaveError(e)
-            else:
+                )
+
+        try:
+            with transaction.atomic(using=case.db, savepoint=False):
+                case.save()
+                for case_transaction in transactions_to_save:
+                    case_transaction.save()
+
+                for index in indices_to_save_or_update:
+                    index.domain = case.domain  # ensure domain is set on indices
+                    update_fields = None
+                    if index.is_saved():
+                        # prevent changing identifier
+                        update_fields = ['referenced_id', 'referenced_type', 'relationship_id']
+                    index.save(update_fields=update_fields)
+
+                CommCareCaseIndexSQL.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
+
+                for attachment in attachments_to_save:
+                    attachment.save()
+
+                CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
+
                 case.clear_tracked_models()
+        except InternalError as e:
+            raise CaseSaveError(e)
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
@@ -860,6 +997,40 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
+    def get_related_indices(domain, case_ids, exclude_indices):
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_indices)]))
+
+    @staticmethod
+    def get_closed_and_deleted_ids(domain, case_ids):
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
+                [domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [accessor.domain, case_ids, sync_log.date, sync_log._id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
@@ -870,14 +1041,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed=True):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
-        with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+        if not case_ids:
+            return []
+
+        extension_case_ids = set()
+        for db_name in get_sql_db_aliases_in_use():
+            query = CommCareCaseIndexSQL.objects.using(db_name).filter(
+                domain=domain,
+                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -885,6 +1066,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Given a list of case IDs, return a dict where the ids are keys and the
         values are the last server modified date of that case.
         """
+        if not case_ids:
+            return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
@@ -909,6 +1092,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def soft_undelete_cases(domain, case_ids):
+        from corehq.form_processor.change_publishers import publish_case_saved
+
         assert isinstance(case_ids, list)
 
         with get_cursor(CommCareCaseSQL) as cursor:
@@ -917,7 +1102,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 [domain, case_ids]
             )
             results = fetchall_as_namedtuple(cursor)
-            return sum([result.affected_count for result in results])
+            return_value = sum([result.affected_count for result in results])
+
+        for case_ids_chunk in chunked(case_ids, 500):
+            cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
+            for case in cases:
+                publish_case_saved(case)
+
+        return return_value
 
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
@@ -953,8 +1145,22 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         return owner_ids
 
+    @staticmethod
+    def get_case_transactions_for_form(form_id, limit_to_cases):
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
+            resultset = CaseTransaction.objects.using(db_name).filter(
+                case_id__in=case_ids, form_id=form_id
+            )
+            for trans in resultset:
+                yield trans
+
 
 class LedgerReindexAccessor(ReindexAccessor):
+
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(LedgerReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
+        self.domain = domain
+
     @property
     def model_class(self):
         return LedgerValue
@@ -974,18 +1180,36 @@ class LedgerReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         modified_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
-            [modified_since, last_id, limit],
-            using=from_db
+
+        domain_clause = "domain = %s AND" if self.domain else ""
+        values = [modified_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        results = LedgerValue.objects.using(from_db).raw(
+            """SELECT * FROM {table}
+        WHERE {domain_clause}
+        (last_modified, id) > (%s, %s)
+        ORDER BY last_modified, id
+        LIMIT %s""".format(
+                table=LedgerValue._meta.db_table,
+                domain_clause=domain_clause
+            ),
+            values,
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
         json_doc['_id'] = doc.ledger_reference.as_id()
         return json_doc
+
+    @property
+    def count_query(self):
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=LedgerValue._meta.db_table,
+            ), [self.domain]
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):
@@ -993,7 +1217,10 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
-        return RawQuerySetWrapper(LedgerValue.objects.raw(
+        if not case_ids:
+            return []
+
+        return list(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
             [case_ids, section_id, entry_id, date_start, date_end]
         ))
@@ -1016,39 +1243,41 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values, deprecated_form=None):
-        if not ledger_values:
+    def save_ledger_values(ledger_values, stock_result=None):
+        if not ledger_values and not (stock_result and stock_result.cases_with_deprecated_transactions):
             return
 
-        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+        try:
+            if stock_result and stock_result.cases_with_deprecated_transactions:
+                db_cases = split_list_by_db_partition(stock_result.cases_with_deprecated_transactions)
+                for db_name, case_ids in db_cases:
+                    LedgerTransaction.objects.using(db_name).filter(
+                        case_id__in=case_ids,
+                        form_id=stock_result.xform.form_id
+                    ).delete()
 
-        for ledger_value in ledger_values:
-            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
+            for ledger_value in ledger_values:
+                transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-            with get_cursor(LedgerValue) as cursor:
-                try:
-                    cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
-                            LedgerValue_DB_TABLE,
-                            LedgerTransaction_DB_TABLE
-                        ),
-                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
-                    )
-                except InternalError as e:
-                    raise LedgerSaveError(e)
+                with transaction.atomic(using=ledger_value.db, savepoint=False):
+                    ledger_value.save()
+                    for trans in transactions_to_save:
+                        trans.save()
 
-            ledger_value.clear_tracked_models()
+                ledger_value.clear_tracked_models()
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+        return list(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
             [case_id, section_id, entry_id]
         ))
 
     @staticmethod
     def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+        return list(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
             [case_id, section_id, entry_id, window_start, window_end]
         ))
@@ -1125,15 +1354,30 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
         except InternalError as e:
             raise LedgerSaveError(e)
 
+    @staticmethod
+    def get_ledger_transactions_for_form(form_id, limit_to_cases):
+        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
+            resultset = LedgerTransaction.objects.using(db_name).filter(
+                case_id__in=case_ids, form_id=form_id
+            )
+            for trans in resultset:
+                yield trans
 
-def _order_list(id_list, object_list, id_property):
-    # SQL won't return the rows in any particular order so we need to order them ourselves
+
+def _sort_with_id_list(object_list, id_list, id_property):
+    """Sort object list in the same order as given list of ids
+
+    SQL does not necessarily return the rows in any particular order so
+    we need to order them ourselves.
+
+    NOTE: this does not return the sorted list. It sorts `object_list`
+    in place using Python's built-in `list.sort`.
+    """
+    def key(obj):
+        return index_map[getattr(obj, id_property)]
+
     index_map = {id_: index for index, id_ in enumerate(id_list)}
-    ordered_list = [None] * len(id_list)
-    for obj in object_list:
-        ordered_list[index_map[getattr(obj, id_property)]] = obj
-
-    return ordered_list
+    object_list.sort(key=key)
 
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
@@ -1141,37 +1385,3 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
-
-
-class RawQuerySetWrapper(object):
-    """
-    Wrapper for RawQuerySet objects to make them behave more like
-    normal QuerySet objects
-    """
-
-    def __init__(self, queryset):
-        self.queryset = queryset
-        self._result_cache = None
-
-    def _fetch_all(self):
-        if self._result_cache is None:
-            self._result_cache = list(self.queryset)
-        return self._result_cache
-
-    def __getattr__(self, item):
-        return getattr(self.queryset, item)
-
-    def __getitem__(self, k):
-        self._fetch_all()
-        return list(self._result_cache)[k]
-
-    def __iter__(self):
-        return self.queryset.__iter__()
-
-    def __len__(self):
-        self._fetch_all()
-        return len(self._result_cache)
-
-    def __nonzero__(self):
-        self._fetch_all()
-        return bool(self._result_cache)

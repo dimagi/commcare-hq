@@ -1,0 +1,338 @@
+{
+    "domains": [
+        "enikshay",
+        "enikshay-reports-qa",
+        "sheel-enikshay"
+
+    ],
+    "server_environment": [
+        "enikshay",
+        "softlayer"
+    ],
+    "data_source_table": "episode_qa",
+    "report_id": "case_finding_mobile_qa",
+    "config": {
+        "description": "",
+        "title": "Summary of Case Finding - Mobile (QA)",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
+                "type": "date",
+                "show_all": true,
+                "slug": "date_of_diagnosis"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "diagnosing_facility_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Suspects referred to DMC",
+                "type": "field",
+                "field": "lab_requests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Suspects who got tested at the DMC",
+                "type": "field",
+                "field": "lab_results",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of diagnostic tests",
+                "type": "field",
+                "field": "diagnostic_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of follow-up tests",
+                "type": "field",
+                "field": "follow_up_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases",
+                "type": "field",
+                "field": "new",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Microbiologically Confirmed Cases",
+                "type": "field",
+                "field": "new_microbiological",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Clinically Diagnosed Cases",
+                "type": "field",
+                "field": "new_clinical",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases - pediatric (0-14)",
+                "type": "field",
+                "field": "new_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases - non pediatric (15+)",
+                "type": "field",
+                "field": "new_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Female Cases",
+                "type": "field",
+                "field": "new_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Male Cases",
+                "type": "field",
+                "field": "new_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Transgender Cases",
+                "type": "field",
+                "field": "new_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Pulmonary Cases",
+                "type": "field",
+                "field": "new_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Extrapulmonary Cases",
+                "type": "field",
+                "field": "new_extra_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of All Previously Treated Cases",
+                "type": "field",
+                "field": "retreatment",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Microbiologically Confirmed Cases",
+                "type": "field",
+                "field": "retreatment_microbiological",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Clinically Diagnosed Cases",
+                "type": "field",
+                "field": "retreatment_clinical",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Cases - pediatric (0-14)",
+                "type": "field",
+                "field": "retreatment_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Cases - adult (15+)",
+                "type": "field",
+                "field": "retreatment_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Female Cases",
+                "type": "field",
+                "field": "retreatment_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Male Cases",
+                "type": "field",
+                "field": "retreatment_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Transgender Cases",
+                "type": "field",
+                "field": "retreatment_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Pulmonary Cases",
+                "type": "field",
+                "field": "retreatment_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Previously Treated Extrapulmonary Cases",
+                "type": "field",
+                "field": "retreatment_extra_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

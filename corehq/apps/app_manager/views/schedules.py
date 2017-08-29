@@ -39,14 +39,6 @@ def edit_schedule_phases(request, domain, app_id, module_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_visit_schedule_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_visit_schedule(request, domain, app_id, form.unique_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)

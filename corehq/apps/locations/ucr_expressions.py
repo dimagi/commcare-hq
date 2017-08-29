@@ -1,3 +1,5 @@
+from jsonobject import DefaultProperty
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
@@ -62,3 +64,48 @@ def location_parent_id(spec, context):
         }
     }
     return ExpressionFactory.from_spec(spec, context)
+
+
+class AncestorLocationExpression(JsonObject):
+    """
+    For a given location id and location type, this expression returns the ancestor of the location that is the
+    given type.
+    If no such location exists, return None.
+    e.g. (boston.location_id, "state") => massachusetts.to_json()
+    """
+    type = TypeProperty("ancestor_location")
+    location_id = DefaultProperty(required=True)
+    location_type = DefaultProperty(required=True)
+
+    def configure(self, location_id_expression, location_type_expression):
+        self._location_id_expression = location_id_expression
+        self._location_type_expression = location_type_expression
+
+    def __call__(self, item, context=None):
+        location_id = self._location_id_expression(item, context)
+        location_type = self._location_type_expression(item, context)
+
+        cache_key = (self.__class__.__name__, location_id, location_type)
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+        ancestor_json = self._get_ancestor(location_id, location_type)
+        context.set_cache_value(cache_key, ancestor_json)
+        return ancestor_json
+
+    def _get_ancestor(self, location_id, location_type):
+        try:
+            location = SQLLocation.objects.get(location_id=location_id)
+            ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
+            return ancestor.to_json()
+        except (AttributeError, SQLLocation.DoesNotExist):
+            # location is None, or location does not have an ancestor of that type
+            return None
+
+
+def ancestor_location(spec, context):
+    wrapped = AncestorLocationExpression.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.location_id, context),
+        ExpressionFactory.from_spec(wrapped.location_type, context),
+    )
+    return wrapped

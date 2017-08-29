@@ -16,9 +16,6 @@ from django.conf import settings
 from dimagi.utils.logging import notify_error
 
 
-CLUSTER_HEALTH = 'cluster_health'
-
-
 def check_es_cluster_health():
     """
     The color state of the cluster health is just a simple indicator for how a cluster is running
@@ -29,8 +26,7 @@ def check_es_cluster_health():
     ret = {}
     es = get_es_new()  # assign to variable to avoid weak reference error
     cluster_health = es.cluster.health()
-    ret[CLUSTER_HEALTH] = cluster_health['status']
-    return ret
+    return cluster_health['status']
 
 
 def check_index_by_doc(es_index, db, doc_id, interval=10):

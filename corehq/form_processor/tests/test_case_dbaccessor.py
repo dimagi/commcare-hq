@@ -29,7 +29,7 @@ class CaseAccessorTestsSQL(TestCase):
 
     def test_get_case_by_id(self):
         case = _create_case()
-        with self.assertNumQueries(1, using=db_for_read_write(CommCareCaseSQL)):
+        with self.assertNumQueries(1, using=case.db):
             case = CaseAccessorSQL.get_case(case.case_id)
         self.assertIsNotNone(case)
         self.assertIsInstance(case, CommCareCaseSQL)
@@ -354,18 +354,6 @@ class CaseAccessorTestsSQL(TestCase):
 
         # hack to call the sql function with an already saved attachment
         case.track_create(attachment)
-
-        with self.assertRaises(CaseSaveError):
-            CaseAccessorSQL.save_case(case)
-
-    def test_save_case_update_transaction(self):
-        case = _create_case()
-
-        [transaction] = CaseAccessorSQL.get_transactions(case.case_id)
-        transaction.revoked = True
-
-        # hack to call the sql function with an already saved transaction
-        case.track_create(transaction)
 
         with self.assertRaises(CaseSaveError):
             CaseAccessorSQL.save_case(case)

@@ -26,7 +26,7 @@
             <thead>
               <tr>
                 <% _.each(headers, function(header, index) { %>
-                  <% if (!(widthHints[index] === 0)) { %>
+                  <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
                     <th class="module-caselist-header"> <%= header %></th>
                   <% } %>
                 <% }); %>
@@ -99,7 +99,6 @@
           </nav>
         </div>
       <% } %>
-
     </div>
 </script>
 
@@ -163,6 +162,38 @@
         grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
         background-color: transparent;
         color: #685c53;
-        justify-items: center;
+        justify-items: left;
+        padding-left: 20px;
+        padding-top: 10px;
     }
+</script>
+
+<script type="text/template" id="case-view-list-detail-template">
+    <div class="module-caselist-container">
+        <div class="page-header menu-header"><h1 class="page-title"><%- title %></h1></div>
+        <div class="module-caselist-table-container">
+            <table class="table module-table module-table-caselist">
+                <thead>
+                <tr>
+                    <% _.each(headers, function(header, index) { %>
+                    <% if (!(styles[index].widthHint === 0)) { %>
+                    <th class="module-caselist-header"> <%= header %></th>
+                    <% } %>
+                    <% }); %>
+                </tr>
+                </thead>
+                <% if (hasNoItems) { %>
+                <tbody>
+                <tr>
+                    <td class="module-caselist-column module-caselist-column-empty" colspan="<%=headers.length%>">
+                        <div class="alert alert-info">{% trans "List is empty." %}</div>
+                    </td>
+                </tr>
+                </tbody>
+                <% } %>
+                <tbody class="wrapper js-case-container">
+                </tbody>
+            </table>
+        </div>
+    </div>
 </script>

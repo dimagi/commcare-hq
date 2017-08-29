@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    {% include 'style/includes/ui_element_js.html' %}
     <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
@@ -93,10 +93,19 @@
             <div role="tabpanel" class="tab-pane active" id="membership-tab">
                 <div class="row">
                     <div class="col-sm-12">
-                        <form class="form-horizontal disable-on-submit" id="edit_membership"
+                        <div class="alert alert-info" id="membership_updating" style="display: none">
+                          <p class="lead">
+                            <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
+                          </p>
+                        </div>
+
+                        <form class="form-horizontal disable-on-submit"
+                              id="edit_membership"
                               action="{% url "update_group_membership" domain group.get_id %}" method='post'>
-                                {% crispy user_form %}
+                                {% crispy group_membership_form %}
                         </form>
+
+
                     </div>
                 </div>
             </div>

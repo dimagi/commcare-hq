@@ -1,6 +1,6 @@
-hqDefine("export/js/export_list.js", function() {
+hqDefine("export/js/export_list", function() {
     'use strict';
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
         listExportsApp = window.angular.module('listExportsApp', ['hq.list_exports', 'hq.app_data_drilldown']);
     listExportsApp.config(["$httpProvider", function($httpProvider) {
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';

@@ -48,7 +48,7 @@ requires imports/proptable.html to be included in the main template
         }
 
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            hqImport("style/js/main").transformHelpTemplate($(this), true);
         });
 
         $('#edit-form').click(function() {
@@ -297,8 +297,11 @@ requires imports/proptable.html to be included in the main template
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title accordion-toggle">
-                        <a data-toggle="collapse" 
-                            href="#form-case-acc-{{ forloop.counter }}">
+                        {% if case_data.valid_case and case_data.case_type and cases|length > 1 %}
+                            <span class="label label-default">{{case_data.case_type}}</span>
+                        {% endif %}
+                        <a data-toggle="collapse"
+                           href="#form-case-acc-{{ forloop.counter }}">
                             {% if case_data.valid_case and case_data.name %}
                             {{ case_data.name }}
                             {% else %}
@@ -349,7 +352,7 @@ requires imports/proptable.html to be included in the main template
             {% if attachment.is_image %}
                 <dd><img src="{% url "api_form_attachment" domain=domain form_id=instance.form_id attachment_id=key %}"></dd>
             {% else %}
-                <dd><a href="{% url "download_attachment" domain instance.form_id %}?attachment={{ key }}" download="{{ key }}">{% trans "Download" %}</a></dd>
+                <dd><a href="{% url "api_form_attachment" domain instance.form_id key %}" download="{{ key }}">{% trans "Download" %}</a></dd>
             {% endif %}
         </dl>
         </td></tr>

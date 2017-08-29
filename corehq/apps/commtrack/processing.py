@@ -33,6 +33,7 @@ class StockProcessingResult(object):
         self.models_to_save = None
         self.models_to_delete = None
         self.populated = False
+        self.cases_with_deprecated_transactions = None
 
     def populate_models(self):
         self.populated = True
@@ -52,6 +53,10 @@ class StockProcessingResult(object):
         )
         self.models_to_save, self.models_to_delete = models_result
 
+        self.cases_with_deprecated_transactions = {
+            trans.case_id for srh in deprecated_helpers for trans in srh.transactions
+        }
+
     def commit(self):
         assert self.populated
         for to_delete in self.models_to_delete:
@@ -63,10 +68,7 @@ class StockProcessingResult(object):
         """
         Finalize anything else that needs to happen - this runs after models are saved.
         """
-        # if cases were changed we should purge the sync token cache
-        # this ensures that ledger updates will sync back down
-        if self.relevant_cases and self.xform.get_sync_token():
-            self.xform.get_sync_token().invalidate_cached_payloads()
+        pass
 
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
@@ -147,7 +149,12 @@ def mark_cases_changed(case_action_intents, case_db):
         if len(intents) > 1:
             primary_intent, deprecation_intent = sorted(case_action_intents, key=lambda i: i.is_deprecation)
         else:
-            [primary_intent] = intents
+            [intent] = intents
+            if intent.is_deprecation:
+                primary_intent = None
+                deprecation_intent = intent
+            else:
+                primary_intent = intent
         case_db.apply_action_intents(case, primary_intent, deprecation_intent)
         case_db.mark_changed(case)
 

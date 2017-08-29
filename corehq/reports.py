@@ -30,6 +30,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
 )
+from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
@@ -62,7 +63,6 @@ from custom.openclinica.reports import OdmExportReport
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
-    from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
 
     report_set = None
     if project.report_whitelist:
@@ -116,13 +116,6 @@ def REPORTS(project):
             )
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
-
-    if project.has_careplan:
-        from corehq.apps.app_manager.models import CareplanConfig
-        config = CareplanConfig.for_domain(project.name)
-        if config:
-            cp_reports = tuple(make_careplan_reports(config))
-            reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
 
     reports = list(_get_report_builder_reports(project)) + reports
 
@@ -260,7 +253,11 @@ def _get_configurable_reports(project):
     configs = _safely_get_report_configs(project.name)
 
     if configs:
-        yield (_('Reports'), [_make_report_class(config, show_in_nav=True) for config in configs])
+        yield (
+            _('Reports'),
+            [_make_report_class(config, show_in_nav=not config.title.startswith(TEMP_REPORT_PREFIX))
+             for config in configs]
+        )
 
 
 def _get_report_builder_reports(project):
@@ -285,7 +282,8 @@ def _get_report_builder_reports(project):
     if configs:
         yield (
             _('Report Builder Reports'),
-            [_make_report_class(config, show_in_dropdown=True) for config in report_builder_reports]
+            [_make_report_class(config, show_in_dropdown=not config.title.startswith(TEMP_REPORT_PREFIX))
+             for config in report_builder_reports]
         )
 
 DATA_INTERFACES = (

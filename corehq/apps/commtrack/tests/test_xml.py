@@ -1,4 +1,6 @@
 from decimal import Decimal
+
+from django.db.models import Q
 from django.test import TestCase
 from django.test.utils import override_settings
 from lxml import etree
@@ -9,22 +11,23 @@ from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
+from casexml.apps.phone.tests.utils import deprecated_synclog_id_from_restore_payload
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAccessors, CaseAccessors
 from corehq.form_processor.models import LedgerTransaction
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.util import run_query_across_partitioned_databases
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.tests import util
-from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
+from casexml.apps.case.tests.util import check_xml_line_by_line, deprecated_check_user_has_case
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
@@ -78,11 +81,9 @@ class XMLTest(TestCase):
 
 class CommTrackOTATest(XMLTest):
 
-    @run_with_all_backends
     def test_ota_blank_balances(self):
         self.assertFalse(util.get_ota_balance_xml(self.domain, self.user))
 
-    @run_with_all_backends
     def test_ota_basic(self):
         amounts = [
             SohReport(section_id='stock', product_id=p._id, amount=i*10)
@@ -100,7 +101,6 @@ class CommTrackOTATest(XMLTest):
             util.get_ota_balance_xml(self.domain, self.user)[0],
         )
 
-    @run_with_all_backends
     def test_ota_multiple_stocks(self):
         section_ids = sorted(('stock', 'losses', 'consumption'))
         amounts = [
@@ -126,7 +126,6 @@ class CommTrackOTATest(XMLTest):
                 balance_blocks[i],
             )
 
-    @run_with_all_backends
     def test_ota_consumption(self):
         self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
@@ -169,7 +168,6 @@ class CommTrackOTATest(XMLTest):
             consumption_block,
         )
 
-    @run_with_all_backends
     def test_force_consumption(self):
         self.ct_settings.sync_consumption_fixtures = True
         self.ct_settings.consumption_config = ConsumptionConfig(
@@ -209,6 +207,11 @@ class CommTrackOTATest(XMLTest):
         self.domain = Domain.get(self.domain._id)
 
 
+@use_sql_backend
+class CommTrackOTATestSQL(CommTrackOTATest):
+    pass
+
+
 class CommTrackSubmissionTest(XMLTest):
 
     def setUp(self):
@@ -218,7 +221,8 @@ class CommTrackSubmissionTest(XMLTest):
 
     @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
     @process_pillow_changes('LedgerToElasticsearchPillow')
-    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime, **submit_extras):
+    def submit_xml_form(self, xml_method, timestamp=None, date_formatter=json_format_datetime,
+                        device_id='351746051189879', **submit_extras):
         instance_id = uuid.uuid4().hex
         instance = submission_wrap(
             instance_id,
@@ -229,6 +233,7 @@ class CommTrackSubmissionTest(XMLTest):
             xml_method,
             timestamp=timestamp,
             date_formatter=date_formatter,
+            device_id=device_id,
         )
         submit_form_locally(
             instance=instance,
@@ -256,31 +261,30 @@ class CommTrackSubmissionTest(XMLTest):
         else:
             self.assertEqual(expected_qty, latest_trans.quantity)
 
+    def _get_all_ledger_transactions(self, q_):
+        return list(run_query_across_partitioned_databases(LedgerTransaction, q_))
+
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
-    @run_with_all_backends
     def test_balance_submit(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
-    @run_with_all_backends
     def test_balance_submit_date(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_submission(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
-    @run_with_all_backends
     def test_balance_enumerated(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(balance_enumerated(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
-    @run_with_all_backends
     def test_balance_consumption(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -304,7 +308,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
                 self.assertEqual(Decimal(str(amt)), inferred_txn.stock_on_hand)
                 self.assertEqual(stockconst.TRANSACTION_TYPE_CONSUMPTION, inferred_txn.type)
 
-    @run_with_all_backends
     def test_balance_consumption_with_date(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -315,7 +318,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
-    @run_with_all_backends
     def test_archived_product_submissions(self):
         """
         This is basically the same as above, but separated to be
@@ -334,7 +336,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in final_amounts:
             self.check_product_stock(self.sp, product, amt, 0)
 
-    @run_with_all_backends
     def test_balance_submit_multiple_stocks(self):
         def _random_amounts():
             return [(p._id, float(random.randint(0, 100))) for i, p in enumerate(self.products)]
@@ -348,14 +349,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             for product, amt in amounts:
                 self.check_product_stock(self.sp, product, amt, 0, section_id)
 
-    @run_with_all_backends
     def test_transfer_dest_only(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts))
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
 
-    @run_with_all_backends
     def test_transfer_source_only(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -366,7 +365,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in deductions:
             self.check_product_stock(self.sp, product, initial-amt, -amt)
 
-    @run_with_all_backends
     def test_transfer_both(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -378,14 +376,12 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
             self.check_product_stock(self.sp, product, initial-amt, -amt)
             self.check_product_stock(self.sp2, product, amt, amt)
 
-    @run_with_all_backends
     def test_transfer_with_date(self):
         amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
         self.submit_xml_form(transfer_dest_only(amounts), date_formatter=json_format_date)
         for product, amt in amounts:
             self.check_product_stock(self.sp, product, amt, amt)
 
-    @run_with_all_backends
     def test_transfer_enumerated(self):
         initial = float(100)
         initial_amounts = [(p._id, initial) for p in self.products]
@@ -396,7 +392,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in receipts:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 
-    @run_with_all_backends
     def test_balance_first_doc_order(self):
         initial = float(100)
         balance_amounts = [(p._id, initial) for p in self.products]
@@ -405,7 +400,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, initial + amt, amt)
 
-    @run_with_all_backends
     def test_transfer_first_doc_order(self):
         # first set to 100
         initial = float(100)
@@ -421,7 +415,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product, amt in transfers:
             self.check_product_stock(self.sp, product, final, 0)
 
-    @run_with_all_backends
     def test_blank_quantities(self):
         # submitting a bunch of blank data shouldn't submit transactions
         # so lets submit some initial data and make sure we don't modify it
@@ -439,7 +432,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         for product in self.products:
             self.check_product_stock(self.sp, product._id, 100, 0)
 
-    @run_with_all_backends
     def test_blank_product_id(self):
         initial = float(100)
         balances = [('', initial)]
@@ -448,7 +440,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertTrue(instance.is_error)
         self.assertTrue('MissingProductId' in instance.problem)
 
-    @run_with_all_backends
     def test_blank_case_id_in_balance(self):
         form = submit_case_blocks(
             case_blocks=util.get_single_balance_block(
@@ -462,7 +453,6 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
 
-    @run_with_all_backends
     def test_blank_case_id_in_transfer(self):
         form = submit_case_blocks(
             case_blocks=util.get_single_transfer_block(
@@ -475,9 +465,13 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.assertTrue('IllegalCaseId' in instance.problem)
 
 
+@use_sql_backend
+class CommTrackBalanceTransferTestSQL(CommTrackBalanceTransferTest):
+    pass
+
+
 class BugSubmissionsTest(CommTrackSubmissionTest):
 
-    @run_with_all_backends
     def test_device_report_submissions_ignored(self):
         """
         submit a device report with a stock block and make sure it doesn't
@@ -485,7 +479,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         """
         def _assert_no_stock_transactions():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(0, LedgerTransaction.objects.using('default').count())
+                self.assertEqual(0, len(self._get_all_ledger_transactions(Q())))
             else:
                 self.assertEqual(0, StockTransaction.objects.count())
 
@@ -510,7 +504,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
 
         _assert_no_stock_transactions()
 
-    @run_with_all_backends
     def test_xform_id_added_to_case_xform_list(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
@@ -522,7 +515,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         case = CaseAccessors(self.domain.name).get_case(self.sp.case_id)
         self.assertIn(instance_id, case.xform_ids)
 
-    @run_with_all_backends
     def test_xform_id_added_to_case_xform_list_only_once(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         submissions = [balance_submission([amount]) for amount in initial_amounts]
@@ -542,7 +534,6 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         # make sure the ID only got added once
         self.assertEqual(len(case.xform_ids), len(set(case.xform_ids)))
 
-    @run_with_all_backends
     def test_archived_form_gets_removed_from_case_xform_ids(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         instance_id = self.submit_xml_form(
@@ -559,6 +550,11 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
 
         case = case_accessors.get_case(self.sp.case_id)
         self.assertNotIn(instance_id, case.xform_ids)
+
+
+@use_sql_backend
+class BugSubmissionsTestSQL(BugSubmissionsTest):
+    pass
 
 
 class CommTrackSyncTest(CommTrackSubmissionTest):
@@ -581,20 +577,28 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
             restore_user=self.restore_user,
             params=RestoreParams(version=V2),
         )
-        self.sync_log_id = synclog_id_from_restore_payload(restore_config.get_payload().as_string())
+        self.sync_log_id = deprecated_synclog_id_from_restore_payload(
+            restore_config.get_payload().as_string())
 
-    @run_with_all_backends
     def testStockSyncToken(self):
         # first restore should not have the updated case
-        check_user_has_case(self, self.restore_user, self.sp_block, should_have=False,
-                            restore_id=self.sync_log_id, version=V2)
+        deprecated_check_user_has_case(
+            self, self.restore_user, self.sp_block, should_have=False,
+            restore_id=self.sync_log_id, version=V2)
 
         # submit with token
-        amounts = [(p._id, float(i*10)) for i, p in enumerate(self.products)]
-        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id)
+        amounts = [(p._id, float(i * 10)) for i, p in enumerate(self.products)]
+        self.submit_xml_form(balance_submission(amounts), last_sync_token=self.sync_log_id,
+                             device_id=None)
         # now restore should have the case
-        check_user_has_case(self, self.restore_user, self.sp_block, should_have=True,
-                            restore_id=self.sync_log_id, version=V2, line_by_line=False)
+        deprecated_check_user_has_case(
+            self, self.restore_user, self.sp_block, should_have=True,
+            restore_id=self.sync_log_id, version=V2, line_by_line=False)
+
+
+@use_sql_backend
+class CommTrackSyncTestSQL(CommTrackSyncTest):
+    pass
 
 
 class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
@@ -604,7 +608,6 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         self.ct_settings.use_auto_consumption = True
         self.ct_settings.save()
 
-    @run_with_all_backends
     def test_archive_last_form(self):
         initial_amounts = [(p._id, float(100)) for p in self.products]
         self.submit_xml_form(
@@ -616,9 +619,10 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         second_form_id = self.submit_xml_form(balance_submission(final_amounts))
 
         ledger_accessors = LedgerAccessors(self.domain.name)
+
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
+                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
                 # 6 = 3 stockonhand and 3 inferred consumption txns
@@ -642,7 +646,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             form.archive()
 
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
@@ -660,7 +664,6 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             form.unarchive()
         _assert_initial_state()
 
-    @run_with_all_backends
     def test_archive_only_form(self):
         # check no data in stock states
         ledger_accessors = LedgerAccessors(self.domain.name)
@@ -673,7 +676,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         # check that we made stuff
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
+                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
                 self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -690,7 +693,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -698,6 +701,11 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         # unarchive and confirm commtrack data is restored
         form.unarchive()
         _assert_initial_state()
+
+
+@use_sql_backend
+class CommTrackArchiveSubmissionTestSQL(CommTrackArchiveSubmissionTest):
+    pass
 
 
 def _report_soh(soh_reports, case_id, domain):

@@ -9,6 +9,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_to_user_pillow, \
@@ -69,6 +70,24 @@ class GroupToUserPillowTest(SimpleTestCase):
         update_es_user_with_groups(new_group)
         self._check_es_user(['group1', 'group2'], ['g1', 'g2'])
 
+    def test_update_es_user_with_groups_remove_user(self):
+        group_doc = {
+            'name': 'g1',
+            '_id': 'group1',
+            'users': [self.user_id],
+            'removed_users': set([]),
+        }
+
+        # re-process group with no change
+        update_es_user_with_groups(group_doc)
+        self._check_es_user(['group1'], ['g1'])
+
+        group_doc['removed_users'].add(self.user_id)
+        group_doc['users'] = []
+
+        update_es_user_with_groups(group_doc)
+        self._check_es_user(None, None)
+
     def test_remove_user_from_groups_partial_match(self):
         original_id = uuid.uuid4().hex
         group_doc = {
@@ -95,12 +114,12 @@ def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, gr
     es_user = es_client.get(USER_INDEX, user_id)
     user_doc = es_user['_source']
     if group_ids is None:
-        test_case.assertTrue('__group_ids' not in user_doc)
+        test_case.assertTrue('__group_ids' not in user_doc or not user_doc['__group_ids'])
     else:
         test_case.assertEqual(set(user_doc['__group_ids']), set(group_ids))
 
     if group_names is None:
-        test_case.assertTrue('__group_names' not in user_doc)
+        test_case.assertTrue('__group_names' not in user_doc or not user_doc['__group_names'])
     else:
         test_case.assertEqual(set(user_doc['__group_names']), set(group_names))
 
@@ -112,6 +131,7 @@ def _create_es_user(es_client, user_id, domain):
         username='hc',
         first_name='Harry',
         last_name='Casual',
+        is_active=True,
     )
     send_to_elasticsearch('users', user.to_json())
     es_client.indices.refresh(USER_INDEX)
@@ -203,6 +223,6 @@ class GroupsToUserReindexerTest(TestCase):
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
-        call_command('ptop_reindexer_v2', 'groups-to-user', noinput=True)
+        reindex_and_clean('groups-to-user')
         self.es.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])

@@ -30,7 +30,7 @@ def ensure_plans(config, verbose, apps):
             return
 
         product, product_rate = _ensure_product_and_rate(
-            plan_deets['product_rate'], edition,
+            plan_deets['product_rate_monthly_fee'], edition,
             verbose=verbose, apps=apps,
         )
         feature_rates = _ensure_feature_rates(
@@ -106,7 +106,7 @@ def _ensure_role(role_slug, apps):
     return role
 
 
-def _ensure_product_and_rate(product_rate, edition, verbose, apps):
+def _ensure_product_and_rate(monthly_fee, edition, verbose, apps):
     """
     Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
     """
@@ -116,12 +116,16 @@ def _ensure_product_and_rate(product_rate, edition, verbose, apps):
     if verbose:
         log_accounting_info('Ensuring Products and Product Rates')
 
-    product_type = SoftwareProductType.COMMCARE
-    product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
+    product = SoftwareProduct(name='CommCare %s' % edition)
+
+    # TODO - remove after product_type column is dropped and migrations are squashed
+    if hasattr(product, 'product_type'):
+        product.product_type = SoftwareProductType.COMMCARE
+
     if edition == SoftwarePlanEdition.ENTERPRISE:
         product.name = "Dimagi Only %s" % product.name
 
-    product_rate = SoftwareProductRate(**product_rate)
+    product_rate = SoftwareProductRate(monthly_fee=monthly_fee)
     try:
         product = SoftwareProduct.objects.get(name=product.name)
         if verbose:

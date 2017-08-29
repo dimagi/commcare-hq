@@ -1,7 +1,7 @@
 /* globals $ */
 /* globals window */
 
-hqDefine('app_manager/js/preview_app.js', function() {
+hqDefine('app_manager/js/preview_app', function() {
     'use strict';
     var module = {};
     var _private = {};

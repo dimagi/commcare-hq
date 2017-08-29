@@ -1,14 +1,13 @@
 import uuid
-from tempfile import mkdtemp
+from datetime import datetime
 
+from contextlib2 import ExitStack
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
-from shutil import rmtree
 
 import settings
 from corehq.blobs import get_blob_db
-from corehq.blobs.fsdb import FilesystemBlobDB
-from corehq.blobs.tests.util import TemporaryS3BlobDB
+from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
@@ -23,9 +22,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'
@@ -41,7 +38,7 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_form_by_id(self):
         form = create_form_for_test(DOMAIN)
-        with self.assertNumQueries(1, using=db_for_read_write(XFormInstanceSQL)):
+        with self.assertNumQueries(1, using=form.db):
             form = FormAccessorSQL.get_form(form.form_id)
         self._check_simple_form(form)
 
@@ -65,12 +62,44 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(form1.form_id, forms[0].form_id)
         self.assertEqual(form2.form_id, forms[1].form_id)
 
+    def test_get_forms_by_last_modified(self):
+        start = datetime(2016, 1, 1)
+        end = datetime(2018, 1, 1)
+
+        form1 = create_form_for_test(DOMAIN, received_on=datetime(2017, 1, 1))
+        create_form_for_test(DOMAIN, received_on=datetime(2015, 1, 1))
+        # Test that it gets all states
+        form2 = create_form_for_test(
+            DOMAIN,
+            state=XFormInstanceSQL.ARCHIVED,
+            received_on=datetime(2017, 1, 1)
+        )
+        # Test that other date fields are properly fetched
+        form3 = create_form_for_test(
+            DOMAIN,
+            received_on=datetime(2015, 1, 1),
+            edited_on=datetime(2017, 1, 1),
+        )
+
+        forms = list(FormAccessorSQL.iter_forms_by_last_modified(start, end))
+        self.assertEqual(3, len(forms))
+        self.assertEqual(
+            {form1.form_id, form2.form_id, form3.form_id},
+            {form.form_id for form in forms},
+        )
+
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
         with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(2, using=db_for_read_write(XFormAttachmentSQL)):
+        with ExitStack() as stack:
+            if settings.USE_PARTITIONED_DATABASE:
+                proxy_queries = 1
+                stack.enter_context(self.assertNumQueries(1, using=form.db))
+            else:
+                proxy_queries = 2
+            stack.enter_context(self.assertNumQueries(proxy_queries, using=db_for_read_write(XFormAttachmentSQL)))
             form = FormAccessorSQL.get_with_attachments(form.form_id)
 
         self._check_simple_form(form)
@@ -360,10 +389,7 @@ class FormAccessorsTests(TestCase):
 
         for form_id in ['f1', 'f2']:
             form = FormAccessors(DOMAIN).get_form(form_id)
-            if isinstance(form, PartitionedModel):
-                form.delete(using=get_db_alias_for_partitioned_doc(form.form_id))
-            else:
-                form.delete()
+            form.delete()
 
 
 @use_sql_backend
@@ -374,13 +400,10 @@ class FormAccessorsTestsSQL(FormAccessorsTests):
 class DeleteAttachmentsFSDBTests(TestCase):
     def setUp(self):
         super(DeleteAttachmentsFSDBTests, self).setUp()
-        self.rootdir = mkdtemp(prefix="blobdb")
-        self.db = FilesystemBlobDB(self.rootdir)
+        self.db = TemporaryFilesystemBlobDB()
 
     def tearDown(self):
-        self.db = None
-        rmtree(self.rootdir)
-        self.rootdir = None
+        self.db.close()
         super(DeleteAttachmentsFSDBTests, self).tearDown()
 
     def test_hard_delete_forms_and_attachments(self):

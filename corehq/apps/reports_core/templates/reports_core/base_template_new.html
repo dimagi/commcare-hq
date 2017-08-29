@@ -34,14 +34,14 @@
             return base_url;
         }
     $(function() {
-        var charts = hqImport('reports_core/js/charts.js');
+        var charts = hqImport('reports_core/js/charts');
         var chartSpecs = {{ report.spec.charts|JSON }};
         var updateCharts = function (data) {
             if (chartSpecs !== null && chartSpecs.length > 0) {
                 var isReportBuilderReport = {{ report.spec.report_meta.created_by_builder|JSON }};
                 if (data.iTotalRecords > 25 && isReportBuilderReport) {
                     $("#chart-warning").removeClass("hide");
-                    charts.clear($("#chart-container"))
+                    charts.clear($("#chart-container"));
                 } else {
                     $("#chart-warning").addClass("hide");
                     charts.render(chartSpecs, data.aaData, $("#chart-container"));
@@ -53,7 +53,7 @@
         var updateMap = function (data) {
             if (mapSpec) {
                 mapSpec.mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-                var render_map = hqImport('reports_core/js/maps.js').render;
+                var render_map = hqImport('reports_core/js/maps').render;
                 render_map(mapSpec, data.aaData, $("#map-container"));
             }
         };
@@ -93,7 +93,7 @@
             }
         };
 
-        var reportTables = new HQReportDataTables({
+        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},

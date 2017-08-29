@@ -9,6 +9,9 @@ class FakeTwilioMessage(object):
         self.price = price
         self.num_segments = six.text_type(num_segments)
 
+    def fetch(self):
+        return self
+
 
 class FakeTwilioMessageFactory(object):
     backend_message_id_to_num_segments = {}

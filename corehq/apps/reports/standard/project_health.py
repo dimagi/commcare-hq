@@ -415,10 +415,19 @@ class ProjectHealthDashboard(ProjectReport):
 
     @property
     def template_context(self):
-        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         performance_threshold = get_performance_threshold(self.domain)
+        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
+        six_months_reports = []
+
+        for report in prior_months_reports:
+            r = report.to_json()
+            # inactive is a calculated property and this is transformed to json in
+            # the template so we need to precompute here
+            r.update({'inactive': report.inactive})
+            six_months_reports.append(r)
+
         return {
-            'six_months_reports': prior_months_reports,
+            'six_months_reports': six_months_reports,
             'this_month': prior_months_reports[-1],
             'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,

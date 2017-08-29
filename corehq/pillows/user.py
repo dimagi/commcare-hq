@@ -14,7 +14,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -83,13 +83,15 @@ class UnknownUsersProcessor(PillowProcessor):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
-def get_unknown_users_pillow(pillow_id='unknown-users-pillow', **kwargs):
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.FORM_TOPICS)
     processor = UnknownUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='unknown-users')
+    change_feed = KafkaChangeFeed(
+        topics=topics.FORM_TOPICS, group_id='unknown-users', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -108,15 +110,17 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow', **kwargs):
+def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
-    change_feed = KafkaChangeFeed(topics=topics.USER_TOPICS, group_id='users-to-es')
+    change_feed = KafkaChangeFeed(
+        topics=topics.USER_TOPICS, group_id='users-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -128,16 +132,23 @@ def get_user_pillow(pillow_id='UserPillow', **kwargs):
     )
 
 
-def get_user_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_user_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=CommCareUser.get_db(),
-            view_name='users/by_username',
-            view_kwargs={
-                'include_docs': True,
-            }
-        ),
-        elasticsearch=get_es_new(),
-        index_info=USER_INDEX_INFO,
-    )
+class UserReindexerFactory(ReindexerFactory):
+    slug = 'user'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        return ElasticPillowReindexer(
+            pillow=get_user_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=CommCareUser.get_db(),
+                view_name='users/by_username',
+                view_kwargs={
+                    'include_docs': True,
+                }
+            ),
+            elasticsearch=get_es_new(),
+            index_info=USER_INDEX_INFO,
+            **self.options
+        )

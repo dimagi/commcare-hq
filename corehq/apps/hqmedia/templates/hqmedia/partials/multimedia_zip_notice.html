@@ -14,8 +14,8 @@
                 href="#multimedia-zip-modal" data-toggle="modal" onclick="download_application_zip()"
             }
             {% else %}
-                {# This happens when the template gets included in app_manager/v1/partials/releases.html #}
-                {# See app_manager/js/releases.js #}
+                {# This happens when the template gets included in app_manager/partials/releases.html #}
+                {# See app_manager/js/releases/releases.js #}
                 data-bind="click: function () {
                     download_application_zip(true, build_profile());
                 }"
@@ -52,6 +52,5 @@
 
 {% if include_modal %}
     {% url "download_multimedia_zip" domain app.get_id as multimedia_url%}
-    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
-    {% include 'app_manager/v1/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=multimedia_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=multimedia_url %}
 {% endif %}

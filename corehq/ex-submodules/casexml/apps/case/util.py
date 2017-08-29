@@ -1,14 +1,15 @@
 from __future__ import absolute_import
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import uuid
 
 from xml.etree import ElementTree
 import datetime
 
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
 from iso8601 import iso8601
+from restkit.errors import ResourceError
 
-from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.exceptions import PhoneDateValueError
@@ -40,7 +41,7 @@ def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
         raise PhoneDateValueError('{!r}'.format(datetime_string))
 
 
-def post_case_blocks(case_blocks, form_extras=None, domain=None):
+def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, device_id=None):
     """
     Post case blocks.
 
@@ -60,7 +61,9 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     return submit_case_blocks(
         [ElementTree.tostring(case_block) for case_block in case_blocks],
         domain=domain,
-        form_extras=form_extras
+        form_extras=form_extras,
+        user_id=user_id,
+        device_id=device_id,
     )
 
 
@@ -112,6 +115,14 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError as e:
+        soft_assert('@'.join(['skelly', 'dimagi.com']))(
+            False,
+            'SyncLogAssertionError raised while updating phone lists',
+            {
+                'form_id': xform.form_id,
+                'cases': [case.case_id for case in cases]
+            }
+        )
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
@@ -132,6 +143,17 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
+
+
+def prune_previous_log(sync_log):
+    previous_log = sync_log.get_previous_log()
+    if previous_log:
+        try:
+            previous_log.delete()
+            sync_log.previous_log_removed = True
+            sync_log.save()
+        except ResourceError:
+            pass
 
 
 def get_indexed_cases(domain, case_ids):
@@ -157,3 +179,36 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
     else:
         for case in CommCareCase.bulk_get_lite(case_ids, wrap=wrap):
             yield case
+
+
+def get_datetime_case_property_changed(case, case_property_name, value):
+    """Returns the datetime a particular case property was changed to a specific value
+
+    Not performant!
+    """
+    from casexml.apps.case.xform import get_case_updates
+    PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'new_value modified_on')
+
+    def property_changed_in_action(action, case_property_name):
+        update_actions = [
+            (update.modified_on_str, update.get_update_action())
+            for update in get_case_updates(action.form)
+            if update.id == case.case_id
+        ]
+        for (modified_on, action) in update_actions:
+            if action:
+                property_changed = action.dynamic_properties.get(case_property_name)
+                if property_changed:
+                    return PropertyChangedInfo(property_changed, modified_on)
+        return False
+
+    date_of_change = None
+    actions = case.actions
+    for i, transactions in enumerate(actions):
+        property_changed_info = property_changed_in_action(transactions, case_property_name)
+        if property_changed_info and property_changed_info.new_value == value:
+            # get the date that case_property changed
+            date_of_change = parse_datetime(property_changed_info.modified_on)
+            break
+
+    return date_of_change

@@ -7,7 +7,7 @@ from django.db import transaction
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str
+from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
@@ -114,21 +114,17 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency, max_checkpoint_delay=MAX_CHECKPOINT_DELAY):
+    def __init__(self, checkpoint, checkpoint_frequency, checkpoint_callback=None):
         """
         :param checkpoint: PillowCheckpoint object
         :param checkpoint_frequency: Number of changes between checkpoint updates
-        :param max_checkpoint_delay: Max number of seconds between checkpoint updates
         """
         # check settings to make it easy to override in tests
-        override_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', DELAY_SENTINEL)
-        if override_delay != DELAY_SENTINEL:
-            max_checkpoint_delay = override_delay
-
+        self.max_checkpoint_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', MAX_CHECKPOINT_DELAY)
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
-        self.max_checkpoint_delay = max_checkpoint_delay
         self.last_update = datetime.utcnow()
+        self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
         frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
@@ -136,11 +132,13 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         if self.max_checkpoint_delay:
             seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
             time_hit = seconds_since_last_update >= self.max_checkpoint_delay
-        return context.do_set_checkpoint and (frequency_hit or time_hit)
+        return frequency_hit or time_hit
 
     def update_checkpoint(self, new_seq):
         self.checkpoint.update_to(new_seq)
         self.last_update = datetime.utcnow()
+        if self.checkpoint_callback:
+            self.checkpoint_callback.checkpoint_updated()
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
@@ -175,23 +173,33 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def get_or_create_wrapped(self, verify_unchanged=None):
         checkpoints = self._get_checkpoints()
         ret = {}
-        timestamp = checkpoints[0].last_modified
-        for checkpoint in checkpoints:
-            ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
-            if checkpoint.last_modified > timestamp:
-                timestamp = checkpoint.last_modified
+        if checkpoints:
+            timestamp = checkpoints[0].last_modified
+            for checkpoint in checkpoints:
+                ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+                if checkpoint.last_modified > timestamp:
+                    timestamp = checkpoint.last_modified
+        else:
+            timestamp = datetime.fromtimestamp(0)
 
         return WrappedCheckpoint(ret, timestamp)
 
-    def get_current_sequence_id(self):
+    def get_current_sequence_as_dict(self):
         return {
             (checkpoint.topic, checkpoint.partition): checkpoint.offset
             for checkpoint in self._get_checkpoints()
         }
 
+    def get_current_sequence_id(self):
+        return kafka_seq_to_str(self.get_current_sequence_as_dict())
+
     def update_to(self, seq):
-        kafka_seq = seq
-        seq = kafka_seq_to_str(seq)
+        if isinstance(seq, basestring):
+            kafka_seq = str_to_kafka_seq(seq)
+        else:
+            kafka_seq = seq
+            seq = kafka_seq_to_str(seq)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
@@ -208,7 +216,10 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def touch(self, min_interval):
         return False
 
+    def reset(self):
+        KafkaCheckpoint.objects.filter(checkpoint_id=self.checkpoint_id).delete()
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
+
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
+    return KafkaPillowCheckpoint(checkpoint_id, topics)

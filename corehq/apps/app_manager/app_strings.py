@@ -27,6 +27,13 @@ def convert_to_two_letter_code(lc):
     return lc
 
 
+def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=None, module=None):
+    if form:
+        return id_strings.form_custom_icon_locale(form, custom_icon_form), custom_icon_text
+    elif module:
+        return id_strings.module_custom_icon_locale(module, custom_icon_form), custom_icon_text
+
+
 def _create_custom_app_strings(app, lang, for_default=False):
 
     def trans(d):
@@ -60,21 +67,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
     for module in app.get_modules():
         for detail_type, detail, _ in module.get_details():
-            if detail_type.startswith('case'):
-                label = trans(module.case_label)
-            elif detail_type.startswith('referral'):
-                label = trans(module.referral_label)
-            elif detail_type in ('product_short', 'product_long'):
-                label = ''
-            else:
-                label = None
-            if label is not None:
-                yield id_strings.detail_title_locale(module, detail_type), label
-
             for column in detail.get_columns():
                 yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
-                if column.format in ('enum', 'enum-image'):
+                if column.format in ('enum', 'enum-image', 'conditional-enum'):
                     for item in column.enum:
                         yield id_strings.detail_column_enum_variable(
                             module, detail_type, column, item.key_as_variable
@@ -109,10 +105,13 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
         icon = module.icon_app_string(lang, for_default=for_default)
         audio = module.audio_app_string(lang, for_default=for_default)
+        custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
         if icon:
             yield id_strings.module_icon_locale(module), icon
         if audio:
             yield id_strings.module_audio_locale(module), audio
+        if custom_icon_form and custom_icon_text:
+            yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
 
         if hasattr(module, 'report_configs'):
             yield id_strings.report_menu(), 'Reports'
@@ -165,10 +164,13 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
             icon = form.icon_app_string(lang, for_default=for_default)
             audio = form.audio_app_string(lang, for_default=for_default)
+            custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
             if icon:
                 yield id_strings.form_icon_locale(form), icon
             if audio:
                 yield id_strings.form_audio_locale(form), audio
+            if custom_icon_form and custom_icon_text:
+                yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
 
         if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
             yield (

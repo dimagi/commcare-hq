@@ -61,6 +61,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
+    get_account_name_from_default_name,
     get_privileges,
     log_accounting_error,
 )
@@ -71,6 +72,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
@@ -80,7 +82,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -605,7 +607,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
-        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
     def clean_default_timezone(self):
@@ -613,10 +615,6 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
-
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data.get('mobile_ucr_sync_interval'):
-            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -1342,16 +1340,13 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(SetPasswordForm):
+class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
-
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
@@ -1558,19 +1553,15 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     future_subscriptions.update(date_end=F('date_start'))
 
                 if self.current_subscription is not None:
-                    subscription = self.current_subscription.change_plan(
+                    self.current_subscription.change_plan(
                         self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 else:
-                    subscription = Subscription.new_domain_subscription(
+                    Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -1578,11 +1569,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        # this point can only be reached if the initiating user was a superuser
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 return True
         except Exception as e:
             log_accounting_error(
@@ -1590,7 +1576,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 % (self.domain, self.plan_version.plan.name, e.message),
                 show_stack_trace=True,
             )
-        return False
+            return False
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
@@ -1686,6 +1672,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
                 "Subscription for %(domain)s failed to renew due to: %(error)s." % {
@@ -1693,7 +1680,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     'error': e,
                 }
             )
-        return True
+            return False
 
 
 class ProBonoForm(forms.Form):
@@ -1804,7 +1791,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             account = matching_accounts[0]
         else:
             account = BillingAccount(
-                name=self.account_name,
+                name=get_account_name_from_default_name(self.account_name),
                 created_by=self.web_user,
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),
@@ -1824,7 +1811,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
     @property
     @memoized

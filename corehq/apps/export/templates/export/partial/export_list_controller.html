@@ -2,9 +2,17 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
+{% load humanize %}
 
 <div ng-controller="ListExportsController"
      ng-cloak>
+    {% if request|toggle_enabled:"PAGINATED_EXPORTS" %}
+    <div class="alert alert-info">
+        {% blocktrans with max_rows=max_exportable_rows|intcomma %}
+        These exports are paginated. That means exports that have over {{ max_rows }} rows will be split into multiple files.
+        {% endblocktrans %}
+    </div>
+    {% endif %}
     {% if is_deid %}
     <p>
         {% blocktrans %}
@@ -144,7 +152,6 @@
                                         <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
                                     </span>
                                     &nbsp;&nbsp;
-                                    {% if has_edit_permissions %}
                                     {% angularjs %}
                                     <div ng-if="isLocationSafeForUser(export)">
                                         <button type="button"
@@ -164,7 +171,6 @@
                                             {% trans "Updating Data, please wait..." %}
                                         </button>
                                     </div>
-                                    {% endif %}
                                 </div>
 
                                 <div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
@@ -193,7 +199,6 @@
                                     </div>
                                 </div>
 
-                                {% if has_edit_permissions %}
                                 <div ng-if="isLocationSafeForUser(export)">
                                 <p class="text-warning"
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
@@ -210,9 +215,7 @@
                                     {% trans "Please check back later for updates. (Page refresh required)" %}
                                 </p>
                                 </div>
-                                {% endif %}
 
-                                {% if has_edit_permissions %}
                                 <div ng-if="isLocationSafeForUser(export)">
                                     <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                         {% blocktrans %}
@@ -268,7 +271,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                             {% endangularjs %}
                         </td>

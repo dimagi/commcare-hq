@@ -1,6 +1,6 @@
-/* globals hqDefine, ko, $, _, COMMCAREHQ, hqImport */
+/* globals hqDefine, ko, $, _, hqImport */
 
-hqDefine('domain/js/case-search-config.js', function () {
+hqDefine('domain/js/case-search-config', function () {
     'use strict';
 
     var module = {};
@@ -26,6 +26,14 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
     };
 
+    var IgnorePatterns = function(caseType, caseProperty, regex){
+        var self = this;
+
+        self.caseType = ko.observable(caseType);
+        self.caseProperty = ko.observable(caseProperty);
+        self.regex = ko.observable(regex);
+    };
+
     /**
      * Returns a viewModel for domain/admin/case_search.html
      */
@@ -36,20 +44,20 @@ hqDefine('domain/js/case-search-config.js', function () {
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
         self.fuzzyProperties = ko.observableArray();
-        if (
-            initialValues.config.hasOwnProperty('fuzzy_properties') &&
-            initialValues.config.fuzzy_properties.length > 0
-        ) {
-            for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
-                self.fuzzyProperties.push(new CaseTypeProps(
-                    initialValues.config.fuzzy_properties[i].case_type,
-                    initialValues.config.fuzzy_properties[i].properties
-                ));
-            }
-        } else {
-            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        for (var caseType in initialValues.fuzzy_properties){
+            self.fuzzyProperties.push(new CaseTypeProps(
+                caseType,
+                initialValues.fuzzy_properties[caseType]
+            ));
         }
-
+        self.ignorePatterns = ko.observableArray();
+        for (var i = 0; i < initialValues.ignore_patterns.length; i++){
+            self.ignorePatterns.push(new IgnorePatterns(
+                initialValues.ignore_patterns[i].case_type,
+                initialValues.ignore_patterns[i].case_property,
+                initialValues.ignore_patterns[i].regex
+            ));
+        }
         self.change = function(){
             self.saveButton.fire('change');
         };
@@ -64,32 +72,49 @@ hqDefine('domain/js/case-search-config.js', function () {
             self.change();
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.addIgnorePatterns = function(){
+            self.ignorePatterns.push(new IgnorePatterns('', '', ''));
+            self.change();
+        };
+        self.removeIgnorePatterns = function(r){
+            self.ignorePatterns.remove(r);
+            self.change();
+        };
+
+        self.saveButton = hqImport("style/js/main").initSaveButton({
             unsavedMessage: "You have unchanged settings",
             save: function() {
                 self.saveButton.ajax({
                     type: 'post',
-                    url: hqImport("hqwebapp/js/urllib.js").reverse("case_search_config"),
-                    data: self.serialize(),
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("case_search_config"),
+                    data: JSON.stringify(self.serialize()),
                     dataType: 'json',
+                    contentType: "application/json; charset=utf-8",
                 });
             },
         });
 
         self.serialize = function(){
-            var fuzzyProperties = [];
+            var fuzzyProperties = {};
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
-                fuzzyProperties.push({
-                    case_type: self.fuzzyProperties()[i].caseType(),
-                    properties: _.map(
+                var caseType = self.fuzzyProperties()[i].caseType(),
+                    properties = _.map(
                         self.fuzzyProperties()[i].properties(),
                         function (property) { return property.name(); }
-                    ),
-                });
+                    );
+
+                fuzzyProperties[caseType] = (fuzzyProperties[caseType] || []).concat(properties);
             }
             return {
                 'enable': self.toggleEnabled(),
-                'config': {'fuzzy_properties': fuzzyProperties},
+                'fuzzy_properties': fuzzyProperties,
+                'ignore_patterns': _.map(self.ignorePatterns(), function(rc){
+                    return {
+                        'case_type': rc.caseType(),
+                        'case_property': rc.caseProperty(),
+                        'regex': rc.regex(),
+                    };
+                }),
             };
         };
     };

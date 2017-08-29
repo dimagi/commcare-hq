@@ -76,5 +76,5 @@ class Command(BaseCommand):
                 "{}-blob-migration-{}.txt".format(slug, now))
             assert not os.path.exists(summary_file), summary_file
             assert not os.path.exists(log_file), log_file
-            with open(summary_file, "w") as fh, tee_output(fh):
+            with open(summary_file, "w", 1) as fh, tee_output(fh):
                 do_migration()

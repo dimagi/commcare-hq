@@ -6,7 +6,6 @@ from django.utils.translation import ugettext
 from crispy_forms.bootstrap import FormActions as OriginalFormActions, InlineField, AccordionGroup
 from crispy_forms.layout import Field as OldField, LayoutObject
 from crispy_forms.utils import render_field, get_template_pack, flatatt
-from django.template import Context
 from django.template.loader import render_to_string
 
 
@@ -27,12 +26,12 @@ class FormActions(OriginalFormActions):
         for field in self.fields:
             html += render_field(field, form, form_style, context, template_pack=template_pack)
         offsets = _get_offsets(context)
-        return render_to_string(self.template, Context({
+        return render_to_string(self.template, {
             'formactions': self,
             'fields_output': html,
             'offsets': offsets,
             'field_class': context.get('field_class', '')
-        }))
+        })
 
 
 class Field(OldField):

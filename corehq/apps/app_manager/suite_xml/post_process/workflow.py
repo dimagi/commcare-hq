@@ -47,7 +47,7 @@ class WorkflowHelper(PostProcessor):
 
                 self.create_workflow_stack(form_command, stack_frames)
 
-    def get_frame_children(self, target_form, module_only=False):
+    def get_frame_children(self, target_form, module_only=False, include_target_root=False):
         """
         For a form return the list of stack frame children that are required
         to navigate to that form.
@@ -83,6 +83,9 @@ class WorkflowHelper(PostProcessor):
             datums_list = self.root_module_datums
         else:
             datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            root_module = target_form.get_module().root_module
+            if root_module and include_target_root:
+                datums_list = datums_list + self.get_module_datums(id_strings.menu_id(root_module)).values()
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -96,7 +99,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas])
+        frames = filter(None, [meta.to_frame() for meta in frame_metas if meta is not None])
         if not frames:
             return
 
@@ -255,30 +258,34 @@ class EndOfFormNavigationWorkflow(object):
 
             return frame_children
 
-        stack_frames = []
-        if form.post_form_workflow == WORKFLOW_ROOT:
-            stack_frames.append(StackFrameMeta(None, [], allow_empty_frame=True))
-        elif form.post_form_workflow == WORKFLOW_MODULE:
-            frame_children = frame_children_for_module(module, include_user_selections=False)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
-            root_module = module.root_module
-            frame_children = frame_children_for_module(root_module)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-            frame_children = self.helper.get_frame_children(form)
+        def _get_static_stack_frame(form_workflow, xpath=None):
+            if form_workflow == WORKFLOW_ROOT:
+                return StackFrameMeta(xpath, [], allow_empty_frame=True)
+            elif form_workflow == WORKFLOW_MODULE:
+                frame_children = frame_children_for_module(module, include_user_selections=False)
+                return StackFrameMeta(xpath, frame_children)
+            elif form_workflow == WORKFLOW_PARENT_MODULE:
+                root_module = module.root_module
+                frame_children = frame_children_for_module(root_module)
+                return StackFrameMeta(xpath, frame_children)
+            elif form_workflow == WORKFLOW_PREVIOUS:
+                frame_children = self.helper.get_frame_children(form, include_target_root=True)
 
-            # since we want to go the 'previous' screen we need to drop the last
-            # datum
-            last = frame_children.pop()
-            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
-                # keep removing last element until we hit a command
-                # or a non-autoselect datum
+                # since we want to go the 'previous' screen we need to drop the last
+                # datum
                 last = frame_children.pop()
+                while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+                    # keep removing last element until we hit a command
+                    # or a non-autoselect datum
+                    last = frame_children.pop()
 
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_FORM:
+                return StackFrameMeta(xpath, frame_children)
+
+        stack_frames = []
+
+        if form.post_form_workflow == WORKFLOW_FORM:
             source_form_datums = self.helper.get_form_datums(form)
+
             for link in form.form_links:
                 target_form = self.helper.app.get_form(link.form_id)
                 target_module = target_form.get_module()
@@ -305,7 +312,25 @@ class EndOfFormNavigationWorkflow(object):
                     ]
 
                 stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
-
+            if form.post_form_workflow_fallback:
+                # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
+                link_xpaths = [link.xpath for link in form.form_links]
+                if link_xpaths:
+                    negate_of_all_link_paths = (
+                        ' and '.join(
+                            ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
+                        )
+                    )
+                    static_stack_frame_for_fallback = _get_static_stack_frame(
+                        form.post_form_workflow_fallback,
+                        negate_of_all_link_paths
+                    )
+                    if static_stack_frame_for_fallback:
+                        stack_frames.append(static_stack_frame_for_fallback)
+        else:
+            static_stack_frame = _get_static_stack_frame(form.post_form_workflow)
+            if static_stack_frame:
+                stack_frames.append(static_stack_frame)
         return stack_frames
 
     @staticmethod
@@ -334,17 +359,25 @@ class CaseListFormStackFrames(namedtuple('CaseListFormStackFrames', 'case_create
     source_session_var = None
 
     def add_children(self, children):
+        children = list(children)
+        if self.case_created:
+            for child in children:
+                self.case_created.add_child(child)
         for child in children:
-            self.case_created.add_child(child)
             if not isinstance(child, WorkflowDatumMeta) or child.source_id != self.source_session_var:
                 # add all children to the 'case not created' block unless it's the datum of the
-                # case that was supposed to be created by the form
+                # case that was supposed to be created by the form, or a later datum
                 self.case_not_created.add_child(child)
+            else:
+                break
 
     @property
     def ids_on_stack(self):
         """All ID's that are already part the stack block"""
-        return {child.id for child in self.case_created.children}
+        if self.case_created:
+            return {child.id for child in self.case_created.children}
+        else:
+            return set()
 
 
 class CaseListFormWorkflow(object):
@@ -401,16 +434,25 @@ class CaseListFormWorkflow(object):
         :param source_form_datums: List of datum from the case list form
         :return: CaseListFormStackFrames object
         """
+        from corehq.apps.app_manager.models import WORKFLOW_CASE_LIST
         source_session_var = self._get_source_session_var(form, target_module.case_type)
         source_case_id = session_var(source_session_var)
         case_count = CaseIDXPath(source_case_id).case().count()
         target_command = id_strings.menu_id(target_module)
-        frame_case_created = StackFrameMeta(
-            self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
-        )
-        frame_case_not_created = StackFrameMeta(
-            self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
-        )
+
+        if target_module.case_list_form.post_form_workflow == WORKFLOW_CASE_LIST:
+            frame_case_created = None
+            frame_case_not_created = StackFrameMeta(
+                self.get_if_clause(None, target_command), current_session=source_form_datums
+            )
+        else:
+            frame_case_created = StackFrameMeta(
+                self.get_if_clause(case_count.gt(0), target_command), current_session=source_form_datums
+            )
+            frame_case_not_created = StackFrameMeta(
+                self.get_if_clause(case_count.eq(0), target_command), current_session=source_form_datums
+            )
+
         stack_frames = CaseListFormStackFrames(
             case_created=frame_case_created, case_not_created=frame_case_not_created
         )
@@ -447,11 +489,13 @@ class CaseListFormWorkflow(object):
     @staticmethod
     def get_if_clause(case_count_xpath, target_command):
         return_to = session_var(RETURN_TO)
-        return XPath.and_(
+        args = [
             return_to.count().eq(1),
             return_to.eq(XPath.string(target_command)),
-            case_count_xpath
-        )
+        ]
+        if case_count_xpath:
+            args.append(case_count_xpath)
+        return XPath.and_(*args)
 
     @staticmethod
     def get_case_type_created_by_form(form, target_module):

@@ -20,6 +20,7 @@ An overview of the design, API and data structures used here.
             - [Iterator Expression](#iterator-expression)
             - [Base iteration number expressions](#base-iteration-number-expressions)
             - [Related document expressions](#related-document-expressions)
+            - [Ancestor Location Expression](#ancestor-location-expression)
             - [Nested expressions](#nested-expressions)
             - [Dict expressions](#dict-expressions)
             - ["Add Days" expressions](#add-days-expressions)
@@ -88,6 +89,7 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
+        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -189,6 +191,7 @@ split_string    | Splitting a string and grabbing a specific element from it by 
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+ancestor_location | A way to retrieve the ancestor of a particular type from a location |
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
@@ -370,6 +373,7 @@ This expression returns `(doc["foo bar"]).split(' ')[0]`:
 }
 ```
 The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+The index_expression is also optional. Without it, the expression will return the list of elements.
 
 ##### Iterator Expression
 
@@ -413,7 +417,7 @@ These are very simple expressions with no config. They return the index of the r
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
 
-```
+```json
 {
     "type": "related_doc",
     "related_doc_type": "CommCareCase",
@@ -424,6 +428,26 @@ This can be used to lookup a property in another document. Here's an example tha
     "value_expression": {
         "type": "property_name",
         "property_name": "owner_id"
+    }
+}
+```
+
+#### Ancestor location expression
+This is used to return a json object representing the ancestor of the given type of the given location.
+For instance, if we had locations configured with a hierarchy like `country -> state -> county -> city`, we could
+pass the location id of Cambridge and a location type of state to this expression to get the Massachusetts
+location.
+
+```json
+{
+    "type": "ancestor_location",
+    "location_id": {
+        "type": "property_name",
+        "name": "owner_id"
+    },
+    "location_type": {
+        "type": "constant",
+        "constant": "state"
     }
 }
 ```
@@ -1223,7 +1247,7 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support two additional configuration options:
+Location choice providers also support three additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
 * "show_full_path" - Display the full path to the location in the filter.  Defaults to `false`.
@@ -1676,7 +1700,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.0f}"
+    "format_string": "{0:.0f}"
 }
 ```
 
@@ -1685,7 +1709,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.3f}"
+    "format_string": "{0:.3f}"
 }
 ```
 
@@ -1696,6 +1720,19 @@ If there is an error formatting the date, the transform is not applied to that v
 {
    "type": "date_format", 
    "format": "%Y-%m-%d %H:%M"
+}
+```
+
+
+### Converting an ethiopian date string to a gregorian date
+Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
+2009-09-11 is converted date(2017, 5, 19). If it is unable to convert the date,
+it will return an empty string.
+
+```json
+{
+   "type": "custom",
+   "custom_type": "ethiopian_date_to_gregorian_date"
 }
 ```
 
@@ -1969,8 +2006,39 @@ Following are some custom expressions that are currently available.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
-## Inspecting database tables
+## Scaling UCR
 
+### Profiling data sources
+
+You can use `./manage.py profile_data_source <domain> <data source id> <doc id>`
+to profile a datasource on a particular doc. It will give you information such
+as functions that take the longest and number of database queries it initiates.
+
+### Faster Reporting
+
+If reports are slow, then you can add `create_index` to the data source to any
+columns that have filters applied to them.
+
+### Asynchronous Indicators
+
+If you have an expensive data source and the changes come in faster than the
+pillow can process them, you can specify `asynchronous: true` in the data source.
+This flag puts the document id in an intermediary table when a change happens
+which is later processed by a celery queue. If multiple changes are submitted
+before this can be processed, a new entry is not created, so it will be processed
+once. This moves the bottle neck from kafka/pillows to celery.
+
+The main benefit of this is that documents will be processed only once even if many
+changes come in at a time. This makes this approach ideal datasources that don't
+require 'live' data or where the source documents change very frequently.
+
+It is also possible achieve greater parallelization than is
+currently available via pillows since multiple Celery workers can process
+the changes.
+
+A diagram of this workflow can be found [here](examples/async_indicator.png)
+
+## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
 This can be done by runnning `./manage.py dbshell` or using `psql`.

@@ -15,6 +15,7 @@ class CCUserLocationAssignmentTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CCUserLocationAssignmentTest, cls).setUpClass()
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -26,6 +27,7 @@ class CCUserLocationAssignmentTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+        super(CCUserLocationAssignmentTest, cls).tearDownClass()
 
     def setUp(self):
         super(CCUserLocationAssignmentTest, self).setUp()
@@ -100,6 +102,23 @@ class CCUserLocationAssignmentTest(TestCase):
         self.loc2.sql_location.full_delete()
         self.assertAssignedLocations([])
 
+    def test_no_commit(self):
+        self.user.set_location(self.loc1, commit=False)
+        saved_user = CommCareUser.get(self.user._id)
+        self.assertEqual(saved_user.get_sql_location(self.domain), None)
+
+    def test_create_with_location(self):
+        self.addCleanup(self.user.delete)
+        self.user = CommCareUser.create(
+            domain=self.domain,
+            username='cc2',
+            password='***',
+            last_login=datetime.now(),
+            location=self.loc1,
+        )
+        self.assertPrimaryLocation(self.loc1.location_id)
+        self.assertAssignedLocations([self.loc1.location_id])
+
     def assertPrimaryLocation(self, expected):
         self.assertEqual(self.user.location_id, expected)
         self.assertEqual(self.user.user_data.get('commcare_location_id'), expected)
@@ -122,6 +141,7 @@ class WebUserLocationAssignmentTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(WebUserLocationAssignmentTest, cls).setUpClass()
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -133,6 +153,7 @@ class WebUserLocationAssignmentTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
+        super(WebUserLocationAssignmentTest, cls).tearDownClass()
 
     def setUp(self):
         super(WebUserLocationAssignmentTest, self).setUp()

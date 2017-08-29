@@ -2,7 +2,6 @@ import os
 
 from django.core.management.base import LabelCommand
 from django.template import Engine
-from django.template import Context
 from django.conf import settings
 
 SQL_ACCESSOR_DIR = os.path.join(settings.FILEPATH, 'corehq', 'sql_accessors', 'sql_templates')
@@ -13,7 +12,9 @@ TEMPLATE_NAME = '_template.sql'
 
 class Command(LabelCommand):
     help = "Create a template sql function"
-    args = "<sql_function_name.. sql_function_name>"
+
+    def add_arguments(self, parser):
+        parser.add_argument('sql_function_name')
 
     def handle_label(self, sql_function_name, **options):
         sql_function_name = os.path.splitext(sql_function_name)[0]  # strip any extension
@@ -26,7 +27,7 @@ class Command(LabelCommand):
             template_string = f.read()
 
         template = Engine().from_string(template_string)
-        rendered_template = template.render(Context({'sql_function_name': sql_function_name}))
+        rendered_template = template.render({'sql_function_name': sql_function_name})
 
         with open(os.path.join(accessor_dir, '{}.sql'.format(sql_function_name)), 'w+') as f:
             f.write(rendered_template)

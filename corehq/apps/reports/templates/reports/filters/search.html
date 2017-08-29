@@ -28,15 +28,3 @@
     </div>
     {% endif %}
 {% endblock %}
-
-{% if search_help_title and search_help_content %}
-{% block filter_js %} {{ block.super }}
-<script>
-    $(function () {
-        $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-        });
-    });
-</script>
-{% endblock filter_js %}
-{% endif %}

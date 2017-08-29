@@ -1,5 +1,5 @@
-hqDefine('accounting/js/accounting.credits.js', function () {
-    var CreditsManager = function (products, features, paymentHandler, can_purchase_credits, is_plan_trial) {
+hqDefine('accounting/js/accounting.credits', function () {
+    var CreditsManager = function (products, features, paymentHandler, can_purchase_credits) {
         'use strict';
         var self = this;
 
@@ -8,7 +8,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
         self.features = ko.observableArray();
         self.prepayments = ko.observable();
 
-        can_purchase_credits = can_purchase_credits && !is_plan_trial;
+        can_purchase_credits = can_purchase_credits;
 
         self.init = function () {
             _.each(products, function (product) {
@@ -24,7 +24,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
     var Prepayments = function(products, features, paymentHandler) {
         'use strict';
         var self = this;
-        var PrepaymentItems = hqImport('accounting/js/accounting.payment_method_handler.js').PrepaymentItems;
+        var PrepaymentItems = hqImport('accounting/js/accounting.payment_method_handler').PrepaymentItems;
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
@@ -56,7 +56,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
     var CreditItem = function (category, data, paymentHandler, can_purchase_credits) {
         'use strict';
         var self = this;
-        var CreditCostItem = hqImport('accounting/js/accounting.payment_method_handler.js').CreditCostItem;
+        var CreditCostItem = hqImport('accounting/js/accounting.payment_method_handler').CreditCostItem;
         self.category = ko.observable(category);
         self.name = ko.observable(data.name);
         self.recurringInterval = ko.observable(data.recurring_interval);

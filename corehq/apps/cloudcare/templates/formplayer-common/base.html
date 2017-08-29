@@ -107,7 +107,6 @@
             };
         </script>
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-        {% if less_watch %}<script>less.watch();</script>{% endif %}
         {% endif %}
 
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
@@ -145,6 +144,7 @@
 	{% block body %}{% endblock %}
 
         {% include 'form_entry/templates.html' %}
+        {% include 'formplayer/debugger.html' %}
         {% include 'formplayer/grid_view.html' %}
         {% include 'formplayer/settings_view.html' %}
         {% include 'formplayer/case_detail.html' %}

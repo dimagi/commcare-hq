@@ -1,0 +1,690 @@
+{
+    "domains": [
+        "enikshay-reports-qa",
+        "sheel-enikshay"
+    ],
+    "server_environment": [
+        "enikshay",
+        "softlayer"
+    ],
+    "data_source_table": "episode_qa",
+    "report_id": "tb_notification_register_qa",
+    "config": {
+        "description": "",
+        "title": "TB Notification Register (Patient Case List) (QA)",
+        "sort_expression": [],
+        "visible": true,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Diagnosis",
+                "field": "date_of_diagnosis",
+                "slug": "date",
+                "type": "date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "multi_field_dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "fields": ["person_owner_id", "diagnosing_facility_id"],
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
+                },
+                "display": "Location"
+            },
+            {
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
+            },
+            {
+                "type": "pre",
+                "field": "episode_type",
+                "slug": "episode_type",
+                "datatype": "string",
+                "pre_value": "confirmed_tb"
+            }
+        ],
+        "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "nikshay_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "TB Notification number/ Nikshay ID"
+            },
+            {
+                "display": "Name",
+                "type": "field",
+                "field": "person_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Age",
+                "type": "field",
+                "field": "age",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Sex",
+                "type": "field",
+                "field": "sex",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Complete Address",
+                "type": "field",
+                "field": "current_address",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "PIN Code",
+                "type": "field",
+                "field": "current_address_postal_code",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Aadhaar No.",
+                "type": "field",
+                "field": "aadhaar_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Mobile/Landline number",
+                "type": "field",
+                "field": "mobile_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Key Population",
+                "type": "field",
+                "field": "key_populations",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "known_patient_contact": "Contact of known TB patient",
+                        "prison_inmate": "Prison inmate",
+                        "miner": "Miner",
+                        "migrant": "Migrant",
+                        "refugee": "Refugee",
+                        "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "other": "Other"
+                    }
+                },
+                "calculate_total": false
+            },
+
+            {
+                "display": "Type of Patient",
+                "type": "field",
+                "field": "patient_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "new": "New",
+                        "retreatment": "Retreatment",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Loss to Follow-up",
+                        "transfer_in": "Transferred In",
+                        "other_previously_treated": "Other Previously Treated"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Site",
+                "type": "field",
+                "field": "disease_classification",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "pulmonary": "P",
+                        "extra_pulmonary": "EP"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Case Definition",
+                "type": "field",
+                "field": "basis_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microbiological": "Microbiologically confirmed",
+                        "clinical": "Clinically Diagnosed"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Diagnosis",
+                "type": "field",
+                "field": "date_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Date",
+                "type": "field",
+                "field": "microbiological_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Lab Name",
+                "type": "field",
+                "field": "microbiological_test_facility_referred_to",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Lab No.",
+                "type": "field",
+                "field": "microbiological_test_lab_serial_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Test",
+                "type": "field",
+                "field": "microbiological_test_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "Microscopy-ZN": "ZN",
+                        "Microscopy-Fluorescent": "FM",
+                        "cbnaat": "CBNAAT"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Results of Test",
+                "type": "field",
+                "field": "microbiological_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Results of Other tests (XRay/Histopatho/FNAC/Clinical/Other,specify)",
+                "type": "field",
+                "field": "not_microbiological_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV Status",
+                "type": "field",
+                "field": "hiv_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "reactive": "Reactive",
+                        "non_reactive": "Non-Reactive",
+                        "unknown": "Unknown"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Diabetes status",
+                "type": "field",
+                "field": "diabetes_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "diabetic": "Diabetic",
+                        "non_diabetic": "Non-diabetic",
+                        "unknown": "Unknown"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Sample Sent for DST",
+                "type": "field",
+                "field": "date_of_sample_dst",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Result of DST",
+                "type": "field",
+                "field": "result_of_dst",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Status of Treatment",
+                "type": "field",
+                "field": "treatment_status_value",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Health Facility for Treatment",
+                "type": "field",
+                "field": "health_facility_for_treatment",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Date of Treatment Initiation",
+                "type": "field",
+                "field": "treatment_initiation_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Type of Regimen",
+                "type": "field",
+                "field": "type_of_regimen",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Weight at beginning of treatment",
+                "type": "field",
+                "field": "weight",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Dosage Frequency",
+                "type": "field",
+                "field": "adherence_schedule_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "schedule_mwf": "Intermittent (MWF)",
+                        "schedule_trs": "Intermittent (TTS)",
+                        "schedule_daily": "Daily"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Date",
+                "type": "field",
+                "field": "endofip_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - DMC Name",
+                "type": "field",
+                "field": "endofip_test_facility_referred_to",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Smear Result",
+                "type": "field",
+                "field": "endofip_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of CP) - Date",
+                "type": "field",
+                "field": "endofcp_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of CP) - DMC Name",
+                "type": "field",
+                "field": "endofcp_test_facility_referred_to",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of CP) - Smear Result",
+                "type": "field",
+                "field": "endofcp_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Outcome - Result",
+                "type": "field",
+                "field": "treatment_outcome",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "cured": "Cured",
+                        "treatment_complete": "Treatment complete",
+                        "died": "Patient died",
+                        "failure": "Treatment Failure",
+                        "loss_to_follow_up": "Loss to follow up",
+                        "regimen_changed": "Regimen changed (switched to CAT4)",
+                        "not_evaluated": "Not evaluated"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Outcome - Date",
+                "type": "field",
+                "field": "treatment_outcome_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "CPT (y/n) Date",
+                "type": "field",
+                "field": "cpt",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "ART (y/n) Date",
+                "type": "field",
+                "field": "art",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 6 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_6_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 12 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_12_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 18 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_18_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow-up (at 24 months) - Smear",
+                "type": "field",
+                "field": "post_treatment_24_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Supporter Details - Name",
+                "type": "field",
+                "field": "treatment_supporter_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Supporter Details - Designation",
+                "type": "field",
+                "field": "treatment_supporter_designation",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "tbhv": "TBHV",
+                        "asha": "ASHA",
+                        "aww": "AWW",
+                        "private_medical_pracitioner": "Private Medical Practitioner",
+                        "health_worker": "Health worker",
+                        "ngo_volunteer": "NGO volunteer",
+                        "other_community_volunteer": "Other community volunteer",
+                        "patient_family_member": "Patient's family member"
+                    }
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

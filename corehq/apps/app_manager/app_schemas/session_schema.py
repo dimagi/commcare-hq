@@ -29,7 +29,7 @@ def get_session_schema(form):
                 },
             },
         }
-    if is_usercase_in_use(app.domain) and toggles.USER_PROPERTY_EASY_REFS.enabled(app.domain):
+    if is_usercase_in_use(app.domain):
         structure["context"] = {
             "merge": True,
             "structure": {

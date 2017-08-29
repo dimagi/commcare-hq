@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import base64
+import hashlib
 import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -25,7 +26,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
 
@@ -236,6 +236,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     fri_message_bank_message_id = models.CharField(max_length=126, null=True)
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
+
+    # Holds any custom metadata for this SMS
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
 
     class Meta:
         abstract = True
@@ -2201,10 +2204,7 @@ class PhoneLoadBalancingMixin(object):
     is an instance of this mixin for performing various operations.)
     """
 
-    def get_load_balance_redis_key(self):
-        return 'load-balance-phones-for-backend-%s' % self.pk
-
-    def get_next_phone_number(self):
+    def get_next_phone_number(self, destination_phone_number):
         if (
             not isinstance(self.load_balancing_numbers, list) or
             len(self.load_balancing_numbers) == 0
@@ -2217,8 +2217,9 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        redis_key = self.get_load_balance_redis_key()
-        return load_balance(redis_key, self.load_balancing_numbers)
+        hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
+        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        return self.load_balancing_numbers[index]
 
 
 class BackendMap(object):
@@ -2564,6 +2565,3 @@ class KeywordAction(models.Model):
             raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
-
-
-from corehq.apps.sms import signals

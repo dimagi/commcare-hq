@@ -24,9 +24,8 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
+from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
-from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -67,14 +66,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             except:
                 meta = {}
 
-            details = {
-                "domain": domain,
-                "app_id": app_id,
-                "user_id": user_id,
-                "authenticated": authenticated,
-                "form_meta": meta,
-            }
-            log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
+            details = [
+                u"domain:{}".format(domain),
+                u"app_id:{}".format(app_id),
+                u"user_id:{}".format(user_id),
+                u"authenticated:{}".format(authenticated),
+                u"form_meta:{}".format(meta),
+            ]
+            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
             notify_exception(request, "Received a submission with POST.keys()", details)
             response = HttpResponseBadRequest(e.message)
             _record_metrics(metric_tags, 'unknown', response)
@@ -122,12 +121,12 @@ def _record_metrics(base_tags, submission_type, response, result=None, timer=Non
         'status_code:{}'.format(response.status_code)
     ])
     if response.status_code == 201 and timer and result:
-        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
-        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
-        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
 
 
 @csrf_exempt

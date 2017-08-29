@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
+from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS
 import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
@@ -290,6 +291,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return {
             'form': self.password_change_form,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
 
     @method_decorator(sensitive_post_parameters())
@@ -439,16 +441,27 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        message = json.dumps([
+        message_v1 = json.dumps([
             {'username': request.user.username},
             {'flag': MULTIPLE_APPS_UNLIMITED.slug}
         ]).replace(' ', '')
+
+        message_v2 = json.dumps([
+            {'username': request.user.username},
+            {'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug]}
+        ]).replace(' ', '')
+
         qrcode_data = json.dumps({
             'username': request.user.username,
+            'version': 2,
             'flag': MULTIPLE_APPS_UNLIMITED.slug,
-            'signature': b64encode(sign(message))
+            'flags': [MULTIPLE_APPS_UNLIMITED.slug, ADVANCED_SETTINGS_ACCESS.slug],
+            'signature': b64encode(sign(message_v1)),
+            'multiple_flags_signature': b64encode(sign(message_v2))
         })
+
         qrcode = get_qrcode(qrcode_data)
+
         context = self.get_context_data(**kwargs)
         context['qrcode_64'] = b64encode(qrcode)
         return self.render_to_response(context)

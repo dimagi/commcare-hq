@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
+    GraphConfiguration,
+    GraphSeries,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -37,6 +39,71 @@ import commcare_translations
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
+
+    @staticmethod
+    def _add_columns_for_case_details(_module):
+        _module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'b'},
+                model='case',
+                field='b',
+                format='plain',
+                case_tile_field='top_left'
+            ),
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='c',
+                format='enum',
+                enum=[
+                    MappingItem(key='male', value={'en': 'Male'}),
+                    MappingItem(key='female', value={'en': 'Female'}),
+                ],
+                case_tile_field='sex'
+            ),
+            DetailColumn(
+                header={'en': 'd'},
+                model='case',
+                field='d',
+                format='plain',
+                case_tile_field='bottom_left'
+            ),
+            DetailColumn(
+                header={'en': 'e'},
+                model='case',
+                field='e',
+                format='date',
+                case_tile_field='date'
+            ),
+        ]
+
+    def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
+        suite = factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <datum
+                    detail-confirm="m1_case_long"
+                    {detail_inline_attr}
+                    {detail_persistent_attr}
+                    detail-select="m1_case_short"
+                    id="case_id_load_person_0"
+                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                    value="./@case_id"
+                />
+            </partial>
+            """.format(detail_inline_attr=detail_inline_attr,
+                       detail_persistent_attr=detail_persistent_attr),
+            suite,
+            'entry/command[@id="m1-f0"]/../session/datum',
+        )
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
@@ -100,14 +167,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
-
-    def test_careplan_suite(self):
-        self._test_generic_suite('careplan')
-
-    def test_careplan_suite_own_module(self):
-        app = Application.wrap(self.get_json('careplan'))
-        app.get_module(1).display_separately = True
-        self.assertXmlEqual(self.get_xml('careplan-own-module'), app.create_suite())
 
     @commtrack_enabled(True)
     def test_product_list_custom_data(self):
@@ -369,10 +428,119 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self):
-        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+        with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
+            self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+
+    def test_case_detail_tabs_with_nodesets_for_sorting(self):
+        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
+        app.modules[0].case_details.long.sort_nodeset_columns = True
+        xml_partial = """
+        <partial>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </template>
+            <sort direction="ascending" order="1" type="string">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </sort>
+          </field>
+        </partial>"""
+        self.assertXmlPartialEqual(
+            xml_partial, app.create_suite(),
+            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
+
+    def test_case_detail_instance_adding(self):
+        # Tests that post-processing adds instances used in calculations
+        # by any of the details (short, long, inline, persistent)
+        self._test_generic_suite('app_case_detail_instances', 'suite-case-detail-instances')
 
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
+
+    def test_case_detail_conditional_enum(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Gender'},
+                model='case',
+                field='gender',
+                format='conditional-enum',
+                enum=[
+                    MappingItem(key="gender = 'male' and age <= 21", value={'en': 'Boy'}),
+                    MappingItem(key="gender = 'female' and age <= 21", value={'en': 'Girl'}),
+                    MappingItem(key="gender = 'male' and age > 21", value={'en': 'Man'}),
+                    MappingItem(key="gender = 'female' and age > 21", value={'en': 'Woman'}),
+                ],
+            ),
+        ]
+
+        key1_varname = hashlib.md5("gender = 'male' and age <= 21").hexdigest()[:8]
+        key2_varname = hashlib.md5("gender = 'female' and age <= 21").hexdigest()[:8]
+        key3_varname = hashlib.md5("gender = 'male' and age > 21").hexdigest()[:8]
+        key4_varname = hashlib.md5("gender = 'female' and age > 21").hexdigest()[:8]
+
+        icon_mapping_spec = """
+        <partial>
+          <template>
+            <text>
+              <xpath function="if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname}, ''))))">
+                <variable name="h{key4_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key4_varname}"/>
+                </variable>
+                <variable name="h{key2_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key2_varname}"/>
+                </variable>
+                <variable name="h{key3_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key3_varname}"/>
+                </variable>
+                <variable name="h{key1_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key1_varname}"/>
+                </variable>
+              </xpath>
+            </text>
+          </template>
+        </partial>
+        """.format(
+            key1_varname=key1_varname,
+            key2_varname=key2_varname,
+            key3_varname=key3_varname,
+            key4_varname=key4_varname,
+        )
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            icon_mapping_spec,
+            app.create_suite(),
+            './detail[@id="m0_case_short"]/field/template'
+        )
+        # check app strings mapped correctly
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key1_varname}'.format(key1_varname=key1_varname, )],
+            'Boy'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key2_varname}'.format(key2_varname=key2_varname, )],
+            'Girl'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key3_varname}'.format(key3_varname=key3_varname, )],
+            'Man'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key4_varname}'.format(key4_varname=key4_varname, )],
+            'Woman'
+        )
 
     def test_case_detail_icon_mapping(self):
         app = Application.new_app('domain', 'Untitled Application')
@@ -450,48 +618,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.pull_down_tile = True
-
-        module.case_details.short.columns = [
-            DetailColumn(
-                header={'en': 'a'},
-                model='case',
-                field='a',
-                format='plain',
-                case_tile_field='header'
-            ),
-            DetailColumn(
-                header={'en': 'b'},
-                model='case',
-                field='b',
-                format='plain',
-                case_tile_field='top_left'
-            ),
-            DetailColumn(
-                header={'en': 'c'},
-                model='case',
-                field='c',
-                format='enum',
-                enum=[
-                    MappingItem(key='male', value={'en': 'Male'}),
-                    MappingItem(key='female', value={'en': 'Female'}),
-                ],
-                case_tile_field='sex'
-            ),
-            DetailColumn(
-                header={'en': 'd'},
-                model='case',
-                field='d',
-                format='plain',
-                case_tile_field='bottom_left'
-            ),
-            DetailColumn(
-                header={'en': 'e'},
-                model='case',
-                field='e',
-                format='date',
-                case_tile_field='date'
-            ),
-        ]
+        self._add_columns_for_case_details(module)
 
         form = app.new_form(0, "Untitled Form", None)
         form.xmlns = 'http://id_m0-f0'
@@ -502,6 +629,98 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./entry/session"
         )
+
+    def test_inline_case_detail_from_another_module(self):
+        factory = AppFactory()
+        module0, form0 = factory.new_advanced_module("m0", "person")
+        factory.form_requires_case(form0, "person")
+        module0.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module0)
+
+        module1, form1 = factory.new_advanced_module("m1", "person")
+        factory.form_requires_case(form1, "person")
+
+        # not configured to use other module's persistent case tile so
+        # has no detail-inline and detail-persistent attr
+        self.ensure_module_session_datum_xml(factory, '', '')
+
+        # configured to use other module's persistent case tile
+        module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+
+        # configured to use other module's persistent case tile that has custom xml
+        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+        module0.case_details.short.custom_xml = ''
+        module0.case_details.short.use_case_tiles = True
+
+        # configured to use pull down tile from the other module
+        module1.case_details.short.pull_down_tile = True
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
+                                             'detail-persistent="m0_case_short"')
+
+        # set to use persistent case tile of its own as well but it would still
+        # persists case tiles and detail inline from another module
+        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.persist_tile_on_forms = True
+        self._add_columns_for_case_details(module1)
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
+                                             'detail-persistent="m0_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and has own persistent case tile as well
+        # So now detail inline from its own details
+        module0.case_details.short.use_case_tiles = False
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m1_case_long"',
+                                             'detail-persistent="m1_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and does not have its own persistent case tile as well
+        module1.case_details.short.use_case_tiles = False
+        self.ensure_module_session_datum_xml(factory, '', '')
+
+    def test_persistent_case_tiles_from_another_module(self):
+        factory = AppFactory()
+        module0, form0 = factory.new_advanced_module("m0", "person")
+        factory.form_requires_case(form0, "person")
+        module0.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module0)
+
+        module1, form1 = factory.new_advanced_module("m1", "person")
+        factory.form_requires_case(form1, "person")
+
+        # not configured to use other module's persistent case tile so
+        # has no detail-persistent attr
+        self.ensure_module_session_datum_xml(factory, '', '')
+
+        # configured to use other module's persistent case tile
+        module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+
+        # configured to use other module's persistent case tile that has custom xml
+        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+        module0.case_details.short.custom_xml = ''
+        module0.case_details.short.use_case_tiles = True
+
+        # set to use persistent case tile of its own as well but it would still
+        # persists case tiles from another module
+        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.persist_tile_on_forms = True
+        self._add_columns_for_case_details(module1)
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and has own persistent case tile as well
+        module0.case_details.short.use_case_tiles = False
+        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m1_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and does not have its own persistent case tile as well
+        module1.case_details.short.use_case_tiles = False
+        self.ensure_module_session_datum_xml(factory, '', '')
 
     def test_persistent_case_tiles_in_advanced_forms(self):
         """
@@ -634,6 +853,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         factory.form_requires_case(form, "person")
         module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.persist_case_context = True
         suite = factory.app.create_suite()
@@ -713,7 +933,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
             xpath_description='"report description"',
-            use_xpath_description=True
+            use_xpath_description=True,
+            complete_graph_configs={
+                chart.chart_id: GraphConfiguration(
+                    graph_type="bar",
+                    series=[GraphSeries() for c in chart.y_axis_columns],
+                )
+                for chart in report.charts
+            },
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]

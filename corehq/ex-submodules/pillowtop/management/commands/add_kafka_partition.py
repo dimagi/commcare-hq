@@ -27,42 +27,31 @@ class Command(BaseCommand):
             "./kafka-topics.sh --alter --zookeeper <zk IP>:2181 --partitions={} --topic={}"
             .format(num_partitions, topic)
         )
+        print(
+            "The following command should be run as root on the kafka server. You will find"
+            "the script in the kafka install directory (likely /opt/kafka/bin)"
+            "If an error occurs about a port, you can prefix the command with JMX_PORT=9998"
+        )
         added_partition = raw_input("have you run {} ? [y/n]".format(kafka_command))
         if added_partition not in ['y', 'yes']:
-            print("then run it")
+            print("then run it on the kafka machine")
 
-        for checkpoint in DjangoPillowCheckpoint.objects.filter(sequence_format='json'):
-            try:
-                kafka_seq = str_to_kafka_seq(checkpoint.sequence)
-            except ValueError:
-                print("unable to parse {}", checkpoint.checkpoint_id)
-                continue
+        checkpoints = (
+            KafkaCheckpoint.objects
+            .filter(topic=topic)
+            .distinct('checkpoint_id')
+            .values_list('checkpoint_id', flat=True)
+        )
 
-            topics = [tp.topic for tp in kafka_seq]
-            if topic not in topics:
-                print("topic does not exist in {}", checkpoint.checkpoint_id)
-                continue
-
-            changed = False
+        for checkpoint in checkpoints:
             for partition in range(num_partitions):
-                tp = TopicAndPartition(topic, partition)
-                if tp in kafka_seq:
-                    continue
-                else:
-                    changed = True
-                    kafka_seq[tp] = 0
-
-            if changed:
-                checkpoint.old_sequence = checkpoint.sequence
-                checkpoint.sequence = kafka_seq_to_str(kafka_seq)
-                checkpoint.save()
-
-                for topic_partition, offset in kafka_seq.items():
-                    KafkaCheckpoint.objects.update_or_create(
-                        checkpoint_id=checkpoint.checkpoint_id,
-                        topic=topic_partition.topic,
-                        partition=topic_partition.partition,
-                        defaults={'offset': offset}
-                    )
+                # use get or create so that we don't accidentally update
+                # any kafka checkpoints that are further than django checkpoints.
+                KafkaCheckpoint.objects.get_or_create(
+                    checkpoint_id=checkpoint,
+                    topic=topic,
+                    partition=partition,
+                    defaults={'offset': 0}
+                )
 
         print("please restart the pillows")

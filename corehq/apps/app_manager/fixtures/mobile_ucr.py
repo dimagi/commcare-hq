@@ -3,6 +3,7 @@ from datetime import datetime
 import logging
 import random
 
+from couchdbkit.exceptions import NoResultFound
 from django.conf import settings
 from lxml.builder import E
 
@@ -13,14 +14,16 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobil
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.const import UCR_SUPPORT_BOTH_BACKENDS
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
+)
 
-MOBILE_UCR_RANDOM_THRESHOLD = 10 ** 5
+MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
 
 def _should_sync(restore_state):
@@ -29,12 +32,25 @@ def _should_sync(restore_state):
         return True
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
+    if sync_interval is None and restore_state.params.app:
+        app = restore_state.params.app
+        if restore_state.params.app.copy_of:
+            # get sync interval from latest app version so that we don't have to deploy a new version
+            # to make changes to the sync interval
+            try:
+                app = get_brief_app(restore_state.domain, restore_state.params.app.copy_of)
+            except NoResultFound:
+                pass
+        sync_interval = app.mobile_ucr_sync_interval
+    if sync_interval is None:
+        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
+
+    sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
         not sync_interval or
         (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
     )
-
 
 
 class ReportFixturesProvider(FixtureProvider):
@@ -48,8 +64,29 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
-        app = restore_state.params.app
-        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
+        if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
+            return []
+
+        app_aware_sync_app = restore_state.params.app
+        if app_aware_sync_app:
+            apps = [app_aware_sync_app]
+        elif (
+                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                and restore_state.params.device_id
+                and "WebAppsLogin" in restore_state.params.device_id
+        ):
+            # Only sync reports for apps the user has access to if this is a restore from webapps
+            role = restore_user.get_role(restore_user.domain)
+            if role:
+                allowed_app_ids = [app['_id'] for app in get_brief_apps_in_domain(restore_user.domain)
+                                   if role.permissions.view_web_app(app)]
+                apps = get_apps_by_id(restore_user.domain, allowed_app_ids)
+            else:
+                # If there is no role, allow access to all apps
+                apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+        else:
+            apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+
         report_configs = [
             report_config
             for app_ in apps
@@ -118,7 +155,7 @@ class ReportFixturesProvider(FixtureProvider):
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
                 random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
-            compare_ucr_dbs.delay(domain, report.report_id, filter_values)
+            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
@@ -129,6 +166,9 @@ class ReportFixturesProvider(FixtureProvider):
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
         data_source = ReportFactory.from_spec(report, include_prefilters=True)
+        if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
+            if random.random() < report.soft_rollout:
+                data_source.override_backend_id(UCR_ES_BACKEND)
         return report, data_source
 
     @staticmethod

@@ -32,13 +32,15 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     Xpath,
+    XpathVariable,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
     get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
+from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -50,6 +52,9 @@ class DetailContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
+        def include_sort(detail_type, detail):
+            return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
+
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -63,8 +68,9 @@ class DetailContributor(SectionContributor):
                             r.append(d)
                         else:
                             detail_column_infos = get_detail_column_infos(
+                                detail_type,
                                 detail,
-                                include_sort=detail_type.endswith('short'),
+                                include_sort=include_sort(detail_type, detail),
                             )  # list of DetailColumnInfo named tuples
                             if detail_column_infos:
                                 if detail.use_case_tiles:
@@ -75,6 +81,8 @@ class DetailContributor(SectionContributor):
                                     print_template_path = None
                                     if detail.print_template:
                                         print_template_path = detail.print_template['path']
+                                    locale_id = id_strings.detail_title_locale(detail_type)
+                                    title = Text(locale_id=locale_id) if locale_id else Text()
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,14 +90,15 @@ class DetailContributor(SectionContributor):
                                         detail_column_infos,
                                         tabs=list(detail.get_tabs()),
                                         id=id_strings.detail(module, detail_type),
-                                        title=Text(locale_id=id_strings.detail_title_locale(
-                                            module, detail_type
-                                        )),
+                                        title=title,
                                         print_template=print_template_path,
                                     )
                                     if d:
                                         r.append(d)
-                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                        # add the persist case context if needed and if
+                        # case tiles are present and have their own persistent block
+                        if (detail.persist_case_context and
+                                not (detail.use_case_tiles and detail.persist_tile_on_forms)):
                             d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
@@ -97,18 +106,23 @@ class DetailContributor(SectionContributor):
                     r.append(d)
         return r
 
-    def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None):
+    def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
+                     title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template)
+        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
+                # relevant should be set to None even in case its ''
+                tab_relevant = None
+                if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
+                    tab_relevant = tab.relevant
+
                 sub_detail = self.build_detail(
                     module,
                     detail_type,
@@ -119,7 +133,8 @@ class DetailContributor(SectionContributor):
                     )),
                     nodeset=tab.nodeset if tab.has_nodeset else None,
                     start=tab_spans[tab.id][0],
-                    end=tab_spans[tab.id][1]
+                    end=tab_spans[tab.id][1],
+                    relevant=tab_relevant,
                 )
                 if sub_detail:
                     d.details.append(sub_detail)
@@ -153,7 +168,7 @@ class DetailContributor(SectionContributor):
                 #   column_info.sort_element: an instance of app_manager.models.SortElement
                 #   column_info.order: an integer
                 fields = get_column_generator(
-                    self.app, module, detail,
+                    self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
                 ).fields
                 d.fields.extend(fields)
@@ -354,6 +369,23 @@ class DetailsHelper(object):
         return detail_id if detail_id in self.active_details else None
 
 
+def get_nodeset_sort_elements(detail):
+    from corehq.apps.app_manager.models import SortElement
+    sort_elements = []
+    tab_spans = detail.get_tab_spans()
+    for tab in detail.get_tabs():
+        if tab.nodeset:
+            tab_span = tab_spans[tab.id]
+            for column in detail.columns[tab_span[0]:tab_span[1]]:
+                if column.invisible:
+                    sort_elements.append(SortElement(
+                        field=column.field,
+                        type='string',
+                        direction='ascending'
+                    ))
+    return sort_elements
+
+
 def get_default_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
 
@@ -382,7 +414,7 @@ def get_default_sort_elements(detail):
     return sort_elements
 
 
-def get_detail_column_infos(detail, include_sort):
+def get_detail_column_infos(detail_type, detail, include_sort):
     """
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
@@ -394,6 +426,8 @@ def get_detail_column_infos(detail, include_sort):
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
+    elif detail.sort_nodeset_columns_for_detail():
+        sort_elements = get_nodeset_sort_elements(detail)
     else:
         sort_elements = get_default_sort_elements(detail)
 
@@ -484,9 +518,7 @@ class CaseTileHelper(object):
         """
         return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                self.module, self.detail_type
-            )
+            "title_text_id": id_strings.detail_title_locale(self.detail_type),
         }
 
     def _get_column_context(self, column):
@@ -506,7 +538,7 @@ class CaseTileHelper(object):
                 column.header.get(default_lang, "")
             )
         }
-        if column.enum and column.format != "enum":
+        if column.enum and column.format != "enum" and column.format != "conditional-enum":
             raise SuiteError(
                 'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
                     column.case_tile_field,
@@ -514,17 +546,23 @@ class CaseTileHelper(object):
                 )
             )
 
-        if column.format == "enum":
-            context["enum_keys"] = self._get_enum_keys(column)
+        context['variables'] = ''
+        if column.format == "enum" or column.format == 'conditional-enum':
+            context["variables"] = self._get_enum_variables(column)
         return context
 
-    def _get_enum_keys(self, column):
-        keys = {}
-        for mapping in column.enum:
-            keys[mapping.key] = id_strings.detail_column_enum_variable(
-                self.module, self.detail_type, column, mapping.key_as_variable
+    def _get_enum_variables(self, column):
+        variables = []
+        for i, mapping in enumerate(column.enum):
+            variables.append(
+                XpathVariable(
+                    name=mapping.key_as_variable,
+                    locale_id=id_strings.detail_column_enum_variable(
+                        self.module, self.detail_type, column, mapping.key_as_variable
+                    )
+                ).serialize()
             )
-        return keys
+        return ''.join(variables)
 
     @property
     @memoized

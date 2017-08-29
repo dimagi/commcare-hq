@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+from uuid import uuid4
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -13,7 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.util import format_username
 from corehq.apps.users.const import ANONYMOUS_USERNAME
@@ -94,6 +95,9 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
+    view_web_apps = BooleanProperty(default=True)
+    view_web_apps_list = StringListProperty(default=[])
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -106,6 +110,11 @@ class Permissions(DocumentSchema):
                 reports[i] = MOVED_REPORT_MAPPING[report_name]
 
         return super(Permissions, cls).wrap(data)
+
+    def view_web_app(self, app):
+        if self.view_web_apps:
+            return True
+        return any(app_id in self.view_web_apps_list for app_id in [app['_id'], app['copy_of']])
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
@@ -215,7 +224,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     default_landing_page = StringProperty(
-        choices=[page.id for page in ALLOWED_LANDING_PAGES],
+        choices=[page.id for page in ALL_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
     is_non_admin_editable = BooleanProperty(default=False)
@@ -802,9 +811,29 @@ class LastSubmission(DocumentSchema):
     commcare_version = StringProperty()
 
 
-class ReportingMetadata(DocumentSchema):
+class LastSync(DocumentSchema):
+    sync_date = DateTimeProperty()
+    build_version = IntegerProperty()
+    app_id = StringProperty()
 
+
+class LastBuild(DocumentSchema):
+    """
+    Build info for the app on the user's phone
+    when they last synced or submitted
+    """
+    build_version = IntegerProperty()
+    build_version_date = DateTimeProperty()
+    app_id = StringProperty()
+
+
+class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
+    last_submission_for_user = SchemaProperty(LastSubmission)
+    last_syncs = SchemaListProperty(LastSync)
+    last_sync_for_user = SchemaProperty(LastSync)
+    last_builds = SchemaListProperty(LastBuild)
+    last_build_for_user = SchemaProperty(LastBuild)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
@@ -822,6 +851,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+    last_modified = DateTimeProperty()
     #    For now, 'status' is things like:
     #        ('auto_created',     'Automatically created from form submission.'),
     #        ('phone_registered', 'Registered from phone'),
@@ -862,6 +892,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         pass
 
     class InvalidID(Exception):
+        pass
+
+    class UnsuportedOperation(Exception):
         pass
 
     def __repr__(self):
@@ -1325,21 +1358,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def to_be_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
 
-    def change_username(self, username):
-        if username == self.username:
-            return
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(CouchUser, cls).save_docs(docs, **kwargs)
 
-        if User.objects.filter(username=username).exists():
-            raise self.Inconsistent("User with username %s already exists" % username)
-
-        django_user = self.get_django_user()
-        django_user.DO_NOT_SAVE_COUCH_USER = True
-        django_user.username = username
-        django_user.save()
-        self.username = username
-        self.save()
+    bulk_save = save_docs
 
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
@@ -1441,6 +1470,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.has_permission(domain, perm, data)
         return fn
 
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
@@ -1479,15 +1511,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    def _is_demo_user_cached_value_is_stale(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
+        if cached_demo_users is not Ellipsis:
+            cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
+            if cached_is_demo_user != self.is_demo_user:
+                return True
+        return False
+
     def clear_quickcache_for_user(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
+
+        if self._is_demo_user_cached_value_is_stale():
+            get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
+        is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(**params)
 
         from .signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
+                                                      is_new_user=is_new_user)
         log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
@@ -1514,20 +1561,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create(cls,
-            domain,
-            username,
-            password,
-            email=None,
-            uuid='',
-            date='',
-            phone_number=None,
-            is_anonymous=False,
-            commit=True,
-            **kwargs):
+               domain,
+               username,
+               password,
+               email=None,
+               uuid='',
+               date='',
+               phone_number=None,
+               is_anonymous=False,
+               location=None,
+               commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
+        uuid = uuid or uuid4().hex
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1540,6 +1589,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+
+        if location:
+            commcare_user.set_location(location, commit=False)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
@@ -1632,6 +1684,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(self.domain, self.get_id)
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
@@ -1686,7 +1741,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
         for to_remove in current - desired:
             group = Group.get(to_remove)
-            group.remove_user(self._id, save=False)
+            group.remove_user(self._id)
             touched.append(group)
 
         Group.bulk_save(touched)
@@ -1731,16 +1786,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return SQLLocation.objects.none()
 
-    def add_to_assigned_locations(self, location):
+    def add_to_assigned_locations(self, location, commit=True):
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-            self.save()
+            if commit:
+                self.save()
         else:
-            self.set_location(location)
+            self.set_location(location, commit=commit)
 
     @memoized
     def get_sql_location(self, domain):
@@ -2029,6 +2085,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self=self
         ))
 
+    @property
+    @memoized
+    def memoized_usercase(self):
+        return self.get_usercase()
+
     def get_usercase(self):
         return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
 
@@ -2040,19 +2101,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def update_device_id_last_used(self, device_id, when=None):
         """
         Sets the last_used date for the device to be the current time
-
         Does NOT save the user object.
+
+        :returns: True if user was updated and needs to be saved
         """
         when = when or datetime.utcnow()
+
         for user_device_id_last_used in self.devices:
             if user_device_id_last_used.device_id == device_id:
-                user_device_id_last_used.last_used = when
-                break
+                if when.date() > user_device_id_last_used.last_used.date():
+                    user_device_id_last_used.last_used = when
+                    return True
+                else:
+                    return False
         else:
             self.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
                 last_used=when
             ))
+            return True
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2216,9 +2283,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.save()
-
-    def get_location_id(self, domain):
-        return getattr(self.get_domain_membership(domain), 'location_id', None)
 
     @memoized
     def get_sql_location(self, domain):

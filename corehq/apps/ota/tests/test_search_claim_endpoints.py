@@ -2,24 +2,28 @@ import re
 from uuid import uuid4
 
 from django.urls import reverse
-from django.test import TestCase, Client, SimpleTestCase
+from django.test import TestCase, Client
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig, SEARCH_QUERY_ADDITION_KEY, \
-    CaseSearchQueryAddition
+from corehq.apps.case_search.models import (
+    CLAIM_CASE_TYPE,
+    CaseSearchConfig,
+    SEARCH_QUERY_ADDITION_KEY,
+    CaseSearchQueryAddition,
+    IgnorePatterns,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, SIZE_LIMIT
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.elastic import get_es_new, ES_DEFAULT_INSTANCE
 from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.apps.ota.views import add_blacklisted_owner_ids
+from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.pillows.case_search import get_case_search_reindexer
+from corehq.pillows.case_search import CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_INDEX,
@@ -28,7 +32,7 @@ from corehq.pillows.mappings.case_search_mapping import (
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
-DOMAIN = 'test-domain'
+DOMAIN = 'swashbucklers'
 USERNAME = 'testy_mctestface'
 PASSWORD = '123'
 CASE_NAME = 'Jamie Hand'
@@ -42,18 +46,22 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-class BlacklistedOwnerIdsTest(SimpleTestCase, ElasticTestMixin):
+class CaseSearchTests(TestCase, ElasticTestMixin):
     def setUp(self):
-        super(BlacklistedOwnerIdsTest, self).setUp()
-        self.search_es = CaseSearchES().domain('swashbucklers')
+        super(CaseSearchTests, self).setUp()
+        self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
 
     def test_add_blacklisted_ids(self):
-        blacklisted_owner_ids = "id1 id2 id3,id4"
+        criteria = {
+            "commcare_blacklisted_owner_ids": "id1 id2 id3,id4"
+        }
         expected = {'query':
                     {'filtered':
                      {'filter':
                       {'and': [
                           {'term': {'domain.exact': 'swashbucklers'}},
+                          {"term": {"type.exact": "case_type"}},
+                          {"term": {"closed": False}},
                           {'not': {'term': {'owner_id': 'id1'}}},
                           {'not': {'term': {'owner_id': 'id2'}}},
                           {'not': {'term': {'owner_id': 'id3,id4'}}},
@@ -62,10 +70,181 @@ class BlacklistedOwnerIdsTest(SimpleTestCase, ElasticTestMixin):
                       "query": {
                           "match_all": {}
                       }}},
-                    'size': SIZE_LIMIT}
+                    'size': CASE_SEARCH_MAX_RESULTS}
+
         self.checkQuery(
-            add_blacklisted_owner_ids(self.search_es, blacklisted_owner_ids),
+            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
             expected
+        )
+
+    def test_add_ignore_pattern_queries(self):
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='name',
+            regex=' word',
+        )                       # remove ' word' from the name case property
+        rc.save()
+        self.config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='name',
+            regex=' gone',
+        )                       # remove ' gone' from the name case property
+        rc.save()
+        self.config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='special_id',
+            regex='-',
+        )                       # remove '-' from the special id case property
+        rc.save()
+        self.config.ignore_patterns.add(rc)
+        self.config.save()
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='phone_number',
+            regex='+',
+        )                       # remove '+' from the phone_number case property
+        rc.save()
+        self.config.ignore_patterns.add(rc)
+        self.config.save()
+
+        criteria = {
+            'name': "this word should be gone",
+            'other_name': "this word should not be gone",
+            'special_id': 'abc-123-546',
+            'phone_number': '+91999',
+        }
+
+        expected = {"query": {
+            "filtered": {
+                "filter": {
+                    "and": [
+                        {
+                            "term": {
+                                "domain.exact": "swashbucklers"
+                            }
+                        },
+                        {
+                            "term": {
+                                "type.exact": "case_type"
+                            }
+                        },
+                        {
+                            "term": {
+                                "closed": False
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ]
+                },
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "phone_number"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "91999",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "special_id"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "abc123546",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "name"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this should be",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "other_name"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this word should not be gone",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+            "size": CASE_SEARCH_MAX_RESULTS,
+        }
+        self.checkQuery(
+            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            expected,
         )
 
 
@@ -87,7 +266,7 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
-        get_case_search_reindexer(DOMAIN).reindex()
+        CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
 
@@ -223,6 +402,7 @@ class CaseClaimEndpointTests(TestCase):
             '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
+            '<commcare_search_score>xxx</commcare_search_score>'
             '<location_id>None</location_id>'
             '<referrals>None</referrals>'
             '</case>'
@@ -237,8 +417,13 @@ class CaseClaimEndpointTests(TestCase):
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
+        score_regex = re.compile(r'(<commcare_search_score>)(\d+.\d+)(<\/commcare_search_score>)')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(re.sub(DATE_PATTERN, FIXED_DATESTAMP, re.sub(PATTERN, TIMESTAMP, response.content)), known_result)
+        self.assertEqual(
+            score_regex.sub(r'\1xxx\3',
+                            re.sub(DATE_PATTERN, FIXED_DATESTAMP,
+                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+            known_result)
 
     @patch('corehq.apps.es.es_query.run_query')
     def test_search_query_addition(self, run_query_mock):
@@ -348,4 +533,9 @@ class CaseClaimEndpointTests(TestCase):
             },
             'size': CASE_SEARCH_MAX_RESULTS
         }
-        run_query_mock.assert_called_with("case_search", expected_query, debug_host=None)
+        run_query_mock.assert_called_with(
+            "case_search",
+            expected_query,
+            debug_host=None,
+            es_instance_alias=ES_DEFAULT_INSTANCE,
+        )

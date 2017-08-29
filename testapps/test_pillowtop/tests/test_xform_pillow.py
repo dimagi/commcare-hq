@@ -80,6 +80,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_app_versions(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'meta': {
                     'appVersion': 'version "2.27.2"(414569). App v56. 2.27. Build 414569'
@@ -93,6 +94,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_app_versions_none(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'meta': {
                     'appVersion': 'not an app version'
@@ -106,6 +108,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_location(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'meta': {
                     'location': '42.7 -21 0 0'
@@ -118,6 +121,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_location_missing(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'meta': {
                 }
@@ -129,6 +133,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_for_elasticsearch_location_bad(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 'meta': {
                     'location': 'not valid'
@@ -141,6 +146,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_base_case_dates(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 "case": {
                     "@case_id": "123",
@@ -155,6 +161,7 @@ class TransformXformForESTest(SimpleTestCase):
     def test_transform_xform_base_case_xmlns(self):
         doc_dict = {
             'domain': 'demo',
+            'received_on': '2013-10-12T11:59:41Z',
             'form': {
                 "case": {
                     "@case_id": "123",

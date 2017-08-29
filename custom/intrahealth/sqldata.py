@@ -268,7 +268,11 @@ class TauxDeRuptures(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Stock total"), CountColumn('total_stock_total')))
+        columns.append(DatabaseColumn(
+            _("Stock total"),
+            CountColumn('total_stock_total'),
+            format_fn=lambda x: 1 if x > 0 else 0
+        ))
         return columns
 
     def calculate_total_row(self, rows):
@@ -280,9 +284,13 @@ class TauxDeRuptures(BaseSqlData):
             conventure_data_rows = conventure.rows
             total = conventure_data_rows[0][2]["html"] if conventure_data_rows else 0
 
+        def get_value(x):
+            """x can be a value or a sort_key/html dict"""
+            return x["sort_key"] if isinstance(x, dict) else x
+
         for row in rows:
-            row.append(dict(sort_key=1L if any([x["sort_key"] for x in row[1:]]) else 0L,
-                            html=1L if any([x["sort_key"] for x in row[1:]]) else 0L))
+            value = 1L if any(get_value(x) for x in row[1:]) else 0L
+            row.append({'sort_key': value, 'html': value})
 
         total_row = list(calculate_total_row(rows))
 
@@ -547,7 +555,8 @@ class TauxConsommationData(BaseSqlData):
                                       MeanColumn('stock_total', alias="stock"),
                                       format_fn=self.format_data_and_cast_to_float))
         columns.append(AggregateColumn(_("Taux consommation"), self.percent_fn,
-                                       [AliasColumn('stock'), AliasColumn('consumption')]))
+                                       [AliasColumn('stock'), AliasColumn('consumption')],
+                                       slug='taux-consommation'))
         return columns
 
     def calculate_total_row(self, rows):
