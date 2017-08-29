@@ -25,6 +25,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.specs import FactoryContext
@@ -1063,7 +1064,19 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
+            'can_rebuid': self.can_rebuild,
         }
+
+    @property
+    def can_rebuild(self):
+        # Don't allow rebuilds if there have been more than 1 million forms or cases
+        domain = DomainES().in_domains(self.domain).run().hits[0]
+        doc_type = self.config.referenced_doc_type
+        if doc_type == 'CommCareCase':
+            return domain.get('cp_n_cases', 0) < 1000000
+        elif doc_type == 'XFormInstance':
+            return domain.get('cp_n_forms', 0) < 1000000
+        return True
 
     @property
     def page_url(self):
