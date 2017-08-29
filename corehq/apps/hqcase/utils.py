@@ -31,6 +31,18 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
 
+    :param xmlns: Form XMLNS. Format: IRI or URN. Historically this was
+    used in some places to uniquely identify the subsystem that posted
+    the cases; `device_id` is now recommended for that purpose. Going
+    forward, it is recommended to use the default value along with
+    `device_id`, which indicates that the cases were submitted by an
+    internal system process.
+    :param device_id: Identifier for the source of posted cases. Ideally
+    this should uniquely identify the subsystem that is posting cases to
+    make it easier to trace the source. All new code should use this
+    argument. A human recognizable value is recommended outside of test
+    code. Example: "auto-close-rule-<GUID>"
+
     returns the UID of the resulting form.
     """
     attachments = attachments or {}
