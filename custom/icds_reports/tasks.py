@@ -1,19 +1,24 @@
+from datetime import datetime
 import logging
 import os
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-from datetime import datetime
-
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-
 from django.db import connections
+
+from corehq.util.decorators import serial_task
 
 celery_task_logger = logging.getLogger('celery.task')
 
 
 @periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
+def run_move_ucr_data_into_aggregation_tables_task(date=None):
+    move_ucr_data_into_aggregation_tables.delay(date)
+
+
+@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
 def move_ucr_data_into_aggregation_tables(date=None):
     date = date or datetime.utcnow().date()
     now = datetime.utcnow().date()
