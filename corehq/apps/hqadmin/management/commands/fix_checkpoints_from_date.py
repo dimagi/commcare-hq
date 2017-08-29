@@ -1,18 +1,14 @@
 from __future__ import print_function
 
+import argparse
 import difflib
-import json
 import pprint
-
+import re
 from datetime import datetime
 
-import argparse
-
-import re
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop import get_pillow_by_name
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
 
