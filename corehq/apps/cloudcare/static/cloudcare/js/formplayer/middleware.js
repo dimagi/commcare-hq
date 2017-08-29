@@ -24,6 +24,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var clearVersionInfo = function(name) {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
+    var clearBreadcrumbMiddleware = function(name) {
+        FormplayerFrontend.trigger('clearBreadcrumbs');
+    };
     var setScrollableMaxHeight = function() {
         var maxHeight,
             user = FormplayerFrontend.request('currentUser'),
@@ -48,5 +51,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         clearFormMiddleware,
         clearVersionInfo,
         setScrollableMaxHeight,
+        clearBreadcrumbMiddleware,
     ];
 });

@@ -82,6 +82,10 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
+FormplayerFrontend.on('clearBreadcrumbs', function () {
+    $('#persistent-case-tile').html("");
+});
+
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('.menu-scrollable-container').removeClass('hide');
