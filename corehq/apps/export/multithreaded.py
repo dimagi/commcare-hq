@@ -121,19 +121,18 @@ def rebuild_export_mutithreaded(export_id, num_processes, page_size=100000):
     logger.info('Starting data dump of {} docs'.format(total_docs))
     exporter = MultithreadedExporter(export_instance, total_docs, num_processes)
     paginator = OutputPaginator(export_id)
-    with exporter:
-        with paginator:
-            for index, doc in enumerate(_get_export_documents(export_instance, filters)):
-                paginator.write(doc)
-                if paginator.page_size == page_size:
-                    _log_page_dumped(paginator)
-                    exporter.process_page(paginator.get_result())
-                    paginator.next_page()
-            if paginator.page_size:
+    with exporter, paginator:
+        for index, doc in enumerate(_get_export_documents(export_instance, filters)):
+            paginator.write(doc)
+            if paginator.page_size == page_size:
                 _log_page_dumped(paginator)
                 exporter.process_page(paginator.get_result())
+                paginator.next_page()
+        if paginator.page_size:
+            _log_page_dumped(paginator)
+            exporter.process_page(paginator.get_result())
 
-        exporter.wait_till_completion()
+    exporter.wait_till_completion()
 
 
 def run_export_with_logging(export_instance, page_number, dump_path, doc_count, attempts):
