@@ -1064,7 +1064,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
-            'can_rebuid': self.can_rebuild,
+            'can_rebuild': self.can_rebuild,
         }
 
     @property
