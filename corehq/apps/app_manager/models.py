@@ -2332,7 +2332,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def requires_case_details(self):
         return False
 
-    def root_module_requires_same_case(self):
+    def root_requires_same_case(self):
         return self.root_module \
             and self.root_module.case_type == self.case_type \
             and self.root_module.all_forms_require_a_case()
