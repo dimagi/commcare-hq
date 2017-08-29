@@ -2,7 +2,7 @@ import logging
 import os
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -14,7 +14,12 @@ celery_task_logger = logging.getLogger('celery.task')
 
 
 @periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
-def move_ucr_data_into_aggregation_tables(date=None):
+def move_ucr_data_into_aggregation_tables():
+    move_ucr_data_into_aggregation_tables_task()
+
+
+@task(queue='background_queue')
+def move_ucr_data_into_aggregation_tables_task(date=None):
     date = date or datetime.utcnow().date()
     now = datetime.utcnow().date()
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
