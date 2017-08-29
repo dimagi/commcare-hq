@@ -42,6 +42,7 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
+DEFAULT_VALUE = "Data not Entered"
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -1160,24 +1161,24 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             'normal': normal
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 35:
-            row_values.update({'fillKey': '20%-34%'})
+            row_values.update({'fillKey': '20%-35%'})
         elif value >= 35:
-            row_values.update({'fillKey': '>35%'})
+            row_values.update({'fillKey': '35%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': PINK})
-    fills.update({'20%-34%': ORANGE})
-    fills.update({'>35%': RED})
+    fills.update({'0%-20%': PINK})
+    fills.update({'20%-35%': ORANGE})
+    fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "moderately_underweight",
-            "label": "",
+            "label": "Percent of Children Underweight (0-5 years)",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -1369,21 +1370,21 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-34%",
+                "key": "20%-35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">35%",
+                "key": "35%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2256,24 +2257,24 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         }
 
         if value < 5:
-            row_values.update({'fillKey': '0%-4%'})
+            row_values.update({'fillKey': '0%-5%'})
         elif 5 <= value <= 7:
             row_values.update({'fillKey': '5%-7%'})
         elif value > 7:
-            row_values.update({'fillKey': '>8%'})
+            row_values.update({'fillKey': '7%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-4%': PINK})
+    fills.update({'0%-5%': PINK})
     fills.update({'5%-7%': ORANGE})
-    fills.update({'>8%': RED})
+    fills.update({'7%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent of Children Wasted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
                 "average": "%.2f" % (sum(average) / (len(average) or 1)),
@@ -2452,7 +2453,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-4%",
+                "key": "0%-5%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -2466,7 +2467,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
             },
             {
                 "values": chart_data['red'],
-                "key": ">8%",
+                "key": "7%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2512,24 +2513,24 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             'total_measured': total_measured or 0,
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
-            row_values.update({'fillKey': '25%-37%'})
+            row_values.update({'fillKey': '25%-38%'})
         elif value >= 38:
-            row_values.update({'fillKey': '>38%'})
+            row_values.update({'fillKey': '38%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': PINK})
-    fills.update({'25%-37%': ORANGE})
-    fills.update({'>38%': RED})
+    fills.update({'0%-25%': PINK})
+    fills.update({'25%-38%': ORANGE})
+    fills.update({'38%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent of Children Stunted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
                 "average": "%.2f" % (sum(average) / (len(average) or 1)),
@@ -2712,21 +2713,21 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-37%",
+                "key": "25%-38%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">38%",
+                "key": "38%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2763,24 +2764,24 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             'in_month': in_month,
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': PINK})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': RED})
+    fills.update({'0%-20%': PINK})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "low_birth",
-            "label": "",
+            "label": "Percent Newborns with Low Birth Weight",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -2951,21 +2952,21 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -3002,24 +3003,24 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             'in_month': in_month,
         }
         if value <= 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': PINK})
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "early_initiation",
-            "label": "",
+            "label": "Percent Early Initiation of Breastfeeding",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -3191,21 +3192,21 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
 
             {
                 "values": chart_data['red'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['green'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -3242,24 +3243,24 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': PINK})
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent Exclusive Breastfeeding",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -3442,21 +3443,21 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -3510,7 +3511,7 @@ def get_children_initiated_data_map(config, loc_level):
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent Children (6-8 months) initiated Complementary Feeding",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -3758,7 +3759,7 @@ def get_institutional_deliveries_data_map(config, loc_level):
     return [
         {
             "slug": "institutional_deliveries",
-            "label": "",
+            "label": "Percent Instituitional Deliveries",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -4009,7 +4010,7 @@ def get_immunization_coverage_data_map(config, loc_level):
     return [
         {
             "slug": "institutional_deliveries",
-            "label": "",
+            "label": "Percent Immunization Coverage at 1 year",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -4259,7 +4260,7 @@ def get_awc_daily_status_data_map(config, loc_level):
     return [
         {
             "slug": "awc_daily_statuses",
-            "label": "",
+            "label": "Percent AWCs Open Yesterday",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -5258,24 +5259,24 @@ def get_adhaar_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value <= 50:
             row_values.update({'fillKey': '25%-50%'})
         elif value > 50:
-            row_values.update({'fillKey': '51%-100%'})
+            row_values.update({'fillKey': '50%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
+    fills.update({'0%-25%': RED})
     fills.update({'25%-50%': ORANGE})
-    fills.update({'51%-100%': PINK})
+    fills.update({'50%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "adhaar",
-            "label": "",
+            "label": "Percent Adhaar seeded beneficiaries",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -5455,14 +5456,14 @@ def get_adhaar_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-50%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
@@ -5506,24 +5507,24 @@ def get_clean_water_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value <= 50:
-            row_values.update({'fillKey': '25%-50%'})
-        elif value >= 50:
-            row_values.update({'fillKey': '51%-100%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
+        elif value >= 75:
+            row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-50%': ORANGE})
-    fills.update({'51%-100%': PINK})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "clean_water",
-            "label": "",
+            "label": "Percent AWCs with Clean Drinking Water",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -5703,21 +5704,21 @@ def get_clean_water_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -5754,24 +5755,24 @@ def get_functional_toilet_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "functional_toilet",
-            "label": "",
+            "label": "Percent AWCs with Functional Toilet",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -5952,21 +5953,21 @@ def get_functional_toilet_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -6003,24 +6004,24 @@ def get_medicine_kit_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "medicine_kit",
-            "label": "",
+            "label": "Percent AWCs with Medicine Kit",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -6201,21 +6202,21 @@ def get_medicine_kit_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -6252,24 +6253,24 @@ def get_infants_weight_scale_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "infants_weight_scale",
-            "label": "",
+            "label": "Percent AWCs with Weighing Scale: Infants",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -6449,21 +6450,21 @@ def get_infants_weight_scale_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -6500,24 +6501,24 @@ def get_adult_weight_scale_data_map(config, loc_level):
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "adult_weight_scale",
-            "label": "",
+            "label": "Percent AWCs with Weighing Scale: Mother and Child",
             "fills": fills,
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
@@ -6697,21 +6698,21 @@ def get_adult_weight_scale_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK

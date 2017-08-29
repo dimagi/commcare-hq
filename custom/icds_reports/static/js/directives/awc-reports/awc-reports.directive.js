@@ -1840,10 +1840,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data.recorded_weight !== void(0) ? data.recorded_weight : "---") + '</div>';
+            html += '<div>Weight: ' + (data !== void(0) ? data.recorded_weight : "Data not Entered") + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data.recorded_height !== void(0) ? data.recorded_height : "---") + '</div>';
+            html += '<div>Height: ' + (data !== void(0) ? data.recorded_height : "Data not Entered") + '</div>';
         }
         return html;
     };
