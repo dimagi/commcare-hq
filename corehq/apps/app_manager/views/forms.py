@@ -580,6 +580,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'root_requires_same_case': module.root_requires_same_case(),
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
@@ -595,6 +596,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
     }
+
     if add_ons.show("custom_icon_badges", request, form.get_app()):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
