@@ -12,15 +12,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404, JsonResponse
-from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-
-from djangular.views.mixins import allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
@@ -28,8 +25,8 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
@@ -45,10 +42,8 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views import BaseDomainView
@@ -58,7 +53,6 @@ from corehq.apps.style.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    use_angular_js,
     use_nvd3,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
@@ -100,9 +94,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
-    resume_building_indicators,
     delete_data_source_task,
-    rebuild_indicators,
     resume_building_indicators,
     rebuild_indicators_in_place,
     recalculate_indicators,
@@ -1072,7 +1064,19 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
+            'can_rebuid': self.can_rebuild,
         }
+
+    @property
+    def can_rebuild(self):
+        # Don't allow rebuilds if there have been more than 1 million forms or cases
+        domain = DomainES().in_domains(self.domain).run().hits[0]
+        doc_type = self.config.referenced_doc_type
+        if doc_type == 'CommCareCase':
+            return domain.get('cp_n_cases', 0) < 1000000
+        elif doc_type == 'XFormInstance':
+            return domain.get('cp_n_forms', 0) < 1000000
+        return True
 
     @property
     def page_url(self):
