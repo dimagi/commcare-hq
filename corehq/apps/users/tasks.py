@@ -179,7 +179,8 @@ def remove_indices_from_deleted_cases(domain, case_ids):
         for index_info in indexes_referencing_deleted_cases
         if index_info.case_id not in deleted_ids
     ]
-    submit_case_blocks(case_updates, domain)
+    device_id = __name__ + ".remove_indices_from_deleted_cases"
+    submit_case_blocks(case_updates, domain, device_id=device_id)
 
 
 @task(bind=True, queue='background_queue', ignore_result=True,

@@ -192,7 +192,9 @@ class SubmissionPost(object):
                     else:
                         instance.initial_processing_complete = True
                         self.save_processed_models(xforms, case_stock_result)
-                        case_stock_result.case_result.close_extensions(case_db)
+                        device_id = instance.metadata.deviceID if instance.metadata else ""
+                        case_stock_result.case_result.close_extensions(case_db,
+                            "SubmissionPost-close_extensions-%s" % device_id)
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:
