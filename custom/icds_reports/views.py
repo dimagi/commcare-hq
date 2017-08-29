@@ -27,7 +27,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables_task
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -1247,6 +1247,6 @@ class AggregationScriptPage(BaseDomainView):
             messages.error(request, 'Date is required')
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
-        move_ucr_data_into_aggregation_tables.delay(date)
+        move_ucr_data_into_aggregation_tables_task.delay(date)
         messages.success(request, 'Aggregation task is running. Data should appear soon.')
         return redirect(self.urlname, domain=self.domain)
