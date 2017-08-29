@@ -52,6 +52,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
 
     var locationsCache = {};
 
@@ -135,7 +136,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
-                locationsCache.root = data.locations;
+                locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
             });
             vm.groupByLevels = vm.levels;
         }
@@ -150,7 +151,18 @@ function DownloadController($location, locationHierarchy, locationsService, user
         }).join(', ');
     };
 
+    vm.getInfoMessage = function() {
+        if (vm.selectedLevel <= 1) {
+            return null;
+        } else {
+            return "Please choose " + vm.levels[vm.selectedLevel - 2].name + " to download data by " + vm.levels[vm.selectedLevel - 1].name;
+        }
+    };
+
     vm.getLocationsForLevel = function(level) {
+        if (vm.selectedLevel === 1) {
+            return [NATIONAL_OPTION];
+        }
         if (level === 0) {
             return locationsCache.root;
         } else {
@@ -201,7 +213,11 @@ function DownloadController($location, locationHierarchy, locationsService, user
             }
         });
         vm.groupByLevels = levels;
-        vm.selectedLevel = selectedLocationIndex() + 1;
+        if (selectedLocationIndex() === -1) {
+            vm.selectedLevel = 1;
+        } else {
+            vm.selectedLevel = selectedLocationIndex() + 1;
+        }
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
