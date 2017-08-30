@@ -1592,10 +1592,11 @@ class FormExportDataSchema(ExportDataSchema):
             else:
                 actions = form.actions.subcases
             for i, action in enumerate(actions):
+                action.subcase_index = i
                 if action.repeat_context:
                     repeats_with_subcases.append(action)
                 else:
-                    non_repeating_subcases.append((i, action))
+                    non_repeating_subcases.append(action)
 
         xform_schema = cls._generate_schema_from_xform(
             xform,
@@ -1625,14 +1626,14 @@ class FormExportDataSchema(ExportDataSchema):
         def _add_to_group_schema(path, label):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
-                label=label,
+                label=u'subcase_{}.{}'.format(subcase_action.subcase_index, label),
                 last_occurrences=group_schema.last_occurrences,
             ))
 
         # Add case attributes
         for case_attribute in CASE_ATTRIBUTES:
             path = u'{}/case/{}'.format(root_path, case_attribute)
-            _add_to_group_schema(path, u'case.{}'.format(case_attribute))
+            _add_to_group_schema(path, case_attribute)
 
         # Add case updates
         for case_property, case_path in subcase_action.case_properties.iteritems():
@@ -1649,19 +1650,19 @@ class FormExportDataSchema(ExportDataSchema):
             else:
                 path_suffix = case_property
             path = u'{}/case/update/{}'.format(root_path, path_suffix)
-            _add_to_group_schema(path, u'case.update.{}'.format(case_property))
+            _add_to_group_schema(path, u'update.{}'.format(case_property))
 
         # Add case create properties
         for case_create_element in CASE_CREATE_ELEMENTS:
             path = u'{}/case/create/{}'.format(root_path, case_create_element)
-            _add_to_group_schema(path, u'case.create.{}'.format(case_create_element))
+            _add_to_group_schema(path, u'create.{}'.format(case_create_element))
 
         # Add extension case information
         if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
             for prop in ('#text', '@case_type',):
                 identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship]
                 path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
-                _add_to_group_schema(path, u'case.index.{}'.format(prop))
+                _add_to_group_schema(path, u'.index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
@@ -1756,8 +1757,8 @@ class FormExportDataSchema(ExportDataSchema):
                         )
                     )
 
-                for i, subcase_action in non_repeating_subcases:
-                    root_path = "/data/subcase_{}".format(i)
+                for subcase_action in non_repeating_subcases:
+                    root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
                     cls._add_export_items_from_subcase_action(group_schema, root_path, subcase_action, [])
 
             schema.group_schemas.append(group_schema)
