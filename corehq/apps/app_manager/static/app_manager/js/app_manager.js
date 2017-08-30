@@ -304,17 +304,6 @@ hqDefine('app_manager/js/app_manager', function () {
 
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
-        $('.sortable').each(function () {
-            var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
-            if ($(this).children().not('.sort-disabled').length < min_elem) {
-                var $sortable = $(this);
-                $('.drag_handle', this).each(function () {
-                    if ($(this).closest('.sortable')[0] === $sortable[0]) {
-                        $(this).removeClass('drag_handle').hide();
-                    }
-                });
-            }
-        });
 
         $('.js-appnav-drag-module').on('mouseenter', function() {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');
