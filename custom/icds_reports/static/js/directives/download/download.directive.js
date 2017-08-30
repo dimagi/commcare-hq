@@ -162,7 +162,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.showErrorMessage = function () {
         return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
-    }
+    };
 
     vm.getLocationsForLevel = function(level) {
         if (vm.selectedLevel === 1) {
