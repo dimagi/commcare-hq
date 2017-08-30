@@ -322,7 +322,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
             docs = get_export_documents(export_instance, filters)
-            _write_export_instance(writer, export_instance, docs, progress_tracker)
+            write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
@@ -347,7 +347,7 @@ def get_export_size(export_instance, filters):
     return _get_export_query(export_instance, filters).count()
 
 
-def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
+def write_export_instance(writer, export_instance, documents, progress_tracker=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of

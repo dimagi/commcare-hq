@@ -33,7 +33,7 @@ from datetime import timedelta
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
     ExportFile, get_export_writer, save_export_payload, get_export_size, get_export_documents)
-from corehq.apps.export.export import _write_export_instance
+from corehq.apps.export.export import write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
@@ -178,7 +178,7 @@ def get_export_file(export_instance, docs, progress_tracker=None):
     export_instances = [export_instance]
     writer = get_export_writer(export_instances, allow_pagination=False)
     with writer.open(export_instances):
-        _write_export_instance(writer, export_instance, docs, progress_tracker)
+        write_export_instance(writer, export_instance, docs, progress_tracker)
         return ExportFile(writer.path, writer.format)
 
 
