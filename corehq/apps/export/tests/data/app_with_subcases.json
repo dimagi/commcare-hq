@@ -59,50 +59,7 @@
     "doc_type": "Application",
     "domain": "app_with_subcases",
     "experienced_threshold": "3",
-    "external_blobs": {
-        "6108183de70abe694a28352e2eaf147bd33fc00c.xml": {
-            "content_length": 645,
-            "content_type": "application/xml",
-            "digest": "md5-DbUHx0wXKufjluDcyymnMQ==",
-            "doc_type": "BlobMeta",
-            "id": "TVGjTruF4fk"
-        },
-        "7d7bdf98d4685ef83e30d80e635b19430e736e4a.xml": {
-            "content_length": 645,
-            "content_type": "application/xml",
-            "digest": "md5-31c7eIAqXwPi2rpa2HpzxQ==",
-            "doc_type": "BlobMeta",
-            "id": "VhyRzprSwvg"
-        },
-        "b44edb0f6b73b69e08f1aeda3b32163a679560b4.xml": {
-            "content_length": 8900,
-            "content_type": "application/xml",
-            "digest": "md5-MW680GgfPhkQFVx2wconww==",
-            "doc_type": "BlobMeta",
-            "id": "G5hhq6ApQBc"
-        },
-        "c32f4618bce93fbc34077da7b968586c6adb0e7e.xml": {
-            "content_length": 1480,
-            "content_type": "application/xml",
-            "digest": "md5-3SX5w9hvx8dg5nW34ICl9Q==",
-            "doc_type": "BlobMeta",
-            "id": "WPJUz5V-_Cc"
-        },
-        "d9d5ca0cdc1c1fca6ab29d4d8d438d979de3d10a.xml": {
-            "content_length": 1546,
-            "content_type": "application/xml",
-            "digest": "md5-S8Gce0UH4+hDVQK6A/03/A==",
-            "doc_type": "BlobMeta",
-            "id": "gbcJfXM6ccs"
-        },
-        "ff6fd16dd6904462d01f35835c2a4526586a4148.xml": {
-            "content_length": 1996,
-            "content_type": "application/xml",
-            "digest": "md5-NRXXy/Q7Tv5ixxdMxEaHFw==",
-            "doc_type": "BlobMeta",
-            "id": "2N5KD84hUE4"
-        }
-    },
+    "external_blobs": {},
     "grid_form_menus": "none",
     "has_submissions": false,
     "is_released": false,
