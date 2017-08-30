@@ -119,12 +119,13 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
     return JsonResponse(attempt.to_json())
 
 
+@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
 class OpenmrsImporterView(BaseAdminProjectSettingsView):
     urlname = 'openmrs_importer_view'
     page_title = ugettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
-    @method_decorator(domain_admin_required)
     def post(self, request, *args, **kwargs):
         form = self.openmrs_importer_form
         if form.is_valid():
@@ -133,12 +134,6 @@ class OpenmrsImporterView(BaseAdminProjectSettingsView):
             return HttpResponseRedirect(self.page_url)
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.OPENMRS_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(OpenmrsImporterView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
