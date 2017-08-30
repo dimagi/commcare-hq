@@ -463,7 +463,7 @@ def get_maternal_child_data(config):
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
-                        "Percentage of newborns with born with birth weight less than 2500 grams. Newborns with"
+                        "Percentage of newborns born with birth weight less than 2500 grams. Newborns with"
                         " Low Birth Weight are closely associated with foetal and neonatal mortality and "
                         "morbidity, inhibited growth and cognitive development, and chronic diseases later "
                         "in life")),

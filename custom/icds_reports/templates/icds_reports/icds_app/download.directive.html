@@ -87,6 +87,9 @@
             </div>
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-6">
+                    <div class="alert alert-danger" ng-show="$ctrl.showErrorMessage()">
+                        <strong>Warning!</strong> You must choose AWC to see data
+                    </div>
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="location" ng-value="$ctrl.selectedLocationId" />
@@ -95,7 +98,7 @@
                         <input type="hidden" name="year" ng-value="$ctrl.selectedYear" />
                         <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
                         <input type="hidden" name="format" ng-value="$ctrl.selectedFormat" />
-                        <button type="submit" class="btn btn-default normalButton orangeButton">Export</button>
+                        <button type="submit" class="btn btn-default normalButton orangeButton" ng-disabled="$ctrl.showErrorMessage()">Export</button>
                     </form>
                 </div>
             </div>
