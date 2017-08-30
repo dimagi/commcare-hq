@@ -1,5 +1,5 @@
 import json
-from django.http import JsonResponse, HttpResponseRedirect, Http404
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
@@ -12,8 +12,11 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
-from corehq.motech.openmrs.repeater_helpers import Requests, \
-    get_patient_identifier_types, get_person_attribute_types
+from corehq.motech.openmrs.repeater_helpers import (
+    Requests,
+    get_patient_identifier_types,
+    get_person_attribute_types,
+)
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from dimagi.utils.decorators.memoized import memoized
 
