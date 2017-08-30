@@ -41,13 +41,6 @@ class Command(BaseCommand):
             nargs='+',
             help="Restrict changes to only these pillows. (regex supported)"
         )
-        parser.add_argument(
-            '--noinput',
-            action='store_true',
-            dest='noinput',
-            default=False,
-            help="Disable interactive mode",
-        )
 
     def handle(self, **options):
         date = options['date']
