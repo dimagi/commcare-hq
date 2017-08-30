@@ -4,10 +4,9 @@ from corehq.util.quickcache import quickcache
 
 @quickcache(['domain_name'])
 def get_openmrs_importers_by_domain(domain_name):
-    results = OpenmrsImporter.get_db().view(
+    return OpenmrsImporter.view(
         'by_domain_doc_type_date/view',
         key=[domain_name, 'OpenmrsImporter', None],
         include_docs=True,
         reduce=False,
     ).all()
-    return [OpenmrsImporter.wrap(result['doc']) for result in results]
