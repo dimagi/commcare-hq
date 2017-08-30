@@ -112,7 +112,7 @@ def get_releases_context(request, domain, app_id):
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
-    prompt_settings_form = PromptUpdateSettingsForm.from_app(app)
+    prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
     context.update({
         'release_manager': True,

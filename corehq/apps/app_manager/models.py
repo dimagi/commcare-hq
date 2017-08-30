@@ -182,6 +182,10 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 }
 
 
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
+
+
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
     parent = jsonpath.Parent().find(datum_context)[0]
@@ -6298,6 +6302,10 @@ class GlobalAppConfig(Document):
         choices=["off", "on", "forced"],
         default="off"
     )
+
+    # corresponding versions to which user should be prompted to update to
+    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
+    app_version = IntegerProperty(default=LATEST_APP_VALUE)
 
     @classmethod
     def for_app(cls, app):
