@@ -9,6 +9,7 @@ import datetime
 
 from couchdbkit import ResourceConflict
 
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
@@ -372,12 +373,22 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
         total_bytes += sys.getsizeof(doc)
         for table in export_instance.selected_tables:
             compute_start = _time_in_milliseconds()
-            rows = table.get_rows(
-                doc,
-                row_number,
-                split_columns=export_instance.split_multiselects,
-                transform_dates=export_instance.transform_dates,
-            )
+            try:
+                rows = table.get_rows(
+                    doc,
+                    row_number,
+                    split_columns=export_instance.split_multiselects,
+                    transform_dates=export_instance.transform_dates,
+                )
+            except Exception as e:
+                notify_exception(None, "Error exporting doc", details={
+                    'domain': export_instance.domain,
+                    'export_instance_id': export_instance.get_id,
+                    'export_table': table.label,
+                    'doc_id': doc.get('_id'),
+                })
+                e.sentry_capture = False
+                raise
             compute_total += _time_in_milliseconds() - compute_start
 
             write_start = _time_in_milliseconds()
