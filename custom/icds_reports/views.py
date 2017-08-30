@@ -26,7 +26,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport
+    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
@@ -517,7 +517,7 @@ class ExportIndicatorView(View):
                 'month': date(year, month, 1),
             })
 
-        location = request.POST.get('location_id', '')
+        location = request.POST.get('location', '')
 
         if location:
             try:
@@ -543,6 +543,8 @@ class ExportIndicatorView(View):
             return AWCInfrastructureExport(
                 config=config, loc_level=aggregation_level
             ).to_export(export_format, location)
+        elif indicator == 6:
+            return BeneficiaryExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

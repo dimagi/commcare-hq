@@ -27,9 +27,6 @@
         </div>
         <div ng-if="!$ctrl.report">
             <div class="row">
-                <h2 class="black center" style="margin-bottom: 10px">ICDS-CAS Outcomes</h2>
-            </div>
-            <div class="row">
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
                         <img style="width: 152px;" src="{% static 'img/maternal_and_child.png' %}"/>
@@ -86,7 +83,14 @@
                         <th class="col-md-1" ng-repeat="month in section.months">
                             <span ng-bind-html="month"></span>
                         </th>
-                        <th class="col-md-1">National Average</th>
+                        <th class="col-md-1">
+                            <div class="pointer" uib-popover="National average is calculated using the previous calendar month's data"
+                               popover-placement="top"
+                               popover-trigger="'mouseenter'">
+                                <span>National Average </span>
+                                <i class="fa fa-info-circle"></i>
+                            </div>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
