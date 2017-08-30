@@ -51,18 +51,19 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
         super(TestFormExportSubcases, cls).tearDownClass()
 
-    def assertContainsPaths(self, paths, export_group_schema):
+    def assertContainsExportItems(self, item_tuples, export_group_schema):
         """
         paths should be of the form ["form.question1", "form.group.question2"]
         """
-        actual_paths = {
-            ".".join(node.name for node in item.path)
+        actual = {
+            (item.readable_path, item.label)
             for item in export_group_schema.items
         }
-        missing = set(paths) - actual_paths
+        missing = set(item_tuples) - actual
         if missing:
-            raise AssertionError("Contains paths:\n  {}\nMissing paths:\n  {}"
-                                 .format('\n  '.join(actual_paths), '\n  '.join(missing)))
+            prettify = lambda list_of_tuples: '\n  '.join(map(unicode, list_of_tuples))
+            raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}"
+                                 .format(prettify(actual), prettify(missing)))
 
     def test(self):
         with patch('corehq.apps.app_manager.models.FormBase.wrapped_xform', lambda _: self.xform):
@@ -82,45 +83,59 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             elif path == ['form', 'babies']:
                 baby_repeat_group_schema = group_schema
 
-        self.assertContainsPaths(
+        self.assertContainsExportItems(
             [
                 # Verify that a simple form question appears in the schema
-                'form.how_are_you_today',
+                ('form.how_are_you_today', 'How are you today?'),
+                ('form.how_many_babies', 'How many babies?'),
 
                 # Verify that the main parent case updates appear (case type "mom")
-                'form.case.update.last_status',
+                ('form.case.update.last_status', 'case.update.last_status'),
 
                 # Verify that we see case updates for save-to-case cases
                 # These are already in the form schema, so they get interpreted like any other question
-                'form.prescription.prescription.case.close',
-                'form.prescription.prescription.case.create.case_name',
-                'form.prescription.prescription.case.create.case_type',
-                'form.prescription.prescription.case.update.number_of_babies',
-                'form.prescription.prescription_name',
-                'form.prescription.prescription.case.index.parent',
+                ('form.prescription.prescription.case.close',
+                 '#form/prescription/prescription/case/close'),
+                ('form.prescription.prescription.case.create.case_name',
+                 '#form/prescription/prescription/case/create/case_name'),
+                ('form.prescription.prescription.case.create.case_type',
+                 '#form/prescription/prescription/case/create/case_type'),
+                ('form.prescription.prescription.case.update.number_of_babies',
+                 '#form/prescription/prescription/case/update/number_of_babies'),
+                ('form.prescription.prescription_name',
+                 '#form/prescription/prescription_name'),
+                ('form.prescription.prescription.case.index.parent',
+                 '#form/prescription/prescription/case/index/parent'),
 
                 # # Verify that we see updates from subcases not in repeat groups (case type "voucher")
-                'form.subcase_0.case.@case_id',
-                'form.subcase_0.case.@date_modified',
-                'form.subcase_0.case.@user_id',
-                'form.subcase_0.case.create.case_name',
-                'form.subcase_0.case.create.case_type',
-                'form.subcase_0.case.create.owner_id',
-                'form.subcase_0.case.update.how_many_babies',
+                ('form.subcase_0.case.@case_id', 'case.@case_id'),
+                ('form.subcase_0.case.@date_modified', 'case.@date_modified'),
+                ('form.subcase_0.case.@user_id', 'case.@user_id'),
+                ('form.subcase_0.case.create.case_name', 'case.create.case_name'),
+                ('form.subcase_0.case.create.case_type', 'case.create.case_type'),
+                ('form.subcase_0.case.create.owner_id', 'case.create.owner_id'),
+                ('form.subcase_0.case.index.parent.#text', 'case.index.#text'),
+                ('form.subcase_0.case.index.parent.@case_type', 'case.index.@case_type'),
+                ('form.subcase_0.case.update.how_many_babies', 'case.update.how_many_babies'),
+
             ],
             main_group_schema
         )
 
         # Verify that we see updates from subcases in repeat groups (case type "baby")
-        self.assertContainsPaths(
+        self.assertContainsExportItems(
             [
-                'form.babies.case.@case_id',
-                'form.babies.case.@date_modified',
-                'form.babies.case.@user_id',
-                'form.babies.case.create.case_name',
-                'form.babies.case.create.case_type',
-                'form.babies.case.create.owner_id',
-                'form.babies.case.update.eye_color',
+                ('form.babies.case.@case_id', 'case.@case_id'),
+                ('form.babies.case.@date_modified', 'case.@date_modified'),
+                ('form.babies.case.@user_id', 'case.@user_id'),
+                ('form.babies.case.create.case_name', 'case.create.case_name'),
+                ('form.babies.case.create.case_type', 'case.create.case_type'),
+                ('form.babies.case.create.owner_id', 'case.create.owner_id'),
+                ('form.babies.case.update.eye_color', 'case.update.eye_color'),
+                ('form.babies.case.index.parent.#text', 'case.index.#text'),
+                ('form.babies.case.index.parent.@case_type', 'case.index.@case_type'),
+                ('form.babies.eye_color', 'Eye color?'),
+                ('form.babies.whats_the_babys_name', "What's the baby's name?"),
             ],
             baby_repeat_group_schema
         )
