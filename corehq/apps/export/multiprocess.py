@@ -32,7 +32,7 @@ from datetime import timedelta
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    ExportFile, get_export_writer, _save_export_payload, get_export_size, _get_export_documents)
+    ExportFile, get_export_writer, save_export_payload, get_export_size, _get_export_documents)
 from corehq.apps.export.export import _write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
@@ -327,7 +327,7 @@ class MultiprocessExporter(object):
     def upload(self, final_path, clean=True):
         logger.info('Uploading final export')
         with open(final_path, 'r') as payload:
-            _save_export_payload(self.export_instance, payload)
+            save_export_payload(self.export_instance, payload)
         if clean:
             os.remove(final_path)
 

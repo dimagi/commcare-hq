@@ -463,7 +463,7 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
     filters = filters or export_instance.get_filters()
     export_file = get_export_file([export_instance], filters or [])
     with export_file as payload:
-        _save_export_payload(export_instance, payload)
+        save_export_payload(export_instance, payload)
 
 
 def _should_not_rebuild_export(export, last_access_cutoff):
@@ -475,7 +475,7 @@ def _should_not_rebuild_export(export, last_access_cutoff):
     )
 
 
-def _save_export_payload(export, payload):
+def save_export_payload(export, payload):
     """
     Save the contents of an export file to disk for later retrieval.
     """
