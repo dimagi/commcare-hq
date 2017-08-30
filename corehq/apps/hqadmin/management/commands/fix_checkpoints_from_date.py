@@ -74,7 +74,7 @@ class Command(BaseCommand):
             if not pillows:
                 raise CommandError('No pillows match: {}'.format(options['pillows']))
 
-            if not confirm('Update checkpoints for {}?'.format(', '.join(p.pillow_id for p in pillows))):
+            if not confirm('Update checkpoints for {}?'.format('\n  '.join(p.pillow_id for p in pillows))):
                 raise CommandError('abort')
 
         for pillow in pillows:
