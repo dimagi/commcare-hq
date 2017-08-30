@@ -304,100 +304,88 @@ hqDefine('app_manager/js/app_manager', function () {
 
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
-        $('.sortable').each(function () {
-            var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
-            if ($(this).children().not('.sort-disabled').length < min_elem) {
-                var $sortable = $(this);
-                $('.drag_handle', this).each(function () {
-                    if ($(this).closest('.sortable')[0] === $sortable[0]) {
-                        $(this).removeClass('drag_handle').hide();
-                    }
-                });
-            }
-        });
 
         $('.js-appnav-drag-module').on('mouseenter', function() {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');
         }).on('mouseleave', function () {
             $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
         });
+
+        // Initialize sorting behavior for both modules and forms
         $('.sortable').each(function () {
             var $sortable = $(this);
             var sorting_forms = $sortable.hasClass('sortable-forms');
-            var min_elem = $(this).hasClass('sortable-forms') ? 0 : 1;
-            if ($(this).children().not('.sort-disabled').length > min_elem) {
-                var init_dict = {
-                    handle: '.drag_handle ',
-                    items: ">*:not(.sort-disabled)",
-                    update: function (e, ui) {
-                        // because the event is triggered on both sortables when moving between one sortable list to
-                        // another, do a check to see if this is the sortable list we're moving the item to
-                        if ($sortable.find(ui.item).length < 1) {
-                            return;
-                        }
+            var init_dict = {
+                handle: '.drag_handle ',
+                items: ">*:not(.sort-disabled)",
+                update: function (e, ui) {
+                    // because the event is triggered on both sortables when moving between one sortable list to
+                    // another, do a check to see if this is the sortable list we're moving the item to
+                    if ($sortable.find(ui.item).length < 1) {
+                        return;
+                    }
 
-                        var to = -1,
-                            from = -1,
-                            to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
-                            moving_to_new_module = false,
-                            $form;
+                    var to = -1,
+                        from = -1,
+                        to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
+                        moving_to_new_module = false,
+                        $form;
 
-                        // if you're moving modules or moving forms within the same module, use this logic to find to and from
-                        if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
-                            $(this).children().not('.sort-disabled').each(function (i) {
-                                var index = parseInt($(this).data('index'), 10);
-                                if (from !== -1) {
-                                    if (from === index) {
-                                        to = i;
-                                        return false;
-                                    }
-                                }
-                                if (i !== index) {
-                                    if (i + 1 === index) {
-                                        from = i;
-                                    } else {
-                                        to = i;
-                                        from = index;
-                                        return false;
-                                    }
-                                }
-                            });
-                        } else { //moving forms to a new submodule
-                            $(this).children().not('.sort-disabled').each(function (i) {
-                                if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
-                                    moving_to_new_module = true;
+                    // if you're moving modules or moving forms within the same module, use this logic to find to and from
+                    if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
+                        $(this).children().not('.sort-disabled').each(function (i) {
+                            var index = parseInt($(this).data('index'), 10);
+                            if (from !== -1) {
+                                if (from === index) {
                                     to = i;
-                                    from = parseInt(ui.item.data('index'), 10);
                                     return false;
                                 }
-                            });
-                        }
-
-                        if (moving_to_new_module || to !== from) {
-                            var from_module_id = parseInt(ui.item.data('moduleid'), 10);
-                            $form = $(this).find('> .sort-action form');
-                            $form.find('[name="from"], [name="to"]').remove();
-                            $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-                            $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
-                            if (sorting_forms) {
-                                $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
-                                $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
+                            if (i !== index) {
+                                if (i + 1 === index) {
+                                    from = i;
+                                } else {
+                                    to = i;
+                                    from = index;
+                                    return false;
+                                }
+                            }
+                        });
+                    } else { //moving forms to a new submodule
+                        $(this).children().not('.sort-disabled').each(function (i) {
+                            if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
+                                moving_to_new_module = true;
+                                to = i;
+                                from = parseInt(ui.item.data('index'), 10);
+                                return false;
+                            }
+                        });
+                    }
 
-                            // Show loading screen and disable rearranging
-                            $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                            $sortable.find('.drag_handle').remove();
-                            $form.submit();
+                    if (moving_to_new_module || to !== from) {
+                        var from_module_id = parseInt(ui.item.data('moduleid'), 10);
+                        $form = $(this).find('> .sort-action form');
+                        $form.find('[name="from"], [name="to"]').remove();
+                        $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
+                        $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
+                        if (sorting_forms) {
+                            $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
+                            $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                         }
 
-                        module.setPublishStatus(true);
+                        // Show loading screen and disable rearranging
+                        $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                        $sortable.find('.drag_handle').remove();
+                        $form.submit();
                     }
-                };
-                if (sorting_forms) {
-                    init_dict["connectWith"] = '.sortable-forms';
+
+                    module.setPublishStatus(true);
                 }
-                $(this).sortable(init_dict);
+            };
+            if (sorting_forms) {
+                init_dict["connectWith"] = '.sortable-forms';
             }
+            $(this).sortable(init_dict);
         });
         $('.sort-action').hide();
     };
