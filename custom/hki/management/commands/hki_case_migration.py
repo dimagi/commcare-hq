@@ -34,7 +34,8 @@ class Command(BaseCommand):
             for cases in chunked(with_progress_bar(self._get_cases_to_process(), total_cases), 100):
                 cases_to_update = self._process_cases(cases, failed_updates, loc_mapping)
                 try:
-                    xform, cases = bulk_update_cases(self.domain, cases_to_update)
+                    xform, cases = bulk_update_cases(
+                        self.domain, cases_to_update, self.__module__)
                     fh.write(xform.form_id)
                 except LocalSubmissionError as e:
                     print unicode(e)

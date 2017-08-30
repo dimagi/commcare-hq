@@ -1404,7 +1404,8 @@ def close_case_view(request, domain, case_id):
     if case.closed:
         messages.info(request, u'Case {} is already closed.'.format(case.name))
     else:
-        form_id = close_case(case_id, domain, request.couch_user)
+        device_id = __name__ + ".close_case_view"
+        form_id = close_case(case_id, domain, request.couch_user, device_id)
         msg = _(u'''Case {name} has been closed.
             <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
             You can also reopen the case in the future by archiving the last form in the case history.

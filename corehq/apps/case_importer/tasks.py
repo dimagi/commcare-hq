@@ -84,6 +84,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     domain,
                     username,
                     user_id,
+                    device_id=__name__ + ".do_import",
                 )
 
                 if form.is_error:

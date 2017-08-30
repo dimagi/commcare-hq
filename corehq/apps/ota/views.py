@@ -127,7 +127,9 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+                   host_type=request.POST.get('case_type'),
+                   host_name=request.POST.get('case_name'),
+                   device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
