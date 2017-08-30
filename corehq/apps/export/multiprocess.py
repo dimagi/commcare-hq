@@ -32,7 +32,7 @@ from datetime import timedelta
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    ExportFile, get_export_writer, save_export_payload, get_export_size, _get_export_documents)
+    ExportFile, get_export_writer, save_export_payload, get_export_size, get_export_documents)
 from corehq.apps.export.export import _write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
@@ -124,7 +124,7 @@ def rebuild_export_mutiprocess(export_id, num_processes, page_size=100000):
     exporter = MultiprocessExporter(export_instance, total_docs, num_processes)
     paginator = OutputPaginator(export_id)
     with exporter, paginator:
-        for index, doc in enumerate(_get_export_documents(export_instance, filters)):
+        for index, doc in enumerate(get_export_documents(export_instance, filters)):
             paginator.write(doc)
             if paginator.page_size == page_size:
                 _log_page_dumped(paginator)

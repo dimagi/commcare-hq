@@ -321,13 +321,13 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
-            docs = _get_export_documents(export_instance, filters)
+            docs = get_export_documents(export_instance, filters)
             _write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
 
-def _get_export_documents(export_instance, filters):
+def get_export_documents(export_instance, filters):
     query = _get_export_query(export_instance, filters)
     # size here limits each scroll request, not the total number of results
     # We believe we can occasionally hit the 5m limit to process a single scroll window
