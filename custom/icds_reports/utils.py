@@ -1143,7 +1143,10 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    moderately_underweight_total = 0
+    severely_underweight_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -1153,7 +1156,11 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         normal = row['normal']
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
-        average.append(value)
+
+        moderately_underweight_total += (moderately_underweight or 0)
+        severely_underweight_total += (severely_underweight_total or 0)
+        valid_total += (valid or 0)
+
         row_values = {
             'severely_underweight': severely_underweight or 0,
             'moderately_underweight': moderately_underweight or 0,
@@ -1175,13 +1182,15 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
     fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
+    average = ((moderately_underweight_total or 0) + (severely_underweight_total or 0)) * 100 / (valid_total or 1)
+
     return [
         {
             "slug": "moderately_underweight",
             "label": "Percent of Children Underweight (0-5 years)",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": average,
                 "info": _((
                     "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
@@ -1522,7 +1531,6 @@ def get_awc_reports_pse(config, month, domain):
         else:
             open_count_chart[pse_week] = chart_row['open_count']
             attended_children_chart[pse_week] = [chart_row['attended_children_percent']]
-
 
     map_data = {}
 
@@ -2236,7 +2244,11 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    severe_total = 0
+    moderate_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -2246,8 +2258,11 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         normal = row['normal']
         total_measured = row['total_measured']
 
+        severe_total += (severe or 0)
+        moderate_total += (moderate or 0)
+        valid_total += (valid or 0)
+
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
-        average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
@@ -2277,7 +2292,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             "label": "Percent of Children Wasted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
-                "average": "%.2f" % (sum(average) / (len(average) or 1)),
+                "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
                     "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
@@ -2493,7 +2508,11 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    moderate_total = 0
+    severe_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -2503,8 +2522,11 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         normal = row['normal']
         total_measured = row['total_measured']
 
+        moderate_total += (moderate or 0)
+        severe_total += (severe or 0)
+        valid_total += (valid or 0)
+
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
-        average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
@@ -2533,7 +2555,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             "label": "Percent of Children Stunted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
-                "average": "%.2f" % (sum(average) / (len(average) or 1)),
+                "average": "%.2f" % (((moderate_total + severe_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
                     "-2Z standard deviations of the WHO Child Growth Standards median."
@@ -2750,15 +2772,19 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    low_birth_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
 
         low_birth = row['low_birth']
         in_month = row['in_month']
 
+        low_birth_total += (low_birth or 0)
+        in_month_total += (in_month or 0)
+
         value = (low_birth or 0) * 100 / (in_month or 1)
-        average.append(value)
         row_values = {
             'low_birth': low_birth,
             'in_month': in_month,
@@ -2784,7 +2810,7 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             "label": "Percent Newborns with Low Birth Weight",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (low_birth_total * 100) / float(in_month_total or 1),
                 "info": _((
                     "Percentage of newborns with born with birth weight less than 2500 grams."
                     "<br/><br/>"
@@ -2989,15 +3015,18 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    birth_total = 0
+    in_month_total = 0
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
 
         birth = row['birth']
         in_month = row['in_month']
 
+        birth_total += (birth or 0)
+        in_month_total += (in_month or 0)
+
         value = (birth or 0) * 100 / (in_month or 1)
-        average.append(value)
         row_values = {
             'birth': birth,
             'in_month': in_month,
@@ -3023,7 +3052,7 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             "label": "Percent Early Initiation of Breastfeeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (birth_total * 100) / float(in_month_total or 1),
                 "info": _((
                     "Percentage of children who were put to the breast within one hour of birth."
                     "<br/><br/>"
@@ -3229,15 +3258,20 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -3263,7 +3297,7 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             "label": "Percent Exclusive Breastfeeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / (float(valid_total) or 1),
                 "info": _((
                     "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
                     "<br/><br/>"
@@ -3480,15 +3514,20 @@ def get_children_initiated_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -3514,7 +3553,7 @@ def get_children_initiated_data_map(config, loc_level):
             "label": "Percent Children (6-8 months) initiated Complementary Feeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food."
@@ -3728,15 +3767,18 @@ def get_institutional_deliveries_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
 
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -3762,7 +3804,7 @@ def get_institutional_deliveries_data_map(config, loc_level):
             "label": "Percent Instituitional Deliveries",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of pregant women who delivered in a public or private medical facility "
                     "in the last month. "
@@ -3979,15 +4021,20 @@ def get_immunization_coverage_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -4013,7 +4060,7 @@ def get_immunization_coverage_data_map(config, loc_level):
             "label": "Percent Immunization Coverage at 1 year",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of children at age 3 who have recieved complete immunization as per "
                     "National Immunization Schedule of India."
@@ -4229,15 +4276,20 @@ def get_awc_daily_status_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_day_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_day = row['in_day']
 
+        in_day_total += (in_day or 0)
+        valid_total += (valid or 0)
+
         value = (in_day or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_day': in_day or 0,
             'all': valid or 0
@@ -4263,7 +4315,7 @@ def get_awc_daily_status_data_map(config, loc_level):
             "label": "Percent AWCs Open Yesterday",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_day_total or 0) * 100 / float(valid_total or 1),
                 "info": _((
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
@@ -5245,7 +5297,9 @@ def get_adhaar_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5253,7 +5307,10 @@ def get_adhaar_data_map(config, loc_level):
         in_month = row['in_month']
 
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
+        valid_total += (valid or 0)
+        in_month_total += (in_month or 0)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -5279,7 +5336,7 @@ def get_adhaar_data_map(config, loc_level):
             "label": "Percent Adhaar seeded beneficiaries",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage number of ICDS beneficiaries whose Adhaar identification has been captured"
                 )),
@@ -5493,15 +5550,19 @@ def get_clean_water_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -5527,7 +5588,7 @@ def get_clean_water_data_map(config, loc_level):
             "label": "Percent AWCs with Clean Drinking Water",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a source of clean drinking water"
                 )),
@@ -5741,15 +5802,19 @@ def get_functional_toilet_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -5775,7 +5840,7 @@ def get_functional_toilet_data_map(config, loc_level):
             "label": "Percent AWCs with Functional Toilet",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a functional toilet"
                 )),
@@ -5990,15 +6055,20 @@ def get_medicine_kit_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -6024,7 +6094,7 @@ def get_medicine_kit_data_map(config, loc_level):
             "label": "Percent AWCs with Medicine Kit",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a Medicine Kit"
                 )),
@@ -6239,15 +6309,19 @@ def get_infants_weight_scale_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -6273,7 +6347,7 @@ def get_infants_weight_scale_data_map(config, loc_level):
             "label": "Percent AWCs with Weighing Scale: Infants",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for infants"
                 )),
@@ -6487,15 +6561,21 @@ def get_adult_weight_scale_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
@@ -6521,7 +6601,7 @@ def get_adult_weight_scale_data_map(config, loc_level):
             "label": "Percent AWCs with Weighing Scale: Mother and Child",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for mother and child"
                 )),
