@@ -8,6 +8,7 @@ from datetime import datetime
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
@@ -84,6 +85,46 @@ SUCCESSFUL_SOAP_RESPONSE = (
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+
+FAILURE_HEALTH_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+    '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                        '<NewDataSet xmlns="">'
+                            '<HE_DETAILS diffgr:id="HE_DETAILS1" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                                '<Message>Character are not allowed........</Message>'
+                            '</HE_DETAILS>'
+                        '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+)
+
+DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
+
+SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+    '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                        '<NewDataSet xmlns="">'
+                            '<HE_DETAILS diffgr:id="HE_DETAILS1" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                                '<Message>HE_ID: {dummy_id}</Message>'
+                            '</HE_DETAILS>'
+                        '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -1268,8 +1309,9 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
 
         self.repeater = NikshayHealthEstablishmentRepeater(
             domain=self.domain,
-            url='case-repeater-url?wsdl',
-            username='test-user'
+            url=WSDL_URL,
+            username='test-user',
+            operation='HE_Registration'
         )
         self.repeater.save()
 
@@ -1284,27 +1326,18 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
         # on create
         _, locations = setup_enikshay_locations(self.domain)
-        self.assertEqual(2, len(self.repeat_records().all()))
-        self.assertFalse(locations['STO'].location_id in [record.payload_id for record in RepeatRecord.all()])
-        self.assertTrue(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
-        self.assertTrue(locations['PAC'].location_id in [record.payload_id for record in RepeatRecord.all()])
-        delete_all_repeat_records()
+        # all locations have been created with nikshay code so nothing should get queued here
+        self.assertEqual(0, len(self.repeat_records().all()))
         # on update
         self.pcp = locations['PCP']
         self.pcp.name = "Nikshay PCP"
-        self.pcp.metadata = {
-            'establishment_type': 'Lab',
-            'sector': 'Public',
-            'registration_number': '123',
-            'contact_name': 'PCP contact person name',
-            'contact_designation': 'Lab Manager',
-            'phone_number': '01127477587',
-            'mobile_number': '9818710071',
-            'address': 'PCP Address',
-            'address_pincode': '110088',
+        self.pcp.metadata.update({
             'email_address': 'pcp@email.com',
-        }
+            # clean nikshay code to have trigger
+            'nikshay_code': '',
+        })
         self.pcp.save()
+        self.assertTrue(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
 
         # update on test location
         delete_all_repeat_records()
@@ -1319,12 +1352,20 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHealthEstablishmentPayloadGenerator, self).setUp()
 
+        self.repeater = NikshayHealthEstablishmentRepeater(
+            domain=self.domain,
+            url=WSDL_URL,
+            username='test-user',
+            operation='HE_Registration'
+        )
+        self.repeater.save()
+
     def test_payload_properties(self):
         _, locations = setup_enikshay_locations(self.domain)
 
         self.pcp = locations['PCP']
         self.pcp.name = "Nikshay PCP"
-        self.pcp.metadata = {
+        self.pcp.metadata.update({
             'establishment_type': 'lab',
             'sector': 'public',
             'registration_number': '123',
@@ -1336,7 +1377,7 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
             'address_pincode': '110088',
             'email_address': 'pcp@email.com',
             'tbu_code': '123',
-        }
+        })
         self.pcp.save()
 
         payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
@@ -1358,3 +1399,23 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         self.assertEqual(payload['USER_ID'], 'test-mh14')
         self.assertEqual(payload['PASSWORD'], '123')
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
+
+    def test_handle_success(self):
+        _, locations = setup_enikshay_locations(self.domain)
+        payload_generator = NikshayHealthEstablishmentPayloadGenerator(None)
+        self.pcp = locations["PCP"]
+        self.pcp.metadata['nikshay_code'] = ''
+        # save with no nikshay code to add a repeat record
+        self.pcp.save()
+        repeat_record = [record for record in RepeatRecord.all() if record.payload_id == self.pcp.location_id][0]
+
+        self.pcp.metadata['nikshay_code'] = 'old_id_value'
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE),
+            self.pcp,
+            repeat_record,
+        )
+        updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
+        self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)
+        self.assertEqual(updated_location.metadata['old_nikshay_code'], 'old_id_value')
