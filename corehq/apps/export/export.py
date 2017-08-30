@@ -45,7 +45,7 @@ class ExportFile(object):
         os.remove(self.path)
 
 
-class _Writer(object):
+class _ExportWriter(object):
     """
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
@@ -123,7 +123,7 @@ class _Writer(object):
         return self._path
 
 
-class _PaginatedWriter(object):
+class _PaginatedExportWriter(object):
 
     def __init__(self, writer, page_length=None):
         self.format = writer.format
@@ -283,7 +283,7 @@ class _PaginatedWriter(object):
         return self._path
 
 
-def _get_writer(export_instances, allow_pagination=True):
+def get_export_writer(export_instances, allow_pagination=True):
     """
     Return a new _Writer
     """
@@ -293,9 +293,9 @@ def _get_writer(export_instances, allow_pagination=True):
 
     legacy_writer = get_writer(format)
     if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
-        writer = _PaginatedWriter(legacy_writer)
+        writer = _PaginatedExportWriter(legacy_writer)
     else:
-        writer = _Writer(legacy_writer)
+        writer = _ExportWriter(legacy_writer)
     return writer
 
 
@@ -317,7 +317,7 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
     """
-    writer = _get_writer(export_instances)
+    writer = get_export_writer(export_instances)
     with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to

@@ -13,8 +13,8 @@ from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
 )
 from corehq.apps.export.export import (
-    _get_writer,
-    _Writer,
+    get_export_writer,
+    _ExportWriter,
     _write_export_instance,
     ExportFile,
     get_export_file,
@@ -115,7 +115,7 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
@@ -159,7 +159,7 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs + self.docs)
 
@@ -204,7 +204,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
@@ -251,7 +251,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, [doc])
 
@@ -347,7 +347,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
 
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
@@ -390,7 +390,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
@@ -432,7 +432,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
@@ -482,7 +482,7 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
         with ExportFile(writer.path, writer.format) as export:
@@ -523,7 +523,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.HTML,
             tables=tables
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         docs = [
             {
                 'domain': 'my-domain',
@@ -602,7 +602,7 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _Writer(get_writer(Format.JSON))
+        writer = _ExportWriter(get_writer(Format.JSON))
         with writer.open(export_instances):
             _write_export_instance(writer, export_instances[0], self.docs)
             _write_export_instance(writer, export_instances[1], self.docs)
@@ -660,7 +660,7 @@ class WriterTest(SimpleTestCase):
             }
         ]
 
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
 
@@ -697,7 +697,7 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, self.docs)
 
@@ -829,7 +829,7 @@ class ExportTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
 
