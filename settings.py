@@ -825,7 +825,7 @@ STRIPE_PRIVATE_KEY = ''
 # or a dict of the following format:
 # {
 #     'WRITE': 'django_db_alias',
-#     'READ': [('django_db_alias', query_weighting_int), (...)]
+#     'READ': [('django_db_alias or connection URL', query_weighting_int), (...)]
 # }
 REPORTING_DATABASES = {
     'default': 'default',
