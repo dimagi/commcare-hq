@@ -46,18 +46,19 @@ class Command(BaseCommand):
             (os.path.join(extract_to, export_name, page), page)
             for page in os.listdir(os.path.join(extract_to, export_name))
         ]
-        headers_line = self._get_headers(export_pages)
-        headers = headers_line.strip().split(',')
-        deid_indexes = ','.join([str(headers.index(col) + 1) for col in columns])
 
         deid_root = tempfile.mkdtemp()
         deid_subdir = os.path.join(deid_root, export_name)
         os.mkdir(deid_subdir)
 
-        cut = sh.cut.bake('-d,', '-f{}'.format(deid_indexes), '--complement')
         for page in export_pages:
-            print('  Processing file: {}'.format(page[1]))
+            cut = self._make_cut_command(page[0], columns)
             dest = os.path.join(deid_subdir, page[1])
+            if not cut:
+                shutil.copyfile(page[0], dest)
+                print ('  Skipping file: {}, as it doesnt have deid columns'.format(page[1]))
+                continue
+            print('  Processing file: {}'.format(page[1]))
             cut(page[0], _out=dest)
 
         final_dir, orig_name = os.path.split(path)
@@ -72,16 +73,14 @@ class Command(BaseCommand):
         shutil.rmtree(extract_to)
         shutil.rmtree(deid_root)
 
-    def _get_headers(self, page_paths):
-        def __first_line(path):
-            with open(path, 'r') as sample_file:
-                return sample_file.readline().strip()
+    def _get_headers(self, path):
+        with open(path, 'r') as sample_file:
+            return sample_file.readline().strip()
 
-        headers = __first_line(page_paths[0][0])
-
-        for page in page_paths[1:]:
-            page_headers = __first_line(page[0])
-            if not page_headers == headers:
-                raise CommandError("Headers for page {} don't match".format(page[1]))
-
-        return headers
+    def _make_cut_command(self, path, deid_columns):
+        headers_line = self._get_headers(path)
+        headers = headers_line.strip().split(',')
+        if not set(deid_columns) < set(headers):
+            return None
+        deid_indexes = ','.join([str(headers.index(col) + 1) for col in deid_columns])
+        return sh.cut.bake('-d,', '-f{}'.format(deid_indexes), '--complement')
