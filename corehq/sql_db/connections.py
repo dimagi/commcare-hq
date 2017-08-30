@@ -1,4 +1,5 @@
 import random
+import warnings
 from contextlib import contextmanager
 from urllib import urlencode
 
@@ -125,10 +126,10 @@ class ConnectionManager(object):
         return connection_string or self.db_connection_map['default']
 
     def _populate_connection_map(self):
-        reporting_db_config = self._get_reporting_db_config()
-        if not reporting_db_config:
+        if getattr(settings, 'UCR_DATABASE_URL', None):
             self._populate_from_legacy_settings()
         else:
+            reporting_db_config = getattr(settings, 'REPORTING_DATABASES', None)
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
                 read = None
@@ -165,13 +166,14 @@ class ConnectionManager(object):
         self._add_django_db_from_settings_key(ICDS_TEST_UCR_ENGINE_ID, 'ICDS_UCR_TEST_DATABASE_ALIAS')
 
     def _populate_from_legacy_settings(self):
+        warnings.warn(
+            "'UCR_DATABASE_URL' setting deprecated. Use 'REPORTING_DATABASES instead.",
+            DeprecationWarning
+        )
         default_db = self._connection_string_from_django('default')
         ucr_db_reporting_url = getattr(settings, 'UCR_DATABASE_URL', None)
         self.db_connection_map[DEFAULT_ENGINE_ID] = default_db
         self.db_connection_map[UCR_ENGINE_ID] = ucr_db_reporting_url or default_db
-
-    def _get_reporting_db_config(self):
-        return getattr(settings, 'REPORTING_DATABASES', None)
 
     def _add_django_db_from_settings_key(self, engine_id, db_alias_settings_key):
         db_alias = self._get_db_alias_from_settings_key(db_alias_settings_key)
