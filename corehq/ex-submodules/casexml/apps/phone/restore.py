@@ -835,8 +835,12 @@ class RestoreConfig(object):
         username = self.restore_user.username
         duration = timing.duration if timing is not None else -1
         if duration > 20 or status == 412:
-            sync_log = self.restore_state.current_sync_log
-            sync_log_id = sync_log._id if sync_log else 'N/A'
+            if status == 412:
+                # use last sync log since there is no current sync log
+                sync_log_id = self.restore_state.params.sync_log_id
+            else:
+                sync_log = self.restore_state.current_sync_log
+                sync_log_id = sync_log._id if sync_log else 'N/A'
             log = logging.getLogger(__name__)
             log.info("restore %s: user=%s domain=%s status=%s duration=%.3f",
                      sync_log_id, username, self.domain, status, duration)
