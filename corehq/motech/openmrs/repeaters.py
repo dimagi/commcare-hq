@@ -48,7 +48,6 @@ class OpenmrsRepeater(CaseRepeater):
     def fire_for_record(self, repeat_record):
         form_json = json.loads(self.get_payload(repeat_record))
 
-        # FIXME: white_listed_case_types must work if blank
         trigger_case_infos = get_relevant_case_updates_from_form_json(
             self.domain, form_json, case_types=self.white_listed_case_types,
             extra_fields=[id_matcher.case_property
