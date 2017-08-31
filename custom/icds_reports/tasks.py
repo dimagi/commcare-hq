@@ -19,9 +19,9 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
-def move_ucr_data_into_aggregation_tables(date=None):
+def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
     date = date or datetime.utcnow().date()
-    now = datetime.utcnow().date()
+    monthly_date = date.replace(day=1)
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
 
@@ -42,19 +42,16 @@ def move_ucr_data_into_aggregation_tables(date=None):
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_monthly_aggregate_tables.sql')
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
-                date_diff = relativedelta(now, date)
-                months = date_diff.years * 12 + date_diff.months
-                for interval in [
-                    "{} months".format(months),
-                    "{} months".format(months + 1),
-                    "{} months".format(months + 2)
-                ]:
+                for interval in reversed(range(0, intervals)):
+                    calculation_date = (monthly_date - relativedelta(months=interval)).strftime('%Y-%m-%d')
                     celery_task_logger.info(
-                        "Starting icds reports {} update_monthly_aggregate_tables".format(interval)
+                        "Starting icds reports {} update_monthly_aggregate_tables".format(
+                            calculation_date
+                        )
                     )
-                    cursor.execute(sql_to_execute, {"interval": interval})
+                    cursor.execute(sql_to_execute, {"date": calculation_date})
                     celery_task_logger.info(
-                        "Ended icds reports {} update_monthly_aggregate_tables".format(interval)
+                        "Ended icds reports {} update_monthly_aggregate_tables".format(calculation_date)
                     )
 
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_daily_aggregate_table.sql')
