@@ -152,13 +152,15 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                 repeat_context='/data/repeat',
                 case_properties={
                     'weight': '/data/repeat/group/weight',
-                }
+                },
+                subcase_index=0,
             ),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
                     'age': '/data/repeat/nested_repeat/age',
-                }
+                },
+                subcase_index=1,
             ),
         ]
 
@@ -188,7 +190,10 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             create_items,
         )))
 
-        update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items))
+        index_items = filter(lambda item: 'case.index.parent' in item.readable_path, group_schema.items)
+        self.assertEqual(len(index_items), 2)
+
+        update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
         self.assertEqual(len(update_items), 1)
         self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.group.weight')
 
