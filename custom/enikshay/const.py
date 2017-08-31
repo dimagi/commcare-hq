@@ -97,7 +97,6 @@ VALID_ADHERENCE_SOURCES = (
 )
 
 CASE_VERSION = 'case_version'
-CASE_MINOR_VERSION = 'case_minor_version'
 
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"
