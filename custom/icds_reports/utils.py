@@ -2174,30 +2174,33 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
             )
         ][::-1],
         'last_month': datetime(*month).strftime("%b %Y"),
-        'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }
 
     def row_format(row_data):
+        return dict(
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorder_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            pse_days_attended=row_data.pse_days_attended
+        )
+
+    def base_data(row_data):
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized_date != '' else 'No',
-            nutrition_status=row_data.current_month_nutrition_status,
-            recorded_weight=row_data.recorded_weight or 0,
-            recorder_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
+            fully_immunized_date='Yes' if row_data.fully_immunized_date else 'No',
             mother_name=row_data.mother_name,
-            pse_days_attended=row_data.pse_days_attended,
             age_in_months=row_data.age_in_months,
         )
 
     for row in data:
         if row.case_id not in config['rows']:
-            config['rows'][row.case_id] = {}
+            config['rows'][row.case_id] = base_data(row)
         config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
 
     return config

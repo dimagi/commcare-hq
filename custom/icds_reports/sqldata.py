@@ -1629,6 +1629,11 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         return columns + agg_columns
 
 
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''
+
+
 class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
@@ -1682,7 +1687,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 SimpleColumn('sex'),
                 slug='sex'
             ),
-            DatabaseColumn(
+            ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
                 SimpleColumn('fully_immunized_date'),
                 format_fn=lambda x: 'Yes' if x != '' else 'No'
