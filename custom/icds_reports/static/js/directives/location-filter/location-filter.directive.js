@@ -46,9 +46,9 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
             return false;
         }
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
-                i = value;
+        window.angular.forEach(vm.selectedLocations, function (value, index) {
+            if (value && value.location_id === userLocationId) {
+                i = index;
             }
         });
         return selectedLocationIndex() !== -1 && i >= level;
