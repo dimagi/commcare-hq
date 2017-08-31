@@ -1,11 +1,12 @@
 import datetime
 import logging
 import uuid
-from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
+from contextlib2 import ExitStack
 from django.db import transaction
+
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -16,12 +17,12 @@ from corehq.form_processor.change_publishers import (
     republish_all_changes_for_form)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
-from couchforms.const import ATTACHMENT_NAME
-
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from couchforms.const import ATTACHMENT_NAME
+from dimagi.utils.couch import acquire_lock, release_lock
 
 
 class FormProcessorSQL(object):
@@ -243,23 +244,27 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail):
-        try:
-            case = CaseAccessorSQL.get_case(case_id)
-            assert case.domain == domain
-            found = True
-        except CaseNotFound:
+    def hard_rebuild_case(domain, case_id, detail, lock=True):
+        case, lock = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
+        if not case:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
-            found = False
+            if lock:
+                lock = CommCareCaseSQL.get_obj_lock_by_id(case_id)
 
-        case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
-        if case.is_deleted and not found:
-            return None
+        try:
+            if lock:
+                acquire_lock(lock, degrade_gracefully=False)
+            assert case.domain == domain
+            case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+            if case.is_deleted and not case.is_saved():
+                return None
 
-        case.server_modified_on = rebuild_transaction.server_date
-        CaseAccessorSQL.save_case(case)
-        publish_case_saved(case)
-        return case
+            case.server_modified_on = rebuild_transaction.server_date
+            CaseAccessorSQL.save_case(case)
+            publish_case_saved(case)
+            return case
+        finally:
+            release_lock(lock, degrade_gracefully=True)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
