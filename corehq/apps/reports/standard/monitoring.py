@@ -278,12 +278,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def all_users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        return users_data.combined_users
+        return _get_selected_users(self.domain, self.request)
 
     @property
     @memoized
@@ -1013,12 +1008,8 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         def _fmt_ts(timestamp):
             return format_datatables_data(to_minutes(timestamp), timestamp, to_minutes_raw(timestamp))
 
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        user_ids = [user.user_id for user in users_data.combined_users]
+        users = _get_selected_users(self.domain, self.request)
+        user_ids = [user.user_id for user in users]
         app_id = self.selected_form_data['app_id']
         xmlns = self.selected_form_data['xmlns']
 
@@ -1032,7 +1023,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             by_submission_time=self.by_submission_time,
         )
 
-        for user in users_data.combined_users:
+        for user in users:
             stats = data_map.get(user.user_id, {})
             rows.append([
                 self.get_user_link(user),
@@ -1096,15 +1087,11 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         total = 0
         total_seconds = 0
         if self.all_relevant_forms:
-            mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-            users_data = EMWF.pull_users_and_groups(
-                self.domain,
-                mobile_user_and_group_slugs,
-            )
+            users = _get_selected_users(self.domain, self.request)
 
             user_map = {user.user_id: user
-                        for user in users_data.combined_users if user.user_id}
-            user_ids = [user.user_id for user in users_data.combined_users if user.user_id]
+                        for user in users if user.user_id}
+            user_ids = [user.user_id for user in users if user.user_id]
 
             xmlnss = []
             app_ids = []
@@ -1232,12 +1219,8 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     @memoized
     def activity_times(self):
         all_times = []
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        user_ids = map(lambda user: user.user_id, users_data.combined_users)
+        users = _get_selected_users(self.domain, self.request)
+        user_ids = map(lambda user: user.user_id, users)
         xmlnss = map(lambda form: form['xmlns'], self.all_relevant_forms.values())
         app_ids = map(lambda form: form['app_id'], self.all_relevant_forms.values())
 
