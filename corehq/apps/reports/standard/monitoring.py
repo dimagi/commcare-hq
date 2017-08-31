@@ -684,11 +684,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @property
     @memoized
     def selected_simplified_users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        return util.get_simplified_users(EMWF.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-        ))
+        return _get_selected_users(self.domain, self.request)
 
     @property
     def rows(self):
@@ -826,8 +822,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     @property
     @memoized
     def all_users(self):
-        user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
-        return util.get_simplified_users(user_query)
+        return _get_selected_users(self.domain, self.request)
 
     def paginate_list(self, data_list):
         if self.pagination:
@@ -1817,3 +1812,14 @@ def _get_raw_user_link(user, url, filter_class):
         'username': user.username_in_report,
     }
     return user_link
+
+
+def _get_selected_users(domain, request):
+    """For use with the Expanded Mobile Worker Filter
+
+    :return: simplified users
+    """
+    return util.get_simplified_users(EMWF.user_es_query(
+        domain,
+        request.GET.getlist(EMWF.slug),
+    ))
