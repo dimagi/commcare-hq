@@ -1635,15 +1635,6 @@ def clean_hiv_status(value):
     }[clean_value]
 
 
-
-    if not value:
-        return None
-    if value not in ("reactive", "non_reactive"):
-        raise FieldValidationFailure(value, "HIV status")
-    return value
-
-
-
 def clean_socioeconomic_status(value):
     if value is None:
         return "unknown"
