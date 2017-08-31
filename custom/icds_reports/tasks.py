@@ -42,7 +42,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_monthly_aggregate_tables.sql')
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
-                for interval in range(intervals-1, -1, -1):
+                for interval in range(intervals - 1, -1, -1):
                     calculation_date = (monthly_date - relativedelta(months=interval)).strftime('%Y-%m-%d')
                     celery_task_logger.info(
                         "Starting icds reports {} update_monthly_aggregate_tables".format(
