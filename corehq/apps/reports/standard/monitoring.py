@@ -34,7 +34,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import (
-    ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
+    ExpandedMobileWorkerFilter as EMWF
 )
 from corehq.apps.reports.standard import ProjectReportParametersMixin, \
     DatespanMixin, ProjectReport
@@ -110,7 +110,7 @@ class WorkerMonitoringFormReportTableBase(WorkerMonitoringReportTableBase):
             "enddate": self.request.GET.get("enddate", '')
         }
 
-        params.update(LocationRestrictedMobileWorkerFilter.for_user(user.user_id))
+        params.update(EMWF.for_user(user.user_id))
 
         from corehq.apps.reports.standard.inspect import SubmitHistory
 
@@ -940,7 +940,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
     def get_raw_user_link(self, user):
         from corehq.apps.reports.standard.inspect import SubmitHistory
         return _get_raw_user_link(user, SubmitHistory.get_url(domain=self.domain),
-                                  filter_class=LocationRestrictedMobileWorkerFilter)
+                                  filter_class=EMWF)
 
     @property
     def template_context(self):
@@ -1360,7 +1360,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def fields(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return [
-                'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
                 'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
                 'corehq.apps.reports.filters.dates.DatespanFilter',
             ]
@@ -1460,8 +1460,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
-                self.domain, self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            user_query = EMWF.user_es_query(
+                self.domain, self.request.GET.getlist(EMWF.slug)
             )
             if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
                 accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -1502,9 +1502,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         base_url = absolute_reverse('project_report_dispatcher', args=(self.domain, 'submit_history'))
         if self.view_by_groups:
-            params = LocationRestrictedMobileWorkerFilter.for_reporting_group(owner_id)
+            params = EMWF.for_reporting_group(owner_id)
         else:
-            params = LocationRestrictedMobileWorkerFilter.for_user(owner_id)
+            params = EMWF.for_user(owner_id)
 
         start_date, end_date = self._dates_for_linked_reports(self.datespan)
         params.update({
@@ -1807,9 +1807,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
 def _get_raw_user_link(user, url, filter_class):
     """
-    filter_class is expected to be either ExpandedMobileWorkerFilter or a subclass of it, including
-    - CaseListFilter
-    - LocationRestrictedMobileWorkerFilter
+    filter_class is expected to be either ExpandedMobileWorkerFilter or a
+    subclass of it, such as the CaseListFilter
     """
     user_link_template = '<a href="%(link)s?%(params)s">%(username)s</a>'
     user_link = user_link_template % {

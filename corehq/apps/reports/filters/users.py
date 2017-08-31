@@ -433,11 +433,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
-class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
-    slug = 'location_restricted_mobile_worker'
-    options_url = 'emwf_options'
-
-
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
     try:

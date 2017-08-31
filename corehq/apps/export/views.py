@@ -21,7 +21,7 @@ from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -2238,7 +2238,7 @@ class GenericDownloadNewExportMixin(object):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
     mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+        '(emw=|case_list_filter=|emw=){1}([^&]*)(&){0,1}'
     )
 
     def _get_download_task(self, in_data):
@@ -2309,7 +2309,7 @@ class GenericDownloadNewExportMixin(object):
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
-            filter_form_data[LocationRestrictedMobileWorkerFilter.slug]
+            filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
         try:
             export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
@@ -2325,7 +2325,7 @@ class GenericDownloadNewExportMixin(object):
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = LocationRestrictedMobileWorkerFilter
+    export_filter_class = ExpandedMobileWorkerFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
@@ -2345,7 +2345,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         return form_filters
 
     def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
-        filter_slug = in_data['form_data'][LocationRestrictedMobileWorkerFilter.slug]
+        filter_slug = in_data['form_data'][ExpandedMobileWorkerFilter.slug]
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
@@ -2354,7 +2354,7 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Exports")
     filter_form_class = EmwfFilterFormExport
-    export_filter_class = LocationRestrictedMobileWorkerFilter
+    export_filter_class = ExpandedMobileWorkerFilter
 
 
 @location_safe

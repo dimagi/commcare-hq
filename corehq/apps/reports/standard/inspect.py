@@ -7,7 +7,7 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -49,7 +49,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
