@@ -245,15 +245,15 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True):
-        case, lock = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
+        case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         if not case:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
-            if lock:
-                lock = CommCareCaseSQL.get_obj_lock_by_id(case_id)
+            if lock_obj:
+                lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
 
         try:
-            if lock:
-                acquire_lock(lock, degrade_gracefully=False)
+            if lock_obj:
+                acquire_lock(lock_obj, degrade_gracefully=False)
             assert case.domain == domain
             case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
             if case.is_deleted and not case.is_saved():
@@ -264,7 +264,7 @@ class FormProcessorSQL(object):
             publish_case_saved(case)
             return case
         finally:
-            release_lock(lock, degrade_gracefully=True)
+            release_lock(lock_obj, degrade_gracefully=True)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):

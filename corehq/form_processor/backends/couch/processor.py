@@ -148,18 +148,18 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
-        case, lock = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
+        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
         if not case:
             case = CommCareCase()
             case.case_id = case_id
             case.domain = domain
-            if lock:
-                lock = CommCareCase.get_obj_lock_by_id(case_id)
+            if lock_obj:
+                lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
 
         try:
-            if lock:
-                acquire_lock(lock, degrade_gracefully=False)
+            if lock_obj:
+                acquire_lock(lock_obj, degrade_gracefully=False)
             assert case.domain == domain
             forms = FormProcessorCouch.get_case_forms(case_id)
             filtered_forms = [f for f in forms if f.is_normal]
@@ -184,7 +184,7 @@ class FormProcessorCouch(object):
                 case.save()
             return case
         finally:
-            release_lock(lock, degrade_gracefully=True)
+            release_lock(lock_obj, degrade_gracefully=True)
 
     @staticmethod
     def get_case_forms(case_id):
