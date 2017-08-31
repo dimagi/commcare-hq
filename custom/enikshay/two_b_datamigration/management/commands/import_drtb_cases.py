@@ -334,7 +334,6 @@ MUMBAI_MAP = {
     "Am": 82,
     "dst_result_date": 83,
     "treatment_initiation_date": 89,
-    "drtb_type": 92,
     "mumbai_treatment_status": 92,
     "treatment_regimen": 93,
     "ip_to_cp_date": 95,
@@ -831,14 +830,15 @@ def get_diagnosis_properties(column_mapping, domain, row):
 
 def get_disease_site_properties(column_mapping, row):
     xlsx_value = column_mapping.get_value("site_of_disease", row)
+    if not xlsx_value:
+        return {}
+
     value = xlsx_value.replace('EP ', 'extra pulmonary ').\
         lower().\
         replace('extra pulmonary', 'extra_pulmonary').\
         replace('lymph node', 'lymph_node').\
         replace('pleural effusion', 'pleural_effusion')
 
-    if not value:
-        return {}
     if (not re.match("^extra_pulmonary \(other - .*$", value)
         and value not in [
         "pulmonary",
@@ -1316,6 +1316,9 @@ def clean_mumbai_treatment_status(value, treatment_initiation_date):
 
 
 def clean_patient_type(value):
+    if not value:
+        return None
+
     clean_value = value.lower().replace(' ', '_')
     if clean_value not in [
         "new",
