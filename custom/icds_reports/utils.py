@@ -882,7 +882,7 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
@@ -2135,7 +2135,7 @@ def get_awc_report_demographics(config, month):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
@@ -4360,7 +4360,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
         date = row['date']
         in_day = row['in_day'] or 0
         location = row['%s_name' % loc_level]
-        valid = row['all']
+        valid = row['all'] or 0
 
         if location in best_worst:
             best_worst[location].append(in_day / (valid or 1))
@@ -5333,7 +5333,7 @@ def get_adhaar_data_map(config, loc_level):
     return [
         {
             "slug": "adhaar",
-            "label": "Percent Adhaar seeded beneficiaries",
+            "label": "Percent Adhaar Seeded Individuals",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
