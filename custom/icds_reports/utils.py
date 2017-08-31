@@ -332,7 +332,7 @@ def get_system_usage_data(yesterday, config):
     }
 
 
-@quickcache(['config'], timeout=24 * 60 * 60)
+# @quickcache(['config'], timeout=24 * 60 * 60)
 def get_maternal_child_data(config):
 
     def get_data_for_child_health_monthly(date, filters):
