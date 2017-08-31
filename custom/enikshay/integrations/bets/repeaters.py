@@ -26,7 +26,8 @@ from custom.enikshay.integrations.bets.repeater_generators import (
     BETSBeneficiaryPayloadGenerator)
 from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
-    is_valid_archived_submission, is_valid_person_submission, case_was_created)
+    is_valid_archived_submission, is_valid_person_submission, case_was_created,
+    is_migrated_uatbc_episode)
 
 
 class BETSRepeaterMixin(object):
@@ -215,6 +216,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
@@ -357,12 +359,13 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
             and enrolled_in_private_sector
             and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - AYUSH/Other provider: Registering and referral of a presumptive TB case"
-                      " in UATBC/e-Nikshay (episode case type)")
+                      " in eNikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
 
@@ -385,6 +388,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             and enrolled_in_private_sector
             and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
