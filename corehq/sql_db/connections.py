@@ -1,4 +1,5 @@
 import random
+import warnings
 from contextlib import contextmanager
 from urllib import urlencode
 
@@ -48,6 +49,12 @@ class SessionHelper(object):
                 session.close()
 
         return session_scope
+
+
+def _validate_db_alias_or_connection_string(db_alias_or_connection_string):
+    if db_alias_or_connection_string not in settings.DATABASES:
+        # Test to make sure this connection string is valid
+        SessionHelper(db_alias_or_connection_string).engine.execute("SELECT 1")
 
 
 class ConnectionManager(object):
@@ -119,28 +126,36 @@ class ConnectionManager(object):
         return connection_string or self.db_connection_map['default']
 
     def _populate_connection_map(self):
-        reporting_db_config = self._get_reporting_db_config()
-        if not reporting_db_config:
+        if getattr(settings, 'UCR_DATABASE_URL', None):
             self._populate_from_legacy_settings()
         else:
+            reporting_db_config = getattr(settings, 'REPORTING_DATABASES', None)
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
                 read = None
                 if isinstance(db_config, dict):
                     write_db = db_config['WRITE']
                     read = db_config['READ']
-                    for db_alias, weighting in read:
+                    for db_alias_or_connection_string, weighting in read:
                         assert isinstance(weighting, int), 'weighting must be int'
-                        assert db_alias in settings.DATABASES, db_alias
+                        _validate_db_alias_or_connection_string(db_alias_or_connection_string)
 
                 self._add_django_db(engine_id, write_db)
                 if read:
                     self.read_database_mapping[engine_id] = []
-                    for read_db, weighting in read:
+                    for index, read_config in enumerate(read):
+                        read_db, weighting = read_config
                         assert read_db == write_db or read_db not in self.db_connection_map, read_db
-                        self.read_database_mapping[engine_id].extend([read_db] * weighting)
+                        if read_db in settings.DATABASES:
+                            read_engine_id = read_db
+                        else:
+                            read_engine_id = '{}_{}'.format(engine_id, index)
+                        self.read_database_mapping[engine_id].extend([read_engine_id] * weighting)
                         if read_db != write_db:
-                            self._add_django_db(read_db, read_db)
+                            if read_db in settings.DATABASES:
+                                self._add_django_db(read_db, read_db)
+                            else:
+                                self.db_connection_map[read_engine_id] = read_db
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')
@@ -151,13 +166,14 @@ class ConnectionManager(object):
         self._add_django_db_from_settings_key(ICDS_TEST_UCR_ENGINE_ID, 'ICDS_UCR_TEST_DATABASE_ALIAS')
 
     def _populate_from_legacy_settings(self):
+        warnings.warn(
+            "'UCR_DATABASE_URL' setting deprecated. Use 'REPORTING_DATABASES instead.",
+            DeprecationWarning
+        )
         default_db = self._connection_string_from_django('default')
         ucr_db_reporting_url = getattr(settings, 'UCR_DATABASE_URL', None)
         self.db_connection_map[DEFAULT_ENGINE_ID] = default_db
         self.db_connection_map[UCR_ENGINE_ID] = ucr_db_reporting_url or default_db
-
-    def _get_reporting_db_config(self):
-        return getattr(settings, 'REPORTING_DATABASES', None)
 
     def _add_django_db_from_settings_key(self, engine_id, db_alias_settings_key):
         db_alias = self._get_db_alias_from_settings_key(db_alias_settings_key)

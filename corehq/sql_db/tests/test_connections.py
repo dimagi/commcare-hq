@@ -2,6 +2,7 @@ from collections import Counter
 
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
+from mock import patch
 
 from corehq.sql_db.connections import ConnectionManager
 
@@ -51,11 +52,12 @@ class ConnectionManagerTests(SimpleTestCase):
             'other': 'postgresql+psycopg2://:@localhost:5432/other',
         })
 
-    def test_read_load_balancing(self):
+    @patch('corehq.sql_db.connections._validate_db_alias_or_connection_string', return_value=True)
+    def test_read_load_balancing(self, mock):
         reporting_dbs = {
             'ucr': {
                 'WRITE': 'ucr',
-                'READ': [('ucr', 8), ('other', 1), ('default', 1)]
+                'READ': [('ucr', 6), ('other', 1), ('postgresql+psycopg2://:@localhost:5432/read_only', 3)]
             },
         }
         with override_settings(REPORTING_DATABASES=reporting_dbs):
@@ -64,6 +66,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 'default': 'postgresql+psycopg2://:@localhost:5432/default',
                 'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
                 'other': 'postgresql+psycopg2://:@localhost:5432/other',
+                'ucr_2': 'postgresql+psycopg2://:@localhost:5432/read_only',
             })
 
             # test that load balancing works with a 10% margin for randomness
@@ -72,7 +75,7 @@ class ConnectionManagerTests(SimpleTestCase):
             total_weighting = sum(db[1] for db in reporting_dbs['ucr']['READ'])
             expected = {
                 alias: weight * total_requests / total_weighting
-                for alias, weight in reporting_dbs['ucr']['READ']
+                for alias, weight in [('ucr', 6), ('other', 1), ('ucr_2', 3)]
             }
             balanced = Counter(manager.get_load_balanced_read_engine_id('ucr') for i in range(total_requests))
             for db, requests in balanced.items():
