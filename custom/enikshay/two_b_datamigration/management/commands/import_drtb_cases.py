@@ -275,9 +275,9 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
+    "social_scheme": 15,
     "initial_home_visit_date": 18,
     "aadhaar_number": 19,
-    "social_scheme": 20,
     "district_name": 22,
     "phi_name": 25,
     "reason_for_testing": 27,
@@ -335,11 +335,11 @@ MUMBAI_MAP = {
     "dst_result_date": 83,
     "treatment_initiation_date": 89,
     "drtb_type": 92,
-    "mumbai_treatment_status": 93,
-    "treatment_regimen": 94,
-    "ip_to_cp_date": 97,
-    "treatment_outcome": 180,
-    "date_of_treatment_outcome": 181,
+    "mumbai_treatment_status": 92,
+    "treatment_regimen": 93,
+    "ip_to_cp_date": 95,
+    "treatment_outcome": 200,
+    "date_of_treatment_outcome": 201,
 }
 
 
@@ -831,28 +831,43 @@ def get_diagnosis_properties(column_mapping, domain, row):
 
 def get_disease_site_properties(column_mapping, row):
     xlsx_value = column_mapping.get_value("site_of_disease", row)
-    if not xlsx_value:
+    value = xlsx_value.replace('EP ', 'extra pulmonary ').\
+        lower().\
+        replace('extra pulmonary', 'extra_pulmonary').\
+        replace('lymph node', 'lymph_node').\
+        replace('pleural effusion', 'pleural_effusion')
+
+    if not value:
         return {}
-    if xlsx_value not in [
+    if (not re.match("^extra_pulmonary \(other - .*$", value)
+        and value not in [
         "pulmonary",
         "extra_pulmonary",
+        "extra_pulmonary ",
         "extra_pulmonary (lymph_node)",
         "extra_pulmonary (spine)",
         "extra_pulmonary (brain)",
         "extra_pulmonary (pleural_effusion)",
         "extra_pulmonary (abdominal)",
         "extra_pulmonary (other)",
-    ]:
+    ]):
         raise FieldValidationFailure(xlsx_value, "site of disease")
-    classification = "extra_pulmonary" if "extra_pulmonary" in xlsx_value else "pulmonary"
-    match = re.match("\((.*)\)", xlsx_value)
+    classification = "extra_pulmonary" if "extra_pulmonary" in value else "pulmonary"
+    match = re.match("^.*\((.*)\)", value)
     if match:
         site = match.groups()[0]
+        if re.match("^other - .*$", site):
+            site_choice = site.replace('other - ', '')
+            site = 'other'
+        else:
+            site_choice = None
     else:
         site = None
+        site_choice = None
     return {
         "disease_classification": classification,
         "site_detail": site,
+        "site_choice": site_choice
     }
 
 
@@ -1301,7 +1316,8 @@ def clean_mumbai_treatment_status(value, treatment_initiation_date):
 
 
 def clean_patient_type(value):
-    if value not in [
+    clean_value = value.lower().replace(' ', '_')
+    if clean_value not in [
         "new",
         "recurrent",
         "treatment_after_failure",
@@ -1310,7 +1326,7 @@ def clean_patient_type(value):
         None
     ]:
         raise FieldValidationFailure(value, "type of patient")
-    return value
+    return clean_value
 
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
@@ -1468,47 +1484,51 @@ def get_secondary_owner_case_properties(domain, city_constants, district_id):
     ]
 
 
-def clean_diabetes_status(xlsx_value):
-    if xlsx_value not in [
-        "non_diabetic",
+def clean_diabetes_status(value):
+    if not value:
+        return None
+    clean_value = value.lower().replace(' ', '_')
+    if clean_value not in [
         "diabetic",
+        "positive",
+        "negative",
+        "non_diabetic",
         "unknown",
-        None
     ]:
-        raise FieldValidationFailure(xlsx_value, "diabetes status")
-    return xlsx_value
+        raise FieldValidationFailure(value, "Diabetes status")
+
+    return {
+        "diabetic": "diabetic",
+        "positive": "diabetic",
+        "non_diabetic": "non_diabetic",
+        "negative": "non_diabetic",
+        "unknown": "unknown",
+    }[clean_value]
 
 
 def clean_weight_band(value):
+    if not value:
+        return None
     if value not in [
-        None,
-        "adult_25-39",
-        "adult_40-54",
-        "adult_55-69",
-        "adult_greater_than_70",
-        "pediatric_4-7",
-        "pediatric_8-11",
-        "pediatric_12-15",
-        "pediatric_16-24",
-        "pediatric_25-29",
-        "pediatric_30-39",
-        "6-10",
-        "11-17",
-        "18-25",
-        "26-30",
-        "31-60",
-        "above_60",
-        "drtb_conventional_lt_16",
-        "drtb_conventional_16_29",
-        "drtb_conventional_30_45",
-        "drtb_conventional_46_70",
-        "drtb_conventional_gt70",
-        "drtb_short_lt30",
-        "drtb_short_30_50",
-        "drtb_short_gt50",
+        "Less than 16",
+        "16-25",
+        "26-45",
+        "46-70",
+        "Above 70",
+        "16-29",
+        "30-45",
     ]:
         raise FieldValidationFailure(value, "weight band")
-    return value
+
+    return {
+        "Less than 16": "drtb_conventional_lt_16",
+        "16-29": "drtb_conventional_16_29",
+        "30-45": "drtb_conventional_30_45",
+        "16-25": "drtb_old_conventional_16_25",
+        "26-45": "drtb_old_conventional_26_45",
+        "46-70": "drtb_conventional_46_70",
+        "Above 70": "drtb_conventional_gt70"
+    }[value]
 
 
 def clean_height(value):
@@ -1520,28 +1540,30 @@ def clean_height(value):
 
 
 def clean_treatment_regimen(value):
-    if value is None:
+    if not value:
         return None
-    if value not in {
-        "inh_poly_mono",
-        "mdr_rr",
-        "short_regimen",
-        "mdr_rr_fq_sli",
-        "xdr",
-        "mixed_pattern",
-        "new_drug_mdr_rr_fq_sli",
-        "new_drug_xdr",
-        "new_fail_mdr",
-        "new_fail_xdr",
-        "new_mixed_pattern",
-    }:
-        raise FieldValidationFailure(value, "treatment reigmen")
-    return value
-    # return {
-    #     "Regimen for MDR/RR TB": "mdr_rr",
-    #     "Regimen for XDR TB": "xdr",
-    #     "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
-    # }[value]
+    if value not in [
+        "Regimen for XDR TB",
+        "Regimen for MDR/RR TB",
+        "Modified Regimen for MDR/RR-TB + FQ/SLI resistance",
+        "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance",
+        "Regimen with New Drug for XDR-TB",
+        "Modified regimen for mixed pattern resistance",
+        "Regimen for INH mono/poly resistant TB",
+        "Regimen with New Drug for failures of regimen for MDR TB",
+    ]:
+        raise FieldValidationFailure(value, "Treatment Regimen")
+
+    return {
+        "Regimen for XDR TB": "xdr",
+        "Regimen for MDR/RR TB": "mdr_rr",
+        "Modified Regimen for MDR/RR-TB + FQ/SLI resistance": "mdr_rr_fq_sli",
+        "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance": "new_drug_mdr_rr_fq_sli",
+        "Regimen with New Drug for XDR-TB": "new_drug_xdr",
+        "Modified regimen for mixed pattern resistance": "mixed_pattern",
+        "Regimen for INH mono/poly resistant TB": "inh_poly_mono",
+        "Regimen with New Drug for failures of regimen for MDR TB": "new_fail_mdr",
+    }[value]
 
 
 def clean_phone_number(value):
@@ -1592,6 +1614,28 @@ def _starts_with_any(value, strings):
 
 
 def clean_hiv_status(value):
+    if not value:
+        return None
+    clean_value = value.lower().replace(' ', '_')
+    if clean_value not in [
+        "reactive",
+        "positive",
+        "negative",
+        "non_reactive",
+        "unknown",
+    ]:
+        raise FieldValidationFailure(value, "HIV status")
+
+    return {
+        "reactive": "reactive",
+        "non_reactive": "non_reactive",
+        "positive": "reactive",
+        "negative": "non_reactive",
+        "unknown": "unknown",
+    }[clean_value]
+
+
+
     if not value:
         return None
     if value not in ("reactive", "non_reactive"):
