@@ -820,17 +820,29 @@ BANK_SWIFT_CODE = ''
 STRIPE_PUBLIC_KEY = ''
 STRIPE_PRIVATE_KEY = ''
 
-# mapping of report engine IDs to database configurations
-# values must be an alias of a DB in the Django DB configuration
-# or a dict of the following format:
-# {
-#     'WRITE': 'django_db_alias',
-#     'READ': [('django_db_alias', query_weighting_int), (...)]
+# Similar to DATABASES setting but not managed by Django.
+# If not specified or left blank then DATABASES will be used
+# REPORTING_DATABASES = {
+#     'reporting_db_alias': {
+#         'NAME': 'db_name',
+#         'USER': 'username',
+#         'PASSWORD': 'password',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
 # }
-REPORTING_DATABASES = {
-    'default': 'default',
-    'ucr': 'default'
-}
+
+# Mapping of report engine IDs to database configurations. If left
+# blank a 'default' and 'ucr' engine will be added both pointing to the
+# 'default' database.
+# Values must be an alias of a DB in the REPORTING_DATABASES configuration
+# or a dict of the following format:
+# REPORTING_ENGINES = {
+#     'engine_id': {
+#         'WRITE': 'reporting_db_alias',
+#         'READ': [('reporting_db_alias', query_weighting_int), (...)]
+#     }
+# }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
 
