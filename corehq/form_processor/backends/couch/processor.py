@@ -150,7 +150,7 @@ class FormProcessorCouch(object):
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
         case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
-        if not case:
+        if found:
             case = CommCareCase()
             case.case_id = case_id
             case.domain = domain
