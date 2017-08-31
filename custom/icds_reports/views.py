@@ -871,7 +871,7 @@ class ImmunizationCoverageView(View):
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
-        now = datetime(2017, 6, 28)
+        now = datetime.utcnow() - relativedelta(day=1)
 
         config = {
             'month': tuple(now.timetuple())[:3],
