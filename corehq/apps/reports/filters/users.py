@@ -253,7 +253,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def show_all_mobile_workers(mobile_user_and_group_slugs):
         return 't__0' in mobile_user_and_group_slugs
 
+    def _get_assigned_locations_default(self):
+        user_locations = self.request.couch_user.get_sql_locations(self.domain)
+        return map(self.utils.location_tuple, user_locations)
+
     def get_default_selections(self):
+        if not self.request.can_access_all_locations:
+            return self._get_assigned_locations_default()
+
         defaults = [('t__0', _("[All mobile workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
@@ -425,22 +432,11 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
-    def _get_assigned_locations_default(self):
-        user_assigned_locations = self.request.couch_user.get_sql_locations(
-            self.request.domain
-        )
-        return map(self.utils.location_tuple, user_assigned_locations)
-
 
 class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
     slug = 'location_restricted_mobile_worker'
-    options_url = 'new_emwf_options'
+    options_url = 'emwf_options'
 
-    def get_default_selections(self):
-        if self.request.can_access_all_locations:
-            return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
-        else:
-            return self._get_assigned_locations_default()
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
