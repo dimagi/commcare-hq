@@ -1653,7 +1653,7 @@ class ProgressReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Total number of unweighed children',
                                 'slug': 'nutrition_status_unweighed',
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1661,7 +1661,7 @@ class ProgressReport(object):
                                           'severely underweight (weight-for-age)',
                                 'slug': 'severely_underweight',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1669,7 +1669,7 @@ class ProgressReport(object):
                                           'are moderately underweight (weight-for-age)',
                                 'slug': 'moderately_underweight',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1683,7 +1683,7 @@ class ProgressReport(object):
                                           'malnutrition (weight-for-height)',
                                 'slug': 'wasting_severe',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1693,7 +1693,7 @@ class ProgressReport(object):
                                 ),
                                 'slug': 'wasting_moderate',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1706,7 +1706,7 @@ class ProgressReport(object):
                                 'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                                 'slug': 'stunting_moderate',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
