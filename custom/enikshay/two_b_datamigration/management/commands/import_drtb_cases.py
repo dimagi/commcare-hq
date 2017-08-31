@@ -681,7 +681,6 @@ def get_occurrence_case_properties(column_mapping, row):
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status": "completed" if initial_visit_date else None,
         "initial_home_visit_date": clean_date(initial_visit_date),
-        "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
     }
