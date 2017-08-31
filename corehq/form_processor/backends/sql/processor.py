@@ -251,10 +251,10 @@ class FormProcessorSQL(object):
             if lock:
                 lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
 
+        assert case.domain == domain
         try:
             if lock_obj:
                 acquire_lock(lock_obj, degrade_gracefully=False)
-            assert case.domain == domain
             case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
             if case.is_deleted and not case.is_saved():
                 return None
