@@ -248,7 +248,7 @@ class FormProcessorSQL(object):
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         if not case:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
-            if lock_obj:
+            if lock:
                 lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
 
         try:

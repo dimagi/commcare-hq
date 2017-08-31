@@ -154,7 +154,7 @@ class FormProcessorCouch(object):
             case = CommCareCase()
             case.case_id = case_id
             case.domain = domain
-            if lock_obj:
+            if lock:
                 lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
 
         try:
