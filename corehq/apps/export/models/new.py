@@ -1662,7 +1662,7 @@ class FormExportDataSchema(ExportDataSchema):
             for prop in ('#text', '@case_type',):
                 identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship]
                 path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
-                _add_to_group_schema(path, u'.index.{}'.format(prop))
+                _add_to_group_schema(path, u'index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
