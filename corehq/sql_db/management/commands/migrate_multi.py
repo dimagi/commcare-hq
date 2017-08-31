@@ -33,6 +33,8 @@ class Command(BaseCommand):
             args.append(migration_name)
         for db_alias in settings.DATABASES.keys():
             print('\n======================= Migrating DB: {} ======================='.format(db_alias))
+            if not settings.DATABASES[db_alias].get('MIGRATE', True):
+                print("Skipping.")
             call_options = copy(options)
             call_options['database'] = db_alias
             call_command(
