@@ -152,7 +152,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     if (this.blockingRequestInProgress) {
         return;
     }
-    this.blockingRequestInProgress = blocking;
+    this.blockingRequestInProgress = blocking || false;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -227,8 +227,8 @@ WebFormSession.prototype.handleFailure = function(resp, action, textStatus, fail
         human_readable_message: errorMessage
     });
     this.onLoadingComplete();
-    $.publish('session.block', false);
-    this.blockingRequestInProgress = false;
+//    $.publish('session.block', false);
+//    this.blockingRequestInProgress = false;
 };
 
 /*
