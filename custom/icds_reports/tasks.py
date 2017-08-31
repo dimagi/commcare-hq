@@ -3,7 +3,7 @@ import logging
 import os
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import connections
@@ -39,6 +39,8 @@ def move_ucr_data_into_aggregation_tables(date=None):
                 cursor.execute(sql_to_execute)
             celery_task_logger.info("Ended icds reports update_location_tables_sql")
 
+            daily_aggregation.delay(date)
+
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_monthly_aggregate_tables.sql')
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
@@ -57,6 +59,13 @@ def move_ucr_data_into_aggregation_tables(date=None):
                         "Ended icds reports {} update_monthly_aggregate_tables".format(interval)
                     )
 
+
+@task(queue='background_queue')
+def daily_aggregation(date=None):
+    date = date or datetime.utcnow().date()
+
+    if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
+        with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_daily_aggregate_table.sql')
             celery_task_logger.info("Starting icds reports update_daily_aggregate_table")
             with open(path, "r") as sql_file:
