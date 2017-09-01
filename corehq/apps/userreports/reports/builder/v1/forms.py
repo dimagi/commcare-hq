@@ -19,7 +19,7 @@ from corehq.apps.userreports.reports.builder.v1.columns import \
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
@@ -27,7 +27,6 @@ from corehq.apps.app_manager.models import (
     Form,
 )
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -520,7 +519,7 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble(
+            chart_type_crispy_field = hqcrispy.FieldWithHelpBubble(
                 'chart_type',
                 help_bubble_text=_(
                     "<strong>Bar</strong> shows one vertical bar for each value in your case or form. "
@@ -530,14 +529,14 @@ class DataSourceForm(forms.Form):
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
-                report_source_crispy_fields.append(FieldWithHelpBubble(
+                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
                     k, help_bubble_text=report_source_help_texts[k]
                 ))
             else:
                 report_source_crispy_fields.append(k)
 
         top_fields = [
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'report_name',
                 help_bubble_text=_(
                     'Web users will see this name in the "Reports" section of CommCareHQ and can click to view '
@@ -1116,7 +1115,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         return crispy.Div(
             crispy.Fieldset(
                 _('Chart'),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'group_by',
                     help_bubble_text=_(
                         "The values of the selected property will be aggregated "
@@ -1201,7 +1200,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
         return crispy.Div(
             crispy.Fieldset(
                 _('Chart Properties'),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'group_by',
                     help_bubble_text=_(
                         "The values of the selected property will be aggregated "

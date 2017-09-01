@@ -5,7 +5,7 @@ from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from django.urls import reverse
 from django.template.loader import render_to_string
 from datetime import timedelta, datetime, time, date
@@ -23,7 +23,6 @@ from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import ErrorsOnlyField, FieldWithHelpBubble, B3MultiField
 from corehq.apps.sms.models import Keyword
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
@@ -596,7 +595,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_start_fields(self):
         return [
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
                 data_bind="value: case_type, autocompleteSelect2: available_case_types",
@@ -606,7 +605,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     "sent out for."
                 ),
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'start_reminder_on',
                 data_bind="value: start_reminder_on",
                 css_class="input-xlarge",
@@ -716,7 +715,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def section_recipient(self):
         return crispy.Fieldset(
             _("Recipient"),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'recipient',
                 data_bind="value: recipient",
                 help_bubble_text=("The contact related to the case that reminder should go to.  The Case "
@@ -771,7 +770,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @property
     def section_message_fields(self):
         return [
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'method',
                 data_bind="value: method",
                 help_bubble_text=("Send a single SMS message or an interactive SMS survey. "
@@ -888,7 +887,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: showDefaultLanguageOption",
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'global_timeouts',
                     data_bind="value: global_timeouts",
                     placeholder="e.g. 30,60,180",
@@ -902,7 +901,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isGlobalTimeoutsVisible",
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'max_question_retries',
                     help_bubble_text=_("For IVR surveys, the number of times a person can provide an invalid "
                                        "answer before the call will hang up. ")
@@ -910,7 +909,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isMaxQuestionRetriesVisible",
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'submit_partial_forms',
                     data_bind="checked: submit_partial_forms",
                     help_bubble_text=_(
@@ -922,7 +921,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 data_bind="visible: isPartialSubmissionsVisible",
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'include_case_side_effects',
                     help_bubble_text=_("When submitting a partial survey, this controls whether the corresponding "
                                        "case should be created, updated or closed.  This is may not be safe to do if "
@@ -2120,7 +2119,7 @@ class KeywordForm(Form):
                             css_class='col-md-4 col-lg-4'
                         ),
 
-                        ErrorsOnlyField('named_args'),
+                        hqcrispy.ErrorsOnlyField('named_args'),
                         crispy.Div(
                             data_bind="template: {"
                                       " name: 'ko-template-named-args', "
@@ -2587,7 +2586,7 @@ class BroadcastForm(Form):
                 data_bind='value: timing',
             ),
             crispy.Div(
-                B3MultiField(
+                hqcrispy.B3MultiField(
                     _("Date and Time"),
                     crispy.Div(
                         InlineField(
@@ -2600,8 +2599,8 @@ class BroadcastForm(Form):
                         template='reminders/partial/time_picker.html'
                     ),
                 ),
-                ErrorsOnlyField('time'),
-                ErrorsOnlyField('datetime'),
+                hqcrispy.ErrorsOnlyField('time'),
+                hqcrispy.ErrorsOnlyField('datetime'),
                 data_bind='visible: showDateAndTimeSelect',
             ),
         ]

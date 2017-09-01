@@ -10,8 +10,7 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import ErrorsOnlyField, HiddenFieldWithErrors, FieldWithHelpBubble
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
@@ -307,7 +306,7 @@ class SettingsForm(Form):
                 css_id="default-sms-response-group",
                 field_class='col-sm-6 col-md-9 col-lg-9'
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "use_restricted_sms_times",
                 data_bind="value: use_restricted_sms_times",
                 help_bubble_text=_("Use this option to limit the times "
@@ -317,7 +316,7 @@ class SettingsForm(Form):
             ),
             hqcrispy.B3MultiField(
                 "",
-                HiddenFieldWithErrors("restricted_sms_times_json",
+                hqcrispy.HiddenFieldWithErrors("restricted_sms_times_json",
                                       data_bind="value: restricted_sms_times_json"),
                 crispy.Div(
                     data_bind="template: {"
@@ -328,7 +327,7 @@ class SettingsForm(Form):
                 data_bind="visible: showRestrictedSMSTimes",
                 field_class='col-md-10 col-lg-10'
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "send_to_duplicated_case_numbers",
                 help_bubble_text=_("Enabling this option will send "
                                    "outgoing-only messages to phone numbers registered "
@@ -336,7 +335,7 @@ class SettingsForm(Form):
                                    "and keywords will still only work for unique phone "
                                    "numbers in your project."),
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'sms_survey_date_format',
                 help_bubble_text=_("Choose the format in which date questions "
                                    "should be answered in SMS surveys."),
@@ -350,7 +349,7 @@ class SettingsForm(Form):
     @property
     def section_registration(self):
         fields = [
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "sms_case_registration_enabled",
                 help_bubble_text=_("When this option is enabled, a person "
                     "can send an SMS into the system saying 'join "
@@ -360,25 +359,25 @@ class SettingsForm(Form):
                 data_bind="value: sms_case_registration_enabled",
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     "sms_case_registration_type",
                     placeholder=_("Enter a Case Type"),
                     help_bubble_text=_("Cases that self-register over SMS "
                         "will be given this case type."),
                 ),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     "sms_case_registration_owner_id",
                     help_bubble_text=_("Cases that self-register over SMS "
                         "will be owned by this user or user group."),
                 ),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     "sms_case_registration_user_id",
                     help_bubble_text=_("The form submission for a "
                         "self-registration will belong to this user."),
                 ),
                 data_bind="visible: showRegistrationOptions",
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "sms_mobile_worker_registration_enabled",
                 help_bubble_text=_("When this option is enabled, a person "
                     "can send an SMS into the system saying 'join "
@@ -386,7 +385,7 @@ class SettingsForm(Form):
                     " project space and [username] is an optional username)"
                     ", and the system will add them as a mobile worker."),
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'registration_welcome_message',
                 help_bubble_text=_("Choose whether to send an automatic "
                     "welcome message to cases, mobile workers, or both, "
@@ -454,7 +453,7 @@ class SettingsForm(Form):
                 css_id="custom-message-count-threshold-group",
                 field_class='col-sm-6 col-md-9 col-lg-9'
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "use_sms_conversation_times",
                 data_bind="value: use_sms_conversation_times",
                 help_bubble_text=_("When this option is enabled, the system "
@@ -463,7 +462,7 @@ class SettingsForm(Form):
             ),
             hqcrispy.B3MultiField(
                 "",
-                HiddenFieldWithErrors("sms_conversation_times_json",
+                hqcrispy.HiddenFieldWithErrors("sms_conversation_times_json",
                     data_bind="value: sms_conversation_times_json"),
                 crispy.Div(
                     data_bind="template: {"
@@ -476,7 +475,7 @@ class SettingsForm(Form):
                 field_class='col-md-12 col-lg-10'
             ),
             crispy.Div(
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     "sms_conversation_length",
                     help_bubble_text=_("The number of minutes to wait "
                         "after receiving an incoming SMS from a chat "
@@ -485,7 +484,7 @@ class SettingsForm(Form):
                 ),
                 data_bind="visible: showSMSConversationTimes",
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "survey_traffic_option",
                 help_bubble_text=_("This option allows you to hide a chat "
                     "recipient's survey questions and responses from chat "
@@ -493,7 +492,7 @@ class SettingsForm(Form):
                     "responses to questions in the chat window, which could "
                     "be attempts to converse."),
             ),
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 "count_messages_as_read_by_anyone",
                 help_bubble_text=_("The chat window will mark unread "
                     "messages to the user viewing them. Use this option to "
@@ -937,7 +936,7 @@ class BackendMapForm(Form):
                 _("Default Gateways"),
                 hqcrispy.B3MultiField(
                     _("Default Gateway by Prefix"),
-                    ErrorsOnlyField('backend_map'),
+                    hqcrispy.ErrorsOnlyField('backend_map'),
                     crispy.Div(
                         data_bind="template: {"
                                   " name: 'ko-template-backend-map', "
