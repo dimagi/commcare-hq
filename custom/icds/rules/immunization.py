@@ -1,3 +1,24 @@
+"""
+This module contains utils which can be used for dealing with immunizations
+in the AWW app.
+
+Each immunization is represented by a CommCare Supply product. When an
+immunization is applied, it is recorded using a LedgerValue, where the entry_id
+of the LedgerValue is the product's unique id, and the balance of the
+LedgerValue is the date that the immunization took place, represented as an
+integer (the number of days since 1970-01-01). The LedgerValues are tracked
+against cases with case type "tasks".
+
+Each immunization has a window within which it is valid to be applied, which
+depends on a few factors, including whether it depends on another immunization
+to happen first. All of this information is stored as custom product_data on the
+CommCare Supply product.
+
+These utils can be used to calculate when immunizations are due for a given
+"tasks" case, whether that "tasks" case applies to a mother (case property
+"tasks_type" == "pregnancy"), or a child (case property "tasks_type" == "child").
+"""
+
 import pytz
 import re
 from corehq.apps.products.models import SQLProduct
