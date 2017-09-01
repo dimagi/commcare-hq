@@ -1722,6 +1722,7 @@ class FormExportDataSchema(ExportDataSchema):
                 path=_question_path_to_path_nodes(path, repeats),
                 label=u'{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
+                tag=PROPERTY_TAG_CASE
             ))
 
         # Add case attributes
