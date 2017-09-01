@@ -537,7 +537,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     """
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
-    episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
+    episode_case_properties = get_episode_case_properties(domain, column_mapping, city_constants, row)
     test_case_properties = get_test_case_properties(
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
@@ -692,7 +692,7 @@ def get_occurrence_case_properties(column_mapping, row):
     return properties
 
 
-def get_episode_case_properties(domain, column_mapping, row):
+def get_episode_case_properties(domain, column_mapping, city_constants, row):
     phi_name, phi_id = match_phi(domain, column_mapping.get_value("phi_name", row))
     report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
@@ -707,6 +707,7 @@ def get_episode_case_properties(domain, column_mapping, row):
 
     properties = {
         "owner_id": "-",
+        "treatment_initiating_drtb_center_id": city_constants.drtb_center_id,
         "episode_type": "confirmed_drtb",
         "episode_pending_registration": "no",
         "is_active": "yes",
