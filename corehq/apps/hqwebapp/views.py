@@ -439,7 +439,7 @@ def logout(req):
 
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
+def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
                                         extra_context={'domain': domain, 'next_url': next_url})
@@ -995,7 +995,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'style/includes/create_item_form.html', {
+            'hqwebapp/includes/create_item_form.html', {
                 'form': create_form
             }
         )
