@@ -168,11 +168,13 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             ]
 
         self.assertDictContainsSubset({
-            # I don't know what these ones are - normal form case?
-            # (This is a followup, not registration form)
+            # These get added automatically to all forms but probably shouldn't
+            # See ExportInstance._insert_system_properties
+            "case_name": "---",
             "create.case_name": "---",
             "create.case_type": "---",
             "create.owner_id": "---",
+            "caseid": "71626d9c-2d05-491f-81d9-becf8566618a",
 
             # normal form questions
             "form.add_a_prescription": "yes_then_close",
