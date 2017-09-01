@@ -42,7 +42,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_app,
 )
-from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction
+from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -1601,19 +1601,6 @@ class FormExportDataSchema(ExportDataSchema):
         for form in forms:
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
-        repeats_with_subcases = []
-        non_repeating_subcases = []
-        for form in forms:
-            if isinstance(form.actions, AdvancedFormActions):
-                actions = form.actions.open_cases
-            else:
-                actions = form.actions.subcases
-            for i, action in enumerate(actions):
-                action.subcase_index = i
-                if action.repeat_context:
-                    repeats_with_subcases.append(action)
-                else:
-                    non_repeating_subcases.append(action)
 
         for case_update_field in case_updates:
             root_group_schema.items.append(
@@ -1629,6 +1616,20 @@ class FormExportDataSchema(ExportDataSchema):
                     last_occurrences={app.master_id: app.version},
                 )
             )
+
+        repeats_with_subcases = []
+        non_repeating_subcases = []
+        for form in forms:
+            if isinstance(form.actions, AdvancedFormActions):
+                actions = form.actions.open_cases
+            else:
+                actions = form.actions.subcases
+            for i, action in enumerate(actions):
+                action.subcase_index = i
+                if action.repeat_context:
+                    repeats_with_subcases.append(action)
+                else:
+                    non_repeating_subcases.append(action)
 
         for subcase_action in non_repeating_subcases:
             root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
@@ -1649,11 +1650,28 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
         """return (path, label) tuples for each export item"""
+        label_prefix = 'subcase_{}'.format(subcase_action.subcase_index)
+        index_relationships = []
+        if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
+            index_relationships = [CaseIndex(
+                reference_id=DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship],
+                relationship=subcase_action.relationship,
+            )]
+        elif hasattr(subcase_action, 'case_indices'):
+            index_relationships = subcase_action.case_indices
 
+        cls._add_export_items_for_case(
+            group_schema, root_path, subcase_action.case_properties,
+            label_prefix, subcase_action.repeat_context, repeats, case_indices=index_relationships
+        )
+
+    @classmethod
+    def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
+                                   repeat_context, repeats, case_indices=None, create=True, close=False):
         def _add_to_group_schema(path, label):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
-                label=u'subcase_{}.{}'.format(subcase_action.subcase_index, label),
+                label=u'{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
             ))
 
@@ -1663,8 +1681,8 @@ class FormExportDataSchema(ExportDataSchema):
             _add_to_group_schema(path, case_attribute)
 
         # Add case updates
-        for case_property, case_path in subcase_action.case_properties.iteritems():
-            if subcase_action.repeat_context:
+        for case_property, case_path in case_properties.iteritems():
+            if repeat_context:
                 # This removes the repeat part of the path. For example, if inside
                 # a repeat group that has the following path:
                 #
@@ -1673,23 +1691,32 @@ class FormExportDataSchema(ExportDataSchema):
                 # We want to create a path that looks like:
                 #
                 # /data/repeat/case/update/other_group/question
-                path_suffix = case_path[len(subcase_action.repeat_context) + 1:]
+                path_suffix = case_path[len(repeat_context) + 1:]
             else:
                 path_suffix = case_property
             path = u'{}/case/update/{}'.format(root_path, path_suffix)
             _add_to_group_schema(path, u'update.{}'.format(case_property))
 
         # Add case create properties
-        for case_create_element in CASE_CREATE_ELEMENTS:
-            path = u'{}/case/create/{}'.format(root_path, case_create_element)
-            _add_to_group_schema(path, u'create.{}'.format(case_create_element))
+        if create:
+            for case_create_element in CASE_CREATE_ELEMENTS:
+                path = u'{}/case/create/{}'.format(root_path, case_create_element)
+                _add_to_group_schema(path, u'create.{}'.format(case_create_element))
 
-        # Add extension case information
-        if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
-            for prop in ('#text', '@case_type',):
-                identifier = DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship]
-                path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
-                _add_to_group_schema(path, u'index.{}'.format(prop))
+        if close:
+            # TODO: add item for case close
+            pass
+
+        # Add case index information
+        if case_indices:
+            for index in case_indices:
+                props = ('#text', '@case_type',)
+                if index.relationship == 'extension':
+                    props = props + ('@relationship',)
+                for prop in props:
+                    identifier = index.reference_id or 'parent'
+                    path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
+                    _add_to_group_schema(path, u'index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
