@@ -119,6 +119,8 @@ class EpisodeFacilityIDMigration(object):
                 return owner_id.new_value
 
     def _property_changed_in_action(self, action, case_property):
+        if action.form is None:
+            return False
         update_actions = [
             (update.modified_on_str, update.get_update_action())
             for update in get_case_updates(action.form)
