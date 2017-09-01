@@ -31,7 +31,7 @@ from corehq.apps.app_manager.models import (
     Form,
 )
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.style.crispy import FieldWithHelpBubble
+from corehq.apps.hqwebapp.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (

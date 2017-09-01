@@ -23,9 +23,8 @@ from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
+from corehq.apps.hqwebapp.crispy import ErrorsOnlyField, FieldWithHelpBubble, B3MultiField
 from corehq.apps.sms.models import Keyword
-from corehq.apps.style.crispy import FieldWithHelpBubble, B3MultiField
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime

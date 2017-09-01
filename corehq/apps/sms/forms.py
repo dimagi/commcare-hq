@@ -10,8 +10,7 @@ from django.forms.fields import *
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
-from corehq.apps.hqwebapp.crispy import HiddenFieldWithErrors
-from corehq.apps.style.crispy import FieldWithHelpBubble
+from corehq.apps.hqwebapp.crispy import ErrorsOnlyField, HiddenFieldWithErrors, FieldWithHelpBubble
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
@@ -24,7 +23,6 @@ from corehq.apps.sms.util import (validate_phone_number, strip_plus,
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
