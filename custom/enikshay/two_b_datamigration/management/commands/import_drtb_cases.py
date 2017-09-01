@@ -759,7 +759,7 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
     properties.update(get_selection_criteria_properties(column_mapping, row))
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
-        if not properties.has_key('treatment_status'):
+        if 'treatment_status' not in properties:
             properties["treatment_initiating_facility_id"] = phi_id
             properties['treatment_status'] = 'initiated_second_line_treatment'
 
@@ -846,7 +846,7 @@ def get_diagnosis_properties(column_mapping, domain, row):
         properties["diagnosis_test_summary"] = diagnosing_test['result_summary_display']
 
     return properties
-   # TODO: (WAITING) figure out how to set these properties based on other info
+    # TODO: (WAITING) figure out how to set these properties based on other info
 
 
 def get_disease_site_properties(column_mapping, row):
@@ -997,6 +997,7 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
         "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
     }
     return properties
+
 
 def get_test_summary(properties):
     if properties['result'] == 'tb_detected':
