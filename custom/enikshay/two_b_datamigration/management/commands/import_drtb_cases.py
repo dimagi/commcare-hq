@@ -293,19 +293,23 @@ MUMBAI_MAP = {
     "art_initiation_date": 37,
     "diabetes": 38,
     "cbnaat_lab": 39,  # This is similar to testing_facility, but slightly different
+    "cbnaat_lab_number": 40,
     "cbnaat_sample_date": 41,
     "cbnaat_result": 42,
     "cbnaat_result_date": 43,
     "lpa_lab": 44,
+    "lpa_lab_number": 45,
     "lpa_sample_date": 46,
     "lpa_rif_result": 47,
     "lpa_inh_result": 48,
     "lpa_result_date": 49,
-    "sl_lpa_lab": 51,
+    "sl_lpa_lab": 50,
+    "sl_lpa_lab_number": 51,
     "sl_lpa_sample_date": 52,
     "sl_lpa_result": 53,
     "sl_lpa_result_date": 54,
     "culture_lab": 55,
+    "culture_lab_number": 51,
     "culture_sample_date": 57,
     "culture_type": 58,
     "culture_result": 59,
@@ -707,6 +711,7 @@ def get_episode_case_properties(domain, column_mapping, row):
         "episode_pending_registration": "no",
         "is_active": "yes",
         "diagnosing_facility_id": phi_id,
+        "diagnosing_facility_name": phi_name,
         "date_of_diagnosis": report_sending_date,
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
@@ -803,30 +808,28 @@ def get_reason_for_test_properties(column_mapping, row):
 
 
 def get_diagnosis_properties(column_mapping, domain, row):
-    has_cbnaat_result = bool(column_mapping.get_value("cbnaat_result", row))
-    if has_cbnaat_result:
-        properties = {}
-        cbnaat_lab_name, cbnaat_lab_id = match_location(
-            domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
-        if cbnaat_lab_name:
-            properties.update({
-                "diagnosing_facility_name": cbnaat_lab_name,
-                "diagnosis_test_type_label": "CBNAAT",
-                "diagnosis_test_type_value": "cbnaat",
-            })
-        if get_cbnaat_resistance(column_mapping, row):
-            properties["diagnosis_test_drug_resistance_list"] = "r"
+    properties = {}
+    diagnosing_test = None
+    if column_mapping.get_value("cbnaat_result", row):
+        diagnosing_test = get_cbnaat_test_case_properties(domain, column_mapping, row)
+    elif column_mapping.get_value("lpa_rif_result", row) or column_mapping.get_value("lpa_inh_result", row):
+        diagnosing_test = get_lpa_test_case_properties(domain, column_mapping, row)
+    elif column_mapping.get_value("sl_lpa_result", row):
+        diagnosing_test = get_sl_lpa_test_case_properties(domain, column_mapping, row)
 
-        cbnaat_result_date = column_mapping.get_value("cbnaat_result_date", row)
-        if cbnaat_result_date:
-            properties.update({
-                "diagnosis_test_result_date": clean_date(cbnaat_result_date),
-                "date_of_diagnosis": clean_date(cbnaat_result_date),
-            })
-        return properties
-    else:
-        # TODO: (WAITING) figure out how to set these properties based on other info
-        return {}
+    if diagnosing_test:
+        properties["diagnosis_test_type_label"] = diagnosing_test['test_type_label']
+        properties["diagnosis_test_type_value"] = diagnosing_test['test_type_value']
+        properties["diagnosis_test_drug_resistance_list"] = diagnosing_test['drug_resistance_list']
+        properties["diagnosis_test_drug_sensitive_list"] = diagnosing_test['drug_sensitive_list']
+        properties["diagnosis_lab_facility_id"] = diagnosing_test['testing_facility_id']
+        properties["diagnosis_lab_facility_name"] = diagnosing_test['testing_facility_name']
+        properties["diagnosis_test_result_date"] = diagnosing_test['date_reported']
+        properties["diagnosis_test_specimen_date"] = diagnosing_test['date_tested']
+        properties["diagnosis_test_summary"] = diagnosing_test['result_summary_display']
+
+    return properties
+   # TODO: (WAITING) figure out how to set these properties based on other info
 
 
 def get_disease_site_properties(column_mapping, row):
@@ -951,12 +954,6 @@ def get_lpa_test_resistance_properties(column_mapping, row):
     }
 
 
-def lpa_detected_tb(column_mapping, row):
-    rif = clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))
-    inha = clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))
-    return (rif is not None) or (inha is not None)
-
-
 def get_sl_lpa_test_resistance_properties(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
@@ -970,6 +967,18 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
         "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
     }
     return properties
+
+def get_test_summary(properties):
+    if properties['result'] == 'tb_detected':
+        detected = 'TB Detected'
+    else:
+        detected = 'TB Not Detected'
+
+    return '\n'.join(filter(None, [
+        detected,
+        'Resistant: {}'.format(properties['drug_resistance_list']) if properties['drug_resistance_list'] else None,
+        'Sensitive: {}'.format(properties['drug_sensitive_list']) if properties['drug_sensitive_list'] else None,
+    ]))
 
 
 def get_cbnaat_resistance(column_mapping, row):
@@ -1072,7 +1081,7 @@ def get_mehsana_test_case_properties(domain, column_mapping, row):
     properties = {
         "owner_id": "-",
         "date_reported": column_mapping.get_value("report_sending_date", row),
-        "testing_facility_saved_name": facility_name,
+        "testing_facility_name": facility_name,
         "testing_facility_id": facility_id,
     }
     properties.update(get_selection_criteria_properties(column_mapping, row))
@@ -1089,16 +1098,21 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
     properties = {
         "owner_id": "-",
         "date_reported": date_reported,
-        "testing_facility_saved_name": cbnaat_lab_name,
+        "testing_facility_name": cbnaat_lab_name,
         "testing_facility_id": cbnaat_lab_id,
+        "lab_serial_number": column_mapping.get_value("cbnaat_lab_number", row),
         "test_type_label": "CBNAAT",
         "test_type_value": "cbnaat",
         "date_tested": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
+        "result": "tb_not_detected",
+        "drug_resistance_list": '',
+        "drug_sensitive_list": '',
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
     if get_cbnaat_resistance(column_mapping, row) is not None:
         properties['result'] = "tb_detected"
+    properties['result_summary_display'] = get_test_summary(properties)
     return properties
 
 
@@ -1110,17 +1124,22 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
 
     properties = {
         "owner_id": "-",
-        "testing_facility_saved_name": lpa_lab_name,
+        "testing_facility_name": lpa_lab_name,
         "testing_facility_id": lpa_lab_id,
+        "lab_serial_number": column_mapping.get_value("lpa_lab_number", row),
         "test_type_label": "FL LPA",
         "test_type_value": "fl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
         "date_reported": result_date,
+        "result": "tb_not_detected",
+        "drug_resistance_list": '',
+        "drug_sensitive_list": '',
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
-    if lpa_detected_tb(column_mapping, row):
+    if properties['drug_resistance_list']:
         properties['result'] = "tb_detected"
+    properties['result_summary_display'] = get_test_summary(properties)
     return properties
 
 
@@ -1131,16 +1150,22 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         raise ValidationFailure("LPA result date required if result included")
     properties = {
         "owner_id": "-",
-        "testing_facility_saved_name": sl_lpa_lab_name,
+        "testing_facility_name": sl_lpa_lab_name,
         "testing_facility_id": sl_lpa_lab_id,
+        "lab_serial_number": column_mapping.get_value("sl_lpa_lab_number", row),
         "test_type_label": "SL LPA",
         "test_type_value": "sl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
         "date_reported": date_reported,
-        # TODO: Should this have a "result"?
+        "result": "tb_not_detected",
+        "drug_resistance_list": '',
+        "drug_sensitive_list": '',
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
+    if properties['drug_resistance_list']:
+        properties['result'] = "tb_detected"
+    properties['result_summary_display'] = get_test_summary(properties)
     return properties
 
 
@@ -1153,16 +1178,17 @@ def get_culture_test_case_properties(domain, column_mapping, row):
 
     properties = {
         "owner_id": "-",
-        "testing_facility_saved_name": lab_name,
+        "testing_facility_name": lab_name,
         "testing_facility_id": lab_id,
-        "test_type_label": "Culture",
+        "lab_serial_number": column_mapping.get_value("culture_lab_number", row),
         "test_type_value": "culture",
         "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
         "date_reported": date_reported,
         "culture_type": culture_type,
-        "culture_type_label": get_culture_type_label(culture_type),
+        "test_type_label": get_culture_type_label(culture_type) or 'Culture',
         "result": clean_result(column_mapping.get_value("culture_result", row))
     }
+    properties['result_summary_display'] = get_test_summary(properties)
     return properties
 
 
