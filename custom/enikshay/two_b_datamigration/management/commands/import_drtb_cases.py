@@ -276,6 +276,7 @@ MUMBAI_MAP = {
     "address": 11,
     "phone_number": 12,
     "social_scheme": 15,
+    "key_populations": 16,
     "initial_home_visit_date": 18,
     "aadhaar_number": 19,
     "district_name": 22,
@@ -688,6 +689,7 @@ def get_occurrence_case_properties(column_mapping, row):
         'occurrence_episode_count': 1,
     }
     properties.update(get_disease_site_properties(column_mapping, row))
+    properties.update(get_key_populations(column_mapping, row))
 
     return properties
 
@@ -873,6 +875,32 @@ def get_disease_site_properties(column_mapping, row):
         "disease_classification": classification,
         "site_detail": site,
         "site_choice": site_choice
+    }
+
+
+def get_key_populations(column_mapping, row):
+    value = column_mapping.get_value("key_populations", row)
+    if not value:
+        return {}
+    clean_value = value.lower()
+    try:
+        key_populations, key_population_other_detail = {
+            "slum dweller": ["slum_dweller", None],
+            "migrant": ["migrant", None],
+            "contact of known tb patients": ["known_patient_contact", None],
+            "refugee": ["refugee", None],
+            "other (health care worker)": ["health_care_worker", None],
+            "other (minor)": ["other", "minor"],
+            "other (diabetic)": ["other", "diabetic"],
+            "other (na)": [None, None],
+            "na": [None, None],
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Key Populations")
+
+    return {
+        "key_populations": key_populations,
+        "key_population_other_detail": key_population_other_detail,
     }
 
 
