@@ -552,9 +552,14 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         secondary_owner_case_properties
     )
 
+    # Close the occurrence if we have a treatment outcome recorded
+    close_occurrence = ("treatment_outcome" in episode_case_properties and
+                        episode_case_properties["treatment_outcome"])
+
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
-        CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure)
+        CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure,
+        close=close_occurrence)
     episode_case_structure = get_case_structure(
         CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure)
     drug_resistance_case_structures = [
@@ -595,7 +600,7 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
         secondary_owner['name'] = occurrence_id + secondary_owner['secondary_owner_type']
 
 
-def get_case_structure(case_type, properties, migration_identifier, host=None):
+def get_case_structure(case_type, properties, migration_identifier, host=None, close=False):
     """
     Converts a properties dictionary to a CaseStructure object
     """
@@ -611,6 +616,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None):
             "create": True,
             "owner_id": owner_id,
             "update": props,
+            "close": close,
         },
     }
     if host:
