@@ -54,7 +54,9 @@ class EpisodeFacilityIDMigration(object):
         if (diagnosing_facility_id is not None
            and diagnosing_facility_id != u''
            and treatment_initiating_facility_id is not None
-           and treatment_initiating_facility_id != u''):
+           and treatment_initiating_facility_id != u'') or (
+                '_archive_' in [diagnosing_facility_id, treatment_initiating_facility_id]
+        ):
             return False
 
         if self.episode.get_case_property('enrolled_in_private') == 'true':
