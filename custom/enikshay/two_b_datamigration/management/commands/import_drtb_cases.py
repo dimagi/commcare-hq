@@ -485,7 +485,7 @@ class MumbaiColumnMapping(ColumnMapping):
         "phi_name",
         # The phi must also be valid, but this is checked in the match_phi function.
     )
-    follow_up_culture_index_start = 108
+    follow_up_culture_index_start = 96
     follow_up_culture_month_start = 3
 
     @classmethod
@@ -497,8 +497,16 @@ class MumbaiColumnMapping(ColumnMapping):
             return None
 
     @classmethod
-    def get_follow_up_culture_date(cls, month, row):
+    def get_follow_up_culture_lab(cls, month, row):
         index = cls._get_follow_up_start_index(month) + 1
+        try:
+            return row[index].value
+        except IndexError:
+            return None
+
+    @classmethod
+    def get_follow_up_culture_date(cls, month, row):
+        index = cls._get_follow_up_start_index(month) + 2
         try:
             return row[index].value
         except IndexError:
@@ -511,7 +519,7 @@ class MumbaiColumnMapping(ColumnMapping):
             index = 170
         else:
             assert month >= 3 and month <= 33
-            offset = (month - 3) * 2
+            offset = (month - 3) * 3
             index = cls.follow_up_culture_index_start + offset
         return index
 
@@ -1472,10 +1480,12 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 result = column_mapping.get_follow_up_culture_result(month, row)
                 if result:
                     date_tested = clean_date(column_mapping.get_follow_up_culture_date(month, row))
+                    lab_name = column_mapping.get_follow_up_culture_lab(month, row)
                     properties = {
                         "owner_id": "-",
                         "test_type": "culture",
                         "test_type_label": "Culture",
+                        "testing_facility_name": lab_name,
                         "rft_general": "follow_up_drtb",
                         "rft_drtb_follow_up_treatment_month": month,
                         "date_tested": date_tested,
