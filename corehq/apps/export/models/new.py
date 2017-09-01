@@ -1602,41 +1602,48 @@ class FormExportDataSchema(ExportDataSchema):
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
 
-        # for case_update_field in case_updates:
-        #     root_group_schema.items.append(
-        #         ExportItem(
-        #             path=[
-        #                 PathNode(name='form'),
-        #                 PathNode(name='case'),
-        #                 PathNode(name='update'),
-        #                 PathNode(name=case_update_field)
-        #             ],
-        #             label="case.update.{}".format(case_update_field),
-        #             tag=PROPERTY_TAG_CASE,
-        #             last_occurrences={app.master_id: app.version},
-        #         )
-        #     )
-
         for form in forms:
             if not form.uses_cases:
                 continue
 
-            if form.form_type == 'basic':
-                case_properties = []
+            if form.form_type == 'module_form':
+                case_properties = {}
                 actions = form.active_actions()
                 if 'open_case' in actions:
                     action = actions['open_case']
                     if 'external_id' in action and action.external_id:
-                        case_properties.append(('external_id', action.external_id))
+                        case_properties['external_id'] = action.external_id
                 if 'update_case' in actions:
-                    case_properties.extend(form.get_case_updates(form.get_module().case_type))
+                    case_properties.update(actions['update_case'].update)
 
                 cls._add_export_items_for_case(
-                    root_group_schema, '', case_properties,
+                    root_group_schema, '/data', case_properties,
                     'case', None, [], create='open_case' in actions, close='close_case' in actions
                 )
+
+                if 'usercase_update' in actions and actions['usercase_update'].update:
+                    cls._add_export_items_for_case(
+                        root_group_schema, '/data/commcare_usercase', actions['usercase_update'].update,
+                        'case', None, [], create='open_case' in actions, close='close_case' in actions
+                    )
             else:
-                pass
+                all_actions = [form.actions]
+                if hasattr(form, 'extra_actions'):
+                    # shadow forms can have extra actions
+                    all_actions.append(form.extra_actions)
+                for actions in all_actions:
+                    for action in actions.load_update_cases:
+                        cls._add_export_items_for_case(
+                            root_group_schema, '/data/{}'.format(action.form_element_name), action.case_properties,
+                            action.case_tag, None, [], create=False, close=action.close_condition.is_active()
+                        )
+
+                    for action in actions.open_cases:
+                        if not action.is_subcase:
+                            cls._add_export_items_for_case(
+                                root_group_schema, '/data/{}'.format(action.form_element_name), action.case_properties,
+                                action.case_tag, None, [], create=True, close=action.close_condition.is_active()
+                            )
 
         repeats_with_subcases = []
         non_repeating_subcases = []

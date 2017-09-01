@@ -80,6 +80,9 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 ('form.is_this_a_delivery', 'Is this a delivery?'),
 
                 # Verify that the main parent case updates appear (case type "mom")
+                ('form.case.@case_id', 'case.@case_id'),
+                ('form.case.@date_modified', 'case.@date_modified'),
+                ('form.case.@user_id', 'case.@user_id'),
                 ('form.case.update.last_status', 'case.update.last_status'),
 
                 # Verify that we see case updates for save-to-case cases
@@ -159,7 +162,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "create.case_name": "---",
             "create.case_type": "---",
             "create.owner_id": "---",
-            "caseid": "71626d9c-2d05-491f-81d9-becf8566618a",
 
             # normal form questions
             "form.add_a_prescription": "yes_then_close",
@@ -170,6 +172,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
 
             # standard case update
             "form.case.update.last_status": "fine_thanks",
+            "form.case.@case_id": "71626d9c-2d05-491f-81d9-becf8566618a",
+            "form.case.@user_id": "853a24735ba89a3019ced7e3153dc60d",
 
             # save-to-case properties
             "form.prescription.prescription.case.create.case_name": "Petunia-prescription-2017-08-29",
