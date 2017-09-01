@@ -1,6 +1,11 @@
 from functools import wraps
 
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import (
+    Http404,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -27,6 +32,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_alert_schedule_instances_for_schedule,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -234,10 +240,10 @@ class EditMessageView(CreateMessageView):
 
     def post(self, request, *args, **kwargs):
         values = self.message_form.cleaned_data
-        # TODO shouldn't have gotten here. add soft assert
         if values['send_frequency'] == 'immediately':
-            # TODO 404 probably isn't the right thing
-            raise Http404()
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(False, "Someone tried to edit an 'immediate' message")
+            return HttpResponseBadRequest(ugettext_lazy("Cannot edit messages that were sent immediately"))
         super(EditMessageView, self).post(request, *args, **kwargs)
 
 
