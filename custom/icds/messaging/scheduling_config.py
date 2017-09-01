@@ -1,6 +1,7 @@
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
+    CustomMatchDefinition,
     CreateScheduleInstanceActionDefinition,
 )
 from corehq.messaging.scheduling.const import VISIT_WINDOW_END
@@ -296,4 +297,39 @@ def create_ls_indicator_4b(domain):
             timed_schedule_id=schedule.schedule_id,
             recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
             reset_case_property_name='last_referral_date',
+        )
+
+
+def create_aww_indicator_4(domain):
+    with transaction.atomic():
+        # Monthly schedule for the last day of the month
+        schedule = TimedSchedule.create_simple_monthly_schedule(
+            domain,
+            time(9, 30),
+            [-1],
+            CustomContent(custom_content_id='ICDS_DPT3_AND_MEASLES_ARE_DUE'),
+            total_iterations=TimedSchedule.REPEAT_INDEFINITELY
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_4'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #4: DPT3 and Measles Vaccinations Due",
+            case_type='tasks',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER',
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
         )
