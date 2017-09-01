@@ -1490,47 +1490,33 @@ def clean_diabetes_status(value):
     if not value:
         return None
     clean_value = value.lower().replace(' ', '_')
-    if clean_value not in [
-        "diabetic",
-        "positive",
-        "negative",
-        "non_diabetic",
-        "unknown",
-    ]:
+    try:
+        return {
+            "diabetic": "diabetic",
+            "positive": "diabetic",
+            "non_diabetic": "non_diabetic",
+            "negative": "non_diabetic",
+            "unknown": "unknown",
+        }[clean_value]
+    except KeyError:
         raise FieldValidationFailure(value, "Diabetes status")
-
-    return {
-        "diabetic": "diabetic",
-        "positive": "diabetic",
-        "non_diabetic": "non_diabetic",
-        "negative": "non_diabetic",
-        "unknown": "unknown",
-    }[clean_value]
 
 
 def clean_weight_band(value):
     if not value:
         return None
-    if value not in [
-        "Less than 16",
-        "16-25",
-        "26-45",
-        "46-70",
-        "Above 70",
-        "16-29",
-        "30-45",
-    ]:
-        raise FieldValidationFailure(value, "weight band")
-
-    return {
-        "Less than 16": "drtb_conventional_lt_16",
-        "16-29": "drtb_conventional_16_29",
-        "30-45": "drtb_conventional_30_45",
-        "16-25": "drtb_conventional_old_16_25",
-        "26-45": "drtb_conventional_old_26_45",
-        "46-70": "drtb_conventional_46_70",
-        "Above 70": "drtb_conventional_gt70"
-    }[value]
+    try:
+        return {
+            "Less than 16": "drtb_conventional_lt_16",
+            "16-29": "drtb_conventional_16_29",
+            "30-45": "drtb_conventional_30_45",
+            "16-25": "drtb_conventional_old_16_25",
+            "26-45": "drtb_conventional_old_26_45",
+            "46-70": "drtb_conventional_46_70",
+            "Above 70": "drtb_conventional_gt70"
+        }[value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Weight Band")
 
 
 def clean_height(value):
@@ -1544,28 +1530,19 @@ def clean_height(value):
 def clean_treatment_regimen(value):
     if not value:
         return None
-    if value not in [
-        "Regimen for XDR TB",
-        "Regimen for MDR/RR TB",
-        "Modified Regimen for MDR/RR-TB + FQ/SLI resistance",
-        "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance",
-        "Regimen with New Drug for XDR-TB",
-        "Modified regimen for mixed pattern resistance",
-        "Regimen for INH mono/poly resistant TB",
-        "Regimen with New Drug for failures of regimen for MDR TB",
-    ]:
+    try:
+        return {
+            "Regimen for XDR TB": "xdr",
+            "Regimen for MDR/RR TB": "mdr_rr",
+            "Modified Regimen for MDR/RR-TB + FQ/SLI resistance": "mdr_rr_fq_sli",
+            "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance": "new_drug_mdr_rr_fq_sli",
+            "Regimen with New Drug for XDR-TB": "new_drug_xdr",
+            "Modified regimen for mixed pattern resistance": "mixed_pattern",
+            "Regimen for INH mono/poly resistant TB": "inh_poly_mono",
+            "Regimen with New Drug for failures of regimen for MDR TB": "new_fail_mdr",
+        }[value]
+    except KeyError:
         raise FieldValidationFailure(value, "Treatment Regimen")
-
-    return {
-        "Regimen for XDR TB": "xdr",
-        "Regimen for MDR/RR TB": "mdr_rr",
-        "Modified Regimen for MDR/RR-TB + FQ/SLI resistance": "mdr_rr_fq_sli",
-        "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance": "new_drug_mdr_rr_fq_sli",
-        "Regimen with New Drug for XDR-TB": "new_drug_xdr",
-        "Modified regimen for mixed pattern resistance": "mixed_pattern",
-        "Regimen for INH mono/poly resistant TB": "inh_poly_mono",
-        "Regimen with New Drug for failures of regimen for MDR TB": "new_fail_mdr",
-    }[value]
 
 
 def clean_phone_number(value):
@@ -1619,22 +1596,16 @@ def clean_hiv_status(value):
     if not value:
         return None
     clean_value = value.lower().replace(' ', '_')
-    if clean_value not in [
-        "reactive",
-        "positive",
-        "negative",
-        "non_reactive",
-        "unknown",
-    ]:
+    try:
+        return {
+            "reactive": "reactive",
+            "non_reactive": "non_reactive",
+            "positive": "reactive",
+            "negative": "non_reactive",
+            "unknown": "unknown",
+        }[clean_value]
+    except KeyError:
         raise FieldValidationFailure(value, "HIV status")
-
-    return {
-        "reactive": "reactive",
-        "non_reactive": "non_reactive",
-        "positive": "reactive",
-        "negative": "non_reactive",
-        "unknown": "unknown",
-    }[clean_value]
 
 
 def clean_socioeconomic_status(value):
