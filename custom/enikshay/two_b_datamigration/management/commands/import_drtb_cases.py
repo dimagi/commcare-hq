@@ -909,27 +909,14 @@ def get_disease_site_properties_for_person(column_mapping, row):
     return {"current_{}".format(k): v for k, v in props.iteritems()}
 
 
-def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
-    # Treatment outcome is listed in two columns, but we've been promised that they will not contradict eachother
-    mumbai_treatment_status_value = column_mapping.get_value("mumbai_treatment_status", row)
-    outcomes = []
-    if treatment_initiation_date and not mumbai_treatment_status_value == "Transferred Out":
-        # treatment status contains an outcome
-        outcomes.append(mumbai_treatment_status_value)
-
-    outcome_column_value = column_mapping.get_value("treatment_outcome", row)
-    if outcome_column_value:
-        outcomes.append(outcome_column_value)
-
-    if not outcomes:
+def get_treatment_outcome(column_mapping, row):
+    value = column_mapping.get_value("treatment_outcome", row)
+    if not value:
         return None
-    else:
-        # Confirm that values are the same
-        if not all(outcomes[0] == value for value in outcomes):
-            raise ValidationFailure(
-                "Treatment outcomes in final treatment outcome column and treatment status column do not match")
-        if outcomes[0] not in [
+    clean_value = value.lower().replace(' ', '_')
+    if clean_value not in [
             "cured",
+            "died",
             "treatment_complete",
             "failure",
             "loss_to_follow_up",
@@ -941,8 +928,8 @@ def get_treatment_outcome(column_mapping, row, treatment_initiation_date):
             "treatment_failure_additional_drug_resistance",
             "treatment_failure_adverse_drug_reaction",
         ]:
-            raise FieldValidationFailure(outcomes[0], "treatment outcome")
-        return outcomes[0]
+        raise FieldValidationFailure(value, "treatment outcome")
+    return clean_value
 
 
 def get_selection_criteria_properties(column_mapping, row):
