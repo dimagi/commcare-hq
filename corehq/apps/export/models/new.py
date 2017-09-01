@@ -1602,20 +1602,41 @@ class FormExportDataSchema(ExportDataSchema):
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
 
-        for case_update_field in case_updates:
-            root_group_schema.items.append(
-                ExportItem(
-                    path=[
-                        PathNode(name='form'),
-                        PathNode(name='case'),
-                        PathNode(name='update'),
-                        PathNode(name=case_update_field)
-                    ],
-                    label="case.update.{}".format(case_update_field),
-                    tag=PROPERTY_TAG_CASE,
-                    last_occurrences={app.master_id: app.version},
+        # for case_update_field in case_updates:
+        #     root_group_schema.items.append(
+        #         ExportItem(
+        #             path=[
+        #                 PathNode(name='form'),
+        #                 PathNode(name='case'),
+        #                 PathNode(name='update'),
+        #                 PathNode(name=case_update_field)
+        #             ],
+        #             label="case.update.{}".format(case_update_field),
+        #             tag=PROPERTY_TAG_CASE,
+        #             last_occurrences={app.master_id: app.version},
+        #         )
+        #     )
+
+        for form in forms:
+            if not form.uses_cases:
+                continue
+
+            if form.form_type == 'basic':
+                case_properties = []
+                actions = form.active_actions()
+                if 'open_case' in actions:
+                    action = actions['open_case']
+                    if 'external_id' in action and action.external_id:
+                        case_properties.append(('external_id', action.external_id))
+                if 'update_case' in actions:
+                    case_properties.extend(form.get_case_updates(form.get_module().case_type))
+
+                cls._add_export_items_for_case(
+                    root_group_schema, '', case_properties,
+                    'case', None, [], create='open_case' in actions, close='close_case' in actions
                 )
-            )
+            else:
+                pass
 
         repeats_with_subcases = []
         non_repeating_subcases = []
