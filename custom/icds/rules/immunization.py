@@ -3,6 +3,7 @@ import re
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime, date, timedelta
 
@@ -17,6 +18,7 @@ def _validate_child_or_pregnancy_type(value):
         raise ValueError("Expected one of: 'child', 'pregnancy'")
 
 
+@quickcache(['domain', 'schedule'], timeout=60 * 60)
 def get_immunization_products(domain, schedule):
     _validate_child_or_pregnancy_type(schedule)
 
