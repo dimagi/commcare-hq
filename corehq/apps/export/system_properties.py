@@ -191,6 +191,16 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
+
+def get_case_name_column(case_id_path):
+    return ExportColumn(
+        tags=[PROPERTY_TAG_CASE],
+        label='case_name',
+        item=ExportItem(path=case_id_path, transform=CASE_NAME_TRANSFORM),
+        selected=True,
+        help_text=_("The name of the case that this form operated on")
+    )
+
 ROW_NUMBER_COLUMN = RowNumberColumn(
     tags=[PROPERTY_TAG_ROW],
     label='number',

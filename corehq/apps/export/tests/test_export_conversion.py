@@ -742,13 +742,6 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
         expected_paths = [
             ([PathNode(name='xmlns')], None, True),
-            ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')], None, True),
-            ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], None, True),
-            (
-                [PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')],
-                CASE_NAME_TRANSFORM,
-                True
-            ),
         ]
         for path, transform, selected in expected_paths:
             index, column = table.get_column(path, 'ExportItem', transform)

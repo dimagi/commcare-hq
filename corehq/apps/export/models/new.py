@@ -821,6 +821,8 @@ class ExportInstance(BlobMixin, Document):
         :param top: When True inserts the columns at the top, when false at the bottom
         :param column_initialization_data: Extra data to be passed to the column if needed on initialization
         """
+        from corehq.apps.export.system_properties import get_case_name_column
+
         properties = map(copy, properties)
         if top:
             insert_fn = partial(table.columns.insert, 0)
@@ -842,6 +844,18 @@ class ExportInstance(BlobMixin, Document):
 
             if not existing_column:
                 insert_fn(static_column)
+
+        case_id_columns = {
+            _path_nodes_to_string(column.item.path[:-1]): column
+            for column in table.columns if column.item.path[-1].name == '@case_id'
+        }
+        case_name_columns = {
+            _path_nodes_to_string(column.item.path[:-2]): column
+            for column in table.columns if column.item.path[-1].name == 'case_name'
+        }
+        for path, column in case_id_columns.items():
+            if path not in case_name_columns:
+                insert_fn(get_case_name_column(column.item.path))
 
     @property
     def file_size(self):
