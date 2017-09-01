@@ -334,7 +334,6 @@ MUMBAI_MAP = {
     "Am": 82,
     "dst_result_date": 83,
     "treatment_initiation_date": 89,
-    "mumbai_treatment_status": 92,
     "treatment_regimen": 93,
     "ip_to_cp_date": 95,
     "treatment_outcome": 200,
@@ -690,7 +689,7 @@ def get_occurrence_case_properties(column_mapping, row):
 
 
 def get_episode_case_properties(domain, column_mapping, row):
-
+    phi_name, phi_id = match_phi(domain, column_mapping.get_value("phi_name", row))
     report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
 
@@ -707,6 +706,7 @@ def get_episode_case_properties(domain, column_mapping, row):
         "episode_type": "confirmed_drtb",
         "episode_pending_registration": "no",
         "is_active": "yes",
+        "diagnosing_facility_id": phi_id,
         "date_of_diagnosis": report_sending_date,
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
@@ -722,11 +722,11 @@ def get_episode_case_properties(domain, column_mapping, row):
         "height": clean_height(column_mapping.get_value("height", row)),
         "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
-        "treatment_status": clean_mumbai_treatment_status(
-            column_mapping.get_value("mumbai_treatment_status", row), treatment_initiation_date),
         "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row))
     }
 
+    # this code is specifically for Mehsana since we dont' have a treatment status in Mumbai
+    # need to update once we get Excel to figure out how to determine treatment initiating facility ID
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
     if raw_treatment_status:
         treatment_status_id = convert_treatment_status(raw_treatment_status)
@@ -737,6 +737,9 @@ def get_episode_case_properties(domain, column_mapping, row):
     properties.update(get_selection_criteria_properties(column_mapping, row))
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
+        if not properties.has_key('treatment_status'):
+            properties["treatment_initiating_facility_id"] = phi_id
+            properties['treatment_status'] = 'initiated_second_line_treatment'
 
     properties.update(get_diagnosis_properties(column_mapping, domain, row))
 
@@ -808,7 +811,6 @@ def get_diagnosis_properties(column_mapping, domain, row):
         if cbnaat_lab_name:
             properties.update({
                 "diagnosing_facility_name": cbnaat_lab_name,
-                "diagnosing_facility_id": cbnaat_lab_id,
                 "diagnosis_test_type_label": "CBNAAT",
                 "diagnosis_test_type_value": "cbnaat",
             })
@@ -1287,31 +1289,6 @@ def convert_treatment_status(status_in_xlsx):
         "Cat V": second_line,
         "Not initiated (reason remark)": "other",
     }[status_in_xlsx]
-
-
-def clean_mumbai_treatment_status(value, treatment_initiation_date):
-    if value == "Transferred Out":
-        return "referred_pending_feedback"
-    elif treatment_initiation_date:
-        return "initiated_second_line_treatment"
-    else:
-        if value in [
-            None,
-            "initiated_first_line_treatment",
-            "initiated_outside_facility",
-            "initiated_second_line_treatment",
-            "initiated_outside_rntcp",
-            "untraceable_incomplete_address",
-            "untraceable_migrated",
-            "refuse_treatment",
-            "repeat_diagnosis",
-            "wrong_diagnosis",
-            "referred_pending_feedback",
-            "other",
-            "died",
-        ]:
-            return value
-        raise FieldValidationFailure(value, "treatment status")
 
 
 def clean_patient_type(value):
