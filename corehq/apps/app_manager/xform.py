@@ -1457,11 +1457,10 @@ class XForm(WrappedNode):
 
         if 'subcases' in actions:
             subcases = actions['subcases']
-            repeat_contexts = defaultdict(int)
-            for subcase in subcases:
-                if subcase.repeat_context:
-                    repeat_contexts[subcase.repeat_context] += 1
 
+            repeat_context_count = collections.Counter([
+                action.repeat_context for action in subcases
+            ])
             for i, subcase in enumerate(subcases):
                 if not form.get_app().case_type_exists(subcase.case_type):
                     raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
@@ -1470,7 +1469,7 @@ class XForm(WrappedNode):
                     parent_node = self.instance_node.find(
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
-                    nest = repeat_contexts[subcase.repeat_context] > 1
+                    nest = repeat_context_count[subcase.repeat_context] > 1
                     case_id = 'uuid()'
                 else:
                     base_path = ''
@@ -1715,10 +1714,9 @@ class XForm(WrappedNode):
                     self.add_casedb()
                     configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
-        repeat_contexts = defaultdict(int)
-        for action in form.actions.open_cases:
-            if action.repeat_context:
-                repeat_contexts[action.repeat_context] += 1
+        repeat_context_count = collections.Counter([
+            action.repeat_context for action in form.actions.open_cases
+        ])
 
         def get_action_path(action, create_subcase_node=True):
             if action.repeat_context:
@@ -1726,7 +1724,7 @@ class XForm(WrappedNode):
                 parent_node = self.instance_node.find(
                     '/{x}'.join(action.repeat_context.split('/'))[1:]
                 )
-                nest = repeat_contexts[action.repeat_context] > 1
+                nest = repeat_context_count[action.repeat_context] > 1
             else:
                 base_path = ''
                 parent_node = self.data_node

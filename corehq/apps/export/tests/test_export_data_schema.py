@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.export.models.new import MAIN_TABLE, \
     PathNode, _question_path_to_path_nodes
+from corehq.apps.export.tests.util import assertContainsExportItems
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert
@@ -147,6 +148,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                 },
                 subcase_index=0,
                 form_element_name='subcase_0',  # would normally get added by caller
+                nest=False,
             ),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
@@ -155,6 +157,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                 },
                 subcase_index=1,
                 form_element_name='subcase_1',  # would normally get added by caller
+                nest=False,  # would normally get added by caller
             ),
         ]
 
@@ -533,19 +536,23 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build.version = 3
         cls.first_build.has_submissions = True
 
-        cls.advanced_app = Application.new_app('domain', "Untitled Application")
-        module = cls.advanced_app.add_module(AdvancedModule.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", cls.get_xml('repeat_group_form'))
-        form.xmlns = 'repeat-xmlns'
-        form.actions.open_cases = [
+        factory = AppFactory(build_version='2.36')
+        m0, f0 = factory.new_advanced_module('mod0', 'advanced')
+        f0.source = cls.get_xml('repeat_group_form')
+        f0.xmlns = 'repeat-xmlns'
+
+        factory.form_requires_case(f0, 'case0')
+        f0.actions.open_cases = [
             AdvancedOpenCaseAction(
                 case_type="advanced",
                 case_tag="open_case_0",
                 name_path="/data/question3/question4",
                 repeat_context="/data/question3",
-                case_indices=[CaseIndex()]
+                case_indices=[CaseIndex(tag='load_case0_0')]
             )
         ]
+        cls.advanced_app = factory.app
+        cls.advanced_app.save()
 
         cls.apps = [
             cls.current_app,
@@ -672,9 +679,23 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         group_schema = schema.group_schemas[1]  # The repeat schema
-
         # Assert that all proper case attributes are added to advanced forms that open
         # cases with repeats
+
+        assertContainsExportItems(
+            [
+                ('form.question3.question4', 'question4'),
+                ('form.question3.case.create.case_name', 'case_open_case_0.create.case_name'),
+                ('form.question3.case.create.case_type', 'case_open_case_0.create.case_type'),
+                ('form.question3.case.create.owner_id', 'case_open_case_0.create.owner_id'),
+                ('form.question3.case.index.parent.#text', 'case_open_case_0.index.#text'),
+                ('form.question3.case.index.parent.@case_type', 'case_open_case_0.index.@case_type'),
+                ('form.question3.case.@case_id', 'case_open_case_0.@case_id'),
+                ('form.question3.case.@date_modified', 'case_open_case_0.@date_modified'),
+                ('form.question3.case.@user_id', 'case_open_case_0.@user_id'),
+            ],
+            group_schema
+        )
         path_suffixes = set(map(lambda item: item.path[-1].name, group_schema.items))
         self.assertEqual(len(path_suffixes & set(CASE_ATTRIBUTES)), len(CASE_ATTRIBUTES))
 

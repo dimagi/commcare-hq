@@ -4,6 +4,7 @@ from mock import patch
 
 from django.test import TestCase
 
+from corehq.apps.export.tests.util import assertContainsExportItems
 from couchexport.models import Format
 
 from corehq.util.context_managers import drop_connected_signals
@@ -52,22 +53,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         delete_all_export_data_schemas()
         super(TestFormExportSubcases, cls).tearDownClass()
 
-    def assertContainsExportItems(self, item_tuples, export_group_schema):
-        """
-        paths should be of the form ["form.question1", "form.group.question2"]
-        """
-        actual = {
-            (item.readable_path, item.label)
-            for item in export_group_schema.items
-        }
-        item_set = set(item_tuples)
-        missing = item_set - actual
-        extra = actual - item_set
-        if missing or extra:
-            prettify = lambda list_of_tuples: '\n  '.join(map(unicode, list_of_tuples))
-            raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
-                                 .format(prettify(actual), prettify(missing), prettify(extra)))
-
     def test(self):
         schema = FormExportDataSchema.generate_schema_from_builds(
             self.domain,
@@ -85,7 +70,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             elif path == ['form', 'babies']:
                 baby_repeat_group_schema = group_schema
 
-        self.assertContainsExportItems(
+        assertContainsExportItems(
             [
                 # Verify that a simple form question appears in the schema
                 ('form.how_are_you_today', 'How are you today?'),
@@ -128,7 +113,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         )
 
         # Verify that we see updates from subcases in repeat groups (case type "baby")
-        self.assertContainsExportItems(
+        assertContainsExportItems(
             [
                 ('form.babies.case.@case_id', 'subcase_1.@case_id'),
                 ('form.babies.case.@date_modified', 'subcase_1.@date_modified'),

@@ -5,7 +5,7 @@ from copy import copy
 from datetime import datetime
 from itertools import groupby
 from functools import partial
-from collections import defaultdict, OrderedDict, namedtuple
+from collections import defaultdict, OrderedDict, namedtuple, Counter
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
@@ -1621,20 +1621,25 @@ class FormExportDataSchema(ExportDataSchema):
         non_repeating_subcases = []
         for form in forms:
             if isinstance(form.actions, AdvancedFormActions):
-                actions = form.actions.get_open_subcase_actions()
+                actions = list(form.actions.get_open_subcase_actions())
             else:
                 actions = form.actions.subcases
                 for i, action in enumerate(form.actions.subcases):
                     action.form_element_name = 'subcase_{}'.format(i)
 
+            repeat_context_count = Counter([
+                action.repeat_context for action in actions
+            ])
+
             for action in actions:
                 if action.repeat_context:
+                    action.nest = repeat_context_count[action.repeat_context] > 1
                     repeats_with_subcases.append(action)
                 else:
                     non_repeating_subcases.append(action)
 
         for subcase_action in non_repeating_subcases:
-            root_path = "/data/{}".format(subcase_action.form_element_name)
+            root_path = "/data/{}".format(subcase_action.form_element_name)  # always nest in root
             cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
 
         subcase_schemas = []
@@ -1739,6 +1744,8 @@ class FormExportDataSchema(ExportDataSchema):
 
         for subcase_action in repeats_with_subcases:
             root_path = subcase_action.repeat_context
+            if subcase_action.nest:
+                root_path = '{}/{}'.format(root_path, subcase_action.form_element_name)
 
             group_schema = ExportGroupSchema(
                 path=_question_path_to_path_nodes(root_path, repeats),
