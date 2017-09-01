@@ -1621,7 +1621,7 @@ class FormExportDataSchema(ExportDataSchema):
         non_repeating_subcases = []
         for form in forms:
             if isinstance(form.actions, AdvancedFormActions):
-                actions = form.actions.open_cases
+                actions = form.actions.get_open_subcase_actions()
             else:
                 actions = form.actions.subcases
             for i, action in enumerate(actions):
