@@ -51,7 +51,7 @@ class MockResponse(object):
 
 
 class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
-    maxDiff=None
+    maxDiff = None
 
     def setUp(self):
         super(ENikshayRepeaterTestBase, self).setUp()
