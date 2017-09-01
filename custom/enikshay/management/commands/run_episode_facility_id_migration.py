@@ -18,7 +18,9 @@ class Command(BaseCommand):
             episode_case_ids = case_accessor.get_case_ids_in_domain(type='episode')
 
         for episode_case_id in episode_case_ids:
+            print episode_case_id
             episode_case = case_accessor.get_case(episode_case_id)
-            update_json = EpisodeFacilityIDMigration(domain, episode_case).update_json()
+            updater = EpisodeFacilityIDMigration(domain, episode_case)
+            update_json = updater.update_json()
             if update_json:
                 update_case(domain, episode_case_id, update_json)
