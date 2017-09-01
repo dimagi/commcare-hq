@@ -737,7 +737,7 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
             column_mapping, row, treatment_initiation_date),
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
-        "treatment_outcome": get_treatment_outcome(column_mapping, row, treatment_initiation_date),
+        "treatment_outcome": get_treatment_outcome(column_mapping, row),
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
