@@ -1583,7 +1583,7 @@ class FormExportDataSchema(ExportDataSchema):
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app.copy_of or app._id,  # If it's not a copy, must be current
+            app.master_id,  # If it's not a copy, must be current
             app.version,
         )
 
@@ -1626,7 +1626,7 @@ class FormExportDataSchema(ExportDataSchema):
                     ],
                     label="case.update.{}".format(case_update_field),
                     tag=PROPERTY_TAG_CASE,
-                    last_occurrences={app.copy_of or app._id: app.version},
+                    last_occurrences={app.master_id: app.version},
                 )
             )
 
@@ -1640,7 +1640,7 @@ class FormExportDataSchema(ExportDataSchema):
                 xform,
                 repeats_with_subcases,
                 app.langs,
-                app.copy_of or app._id,
+                app.master_id,
                 app.version,
             )
             subcase_schemas.append(repeat_case_schema)
@@ -1856,18 +1856,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.copy_of or app._id,  # If not copy, must be current app
+            app.master_id,  # If not copy, must be current app
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.copy_of or app._id,
+                app.master_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.copy_of or app._id,
+            app.master_id,
             app.version,
         ))
         case_schemas.append(current_schema)

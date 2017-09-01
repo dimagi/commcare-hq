@@ -4342,6 +4342,10 @@ class VersionedDoc(LazyBlobDoc):
     def id(self):
         return self._id
 
+    @property
+    def master_id(self):
+        return self.copy_of or self._id
+
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
             increment_version = not self.copy_of
@@ -5094,7 +5098,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
 
-        LatestAppInfo(self.copy_of or self.id, self.domain).clear_caches()
+        LatestAppInfo(self.master_id, self.domain).clear_caches()
 
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -5471,7 +5475,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
-            'uniqueid': self.copy_of or self.id,
+            'uniqueid': self.master_id,
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
@@ -6318,7 +6322,7 @@ class GlobalAppConfig(Document):
         Returns the actual config object for the app or an unsaved
             default object
         """
-        app_id = app.copy_of or app.id
+        app_id = app.master_id
 
         res = cls.get_db().view(
             "global_app_config_by_app_id/view",
