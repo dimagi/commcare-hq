@@ -1580,14 +1580,20 @@ class FormExportDataSchema(ExportDataSchema):
             return current_schema
 
         xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
-        app_id = app.copy_of or app._id  # If it's not a copy, must be current
         xform_schema = cls._generate_schema_from_xform(
             xform,
             app.langs,
-            app_id,
+            app.copy_of or app._id,  # If it's not a copy, must be current
             app.version,
         )
 
+        schemas = [current_schema, xform_schema]
+        schemas.extend(cls._add_export_items_for_cases(app, xform_schema, forms, xform))
+
+        return cls._merge_schemas(*schemas)
+
+    @classmethod
+    def _add_export_items_for_cases(cls, app, xform_schema, forms, xform):
         root_group_schema = xform_schema.group_schemas[0]
         assert root_group_schema.path == []
 
@@ -1620,7 +1626,7 @@ class FormExportDataSchema(ExportDataSchema):
                     ],
                     label="case.update.{}".format(case_update_field),
                     tag=PROPERTY_TAG_CASE,
-                    last_occurrences={app_id: app.version},
+                    last_occurrences={app.copy_of or app._id: app.version},
                 )
             )
 
@@ -1628,18 +1634,17 @@ class FormExportDataSchema(ExportDataSchema):
             root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
             cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
 
-        schemas = [current_schema, xform_schema]
+        subcase_schemas = []
         if repeats_with_subcases:
             repeat_case_schema = cls._generate_schema_from_repeat_subcases(
                 xform,
                 repeats_with_subcases,
                 app.langs,
-                app.copy_of or app._id,  # If it's not a copy, must be current
+                app.copy_of or app._id,
                 app.version,
             )
-            schemas.append(repeat_case_schema)
-
-        return cls._merge_schemas(*schemas)
+            subcase_schemas.append(repeat_case_schema)
+        return subcase_schemas
 
     @classmethod
     def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
