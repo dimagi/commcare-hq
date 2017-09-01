@@ -156,13 +156,6 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             ]
 
         self.assertDictContainsSubset({
-            # These get added automatically to all forms but probably shouldn't
-            # See ExportInstance._insert_system_properties
-            "case_name": "---",
-            "create.case_name": "---",
-            "create.case_type": "---",
-            "create.owner_id": "---",
-
             # normal form questions
             "form.add_a_prescription": "yes_then_close",
             "form.how_are_you_today": "fine_thanks",
