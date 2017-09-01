@@ -187,8 +187,6 @@ def dpt3_and_measles_are_due(recipient, case_schedule_instance):
     measles_product = product_code_to_product['4g_measles']
 
     ledger_values = get_tasks_case_immunization_ledger_values(case)
-    product_id_to_ledger_value = get_map(ledger_values, 'entry_id')
-
     anchor_date = get_immunization_anchor_date(case)
     if (
         immunization_is_due(case, anchor_date, dpt3_product, products, ledger_values) and

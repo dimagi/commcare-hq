@@ -145,7 +145,6 @@ def calculate_immunization_window(tasks_case, anchor_date, immunization_product,
 
     product_id_to_ledger_value = get_map(ledger_values, 'entry_id')
     product_code_to_product = get_map(all_immunization_products, 'code')
-    product_id_to_product = get_map(all_immunization_products, 'product_id')
 
     valid = int(immunization_product.product_data.get('valid'))
     expires = int(immunization_product.product_data.get('expires'))
