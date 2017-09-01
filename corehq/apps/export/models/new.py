@@ -1579,11 +1579,22 @@ class FormExportDataSchema(ExportDataSchema):
         if not forms:
             return current_schema
 
+        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
+        app_id = app.copy_of or app._id  # If it's not a copy, must be current
+        xform_schema = cls._generate_schema_from_xform(
+            xform,
+            app.langs,
+            app_id,
+            app.version,
+        )
+
+        root_group_schema = xform_schema.group_schemas[0]
+        assert root_group_schema.path == []
+
         case_updates = OrderedSet()
         for form in forms:
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
-        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
         repeats_with_subcases = []
         non_repeating_subcases = []
         for form in forms:
@@ -1598,14 +1609,25 @@ class FormExportDataSchema(ExportDataSchema):
                 else:
                     non_repeating_subcases.append(action)
 
-        xform_schema = cls._generate_schema_from_xform(
-            xform,
-            case_updates,
-            non_repeating_subcases,
-            app.langs,
-            app.copy_of or app._id,  # If it's not a copy, must be current
-            app.version,
-        )
+        for case_update_field in case_updates:
+            root_group_schema.items.append(
+                ExportItem(
+                    path=[
+                        PathNode(name='form'),
+                        PathNode(name='case'),
+                        PathNode(name='update'),
+                        PathNode(name=case_update_field)
+                    ],
+                    label="case.update.{}".format(case_update_field),
+                    tag=PROPERTY_TAG_CASE,
+                    last_occurrences={app_id: app.version},
+                )
+            )
+
+        for subcase_action in non_repeating_subcases:
+            root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
+            cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
+
         schemas = [current_schema, xform_schema]
         if repeats_with_subcases:
             repeat_case_schema = cls._generate_schema_from_repeat_subcases(
@@ -1701,7 +1723,7 @@ class FormExportDataSchema(ExportDataSchema):
         ]
 
     @classmethod
-    def _generate_schema_from_xform(cls, xform, case_updates, non_repeating_subcases, langs, app_id, app_version):
+    def _generate_schema_from_xform(cls, xform, langs, app_id, app_version):
         questions = xform.get_questions(langs, include_triggers=True)
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
@@ -1740,26 +1762,6 @@ class FormExportDataSchema(ExportDataSchema):
                         repeats,
                     )
                     group_schema.items.append(item)
-
-            if group_path is None:
-                for case_update_field in case_updates:
-                    group_schema.items.append(
-                        ExportItem(
-                            path=[
-                                PathNode(name='form'),
-                                PathNode(name='case'),
-                                PathNode(name='update'),
-                                PathNode(name=case_update_field)
-                            ],
-                            label="case.update.{}".format(case_update_field),
-                            tag=PROPERTY_TAG_CASE,
-                            last_occurrences={app_id: app_version},
-                        )
-                    )
-
-                for subcase_action in non_repeating_subcases:
-                    root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
-                    cls._add_export_items_from_subcase_action(group_schema, root_path, subcase_action, [])
 
             schema.group_schemas.append(group_schema)
 
