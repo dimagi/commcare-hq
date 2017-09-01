@@ -59,11 +59,13 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             (item.readable_path, item.label)
             for item in export_group_schema.items
         }
-        missing = set(item_tuples) - actual
-        if missing:
+        item_set = set(item_tuples)
+        missing = item_set - actual
+        extra = actual - item_set
+        if missing or extra:
             prettify = lambda list_of_tuples: '\n  '.join(map(unicode, list_of_tuples))
-            raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}"
-                                 .format(prettify(actual), prettify(missing)))
+            raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
+                                 .format(prettify(actual), prettify(missing), prettify(extra)))
 
     def test(self):
         with patch('corehq.apps.app_manager.models.FormBase.wrapped_xform', lambda _: self.xform):
@@ -88,6 +90,9 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                 # Verify that a simple form question appears in the schema
                 ('form.how_are_you_today', 'How are you today?'),
                 ('form.how_many_babies', 'How many babies?'),
+                ('form.add_a_prescription', 'Add a prescription?'),
+                ('form.voucher-name', '#form/voucher-name'),
+                ('form.is_this_a_delivery', 'Is this a delivery?'),
 
                 # Verify that the main parent case updates appear (case type "mom")
                 ('form.case.update.last_status', 'case.update.last_status'),
