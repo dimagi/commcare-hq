@@ -9,7 +9,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy as _
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -53,7 +53,7 @@ def _requires_new_reminder_framework():
 class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
-    page_title = ugettext_lazy('Schedule a Message')
+    page_title = _('Schedule a Message')
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
@@ -125,7 +125,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
 class CreateMessageView(BaseMessagingSectionView):
     urlname = 'create_message'
-    page_title = ugettext_lazy('Create a Message')
+    page_title = _('Create a Message')
     template_name = 'scheduling/create_message.html'
 
     @method_decorator(_requires_new_reminder_framework())
@@ -198,7 +198,7 @@ class CreateMessageView(BaseMessagingSectionView):
 
 class EditMessageView(CreateMessageView):
     urlname = 'edit_message'
-    page_title = ugettext_lazy('Edit Message')
+    page_title = _('Edit Message')
 
     @property
     def page_url(self):
@@ -243,7 +243,7 @@ class EditMessageView(CreateMessageView):
         if values['send_frequency'] == 'immediately':
             _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
             _soft_assert(False, "Someone tried to edit an 'immediate' message")
-            return HttpResponseBadRequest(ugettext_lazy("Cannot edit messages that were sent immediately"))
+            return HttpResponseBadRequest(_("Cannot edit messages that were sent immediately"))
         super(EditMessageView, self).post(request, *args, **kwargs)
 
 
