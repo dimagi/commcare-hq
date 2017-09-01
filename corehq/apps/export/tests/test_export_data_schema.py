@@ -17,7 +17,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     AdvancedOpenCaseAction,
-    CaseReferences)
+    CaseReferences, CaseIndex)
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -146,6 +146,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     'weight': '/data/repeat/group/weight',
                 },
                 subcase_index=0,
+                form_element_name='subcase_0',  # would normally get added by caller
             ),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
@@ -153,6 +154,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     'age': '/data/repeat/nested_repeat/age',
                 },
                 subcase_index=1,
+                form_element_name='subcase_1',  # would normally get added by caller
             ),
         ]
 
@@ -541,6 +543,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
                 case_tag="open_case_0",
                 name_path="/data/question3/question4",
                 repeat_context="/data/question3",
+                case_indices=[CaseIndex()]
             )
         ]
 

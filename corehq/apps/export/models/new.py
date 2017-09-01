@@ -1624,15 +1624,17 @@ class FormExportDataSchema(ExportDataSchema):
                 actions = form.actions.get_open_subcase_actions()
             else:
                 actions = form.actions.subcases
-            for i, action in enumerate(actions):
-                action.subcase_index = i
+                for i, action in enumerate(form.actions.subcases):
+                    action.form_element_name = 'subcase_{}'.format(i)
+
+            for action in actions:
                 if action.repeat_context:
                     repeats_with_subcases.append(action)
                 else:
                     non_repeating_subcases.append(action)
 
         for subcase_action in non_repeating_subcases:
-            root_path = "/data/subcase_{}".format(subcase_action.subcase_index)
+            root_path = "/data/{}".format(subcase_action.form_element_name)
             cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
 
         subcase_schemas = []
@@ -1650,7 +1652,7 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
         """return (path, label) tuples for each export item"""
-        label_prefix = 'subcase_{}'.format(subcase_action.subcase_index)
+        label_prefix = subcase_action.form_element_name
         index_relationships = []
         if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
             index_relationships = [CaseIndex(
