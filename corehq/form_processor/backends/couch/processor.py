@@ -150,7 +150,7 @@ class FormProcessorCouch(object):
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
         case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
-        if found:
+        if not found:
             case = CommCareCase()
             case.case_id = case_id
             case.domain = domain
@@ -159,7 +159,8 @@ class FormProcessorCouch(object):
 
         assert case.domain == domain
         try:
-            if lock_obj:
+            if not found and lock_obj:
+                # the lock was only aquired if we found a case
                 acquire_lock(lock_obj, degrade_gracefully=False)
             forms = FormProcessorCouch.get_case_forms(case_id)
             filtered_forms = [f for f in forms if f.is_normal]

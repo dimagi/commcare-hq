@@ -246,14 +246,16 @@ class FormProcessorSQL(object):
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True):
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
-        if not case:
+        found = bool(case)
+        if not found:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
             if lock:
                 lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
 
         assert case.domain == domain
         try:
-            if lock_obj:
+            if not found and lock_obj:
+                # the lock was only aquired if we found a case
                 acquire_lock(lock_obj, degrade_gracefully=False)
             case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
             if case.is_deleted and not case.is_saved():
