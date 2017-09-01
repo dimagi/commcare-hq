@@ -45,7 +45,7 @@ def get_and_check_parent_case(subcase, identifier, relationship, expected_case_t
 
     parent_case = related[0]
     if parent_case.type != expected_case_type:
-        raise ValueError("Expected case type %s, found %s", % (expected_case_type, parent_case.type))
+        raise ValueError("Expected case type %s, found %s" % (expected_case_type, parent_case.type))
 
     return parent_case
 
@@ -129,7 +129,7 @@ def calculate_immunization_window(tasks_case, anchor_date, immunization_product,
     eligible_start_date = anchor_date + timedelta(days=valid)
     end_date = anchor_date + timedelta(days=expires)
 
-    precessor_id = immunization_product.product_data.get('predecessor_id', '').strip()
+    predecessor_id = immunization_product.product_data.get('predecessor_id', '').strip()
     if predecessor_id:
         predecessor_product = product_code_to_product.get(predecessor_id)
         if predecessor_product is None:
@@ -148,6 +148,10 @@ def calculate_immunization_window(tasks_case, anchor_date, immunization_product,
         start_date = eligible_start_date
 
     return (start_date, end_date)
+
+
+def todays_date():
+    return ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
 
 
 def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immunization_products, ledger_values):
@@ -171,13 +175,13 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
     if product_schedule_flag:
         tasks_case_schedule_flag = tasks_case.get_case_property('schedule_flag')
         if (
-            not isinstance(task_case_schedule_flag, basestring) or
+            not isinstance(tasks_case_schedule_flag, basestring) or
             product_schedule_flag not in tasks_case_schedule_flag
         ):
             return False
 
     # If all of the above checks pass, check that today's date falls within the immunization window
-    today = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
+    today = todays_date()
 
     start_date, end_date = calculate_immunization_window(
         tasks_case,

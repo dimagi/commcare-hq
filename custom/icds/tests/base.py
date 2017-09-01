@@ -29,7 +29,7 @@ class BaseICDSTest(TestCase):
 
     @classmethod
     def create_case(cls, case_type, parent_case_id=None, parent_case_type=None, parent_identifier=None,
-            parent_relationship=None):
+            parent_relationship=None, update=None):
 
         kwargs = {}
         if parent_case_id:
@@ -39,6 +39,7 @@ class BaseICDSTest(TestCase):
             uuid.uuid4().hex,
             case_type=case_type,
             create=True,
+            update=update,
             **kwargs
         )
         case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
