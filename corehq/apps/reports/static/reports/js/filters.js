@@ -139,7 +139,7 @@ hqGlobal("reports/js/filters", ['jquery', 'knockout', 'select2'], function($, ko
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            hqImport("style/js/main").transformHelpTemplate($(this), true);
+            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
     };
 

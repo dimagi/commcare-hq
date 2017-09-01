@@ -13,7 +13,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
     }
 
     $(function() {
-        var alert_user = hqImport("style/js/alert_user").alert_user,
+        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user,
             $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 

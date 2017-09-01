@@ -1,9 +1,9 @@
 from StringIO import StringIO
 from collections import OrderedDict
+import datetime
 
 import pytz
 from dateutil.rrule import rrule, MONTHLY
-from django.db.models.functions import datetime
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
@@ -158,7 +158,10 @@ class ExportableMixin(object):
                     cell = row[c.slug]
                 else:
                     cell = row[c['slug']]
-                row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
+                if not isinstance(cell, dict):
+                    row_data.append(cell)
+                else:
+                    row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
 
         utc_now = datetime.datetime.now(pytz.utc)
@@ -1626,6 +1629,112 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         return columns + agg_columns
 
 
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''
+
+
+class BeneficiaryExport(ExportableMixin, SqlData):
+    title = 'Child Beneficiary'
+    table_name = 'child_health_monthly_view'
+
+    @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if key not in ['aggregation_level', 'state_id', 'district_id', 'block_id', 'supervisor_id']:
+                filters.append(EQ(key, key))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = []
+        for column in group_by_columns:
+            if column.slug != 'current_age':
+                group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        return [OrderBy('person_name')]
+
+    @property
+    def get_columns_by_loc_level(self):
+
+        def current_age(dob):
+            return int(round((self.config['month'] - dob).days / 365.25))
+
+        columns = [
+            DatabaseColumn(
+                'Name',
+                SimpleColumn('person_name'),
+                slug='person_name'
+            ),
+            DatabaseColumn(
+                'Date of Birth',
+                SimpleColumn('dob'),
+                slug='dob'
+            ),
+            DatabaseColumn(
+                'Current Age (In years)',
+                AliasColumn('dob'),
+                format_fn=current_age,
+                slug='current_age'
+            ),
+            DatabaseColumn(
+                'Sex ',
+                SimpleColumn('sex'),
+                slug='sex'
+            ),
+            ICDSDatabaseColumn(
+                '1 Year Immunizations Complete',
+                SimpleColumn('fully_immunized_date'),
+                format_fn=lambda x: 'Yes' if x != '' else 'No'
+            ),
+            DatabaseColumn(
+                'Month for data shown',
+                SimpleColumn('month'),
+                slug='month'
+            ),
+            DatabaseColumn(
+                'Weight recorded',
+                SimpleColumn('recorded_weight'),
+                slug='recorded_weight'
+            ),
+            DatabaseColumn(
+                'Height recorded',
+                SimpleColumn('recorded_height'),
+                slug='recorded_height'
+            ),
+            DatabaseColumn(
+                'Weight-for-Age Status',
+                SimpleColumn('current_month_nutrition_status'),
+                slug='current_month_nutrition_status'
+            ),
+            DatabaseColumn(
+                'Weight-for-Height Status',
+                SimpleColumn('current_month_stunting'),
+                slug="current_month_stunting"
+            ),
+            DatabaseColumn(
+                'Height-for-Age status',
+                SimpleColumn('current_month_wasting'),
+                slug="current_month_wasting"
+            ),
+            DatabaseColumn(
+                'PSE Attendance',
+                SimpleColumn('pse_days_attended'),
+                slug="pse_days_attended"
+            ),
+        ]
+        return columns
+
+    @property
+    def columns(self):
+        return self.get_columns_by_loc_level
+
+
 class ProgressReport(object):
 
     def __init__(self, config=None, loc_level='state'):
@@ -1653,7 +1762,7 @@ class ProgressReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Total number of unweighed children',
                                 'slug': 'nutrition_status_unweighed',
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1661,7 +1770,7 @@ class ProgressReport(object):
                                           'severely underweight (weight-for-age)',
                                 'slug': 'severely_underweight',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1669,7 +1778,7 @@ class ProgressReport(object):
                                           'are moderately underweight (weight-for-age)',
                                 'slug': 'moderately_underweight',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1683,7 +1792,7 @@ class ProgressReport(object):
                                           'malnutrition (weight-for-height)',
                                 'slug': 'wasting_severe',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1693,7 +1802,7 @@ class ProgressReport(object):
                                 ),
                                 'slug': 'wasting_moderate',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1706,7 +1815,7 @@ class ProgressReport(object):
                                 'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                                 'slug': 'stunting_moderate',
                                 'average': [],
-                                'reverseColors': 'true',
+                                'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',

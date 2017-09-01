@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-22 21:00+0000\n"
+"POT-Creation-Date: 2017-08-29 19:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,6 +25,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/locations/static/locations/js/location_types.js:350
 #: corehq/apps/reminders/static/reminders/js/reminders.js:12
+#: corehq/apps/style/static/style/js/components/inline_edit.js:67
 msgid "You have unsaved changes."
 msgstr ""
 
@@ -32,13 +33,13 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:210
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:180
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/itextBlock.js:177
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:455
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:415
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -53,7 +54,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:528
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:426
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
 msgid "Copied!"
 msgstr ""
 
@@ -250,7 +251,7 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:124
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:116
 msgid "Edit Form"
 msgstr ""
 
@@ -258,27 +259,27 @@ msgstr ""
 msgid "Form Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:121
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:75
 msgid "Home Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:122
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:76
 msgid "First Menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:123
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:77
 msgid "Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Parent Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:127
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
 msgid "Previous Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:136
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:90
 msgid "Link to other form"
 msgstr ""
 
@@ -291,31 +292,27 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/managed_app.js:46
-msgid "Edit in form builder"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:9
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:8
 msgid "Module Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:79
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:78
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:85
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:91
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:90
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:117
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -374,7 +371,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:45
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
-#: corehq/apps/style/static/style/js/main.js:245
+#: corehq/apps/style/static/style/js/main.js:236
 #: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr ""
@@ -399,21 +396,21 @@ msgstr ""
 msgid "No new changes!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:158
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:155
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:160
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:157
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:171
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:168
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:321
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:309
 msgid "You have unsaved settings."
 msgstr ""
 
@@ -502,7 +499,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
-#: corehq/apps/style/static/style/js/main.js:249
+#: corehq/apps/style/static/style/js/main.js:240
 #: corehq/apps/style/static/style/js/ui_elements/ui-element-input-map.js:38
 msgid "Delete"
 msgstr ""
@@ -608,7 +605,6 @@ msgstr ""
 msgid "no formatting"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:10
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: submodules/formdesigner/src/widgets.js:639
 #: submodules/formdesigner/src/widgets.js:641
@@ -1142,7 +1138,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:541
 #: corehq/apps/export/static/export/js/models.js:203
-#: corehq/apps/style/static/style/js/main.js:241
+#: corehq/apps/style/static/style/js/main.js:232
 #: corehq/apps/users/static/users/js/web_users.js:46
 #: submodules/formdesigner/src/core.js:2057
 msgid "Save"
@@ -1336,7 +1332,7 @@ msgstr ""
 msgid "Update Source"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: submodules/formdesigner/src/core.js:583
 msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
@@ -2129,27 +2125,27 @@ msgstr ""
 msgid "Close Case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/src/saveToCase.js:259
 msgid "Close Condition"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/src/saveToCase.js:267
 msgid "Update Case"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/src/saveToCase.js:273
 msgid "Properties To Update"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/src/saveToCase.js:295
 msgid "Use Index"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/src/saveToCase.js:301
 msgid "Index Properties"
 msgstr ""
@@ -2377,6 +2373,14 @@ msgstr ""
 msgid "Unknown question type:"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
+msgid "Enter command"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
+msgid "Command Bar"
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
 msgid "Form Data"
 msgstr ""
@@ -2410,16 +2414,16 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:144
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:148
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:358
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:362
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:386
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:390
 msgid "Please wait..."
 msgstr ""
 
@@ -2921,32 +2925,36 @@ msgstr ""
 msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:242
+#: corehq/apps/style/static/style/js/components/inline_edit.js:54
+msgid "Error saving, please try again."
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:233
 #: corehq/apps/userreports/static/userreports/js/report_config.js:387
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:243
+#: corehq/apps/style/static/style/js/main.js:234
 #: corehq/apps/userreports/static/userreports/js/report_config.js:388
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:244
-#: corehq/apps/style/static/style/js/main.js:252
+#: corehq/apps/style/static/style/js/main.js:235
+#: corehq/apps/style/static/style/js/main.js:243
 #: corehq/apps/userreports/static/userreports/js/report_config.js:389
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:250
+#: corehq/apps/style/static/style/js/main.js:241
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:251
+#: corehq/apps/style/static/style/js/main.js:242
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:253
+#: corehq/apps/style/static/style/js/main.js:244
 msgid "There was an error deleting"
 msgstr ""
 

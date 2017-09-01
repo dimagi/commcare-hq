@@ -1,12 +1,12 @@
 /* globals hqDefine, $, hqImport */
 
-hqDefine('style/js/ui_elements/ui-element-input', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-input', function () {
     'use strict';
     var module = {};
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
-        hqImport("style/js/main").eventize(this);
+        hqImport("hqwebapp/js/main").eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
         this.edit = true;
@@ -47,11 +47,11 @@ hqDefine('style/js/ui_elements/ui-element-input', function () {
             }
         },
         setVisibleValue: function (value) {
-            var translated = hqImport('style/js/ui_elements/ui-element-langcode-button').translate_delim(value);
+            var translated = hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
                 this.ui.css("position", "relative");
-                var langcode_button = hqImport('style/js/ui_elements/ui-element-langcode-button').new(
+                var langcode_button = hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').new(
                     $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang
                 );

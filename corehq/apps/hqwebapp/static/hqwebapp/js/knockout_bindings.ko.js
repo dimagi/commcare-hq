@@ -183,7 +183,7 @@ ko.bindingHandlers.saveButton2 = {
             state = valueAccessor(),
             saveButton;
 
-        saveButton = hqImport("style/js/main").initSaveButton({
+        saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             save: function () {
                 saveButton.ajax(saveOptions());
             }
@@ -208,7 +208,7 @@ ko.bindingHandlers.deleteButton = {
             state = valueAccessor(),
             deleteButton;
 
-        deleteButton = hqImport("style/js/main").initDeleteButton({
+        deleteButton = hqImport("hqwebapp/js/main").initDeleteButton({
             save: function () {
                 deleteButton.ajax(saveOptions());
             }
@@ -353,7 +353,7 @@ ko.bindingHandlers.makeHqHelp = {
             placement = ko.utils.unwrapObservable(opts.placement || $(element).data('placement')),
             format = ko.utils.unwrapObservable(opts.format);
         $(element).find('.hq-help').remove();
-        hqImport("style/js/main").makeHqHelp({
+        hqImport("hqwebapp/js/main").makeHqHelp({
             title: name,
             content: description,
             html: format === 'html',
@@ -566,7 +566,7 @@ ko.bindingHandlers.autocompleteAtwho = {
             throw new Error("The typeahead binding requires Atwho.js and Caret.js");
         }
 
-        hqImport('style/js/atwho').init($element, {
+        hqImport('hqwebapp/js/atwho').init($element, {
             afterInsert: function() {
                 $element.trigger('textchange');
             },

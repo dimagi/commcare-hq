@@ -1,12 +1,12 @@
 /* globals hqDefine, hqImport, $, django */
 
-hqDefine('style/js/ui_elements/ui-element-input-map', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
     'use strict';
     var module = {};
 
     var InputMap = function (show_del_button) {
         var that = this;
-        hqImport("style/js/main").eventize(this);
+        hqImport("hqwebapp/js/main").eventize(this);
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",

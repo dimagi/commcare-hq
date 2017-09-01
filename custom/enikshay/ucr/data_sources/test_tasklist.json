@@ -139,7 +139,7 @@
         },
         "transform": {},
         "is_primary_key": false,
-        "is_nullable": false,
+        "is_nullable": true,
         "type": "expression",
         "column_id": "tu_id"
       },
@@ -160,7 +160,7 @@
         },
         "transform": {},
         "is_primary_key": false,
-        "is_nullable": false,
+        "is_nullable": true,
         "type": "expression",
         "column_id": "dto_id"
       },

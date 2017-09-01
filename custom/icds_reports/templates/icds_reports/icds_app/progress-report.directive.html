@@ -27,9 +27,6 @@
         </div>
         <div ng-if="!$ctrl.report">
             <div class="row">
-                <h2 class="black center" style="margin-bottom: 10px">ICDS-CAS Outcomes</h2>
-            </div>
-            <div class="row">
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
                         <img style="width: 152px;" src="{% static 'img/maternal_and_child.png' %}"/>
@@ -58,7 +55,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #00bdc5" ng-click="$ctrl.goToReport('demographics')">
-                        <img src="{% static 'img/demographics.png' %}"/>
+                        <img style="width: 100%" src="{% static 'img/demographics.png' %}"/>
                         <div class="caption">Demographics</div>
                     </div>
                 </div>
@@ -86,15 +83,22 @@
                         <th class="col-md-1" ng-repeat="month in section.months">
                             <span ng-bind-html="month"></span>
                         </th>
-                        <th class="col-md-1">National Average</th>
+                        <th class="col-md-1">
+                            <div class="pointer" uib-popover="National average is calculated using the previous calendar month's data"
+                               popover-placement="top"
+                               popover-trigger="'mouseenter'">
+                                <span>National Average </span>
+                                <i class="fa fa-info-circle"></i>
+                            </div>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
                             <span ng-if="row.average.html !== void(0)">{$ row.average.html | number:2 $} %</span>

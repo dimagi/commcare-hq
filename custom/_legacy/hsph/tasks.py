@@ -99,7 +99,11 @@ def new_update_case_properties():
         }
         if case.get('owner_id', None):
             kwargs['owner_id'] = case['owner_id']
-        submit_case_blocks([ElementTree.tostring(CaseBlock(**kwargs).as_xml())], domain)
+        submit_case_blocks(
+            [ElementTree.tostring(CaseBlock(**kwargs).as_xml())],
+            domain,
+            device_id=__name__ + ".new_update_case_properties",
+        )
 
 
 def iter_cases_to_modify():

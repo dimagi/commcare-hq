@@ -369,6 +369,9 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # check for translation for text locale
         self._assert_valid_media_translation(self.app, 'hin', custom_icon_locale, custom_icon.text['hin'])
 
+        # check for default in case of missing translation
+        self._assert_valid_media_translation(self.app, 'secret', custom_icon_locale, custom_icon.text['en'])
+
         # check for xpath being set for custom icon
         custom_icon.xpath = "if(1=1, 'a', 'b')"
         custom_icon.text = {}

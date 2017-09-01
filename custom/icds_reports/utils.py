@@ -42,6 +42,7 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
+DEFAULT_VALUE = "Data not Entered"
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -331,7 +332,7 @@ def get_system_usage_data(yesterday, config):
     }
 
 
-@quickcache(['config'], timeout=24 * 60 * 60)
+# @quickcache(['config'], timeout=24 * 60 * 60)
 def get_maternal_child_data(config):
 
     def get_data_for_child_health_monthly(date, filters):
@@ -462,7 +463,7 @@ def get_maternal_child_data(config):
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
-                        "Percentage of newborns with born with birth weight less than 2500 grams. Newborns with"
+                        "Percentage of newborns born with birth weight less than 2500 grams. Newborns with"
                         " Low Birth Weight are closely associated with foetal and neonatal mortality and "
                         "morbidity, inhibited growth and cognitive development, and chronic diseases later "
                         "in life")),
@@ -881,7 +882,7 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
@@ -1142,7 +1143,10 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    moderately_underweight_total = 0
+    severely_underweight_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -1152,7 +1156,11 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         normal = row['normal']
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
-        average.append(value)
+
+        moderately_underweight_total += (moderately_underweight or 0)
+        severely_underweight_total += (severely_underweight_total or 0)
+        valid_total += (valid or 0)
+
         row_values = {
             'severely_underweight': severely_underweight or 0,
             'moderately_underweight': moderately_underweight or 0,
@@ -1160,27 +1168,29 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             'normal': normal
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 35:
-            row_values.update({'fillKey': '20%-34%'})
+            row_values.update({'fillKey': '20%-35%'})
         elif value >= 35:
-            row_values.update({'fillKey': '>35%'})
+            row_values.update({'fillKey': '35%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': PINK})
-    fills.update({'20%-34%': ORANGE})
-    fills.update({'>35%': RED})
+    fills.update({'0%-20%': PINK})
+    fills.update({'20%-35%': ORANGE})
+    fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
+
+    average = ((moderately_underweight_total or 0) + (severely_underweight_total or 0)) * 100 / (valid_total or 1)
 
     return [
         {
             "slug": "moderately_underweight",
-            "label": "",
+            "label": "Percent of Children Underweight (0-5 years)",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": average,
                 "info": _((
                     "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
@@ -1369,21 +1379,21 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-34%",
+                "key": "20%-35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">35%",
+                "key": "35%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -1516,12 +1526,11 @@ def get_awc_reports_pse(config, month, domain):
     for chart_row in chart_data:
         pse_week = chart_row['pse_date'].isocalendar()[1]
         if pse_week in open_count_chart:
-            open_count_chart[pse_week] += chart_row['open_count']
-            attended_children_chart[pse_week].append(chart_row['attended_children_percent'])
+            open_count_chart[pse_week] += (chart_row['open_count'] or 0)
+            attended_children_chart[pse_week].append((chart_row['attended_children_percent'] or 0))
         else:
-            open_count_chart[pse_week] = chart_row['open_count']
-            attended_children_chart[pse_week] = [chart_row['attended_children_percent']]
-
+            open_count_chart[pse_week] = (chart_row['open_count'] or 0)
+            attended_children_chart[pse_week] = [chart_row['attended_children_percent'] or 0]
 
     map_data = {}
 
@@ -2126,7 +2135,7 @@ def get_awc_report_demographics(config, month):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
@@ -2165,30 +2174,33 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
             )
         ][::-1],
         'last_month': datetime(*month).strftime("%b %Y"),
-        'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }
 
     def row_format(row_data):
+        return dict(
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorder_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            pse_days_attended=row_data.pse_days_attended
+        )
+
+    def base_data(row_data):
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized_date != '' else 'No',
-            nutrition_status=row_data.current_month_nutrition_status,
-            recorded_weight=row_data.recorded_weight or 0,
-            recorder_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
+            fully_immunized_date='Yes' if row_data.fully_immunized_date else 'No',
             mother_name=row_data.mother_name,
-            pse_days_attended=row_data.pse_days_attended,
             age_in_months=row_data.age_in_months,
         )
 
     for row in data:
         if row.case_id not in config['rows']:
-            config['rows'][row.case_id] = {}
+            config['rows'][row.case_id] = base_data(row)
         config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
 
     return config
@@ -2235,7 +2247,11 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    severe_total = 0
+    moderate_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -2245,8 +2261,11 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         normal = row['normal']
         total_measured = row['total_measured']
 
+        severe_total += (severe or 0)
+        moderate_total += (moderate or 0)
+        valid_total += (valid or 0)
+
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
-        average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
@@ -2256,27 +2275,27 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         }
 
         if value < 5:
-            row_values.update({'fillKey': '0%-4%'})
+            row_values.update({'fillKey': '0%-5%'})
         elif 5 <= value <= 7:
             row_values.update({'fillKey': '5%-7%'})
         elif value > 7:
-            row_values.update({'fillKey': '>8%'})
+            row_values.update({'fillKey': '7%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-4%': PINK})
+    fills.update({'0%-5%': PINK})
     fills.update({'5%-7%': ORANGE})
-    fills.update({'>8%': RED})
+    fills.update({'7%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent of Children Wasted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
-                "average": "%.2f" % (sum(average) / (len(average) or 1)),
+                "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
                     "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
@@ -2452,7 +2471,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-4%",
+                "key": "0%-5%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -2466,7 +2485,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
             },
             {
                 "values": chart_data['red'],
-                "key": ">8%",
+                "key": "7%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2492,7 +2511,11 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    moderate_total = 0
+    severe_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['valid']
         name = row['%s_name' % loc_level]
@@ -2502,8 +2525,11 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         normal = row['normal']
         total_measured = row['total_measured']
 
+        moderate_total += (moderate or 0)
+        severe_total += (severe or 0)
+        valid_total += (valid or 0)
+
         value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
-        average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
@@ -2512,27 +2538,27 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             'total_measured': total_measured or 0,
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
-            row_values.update({'fillKey': '25%-37%'})
+            row_values.update({'fillKey': '25%-38%'})
         elif value >= 38:
-            row_values.update({'fillKey': '>38%'})
+            row_values.update({'fillKey': '38%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': PINK})
-    fills.update({'25%-37%': ORANGE})
-    fills.update({'>38%': RED})
+    fills.update({'0%-25%': PINK})
+    fills.update({'25%-38%': ORANGE})
+    fills.update({'38%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent of Children Stunted (6 - 60 months)",
             "fills": fills,
             "rightLegend": {
-                "average": "%.2f" % (sum(average) / (len(average) or 1)),
+                "average": "%.2f" % (((moderate_total + severe_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
                     "-2Z standard deviations of the WHO Child Growth Standards median."
@@ -2712,21 +2738,21 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-37%",
+                "key": "25%-38%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">38%",
+                "key": "38%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2749,41 +2775,45 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    low_birth_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
 
         low_birth = row['low_birth']
         in_month = row['in_month']
 
+        low_birth_total += (low_birth or 0)
+        in_month_total += (in_month or 0)
+
         value = (low_birth or 0) * 100 / (in_month or 1)
-        average.append(value)
         row_values = {
             'low_birth': low_birth,
             'in_month': in_month,
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': PINK})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': RED})
+    fills.update({'0%-20%': PINK})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "low_birth",
-            "label": "",
+            "label": "Percent Newborns with Low Birth Weight",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (low_birth_total * 100) / float(in_month_total or 1),
                 "info": _((
                     "Percentage of newborns with born with birth weight less than 2500 grams."
                     "<br/><br/>"
@@ -2951,21 +2981,21 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -2988,41 +3018,44 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    birth_total = 0
+    in_month_total = 0
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
 
         birth = row['birth']
         in_month = row['in_month']
 
+        birth_total += (birth or 0)
+        in_month_total += (in_month or 0)
+
         value = (birth or 0) * 100 / (in_month or 1)
-        average.append(value)
         row_values = {
             'birth': birth,
             'in_month': in_month,
         }
         if value <= 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': PINK})
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "early_initiation",
-            "label": "",
+            "label": "Percent Early Initiation of Breastfeeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (birth_total * 100) / float(in_month_total or 1),
                 "info": _((
                     "Percentage of children who were put to the breast within one hour of birth."
                     "<br/><br/>"
@@ -3191,21 +3224,21 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
 
             {
                 "values": chart_data['red'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['green'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -3228,41 +3261,46 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
         }
         if value < 20:
-            row_values.update({'fillKey': '0%-19%'})
+            row_values.update({'fillKey': '0%-20%'})
         elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-59%'})
+            row_values.update({'fillKey': '20%-60%'})
         elif value >= 60:
-            row_values.update({'fillKey': '>60%'})
+            row_values.update({'fillKey': '60%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-19%': RED})
-    fills.update({'20%-59%': ORANGE})
-    fills.update({'>60%': PINK})
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': ORANGE})
+    fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent Exclusive Breastfeeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / (float(valid_total) or 1),
                 "info": _((
                     "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
                     "<br/><br/>"
@@ -3442,21 +3480,21 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-19%",
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "20%-59%",
+                "key": "20%-60%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": ">60%",
+                "key": "60%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -3479,15 +3517,20 @@ def get_children_initiated_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -3510,10 +3553,10 @@ def get_children_initiated_data_map(config, loc_level):
     return [
         {
             "slug": "severe",
-            "label": "",
+            "label": "Percent Children (6-8 months) initiated Complementary Feeding",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food."
@@ -3727,15 +3770,18 @@ def get_institutional_deliveries_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
 
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -3758,10 +3804,10 @@ def get_institutional_deliveries_data_map(config, loc_level):
     return [
         {
             "slug": "institutional_deliveries",
-            "label": "",
+            "label": "Percent Instituitional Deliveries",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of pregant women who delivered in a public or private medical facility "
                     "in the last month. "
@@ -3978,15 +4024,20 @@ def get_immunization_coverage_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'children': in_month or 0,
             'all': valid or 0
@@ -4009,10 +4060,10 @@ def get_immunization_coverage_data_map(config, loc_level):
     return [
         {
             "slug": "institutional_deliveries",
-            "label": "",
+            "label": "Percent Immunization Coverage at 1 year",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of children at age 3 who have recieved complete immunization as per "
                     "National Immunization Schedule of India."
@@ -4228,15 +4279,20 @@ def get_awc_daily_status_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_day_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_day = row['in_day']
 
+        in_day_total += (in_day or 0)
+        valid_total += (valid or 0)
+
         value = (in_day or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_day': in_day or 0,
             'all': valid or 0
@@ -4259,10 +4315,10 @@ def get_awc_daily_status_data_map(config, loc_level):
     return [
         {
             "slug": "awc_daily_statuses",
-            "label": "",
+            "label": "Percent AWCs Open Yesterday",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_day_total or 0) * 100 / float(valid_total or 1),
                 "info": _((
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
@@ -4307,7 +4363,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
         date = row['date']
         in_day = row['in_day'] or 0
         location = row['%s_name' % loc_level]
-        valid = row['all']
+        valid = row['all'] or 0
 
         if location in best_worst:
             best_worst[location].append(in_day / (valid or 1))
@@ -5244,7 +5300,9 @@ def get_adhaar_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
@@ -5252,33 +5310,36 @@ def get_adhaar_data_map(config, loc_level):
         in_month = row['in_month']
 
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
+        valid_total += (valid or 0)
+        in_month_total += (in_month or 0)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value <= 50:
             row_values.update({'fillKey': '25%-50%'})
         elif value > 50:
-            row_values.update({'fillKey': '51%-100%'})
+            row_values.update({'fillKey': '50%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
+    fills.update({'0%-25%': RED})
     fills.update({'25%-50%': ORANGE})
-    fills.update({'51%-100%': PINK})
+    fills.update({'50%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "adhaar",
-            "label": "",
+            "label": "Percent Adhaar Seeded Individuals",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage number of ICDS beneficiaries whose Adhaar identification has been captured"
                 )),
@@ -5455,14 +5516,14 @@ def get_adhaar_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-50%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
@@ -5492,41 +5553,45 @@ def get_clean_water_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value <= 50:
-            row_values.update({'fillKey': '25%-50%'})
-        elif value >= 50:
-            row_values.update({'fillKey': '51%-100%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
+        elif value >= 75:
+            row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-50%': ORANGE})
-    fills.update({'51%-100%': PINK})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
+    fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "clean_water",
-            "label": "",
+            "label": "Percent AWCs with Clean Drinking Water",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a source of clean drinking water"
                 )),
@@ -5703,21 +5768,21 @@ def get_clean_water_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -5740,41 +5805,45 @@ def get_functional_toilet_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "functional_toilet",
-            "label": "",
+            "label": "Percent AWCs with Functional Toilet",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a functional toilet"
                 )),
@@ -5952,21 +6021,21 @@ def get_functional_toilet_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -5989,41 +6058,46 @@ def get_medicine_kit_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
+            row_values.update({'fillKey': '0%-25%'})
         elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "medicine_kit",
-            "label": "",
+            "label": "Percent AWCs with Medicine Kit",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a Medicine Kit"
                 )),
@@ -6201,21 +6275,21 @@ def get_medicine_kit_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -6238,41 +6312,45 @@ def get_infants_weight_scale_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+    valid_total = 0
+    in_month_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "infants_weight_scale",
-            "label": "",
+            "label": "Percent AWCs with Weighing Scale: Infants",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for infants"
                 )),
@@ -6449,21 +6527,21 @@ def get_infants_weight_scale_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK
@@ -6486,41 +6564,47 @@ def get_adult_weight_scale_data_map(config, loc_level):
         )
 
     map_data = {}
-    average = []
+
+    in_month_total = 0
+    valid_total = 0
+
     for row in get_data_for(config):
         valid = row['all']
         name = row['%s_name' % loc_level]
 
         in_month = row['in_month']
 
+        in_month_total += (in_month or 0)
+        valid_total += (valid or 0)
+
         value = (in_month or 0) * 100 / (valid or 1)
-        average.append(value)
+
         row_values = {
             'in_month': in_month or 0,
             'all': valid or 0
         }
         if value < 25:
-            row_values.update({'fillKey': '0%-24%'})
-        elif 25 <= value < 74:
-            row_values.update({'fillKey': '25%-74%'})
+            row_values.update({'fillKey': '0%-25%'})
+        elif 25 <= value < 75:
+            row_values.update({'fillKey': '25%-75%'})
         elif value >= 75:
             row_values.update({'fillKey': '75%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-24%': RED})
-    fills.update({'25%-74%': ORANGE})
+    fills.update({'0%-25%': RED})
+    fills.update({'25%-75%': ORANGE})
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "adult_weight_scale",
-            "label": "",
+            "label": "Percent AWCs with Weighing Scale: Mother and Child",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
+                "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for mother and child"
                 )),
@@ -6697,21 +6781,21 @@ def get_adult_weight_scale_sector_data(config, loc_level):
         "chart_data": [
             {
                 "values": chart_data['green'],
-                "key": "0%-24%",
+                "key": "0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             },
             {
                 "values": chart_data['orange'],
-                "key": "25%-49%",
+                "key": "25%-75%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": chart_data['red'],
-                "key": "50%-100%",
+                "key": "75%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": PINK

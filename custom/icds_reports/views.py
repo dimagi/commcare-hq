@@ -26,7 +26,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport
+    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
@@ -231,11 +231,7 @@ class ProgramSummaryView(View):
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
 
-        test_date = datetime(year, month, day)
-
-        day_before_date_from_filter = (test_date - relativedelta(days=1)).date()
         yesterday = (now - relativedelta(days=1)).date()
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
@@ -259,7 +255,7 @@ class ProgramSummaryView(View):
             data = get_maternal_child_data(config)
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
-                tuple(day_before_date_from_filter.timetuple())[:3],
+                tuple(yesterday.timetuple())[:3],
                 config
             )
         elif step == 'demographics':
@@ -517,7 +513,7 @@ class ExportIndicatorView(View):
                 'month': date(year, month, 1),
             })
 
-        location = request.POST.get('location_id', '')
+        location = request.POST.get('location', '')
 
         if location:
             try:
@@ -543,6 +539,8 @@ class ExportIndicatorView(View):
             return AWCInfrastructureExport(
                 config=config, loc_level=aggregation_level
             ).to_export(export_format, location)
+        elif indicator == 6:
+            return BeneficiaryExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

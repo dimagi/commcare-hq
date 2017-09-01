@@ -24,7 +24,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
@@ -116,6 +116,7 @@
     {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
     {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
     {% initial_page_data 'no_vellum' form.no_vellum %}
+    {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
     {% initial_page_data 'put_in_root' module.put_in_root %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}

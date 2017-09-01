@@ -49,6 +49,22 @@
     min-width: 200px;
 }
 
+th {
+    min-width: 100px !important;
+}
+
+.sorting:hover {
+    text-decoration: underline;
+}
+
+.sorting_asc {
+    background-color: #d9d9d9 !important;
+}
+
+.sorting_desc {
+    background-color: #d9d9d9 !important;
+}
+
 .breadcrumb {
     background-color: #ffffff !important;
 }

@@ -183,6 +183,12 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
                 return data
         return None
 
+    def get_file_extension(self):
+        extension = ''
+        if self.aux_media:
+            extension = '.{}'.format(self.aux_media[-1]['uploaded_filename'].split(".")[-1])
+        return extension
+
     def get_media_info(self, path, is_updated=False, original_path=None):
         return {
             "path": path,

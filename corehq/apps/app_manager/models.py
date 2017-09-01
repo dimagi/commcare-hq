@@ -182,6 +182,10 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
 }
 
 
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
+
+
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
     parent = jsonpath.Parent().find(datum_context)[0]
@@ -1457,7 +1461,8 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def custom_icon_form_and_text_by_language(self, lang):
         custom_icon = self.custom_icon
         if custom_icon:
-            return custom_icon.form, custom_icon.text[lang]
+            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
+            return custom_icon.form, custom_icon_text
         return None, None
 
     def _set_media(self, media_attr, lang, media_path):
@@ -2331,6 +2336,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def requires_case_details(self):
         return False
 
+    def root_requires_same_case(self):
+        return self.root_module \
+            and self.root_module.case_type == self.case_type \
+            and self.root_module.all_forms_require_a_case()
+
     def get_case_types(self):
         return set([self.case_type])
 
@@ -2647,7 +2657,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, Form):
             new_form = form
-        elif isinstance(form, AdvancedForm) and not form.actions.get_all_actions():
+        elif isinstance(form, AdvancedForm) and not len(list(form.actions.get_all_actions())):
             new_form = Form(
                 name=form.name,
                 form_filter=form.form_filter,
@@ -6297,6 +6307,10 @@ class GlobalAppConfig(Document):
         choices=["off", "on", "forced"],
         default="off"
     )
+
+    # corresponding versions to which user should be prompted to update to
+    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
+    app_version = IntegerProperty(default=LATEST_APP_VALUE)
 
     @classmethod
     def for_app(cls, app):

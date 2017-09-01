@@ -44,13 +44,16 @@ class DomainLite(namedtuple('DomainLite', 'name default_timezone cc_case_type us
 
 class _UserCaseHelper(object):
 
+    CASE_SOURCE_ID = __name__ + "._UserCaseHelper."
+
     def __init__(self, domain, owner_id):
         self.domain = domain
         self.owner_id = owner_id
 
-    def _submit_case_block(self, caseblock):
+    def _submit_case_block(self, caseblock, source):
+        device_id = self.CASE_SOURCE_ID + source
         casexml = ElementTree.tostring(caseblock.as_xml())
-        submit_case_blocks(casexml, self.domain.name)
+        submit_case_blocks(casexml, self.domain.name, device_id=device_id)
 
     @staticmethod
     def re_open_case(case):
@@ -69,7 +72,7 @@ class _UserCaseHelper(object):
             case_name=fields.pop('name', None),
             update=fields
         )
-        self._submit_case_block(caseblock)
+        self._submit_case_block(caseblock, "create_user_case")
         self._user_case_changed(fields)
 
     def update_user_case(self, case, case_type, fields):
@@ -82,7 +85,7 @@ class _UserCaseHelper(object):
             close=False,
             update=fields
         )
-        self._submit_case_block(caseblock)
+        self._submit_case_block(caseblock, "update_user_case")
         self._user_case_changed(fields)
 
     def close_user_case(self, case, case_type):
@@ -93,7 +96,7 @@ class _UserCaseHelper(object):
             case_type=case_type,
             close=True,
         )
-        self._submit_case_block(caseblock)
+        self._submit_case_block(caseblock, "close_user_case")
 
     def _user_case_changed(self, fields):
         field_names = fields.keys()
