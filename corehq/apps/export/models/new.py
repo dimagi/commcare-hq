@@ -1698,7 +1698,6 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
-        """return (path, label) tuples for each export item"""
         label_prefix = subcase_action.form_element_name
         index_relationships = []
         if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
