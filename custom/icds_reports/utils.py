@@ -3999,7 +3999,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level):
     ).values(
         *group_by
     ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('institutional_delivery_in_month'),
         eligible=Sum('delivered_in_month'),
@@ -5062,7 +5062,7 @@ def get_enrolled_women_data_map(domain, config, loc_level):
             **filters
         ).exclude(
             state_id__in=get_test_state_locations_id(domain)
-    )   .values(
+        ).values(
             '%s_name' % loc_level
         ).annotate(
             valid=Sum('pregnant'),
