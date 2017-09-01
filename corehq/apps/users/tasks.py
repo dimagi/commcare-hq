@@ -17,6 +17,8 @@ from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from django.utils.html import format_html
+
+from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
@@ -75,6 +77,8 @@ def bulk_download_users_async(domain, download_id):
             ),
             mark_safe(', '.join(group_links))
         ))
+    except BulkFetchException:
+        errors.append(_('Error exporting data. Please try again later.'))
 
     DownloadBase.set_progress(bulk_download_users_async, 100, 100)
     return {

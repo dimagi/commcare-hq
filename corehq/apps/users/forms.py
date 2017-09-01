@@ -774,7 +774,7 @@ class MultipleSelectionForm(forms.Form):
         <script>
             // Multiselect widget
             $(function () {
-                var multiselect_utils = hqImport('style/js/multiselect_utils');
+                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
                     django.gettext("Available Things"),

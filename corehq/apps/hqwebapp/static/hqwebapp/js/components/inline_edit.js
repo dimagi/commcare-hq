@@ -18,7 +18,7 @@
  *  - errorMessage: Message to display if server returns an error.
  */
 
-hqDefine('style/js/components/inline_edit', function() {
+hqDefine('hqwebapp/js/components/inline_edit', function() {
     return {
         viewModel: function(params) {
             var self = this;

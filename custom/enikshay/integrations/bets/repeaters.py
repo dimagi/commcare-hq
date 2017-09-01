@@ -1,4 +1,3 @@
-from dateutil.parser import parse
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
@@ -27,7 +26,7 @@ from custom.enikshay.integrations.bets.repeater_generators import (
 from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
     is_valid_archived_submission, is_valid_person_submission, case_was_created,
-    is_migrated_uatbc_episode)
+    is_migrated_uatbc_episode, string_to_date_or_None)
 
 
 class BETSRepeaterMixin(object):
@@ -239,27 +238,15 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
         return PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n)
 
     @staticmethod
-    def _property_as_date(properties, property_name):
-        """
-        Parse the given value of the given property_name in the given property dict as a date.
-        If the property is not a date, return None
-        """
-        try:
-            return parse(properties.get(property_name, "nope"))
-        except ValueError:
-            return None
-
-    @staticmethod
     def prescription_total_days_threshold_in_trigger_state(episode_case_properties, n, check_already_sent=True):
         threshold_case_prop = BETSDrugRefillRepeater._get_threshold_case_prop(n)
         if check_already_sent:
             return bool(
-                BETSDrugRefillRepeater._property_as_date(episode_case_properties, threshold_case_prop)
+                string_to_date_or_None(episode_case_properties.get(threshold_case_prop))
                 and episode_case_properties.get("event_{}_{}".format(DRUG_REFILL_EVENT, n)) != "sent"
             )
         else:
-            return BETSDrugRefillRepeater._property_as_date(
-                episode_case_properties, threshold_case_prop) is not None
+            return string_to_date_or_None(episode_case_properties.get(threshold_case_prop)) is not None
 
     def allowed_to_forward(self, episode_case):
         if not self.case_types_and_users_allowed(episode_case):
@@ -271,8 +258,8 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
 
         for n in TOTAL_DAY_THRESHOLDS:
             threshold_case_prop = self._get_threshold_case_prop(n)
-            threshold_prop_values_by_threshold[n] = self._property_as_date(
-                episode_case_properties, threshold_case_prop
+            threshold_prop_values_by_threshold[n] = string_to_date_or_None(
+                episode_case_properties.get(threshold_case_prop)
             )
             trigger_for_n = bool(
                 self.prescription_total_days_threshold_in_trigger_state(

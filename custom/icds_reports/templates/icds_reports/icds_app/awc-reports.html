@@ -82,10 +82,10 @@
                     </thead>
                     <tbody>
                         <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
-                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.month_with_data].case_id)"><span>{$ row[$ctrl.data.month_with_data].person_name || 'Data not Entered' $}</span></td>
-                            <td>{$ row[$ctrl.data.month_with_data].dob || 'Data not Entered' $}</td>
-                            <td style="min-width: 80px;">{$ row[$ctrl.data.month_with_data].age || 'Data not Entered' $}</td>
-                            <td>{$ row[$ctrl.data.month_with_data].fully_immunized_date || 'Data not Entered' $}</td>
+                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)"><span>{$ row.person_name || 'Data not Entered' $}</span></td>
+                            <td>{$ row.dob || 'Data not Entered' $}</td>
+                            <td style="min-width: 80px;">{$ row.age || 'Data not Entered' $}</td>
+                            <td>{$ row.fully_immunized_date || 'Data not Entered' $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
                                 <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
                                     {$ row[month].nutrition_status || 'Data not Entered' $}

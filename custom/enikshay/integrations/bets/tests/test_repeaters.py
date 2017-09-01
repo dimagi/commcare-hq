@@ -186,7 +186,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
                 "voucher_fulfilled_by_location_id": self.pcc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
-                "amount_approved": 10.0,
+                "amount_approved": '9.2',  # this should be rounded up to 10
             }
         )
 
@@ -198,7 +198,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.pcc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
-            u"Amount": u'10.0',
+            u"Amount": 10,
             u"InvestigationType": None,
             u"PersonId": self.person.attrs['update']['person_id'],
             u"AgencyId": self.username.split('@')[0],
@@ -237,7 +237,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.plc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
-            u"Amount": u'10.0',
+            u"Amount": 10,
             u"InvestigationType": u"xray",
             u"PersonId": self.person.attrs['update']['person_id'],
             u"AgencyId": self.username.split('@')[0],

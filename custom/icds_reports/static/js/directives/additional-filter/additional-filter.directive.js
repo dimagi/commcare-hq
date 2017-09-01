@@ -30,6 +30,11 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
         });
     };
 
+    vm.reset = function() {
+        vm.selectedAge = '';
+        vm.selectedGender = '';
+    };
+
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');
     };

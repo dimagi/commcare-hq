@@ -19,7 +19,7 @@ $(function() {
     });
 
     form_node.submit(function(event) {
-        var alert_user = hqImport("style/js/alert_user").alert_user;
+        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
         event.preventDefault();
         $.ajax({
             type: 'POST',

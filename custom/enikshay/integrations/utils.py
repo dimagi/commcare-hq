@@ -1,3 +1,4 @@
+from dateutil.parser import parse
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from corehq.apps.locations.models import SQLLocation
@@ -113,3 +114,12 @@ def case_properties_changed(case, case_properties):
         )
     )
     return property_changed
+
+
+def string_to_date_or_None(date_string):
+    if not date_string:
+        return None
+    try:
+        return parse(date_string).date()
+    except ValueError:
+        return None

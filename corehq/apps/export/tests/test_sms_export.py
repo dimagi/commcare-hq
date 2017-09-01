@@ -67,7 +67,7 @@ class TestSmsExport(SimpleTestCase):
         cls.export_no_meta.export_format = Format.JSON
 
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
-    @patch('corehq.apps.export.export._get_export_documents')
+    @patch('corehq.apps.export.export.get_export_documents')
     def test_export(self, docs, owner_id_to_display):
         docs.return_value = self._message_docs()
         owner_id_to_display.return_value = None
@@ -95,7 +95,7 @@ class TestSmsExport(SimpleTestCase):
             )
 
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
-    @patch('corehq.apps.export.export._get_export_documents')
+    @patch('corehq.apps.export.export.get_export_documents')
     def test_export_meta(self, docs, owner_id_to_display):
         docs.return_value = self._message_docs()
         owner_id_to_display.return_value = None
@@ -125,7 +125,7 @@ class TestSmsExport(SimpleTestCase):
 
     @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
-    @patch('corehq.apps.export.export._get_export_documents')
+    @patch('corehq.apps.export.export.get_export_documents')
     def test_export_doc_type_transform(self, docs, owner_id_to_display, case_id_to_casename):
         docs.return_value = [
             self._make_message(1234, couch_recipient_doc_type='WebUser'),
@@ -162,7 +162,7 @@ class TestSmsExport(SimpleTestCase):
             )
 
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
-    @patch('corehq.apps.export.export._get_export_documents')
+    @patch('corehq.apps.export.export.get_export_documents')
     def test_export_workflow_transform(self, docs, owner_id_to_display):
         messages = [
             self._make_message(1234, workflow='blah'),
@@ -199,7 +199,7 @@ class TestSmsExport(SimpleTestCase):
 
     @patch('corehq.apps.export.transforms._cached_case_id_to_case_name')
     @patch('corehq.apps.export.transforms.cached_user_id_to_username')
-    @patch('corehq.apps.export.export._get_export_documents')
+    @patch('corehq.apps.export.export.get_export_documents')
     def test_export_recipient_id_transform(self, docs, owner_id_to_display, case_id_to_casename):
         docs.return_value = [
             self._make_message(1234, couch_recipient_doc_type='WebUser'),
