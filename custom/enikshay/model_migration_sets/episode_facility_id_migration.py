@@ -129,6 +129,8 @@ class EpisodeFacilityIDMigration(object):
         return False
 
     def _get_owner_id_from_transaction(self, transaction, case_id):
+        if transaction.form is None:
+            return None
         case_updates = get_case_updates(transaction.form)
         update_actions = [
             (update.modified_on_str, update.get_update_action()) for update in case_updates
