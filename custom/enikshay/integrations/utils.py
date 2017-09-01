@@ -49,15 +49,7 @@ def is_valid_episode_submission(episode_case):
 
 
 def is_migrated_uatbc_episode(episode_case):
-    try:
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case)
-    except ENikshayCaseNotFound:
-        return False
-    return is_migrated_uatbc_person(person_case)
-
-
-def is_migrated_uatbc_person(person_case):
-    return bool(person_case.get_case_property('migration_created_from_record'))
+    return episode_case.get_case_property('migration_created_case') == 'true'
 
 
 def is_valid_voucher_submission(voucher_case):
