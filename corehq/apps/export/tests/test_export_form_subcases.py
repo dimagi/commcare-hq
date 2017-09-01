@@ -40,10 +40,11 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
     def setUpClass(cls):
         super(TestFormExportSubcases, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json(cls.app_json_file))
-        cls.xform = XForm(cls.get_xml(cls.form_xml_file))
-        cls.form_es_response = cls.get_json(cls.form_es_response_file)
+        cls.app.get_forms_by_xmlns(cls.form_xmlns)[0].source = cls.get_xml(cls.form_xml_file)
         with drop_connected_signals(app_post_save):
             cls.app.save()
+
+        cls.form_es_response = cls.get_json(cls.form_es_response_file)
 
     @classmethod
     def tearDownClass(cls):
@@ -68,13 +69,12 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                                  .format(prettify(actual), prettify(missing), prettify(extra)))
 
     def test(self):
-        with patch('corehq.apps.app_manager.models.FormBase.wrapped_xform', lambda _: self.xform):
-            schema = FormExportDataSchema.generate_schema_from_builds(
-                self.domain,
-                self.app._id,
-                self.form_xmlns,
-                only_process_current_builds=True,
-            )
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.app._id,
+            self.form_xmlns,
+            only_process_current_builds=True,
+        )
 
         for group_schema in schema.group_schemas:
             # group_schema is an instance of ExportGroupSchem
