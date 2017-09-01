@@ -21,6 +21,7 @@ from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggChildHealthMonthly, AggAwcMonthly, \
@@ -333,13 +334,15 @@ def get_system_usage_data(yesterday, config):
 
 
 # @quickcache(['config'], timeout=24 * 60 * 60)
-def get_maternal_child_data(config):
+def get_maternal_child_data(domain, config):
 
     def get_data_for_child_health_monthly(date, filters):
         return AggChildHealthMonthly.objects.filter(
             month=date, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             underweight=(
                 Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
@@ -594,7 +597,7 @@ def get_maternal_child_data(config):
     }
 
 
-def get_cas_reach_data(yesterday, config):
+def get_cas_reach_data(domain, yesterday, config):
     yesterday_date = datetime(*yesterday)
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
@@ -603,6 +606,8 @@ def get_cas_reach_data(yesterday, config):
             month=month, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             states=Sum('num_launched_states'),
             districts=Sum('num_launched_districts'),
@@ -617,6 +622,8 @@ def get_cas_reach_data(yesterday, config):
             date=date, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             awcs=Sum('num_awcs'),
             daily_attendance=Sum('daily_attendance_open')
@@ -712,7 +719,7 @@ def get_cas_reach_data(yesterday, config):
     }
 
 
-def get_demographics_data(yesterday, config):
+def get_demographics_data(domain, yesterday, config):
     yesterday_date = datetime(*yesterday)
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
@@ -721,6 +728,8 @@ def get_demographics_data(yesterday, config):
             date=date, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             household=Sum('cases_household'),
             child_health=Sum('cases_child_health'),
@@ -907,12 +916,14 @@ def get_demographics_data(yesterday, config):
     }
 
 
-def get_awc_infrastructure_data(config):
+def get_awc_infrastructure_data(domain, config):
     def get_data_for(month, filters):
         return AggAwcMonthly.objects.filter(
             month=month, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
@@ -1076,13 +1087,15 @@ def get_awc_infrastructure_data(config):
     }
 
 
-def get_awc_opened_data(filters):
+def get_awc_opened_data(domain, filters):
 
     def get_data_for(date):
         return AggAwcDailyView.objects.filter(
             date=datetime(*date), aggregation_level=1
         ).values(
             'state_name'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             awcs=Sum('awc_count'),
             daily_attendance=Sum('daily_attendance_open'),
@@ -1127,7 +1140,7 @@ def get_awc_opened_data(filters):
 
 
 # @quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
-def get_prevalence_of_undernutrition_data_map(config, loc_level):
+def get_prevalence_of_undernutrition_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -1135,6 +1148,8 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -1204,7 +1219,7 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
     ]
 
 
-def get_prevalence_of_undernutrition_data_chart(config, loc_level):
+def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -1215,6 +1230,8 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -1296,7 +1313,7 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
     }
 
 
-def get_prevalence_of_undernutrition_sector_data(config, loc_level):
+def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -1307,6 +1324,8 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -1402,13 +1421,15 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
     }
 
 
-def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_level):
+def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level):
 
     def get_data_for(filters, date):
         return AggAwcMonthly.objects.filter(
             month=datetime(*date), **filters
         ).values(
             loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             awc_open=Sum('awc_days_open'),
             weighed=Sum('wer_weighed'),
@@ -1500,23 +1521,31 @@ def get_awc_reports_pse(config, month, domain):
     last_three_months = (selected_month - relativedelta(months=3))
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_30_days, now), **config
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
 
     kpi_data_tm = AggAwcMonthly.objects.filter(
         month=selected_month, **config
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).values('awc_name').annotate(
         days_open=Sum('awc_days_open')
     )
     kpi_data_lm = AggAwcMonthly.objects.filter(
         month=last_months, **config
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).values('awc_name').annotate(
         days_open=Sum('awc_days_open')
     )
 
     chart_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_three_months, selected_month), **config
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).values('awc_name', 'pse_date', 'attended_children_percent').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
@@ -1650,13 +1679,15 @@ def get_awc_reports_pse(config, month, domain):
     }
 
 
-def get_awc_reports_maternal_child(config, month, prev_month):
+def get_awc_reports_maternal_child(domain, config, month, prev_month):
 
     def get_data_for(date):
         return AggChildHealthMonthly.objects.filter(
             month=date, **config
         ).values(
             'month', 'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             underweight=(
                 Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
@@ -1687,6 +1718,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
             month=date, **config
         ).values(
             'month', 'aggregation_level', 'awc_name'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             wer_weight=Sum('wer_weighed'),
             wer_eli=Sum('wer_eligible')
@@ -1915,13 +1948,15 @@ def get_awc_reports_maternal_child(config, month, prev_month):
     }
 
 
-def get_awc_report_demographics(config, month):
+def get_awc_report_demographics(domain, config, month):
     selected_month = datetime(*month)
 
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
         'age_tranche', 'aggregation_level'
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('valid_in_month')
     ).order_by('age_tranche')
@@ -1953,6 +1988,8 @@ def get_awc_report_demographics(config, month):
             date=date, **filters
         ).values(
             'aggregation_level'
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             household=Sum('cases_household'),
             child_health=Sum('cases_child_health'),
@@ -2155,7 +2192,7 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_id, month, two_before):
+def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
         awc_id=awc_id,
@@ -2206,9 +2243,11 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
     return config
 
 
-def get_beneficiary_details(case_id, month):
+def get_beneficiary_details(domain, case_id, month):
     data = ChildHealthMonthlyView.objects.filter(
         case_id=case_id, month__lte=datetime(*month)
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).order_by('month')
     beneficiary = {
         'weight': [],
@@ -2230,7 +2269,7 @@ def get_beneficiary_details(case_id, month):
     return beneficiary
 
 
-def get_prevalence_of_severe_data_map(config, loc_level):
+def get_prevalence_of_severe_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -2238,6 +2277,8 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             moderate=Sum('wasting_moderate'),
             severe=Sum('wasting_severe'),
@@ -2311,7 +2352,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
     ]
 
 
-def get_prevalence_of_severe_data_chart(config, loc_level):
+def get_prevalence_of_severe_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -2322,6 +2363,8 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
@@ -2384,7 +2427,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
     }
 
 
-def get_prevalence_of_severe_sector_data(config, loc_level):
+def get_prevalence_of_severe_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -2395,6 +2438,8 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
@@ -2494,7 +2539,7 @@ def get_prevalence_of_severe_sector_data(config, loc_level):
     }
 
 
-def get_prevalence_of_stunning_data_map(config, loc_level):
+def get_prevalence_of_stunning_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -2502,6 +2547,8 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             moderate=Sum('stunting_moderate'),
             severe=Sum('stunting_severe'),
@@ -2573,7 +2620,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
     ]
 
 
-def get_prevalence_of_stunning_data_chart(config, loc_level):
+def get_prevalence_of_stunning_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -2584,6 +2631,8 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
@@ -2646,7 +2695,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
     }
 
 
-def get_prevalence_of_stunning_sector_data(config, loc_level):
+def get_prevalence_of_stunning_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -2657,6 +2706,8 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
@@ -2761,7 +2812,7 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
     }
 
 
-def get_newborn_with_low_birth_weight_map(config, loc_level):
+def get_newborn_with_low_birth_weight_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -2769,6 +2820,8 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             low_birth=Sum('low_birth_weight_in_month'),
             in_month=Sum('born_in_month'),
@@ -2828,7 +2881,7 @@ def get_newborn_with_low_birth_weight_map(config, loc_level):
     ]
 
 
-def get_newborn_with_low_birth_weight_chart(config, loc_level):
+def get_newborn_with_low_birth_weight_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -2839,6 +2892,8 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
         in_month=Sum('born_in_month'),
@@ -2914,7 +2969,7 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
     }
 
 
-def get_newborn_with_low_birth_weight_data(config, loc_level):
+def get_newborn_with_low_birth_weight_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -2925,6 +2980,8 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
         in_month=Sum('born_in_month'),
@@ -3004,7 +3061,7 @@ def get_newborn_with_low_birth_weight_data(config, loc_level):
     }
 
 
-def get_early_initiation_breastfeeding_map(config, loc_level):
+def get_early_initiation_breastfeeding_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -3012,6 +3069,8 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             birth=Sum('bf_at_birth'),
             in_month=Sum('born_in_month'),
@@ -3069,7 +3128,7 @@ def get_early_initiation_breastfeeding_map(config, loc_level):
     ]
 
 
-def get_early_initiation_breastfeeding_chart(config, loc_level):
+def get_early_initiation_breastfeeding_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -3080,6 +3139,8 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         birth=Sum('bf_at_birth'),
         in_month=Sum('born_in_month'),
@@ -3156,7 +3217,7 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
     }
 
 
-def get_early_initiation_breastfeeding_data(config, loc_level):
+def get_early_initiation_breastfeeding_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -3167,6 +3228,8 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         birth=Sum('bf_at_birth'),
         in_month=Sum('born_in_month'),
@@ -3247,7 +3310,7 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
     }
 
 
-def get_exclusive_breastfeeding_data_map(config, loc_level):
+def get_exclusive_breastfeeding_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -3255,6 +3318,8 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('ebf_in_month'),
             eligible=Sum('ebf_eligible'),
@@ -3314,7 +3379,7 @@ def get_exclusive_breastfeeding_data_map(config, loc_level):
     ]
 
 
-def get_exclusive_breastfeeding_data_chart(config, loc_level):
+def get_exclusive_breastfeeding_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -3325,6 +3390,8 @@ def get_exclusive_breastfeeding_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('ebf_in_month'),
         eligible=Sum('ebf_eligible'),
@@ -3398,7 +3465,7 @@ def get_exclusive_breastfeeding_data_chart(config, loc_level):
     }
 
 
-def get_exclusive_breastfeeding_sector_data(config, loc_level):
+def get_exclusive_breastfeeding_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -3409,6 +3476,8 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('ebf_in_month'),
         eligible=Sum('ebf_eligible'),
@@ -3503,7 +3572,7 @@ def get_exclusive_breastfeeding_sector_data(config, loc_level):
     }
 
 
-def get_children_initiated_data_map(config, loc_level):
+def get_children_initiated_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -3511,6 +3580,8 @@ def get_children_initiated_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('cf_initiation_in_month'),
             eligible=Sum('cf_initiation_eligible'),
@@ -3568,7 +3639,7 @@ def get_children_initiated_data_map(config, loc_level):
     ]
 
 
-def get_children_initiated_data_chart(config, loc_level):
+def get_children_initiated_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -3579,6 +3650,8 @@ def get_children_initiated_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('cf_initiation_in_month'),
         eligible=Sum('cf_initiation_eligible'),
@@ -3655,7 +3728,7 @@ def get_children_initiated_data_chart(config, loc_level):
     }
 
 
-def get_children_initiated_sector_data(config, loc_level):
+def get_children_initiated_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -3666,6 +3739,8 @@ def get_children_initiated_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('cf_initiation_in_month'),
         eligible=Sum('cf_initiation_eligible'),
@@ -3756,7 +3831,7 @@ def get_children_initiated_sector_data(config, loc_level):
     }
 
 
-def get_institutional_deliveries_data_map(config, loc_level):
+def get_institutional_deliveries_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -3764,6 +3839,8 @@ def get_institutional_deliveries_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('institutional_delivery_in_month'),
             eligible=Sum('delivered_in_month'),
@@ -3821,7 +3898,7 @@ def get_institutional_deliveries_data_map(config, loc_level):
     ]
 
 
-def get_institutional_deliveries_data_chart(config, loc_level):
+def get_institutional_deliveries_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -3832,6 +3909,8 @@ def get_institutional_deliveries_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('institutional_delivery_in_month'),
         eligible=Sum('delivered_in_month'),
@@ -3908,7 +3987,7 @@ def get_institutional_deliveries_data_chart(config, loc_level):
     }
 
 
-def get_institutional_deliveries_sector_data(config, loc_level):
+def get_institutional_deliveries_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -3919,6 +3998,8 @@ def get_institutional_deliveries_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('institutional_delivery_in_month'),
         eligible=Sum('delivered_in_month'),
@@ -4010,7 +4091,7 @@ def get_institutional_deliveries_sector_data(config, loc_level):
     }
 
 
-def get_immunization_coverage_data_map(config, loc_level):
+def get_immunization_coverage_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -4018,6 +4099,8 @@ def get_immunization_coverage_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
             eligible=Sum('fully_immunized_eligible'),
@@ -4075,7 +4158,7 @@ def get_immunization_coverage_data_map(config, loc_level):
     ]
 
 
-def get_immunization_coverage_data_chart(config, loc_level):
+def get_immunization_coverage_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -4086,6 +4169,8 @@ def get_immunization_coverage_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
         eligible=Sum('fully_immunized_eligible'),
@@ -4162,7 +4247,7 @@ def get_immunization_coverage_data_chart(config, loc_level):
     }
 
 
-def get_immunization_coverage_sector_data(config, loc_level):
+def get_immunization_coverage_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -4173,6 +4258,8 @@ def get_immunization_coverage_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
         eligible=Sum('fully_immunized_eligible'),
@@ -4264,7 +4351,7 @@ def get_immunization_coverage_sector_data(config, loc_level):
     }
 
 
-def get_awc_daily_status_data_map(config, loc_level):
+def get_awc_daily_status_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['date'] = datetime(*filters['month'])
@@ -4273,6 +4360,8 @@ def get_awc_daily_status_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_day=Sum('daily_attendance_open'),
             all=Sum('num_launched_awcs'),
@@ -4330,7 +4419,7 @@ def get_awc_daily_status_data_map(config, loc_level):
     ]
 
 
-def get_awc_daily_status_data_chart(config, loc_level):
+def get_awc_daily_status_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     last = datetime(*config['month']) - relativedelta(days=30)
 
@@ -4341,6 +4430,8 @@ def get_awc_daily_status_data_chart(config, loc_level):
         **config
     ).values(
         'date', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_day=Sum('daily_attendance_open'),
         all=Sum('num_launched_awcs'),
@@ -4417,7 +4508,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
     }
 
 
-def get_awc_daily_status_sector_data(config, loc_level):
+def get_awc_daily_status_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -4429,6 +4520,8 @@ def get_awc_daily_status_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_day=Sum('daily_attendance_open'),
         all=Sum('num_launched_awcs'),
@@ -4519,7 +4612,7 @@ def get_awc_daily_status_sector_data(config, loc_level):
     }
 
 
-def get_awcs_covered_data_map(config, loc_level):
+def get_awcs_covered_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -4528,6 +4621,8 @@ def get_awcs_covered_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             districts=Sum('num_launched_districts'),
             blocks=Sum('num_launched_blocks'),
@@ -4574,7 +4669,7 @@ def get_awcs_covered_data_map(config, loc_level):
     ]
 
 
-def get_awcs_covered_sector_data(config, loc_level):
+def get_awcs_covered_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -4586,6 +4681,8 @@ def get_awcs_covered_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         districts=Sum('num_launched_districts'),
         blocks=Sum('num_launched_blocks'),
@@ -4664,7 +4761,7 @@ def get_awcs_covered_sector_data(config, loc_level):
     }
 
 
-def get_registered_household_data_map(config, loc_level):
+def get_registered_household_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -4673,6 +4770,8 @@ def get_registered_household_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             household=Sum('cases_household'),
         )
@@ -4709,7 +4808,7 @@ def get_registered_household_data_map(config, loc_level):
     ]
 
 
-def get_registered_household_sector_data(config, loc_level):
+def get_registered_household_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -4721,6 +4820,8 @@ def get_registered_household_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         household=Sum('cases_household'),
     ).order_by('%s_name' % loc_level)
@@ -4760,7 +4861,7 @@ def get_registered_household_sector_data(config, loc_level):
     }
 
 
-def get_enrolled_children_data_map(config, loc_level):
+def get_enrolled_children_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -4768,6 +4869,8 @@ def get_enrolled_children_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             valid=Sum('valid_in_month'),
         )
@@ -4808,13 +4911,15 @@ def get_enrolled_children_data_map(config, loc_level):
     ]
 
 
-def get_enrolled_children_data_chart(config, loc_level):
+def get_enrolled_children_data_chart(domain, config, loc_level):
     config['month'] = datetime(*config['month'])
 
     chart_data = AggChildHealthMonthly.objects.filter(
         **config
     ).values(
         'month', 'age_tranche', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('valid_in_month'),
     ).order_by('month')
@@ -4882,7 +4987,7 @@ def get_enrolled_children_data_chart(config, loc_level):
     }
 
 
-def get_enrolled_children_sector_data(config, loc_level):
+def get_enrolled_children_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -4893,6 +4998,8 @@ def get_enrolled_children_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('valid_in_month'),
     ).order_by('%s_name' % loc_level)
@@ -4947,13 +5054,15 @@ def get_enrolled_children_sector_data(config, loc_level):
     }
 
 
-def get_enrolled_women_data_map(config, loc_level):
+def get_enrolled_women_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
         return AggCcsRecordMonthly.objects.filter(
             **filters
-        ).values(
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
+    )   .values(
             '%s_name' % loc_level
         ).annotate(
             valid=Sum('pregnant'),
@@ -4995,7 +5104,7 @@ def get_enrolled_women_data_map(config, loc_level):
     ]
 
 
-def get_enrolled_women_sector_data(config, loc_level):
+def get_enrolled_women_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5006,6 +5115,8 @@ def get_enrolled_women_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('pregnant'),
     ).order_by('%s_name' % loc_level)
@@ -5060,7 +5171,7 @@ def get_enrolled_women_sector_data(config, loc_level):
     }
 
 
-def get_lactating_enrolled_women_data_map(config, loc_level):
+def get_lactating_enrolled_women_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -5068,6 +5179,8 @@ def get_lactating_enrolled_women_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             valid=Sum('lactating'),
         )
@@ -5108,7 +5221,7 @@ def get_lactating_enrolled_women_data_map(config, loc_level):
     ]
 
 
-def get_lactating_enrolled_women_sector_data(config, loc_level):
+def get_lactating_enrolled_women_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5119,6 +5232,8 @@ def get_lactating_enrolled_women_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('lactating'),
     ).order_by('%s_name' % loc_level)
@@ -5173,7 +5288,7 @@ def get_lactating_enrolled_women_sector_data(config, loc_level):
     }
 
 
-def get_adolescent_girls_data_map(config, loc_level):
+def get_adolescent_girls_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -5181,6 +5296,8 @@ def get_adolescent_girls_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
         )
@@ -5221,7 +5338,7 @@ def get_adolescent_girls_data_map(config, loc_level):
     ]
 
 
-def get_adolescent_girls_sector_data(config, loc_level):
+def get_adolescent_girls_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5232,6 +5349,8 @@ def get_adolescent_girls_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
     ).order_by('%s_name' % loc_level)
@@ -5286,12 +5405,14 @@ def get_adolescent_girls_sector_data(config, loc_level):
     }
 
 
-def get_adhaar_data_map(config, loc_level):
+def get_adhaar_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
         return AggAwcMonthly.objects.filter(
             **filters
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).values(
             '%s_name' % loc_level
         ).annotate(
@@ -5350,7 +5471,7 @@ def get_adhaar_data_map(config, loc_level):
     ]
 
 
-def get_adhaar_data_chart(config, loc_level):
+def get_adhaar_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -5361,6 +5482,8 @@ def get_adhaar_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('cases_person_has_aadhaar'),
         all=Sum('cases_person'),
@@ -5437,7 +5560,7 @@ def get_adhaar_data_chart(config, loc_level):
     }
 
 
-def get_adhaar_sector_data(config, loc_level):
+def get_adhaar_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5448,6 +5571,8 @@ def get_adhaar_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('cases_person_has_aadhaar'),
         all=Sum('cases_person'),
@@ -5539,7 +5664,7 @@ def get_adhaar_sector_data(config, loc_level):
     }
 
 
-def get_clean_water_data_map(config, loc_level):
+def get_clean_water_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -5547,6 +5672,8 @@ def get_clean_water_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_clean_water'),
             all=Sum('num_awcs'),
@@ -5602,7 +5729,7 @@ def get_clean_water_data_map(config, loc_level):
     ]
 
 
-def get_clean_water_data_chart(config, loc_level):
+def get_clean_water_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -5613,6 +5740,8 @@ def get_clean_water_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_clean_water'),
         all=Sum('num_awcs'),
@@ -5689,7 +5818,7 @@ def get_clean_water_data_chart(config, loc_level):
     }
 
 
-def get_clean_water_sector_data(config, loc_level):
+def get_clean_water_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5700,6 +5829,8 @@ def get_clean_water_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_clean_water'),
         all=Sum('num_awcs'),
@@ -5791,7 +5922,7 @@ def get_clean_water_sector_data(config, loc_level):
     }
 
 
-def get_functional_toilet_data_map(config, loc_level):
+def get_functional_toilet_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -5799,6 +5930,8 @@ def get_functional_toilet_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_functional_toilet'),
             all=Sum('num_awcs'),
@@ -5854,7 +5987,7 @@ def get_functional_toilet_data_map(config, loc_level):
     ]
 
 
-def get_functional_toilet_data_chart(config, loc_level):
+def get_functional_toilet_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -5865,6 +5998,8 @@ def get_functional_toilet_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_functional_toilet'),
         all=Sum('num_awcs'),
@@ -5941,7 +6076,7 @@ def get_functional_toilet_data_chart(config, loc_level):
     }
 
 
-def get_functional_toilet_sector_data(config, loc_level):
+def get_functional_toilet_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -5952,6 +6087,8 @@ def get_functional_toilet_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_functional_toilet'),
         all=Sum('num_awcs'),
@@ -6044,7 +6181,7 @@ def get_functional_toilet_sector_data(config, loc_level):
     }
 
 
-def get_medicine_kit_data_map(config, loc_level):
+def get_medicine_kit_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -6052,6 +6189,8 @@ def get_medicine_kit_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_medicine_kits'),
             all=Sum('num_awcs'),
@@ -6108,7 +6247,7 @@ def get_medicine_kit_data_map(config, loc_level):
     ]
 
 
-def get_medicine_kit_data_chart(config, loc_level):
+def get_medicine_kit_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -6119,6 +6258,8 @@ def get_medicine_kit_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_medicine_kits'),
         all=Sum('num_awcs'),
@@ -6195,7 +6336,7 @@ def get_medicine_kit_data_chart(config, loc_level):
     }
 
 
-def get_medicine_kit_sector_data(config, loc_level):
+def get_medicine_kit_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -6206,6 +6347,8 @@ def get_medicine_kit_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_medicine_kits'),
         all=Sum('num_awcs'),
@@ -6298,7 +6441,7 @@ def get_medicine_kit_sector_data(config, loc_level):
     }
 
 
-def get_infants_weight_scale_data_map(config, loc_level):
+def get_infants_weight_scale_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -6306,6 +6449,8 @@ def get_infants_weight_scale_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_infant_weighing_scale'),
             all=Sum('num_awcs'),
@@ -6361,7 +6506,7 @@ def get_infants_weight_scale_data_map(config, loc_level):
     ]
 
 
-def get_infants_weight_scale_data_chart(config, loc_level):
+def get_infants_weight_scale_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -6372,6 +6517,8 @@ def get_infants_weight_scale_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
         all=Sum('num_awcs'),
@@ -6448,7 +6595,7 @@ def get_infants_weight_scale_data_chart(config, loc_level):
     }
 
 
-def get_infants_weight_scale_sector_data(config, loc_level):
+def get_infants_weight_scale_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -6459,6 +6606,8 @@ def get_infants_weight_scale_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
         all=Sum('num_awcs'),
@@ -6550,7 +6699,7 @@ def get_infants_weight_scale_sector_data(config, loc_level):
     }
 
 
-def get_adult_weight_scale_data_map(config, loc_level):
+def get_adult_weight_scale_data_map(domain, config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -6558,6 +6707,8 @@ def get_adult_weight_scale_data_map(config, loc_level):
             **filters
         ).values(
             '%s_name' % loc_level
+        ).exclude(
+            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_adult_weighing_scale'),
             all=Sum('num_awcs'),
@@ -6615,7 +6766,7 @@ def get_adult_weight_scale_data_map(config, loc_level):
     ]
 
 
-def get_adult_weight_scale_data_chart(config, loc_level):
+def get_adult_weight_scale_data_chart(domain, config, loc_level):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -6626,6 +6777,8 @@ def get_adult_weight_scale_data_chart(config, loc_level):
         **config
     ).values(
         'month', '%s_name' % loc_level
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_adult_weighing_scale'),
         all=Sum('num_awcs'),
@@ -6702,7 +6855,7 @@ def get_adult_weight_scale_data_chart(config, loc_level):
     }
 
 
-def get_adult_weight_scale_sector_data(config, loc_level):
+def get_adult_weight_scale_sector_data(domain, config, loc_level):
     group_by = ['%s_name' % loc_level]
     if loc_level == LocationTypes.SUPERVISOR:
         config['aggregation_level'] += 1
@@ -6713,6 +6866,8 @@ def get_adult_weight_scale_sector_data(config, loc_level):
         **config
     ).values(
         *group_by
+    ).exclude(
+        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_adult_weighing_scale'),
         all=Sum('num_awcs'),

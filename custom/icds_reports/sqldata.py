@@ -7,17 +7,20 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
+from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
+from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 
 india_timezone = pytz.timezone('Asia/Kolkata')
@@ -117,11 +120,23 @@ class ExportableMixin(object):
     def __init__(self, config=None, loc_level=1):
         self.config = config
         self.loc_level = loc_level
+        self.excluded_states = get_test_state_locations_id(self.domain)
+        self.config['excluded_states'] = self.excluded_states
+        clean_IN_filter_value(self.config, 'excluded_states')
+
+    @property
+    def domain(self):
+        return self.config['domain']
 
     @property
     def filters(self):
-        filters = []
+        infilter_params = get_INFilter_bindparams('excluded_states', self.excluded_states)
+        filters = [
+            NOT(IN('state_id', infilter_params))
+        ]
         for key, value in self.config.iteritems():
+            if key == 'domain' or key in infilter_params:
+                continue
             filters.append(EQ(key, key))
         return filters
 
@@ -231,6 +246,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
 
     def __init__(self, config=None, loc_level='state'):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
+        self.excluded_states = get_test_state_locations_id(self.domain)
         self.loc_key = '%s_site_code' % loc_level
         self.config.update({
             'age_0': '0',
@@ -240,16 +256,25 @@ class AggChildHealthMonthlyDataSource(SqlData):
             'age_36': '36',
             'age_48': '48',
             'age_60': '60',
-            'age_72': '72'
+            'age_72': '72',
+            'excluded_states': self.excluded_states
         })
+        clean_IN_filter_value(self.config, 'excluded_states')
 
     @property
     def group_by(self):
         return ['month']
 
     @property
+    def domain(self):
+        return self.config['domain']
+
+    @property
     def filters(self):
-        filters = [EQ('aggregation_level', 'aggregation_level')]
+        filters = [
+            EQ('aggregation_level', 'aggregation_level'),
+            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
+        ]
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
@@ -488,6 +513,13 @@ class AggCCSRecordMonthlyDataSource(SqlData):
     def __init__(self, config=None, loc_level='state'):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_site_code' % loc_level
+        self.excluded_states = get_test_state_locations_id(self.domain)
+        self.config['excluded_states'] = self.excluded_states
+        clean_IN_filter_value(self.config, 'excluded_states')
+
+    @property
+    def domain(self):
+        return self.config['domain']
 
     @property
     def group_by(self):
@@ -495,7 +527,10 @@ class AggCCSRecordMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [EQ('aggregation_level', 'aggregation_level')]
+        filters = [
+            EQ('aggregation_level', 'aggregation_level'),
+            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
+        ]
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
@@ -602,10 +637,20 @@ class AggAWCMonthlyDataSource(SqlData):
     def __init__(self, config=None, loc_level='state'):
         super(AggAWCMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_site_code' % loc_level
+        self.excluded_states = get_test_state_locations_id(self.domain)
+        self.config['excluded_states'] = self.excluded_states
+        clean_IN_filter_value(self.config, 'excluded_states')
+
+    @property
+    def domain(self):
+        return self.config['domain']
 
     @property
     def filters(self):
-        filters = [EQ('aggregation_level', 'aggregation_level')]
+        filters = [
+            EQ('aggregation_level', 'aggregation_level'),
+            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
+        ]
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
@@ -1122,27 +1167,6 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
 
     table_name = 'agg_child_health_monthly'
 
-    def __init__(self, config=None, loc_level=1):
-        super(DemographicsChildHealth, self).__init__(config, loc_level)
-        self.config.update({
-            'age_0': '0',
-            'age_6': '6',
-            'age_12': '12',
-            'age_24': '24',
-            'age_36': '36',
-            'age_48': '48',
-            'age_60': '60',
-            'age_72': '72'
-        })
-
-    @property
-    def filters(self):
-        filters = []
-        for key, value in self.config.iteritems():
-            if not key.startswith('age'):
-                filters.append(EQ(key, key))
-        return filters
-
     @property
     def get_columns_by_loc_level(self):
         columns = [
@@ -1182,8 +1206,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                 'num_children_0_6mo_enrolled_for_services',
                 SumColumn('valid_in_month', filters=self.filters + [
                     OR([
-                        EQ('age_tranche', 'age_0'),
-                        EQ('age_tranche', 'age_6')
+                        RawFilter("age_tranche = '0'"),
+                        RawFilter("age_tranche = '6'")
                     ])
                 ]),
                 slug='num_children_0_6mo_enrolled_for_services'
@@ -1194,9 +1218,9 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                     'valid_in_month',
                     filters=self.filters + [
                         OR([
-                            EQ('age_tranche', 'age_12'),
-                            EQ('age_tranche', 'age_24'),
-                            EQ('age_tranche', 'age_36')
+                            RawFilter("age_tranche = '12'"),
+                            RawFilter("age_tranche = '24'"),
+                            RawFilter("age_tranche = '36'")
                         ])
                     ]
                 ),
@@ -1208,9 +1232,9 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                     'valid_in_month',
                     filters=self.filters + [
                         OR([
-                            EQ('age_tranche', 'age_48'),
-                            EQ('age_tranche', 'age_60'),
-                            EQ('age_tranche', 'age_72')
+                            RawFilter("age_tranche = '48'"),
+                            RawFilter("age_tranche = '60'"),
+                            RawFilter("age_tranche = '72'")
                         ])
                     ]
                 ),
@@ -1637,14 +1661,6 @@ class ICDSDatabaseColumn(DatabaseColumn):
 class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
-
-    @property
-    def filters(self):
-        filters = []
-        for key, value in self.config.iteritems():
-            if key not in ['aggregation_level', 'state_id', 'district_id', 'block_id', 'supervisor_id']:
-                filters.append(EQ(key, key))
-        return filters
 
     @property
     def group_by(self):
