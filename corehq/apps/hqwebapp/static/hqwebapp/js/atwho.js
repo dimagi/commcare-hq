@@ -1,4 +1,4 @@
-hqDefine('style/js/atwho', function () {
+hqDefine('hqwebapp/js/atwho', function () {
     var _init = function($input, options, afterInsert) {
         $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
             $input.val($input.data("selected-value")).change();

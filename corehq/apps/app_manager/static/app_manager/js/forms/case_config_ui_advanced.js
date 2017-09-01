@@ -40,7 +40,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -213,7 +213,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 });
 
                 $('.hq-help-template').each(function () {
-                    hqImport("style/js/main").transformHelpTemplate($(this), true);
+                    hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -666,7 +666,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("style/js/main").transformHelpTemplate($(this), true);
+                            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                         });
                     });
                 });

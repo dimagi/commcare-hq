@@ -129,7 +129,7 @@ hqDefine("accounting/js/accounting.software_plan_version_handler", function() {
     
         self.init = function () {
             if (options.multiSelectField) {
-                var multiselect_utils = hqImport('style/js/multiselect_utils');
+                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_' + options.multiSelectField.slug,
                     options.multiSelectField.titleSelect,

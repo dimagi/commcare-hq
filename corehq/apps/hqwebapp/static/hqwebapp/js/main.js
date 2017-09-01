@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine("style/js/main", function() {
+hqDefine("hqwebapp/js/main", function() {
     var eventize = function (that) {
         'use strict';
         var events = {};
@@ -169,7 +169,7 @@ hqDefine("style/js/main", function() {
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;
                             }
-                            hqImport("style/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                            hqImport("hqwebapp/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                             error.apply(this, arguments);
                         };
                         var jqXHR = $.ajax(options);

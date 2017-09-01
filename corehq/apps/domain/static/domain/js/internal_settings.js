@@ -52,7 +52,7 @@ hqDefine("domain/js/internal_settings", function() {
         });
     });
     
-    var multiselect_utils = hqImport('style/js/multiselect_utils');
+    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
     multiselect_utils.createFullMultiselectWidget(
         'id_countries',
         django.gettext("Available Countries"),
