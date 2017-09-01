@@ -2,7 +2,7 @@
 
 hqDefine('app_manager/js/details/screen_config', function () {
     var module = {},
-        uiElement = hqImport('style/js/ui-element');
+        uiElement = hqImport('hqwebapp/js/ui-element');
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
@@ -283,7 +283,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column extras: enum, late_flag
                 */
                 var that = this;
-                hqImport("style/js/main").eventize(this);
+                hqImport("hqwebapp/js/main").eventize(this);
                 this.original = JSON.parse(JSON.stringify(col));
 
                 // Set defaults for normal (non-tab) column attributes
@@ -346,7 +346,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             lang = that.screen.langs[i];
                             if (that.original.header[lang]) {
                                 visibleVal = that.original.header[lang]
-                                    + hqImport('style/js/ui_elements/ui-element-langcode-button').LANG_DELIN
+                                    + hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').LANG_DELIN
                                     + lang;
                                 break;
                             }
@@ -585,7 +585,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
             function Screen(spec, config, options) {
                 var i, column, model, property, header,
                     that = this, columns;
-                hqImport("style/js/main").eventize(this);
+                hqImport("hqwebapp/js/main").eventize(this);
                 this.type = spec.type;
                 this.saveUrl = options.saveUrl;
                 this.config = config;
@@ -694,7 +694,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     that.initColumnAsColumn(this.columns()[i]);
                 }
 
-                this.saveButton = hqImport("style/js/main").initSaveButton({
+                this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
                     unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function () {
                         that.save();
