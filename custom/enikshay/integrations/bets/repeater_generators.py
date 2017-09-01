@@ -123,7 +123,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -153,7 +153,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -212,7 +212,7 @@ class IncentivePayload(BETSPayload):
             Location=owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -240,7 +240,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -272,7 +272,7 @@ class IncentivePayload(BETSPayload):
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,

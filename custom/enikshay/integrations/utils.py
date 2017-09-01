@@ -49,6 +49,10 @@ def is_valid_episode_submission(episode_case):
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
 
 
+def is_migrated_uatbc_episode(episode_case):
+    return episode_case.get_case_property('migration_created_case') == 'true'
+
+
 def is_valid_voucher_submission(voucher_case):
     try:
         person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case)
