@@ -1552,6 +1552,8 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
         "custom.icds.messaging.custom_content.child_illness_reported",
     "ICDS_CF_VISITS_COMPLETE":
         "custom.icds.messaging.custom_content.cf_visits_complete",
+    "ICDS_DPT3_AND_MEASLES_ARE_DUE":
+        "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
 }
 
 # Used by the old reminders framework
@@ -1583,7 +1585,10 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
          "ICDS: Supervisor Location from AWC Owner"],
 }
 
-AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {
+    'ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER':
+        'custom.icds.rules.custom_criteria.consider_case_for_dpt3_and_measles_reminder',
+}
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
     'ICDS_ESCALATE_TECH_ISSUE':
