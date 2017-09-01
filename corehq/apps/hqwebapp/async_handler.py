@@ -1,6 +1,6 @@
 import json
 from django.http import HttpResponse, HttpRequest
-from dimagi.utils.decorators.memoized import memoized
+from django.utils.functional import cached_property
 
 
 class AsyncHandlerMixin(object):
@@ -18,8 +18,7 @@ class AsyncHandlerMixin(object):
         handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
         return handler_class(self.request)
 
-    @property
-    @memoized
+    @cached_property
     def async_response(self):
         if self.handler_slug in [h.slug for h in self.async_handlers]:
             return self.get_async_handler().get_response()
