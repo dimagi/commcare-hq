@@ -27,7 +27,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.style.decorators import use_jquery_ui, use_multiselect
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse

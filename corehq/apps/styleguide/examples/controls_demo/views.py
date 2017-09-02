@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.style.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.styleguide.examples.controls_demo.forms import (
     SelectControlDemoForm,
 )

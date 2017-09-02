@@ -53,7 +53,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_angular_js,
     use_multiselect,

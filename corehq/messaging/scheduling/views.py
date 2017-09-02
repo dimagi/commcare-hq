@@ -8,7 +8,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.apps.style.decorators import use_datatables
+from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,

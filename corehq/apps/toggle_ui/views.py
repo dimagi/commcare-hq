@@ -11,7 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.models import CouchUser
-from corehq.apps.style.decorators import use_datatables
+from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache, parse_toggle
