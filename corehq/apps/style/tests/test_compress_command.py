@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 from django.conf import settings
 from django.template.loaders.app_directories import get_app_template_dirs
 
-B3_BASE = 'style/base.html'
+B3_BASE = 'hqwebapp/base.html'
 
 COMPRESS_JS = ' compress js '
 COMPRESS_CSS = ' compress css '
