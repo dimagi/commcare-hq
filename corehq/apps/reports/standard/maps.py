@@ -9,7 +9,7 @@ from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListReport
-from corehq.apps.hqwebapp.decorators import use_maps_async, use_maps
+from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 
