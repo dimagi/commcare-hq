@@ -11,15 +11,15 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, g
 
 class Command(BaseCommand):
     help = """
-    Pass Repeater ID along with domain and State or
-    Pass a list of repeat records ID to get a report
+    Pass Repeater ID along with domain and State(Optional) or
+    Pass a list of repeat records IDs to get a report
     with final state and message for all attempts(if available)
     """
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         # keep a counter of max attempts a repeat record has in the report
-        # to add those many headers
+        # to add those many headers later
         self.max_attempts_in_sheet = 0
         self.record_ids = []
         self.wb = Workbook()
@@ -59,9 +59,9 @@ class Command(BaseCommand):
 
     def _add_header_for_attempts(self):
         # find first empty header cell:
-        # iterate over highest column length which is highest column length over the sheet
-        # even if there are no values in header, empty cells are inserted to match highest
-        # column length. So iterate over cells and find the blank value
+        # iterate first row till highest column length which is highest column length over the sheet
+        # Even if there are no values in header, empty cells are inserted to match highest
+        # column length. So iterate over cells and find index for the first blank value
         max_columns = self.ws.get_highest_column()
         first_empty_index = max_columns
         for i in range(1, max_columns + 1):
