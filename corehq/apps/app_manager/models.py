@@ -4361,6 +4361,8 @@ class VersionedDoc(LazyBlobDoc):
 
     @property
     def master_id(self):
+        """Return the ID of the 'master' app. For app builds this is the ID
+        of the app they were built from otherwise it's just the app's ID."""
         return self.copy_of or self._id
 
     def save(self, response_json=None, increment_version=None, **params):
