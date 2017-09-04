@@ -23,6 +23,7 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
+from corehq.util.global_request import get_request_domain
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
@@ -48,7 +49,6 @@ from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
@@ -84,7 +84,6 @@ from corehq.apps.export.const import (
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
 )
-from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -326,7 +325,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request_domain() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request_domain()):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
