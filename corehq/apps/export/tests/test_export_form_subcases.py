@@ -169,6 +169,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             "form.case.@user_id": "853a24735ba89a3019ced7e3153dc60d",
 
             # save-to-case properties
+            "form.prescription.prescription.case.close": "True",
             "form.prescription.prescription.case.create.case_name": "Petunia-prescription-2017-08-29",
             "form.prescription.prescription.case.create.case_type": "prescription",
             "form.prescription.prescription.case.update.number_of_babies": "2",

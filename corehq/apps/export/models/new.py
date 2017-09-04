@@ -85,7 +85,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-)
+    CASE_CLOSE_TO_BOOLEAN)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -1731,12 +1731,13 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
                                    repeat_context, repeats, case_indices=None, create=True, close=False):
-        def _add_to_group_schema(path, label):
+        def _add_to_group_schema(path, label, transform=None):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
                 label=u'{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
-                tag=PROPERTY_TAG_CASE
+                tag=PROPERTY_TAG_CASE,
+                transform=transform
             ))
 
         # Add case attributes
@@ -1768,8 +1769,8 @@ class FormExportDataSchema(ExportDataSchema):
                 _add_to_group_schema(path, u'create.{}'.format(case_create_element))
 
         if close:
-            # TODO: add item for case close
-            pass
+            path = u'{}/case/close'.format(root_path)
+            _add_to_group_schema(path, u'close', transform=CASE_CLOSE_TO_BOOLEAN)
 
         # Add case index information
         if case_indices:
@@ -1859,6 +1860,9 @@ class FormExportDataSchema(ExportDataSchema):
                         app_version,
                         repeats,
                     )
+                    if question['value'].endswith('case/close'):
+                        # for save to case
+                        item.transform = CASE_CLOSE_TO_BOOLEAN
                     group_schema.items.append(item)
 
             schema.group_schemas.append(group_schema)
