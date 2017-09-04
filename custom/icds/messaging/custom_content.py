@@ -199,3 +199,15 @@ def dpt3_and_measles_are_due(recipient, case_schedule_instance):
         return [render_content_for_user(recipient, 'dpt3_and_measles_due.txt', context)]
 
     return []
+
+
+def child_vaccinations_complete(recipient, case_schedule_instance):
+    case = case_schedule_instance.case
+    if case.type != 'tasks':
+        raise ValueError("Expected 'tasks' case")
+
+    child_person_case = child_person_case_from_tasks_case(case)
+    context = {
+        'child_name': child_person_case.name,
+    }
+    return [render_content_for_user(recipient, 'child_vaccinations_complete.txt', context)]

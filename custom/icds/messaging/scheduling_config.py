@@ -333,3 +333,44 @@ def create_aww_indicator_4(domain):
             timed_schedule_id=schedule.schedule_id,
             recipients=(('Owner', None),),
         )
+
+
+def create_aww_indicator_5(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE'),
+            total_iterations=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_5'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #5: Child Vaccinations Complete",
+            case_type='tasks',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='tasks_type',
+            property_value='child',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='immun_one_year_complete',
+            property_value='yes',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+        )

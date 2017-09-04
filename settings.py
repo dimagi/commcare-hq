@@ -1554,6 +1554,8 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
         "custom.icds.messaging.custom_content.cf_visits_complete",
     "ICDS_DPT3_AND_MEASLES_ARE_DUE":
         "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+    "ICDS_CHILD_VACCINATIONS_COMPLETE":
+        "custom.icds.messaging.custom_content.child_vaccinations_complete",
 }
 
 # Used by the old reminders framework
