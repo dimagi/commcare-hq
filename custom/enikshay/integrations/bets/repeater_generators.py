@@ -1,7 +1,5 @@
 from datetime import datetime, date
 import json
-import math
-
 import jsonobject
 import pytz
 from pytz import timezone
@@ -325,8 +323,8 @@ class VoucherPayload(BETSPayload):
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
-            # always round up to a whole number, but send a string...
-            Amount=str(int(math.ceil(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
+            # always round to nearest whole number, but send a string...
+            Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
