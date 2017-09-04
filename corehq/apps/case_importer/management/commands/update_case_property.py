@@ -11,6 +11,9 @@ from dimagi.utils.chunked import chunked
 
 
 class Command(BaseCommand):
+    help = """updates a single case property for a list of cases in a two column csv format.
+    the first column must be the case_ids and the header of the second column must be the case
+    property you are changing. arguments are <domain> <path_to_input_csv> <path_to_logfile>"""
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
