@@ -141,7 +141,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
             for column in table.columns:
                 column.selected = True
 
-        with patch('corehq.apps.export.export._get_export_documents') as docs:
+        with patch('corehq.apps.export.export.get_export_documents') as docs:
             docs.return_value = self.form_es_response
             export_file = get_export_file([instance], [])
 
