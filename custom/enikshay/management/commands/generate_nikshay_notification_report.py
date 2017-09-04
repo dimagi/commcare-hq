@@ -38,6 +38,7 @@ class Command(BaseCommand):
         self.person_enikshay_ids = []
         self.person_ids = []
         self.episode_ids = []
+        self.max_attempts_in_sheet = 0
         self.search = CaseSearchES().domain('enikshay').size(CASE_SEARCH_MAX_RESULTS)
         self.wb = Workbook()
         self.ws = self.wb.active
@@ -103,11 +104,26 @@ class Command(BaseCommand):
     def _find_fowarding_attempts(episode_id):
         return get_repeat_records_by_payload_id(DOMAIN, episode_id)
 
+    def _add_report_record_attempts(self, row, episode_id):
+        for repeat_record in self._find_fowarding_attempts(episode_id):
+            attempts = []
+            repeat_record_count = len(repeat_record.attempts)
+            if repeat_record_count > self.max_attempts_in_sheet:
+                self.max_attempts_in_sheet = repeat_record_count
+
+            for attempt in repeat_record.attempts:
+                if attempt.message:
+                    attempts.append(attempt.message)
+            row.append(repeat_record.get_id)
+            row.append(repeat_record.state)
+            row.append(';'.join(attempts))
+
     def _add_row(self, episode_id, episode_case, episode_case_properties, should_be_forwarded, error_message=None):
         person_case = get_person_case_from_episode(DOMAIN, episode_id)
         person_enikshay_id = person_case.dynamic_case_properties().get('person_id')
         if error_message:
-            row = [person_enikshay_id, episode_id, should_be_forwarded, error_message]
+            # add blanks for pending columns to append correctly for repeat record attempts later
+            row = [person_enikshay_id, episode_id, should_be_forwarded, error_message, '', '', '', '']
         else:
             row = [
                 person_enikshay_id, episode_id, should_be_forwarded,
@@ -119,9 +135,26 @@ class Command(BaseCommand):
                 episode_case_properties.get('nikshay_error'),
                 episode_case_properties.get('private_nikshay_error'),
             ]
+        self._add_report_record_attempts(row, episode_id)
         self.ws.append(row)
 
+    def _add_repeat_record_attempt_headers(self):
+        max_columns = self.ws.get_highest_column()
+        first_empty_index = max_columns
+        for i in range(1, max_columns + 1):
+            if not self.ws.cell(row=1, column=i).value:
+                first_empty_index = i
+                break
+        column_num = first_empty_index
+        for i in range(0, self.max_attempts_in_sheet):
+            self.ws.cell(row=1, column=column_num).value = "Attempt {index} ID".format(index=i + 1)
+            self.ws.cell(row=1, column=(column_num + 1)).value = "Attempt {index} State".format(index=i + 1)
+            self.ws.cell(row=1, column=(column_num + 2)).value = "Attempt {index} Messages".format(index=i + 1)
+            column_num = column_num + 3
+
     def _save_file(self):
+        if self.max_attempts_in_sheet > 0:
+            self._add_repeat_record_attempt_headers()
         file_name = "nikshay_notification_report_{timestamp}.xlsx".format(
             timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
         )
