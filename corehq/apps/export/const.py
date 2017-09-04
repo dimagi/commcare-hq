@@ -17,7 +17,7 @@ from corehq.apps.export.transforms import (
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-FORM_DATA_SCHEMA_VERSION = 9
+FORM_DATA_SCHEMA_VERSION = 10
 CASE_DATA_SCHEMA_VERSION = 8
 SMS_DATA_SCHEMA_VERSION = 1
 
