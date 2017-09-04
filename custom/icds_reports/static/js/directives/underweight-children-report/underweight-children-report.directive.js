@@ -183,7 +183,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i>',
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

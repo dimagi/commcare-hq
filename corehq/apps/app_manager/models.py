@@ -2657,7 +2657,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, Form):
             new_form = form
-        elif isinstance(form, AdvancedForm) and not form.actions.get_all_actions():
+        elif isinstance(form, AdvancedForm) and not len(list(form.actions.get_all_actions())):
             new_form = Form(
                 name=form.name,
                 form_filter=form.form_filter,

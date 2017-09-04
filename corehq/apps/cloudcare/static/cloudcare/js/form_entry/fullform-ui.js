@@ -420,11 +420,12 @@ function Question(json, parent) {
     };
     self.afterRender = function() { self.entry.afterRender(); };
 
-    self.onchange = _.throttle(function() {
+    self.triggerAnswer = function() {
         $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
         $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
-    }, self.throttle);
+    };
+    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
@@ -589,7 +590,9 @@ Formplayer.Errors = {
         "Technical Details: ",
     TIMEOUT_ERROR: "CommCareHQ has detected a possible network connectivity problem. " +
         "Please make sure you are connected to the " +
-        "Internet in order to submit your form."
+        "Internet in order to submit your form.",
+    LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
+        'Please try again later.'),
 };
 
 Formplayer.Utils.touchformsError = function(message) {

@@ -157,7 +157,7 @@ describe('WebForm', function() {
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
 
-            assert.isUndefined(sess.blockingRequestInProgress);
+            assert.isFalse(sess.blockingRequestInProgress);
 
             // Attempt another request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });

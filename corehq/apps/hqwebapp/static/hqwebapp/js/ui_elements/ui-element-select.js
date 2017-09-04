@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport, $ */
 
-hqDefine('style/js/ui_elements/ui-element-select', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
     'use strict';
     var module = {};
 
@@ -8,7 +8,7 @@ hqDefine('style/js/ui_elements/ui-element-select', function () {
         var that = this,
             i,
             option;
-        hqImport("style/js/main").eventize(this);
+        hqImport("hqwebapp/js/main").eventize(this);
         this.ui = $('<span/>');
         this.value = "";
         this.edit = true;

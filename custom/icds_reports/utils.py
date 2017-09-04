@@ -332,7 +332,7 @@ def get_system_usage_data(yesterday, config):
     }
 
 
-@quickcache(['config'], timeout=24 * 60 * 60)
+# @quickcache(['config'], timeout=24 * 60 * 60)
 def get_maternal_child_data(config):
 
     def get_data_for_child_health_monthly(date, filters):
@@ -463,7 +463,7 @@ def get_maternal_child_data(config):
                 {
                     'label': _('Newborns with Low Birth Weight'),
                     'help_text': _((
-                        "Percentage of newborns with born with birth weight less than 2500 grams. Newborns with"
+                        "Percentage of newborns born with birth weight less than 2500 grams. Newborns with"
                         " Low Birth Weight are closely associated with foetal and neonatal mortality and "
                         "morbidity, inhibited growth and cognitive development, and chronic diseases later "
                         "in life")),
@@ -882,7 +882,7 @@ def get_demographics_data(yesterday, config):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
@@ -1526,11 +1526,11 @@ def get_awc_reports_pse(config, month, domain):
     for chart_row in chart_data:
         pse_week = chart_row['pse_date'].isocalendar()[1]
         if pse_week in open_count_chart:
-            open_count_chart[pse_week] += chart_row['open_count']
-            attended_children_chart[pse_week].append(chart_row['attended_children_percent'])
+            open_count_chart[pse_week] += (chart_row['open_count'] or 0)
+            attended_children_chart[pse_week].append((chart_row['attended_children_percent'] or 0))
         else:
-            open_count_chart[pse_week] = chart_row['open_count']
-            attended_children_chart[pse_week] = [chart_row['attended_children_percent']]
+            open_count_chart[pse_week] = (chart_row['open_count'] or 0)
+            attended_children_chart[pse_week] = [chart_row['attended_children_percent'] or 0]
 
     map_data = {}
 
@@ -2135,7 +2135,7 @@ def get_awc_report_demographics(config, month):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar seeded beneficaries'),
+                    'label': _('Percent Adhaar Seeded Individuals'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
@@ -2174,30 +2174,33 @@ def get_awc_report_beneficiary(awc_id, month, two_before):
             )
         ][::-1],
         'last_month': datetime(*month).strftime("%b %Y"),
-        'month_with_data': data[0].month.strftime("%b %Y") if data else '',
     }
 
     def row_format(row_data):
+        return dict(
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorder_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            pse_days_attended=row_data.pse_days_attended
+        )
+
+    def base_data(row_data):
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized_date != '' else 'No',
-            nutrition_status=row_data.current_month_nutrition_status,
-            recorded_weight=row_data.recorded_weight or 0,
-            recorder_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
+            fully_immunized_date='Yes' if row_data.fully_immunized_date else 'No',
             mother_name=row_data.mother_name,
-            pse_days_attended=row_data.pse_days_attended,
             age_in_months=row_data.age_in_months,
         )
 
     for row in data:
         if row.case_id not in config['rows']:
-            config['rows'][row.case_id] = {}
+            config['rows'][row.case_id] = base_data(row)
         config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
 
     return config
@@ -4360,7 +4363,7 @@ def get_awc_daily_status_data_chart(config, loc_level):
         date = row['date']
         in_day = row['in_day'] or 0
         location = row['%s_name' % loc_level]
-        valid = row['all']
+        valid = row['all'] or 0
 
         if location in best_worst:
             best_worst[location].append(in_day / (valid or 1))
@@ -5333,7 +5336,7 @@ def get_adhaar_data_map(config, loc_level):
     return [
         {
             "slug": "adhaar",
-            "label": "Percent Adhaar seeded beneficiaries",
+            "label": "Percent Adhaar Seeded Individuals",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),

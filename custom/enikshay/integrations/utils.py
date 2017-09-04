@@ -1,3 +1,4 @@
+from dateutil.parser import parse
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from corehq.apps.locations.models import SQLLocation
@@ -46,6 +47,10 @@ def is_valid_episode_submission(episode_case):
     if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
     return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
+
+
+def is_migrated_uatbc_episode(episode_case):
+    return episode_case.get_case_property('migration_created_case') == 'true'
 
 
 def is_valid_voucher_submission(voucher_case):
@@ -109,3 +114,12 @@ def case_properties_changed(case, case_properties):
         )
     )
     return property_changed
+
+
+def string_to_date_or_None(date_string):
+    if not date_string:
+        return None
+    try:
+        return parse(date_string).date()
+    except ValueError:
+        return None

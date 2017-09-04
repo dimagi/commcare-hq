@@ -1,7 +1,7 @@
 /* globals hqDefine django hqLayout hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
-    var module = hqImport("style/js/main").eventize({});
+    var module = hqImport("hqwebapp/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/app_manager', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqImport("style/js/main").updateDOM(update);
+        hqImport("hqwebapp/js/main").updateDOM(update);
     };
 
     module.setupValidation = function (validation_url) {
@@ -303,7 +303,7 @@ hqDefine('app_manager/js/app_manager', function () {
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
+        $('.drag_handle').addClass(hqImport("hqwebapp/js/main").icons.GRIP);
 
         $('.js-appnav-drag-module').on('mouseenter', function() {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');
@@ -399,7 +399,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("style/js/main").initSaveButtonForm($form, {
+                button = hqImport("hqwebapp/js/main").initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;

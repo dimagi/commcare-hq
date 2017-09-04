@@ -15,7 +15,7 @@
         <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
 
         {# link tags #}
-        <link rel="shortcut icon" href="{% static 'style/images/favicon.png' %}" />
+        <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
         <link type="application/opensearchdescription+xml"
               rel="search"
               href="{% url 'osdd' %}"
@@ -190,7 +190,7 @@
         {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-        <script src="{% static 'style/js/daterangepicker.config.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -202,8 +202,8 @@
         {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
         {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
         {% compress js %}
-        <script src="{% static 'style/js/drift.js' %}"></script>
-        <script src="{% static 'style/js/hubspot_drift.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/drift.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hubspot_drift.js' %}"></script>
         {% endcompress %}
         {% endif %}
         {% endif %}
@@ -398,13 +398,13 @@
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script src="{% static 'style/js/hq-bug-report.js' %}"></script>
-        <script src="{% static 'style/js/layout.js' %}"></script>
-        <script src="{% static 'style/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'style/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
         {% endcompress %}
 
         {# JavaScript Display Logic Libaries #}
@@ -415,7 +415,7 @@
 
         {% include "style/includes/ko.html" %}
         {% compress js %}
-        <script src="{% static 'style/js/alert_user.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}
 
         {% if request.use_angular_js %}
@@ -464,7 +464,7 @@
         {% if request.use_typeahead %}
         {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
-        <script src="{% static 'style/js/bootstrap-multi-typeahead.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -517,13 +517,13 @@
         {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
-        <script src="{% static 'style/js/multiselect_utils.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_ko_validation %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script src="{% static 'style/js/validators.ko.js' %}"></script>
+          <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
@@ -538,7 +538,7 @@
 
         {# Remote modals (EULA and CDA) #}
         {% compress js %}
-            <script src="{% static 'style/js/remote-modals.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/remote-modals.js' %}"></script>
         {% endcompress %}
 
         {# EULA #}
