@@ -6,8 +6,8 @@ import logging
 notify_logger = logging.getLogger('notify')
 
 
-def notify_error(message):
-    notify_logger.error(message)
+def notify_error(message, details=None):
+    notify_logger.error(message, extra=details)
 
 
 def notify_exception(request, message=None, details=None, exec_info=None):

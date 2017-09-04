@@ -53,12 +53,12 @@ DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
 CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
 cache = get_redis_client()
 
-# ToDo: Enable post migration
-# @periodic_task(
-#     bind=True,
-#     run_every=crontab(hour=0, minute=0),  # every day at midnight
-#     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
-# )
+
+@periodic_task(
+    bind=True,
+    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
+)
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
@@ -67,6 +67,10 @@ def enikshay_task(self):
 
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
+        if toggles.DATA_MIGRATION.enabled(domain):
+            # Don't run this on the india cluster anymore
+            continue
+
         try:
             updater = EpisodeUpdater(domain, task_id=task_id)
             updater.run()
@@ -120,6 +124,7 @@ class EpisodeUpdater(object):
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
+        device_id = "%s.%s" % (__name__, type(self).__name__)
         update_count = 0
         noupdate_count = 0
         error_count = 0
@@ -156,14 +161,14 @@ class EpisodeUpdater(object):
                 else:
                     noupdate_count += 1
                 if len(updates) >= batch_size:
-                    bulk_update_cases(self.domain, updates)
+                    bulk_update_cases(self.domain, updates, device_id)
                     updates = []
                     batches_processed += 1
 
                 self.update_status(t, success_count, error_count, total_count, batches_processed, errors)
 
             if len(updates) > 0:
-                bulk_update_cases(self.domain, updates)
+                bulk_update_cases(self.domain, updates, device_id)
 
         summary = (
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
@@ -199,7 +204,8 @@ class EpisodeUpdater(object):
         assert episode_case.domain == self.domain
         update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
         if update_json:
-            update_case(self.domain, episode_case.case_id, update_json)
+            update_case(self.domain, episode_case.case_id, update_json,
+                        device_id="%s.%s" % (__name__, type(self).__name__))
 
     def _get_case_ids(self):
         case_accessor = CaseAccessors(self.domain)

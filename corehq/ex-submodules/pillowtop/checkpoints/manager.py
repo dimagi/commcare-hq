@@ -4,6 +4,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
+from kafka.common import TopicAndPartition
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
@@ -114,21 +115,15 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency,
-                 max_checkpoint_delay=MAX_CHECKPOINT_DELAY, checkpoint_callback=None):
+    def __init__(self, checkpoint, checkpoint_frequency, checkpoint_callback=None):
         """
         :param checkpoint: PillowCheckpoint object
         :param checkpoint_frequency: Number of changes between checkpoint updates
-        :param max_checkpoint_delay: Max number of seconds between checkpoint updates
         """
         # check settings to make it easy to override in tests
-        override_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', DELAY_SENTINEL)
-        if override_delay != DELAY_SENTINEL:
-            max_checkpoint_delay = override_delay
-
+        self.max_checkpoint_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', MAX_CHECKPOINT_DELAY)
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
-        self.max_checkpoint_delay = max_checkpoint_delay
         self.last_update = datetime.utcnow()
         self.checkpoint_callback = checkpoint_callback
 
@@ -138,7 +133,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         if self.max_checkpoint_delay:
             seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
             time_hit = seconds_since_last_update >= self.max_checkpoint_delay
-        return context.do_set_checkpoint and (frequency_hit or time_hit)
+        return frequency_hit or time_hit
 
     def update_checkpoint(self, new_seq):
         self.checkpoint.update_to(new_seq)
@@ -182,7 +177,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         if checkpoints:
             timestamp = checkpoints[0].last_modified
             for checkpoint in checkpoints:
-                ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+                ret[TopicAndPartition(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
                 if checkpoint.last_modified > timestamp:
                     timestamp = checkpoint.last_modified
         else:

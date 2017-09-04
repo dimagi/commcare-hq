@@ -36,10 +36,11 @@ def get_cases(domain):
 
 
 def update_supply_points(domain):
+    device_id = __name__ + ".update_supply_points"
     case_blocks = (case_block(c) for c in get_cases(domain) if needs_update(c))
     if case_blocks:
         for chunk in chunked(case_blocks, 100):
-            submit_case_blocks(chunk, domain)
+            submit_case_blocks(chunk, domain, device_id=device_id)
             print("updated {} cases on domain {}".format(len(chunk), domain))
 
 

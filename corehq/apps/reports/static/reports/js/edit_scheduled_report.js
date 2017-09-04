@@ -91,7 +91,7 @@ hqDefine("reports/js/edit_scheduled_report", function() {
     $("#id_config_ids").change(function(){
         updateUcrElements($(this).val());
     });
-    var multiselect_utils = hqImport('style/js/multiselect_utils');
+    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
     multiselect_utils.createFullMultiselectWidget(
         'id_config_ids',
         django.gettext("Available Reports"),

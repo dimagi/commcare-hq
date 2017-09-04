@@ -4,6 +4,7 @@ from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -18,14 +19,14 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.style.decorators import use_daterangepicker
-from corehq.apps.users.models import Permissions
-from custom.icds_reports.const import LocationTypes, APP_ID
+from corehq.apps.users.models import Permissions, UserRole
+from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport
+    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
@@ -230,11 +231,7 @@ class ProgramSummaryView(View):
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
 
-        test_date = datetime(year, month, day)
-
-        day_before_date_from_filter = (test_date - relativedelta(days=1)).date()
         yesterday = (now - relativedelta(days=1)).date()
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
@@ -258,7 +255,7 @@ class ProgramSummaryView(View):
             data = get_maternal_child_data(config)
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
-                tuple(day_before_date_from_filter.timetuple())[:3],
+                tuple(yesterday.timetuple())[:3],
                 config
             )
         elif step == 'demographics':
@@ -469,6 +466,7 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
+                tuple(month.timetuple())[:3],
                 self.kwargs.get('domain')
             )
         elif step == 'maternal_child':
@@ -515,7 +513,7 @@ class ExportIndicatorView(View):
                 'month': date(year, month, 1),
             })
 
-        location = request.POST.get('location_id', '')
+        location = request.POST.get('location', '')
 
         if location:
             try:
@@ -541,6 +539,8 @@ class ExportIndicatorView(View):
             return AWCInfrastructureExport(
                 config=config, loc_level=aggregation_level
             ).to_export(export_format, location)
+        elif indicator == 6:
+            return BeneficiaryExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -559,6 +559,7 @@ class ProgressReportView(View):
         config = {
             'aggregation_level': aggregation_level,
             'month': this_month,
+            'previous_month': date.today().replace(day=1) - relativedelta(months=1),
             'two_before': two_before,
             'category': request.GET.get('category')
         }
@@ -1216,7 +1217,7 @@ class AdultWeightScaleView(View):
         })
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator([login_and_domain_required], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
     urlname = 'aggregation_script_page'
@@ -1224,7 +1225,16 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+        couch_user = self.request.couch_user
+        domain = self.domain
+        domain_membership = couch_user.get_domain_membership(domain)
+        bhd_role = UserRole.by_domain_and_name(
+            domain, BHD_ROLE
+        )
+        if couch_user.is_domain_admin(domain) or (bhd_role or bhd_role[0].get_id == domain_membership.role_id):
+            return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+        else:
+            raise PermissionDenied()
 
     def section_url(self):
         return

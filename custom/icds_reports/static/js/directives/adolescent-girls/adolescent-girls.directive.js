@@ -9,7 +9,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Pregnant Women enrolled for ICDS services";
+    vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_women/map', label: 'Map'},

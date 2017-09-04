@@ -1,4 +1,6 @@
+import random
 from contextlib import contextmanager
+from urllib import urlencode
 
 from django.conf import settings
 import sqlalchemy
@@ -11,8 +13,8 @@ UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
 
-def create_engine(connection_string=None):
-    connection_string = connection_string or settings.SQL_REPORTING_DATABASE_URL
+
+def create_engine(connection_string):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
@@ -55,6 +57,9 @@ class ConnectionManager(object):
 
     def __init__(self):
         self._session_helpers = {}
+        self.db_connection_map = {}
+        self.read_database_mapping = {}
+        self._populate_connection_map()
 
     def _get_or_create_helper(self, engine_id):
         if engine_id not in self._session_helpers:
@@ -81,6 +86,12 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
+    def get_load_balanced_read_engine_id(self, engine_id):
+        read_dbs = self.read_database_mapping.get(engine_id, [])
+        if read_dbs:
+            return random.choice(read_dbs)
+        return engine_id
+
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
             helper.Session.remove()
@@ -104,26 +115,70 @@ class ConnectionManager(object):
             self.dispose_engine(engine_id)
 
     def get_connection_string(self, engine_id):
-        db_connection_map = {
-            DEFAULT_ENGINE_ID: settings.SQL_REPORTING_DATABASE_URL,
-            UCR_ENGINE_ID: settings.UCR_DATABASE_URL,
-        }
-        if hasattr(settings, 'ICDS_UCR_DATABASE_ALIAS') and settings.ICDS_UCR_DATABASE_ALIAS in settings.DATABASES:
-            db_connection_map[ICDS_UCR_ENGINE_ID] = \
-                "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
-                    **settings.DATABASES[settings.ICDS_UCR_DATABASE_ALIAS]
-                )
-        if hasattr(
-            settings, 'ICDS_UCR_TEST_DATABASE_ALIAS'
-        ) and settings.ICDS_UCR_TEST_DATABASE_ALIAS in settings.DATABASES:
-            db_connection_map[
-                ICDS_TEST_UCR_ENGINE_ID
-            ] = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
-                **settings.DATABASES[settings.ICDS_UCR_TEST_DATABASE_ALIAS]
-            )
-        for custom_engine_id, custom_db_url in settings.CUSTOM_DATABASES:
-            db_connection_map[custom_engine_id] = custom_db_url
-        return db_connection_map.get(engine_id, settings.SQL_REPORTING_DATABASE_URL)
+        connection_string = self.db_connection_map.get(engine_id)
+        return connection_string or self.db_connection_map['default']
+
+    def _populate_connection_map(self):
+        reporting_db_config = self._get_reporting_db_config()
+        if not reporting_db_config:
+            self._populate_from_legacy_settings()
+        else:
+            for engine_id, db_config in reporting_db_config.items():
+                write_db = db_config
+                read = None
+                if isinstance(db_config, dict):
+                    write_db = db_config['WRITE']
+                    read = db_config['READ']
+                    for db_alias, weighting in read:
+                        assert isinstance(weighting, int), 'weighting must be int'
+                        assert db_alias in settings.DATABASES, db_alias
+
+                self._add_django_db(engine_id, write_db)
+                if read:
+                    self.read_database_mapping[engine_id] = []
+                    for read_db, weighting in read:
+                        assert read_db == write_db or read_db not in self.db_connection_map, read_db
+                        self.read_database_mapping[engine_id].extend([read_db] * weighting)
+                        if read_db != write_db:
+                            self._add_django_db(read_db, read_db)
+
+        if DEFAULT_ENGINE_ID not in self.db_connection_map:
+            self._add_django_db(DEFAULT_ENGINE_ID, 'default')
+        if UCR_ENGINE_ID not in self.db_connection_map:
+            self._add_django_db(UCR_ENGINE_ID, 'default')
+
+    def _populate_from_legacy_settings(self):
+        default_db = self._connection_string_from_django('default')
+        ucr_db_reporting_url = getattr(settings, 'UCR_DATABASE_URL', None)
+        self.db_connection_map[DEFAULT_ENGINE_ID] = default_db
+        self.db_connection_map[UCR_ENGINE_ID] = ucr_db_reporting_url or default_db
+
+    def _get_reporting_db_config(self):
+        return getattr(settings, 'REPORTING_DATABASES', None)
+
+    def _add_django_db_from_settings_key(self, engine_id, db_alias_settings_key):
+        db_alias = self._get_db_alias_from_settings_key(db_alias_settings_key)
+        if db_alias:
+            self._add_django_db(engine_id, db_alias)
+
+    def _add_django_db(self, engine_id, db_alias):
+            connection_string = self._connection_string_from_django(db_alias)
+            self.db_connection_map[engine_id] = connection_string
+
+    def _connection_string_from_django(self, django_alias):
+        db_settings = settings.DATABASES[django_alias].copy()
+        db_settings['PORT'] = db_settings.get('PORT', '5432')
+        options = db_settings.get('OPTIONS')
+        db_settings['OPTIONS'] = '?{}'.format(urlencode(options)) if options else ''
+
+        return "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}{OPTIONS}".format(
+            **db_settings
+        )
+
+    def _get_db_alias_from_settings_key(self, db_alias_settings_key):
+        db_alias = getattr(settings, db_alias_settings_key, None)
+        if db_alias in settings.DATABASES:
+            return db_alias
 
 
 connection_manager = ConnectionManager()
@@ -138,3 +193,13 @@ def _close_connections(**kwargs):
     connection_manager.close_scoped_sessions()
 
 signals.request_finished.connect(_close_connections)
+
+
+@contextmanager
+def override_engine(engine_id, connection_url):
+    original_url = connection_manager.get_connection_string(engine_id)
+    connection_manager.db_connection_map[engine_id] = connection_url
+    try:
+        yield
+    finally:
+        connection_manager.db_connection_map[engine_id] = original_url

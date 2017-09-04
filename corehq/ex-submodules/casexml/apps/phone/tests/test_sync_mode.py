@@ -1900,7 +1900,8 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
             )],
         )
         # Make a simple extension
-        self.device.post_changes(extension)
+        self.device.change_cases(extension)
+        self.device.sync()
         return host, extension
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
@@ -1955,7 +1956,9 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
         # are not in last_sync_log.extension_index_tree. See
         # _get_case_ids_for_owners_with_extensions after the comment "we
         # also need to fetch unowned extension cases that have been
-        # modified"
+        # modified". This comment can be removed when
+        # test_two_device_extension_sync_bug is no longer skipped for
+        # clean_owners.
         sync0 = guy.sync()
         self.assertEqual(sync0.log.case_ids_on_phone, both_ids)
         self.assertEqual(set(sync0.cases), both_ids)
@@ -1971,6 +1974,41 @@ class SteadyStateExtensionSyncTest(BaseSyncTest):
         sync3 = guy.sync()
         self.assertEqual(sync3.log.case_ids_on_phone, both_ids)
         self.assertFalse(sync3.cases)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_two_device_extension_sync_bug(self):
+        if self.restore_options["case_sync"] == CLEAN_OWNERS:
+            self.skipTest("a bug in clean_owners causes this to fail")
+            # not going after this now since livequery passes
+        deviceA = self.get_device(user=self.other_user, sync=True)
+        deviceB = self.get_device(user=self.other_user, sync=True)
+        self.assertFalse(deviceA.last_sync.cases)
+        self.assertFalse(deviceB.last_sync.cases)
+
+        host = CaseStructure(case_id='host', attrs={'create': True})
+        extension = CaseStructure(
+            case_id='extension',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+        )
+        both_ids = {host.case_id, extension.case_id}
+        deviceA.change_cases(extension)
+        syncA = deviceA.sync()
+        self.assertEqual(syncA.log.case_ids_on_phone, both_ids)
+        self.assertFalse(syncA.cases)
+
+        sync0 = deviceB.sync()
+        self.assertEqual(sync0.log.case_ids_on_phone, both_ids)
+        self.assertEqual(set(sync0.cases), both_ids)
+
+        sync1 = deviceB.sync()
+        self.assertEqual(sync1.log.case_ids_on_phone, both_ids)
+        self.assertFalse(sync1.cases)
 
 
 @use_sql_backend

@@ -232,7 +232,7 @@ class TestGatewayFee(TestCase):
                 self.assertIsNone(billable.gateway_fee)
 
     @patch(
-        'twilio.rest.resources.messages.Messages.get',
+        'twilio.rest.api.v2010.account.message.MessageList.get',
         lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
     )
     def test_twilio_global_backend(self):
@@ -271,7 +271,7 @@ class TestGatewayFee(TestCase):
 
     @patch('corehq.apps.smsbillables.models.log_smsbillables_error')
     @patch(
-        'twilio.rest.resources.messages.Messages.get',
+        'twilio.rest.api.v2010.account.message.MessageList.get',
         lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
     )
     def test_twilio_domain_level_backend(self, mock_log_smsbillables_error):

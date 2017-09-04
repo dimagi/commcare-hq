@@ -1,5 +1,6 @@
 from datetime import datetime, date
 import json
+import math
 
 import jsonobject
 import pytz
@@ -31,6 +32,7 @@ from custom.enikshay.const import (
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
+from custom.enikshay.integrations.utils import string_to_date_or_None
 from .const import (
     TREATMENT_180_EVENT,
     DRUG_REFILL_EVENT,
@@ -58,7 +60,7 @@ def _get_district_location(pcp_location):
 class BETSPayload(jsonobject.JsonObject):
 
     EventID = jsonobject.StringProperty(required=True)
-    EventOccurDate = jsonobject.StringProperty(required=True)
+    EventOccurDate = jsonobject.DateProperty(required=True)
     BeneficiaryUUID = jsonobject.StringProperty(required=True)
     BeneficiaryType = jsonobject.StringProperty(required=True)
     Location = jsonobject.StringProperty(required=True)
@@ -107,9 +109,10 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
-        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        treatment_outcome_date = string_to_date_or_None(
+            episode_case_properties.get(TREATMENT_OUTCOME_DATE))
         if treatment_outcome_date is None:
-            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+            treatment_outcome_date = datetime.utcnow().date()
 
         return cls(
             EventID=TREATMENT_180_EVENT,
@@ -120,7 +123,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -131,7 +134,8 @@ class IncentivePayload(BETSPayload):
     def create_drug_refill_payload(cls, episode_case, n):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
-        event_date = episode_case_properties.get(PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n))
+        event_date = string_to_date_or_None(
+            episode_case_properties.get(PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n)))
 
         pcp_location = cls._get_location(
             person_case.owner_id,
@@ -149,7 +153,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -175,7 +179,8 @@ class IncentivePayload(BETSPayload):
 
         # We don't know whether the trigger fired because the threshold was met
         # or because treatment ended.  Just use whichever happened first.
-        return min(filter(None, [completed_date, threshold_met_date]))
+        return string_to_date_or_None(
+            min(filter(None, [completed_date, threshold_met_date])))
 
     @classmethod
     def create_successful_treatment_payload(cls, episode_case):
@@ -207,7 +212,7 @@ class IncentivePayload(BETSPayload):
             Location=owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -227,14 +232,15 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
-            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
+            EventOccurDate=string_to_date_or_None(
+                episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE)),
             BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -258,14 +264,15 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
-            EventOccurDate=episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE),
+            EventOccurDate=string_to_date_or_None(
+                episode_case.get_case_property(FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE)),
             BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -279,7 +286,7 @@ class IncentivePayload(BETSPayload):
 class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
-    Amount = jsonobject.StringProperty(required=False)
+    Amount = jsonobject.IntegerProperty(required=False)
 
     @classmethod
     def create_voucher_payload(cls, voucher_case):
@@ -312,12 +319,14 @@ class VoucherPayload(BETSPayload):
 
         return cls(
             EventID=event_id,
-            EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
+            EventOccurDate=string_to_date_or_None(
+                voucher_case_properties.get(DATE_FULFILLED)),
             VoucherID=voucher_case.case_id,
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
-            Amount=voucher_case_properties.get(AMOUNT_APPROVED),
+            # always round up to a whole number
+            Amount=int(math.ceil(float(voucher_case_properties.get(AMOUNT_APPROVED)))),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
@@ -378,12 +387,13 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
             VoucherID="DUMMY-VOUCHER-ID",
-            Amount="0",
+            Amount=0,
             EventID="DUMMY-EVENT-ID",
-            EventOccurDate="2017-01-01",
+            EventOccurDate=datetime.date(2017, 1, 1),
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
             BeneficiaryType="chemist",
-            location="DUMMY-LOCATION",
+            Location="DUMMY-LOCATION",
+            DTOLocation="DUMMY-LOCATION",
         ).payload_json())
 
     def get_payload(self, repeat_record, voucher_case):
@@ -406,7 +416,7 @@ class IncentivePayloadGenerator(BETSBasePayloadGenerator):
         return json.dumps(IncentivePayload(
             EpisodeID="DUMMY-EPISODE-ID",
             EventID="DUMMY-EVENT-ID",
-            EventOccurDate="2017-01-01",
+            EventOccurDate=datetime.date(2017, 1, 1),
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
             BeneficiaryType="chemist",
             Location="DUMMY-LOCATION",

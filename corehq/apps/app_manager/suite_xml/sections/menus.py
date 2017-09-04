@@ -47,7 +47,8 @@ class MenuContributor(SuiteContributorByModule):
                         module=module, form=form)
 
                     if xpath_references_case(interpolated_xpath) and \
-                            (not module_uses_case() or module.put_in_root):
+                            (not module_uses_case() or
+                            module.put_in_root and not module.root_requires_same_case()):
                         raise CaseXPathValidationError(module=module, form=form)
 
                     if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
@@ -107,12 +108,19 @@ class MenuContributor(SuiteContributorByModule):
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                     if self.app.enable_localized_menu_media:
+                        module_custom_icon = module.custom_icon
                         menu_kwargs.update({
                             'menu_locale_id': id_strings.module_locale(module),
                             'media_image': bool(len(module.all_image_paths())),
                             'media_audio': bool(len(module.all_audio_paths())),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
+                            'custom_icon_locale_id': (
+                                id_strings.module_custom_icon_locale(module, module_custom_icon.form)
+                                if module_custom_icon and not module_custom_icon.xpath else None),
+                            'custom_icon_form': (module_custom_icon.form if module_custom_icon else None),
+                            'custom_icon_xpath': (module_custom_icon.xpath
+                                                  if module_custom_icon and module_custom_icon.xpath else None),
                         })
                         menu = LocalizedMenu(**menu_kwargs)
                     else:

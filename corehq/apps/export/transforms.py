@@ -8,6 +8,10 @@ Module for transforms used in exports.
 """
 
 
+def case_close_to_boolean(value, doc):
+    return str(value is not None)
+
+
 def user_id_to_username(user_id, doc):
     return cached_user_id_to_username(user_id)
 

@@ -10,7 +10,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Newborns with Low Birth Weight";
+    vm.label = "Newborns with Low Birth Weight";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/low_birth/map', label: 'Map'},

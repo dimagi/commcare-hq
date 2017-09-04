@@ -72,13 +72,6 @@ class DomainMigrationMiddleware(MiddlewareMixin):
             if getattr(view_func, 'domain_migration_handled', False):
                 return None
             if DATA_MIGRATION.enabled(request.domain):
-                # hack for enikshay
-                url_parts = request.path.split('/')
-                if len(url_parts) > 3 and url_parts[3] in ['reports', 'toggles.js']:
-                    return None
-                if request.path.startswith('/a/enikshay/configurable_reports/api/choice_list/'):
-                    return None
-
                 return TemplateResponse(
                     request=request,
                     template='domain/data_migration_in_progress.html',

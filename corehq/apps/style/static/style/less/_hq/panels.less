@@ -37,33 +37,29 @@
   .collapsing {
     overflow: hidden;
   }
-}
 
-.panel-modern-gray-form {
   legend {
     padding: 15px 15px;
     border-bottom: 1px solid @cc-bg;
     font-size: 14px;
     font-weight: 500;
     border-bottom: 1px solid @cc-bg;
-    margin-bottom: 0;
+    margin-bottom: 20px;
   }
 
-  .form-actions {
-    margin-top: 5px;
-    border-top: 0;
-    background-color: lighten(desaturate(@cc-brand-hi, 50), 5);
+  .ms-list {
+    background-color: white;
   }
-  .form-group {
-    margin-top: 15px;
+
+  .ms-container .ms-selectable, .ms-container .ms-selection {
+    background-color: transparent;
   }
 }
 
-.panel-modern-gray-form-danger {
 
-  .form-actions {
-    border-top: 0;
-    background-color: lighten(desaturate(@cc-att-neg-hi, 20), 5);
+.panel-form-only {
+  legend:first-child {
+    padding-top: 0;
   }
 }
 

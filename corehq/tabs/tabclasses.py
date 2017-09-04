@@ -803,8 +803,6 @@ class ApplicationsTab(UITab):
 
     @property
     def view(self):
-        if toggles.APP_MANAGER_V1.enabled(self.couch_user.username):
-            return "default_app"
         return "default_new_app"
 
     @property
@@ -844,9 +842,7 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
                 _('New Application'),
-                url=(reverse('default_app', args=[self.domain])
-                     if toggles.APP_MANAGER_V1.enabled(self.couch_user.username)
-                     else reverse('default_new_app', args=[self.domain])),
+                url=(reverse('default_new_app', args=[self.domain])),
             ))
         return submenu_context
 

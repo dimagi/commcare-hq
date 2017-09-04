@@ -1,5 +1,0 @@
-{% load xforms_extras %}
-{% if not not_actual_build %}
-<a href="{% url "form_source" domain app.id error.module.id error.form.id %}">{{ error.form.name|trans:langs }}</a>
-in module "{{ error.module.name|trans:langs }}"
-{% endif %}

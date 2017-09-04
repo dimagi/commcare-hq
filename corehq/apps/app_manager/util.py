@@ -329,9 +329,16 @@ def version_key(ver):
 
 
 def get_commcare_versions(request_user):
-    versions = [i.build.version for i in CommCareBuildConfig.fetch().menu
-                if request_user.is_superuser or not i.superuser_only]
+    versions = [i.version for i in get_commcare_builds(request_user)]
     return sorted(versions, key=version_key)
+
+
+def get_commcare_builds(request_user):
+    return [
+        i.build
+        for i in CommCareBuildConfig.fetch().menu
+        if request_user.is_superuser or not i.superuser_only
+    ]
 
 
 def actions_use_usercase(actions):
@@ -495,21 +502,6 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_app_manager_template(user, v1, v2):
-    """
-    Given the user, a template string v1, and a template string v2,
-    return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
-
-    :param user: WebUser
-    :param v1: String, template name for V1
-    :param v2: String, template name for V2
-    :return: String, either v1 or v2 depending on toggle
-    """
-    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
-        return v1
-    return v2
-
-
 def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
     from corehq.apps.app_manager.models import ShadowForm
@@ -609,7 +601,7 @@ class LatestAppInfo(object):
     def app(self):
         app = get_app(self.domain, self.app_id, latest=True, target='release')
         # quickache based on a copy app_id will have to be updated too fast
-        is_app_id_brief = self.app_id == (app.copy_of or app.id)
+        is_app_id_brief = self.app_id == app.master_id
         assert is_app_id_brief, "this class doesn't handle copy app ids"
         return app
 
@@ -617,27 +609,35 @@ class LatestAppInfo(object):
         self.get_latest_app_version.clear(self)
 
     def get_latest_apk_version(self):
+        from corehq.apps.app_manager.models import LATEST_APK_VALUE
+        from corehq.apps.builds.models import BuildSpec
         from corehq.apps.builds.utils import get_default_build_spec
         if self.app.global_app_config.apk_prompt == "off":
             return {}
         else:
-            value = get_default_build_spec().version
-            if self.app.global_app_config.apk_prompt == "on":
-                return {"value": value, "force": False}
-            elif self.app.global_app_config.apk_prompt == "forced":
-                return {"value": value, "force": True}
+            configured_version = self.app.global_app_config.apk_version
+            if configured_version == LATEST_APK_VALUE:
+                value = get_default_build_spec().version
+            else:
+                value = BuildSpec.from_string(configured_version).version
+            force = self.app.global_app_config.apk_prompt == "forced"
+            return {"value": value, "force": force}
 
     @quickcache(vary_on=['self.app_id'])
     def get_latest_app_version(self):
+        from corehq.apps.app_manager.models import LATEST_APP_VALUE
         if self.app.global_app_config.app_prompt == "off":
             return {}
         else:
-            if not self.app or not self.app.is_released:
-                return {}
-            if self.app.global_app_config.app_prompt == "on":
-                return {"value": self.app.version, "force": False}
-            elif self.app.global_app_config.app_prompt == "forced":
-                return {"value": self.app.version, "force": True}
+            force = self.app.global_app_config.app_prompt == "forced"
+            app_version = self.app.global_app_config.app_version
+            if app_version != LATEST_APP_VALUE:
+                return {"value": app_version, "force": force}
+            else:
+                if not self.app or not self.app.is_released:
+                    return {}
+                else:
+                    return {"value": self.app.version, "force": force}
 
     def get_info(self):
         return {

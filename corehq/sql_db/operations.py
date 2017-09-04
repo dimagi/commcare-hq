@@ -5,7 +5,6 @@ from django.conf import settings
 from django.db import connection
 from django.db.migrations import RunPython
 from django.db.migrations.operations.special import RunSQL
-from django.template import Context
 from django.template import engines
 
 from corehq.sql_db.routers import allow_migrate
@@ -87,7 +86,7 @@ class RunSqlLazy(RunSQL):
 
         template = engines['django'].from_string(template_string)
 
-        return template.render(Context(self.template_context))
+        return template.render(self.template_context)
 
 
 class RawSQLMigration(object):

@@ -19,7 +19,7 @@
     var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
     var hierarchy = {{ hierarchy|JSON }};
     var show_inactive = {{ show_inactive|yesno:"true,false" }};
-    var alert_user = hqImport("style/js/alert_user").alert_user;
+    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
     function loc_edit_url(loc_id) {
         var template = '{% url "edit_location" domain "-locid-" %}';
