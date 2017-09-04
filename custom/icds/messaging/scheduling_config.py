@@ -45,7 +45,8 @@ def create_beneficiary_indicator_1(domain):
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
-            recipients=(('CustomRecipient', 'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'),)
+            recipients=(('CustomRecipient', 'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'),),
+            reset_case_property_name='last_date_gmp',
         )
 
 
