@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -415,6 +415,9 @@ class FormActions(DocumentSchema):
             names.update(subcase.case_properties.keys())
         return names
 
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.subcases])
+
 
 class CaseIndex(DocumentSchema):
     tag = StringProperty()
@@ -675,6 +678,8 @@ class AdvancedFormActions(DocumentSchema):
 
         return meta
 
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.get_subcase_actions()])
 
 class FormSource(object):
 

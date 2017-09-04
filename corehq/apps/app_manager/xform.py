@@ -1458,9 +1458,7 @@ class XForm(WrappedNode):
         if 'subcases' in actions:
             subcases = actions['subcases']
 
-            repeat_context_count = collections.Counter([
-                action.repeat_context for action in subcases
-            ])
+            repeat_context_count = form.actions.count_subcases_per_repeat_context()
             for subcase in subcases:
                 if not form.get_app().case_type_exists(subcase.case_type):
                     raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
@@ -1713,9 +1711,7 @@ class XForm(WrappedNode):
                     self.add_casedb()
                     configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
-        repeat_context_count = collections.Counter([
-            action.repeat_context for action in form.actions.open_cases
-        ])
+        repeat_context_count = form.actions.count_subcases_per_repeat_context()
 
         def get_action_path(action, create_subcase_node=True):
             if action.repeat_context:

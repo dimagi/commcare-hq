@@ -1686,9 +1686,7 @@ class FormExportDataSchema(ExportDataSchema):
             else:
                 actions = list(form.actions.get_subcases())
 
-            repeat_context_count = Counter([
-                action.repeat_context for action in actions
-            ])
+            repeat_context_count = form.actions.count_subcases_per_repeat_context()
 
             for action in actions:
                 if action.repeat_context:
