@@ -147,18 +147,16 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
                     'weight': '/data/repeat/group/weight',
                 },
                 subcase_index=0,
-                form_element_name='subcase_0',  # would normally get added by caller
                 nest=False,
-            ),
+            ).with_id(0, None),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
                     'age': '/data/repeat/nested_repeat/age',
                 },
                 subcase_index=1,
-                form_element_name='subcase_1',  # would normally get added by caller
                 nest=False,  # would normally get added by caller
-            ),
+            ).with_id(1, None),
         ]
 
         schema = FormExportDataSchema._generate_schema_from_repeat_subcases(

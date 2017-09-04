@@ -369,7 +369,7 @@ class OpenCaseAction(FormAction):
     external_id = StringProperty()
 
 
-class OpenSubCaseAction(FormAction):
+class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
     case_name = StringProperty()
@@ -381,6 +381,10 @@ class OpenSubCaseAction(FormAction):
     relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    @property
+    def form_element_name(self):
+        return 'subcase_{}'.format(self.id)
 
 
 class FormActions(DocumentSchema):
@@ -400,6 +404,8 @@ class FormActions(DocumentSchema):
     usercase_preload = SchemaProperty(PreloadAction)
 
     subcases = SchemaListProperty(OpenSubCaseAction)
+
+    get_subcases = IndexedSchema.Getter('subcases')
 
     def all_property_names(self):
         names = set()
@@ -1563,7 +1569,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
-            a = getattr(self.actions, action_type)
+            getter = 'get_{}'.format(action_type)
+            if hasattr(self.actions, getter):
+                # user getter if there is one
+                a = getattr(self.actions, getter)()
+            else:
+                a = getattr(self.actions, action_type)
             if isinstance(a, list):
                 if a:
                     actions[action_type] = a

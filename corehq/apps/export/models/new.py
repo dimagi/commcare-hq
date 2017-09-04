@@ -5,7 +5,7 @@ from copy import copy
 from datetime import datetime
 from itertools import groupby
 from functools import partial
-from collections import defaultdict, OrderedDict, namedtuple, Counter
+from collections import defaultdict, OrderedDict, namedtuple
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
@@ -1684,9 +1684,7 @@ class FormExportDataSchema(ExportDataSchema):
             if isinstance(form.actions, AdvancedFormActions):
                 actions = list(form.actions.get_open_subcase_actions())
             else:
-                actions = form.actions.subcases
-                for i, action in enumerate(form.actions.subcases):
-                    action.form_element_name = 'subcase_{}'.format(i)
+                actions = list(form.actions.get_subcases())
 
             repeat_context_count = Counter([
                 action.repeat_context for action in actions

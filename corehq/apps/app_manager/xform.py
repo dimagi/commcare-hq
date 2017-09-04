@@ -1461,7 +1461,7 @@ class XForm(WrappedNode):
             repeat_context_count = collections.Counter([
                 action.repeat_context for action in subcases
             ])
-            for i, subcase in enumerate(subcases):
+            for subcase in subcases:
                 if not form.get_app().case_type_exists(subcase.case_type):
                     raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
                 if subcase.repeat_context:
@@ -1478,10 +1478,9 @@ class XForm(WrappedNode):
                     case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
-                    name = 'subcase_%s' % i
-                    subcase_node = _make_elem('{x}%s' % name)
+                    subcase_node = _make_elem('{x}%s' % subcase.form_element_name)
                     parent_node.append(subcase_node)
-                    path = '%s%s/' % (base_path, name)
+                    path = '%s%s/' % (base_path, subcase.form_element_name)
                 else:
                     subcase_node = parent_node
                     path = base_path
