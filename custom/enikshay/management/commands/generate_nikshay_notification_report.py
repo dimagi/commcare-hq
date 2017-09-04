@@ -24,12 +24,12 @@ class Command(BaseCommand):
     help = """
     Iterate over a list of episode case ids and check if they have been
     notified to nikshay or not
-    Pass in a csv file that has 
+    Pass in a csv file that has
     1. episode case ids under header episode_id or
     2. person enikshay ids(not uuid) under header enikshay_id (along with option --parse_as_person_enikshay_ids)
-    
+
     Gives a report with:
-    'Enikshay ID', 'Episode ID', 'Should be Notified', 'Nikshay Registered', 'Nikshay Private Registered', 
+    'Enikshay ID', 'Episode ID', 'Should be Notified', 'Nikshay Registered', 'Nikshay Private Registered',
     'Nikshay ID', 'External ID', 'Nikshay ID history', 'Nikshay Error', 'Private Nikshay Error',
     """
 
@@ -178,7 +178,10 @@ class Command(BaseCommand):
 
     def _nikshay_id_update_history(self, episode_case):
         nikshay_id_update_history = []
-        all_case_update_transactions = [trans for trans in episode_case.actions if not trans.is_case_create and not trans.is_case_rebuild]
+        all_case_update_transactions = [
+            trans for trans in episode_case.actions
+            if not trans.is_case_create and not trans.is_case_rebuild
+        ]
         all_case_actions = []
         for case_update_transaction in all_case_update_transactions:
             all_case_actions += [
@@ -188,8 +191,7 @@ class Command(BaseCommand):
 
         for action in all_case_actions:
             if isinstance(action, CaseUpdateAction) and "nikshay_id" in action.dynamic_properties:
-                nikshay_id_update_history.append(action.dynamic_properties.get("nikshay_id")
-        )
+                nikshay_id_update_history.append(action.dynamic_properties.get("nikshay_id"))
         return nikshay_id_update_history
 
     def handle(self, file_path, *args, **options):
@@ -205,7 +207,8 @@ class Command(BaseCommand):
                 should_be_forwarded = self._should_be_forwarded(episode_case, episode_case_properties)
                 self._add_row(episode_id, episode_case, episode_case_properties, should_be_forwarded)
             except CaseNotFound:
-                self._add_row(episode_id, None, None, should_be_forwarded, error_message="Could not find episode case")
+                self._add_row(episode_id, None, None, should_be_forwarded,
+                              error_message="Could not find episode case")
 
         file_name = self._save_file()
         print("Report saved in file:{filename}".format(filename=file_name))
