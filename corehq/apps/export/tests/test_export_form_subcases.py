@@ -9,7 +9,7 @@ from couchexport.models import Format
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm, Application
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import FormExportDataSchema, FormExportInstance

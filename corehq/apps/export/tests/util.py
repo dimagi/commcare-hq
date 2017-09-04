@@ -43,11 +43,12 @@ def assertContainsExportItems(item_tuples, export_group_schema):
     actual = {
         (item.readable_path, item.label)
         for item in export_group_schema.items
-        }
+    }
     item_set = set(item_tuples)
     missing = item_set - actual
     extra = actual - item_set
     if missing or extra:
-        prettify = lambda list_of_tuples: '\n  '.join(map(unicode, list_of_tuples))
+        def prettify(list_of_tuples):
+            return '\n  '.join(map(unicode, list_of_tuples))
         raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
                              .format(prettify(actual), prettify(missing), prettify(extra)))

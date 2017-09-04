@@ -43,7 +43,9 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_app,
 )
-from corehq.apps.app_manager.models import Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
+from corehq.apps.app_manager.models import (
+    Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -1647,15 +1649,17 @@ class FormExportDataSchema(ExportDataSchema):
                 for actions in all_actions:
                     for action in actions.load_update_cases:
                         cls._add_export_items_for_case(
-                            root_group_schema, '/data/{}'.format(action.form_element_name), action.case_properties,
-                            action.case_tag, None, [], create=False, close=action.close_condition.is_active()
+                            root_group_schema, '/data/{}'.format(action.form_element_name),
+                            action.case_properties, action.case_tag, None, [],
+                            create=False, close=action.close_condition.is_active()
                         )
 
                     for action in actions.open_cases:
                         if not action.is_subcase:
                             cls._add_export_items_for_case(
-                                root_group_schema, '/data/{}'.format(action.form_element_name), action.case_properties,
-                                action.case_tag, None, [], create=True, close=action.close_condition.is_active()
+                                root_group_schema, '/data/{}'.format(action.form_element_name),
+                                action.case_properties, action.case_tag, None, [],
+                                create=True, close=action.close_condition.is_active()
                             )
 
         repeats_with_subcases = []
