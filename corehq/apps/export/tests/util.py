@@ -38,7 +38,8 @@ def new_form(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS, **kwargs
 
 def assertContainsExportItems(item_tuples, export_group_schema):
     """
-    paths should be of the form ["form.question1", "form.group.question2"]
+    :param item_tuples: list of ("path", "label") tuples representing each export item:
+    eg:  [("form.group.question2", "question_label")]
     """
     actual = {
         (item.readable_path, item.label)
