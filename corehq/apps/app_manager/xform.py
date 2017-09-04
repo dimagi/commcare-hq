@@ -1461,7 +1461,9 @@ class XForm(WrappedNode):
             repeat_context_count = form.actions.count_subcases_per_repeat_context()
             for subcase in subcases:
                 if not form.get_app().case_type_exists(subcase.case_type):
-                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (
+                        subcase.case_type, form.default_name()
+                    ))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(

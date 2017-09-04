@@ -681,6 +681,7 @@ class AdvancedFormActions(DocumentSchema):
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.get_subcase_actions()])
 
+
 class FormSource(object):
 
     def __get__(self, form, form_cls):
