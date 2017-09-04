@@ -2356,6 +2356,10 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     filter_form_class = EmwfFilterFormExport
     export_filter_class = LocationRestrictedMobileWorkerFilter
 
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        return False
+
 
 @location_safe
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
