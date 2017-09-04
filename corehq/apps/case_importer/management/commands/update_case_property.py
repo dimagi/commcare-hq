@@ -13,9 +13,9 @@ from dimagi.utils.chunked import chunked
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_arugment('domain')
-        parser.add_arugment('infile')
-        parser.add_arugment('logfile')
+        parser.add_argument('domain')
+        parser.add_argument('infile')
+        parser.add_argument('logfile')
 
     def handle(self, domain, infile, logfile, *args, **options):
         self.domain = domain
