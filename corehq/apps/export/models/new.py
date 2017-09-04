@@ -856,7 +856,7 @@ class ExportInstance(BlobMixin, Document):
         }
         for path, column in case_id_columns.items():
             if path not in case_name_columns:
-                insert_fn(get_case_name_column(column.item.path))
+                insert_fn(get_case_name_column(column.item))
 
     @property
     def file_size(self):

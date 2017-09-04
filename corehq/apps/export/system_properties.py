@@ -192,12 +192,15 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
 
-def get_case_name_column(case_id_path):
+def get_case_name_column(case_id_export_item):
+    label_segments = case_id_export_item.readable_path.split('.')[:-1]
+    label_segments.append('case_name')
     return ExportColumn(
         tags=[PROPERTY_TAG_CASE],
-        label='case_name',
-        item=ExportItem(path=case_id_path, transform=CASE_NAME_TRANSFORM),
-        selected=True,
+        label='.'.join(label_segments),
+        item=ExportItem(path=case_id_export_item.path, transform=CASE_NAME_TRANSFORM),
+        selected=False,
+        is_advanced=True,
         help_text=_("The name of the case that this form operated on")
     )
 
