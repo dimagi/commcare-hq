@@ -259,7 +259,11 @@ class IndexedSchema(DocumentSchema):
         return self._i
 
     def __eq__(self, other):
-        return other and (self.id == other.id) and (self._parent == other._parent)
+        return (
+            other and isinstance(other, IndexedSchema)
+            and (self.id == other.id)
+            and (self._parent == other._parent)
+        )
 
     class Getter(object):
 
