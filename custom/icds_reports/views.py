@@ -232,6 +232,8 @@ class ProgramSummaryView(View):
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
 
+        include_test = request.GET.get('include_test', False)
+
         domain = self.kwargs['domain']
 
         yesterday = (now - relativedelta(days=1)).date()
@@ -249,26 +251,25 @@ class ProgramSummaryView(View):
                 'aggregation_level': 1
             }
 
-        location = request.GET.get('location_id', '')
-        get_location_filter(location, self.kwargs['domain'], config)
-
         data = {}
         if step == 'maternal_child':
-            data = get_maternal_child_data(domain, config)
+            data = get_maternal_child_data(domain, config, include_test)
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,
                 tuple(yesterday.timetuple())[:3],
-                config
+                config,
+                include_test
             )
         elif step == 'demographics':
             data = get_demographics_data(
                 domain,
                 tuple(yesterday.timetuple())[:3],
-                config
+                config,
+                include_test
             )
         elif step == 'awc_infrastructure':
-            data = get_awc_infrastructure_data(domain, config)
+            data = get_awc_infrastructure_data(domain, config, include_test)
         return JsonResponse(data=data)
 
 
@@ -284,6 +285,8 @@ class AwcOpenedView(View):
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
         day = int(self.request.GET.get('day', now.day))
+
+        include_test = request.GET.get('include_test', False)
 
         domain = self.kwargs['domain']
 
@@ -302,9 +305,7 @@ class AwcOpenedView(View):
         }
 
         if step == "map":
-            data = get_awc_opened_data(domain, config)
-        elif step == "chart":
-            pass
+            data = get_awc_opened_data(domain, config, include_test)
         return JsonResponse(data=data)
 
 
@@ -317,6 +318,8 @@ class PrevalenceOfUndernutritionView(View):
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
         test_date = datetime(year, month, 1)
+
+        include_test = request.GET.get('include_test', False)
 
         domain = self.kwargs['domain']
 
@@ -338,11 +341,11 @@ class PrevalenceOfUndernutritionView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level)
+                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_prevalence_of_undernutrition_data_map(domain, config, loc_level)
+                data = get_prevalence_of_undernutrition_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level)
+            data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -437,6 +440,7 @@ class LocationAncestorsView(View):
 class AwcReportsView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
+        include_test = request.GET.get('include_test', False)
 
         now = datetime.utcnow()
         month_param = int(request.GET.get('month', now.month))
@@ -472,39 +476,44 @@ class AwcReportsView(View):
                 tuple(month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
-                'aggregation_level'
+                'aggregation_level',
+                include_test
             )
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
                 tuple(month.timetuple())[:3],
-                self.kwargs.get('domain')
+                self.kwargs.get('domain'),
+                include_test
             )
         elif step == 'maternal_child':
             data = get_awc_reports_maternal_child(
                 domain,
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(prev_month.timetuple())[:3]
+                tuple(prev_month.timetuple())[:3],
+                include_test
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
                 domain,
                 config,
-                tuple(month.timetuple())[:3]
+                tuple(month.timetuple())[:3],
+                include_test
             )
         elif step == 'beneficiary':
             data = get_awc_report_beneficiary(
                 domain,
                 config['awc_id'],
                 tuple(month.timetuple())[:3],
-                tuple(two_before.timetuple())[:3],
+                tuple(two_before.timetuple())[:3]
             )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
                 domain,
                 self.request.GET.get('case_id'),
-                tuple(month.timetuple())[:3]
+                tuple(month.timetuple())[:3],
+                include_test
             )
         return JsonResponse(data=data)
 
@@ -512,6 +521,7 @@ class AwcReportsView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         export_format = request.POST.get('format')
         month = int(request.POST.get('month'))
         year = int(request.POST.get('year'))
@@ -545,28 +555,47 @@ class ExportIndicatorView(View):
                 pass
 
         if indicator == 1:
-            return ChildrenExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
+            return ChildrenExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).to_export(export_format, location)
         elif indicator == 2:
-            return PregnantWomenExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
+            return PregnantWomenExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).to_export(export_format, location)
         elif indicator == 3:
-            return DemographicsExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
+            return DemographicsExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).to_export(export_format, location)
         elif indicator == 4:
-            return SystemUsageExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
+            return SystemUsageExport(
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
+            ).to_export(export_format, location)
         elif indicator == 5:
             return AWCInfrastructureExport(
-                config=config, loc_level=aggregation_level
+                config=config,
+                loc_level=aggregation_level,
+                show_test=include_test
             ).to_export(export_format, location)
         elif indicator == 6:
             return BeneficiaryExport(
                 config=beneficiary_config,
-                loc_level=aggregation_level
+                loc_level=aggregation_level,
+                show_test=include_test
             ).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgressReportView(View):
     def get(self, request, *args, **kwargs):
-
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
@@ -589,7 +618,7 @@ class ProgressReportView(View):
 
         loc_level = get_location_filter(location, domain, config)
 
-        data = ProgressReport(config=config, loc_level=loc_level).get_data()
+        data = ProgressReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
         return JsonResponse(data=data)
 
 
@@ -597,6 +626,7 @@ class ProgressReportView(View):
 class PrevalenceOfSevereView(View):
 
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -623,11 +653,11 @@ class PrevalenceOfSevereView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level)
+                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_prevalence_of_severe_data_map(domain, config, loc_level)
+                data = get_prevalence_of_severe_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -638,6 +668,7 @@ class PrevalenceOfSevereView(View):
 class PrevalenceOfStunningView(View):
 
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -664,11 +695,11 @@ class PrevalenceOfStunningView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level)
+                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_prevalence_of_stunning_data_map(domain, config, loc_level)
+                data = get_prevalence_of_stunning_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_prevalence_of_stunning_data_chart(domain, config, loc_level)
+            data = get_prevalence_of_stunning_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -679,6 +710,7 @@ class PrevalenceOfStunningView(View):
 class NewbornsWithLowBirthWeightView(View):
 
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -705,11 +737,11 @@ class NewbornsWithLowBirthWeightView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level)
+                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, include_test)
             else:
-                data = get_newborn_with_low_birth_weight_map(domain, config, loc_level)
+                data = get_newborn_with_low_birth_weight_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level)
+            data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -720,6 +752,7 @@ class NewbornsWithLowBirthWeightView(View):
 class EarlyInitiationBreastfeeding(View):
 
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -746,11 +779,11 @@ class EarlyInitiationBreastfeeding(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_early_initiation_breastfeeding_data(domain, config, loc_level)
+                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, include_test)
             else:
-                data = get_early_initiation_breastfeeding_map(domain, config, loc_level)
+                data = get_early_initiation_breastfeeding_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_early_initiation_breastfeeding_chart(domain, config, loc_level)
+            data = get_early_initiation_breastfeeding_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -760,6 +793,7 @@ class EarlyInitiationBreastfeeding(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExclusiveBreastfeedingView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -786,11 +820,11 @@ class ExclusiveBreastfeedingView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level)
+                data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_exclusive_breastfeeding_data_map(domain, config, loc_level)
+                data = get_exclusive_breastfeeding_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level)
+            data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -800,6 +834,7 @@ class ExclusiveBreastfeedingView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ChildrenInitiatedView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -826,11 +861,11 @@ class ChildrenInitiatedView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_children_initiated_sector_data(domain, config, loc_level)
+                data = get_children_initiated_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_children_initiated_data_map(domain, config, loc_level)
+                data = get_children_initiated_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_children_initiated_data_chart(domain, config, loc_level)
+            data = get_children_initiated_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -840,6 +875,7 @@ class ChildrenInitiatedView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class InstitutionalDeliveriesView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -863,11 +899,11 @@ class InstitutionalDeliveriesView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_institutional_deliveries_sector_data(domain, config, loc_level)
+                data = get_institutional_deliveries_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_institutional_deliveries_data_map(domain, config, loc_level)
+                data = get_institutional_deliveries_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_institutional_deliveries_data_chart(domain, config, loc_level)
+            data = get_institutional_deliveries_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -877,6 +913,7 @@ class InstitutionalDeliveriesView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ImmunizationCoverageView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
@@ -895,11 +932,11 @@ class ImmunizationCoverageView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_immunization_coverage_sector_data(domain, config, loc_level)
+                data = get_immunization_coverage_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_immunization_coverage_data_map(domain, config, loc_level)
+                data = get_immunization_coverage_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_immunization_coverage_data_chart(domain, config, loc_level)
+            data = get_immunization_coverage_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -909,6 +946,7 @@ class ImmunizationCoverageView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow() - relativedelta(day=1)
 
@@ -924,11 +962,11 @@ class AWCDailyStatusView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awc_daily_status_sector_data(domain, config, loc_level)
+                data = get_awc_daily_status_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_awc_daily_status_data_map(domain, config, loc_level)
+                data = get_awc_daily_status_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_awc_daily_status_data_chart(domain, config, loc_level)
+            data = get_awc_daily_status_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -938,6 +976,7 @@ class AWCDailyStatusView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCsCoveredView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -951,9 +990,9 @@ class AWCsCoveredView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_awcs_covered_sector_data(domain, config, loc_level)
+            data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
         else:
-            data = get_awcs_covered_data_map(domain, config, loc_level)
+            data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -963,6 +1002,7 @@ class AWCsCoveredView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class RegisteredHouseholdView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -976,9 +1016,9 @@ class RegisteredHouseholdView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_registered_household_sector_data(domain, config, loc_level)
+            data = get_registered_household_sector_data(domain, config, loc_level, include_test)
         else:
-            data = get_registered_household_data_map(domain, config, loc_level)
+            data = get_registered_household_data_map(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -988,6 +1028,7 @@ class RegisteredHouseholdView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledChildrenView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1012,11 +1053,11 @@ class EnrolledChildrenView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_enrolled_children_sector_data(domain, config, loc_level)
+                data = get_enrolled_children_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_enrolled_children_data_map(domain, config, loc_level)
+                data = get_enrolled_children_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_enrolled_children_data_chart(domain, config, loc_level)
+            data = get_enrolled_children_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1026,6 +1067,7 @@ class EnrolledChildrenView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1044,9 +1086,9 @@ class EnrolledWomenView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_enrolled_women_sector_data(domain, config, loc_level)
+            data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
         else:
-            data = get_enrolled_women_data_map(domain, config, loc_level)
+            data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1056,6 +1098,7 @@ class EnrolledWomenView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class LactatingEnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1069,9 +1112,9 @@ class LactatingEnrolledWomenView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_lactating_enrolled_women_sector_data(domain, config, loc_level)
+            data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
         else:
-            data = get_lactating_enrolled_women_data_map(domain, config, loc_level)
+            data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1081,6 +1124,7 @@ class LactatingEnrolledWomenView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdolescentGirlsView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1094,9 +1138,9 @@ class AdolescentGirlsView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_adolescent_girls_sector_data(domain, config, loc_level)
+            data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
         else:
-            data = get_adolescent_girls_data_map(domain, config, loc_level)
+            data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1106,6 +1150,7 @@ class AdolescentGirlsView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdhaarBeneficiariesView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1122,11 +1167,11 @@ class AdhaarBeneficiariesView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level)
+                data = get_adhaar_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_adhaar_data_map(domain, config, loc_level)
+                data = get_adhaar_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_adhaar_data_chart(domain, config, loc_level)
+            data = get_adhaar_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1136,6 +1181,7 @@ class AdhaarBeneficiariesView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class CleanWaterView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1151,11 +1197,11 @@ class CleanWaterView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_clean_water_sector_data(domain, config, loc_level)
+                data = get_clean_water_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_clean_water_data_map(domain, config, loc_level)
+                data = get_clean_water_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_clean_water_data_chart(domain, config, loc_level)
+            data = get_clean_water_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1165,6 +1211,7 @@ class CleanWaterView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class FunctionalToiletView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1181,11 +1228,11 @@ class FunctionalToiletView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_functional_toilet_sector_data(domain, config, loc_level)
+                data = get_functional_toilet_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_functional_toilet_data_map(domain, config, loc_level)
+                data = get_functional_toilet_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_functional_toilet_data_chart(domain, config, loc_level)
+            data = get_functional_toilet_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1195,6 +1242,7 @@ class FunctionalToiletView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class MedicineKitView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1211,11 +1259,11 @@ class MedicineKitView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_medicine_kit_sector_data(domain, config, loc_level)
+                data = get_medicine_kit_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_medicine_kit_data_map(domain, config, loc_level)
+                data = get_medicine_kit_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_medicine_kit_data_chart(domain, config, loc_level)
+            data = get_medicine_kit_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1225,6 +1273,7 @@ class MedicineKitView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class InfantsWeightScaleView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1241,11 +1290,11 @@ class InfantsWeightScaleView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_infants_weight_scale_sector_data(domain, config, loc_level)
+                data = get_infants_weight_scale_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_infants_weight_scale_data_map(domain, config, loc_level)
+                data = get_infants_weight_scale_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_infants_weight_scale_data_chart(domain, config, loc_level)
+            data = get_infants_weight_scale_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1255,6 +1304,7 @@ class InfantsWeightScaleView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdultWeightScaleView(View):
     def get(self, request, *args, **kwargs):
+        include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
@@ -1271,11 +1321,11 @@ class AdultWeightScaleView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adult_weight_scale_sector_data(domain, config, loc_level)
+                data = get_adult_weight_scale_sector_data(domain, config, loc_level, include_test)
             else:
-                data = get_adult_weight_scale_data_map(domain, config, loc_level)
+                data = get_adult_weight_scale_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_adult_weight_scale_data_chart(domain, config, loc_level)
+            data = get_adult_weight_scale_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

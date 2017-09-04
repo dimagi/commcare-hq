@@ -117,12 +117,13 @@ def percent(x, y):
 class ExportableMixin(object):
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level=1):
+    def __init__(self, config=None, loc_level=1, show_test=False):
         self.config = config
         self.loc_level = loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def domain(self):
@@ -130,10 +131,12 @@ class ExportableMixin(object):
 
     @property
     def filters(self):
+        filters = []
         infilter_params = get_INFilter_bindparams('excluded_states', self.excluded_states)
-        filters = [
-            NOT(IN('state_id', infilter_params))
-        ]
+
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', infilter_params)))
+
         for key, value in self.config.iteritems():
             if key == 'domain' or key in infilter_params:
                 continue
@@ -244,7 +247,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state'):
+    def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.loc_key = '%s_site_code' % loc_level
@@ -260,6 +263,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
             'excluded_states': self.excluded_states
         })
         clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def group_by(self):
@@ -272,9 +276,10 @@ class AggChildHealthMonthlyDataSource(SqlData):
     @property
     def filters(self):
         filters = [
-            EQ('aggregation_level', 'aggregation_level'),
-            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
+            EQ('aggregation_level', 'aggregation_level')
         ]
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
@@ -510,12 +515,13 @@ class AggCCSRecordMonthlyDataSource(SqlData):
     table_name = 'agg_ccs_record_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state'):
+    def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_site_code' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def domain(self):
@@ -528,9 +534,12 @@ class AggCCSRecordMonthlyDataSource(SqlData):
     @property
     def filters(self):
         filters = [
-            EQ('aggregation_level', 'aggregation_level'),
-            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
+            EQ('aggregation_level', 'aggregation_level')
         ]
+
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
@@ -634,12 +643,13 @@ class AggAWCMonthlyDataSource(SqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state'):
+    def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_site_code' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def domain(self):
@@ -1753,9 +1763,10 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
 class ProgressReport(object):
 
-    def __init__(self, config=None, loc_level='state'):
+    def __init__(self, config=None, loc_level='state', show_test=False):
         self.loc_level = loc_level
         self.config = config
+        self.show_test = show_test
 
     @property
     def new_table_config(self):
@@ -2124,15 +2135,18 @@ class ProgressReport(object):
         return {
             'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
                 config=self.config,
-                loc_level=self.loc_level
+                loc_level=self.loc_level,
+                show_test=self.show_test
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
                 config=self.config,
-                loc_level=self.loc_level
+                loc_level=self.loc_level,
+                show_test=self.show_test
             ),
             'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
                 config=self.config,
-                loc_level=self.loc_level
+                loc_level=self.loc_level,
+                show_test=self.show_test
             )
         }
 
