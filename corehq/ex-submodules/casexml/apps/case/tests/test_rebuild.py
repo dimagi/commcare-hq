@@ -491,7 +491,31 @@ class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
 
 @use_sql_backend
 class CaseRebuildTestSQL(CaseRebuildTest):
-    pass
+    def test_rebuild_duplicate_indexes(self):
+        parent_case_id = uuid.uuid4().hex
+        post_case_blocks([
+            CaseBlock(parent_case_id, create=True).as_xml()
+        ], domain=REBUILD_TEST_DOMAIN)
+        child_case_id = uuid.uuid4().hex
+        post_case_blocks([
+            CaseBlock(child_case_id, create=True).as_xml()
+        ], domain=REBUILD_TEST_DOMAIN)
+        xform, _ = post_case_blocks([
+            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
+        ], domain=REBUILD_TEST_DOMAIN)
+
+        child_case = CaseAccessors(REBUILD_TEST_DOMAIN).get_case(child_case_id)
+        self.assertEqual(1, len(child_case.indices))
+        index = child_case.indices[0]
+        index.id = None
+        index.save()
+
+        child_case = CaseAccessors(REBUILD_TEST_DOMAIN).get_case(child_case_id)
+        self.assertEqual(2, len(child_case.indices))
+
+        rebuild_case_from_forms(REBUILD_TEST_DOMAIN, child_case_id, RebuildWithReason(reason='test'))
+        child_case = CaseAccessors(REBUILD_TEST_DOMAIN).get_case(child_case_id)
+        self.assertEqual(1, len(child_case.indices))
 
 
 class TestCheckActionOrder(SimpleTestCase):
