@@ -67,6 +67,15 @@ def render_message(language_code, template, context):
 
 
 def static_negative_growth_indicator(recipient, schedule_instance):
+    if schedule_instance.case.get_case_property('zscore_grading_wfa') == 'red':
+        # If the child currently has a red score, do not send this message.
+        # We check this here instead of checking it as part of the rule criteria
+        # because if we checked it in the rule critiera, then the message would
+        # send as soon as the score becomes yellow which we don't want. We just
+        # want to skip sending it if it's red at the time this message is supposed
+        # to send.
+        return []
+
     form = get_last_growth_monitoring_form(schedule_instance.domain, schedule_instance.case_id)
     if not form:
         return []
