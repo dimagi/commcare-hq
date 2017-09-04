@@ -13,11 +13,12 @@ from dimagi.utils.chunked import chunked
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
+        parser.add_arugment('domain')
         parser.add_arugment('infile')
         parser.add_arugment('logfile')
 
-    def handle(self, infile, logfile, *args, **options):
-        self.domain = 'icds-cas'
+    def handle(self, domain, infile, logfile, *args, **options):
+        self.domain = domain
         self.case_accessor = CaseAccessors(self.domain)
         with open(infile, 'r') as f, open(logfile, 'w') as log:
             reader = csv.reader(f)
