@@ -157,8 +157,8 @@ class FormProcessorCouch(object):
             if lock:
                 lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
 
-        assert case.domain == domain
         try:
+            assert case.domain == domain, (case.domain, domain)
             if not found and lock_obj:
                 # the lock was only aquired if we found a case
                 acquire_lock(lock_obj, degrade_gracefully=False)
