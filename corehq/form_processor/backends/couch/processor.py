@@ -156,12 +156,10 @@ class FormProcessorCouch(object):
             case.domain = domain
             if lock:
                 lock_obj = CommCareCase.get_obj_lock_by_id(case_id)
+                acquire_lock(lock_obj, degrade_gracefully=False)
 
         try:
             assert case.domain == domain, (case.domain, domain)
-            if not found and lock_obj:
-                # the lock was only aquired if we found a case
-                acquire_lock(lock_obj, degrade_gracefully=False)
             forms = FormProcessorCouch.get_case_forms(case_id)
             filtered_forms = [f for f in forms if f.is_normal]
             sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
