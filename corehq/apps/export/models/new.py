@@ -784,6 +784,7 @@ class ExportInstance(BlobMixin, Document):
                     top=False,
                     **column_initialization_data
                 )
+                cls.__insert_case_name(table, top=False)
             else:
                 cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
@@ -822,14 +823,11 @@ class ExportInstance(BlobMixin, Document):
         :param top: When True inserts the columns at the top, when false at the bottom
         :param column_initialization_data: Extra data to be passed to the column if needed on initialization
         """
-        from corehq.apps.export.system_properties import get_case_name_column
-
         properties = map(copy, properties)
         if top:
-            insert_fn = partial(table.columns.insert, 0)
             properties = reversed(properties)
-        else:
-            insert_fn = table.columns.append
+
+        insert_fn = cls._get_insert_fn(table, top)
 
         for static_column in properties:
             index, existing_column = table.get_column(
@@ -846,6 +844,17 @@ class ExportInstance(BlobMixin, Document):
             if not existing_column:
                 insert_fn(static_column)
 
+    @classmethod
+    def __insert_case_name(cls, table, top=True):
+        """
+        Inserts a case_name column if necessary
+
+        :param table: A TableConfiguration instance
+        :param top: When True inserts the columns at the top, when false at the bottom
+        """
+        insert_fn = cls._get_insert_fn(table, top)
+
+        from corehq.apps.export.system_properties import get_case_name_column
         case_id_columns = {
             _path_nodes_to_string(column.item.path[:-1]): column
             for column in table.columns if column.item.path[-1].name == '@case_id'
@@ -857,6 +866,13 @@ class ExportInstance(BlobMixin, Document):
         for path, column in case_id_columns.items():
             if path not in case_name_columns:
                 insert_fn(get_case_name_column(column.item))
+
+    @staticmethod
+    def _get_insert_fn(table, top):
+        if top:
+            return partial(table.columns.insert, 0)
+        else:
+            return table.columns.append
 
     @property
     def file_size(self):
