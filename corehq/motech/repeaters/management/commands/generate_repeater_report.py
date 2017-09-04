@@ -73,6 +73,8 @@ class Command(BaseCommand):
             self.ws.cell(row=1, column=column_num).value = "Attempt {index}".format(index=i + 1)
 
     def _save_file(self, repeater_id, state):
+        if self.max_attempts_in_sheet > 0:
+            self._add_header_for_attempts()
         file_name = "repeater_report_{repeater_id}_{state}_{timestamp}.xlsx".format(
             repeater_id=repeater_id if repeater_id else '',
             state=state if state else '',
@@ -117,7 +119,5 @@ class Command(BaseCommand):
                     continue
             self._add_row(record)
 
-        if self.max_attempts_in_sheet > 0:
-            self._add_header_for_attempts()
         file_name = self._save_file(repeater_id, state)
         print("Report saved in file:{filename}".format(filename=file_name))
