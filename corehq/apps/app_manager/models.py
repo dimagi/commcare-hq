@@ -1578,7 +1578,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             getter = 'get_{}'.format(action_type)
             if hasattr(self.actions, getter):
                 # user getter if there is one
-                a = getattr(self.actions, getter)()
+                a = list(getattr(self.actions, getter)())
             else:
                 a = getattr(self.actions, action_type)
             if isinstance(a, list):
