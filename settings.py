@@ -790,7 +790,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
-    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+    ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
