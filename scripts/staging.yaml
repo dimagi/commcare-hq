@@ -57,6 +57,7 @@ branches:
   - np/11.1 # NP 8/24
   - np/pycco # NP 8/24
   - sk/cache-sessions-2  # sk 8/25
+  - jls/move-style-styles # Jenny 9/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
