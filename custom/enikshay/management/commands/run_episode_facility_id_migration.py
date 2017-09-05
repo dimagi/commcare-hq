@@ -18,13 +18,20 @@ class Command(BaseCommand):
         if not episode_case_ids:
             episode_case_ids = case_accessor.get_case_ids_in_domain(type='episode')
 
+        errorred_case_ids = []
+
         for episode_case_id in episode_case_ids:
             print episode_case_id
-            episode_case = case_accessor.get_case(episode_case_id)
             try:
-                updater = EpisodeFacilityIDMigration(domain, episode_case)
-            except ENikshayCaseNotFound:
-                continue
-            update_json = updater.update_json()
-            if update_json:
-                update_case(domain, episode_case_id, update_json)
+                episode_case = case_accessor.get_case(episode_case_id)
+                try:
+                    updater = EpisodeFacilityIDMigration(domain, episode_case)
+                except ENikshayCaseNotFound:
+                    continue
+                update_json = updater.update_json()
+                if update_json:
+                    update_case(domain, episode_case_id, update_json)
+            except:
+                errorred_case_ids.append(episode_case_id)
+        print len(errorred_case_ids)
+        print errorred_case_ids
