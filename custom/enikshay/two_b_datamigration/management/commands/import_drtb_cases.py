@@ -1750,7 +1750,17 @@ def match_facility(domain, xlsx_facility_name):
     elif "other" in xlsx_facility_name:
         return xlsx_facility_name, None
     else:
-        return match_location(domain, xlsx_facility_name, location_type="cdst")
+        # this is really ugly but some rows have a lab code
+        # our site codes are prepended with cdst and cbnaat
+        try:
+            return match_location(domain, xlsx_facility_name, location_type="cdst")
+        except ValidationFailure:
+            try:
+                cbnaat_facility_name = "cbnaat_" + xlsx_facility_name.strip().replace('-', '_').lower()
+                return match_location(domain, cbnaat_facility_name, location_type="cdst")
+            except ValidationFailure:
+                cdst_facility_name = "cdst_" + xlsx_facility_name.strip().replace('-', '_').lower()
+                return match_location(domain, cdst_facility_name, location_type="cdst")
 
 
 def match_phi(domain, xlsx_phi_name):
