@@ -97,7 +97,7 @@ from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,

@@ -16,7 +16,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_jquery_ui,
     use_multiselect,

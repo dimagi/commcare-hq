@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_slug
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
-from corehq.apps.style.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
 
 from dimagi.utils.decorators.memoized import memoized

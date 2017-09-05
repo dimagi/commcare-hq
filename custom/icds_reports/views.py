@@ -18,7 +18,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.style.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
 from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
