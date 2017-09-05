@@ -63,7 +63,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     try:
         form = module.get_form(form_id)
-    except AttributeError:
+    except IndexError:
         return bail(request, domain, app_id, not_found="form")
 
     return _get_form_designer_view(request, domain, app, module, form)
