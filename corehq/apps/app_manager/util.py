@@ -601,7 +601,7 @@ class LatestAppInfo(object):
     def app(self):
         app = get_app(self.domain, self.app_id, latest=True, target='release')
         # quickache based on a copy app_id will have to be updated too fast
-        is_app_id_brief = self.app_id == (app.copy_of or app.id)
+        is_app_id_brief = self.app_id == app.master_id
         assert is_app_id_brief, "this class doesn't handle copy app ids"
         return app
 
