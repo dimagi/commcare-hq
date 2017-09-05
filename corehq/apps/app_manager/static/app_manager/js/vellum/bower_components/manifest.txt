@@ -7,12 +7,12 @@
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-beta)
 │ └── jquery#3.2.1
-├── chai#4.1.1
-├── codemirror#5.19.0 (latest is 5.27.4)
+├── chai#4.1.1 (4.1.2 available)
+├── codemirror#5.19.0 (latest is 5.29.0)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.5.0 (latest is 3.0.5)
+├── fuse.js#2.5.0 (latest is 3.1.0)
 ├── jquery#3.2.1
-├── jsdiff#3.3.0
+├── jsdiff#3.3.0 (3.3.1 available)
 ├─┬ jstree#3.3.4
 │ └── jquery#3.2.1
 ├── jstree-actions#0.1.3
