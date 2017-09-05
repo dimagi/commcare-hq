@@ -1737,16 +1737,17 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         return queryset
 
     def get_weight_efficiency(date):
-        return AggAwcMonthly.objects.filter(
+        queryset = AggAwcMonthly.objects.filter(
             month=date, **config
         ).values(
             'month', 'aggregation_level', 'awc_name'
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             wer_weight=Sum('wer_weighed'),
             wer_eli=Sum('wer_eligible')
         )
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
 
     this_month_data = get_data_for(datetime(*month))
     prev_month_data = get_data_for(datetime(*prev_month))
@@ -3106,8 +3107,6 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             birth=Sum('bf_at_birth'),
             in_month=Sum('born_in_month'),
@@ -3361,8 +3360,6 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('ebf_in_month'),
             eligible=Sum('ebf_eligible'),
@@ -4154,8 +4151,6 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
             eligible=Sum('fully_immunized_eligible'),
@@ -4838,8 +4833,6 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             household=Sum('cases_household'),
         )
@@ -6019,8 +6012,6 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_functional_toilet'),
             all=Sum('num_awcs'),
@@ -6443,8 +6434,6 @@ def get_medicine_kit_sector_data(domain, config, loc_level, show_test=False):
         **config
     ).values(
         *group_by
-    ).exclude(
-        state_id__in=get_test_state_locations_id(domain)
     ).annotate(
         in_month=Sum('infra_medicine_kits'),
         all=Sum('num_awcs'),
@@ -6548,8 +6537,6 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_infant_weighing_scale'),
             all=Sum('num_awcs'),
@@ -6811,8 +6798,6 @@ def get_adult_weight_scale_data_map(domain, config, loc_level, show_test=False):
             **filters
         ).values(
             '%s_name' % loc_level
-        ).exclude(
-            state_id__in=get_test_state_locations_id(domain)
         ).annotate(
             in_month=Sum('infra_adult_weighing_scale'),
             all=Sum('num_awcs'),

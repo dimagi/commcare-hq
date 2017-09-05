@@ -1,7 +1,9 @@
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 
 
+@quickcache(['domain'], timeout=5 * 60)
 def get_test_state_locations_id(domain):
     return [
         sql_location.location_id
