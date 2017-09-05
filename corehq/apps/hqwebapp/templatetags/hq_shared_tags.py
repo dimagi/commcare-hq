@@ -672,3 +672,8 @@ def initial_page_data(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'initial_page_data')
+
+
+@register.inclusion_tag('hqstyle/forms/basic_errors.html')
+def bootstrap_form_errors(form):
+    return {'form': form}

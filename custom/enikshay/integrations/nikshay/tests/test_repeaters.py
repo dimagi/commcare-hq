@@ -289,6 +289,22 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['poccupation'], 4)
 
+    def test_age(self):
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {'age': '2.6'})
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['page'], '2')
+
+        update_case(self.domain, self.person_id, {'age': '0.6'})
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['page'], '1')
+
     def test_username_password(self):
         episode_case = self._create_nikshay_enabled_case()
         username = "arwen"
