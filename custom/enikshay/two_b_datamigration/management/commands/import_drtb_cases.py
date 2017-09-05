@@ -1719,6 +1719,7 @@ def match_location(domain, xlsx_name, location_type=None):
     """
     if not xlsx_name:
         return None, None
+    xlsx_name = xlsx_name.strip()
 
     default_query_kwargs = {"domain": domain}
     if location_type:
