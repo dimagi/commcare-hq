@@ -4,7 +4,7 @@
 describe('Util', function() {
     describe('#displayOptions', function() {
         beforeEach(function() {
-            sinon.stub(Util, 'getDisplayOptionsKey', function() { return 'mykey'; });
+            sinon.stub(Util, 'getDisplayOptionsKey').callsFake(function() { return 'mykey'; });
             window.localStorage.clear();
         });
 
