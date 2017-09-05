@@ -12,6 +12,7 @@ BHD_ROLE = 'BHD (For VL Dashboard Testing)'
 
 
 class LocationTypes(object):
+    STATE = 'state'
     BLOCK = 'block'
     SUPERVISOR = 'supervisor'
     AWC = 'awc'
