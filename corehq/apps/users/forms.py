@@ -6,7 +6,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 
-from corehq.apps.style.forms.widgets import Select2Ajax
+from corehq.apps.hqwebapp.forms.widgets import Select2Ajax
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError

@@ -5,7 +5,7 @@ from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
-from corehq.apps.style.forms.widgets import Select2MultipleChoiceWidget
+from corehq.apps.hqwebapp.forms.widgets import Select2MultipleChoiceWidget
 
 from dimagi.utils.decorators.memoized import memoized
 
