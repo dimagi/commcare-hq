@@ -235,8 +235,8 @@ describe('Fullform UI', function() {
             spy = sinon.spy();
             spy2 = sinon.spy();
 
-        sinon.stub(form, 'fromJS', spy);
-        sinon.stub(form2, 'fromJS', spy2);
+        sinon.stub(form, 'fromJS').callsFake(spy);
+        sinon.stub(form2, 'fromJS').callsFake(spy2);
 
         $.publish('session.reconcile', [{}, new Question(questionJSON, form)]);
         assert.isFalse(spy.calledOnce);
