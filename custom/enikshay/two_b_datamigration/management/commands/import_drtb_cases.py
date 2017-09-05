@@ -1781,7 +1781,11 @@ def get_tu(domain, phi_id):
 def get_drtb_hiv_location(domain, district_id):
     if not district_id:
         return None, None
-    drtb_hiv = SQLLocation.get(domain=domain, parent__location_id=district_id, location_type__code="drtb-hiv")
+    drtb_hiv = SQLLocation.active_objects.get(
+        domain=domain,
+        parent__location_id=district_id,
+        location_type__code="drtb-hiv"
+    )
     return drtb_hiv.name, drtb_hiv.location_id
 
 
