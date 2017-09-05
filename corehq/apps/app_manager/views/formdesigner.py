@@ -216,8 +216,6 @@ def _get_vellum_core_context(request, domain, app, module, form):
             {
                 'key': 'fixture',
                 'name': 'Fixtures',
-                'endpoint': reverse('fixture_metadata',
-                                    kwargs={'domain': domain}),
             },
         ],
         'form': form.source,
