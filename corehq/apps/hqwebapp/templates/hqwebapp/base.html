@@ -159,9 +159,9 @@
         {% endif %}
 
         {# Core Libraries #}
-        {% include "style/includes/jquery.html" %}
+        {% include "hqwebapp/includes/jquery.html" %}
         {% compress js %}
-        {% include "style/includes/core_libraries.html" %}
+        {% include "hqwebapp/includes/core_libraries.html" %}
         {% endcompress %} 
 
         {% if request.use_jquery_ui %}
@@ -197,7 +197,7 @@
         {% block head %}
         {% endblock %}
 
-        {% include 'style/includes/analytics_all.html' %}
+        {% include 'hqwebapp/includes/analytics_all.html' %}
 
         {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
         {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
@@ -273,7 +273,7 @@
                     <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
                         <div class="nav-settings-bar pull-right">
                         {% if request.user.is_authenticated %}
-                            {% include 'style/includes/global_navigation_bar.html' %}
+                            {% include 'hqwebapp/includes/global_navigation_bar.html' %}
                         {% else %}
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                         {% endif %}
@@ -413,14 +413,14 @@
         <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
         {% endif %}
 
-        {% include "style/includes/ko.html" %}
+        {% include "hqwebapp/includes/ko.html" %}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}
 
         {% if request.use_angular_js %}
         {% compress js %}
-        {% include "style/includes/angular.html" %}
+        {% include "hqwebapp/includes/angular.html" %}
         {% endcompress %}
         {% endif %}
 
@@ -534,7 +534,7 @@
         {% block js %}{% endblock js %}
 
         {# Report Issue #}
-        {% include 'style/includes/modal_report_issue.html' %}
+        {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
         {# Remote modals (EULA and CDA) #}
         {% compress js %}
@@ -543,11 +543,11 @@
 
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
+            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
         {% endif %}
 
         {# 30 Day Trial #}
-        {% include 'style/includes/modal_30_day_trial.html' %}
+        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

@@ -1196,8 +1196,6 @@ def clean_password(txt):
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
     else:
-        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-        # until then, we are using a dimagi hosted fork
         strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
         message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:
