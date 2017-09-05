@@ -243,6 +243,30 @@ def apply_exclude(domain, queryset):
     )
 
 
+def get_age_filter(age_value):
+    """
+        When age_value = 6 it means first range is chosen 0-6 months.
+        For that range we want to include 0 and 6 in results.
+    """
+    if age_value == '6':
+        return {'age_tranche__in': ['0', '6']}
+    else:
+        return {'age_tranche': age_value}
+
+
+def match_age(age):
+    if 0 <= age <= 1:
+        return '0-1 month'
+    elif 1 < age <= 6:
+        return '1-6 months'
+    elif 6 < age <= 12:
+        return '6-12 months'
+    elif 12 < age <= 36:
+        return '1-3 years'
+    elif 36 < age <= 72:
+        return '3-6 years'
+
+
 def get_location_filter(location, domain, config):
     loc_level = 'state'
     if location:
@@ -1292,8 +1316,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
-        reverse=True
+        key=lambda x: x['percent']
     )
 
     return {
@@ -1453,7 +1476,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
             weighed=Sum('wer_weighed'),
             all=Sum('wer_eligible'),
         )
-        if show_test:
+        if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
@@ -1466,7 +1489,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
         attended_children=Avg('attended_children_percent')
     ).order_by('pse_date')
 
-    if show_test:
+    if not show_test:
         chart_data = apply_exclude(domain, chart_data)
 
     awc_count_chart = []
@@ -1566,7 +1589,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
 
-    if show_test:
+    if not show_test:
         map_image_data = apply_exclude(domain, map_image_data)
         kpi_data_tm = apply_exclude(domain, kpi_data_tm)
         kpi_data_lm = apply_exclude(domain, kpi_data_lm)
@@ -1668,12 +1691,12 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
             [
                 {
                     'key': 'AWC Days Open per week',
-                    'values': [
+                    'values': sorted([
                         dict(
                             x=x_val,
                             y=y_val
                         ) for x_val, y_val in open_count_chart.iteritems()
-                    ],
+                    ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
                     "color": BLUE
@@ -1682,12 +1705,12 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
             [
                 {
                     'key': 'PSE- Average Weekly Attendance',
-                    'values': [
+                    'values': sorted([
                         dict(
                             x=x_val,
                             y=(sum(y_val) / len(y_val))
                         ) for x_val, y_val in attended_children_chart.iteritems()
-                    ],
+                    ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
                     "color": BLUE
@@ -1997,16 +2020,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
         if chart_row['age_tranche']:
             age = int(chart_row['age_tranche'])
             valid = chart_row['valid']
-            if 0 <= age < 1:
-                chart_data['0-1 month'] += valid
-            elif 1 <= age < 6:
-                chart_data['1-6 months'] += valid
-            elif 6 <= age < 12:
-                chart_data['6-12 months'] += valid
-            elif 12 <= age < 36:
-                chart_data['1-3 years'] += valid
-            elif 36 <= age <= 72:
-                chart_data['3-6 years'] += valid
+            chart_data[match_age(age)] += valid
 
     def get_data_for_kpi(filters, date):
         queryset = AggAwcDailyView.objects.filter(
@@ -2431,8 +2445,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
-        reverse=True
+        key=lambda x: x['percent']
     )
 
     return {
@@ -2702,8 +2715,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
-        reverse=True
+        key=lambda x: x['percent']
     )
 
     return {
@@ -2966,8 +2978,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
-        key=lambda x: x['percent'],
-        reverse=True
+        key=lambda x: x['percent']
     )
 
     return {
@@ -5011,27 +5022,12 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
         age = int(row['age_tranche'])
         valid = row['valid']
         all += valid
-        if 0 <= age < 1:
-            chart['0-1 month'] += valid
-        elif 1 <= age < 6:
-            chart['1-6 months'] += valid
-        elif 6 <= age < 12:
-            chart['6-12 months'] += valid
-        elif 12 <= age < 36:
-            chart['1-3 years'] += valid
-        elif 36 <= age <= 72:
-            chart['3-6 years'] += valid
+        chart[match_age(age)] += valid
 
         if location in best_worst:
             best_worst[location] += valid
         else:
             best_worst[location] = valid
-
-    top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
 
     return {
         "chart_data": [
@@ -5049,9 +5045,6 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                 "color": BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 

@@ -13,8 +13,8 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.label = "Immunization coverage (at age 1 year)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/immunization_coverage/map', label: 'Map'},
-        'chart': {route: '/immunization_coverage/chart', label: 'Chart'},
+        'map': {route: '/immunization_coverage/map', label: 'Map View'},
+        'chart': {route: '/immunization_coverage/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -63,10 +63,10 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
 
@@ -158,7 +158,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -168,7 +168,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
                     var total = findValue(vm.chartData[1].values, d.value);

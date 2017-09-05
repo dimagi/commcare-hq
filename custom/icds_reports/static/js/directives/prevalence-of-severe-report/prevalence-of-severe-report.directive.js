@@ -14,8 +14,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/wasting/map', label: 'Map'},
-        'chart': {route: '/wasting/chart', label: 'Chart'},
+        'map': {route: '/wasting/map', label: 'Map View'},
+        'chart': {route: '/wasting/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -70,10 +70,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
@@ -144,7 +144,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
             },

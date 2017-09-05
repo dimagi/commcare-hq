@@ -14,8 +14,8 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/stunning/map', label: 'Map'},
-        'chart': {route: '/stunning/chart', label: 'Chart'},
+        'map': {route: '/stunning/map', label: 'Map View'},
+        'chart': {route: '/stunning/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -70,10 +70,10 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
@@ -144,7 +144,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
             },

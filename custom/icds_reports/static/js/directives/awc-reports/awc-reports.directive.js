@@ -1917,7 +1917,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 yAxis: {
                     axisLabel: '',
                     tickFormat: function(d) {
-                        return d3.format('.2f')(d);
+                        return d3.format('.3f')(d);
                     },
                 },
             },
