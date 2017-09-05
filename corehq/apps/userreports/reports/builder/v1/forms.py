@@ -1280,7 +1280,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 id="columns-table",
                 data_bind='with: columnsList'
             ),
-            hqcrispy.HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
+            hqcrispy.B3HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

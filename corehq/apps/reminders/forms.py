@@ -779,7 +779,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 css_class="input-xlarge",
             ),
             crispy.Field('event_interpretation', data_bind="value: event_interpretation"),
-            hqcrispy.HiddenFieldWithErrors('events', data_bind="value: events"),
+            hqcrispy.B3HiddenFieldWithErrors('events', data_bind="value: events"),
         ]
 
     @property
