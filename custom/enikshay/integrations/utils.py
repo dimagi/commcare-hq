@@ -94,10 +94,11 @@ def is_valid_archived_submission(episode_case):
 
 
 def case_properties_changed(case, case_properties):
+    """NOTE: only works for SQL domains"""
     if isinstance(case_properties, basestring):
         case_properties = [case_properties]
 
-    last_case_action = case.actions[-1]
+    last_case_action = case.get_form_transactions()[-1]
     if last_case_action.is_case_create:
         return False
 

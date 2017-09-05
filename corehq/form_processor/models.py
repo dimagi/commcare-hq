@@ -794,6 +794,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     def get_opening_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE)
 
+    @memoized
+    def get_form_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM)
+
     def _transactions_by_type(self, transaction_type):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.is_saved():

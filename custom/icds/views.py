@@ -13,7 +13,7 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es.users import UserES
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.decorators import use_select2
 
 from custom.icds.messaging.indicators import (

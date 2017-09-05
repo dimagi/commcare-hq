@@ -12,7 +12,7 @@ from corehq.apps.userreports.ui.fields import JsonField
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
-import corehq.apps.style.crispy as hqcrispy
+import corehq.apps.hqwebapp.crispy as hqcrispy
 
 
 class PerformanceFormMixin(object):

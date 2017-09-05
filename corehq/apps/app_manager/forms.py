@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.toggles import LINKED_APPS
 
 from .dbaccessors import get_all_built_app_ids_and_versions

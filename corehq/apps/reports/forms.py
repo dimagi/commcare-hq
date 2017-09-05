@@ -1,5 +1,5 @@
 from django.utils.translation import ugettext
-from corehq.apps.style.crispy import FormActions, B3MultiField
+from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
 import langcodes
 
 from django import forms

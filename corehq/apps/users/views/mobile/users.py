@@ -464,7 +464,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
             'next_url': reverse(EditCommCareUserView.urlname, args=[self.domain, kwargs['user_id']]),
             'next_url_text': _("Go back to Edit Mobile Worker"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -1076,7 +1076,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -1149,7 +1149,7 @@ class DownloadUsersStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to Mobile Workers"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

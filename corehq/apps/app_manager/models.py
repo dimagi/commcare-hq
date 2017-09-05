@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -259,7 +259,11 @@ class IndexedSchema(DocumentSchema):
         return self._i
 
     def __eq__(self, other):
-        return other and (self.id == other.id) and (self._parent == other._parent)
+        return (
+            other and isinstance(other, IndexedSchema)
+            and (self.id == other.id)
+            and (self._parent == other._parent)
+        )
 
     class Getter(object):
 
@@ -369,7 +373,7 @@ class OpenCaseAction(FormAction):
     external_id = StringProperty()
 
 
-class OpenSubCaseAction(FormAction):
+class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
     case_name = StringProperty()
@@ -381,6 +385,10 @@ class OpenSubCaseAction(FormAction):
     relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    @property
+    def form_element_name(self):
+        return 'subcase_{}'.format(self.id)
 
 
 class FormActions(DocumentSchema):
@@ -401,6 +409,8 @@ class FormActions(DocumentSchema):
 
     subcases = SchemaListProperty(OpenSubCaseAction)
 
+    get_subcases = IndexedSchema.Getter('subcases')
+
     def all_property_names(self):
         names = set()
         names.update(self.update_case.update.keys())
@@ -408,6 +418,9 @@ class FormActions(DocumentSchema):
         for subcase in self.subcases:
             names.update(subcase.case_properties.keys())
         return names
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.subcases])
 
 
 class CaseIndex(DocumentSchema):
@@ -668,6 +681,9 @@ class AdvancedFormActions(DocumentSchema):
         add_actions('open', self.get_open_actions())
 
         return meta
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.get_open_subcase_actions()])
 
 
 class FormSource(object):
@@ -1563,7 +1579,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
-            a = getattr(self.actions, action_type)
+            getter = 'get_{}'.format(action_type)
+            if hasattr(self.actions, getter):
+                # user getter if there is one
+                a = list(getattr(self.actions, getter)())
+            else:
+                a = getattr(self.actions, action_type)
             if isinstance(a, list):
                 if a:
                     actions[action_type] = a
@@ -4342,6 +4363,12 @@ class VersionedDoc(LazyBlobDoc):
     def id(self):
         return self._id
 
+    @property
+    def master_id(self):
+        """Return the ID of the 'master' app. For app builds this is the ID
+        of the app they were built from otherwise it's just the app's ID."""
+        return self.copy_of or self._id
+
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
             increment_version = not self.copy_of
@@ -5094,7 +5121,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
 
-        LatestAppInfo(self.copy_of or self.id, self.domain).clear_caches()
+        LatestAppInfo(self.master_id, self.domain).clear_caches()
 
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -5471,7 +5498,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
-            'uniqueid': self.copy_of or self.id,
+            'uniqueid': self.master_id,
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
@@ -6318,7 +6345,7 @@ class GlobalAppConfig(Document):
         Returns the actual config object for the app or an unsaved
             default object
         """
-        app_id = app.copy_of or app.id
+        app_id = app.master_id
 
         res = cls.get_db().view(
             "global_app_config_by_app_id/view",

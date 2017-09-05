@@ -12,7 +12,7 @@ from corehq.apps.data_interfaces.models import (
     CustomActionDefinition,
 )
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
