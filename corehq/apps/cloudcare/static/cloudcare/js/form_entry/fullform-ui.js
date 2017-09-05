@@ -162,7 +162,7 @@ Container.prototype.fromJS = function(json) {
                 if (ko.utils.unwrapObservable(options.target.serverError)) {
                     options.data.answer = _.clone(options.target.answer());
                 }
-                if (_.isEqual(options.target.choices(), options.data.choices)) {
+                if (options.target.choices && _.isEqual(options.target.choices(), options.data.choices)) {
                     // replacing the full choice list if it has a few thousand items
                     // is actually quite expensive and can freeze the page for seconds.
                     // at the very least we can skip entirely when there's no change.
