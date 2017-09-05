@@ -300,6 +300,8 @@ def update_case(domain, case_id, updated_properties, external_id=None,
 
 def get_person_locations(person_case, episode_case=None):
     """
+    picks episode case's diagnosing_facility_id if passed else falls back to person's owner id for
+    fetching the base location to get the hierarchy
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
 
