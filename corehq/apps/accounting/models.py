@@ -581,32 +581,12 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
-class SoftwareProduct(models.Model):
-    """
-    Specifies a product name that can be included in a subscription. e.g. CommTrack Pro, CommCare Community, etc.
-    """
-    name = models.CharField(max_length=40, unique=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'accounting'
-
-    def __str__(self):
-        return "Software Product '%s'" % self.name
-
-    def get_rate(self, default_instance=True):
-        try:
-            return self.softwareproductrate_set.filter(is_active=True).latest('date_created')
-        except SoftwareProductRate.DoesNotExist:
-            return SoftwareProductRate() if default_instance else None  # the defaults
-
-
 class SoftwareProductRate(models.Model):
     """
-    Links a SoftwareProduct to a monthly fee.
-    Once created, ProductRates cannot be modified. Instead, a new ProductRate must be created.
+    Represents the monthly fixed fee for a software product.
+    Once created, SoftwareProductRates cannot be modified. Instead, a new SoftwareProductRate must be created.
     """
-    product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
+    name = models.CharField(max_length=40)
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -619,7 +599,7 @@ class SoftwareProductRate(models.Model):
         return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
+        if not isinstance(other, self.__class__) or not self.name == other.name:
             return False
         for field in ['monthly_fee', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
@@ -628,8 +608,7 @@ class SoftwareProductRate(models.Model):
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
-        product, _ = SoftwareProduct.objects.get_or_create(name=product_name)
-        rate = SoftwareProductRate(product=product, monthly_fee=monthly_fee)
+        rate = SoftwareProductRate(name=product_name, monthly_fee=monthly_fee)
         if save:
             rate.save()
         return rate
