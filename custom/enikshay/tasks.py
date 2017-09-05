@@ -10,6 +10,7 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
+from soil import MultipleTaskDownload
 
 from corehq import toggles
 from corehq.apps.hqcase.utils import update_case, bulk_update_cases
@@ -52,8 +53,9 @@ from .data_store import AdherenceDatastore
 logger = get_task_logger(__name__)
 
 DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
+BatchStatus = namedtuple('BatchStatus', 'update_count noupdate_count success_count errors case_batches duration')
 
-CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
+CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
 
 
@@ -65,8 +67,6 @@ cache = get_redis_client()
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
-    task_id = self.request.id
-    cache.set(CACHE_KEY, task_id)
 
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
@@ -75,14 +75,21 @@ def enikshay_task(self):
             continue
 
         try:
-            EpisodeUpdater(domain).run()
+            task_group = EpisodeUpdater(domain).run()
         except Exception as e:
             logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
+
+        download = MultipleTaskDownload()
+        download.set_task(task_group)
+        download.save()
+        cache.set(CACHE_KEY.format(domain), download.download_id)
+
+        send_status_email(domain, task_group.get())
 
 
 @task
 def run_task(updater, case_ids):
-    updater.run_batch(case_ids)
+    return updater.run_batch(case_ids)
 
 
 class Timer:
@@ -117,25 +124,13 @@ class EpisodeUpdater(object):
             EpisodeTestUpdate,
         ]
 
-    def update_status(self, t, success, fail, total, batches, errors):
-        if self.task_id is None:
-            return
-        enikshay_task.update_state(state="PROGRESS", meta={
-            'success': success,
-            'fail': fail,
-            'total': total,
-            'batches': batches,
-            'errors': errors,
-            'time_elapsed': t.interval,
-        })
-
     def run(self):
         """Kicks off multiple tasks with a batch of case_ids for each partition
         """
         tasks = []
         for case_ids in self._get_case_id_batches():
-            tasks.append(run_task.s(self.domain, case_ids))
-        group(tasks)()
+            tasks.append(run_task.s(self, case_ids))
+        return group(tasks)()
 
     def _get_case_id_batches(self):
         dbs = get_db_aliases_for_partitioned_query()
@@ -156,13 +151,10 @@ class EpisodeUpdater(object):
         noupdate_count = 0
         error_count = 0
         success_count = 0
-        batches_processed = 0
+        case_batches = 0
 
         errors = []
-        total_count = len(case_ids)
-
         with Timer() as t:
-            self.update_status(t, 0, 0, total_count, 0, errors)
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases(case_ids):
@@ -189,41 +181,12 @@ class EpisodeUpdater(object):
                 if len(updates) >= batch_size:
                     bulk_update_cases(self.domain, updates, device_id)
                     updates = []
-                    batches_processed += 1
-
-                self.update_status(t, success_count, error_count, total_count, batches_processed, errors)
+                    case_batches += 1
 
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates, device_id)
 
-        summary = (
-            "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
-            "Cases Updated {updates}, cases errored {errors} and {noupdates} "
-            "cases didn't need update. ".format(
-                domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
-                noupdates=noupdate_count)
-        )
-        logger.info(summary)
-        self.send_final_email(summary, errors)
-
-    def send_final_email(self, message, errors):
-        subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
-        recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
-        cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
-
-        csv_file = StringIO()
-        writer = UnicodeWriter(csv_file)
-        writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
-        writer.writerows(errors)
-
-        attachment = {
-            'title': "failed_episodes_{}.csv".format(datetime.date.today()),
-            'mimetype': 'text/csv',
-            'file_obj': csv_file,
-        }
-        send_html_email_async(
-            subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
-        )
+        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
     def update_single_case(self, episode_case):
         # updates a single episode_case.
@@ -250,6 +213,43 @@ class EpisodeUpdater(object):
                 continue
 
             yield episode_case
+
+
+def send_status_email(domain, async_result):
+    errors = []
+    duration = datetime.timedelta()
+    updates = 0
+    noupdates = 0
+    for batch_info in async_result:
+        errors += batch_info.errors
+        duration += batch_info.duration
+        updates += batch_info.update_count
+        noupdates += batch_info.noupdate_count
+
+    subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
+    recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
+    cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
+
+    csv_file = StringIO()
+    writer = UnicodeWriter(csv_file)
+    writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
+    writer.writerows(errors)
+
+    message = (
+        "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
+        "Cases Updated {updates}, cases errored {errors} and {noupdates} "
+        "cases didn't need update. ".format(
+            domain=domain, duration=duration, updates=updates, errors=len(errors),
+            noupdates=noupdates)
+    )
+    attachment = {
+        'title': "failed_episodes_{}.csv".format(datetime.date.today()),
+        'mimetype': 'text/csv',
+        'file_obj': csv_file,
+    }
+    send_html_email_async(
+        subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
+    )
 
 
 @memoized
