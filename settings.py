@@ -793,7 +793,7 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
