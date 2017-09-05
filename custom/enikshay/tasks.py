@@ -162,7 +162,8 @@ class EpisodeUpdater(object):
                 update_json = {}
                 for updater in self.updaters:
                     try:
-                        update_json.update(updater(self.domain, episode).update_json())
+                        potential_update = updater(self.domain, episode).update_json()
+                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
                     except Exception as e:
                         did_error = True
                         error = [episode.case_id, episode.domain, updater.__name__, e]
@@ -557,22 +558,12 @@ class EpisodeVoucherUpdate(object):
         ]
         return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
 
-    @staticmethod
-    def _updated_fields(existing_properties, new_properties):
-        updated_fields = {}
-        for prop, value in new_properties.items():
-            existing_value = unicode(existing_properties.get(prop, '--'))
-            new_value = unicode(value) if value is not None else u""
-            if existing_value != new_value:
-                updated_fields[prop] = value
-        return updated_fields
-
     def update_json(self):
         output_json = {}
         output_json.update(self.get_prescription_total_days())
         output_json.update(self.get_prescription_refill_due_dates())
         output_json.update(self.get_first_voucher_details())
-        return self._updated_fields(self.episode.dynamic_case_properties(), output_json)
+        return get_updated_fields(self.episode.dynamic_case_properties(), output_json)
 
     def get_prescription_total_days(self):
         prescription_json = {}
@@ -743,3 +734,13 @@ def _get_relevent_case(cases):
         latest_case = by_modified_on[-1]
         return latest_case
     return None
+
+
+def get_updated_fields(existing_properties, new_properties):
+    updated_fields = {}
+    for prop, value in new_properties.items():
+        existing_value = unicode(existing_properties.get(prop, '--'))
+        new_value = unicode(value) if value is not None else u""
+        if existing_value != new_value:
+            updated_fields[prop] = value
+    return updated_fields
