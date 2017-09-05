@@ -4,16 +4,20 @@ from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
 
-from celery.task import periodic_task
+from celery import group
+from celery.task import periodic_task, task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
+from soil import MultipleTaskDownload
 
 from corehq import toggles
 from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -49,8 +53,9 @@ from .data_store import AdherenceDatastore
 logger = get_task_logger(__name__)
 
 DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
+BatchStatus = namedtuple('BatchStatus', 'update_count noupdate_count success_count errors case_batches duration')
 
-CACHE_KEY = "enikshay-task-id-{}".format(datetime.date.today())
+CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
 
 
@@ -62,8 +67,6 @@ cache = get_redis_client()
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
-    task_id = self.request.id
-    cache.set(CACHE_KEY, task_id)
 
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
@@ -72,10 +75,21 @@ def enikshay_task(self):
             continue
 
         try:
-            updater = EpisodeUpdater(domain, task_id=task_id)
-            updater.run()
+            task_group = EpisodeUpdater(domain).run()
         except Exception as e:
             logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
+
+        download = MultipleTaskDownload()
+        download.set_task(task_group)
+        download.save()
+        cache.set(CACHE_KEY.format(domain), download.download_id)
+
+        send_status_email(domain, task_group.get())
+
+
+@task
+def run_task(updater, case_ids):
+    return updater.run_batch(case_ids)
 
 
 class Timer:
@@ -110,33 +124,37 @@ class EpisodeUpdater(object):
             EpisodeTestUpdate,
         ]
 
-    def update_status(self, t, success, fail, total, batches, errors):
-        if self.task_id is None:
-            return
-        enikshay_task.update_state(state="PROGRESS", meta={
-            'success': success,
-            'fail': fail,
-            'total': total,
-            'batches': batches,
-            'errors': errors,
-            'time_elapsed': t.interval,
-        })
-
     def run(self):
-        # iterate over all open 'episode' cases and set 'adherence' properties
+        """Kicks off multiple tasks with a batch of case_ids for each partition
+        """
+        tasks = []
+        for case_ids in self._get_case_id_batches():
+            tasks.append(run_task.s(self, case_ids))
+        return group(tasks)()
+
+    def _get_case_id_batches(self):
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            case_ids = (
+                CommCareCaseSQL.objects
+                .using(db)
+                .filter(domain=self.domain, type=CASE_TYPE_EPISODE)
+                .values_list('case_id', flat=True)
+            )
+            yield case_ids
+
+    def run_batch(self, case_ids):
+        """Run all case updaters against the case_ids passed in
+        """
         device_id = "%s.%s" % (__name__, type(self).__name__)
         update_count = 0
         noupdate_count = 0
         error_count = 0
         success_count = 0
-        batches_processed = 0
+        case_batches = 0
 
         errors = []
-        case_ids = self._get_case_ids()
-        total_count = len(case_ids)
-
         with Timer() as t:
-            self.update_status(t, 0, 0, total_count, 0, errors)
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases(case_ids):
@@ -144,12 +162,13 @@ class EpisodeUpdater(object):
                 update_json = {}
                 for updater in self.updaters:
                     try:
-                        update_json.update(updater(self.domain, episode).update_json())
+                        potential_update = updater(self.domain, episode).update_json()
+                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
                     except Exception as e:
                         did_error = True
                         error = [episode.case_id, episode.domain, updater.__name__, e]
                         errors.append(error)
-                        logger.error("{}: {} - {}".format(*error))
+                        logger.error(error)
                 if did_error:
                     error_count += 1
                 else:
@@ -163,41 +182,12 @@ class EpisodeUpdater(object):
                 if len(updates) >= batch_size:
                     bulk_update_cases(self.domain, updates, device_id)
                     updates = []
-                    batches_processed += 1
-
-                self.update_status(t, success_count, error_count, total_count, batches_processed, errors)
+                    case_batches += 1
 
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates, device_id)
 
-        summary = (
-            "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
-            "Cases Updated {updates}, cases errored {errors} and {noupdates} "
-            "cases didn't need update. ".format(
-                domain=self.domain, duration=t.interval, updates=update_count, errors=len(errors),
-                noupdates=noupdate_count)
-        )
-        logger.info(summary)
-        self.send_final_email(summary, errors)
-
-    def send_final_email(self, message, errors):
-        subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
-        recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
-        cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
-
-        csv_file = StringIO()
-        writer = UnicodeWriter(csv_file)
-        writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
-        writer.writerows(errors)
-
-        attachment = {
-            'title': "failed_episodes_{}.csv".format(datetime.date.today()),
-            'mimetype': 'text/csv',
-            'file_obj': csv_file,
-        }
-        send_html_email_async(
-            subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
-        )
+        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
     def update_single_case(self, episode_case):
         # updates a single episode_case.
@@ -206,11 +196,6 @@ class EpisodeUpdater(object):
         if update_json:
             update_case(self.domain, episode_case.case_id, update_json,
                         device_id="%s.%s" % (__name__, type(self).__name__))
-
-    def _get_case_ids(self):
-        case_accessor = CaseAccessors(self.domain)
-        case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
-        return case_ids
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -231,9 +216,51 @@ class EpisodeUpdater(object):
             yield episode_case
 
 
+def send_status_email(domain, async_result):
+    errors = []
+    duration = datetime.timedelta()
+    updates = 0
+    noupdates = 0
+    for batch_info in async_result:
+        errors += batch_info.errors
+        duration += batch_info.duration
+        updates += batch_info.update_count
+        noupdates += batch_info.noupdate_count
+
+    subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
+    recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
+    cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
+
+    csv_file = StringIO()
+    writer = UnicodeWriter(csv_file)
+    writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
+    writer.writerows(errors)
+
+    message = (
+        "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
+        "Cases Updated {updates}, cases errored {errors} and {noupdates} "
+        "cases didn't need update. ".format(
+            domain=domain, duration=duration, updates=updates, errors=len(errors),
+            noupdates=noupdates)
+    )
+    attachment = {
+        'title': "failed_episodes_{}.csv".format(datetime.date.today()),
+        'mimetype': 'text/csv',
+        'file_obj': csv_file,
+    }
+    send_html_email_async(
+        subject, recipient, message, cc=[cc], text_content=message, file_attachments=[attachment]
+    )
+
+
 @memoized
 def get_datastore(domain):
     return AdherenceDatastore(domain)
+
+
+@memoized
+def get_itemlist(domain):
+    return FixtureDataItem.get_item_list(domain, DAILY_SCHEDULE_FIXTURE_NAME)
 
 
 class EpisodeAdherenceUpdate(object):
@@ -252,31 +279,16 @@ class EpisodeAdherenceUpdate(object):
 
         self._cache_dose_taken_by_date = False
 
-    @property
-    @memoized
-    def case_properties(self):
-        return self.episode.dynamic_case_properties()
-
     @memoized
     def get_doses_data(self):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
-        fixtures = FixtureDataItem.get_item_list(self.domain, DAILY_SCHEDULE_FIXTURE_NAME)
+        fixtures = get_itemlist(self.domain)
         doses_per_week_by_schedule_id = {}
         for f in fixtures:
             schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
             doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
             doses_per_week_by_schedule_id[schedule_id] = doses_per_week
         return doses_per_week_by_schedule_id
-
-    def get_property(self, property):
-        """
-        Args:
-            name of the case-property
-
-        Returns:
-            value of the episode case-property named 'property'
-        """
-        return self.case_properties.get(property)
 
     @memoized
     def get_valid_adherence_cases(self):
@@ -296,7 +308,7 @@ class EpisodeAdherenceUpdate(object):
 
     def get_adherence_schedule_start_date(self):
         # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
-        raw_date = self.get_property('adherence_schedule_date_start')
+        raw_date = self.episode.get_case_property('adherence_schedule_date_start')
         if not raw_date:
             return None
         elif parse_date(raw_date):
@@ -473,7 +485,7 @@ class EpisodeAdherenceUpdate(object):
 
         # calculate 'expected_doses_taken' score
         dose_data = self.get_doses_data()
-        adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+        adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
         if doses_per_week:
             update['expected_doses_taken'] = int(((
@@ -500,7 +512,7 @@ class EpisodeAdherenceUpdate(object):
                 If all of them are set as expected, returns None
         """
         needs_update = any([
-            self.get_property(k) != v
+            self.episode.get_case_property(k) != v
             for (k, v) in update_dict.iteritems()
         ])
         if needs_update:
@@ -546,22 +558,12 @@ class EpisodeVoucherUpdate(object):
         ]
         return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
 
-    @staticmethod
-    def _updated_fields(existing_properties, new_properties):
-        updated_fields = {}
-        for prop, value in new_properties.items():
-            existing_value = unicode(existing_properties.get(prop, '--'))
-            new_value = unicode(value) if value is not None else u""
-            if existing_value != new_value:
-                updated_fields[prop] = value
-        return updated_fields
-
     def update_json(self):
         output_json = {}
         output_json.update(self.get_prescription_total_days())
         output_json.update(self.get_prescription_refill_due_dates())
         output_json.update(self.get_first_voucher_details())
-        return self._updated_fields(self.episode.dynamic_case_properties(), output_json)
+        return get_updated_fields(self.episode.dynamic_case_properties(), output_json)
 
     def get_prescription_total_days(self):
         prescription_json = {}
@@ -732,3 +734,13 @@ def _get_relevent_case(cases):
         latest_case = by_modified_on[-1]
         return latest_case
     return None
+
+
+def get_updated_fields(existing_properties, new_properties):
+    updated_fields = {}
+    for prop, value in new_properties.items():
+        existing_value = unicode(existing_properties.get(prop, '--'))
+        new_value = unicode(value) if value is not None else u""
+        if existing_value != new_value:
+            updated_fields[prop] = value
+    return updated_fields

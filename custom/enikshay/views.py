@@ -1,6 +1,6 @@
-from celery.task.base import Task
 from django.http import HttpResponse
 from django.http.response import JsonResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
@@ -8,6 +8,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from soil import MultipleTaskDownload
 
 from .exceptions import EnikshayTaskException
 from .tasks import EpisodeAdherenceUpdate, CACHE_KEY
@@ -31,21 +32,10 @@ class EpisodeTaskDebugView(View):
 
 class EpisodeTaskStatusView(TemplateView):
     urlname = 'episode_task_status'
-    template_name = 'enikshay/episode_updater_debug.html'
 
     @method_decorator(domain_admin_required)
     def get(self, request, domain, *args, **kwargs):
         cache = get_redis_client()
-        task_id = cache.get(CACHE_KEY)
-        task = Task.AsyncResult(task_id)
-        return self.render_to_response({
-            "task_id": task,
-            "success_pct": 100 * task.info['success'] / task.info['total'] if task.info else 0,
-            "fail_pct": 100 * task.info['fail'] / task.info['total'] if task.info else 0,
-            "success": task.info['success'] if task.info else 0,
-            "fail": task.info['fail'] if task.info else 0,
-            "total": task.info['total'] if task.info else 0,
-            "errors": task.info['errors'] if task.info else [],
-            "batches": task.info['batches'] if task.info else [],
-            "time": task.info['time_elapsed'] if task.info else [],
-        })
+        download_id = cache.get(CACHE_KEY.format(domain))
+        download = MultipleTaskDownload.get(download_id)
+        return redirect('hq_soil_download', domain, download.download_id)
