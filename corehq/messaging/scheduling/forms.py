@@ -1,17 +1,12 @@
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
-from django import forms
 from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
-    MultipleChoiceField,
 )
 from django.forms.forms import Form
-from django.template import Context
-from django.template.loader import get_template
-from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,32 +15,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 
 
-class MessageRecipientWidget(forms.Widget):
-    def __init__(self, domain, readonly, attrs=None, id='message-recipient'):
-        super(MessageRecipientWidget, self).__init__(attrs)
-        self.domain = domain
-        self.id = id
-        self.query_url = reverse('possible_sms_recipients', args=[self.domain])
-        self.readonly = readonly
-
-    def render(self, name, value, attrs=None):
-        initial_value = []
-        if value:
-            for doc_type, doc_id in value:
-                user = CommCareUser.wrap(CommCareUser.get_db().get(doc_id))
-                initial_value.append({"id": doc_id, "name": user.raw_username})
-        # TODO populate this with inital data if necessary
-        return get_template('scheduling/partials/message_recipient_widget.html').render(Context({
-            'id': self.id,
-            'name': name,
-            'value': 'filler' if initial_value else '',
-            'query_url': self.query_url,
-            'initial_data': initial_value,
-            'readonly': self.readonly
-        }))
-
-
-class MessageRecipientField(MultipleChoiceField):
+class MessageRecipientField(CharField):
     def to_python(self, value):
         if not value:
             return []
@@ -73,7 +43,7 @@ class MessageForm(Form):
     )
     recipients = MessageRecipientField(
         label=_("Recipient(s)"),
-        help_text=_("Type a username, group name or 'send to all'")
+        help_text=_("Type a username, group name or 'send to all'"),
     )
     content = ChoiceField(
         required=True,
@@ -104,7 +74,6 @@ class MessageForm(Form):
                 kwargs['initial']['message_%s' % lang] = message.get(lang, '')
 
         super(MessageForm, self).__init__(*args, **kwargs)
-        self.fields['recipients'].widget = MessageRecipientWidget(self.domain, readonly)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
@@ -118,7 +87,12 @@ class MessageForm(Form):
         layout_fields = [
             crispy.Field('schedule_name'),
             crispy.Field('send_frequency'),
-            crispy.Field('recipients'),
+            crispy.Field(
+                'recipients',
+                # type='hidden',
+                data_bind='value: message_recipients.value',
+                placeholder=_("Select some recipients")
+            ),
             crispy.Field('content'),
             crispy.Field('translate', data_bind='checked: translate'),
             # todo this doesn't hide the label

@@ -16,10 +16,13 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import MessageForm
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -123,10 +126,11 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         return super(BroadcastListView, self).get(*args, **kwargs)
 
 
-class CreateMessageView(BaseMessagingSectionView):
+class CreateMessageView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_message'
     page_title = _('Create a Message')
     template_name = 'scheduling/create_message.html'
+    async_handlers = [MessagingRecipientHandler]
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -171,6 +175,9 @@ class CreateMessageView(BaseMessagingSectionView):
         return getattr(doc, 'langs', ['en'])
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
         if self.message_form.is_valid():
             # TODO editing should not create a new one
             values = self.message_form.cleaned_data
@@ -229,10 +236,15 @@ class EditMessageView(CreateMessageView):
             (instance.recipient_type, instance.recipient_id)
             for instance in schedule_instances
         ]
+        ret = []
+        if recipients:
+            for doc_type, doc_id in recipients:
+                user = CommCareUser.wrap(CommCareUser.get_db().get(doc_id))
+                ret.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
             'send_frequency': 'immediately',
-            'recipients': recipients,
+            'recipients': ret,
             'content': 'sms',
             'message': schedule.memoized_events[0].content.message,
         }
