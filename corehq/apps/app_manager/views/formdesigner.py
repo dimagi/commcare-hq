@@ -9,6 +9,8 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
+
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
 
@@ -284,6 +286,7 @@ def _get_vellum_features(request, domain, app):
                                                privileges.CUSTOM_INTENTS),
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
+        'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
     })
     return vellum_features
 
