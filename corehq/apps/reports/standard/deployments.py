@@ -147,6 +147,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         if self.selected_app_id:
             user_query = user_query.filter(
                 filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
+            ).filter(
+                filters.term('reporting_metadata.last_syncs.app_id', self.selected_app_id)
             )
         return user_query
 
