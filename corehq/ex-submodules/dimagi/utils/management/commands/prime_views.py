@@ -1,5 +1,5 @@
 from couchdbkit.exceptions import ResourceNotFound
-from gevent import monkey; monkey.patch_all(thread=False)
+from gevent import monkey; monkey.patch_all()
 import sys
 import gevent
 from restkit.session import set_session
