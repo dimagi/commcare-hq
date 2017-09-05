@@ -57,10 +57,6 @@ class BootstrapMultiField(MultiField):
         return errors
 
 
-class FieldsetAccordionGroup(AccordionGroup):
-    template = "hqwebapp/crispy/layout/fieldset_accordion_group.html"
-
-
 class HiddenFieldWithErrors(OldField):
     template = "hqwebapp/crispy/field/hidden_with_errors.html"
 
