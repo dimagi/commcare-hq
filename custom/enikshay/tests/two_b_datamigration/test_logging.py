@@ -58,7 +58,7 @@ class ImportDRTBTestMixin(object):
                 patch(match_phi_path, return_value=(None, None)),\
                 patch(get_users_path, return_value=[mock_user]), \
                 patch(open_any_workbook_path) as open_any_workbook_mock:
-            rows = [[]] + import_rows  # Add headers to the row list
+            rows = [[]] + [[]] + import_rows  # Add headers to the row list
             open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
             with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
                 try:
