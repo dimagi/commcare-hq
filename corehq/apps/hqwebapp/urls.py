@@ -53,7 +53,7 @@ domain_specific = [
     url(r'^login/mobile/$', domain_login, name='domain_mobile_login',
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
-        retrieve_download, {'template': 'style/includes/file_download.html'},
+        retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
     url(r'couch_doc_counts', couch_doc_counts),
