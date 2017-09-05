@@ -12,7 +12,7 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, g
 class Command(BaseCommand):
     help = """
     Pass Repeater ID along with domain and State(Optional) or
-    Pass a list of repeat records IDs to get a report
+    Pass a csv file path with a list of repeat records IDs to get a report(xlsx)
     with final state and message for all attempts(if available)
     """
 
