@@ -84,7 +84,7 @@ class PatientPayload(jsonobject.JsonObject):
         all_properties = episode_case_properties.copy()
         all_properties.update(person_case_properties)  # items set on person trump items set on episode
 
-        person_locations = get_person_locations(person_case)
+        person_locations = get_person_locations(person_case, episode_case)
         try:
             locations = dict(
                 state_code=person_locations.sto,

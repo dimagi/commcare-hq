@@ -116,7 +116,8 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         })
 
         try:
-            properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
+            properties_dict.update(_get_person_case_properties(
+                episode_case, person_case, person_case_properties))
         except NikshayLocationNotFound as e:
             _save_error_message(person_case.domain, person_case.case_id, e)
         properties_dict.update(_get_episode_case_properties(
@@ -492,7 +493,7 @@ def _get_person_age(person_case_properties):
     return person_age
 
 
-def _get_person_case_properties(person_case, person_case_properties):
+def _get_person_case_properties(episode_case, person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
@@ -511,7 +512,7 @@ def _get_person_case_properties(person_case, person_case_properties):
         "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category
     }
-    person_locations = get_person_locations(person_case)
+    person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
         {
             'scode': person_locations.sto,
