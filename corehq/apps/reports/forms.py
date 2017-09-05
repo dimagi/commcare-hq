@@ -5,7 +5,7 @@ import langcodes
 from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
-from corehq.apps.style.forms.fields import MultiEmailField
+from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper

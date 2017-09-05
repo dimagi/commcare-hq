@@ -18,6 +18,7 @@ from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -103,8 +104,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_ko_validation,
     use_angular_js)
-from corehq.apps.style.forms.widgets import DateRangePickerWidget
-from corehq.apps.style.utils import format_angular_error, format_angular_success
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \

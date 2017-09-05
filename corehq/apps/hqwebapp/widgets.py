@@ -187,7 +187,7 @@ class Select2Ajax(forms.TextInput):
     def render(self, name, value, attrs=None):
         output = super(Select2Ajax, self).render(name, value, attrs)
         output += render_to_string(
-            'hqstyle/forms/select_2_ajax_widget.html',
+            'hqwebapp/select_2_ajax_widget.html',
             {
                 'id': attrs.get('id'),
                 'initial': self._initial if self._initial is not None else self._clean_initial(value),
