@@ -414,47 +414,10 @@
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
             <script src="{% static 'requirejs/require.js' %}"></script>
+            <script src="{% static 'hq.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
-                    baseUrl: '{{ STATIC_CDN }}{{ STATIC_URL }}',
-                    paths: {
-                        {% include "style/includes/jquery.html" %}
-                        {% include "style/includes/core_libraries.html" %}
-                        "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
-                        "django": "{% static 'hqwebapp/js/django' %}",
-                        "knockout": "{% static 'knockout/dist/knockout.debug' %}",
-                        "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
-                        "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
-                        {# TODO: do these really need to be here? #}
-                        {% if request.use_datatables %}
-                        "datatables": "{% static 'datatables/media/js/jquery.dataTables.min' %}",
-                        "datatables.fixedColumns": "{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns' %}",
-                        "datatables.bootstrap": "{% static 'datatables-bootstrap3/BS3/assets/js/datatables' %}",
-                        {% endif %}
-                        {% if request.use_select2 %}
-                        "select2": "{% static 'select2-3.5.2-legacy/select2' %}",
-                        {% endif %}
-                        {% if request.use_select2_v4 %}
-                        "select2": "{% static 'select2/dist/js/select2.full.min' %}",
-                        {% endif %}
-                    },
-                    shim: {
-                        "bootstrap": { deps: ['jquery'] },
-                        "ko.mapping": { deps: ['knockout'] },
-                        "ko.knockout_bindings": { deps: ['knockout'] },
-                        "style/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
-                        {% if request.use_datatables %}
-                        "datatables.bootstrap": { deps: ['datatables'] },
-                        {% endif %}
-                    },
-                    map: {
-                        {% if request.use_datatables %}
-                        "datatables.fixedColumns": {
-                            "datatables.net": "datatables",
-                        },
-                        {% endif %}
-                    },
-                    deps: ['django', 'knockout', 'ko.mapping', 'ko.knockout_bindings'],
+                    deps: ['hqwebapp/js/django', 'knockout', 'ko.mapping', 'ko.knockout_bindings'],
                     callback: function (djangoModule, ko, mapping) {
                         ko.mapping = mapping;
                         djangoModule.gettext = django.gettext;

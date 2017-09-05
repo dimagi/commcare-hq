@@ -8,7 +8,9 @@
 {% endblock %}
 
 {% block requirejs_entry %}
-    requirejs(["{% static 'fixtures/js/lookup-manage.js' %}"]);
+    requirejs(['fixtures/js/built'], function (common) {
+        requirejs(['fixtures/js/lookup-manage']);
+    });
 {% endblock requirejs_entry %}
 
 {% block page_content %}
