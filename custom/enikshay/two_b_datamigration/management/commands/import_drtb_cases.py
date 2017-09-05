@@ -778,49 +778,39 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
 
 
 def get_reason_for_test_properties(column_mapping, row):
-    xlsx_value = column_mapping.get_value("reason_for_testing", row)
-    if not xlsx_value:
+    value = column_mapping.get_value("reason_for_testing", row)
+    if not value:
         return {}
+    clean_value = value.lower()
 
-    if not len(xlsx_value.split(",")) == 3:
-        raise FieldValidationFailure(xlsx_value, "reason for testing")
-    rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = xlsx_value.split(",")
-
-    if rft_dstb_diagnosis not in [
-        "",
-        "resumptive_tb",
-        "epeat_exam_for_diagnosis",
-        "rivate_referral",
-        "resumptive_ntm",
-    ]:
-        raise FieldValidationFailure(rft_dstb_diagnosis, "reason for testing (rft_dstb_diagnosis)")
-    if rft_drtb_diagnosis not in [
-        "",
-        "mdr_at_diagnosis",
-        "contact_of_mdr_rr",
-        "follow_up_sm_ve_ip",
-        "private_referral",
-        "discordance_resolution",
-        "extended_dst",
-    ]:
-        raise FieldValidationFailure(rft_drtb_diagnosis, "reason for testing (rft_drtb_diagnosis)")
-    if rft_drtb_diagnosis_ext_dst not in [
-        "",
-        "mdr_rr_diagnosis",
-        "4mo_culture_positive",
-        "3_monthly_culture_positives",
-        "mdr_rr_failure",
-        "culture_reversion",
-        "recurrent_second_line_treatment",
-        "discordance_resolution",
-    ]:
-        raise FieldValidationFailure(rft_drtb_diagnosis_ext_dst, "reason for testing (rft_drtb_diagnosis_ext_dst)")
+    rft_drtb_diagnosis_ext_dst_tmonth = None
+    if isinstance(clean_value, (int, float, decimal.Decimal)):
+        rft_drtb_diagnosis = "extended_dst"
+        rft_drtb_diagnosis_ext_dst = "3_monthly_culture_positives"
+        rft_drtb_diagnosis_ext_dst_tmonth = value
+    else:
+        try:
+            rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = {
+                "at diagnosis": ["mdr_at_diagnosis", None],
+                "contact of mdr/rr tb": ["contact_of_mdr_rr", None],
+                "follow up sm+ve at end of ip and cp": ["follow_up_sm_ve_ip", None],
+                "private referral": ["private_referral", None],
+                "discordance resolution": ["discordance_resolution", None],
+                "mdr/rr at diagnosis": ["extended_dst", "mdr_rr_diagnosis"],
+                "more than 4 months culture positive": ["extended_dst", "4mo_culture_positive"],
+                "3 monthly, for persistent culture positive": ["extended_dst", "3_monthly_culture_positives"],
+                "failure of mdr/rr-tb regimen": ["extended_dst", "mdr_rr_failure"],
+                "culture reversion": ["extended_dst", "culture_reversion"],
+                "recurrent case of second line treatment": ["extended_dst", "recurrent_second_line_treatment"],
+            }[clean_value]
+        except KeyError:
+            raise FieldValidationFailure(value, "Reason for Testing")
 
     return {
         "rft_general": "diagnosis_drtb",
-        "rft_dstb_diagnosis": rft_dstb_diagnosis,
         "rft_drtb_diagnosis": rft_drtb_diagnosis,
         "rft_drtb_diagnosis_ext_dst": rft_drtb_diagnosis_ext_dst,
+        "rft_drtb_diagnosis_ext_dst_tmonth": rft_drtb_diagnosis_ext_dst_tmonth,
     }
 
 
@@ -1121,7 +1111,7 @@ def get_mehsana_test_case_properties(domain, column_mapping, row):
 
 
 def get_cbnaat_test_case_properties(domain, column_mapping, row):
-    cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row), "cdst")
+    cbnaat_lab_name, cbnaat_lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
     date_reported = column_mapping.get_value("cbnaat_result_date", row)
     if not date_reported:
         raise ValidationFailure("cbnaat result date required if result given")
@@ -1148,7 +1138,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
 
 
 def get_lpa_test_case_properties(domain, column_mapping, row):
-    lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row), "cdst")
+    lpa_lab_name, lpa_lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
     result_date = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not result_date:
         raise ValidationFailure("LPA result date required if result included")
@@ -1175,7 +1165,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_sl_lpa_test_case_properties(domain, column_mapping, row):
-    sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row), "cdst")
+    sl_lpa_lab_name, sl_lpa_lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
     date_reported = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not date_reported:
         raise ValidationFailure("LPA result date required if result included")
@@ -1201,7 +1191,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_culture_test_case_properties(domain, column_mapping, row):
-    lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row), "cdst")
+    lab_name, lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
     culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
     date_reported = clean_date(column_mapping.get_value("culture_result_date", row))
     if not date_reported:
@@ -1753,10 +1743,14 @@ def match_location(domain, xlsx_name, location_type=None):
 
 def match_facility(domain, xlsx_facility_name):
     """
-    Given facility name taken from the spreadsheet, return the name and id of the matching location in HQ.
+    Given lab facility name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
-    # TODO: Consider filtering by location type
-    return match_location(domain, xlsx_facility_name)
+    if not xlsx_facility_name:
+        return None, None
+    elif "other" in xlsx_facility_name:
+        return xlsx_facility_name, None
+    else:
+        return match_location(domain, xlsx_facility_name, location_type="cdst")
 
 
 def match_phi(domain, xlsx_phi_name):
