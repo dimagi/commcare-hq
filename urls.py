@@ -84,7 +84,7 @@ domain_specific = [
     url(r'^', include('custom.enikshay.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
-        lambda request, domain: render(request, 'style/base.html', {'domain': domain})
+        lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls'))

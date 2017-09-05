@@ -1,4 +1,4 @@
-{% extends 'style/two_column.html' %}
+{% extends 'hqwebapp/two_column.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
@@ -76,7 +76,7 @@
                         </div>
                     </div>
                     <div class="col-md-8">
-                        {% include 'style/partials/pagination.html' %}
+                        {% include 'hqwebapp/partials/pagination.html' %}
                     </div>
                 </div>
 
@@ -173,7 +173,7 @@
             </div>
             <div class="row" data-bind="visible: isPaginationActive">
                 <div class="col-md-12">
-                    {% include 'style/partials/pagination.html' %}
+                    {% include 'hqwebapp/partials/pagination.html' %}
                 </div>
             </div>
         </div>

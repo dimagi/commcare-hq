@@ -12,12 +12,12 @@ from corehq.apps.export.transforms import (
     owner_id_to_display,
     workflow_transform,
     doc_type_transform,
-    case_or_user_id_to_name
-)
+    case_or_user_id_to_name,
+    case_close_to_boolean)
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-FORM_DATA_SCHEMA_VERSION = 9
+FORM_DATA_SCHEMA_VERSION = 10
 CASE_DATA_SCHEMA_VERSION = 8
 SMS_DATA_SCHEMA_VERSION = 1
 
@@ -33,6 +33,7 @@ OWNER_ID_TRANSFORM = "owner_id_transform"
 WORKFLOW_TRANSFORM = "workflow_transform"
 DOC_TYPE_TRANSFORM = "doc_type_transform"
 CASE_OR_USER_ID_TRANSFORM = "case_or_user_id_transform"
+CASE_CLOSE_TO_BOOLEAN = "case_close_to_boolean"
 TRANSFORM_FUNCTIONS = {
     CASE_NAME_TRANSFORM: case_id_to_case_name,
     USERNAME_TRANSFORM: user_id_to_username,
@@ -40,6 +41,7 @@ TRANSFORM_FUNCTIONS = {
     WORKFLOW_TRANSFORM: workflow_transform,
     DOC_TYPE_TRANSFORM: doc_type_transform,
     CASE_OR_USER_ID_TRANSFORM: case_or_user_id_to_name,
+    CASE_CLOSE_TO_BOOLEAN: case_close_to_boolean,
 }
 PLAIN_USER_DEFINED_SPLIT_TYPE = 'plain'
 MULTISELCT_USER_DEFINED_SPLIT_TYPE = 'multi-select'

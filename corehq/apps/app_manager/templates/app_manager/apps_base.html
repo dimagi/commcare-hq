@@ -1,4 +1,4 @@
-{% extends 'style/two_column.html' %}
+{% extends 'hqwebapp/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -38,12 +38,12 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
 
-    {% include 'style/includes/atwho.html' %}
+    {% include 'hqwebapp/includes/atwho.html' %}
     <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
     <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 
-    {% include 'style/includes/ui_element_js.html' %}
+    {% include 'hqwebapp/includes/ui_element_js.html' %}
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 {% endblock %}

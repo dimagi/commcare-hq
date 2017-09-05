@@ -9,7 +9,7 @@ from two_factor.forms import (
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _

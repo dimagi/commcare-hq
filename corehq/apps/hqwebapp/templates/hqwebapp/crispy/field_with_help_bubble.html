@@ -12,7 +12,7 @@
                 <label for="{{ field.id_for_label }}" class="inner-control-label">
                     {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
                 </label>
-                {% include 'style/crispy/help_bubble.html' %}
+                {% include 'hqwebapp/crispy/help_bubble.html' %}
             </div>
         {% endif %}
 
@@ -22,7 +22,7 @@
 
         {% if field|is_checkbox and help_bubble_text %}
             <label class="control-label {{ label_class }}">
-                {% include 'style/crispy/help_bubble.html' %}
+                {% include 'hqwebapp/crispy/help_bubble.html' %}
             </label>
         {% endif %}
 

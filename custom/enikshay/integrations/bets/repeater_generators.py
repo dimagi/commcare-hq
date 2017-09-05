@@ -1,7 +1,5 @@
 from datetime import datetime, date
 import json
-import math
-
 import jsonobject
 import pytz
 from pytz import timezone
@@ -123,7 +121,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -153,7 +151,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -212,7 +210,7 @@ class IncentivePayload(BETSPayload):
             Location=owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -240,7 +238,7 @@ class IncentivePayload(BETSPayload):
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -272,7 +270,7 @@ class IncentivePayload(BETSPayload):
             Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
             PersonId=person_case.get_case_property('person_id'),
-            AgencyId=cls._get_agency_id(episode_case),
+            AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
             EnikshayApprover=None,
             EnikshayRole=None,
@@ -286,7 +284,7 @@ class IncentivePayload(BETSPayload):
 class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
-    Amount = jsonobject.IntegerProperty(required=False)
+    Amount = jsonobject.StringProperty(required=False)
 
     @classmethod
     def create_voucher_payload(cls, voucher_case):
@@ -325,8 +323,8 @@ class VoucherPayload(BETSPayload):
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
-            # always round up to a whole number
-            Amount=int(math.ceil(float(voucher_case_properties.get(AMOUNT_APPROVED)))),
+            # always round to nearest whole number, but send a string...
+            Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
             DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
@@ -387,7 +385,7 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
     def get_test_payload(self, domain):
         return json.dumps(VoucherPayload(
             VoucherID="DUMMY-VOUCHER-ID",
-            Amount=0,
+            Amount="0",
             EventID="DUMMY-EVENT-ID",
             EventOccurDate=datetime.date(2017, 1, 1),
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",

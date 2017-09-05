@@ -116,7 +116,8 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         })
 
         try:
-            properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
+            properties_dict.update(_get_person_case_properties(
+                episode_case, person_case, person_case_properties))
         except NikshayLocationNotFound as e:
             _save_error_message(person_case.domain, person_case.case_id, e)
         properties_dict.update(_get_episode_case_properties(
@@ -482,7 +483,17 @@ def _get_nikshay_id_from_response(response):
         raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
-def _get_person_case_properties(person_case, person_case_properties):
+def _get_person_age(person_case_properties):
+    # Nikshay excepts only integer value so pick floor value or 1 in case age less than 1
+    # 2.3 => 2, 0.5 => 1
+    person_age = person_case_properties.get('age', '') or person_case_properties.get('age_entered', '')
+    person_age = person_age.split('.')[0]
+    if person_age == '0':
+        person_age = '1'
+    return person_age
+
+
+def _get_person_case_properties(episode_case, person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
@@ -493,7 +504,7 @@ def _get_person_case_properties(person_case, person_case_properties):
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         # 2B is currently setting age_entered but we are in the short term moving it to use age instead
-        "page": person_case_properties.get('age', '') or person_case_properties.get('age_entered', ''),
+        "page": _get_person_age(person_case_properties),
         "paddress": person_case_properties.get('current_address', ''),
         "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
@@ -501,7 +512,7 @@ def _get_person_case_properties(person_case, person_case_properties):
         "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category
     }
-    person_locations = get_person_locations(person_case)
+    person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
         {
             'scode': person_locations.sto,

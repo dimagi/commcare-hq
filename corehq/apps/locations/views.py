@@ -713,7 +713,7 @@ class EditLocationView(NewLocationView):
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
-    template_name = 'style/soil_status_full.html'
+    template_name = 'hqwebapp/soil_status_full.html'
 
     def get(self, request, *args, **kwargs):
         context = super(LocationImportStatusView, self).main_context
@@ -802,7 +802,7 @@ class LocationImportView(BaseLocationView):
 
 @require_can_edit_locations
 def location_importer_job_poll(request, domain, download_id,
-                               template="style/partials/download_status.html"):
+                               template="hqwebapp/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id)

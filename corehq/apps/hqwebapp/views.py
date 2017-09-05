@@ -439,7 +439,7 @@ def logout(req):
 
 
 @login_and_domain_required
-def retrieve_download(req, domain, download_id, template="style/includes/file_download.html"):
+def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
     next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
                                         extra_context={'domain': domain, 'next_url': next_url})
@@ -676,7 +676,7 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/blank.html",
+    return render(request, "hqwebapp/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
@@ -716,7 +716,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'style/base_page.html'
+    template_name = 'hqwebapp/base_page.html'
 
     @property
     def page_name(self):
@@ -777,7 +777,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "style/base_section.html"
+    template_name = "hqwebapp/base_section.html"
 
     @property
     def section_url(self):
@@ -995,7 +995,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_create_form_response(self, create_form):
         return render_to_string(
-            'style/includes/create_item_form.html', {
+            'hqwebapp/includes/create_item_form.html', {
                 'form': create_form
             }
         )
@@ -1005,7 +1005,7 @@ class CRUDPaginatedViewMixin(object):
 
     def get_update_form_response(self, update_form):
         return render_to_string(
-            'style/partials/update_item_form.html', {
+            'hqwebapp/partials/update_item_form.html', {
                 'form': update_form
             }
         )
@@ -1120,7 +1120,7 @@ def osdd(request, template='osdd.xml'):
 
 
 @require_superuser
-def maintenance_alerts(request, template='style/maintenance_alerts.html'):
+def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
@@ -1136,7 +1136,7 @@ def maintenance_alerts(request, template='style/maintenance_alerts.html'):
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = ugettext_noop("Maintenance Alerts")
-    template_name = 'style/maintenance_alerts.html'
+    template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
