@@ -676,7 +676,7 @@ def render_static(request, template, page_name):
     """
     Takes an html file and renders it Commcare HQ's styling
     """
-    return render(request, "style/blank.html",
+    return render(request, "hqwebapp/blank.html",
                   {'tmpl': template, 'page_name': page_name})
 
 
@@ -716,7 +716,7 @@ def unsubscribe(request, user_id):
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
-    template_name = 'style/base_page.html'
+    template_name = 'hqwebapp/base_page.html'
 
     @property
     def page_name(self):
@@ -777,7 +777,7 @@ class BasePageView(TemplateView):
 
 class BaseSectionPageView(BasePageView):
     section_name = ""
-    template_name = "style/base_section.html"
+    template_name = "hqwebapp/base_section.html"
 
     @property
     def section_url(self):
@@ -1120,7 +1120,7 @@ def osdd(request, template='osdd.xml'):
 
 
 @require_superuser
-def maintenance_alerts(request, template='style/maintenance_alerts.html'):
+def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
 
     return render(request, template, {
@@ -1136,7 +1136,7 @@ def maintenance_alerts(request, template='style/maintenance_alerts.html'):
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
     page_title = ugettext_noop("Maintenance Alerts")
-    template_name = 'style/maintenance_alerts.html'
+    template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
