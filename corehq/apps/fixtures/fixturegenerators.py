@@ -1,10 +1,13 @@
 from collections import defaultdict
 from xml.etree import ElementTree
+from cStringIO import StringIO
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
+from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 
 from .utils import get_index_schema_node
 
@@ -52,11 +55,29 @@ class ItemListsProvider(FixtureProvider):
                 global_types[data_type._id] = data_type
             else:
                 user_types[data_type._id] = data_type
-        items = self.get_global_items(global_types, restore_user)
+        items = self.get_global_items(global_types, restore_state)
         items.extend(self.get_user_items(user_types, restore_user))
         return items
 
-    def get_global_items(self, global_types, restore_user):
+    def get_global_items(self, global_types, restore_state):
+        restore_user = restore_state.restore_user
+        domain = restore_user.domain
+        db = get_blob_db()
+        if not restore_state.overwrite_cache:
+            try:
+                fixture_data = db.get(domain, FIXTURE_BUCKET).read()
+                return [fixture_data] if fixture_data else []
+            except NotFound:
+                pass
+        global_items = self._get_global_items(global_types, restore_user)
+        io = StringIO()
+        for element in global_items:
+            io.write(ElementTree.tostring(element, encoding='utf-8'))
+        io.seek(0)
+        db.put(io, domain, FIXTURE_BUCKET)
+        return global_items
+
+    def _get_global_items(self, global_types, restore_user):
         if not global_types:
             return []
         items_by_type = defaultdict(list)
