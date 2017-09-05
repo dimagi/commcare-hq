@@ -310,7 +310,7 @@ MUMBAI_MAP = {
     "sl_lpa_result": 53,
     "sl_lpa_result_date": 54,
     "culture_lab": 55,
-    "culture_lab_number": 51,
+    "culture_lab_number": 56,
     "culture_sample_date": 57,
     "culture_type": 58,
     "culture_result": 59,
