@@ -1967,7 +1967,7 @@ class Command(BaseCommand):
             return ImportFormat(
                 MumbaiColumnMapping,
                 MumbaiConstants,
-                1,
+                2,
             )
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
