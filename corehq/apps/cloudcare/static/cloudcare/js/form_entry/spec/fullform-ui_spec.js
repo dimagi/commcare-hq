@@ -232,7 +232,7 @@ describe('Fullform UI', function() {
         $.extend(formJSON2, formJSON);
         var form = new Form(formJSON),
             form2 = new Form(formJSON2),
-            spy = sinon.spy();
+            spy = sinon.spy(),
             spy2 = sinon.spy();
 
         sinon.stub(form, 'fromJS').callsFake(spy);
