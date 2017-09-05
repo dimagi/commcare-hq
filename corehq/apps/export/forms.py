@@ -36,7 +36,7 @@ from corehq.apps.reports.util import (
     datespan_from_beginning,
 )
 from corehq.apps.hqwebapp.crispy import B3MultiField, CrispyTemplate
-from corehq.apps.hqwebapp.forms.widgets import (
+from corehq.apps.hqwebapp.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
     Select2,

@@ -104,7 +104,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_ko_validation,
     use_angular_js)
-from corehq.apps.hqwebapp.forms.widgets import DateRangePickerWidget
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
