@@ -294,6 +294,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
+    'corehq.messaging.smsbackends.start_enterprise',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -1508,6 +1509,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
+    'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
