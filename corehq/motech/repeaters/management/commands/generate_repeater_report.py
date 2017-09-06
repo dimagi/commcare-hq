@@ -100,12 +100,8 @@ class Command(BaseCommand):
             records = self.record_ids
             record_count = len(records)
         elif domain and repeater_id:
-            if state:
-                records = iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=state)
-                record_count = get_repeat_record_count(domain, repeater_id=repeater_id, state=state)
-            else:
-                records = iter_repeat_records_by_domain(domain, repeater_id=repeater_id)
-                record_count = get_repeat_record_count(domain, repeater_id=repeater_id)
+            records = iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=state)
+            record_count = get_repeat_record_count(domain, repeater_id=repeater_id, state=state)
         else:
             raise CommandError("Insufficient Arguments")
 
