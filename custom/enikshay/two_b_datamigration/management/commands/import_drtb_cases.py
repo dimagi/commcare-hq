@@ -843,39 +843,27 @@ def get_disease_site_properties(column_mapping, row):
     xlsx_value = column_mapping.get_value("site_of_disease", row)
     if not xlsx_value:
         return {}
+    value = xlsx_value.replace('EP ', 'extra pulmonary ').lower().strip()
 
-    value = xlsx_value.replace('EP ', 'extra pulmonary ').\
-        lower().\
-        replace('extra pulmonary', 'extra_pulmonary').\
-        replace('lymph node', 'lymph_node').\
-        replace('pleural effusion', 'pleural_effusion').\
-        replace('others', 'other')
+    try:
+        classification, site, site_choice = {
+            "pulmonary": ["pulmonary", None, None],
+            "extra pulmonary": ["extra_pulmonary", None, None],
+            "extra pulmonary (lymph node)": ["extra_pulmonary", "lymph_node", None],
+            "extra pulmonary (spine)": ["extra_pulmonary", "spine", None],
+            "extra pulmonary (brain)": ["extra_pulmonary", "brain", None],
+            "extra pulmonary (pleural effusion)": ["extra_pulmonary", "pleural_effusion", None],
+            "extra pulmonary (abdominal)": ["extra_pulmonary", "abdominal", None],
+        }[value]
+    except KeyError:
+        match = re.match("^.*\((.*)\)", value)
+        if "extra_pulmonary" not in value and not match:
+            raise FieldValidationFailure(value, "Site of Disease")
 
-    if (not re.match("^extra_pulmonary \(other - .*$", value)
-        and value not in [
-        "pulmonary",
-        "extra_pulmonary",
-        "extra_pulmonary ",
-        "extra_pulmonary (lymph_node)",
-        "extra_pulmonary (spine)",
-        "extra_pulmonary (brain)",
-        "extra_pulmonary (pleural_effusion)",
-        "extra_pulmonary (abdominal)",
-        "extra_pulmonary (other)",
-    ]):
-        raise FieldValidationFailure(xlsx_value, "site of disease")
-    classification = "extra_pulmonary" if "extra_pulmonary" in value else "pulmonary"
-    match = re.match("^.*\((.*)\)", value)
-    if match:
-        site = match.groups()[0]
-        if re.match("^other - .*$", site):
-            site_choice = site.replace('other - ', '')
-            site = 'other'
-        else:
-            site_choice = None
-    else:
-        site = None
-        site_choice = None
+        classification = "extra_pulmonary"
+        site = "other"
+        site_choice = match.groups()[0]
+
     return {
         "disease_classification": classification,
         "site_detail": site,
