@@ -1214,11 +1214,17 @@ def get_culture_test_case_properties(domain, column_mapping, row):
 
 
 def clean_culture_type(value):
-    if value is None:
+    if not value:
         return None
-    if value not in ("lc", "lj"):
-        raise FieldValidationFailure(value, "culture type")
-    return value
+    clean_value = value.lower()
+    try:
+        return {
+            "lc": "lc",
+            "lj": "lj",
+            "liquid": "lc",
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Culture Type")
 
 
 def get_culture_type_label(culture_type):
