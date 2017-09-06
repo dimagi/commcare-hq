@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/app_manager_media.js', function () {
+hqDefine('app_manager/js/app_manager_media', function () {
     var AppMenuMediaManager = function (o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
@@ -151,7 +151,7 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
     };
 
     function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
-        var uploaders = hqImport("app_manager/js/nav_menu_media_common.js");
+        var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         var $mediaImage = $('#' + qualifier + 'media_image'),
             $mediaAudio = $('#' + qualifier + 'media_audio');
 

@@ -8,6 +8,7 @@ from itertools import groupby
 from uuid import UUID
 
 import csiphash
+import re
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
@@ -163,6 +164,9 @@ class ShardAccessor(object):
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
     startkey_min_value = datetime.min
 
+    def __init__(self, limit_db_aliases=None):
+        self.limit_db_aliases = limit_db_aliases
+
     def is_sharded(self):
         """
         :return: True the django model is sharded, otherwise false.
@@ -172,7 +176,14 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
 
     @property
     def sql_db_aliases(self):
-        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        all_db_aliases = get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
+        if self.limit_db_aliases:
+            db_aliases = list(set(all_db_aliases) & set(self.limit_db_aliases))
+            assert db_aliases, 'Limited DBs not in expected list: {} {}'.format(
+                all_db_aliases, self.limit_db_aliases
+            )
+            return db_aliases
+        return all_db_aliases
 
     @abstractproperty
     def model_class(self):
@@ -214,21 +225,42 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @property
+    def count_query(self):
+        """Define a custom query to use to get the doc count (only used for filtered reindex).
+        :returns: tuple('query_string', [query values])
+        """
+        return
+
     def get_doc_count(self, from_db):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
-        from_db = 'default' if from_db is None else from_db
-        sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-        db_cursor = connections[from_db].cursor()
-        with db_cursor as cursor:
-            cursor.execute(sql_query.format(self.model_class._meta.db_table))
-            return int(fetchone_as_namedtuple(cursor).reltuples)
+        if self.count_query:
+            query, values = self.count_query
+            query = 'EXPLAIN {}'.format(query)
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(query, values)
+                for row in cursor.fetchall():
+                    search = re.search(r' rows=(\d+)', row[0])
+                    if search:
+                        return int(search.group(1))
+            return 0
+        else:
+            from_db = 'default' if from_db is None else from_db
+            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
+            db_cursor = connections[from_db].cursor()
+            with db_cursor as cursor:
+                cursor.execute(sql_query.format(self.model_class._meta.db_table))
+                return int(fetchone_as_namedtuple(cursor).reltuples)
 
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, include_attachments=True):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None):
+        super(FormReindexAccessor, self).__init__(limit_db_aliases)
+        self.domain = domain
         self.include_attachments = include_attachments
 
     @property
@@ -251,13 +283,35 @@ class FormReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         received_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = XFormInstanceSQL.objects.raw(
-            'SELECT * FROM get_all_forms_received_since(%s, %s, %s)',
-            [received_on_since, last_id, limit],
-            using=from_db
+
+        domain_clause = "form_table.domain = %s AND" if self.domain else ""
+        values = [received_on_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = XFormInstanceSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as form_table
+        WHERE {domain_clause}
+        state & {deleted_state} = 0 AND
+        (form_table.received_on, form_table.id) > (%s, %s)
+        ORDER BY form_table.received_on, form_table.id
+        LIMIT %s;""".format(
+                table=XFormInstanceSQL._meta.db_table,
+                domain_clause=domain_clause,
+                deleted_state=XFormInstanceSQL.DELETED
+            ),
+            values
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
+
+    @property
+    def count_query(self):
+        # deletion clause left out on purpose since it throws off the count estimate
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=XFormInstanceSQL._meta.db_table,
+            ), [self.domain]
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -626,6 +680,13 @@ class FormAccessorSQL(AbstractFormAccessor):
 
 
 class CaseReindexAccessor(ReindexAccessor):
+    """
+    :param: domain: If supplied the accessor will restrict results to only that domain
+    """
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
+        self.domain = domain
+
     @property
     def model_class(self):
         return CommCareCaseSQL
@@ -643,13 +704,31 @@ class CaseReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         server_modified_on_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_all_cases_modified_since(%s, %s, %s)',
-            [server_modified_on_since, last_id, limit],
-            using=from_db
+        domain_clause = "case_table.domain = %s AND" if self.domain else ""
+        values = [False, server_modified_on_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        # using raw query to avoid having to expand the tuple comparison
+        results = CommCareCaseSQL.objects.using(from_db).raw(
+            """SELECT * FROM {table} as case_table
+            WHERE {domain_clause}
+            deleted = %s AND
+            (case_table.server_modified_on, case_table.id) > (%s, %s)
+            ORDER BY case_table.server_modified_on, case_table.id
+            LIMIT %s;""".format(
+                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
+            ),
+            values
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
+
+    @property
+    def count_query(self):
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s AND deleted = %s""".format(
+                    table=CommCareCaseSQL._meta.db_table
+            ), [self.domain, False]
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -1077,6 +1156,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
 
 class LedgerReindexAccessor(ReindexAccessor):
+
+    def __init__(self, domain=None, limit_db_aliases=None):
+        super(LedgerReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
+        self.domain = domain
+
     @property
     def model_class(self):
         return LedgerValue
@@ -1096,18 +1180,36 @@ class LedgerReindexAccessor(ReindexAccessor):
     def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
         modified_since = startkey or datetime.min
         last_id = last_doc_pk or -1
-        results = LedgerValue.objects.raw(
-            'SELECT * FROM get_all_ledger_values_modified_since(%s, %s, %s)',
-            [modified_since, last_id, limit],
-            using=from_db
+
+        domain_clause = "domain = %s AND" if self.domain else ""
+        values = [modified_since, last_id, limit]
+        if self.domain:
+            values = [self.domain] + values
+
+        results = LedgerValue.objects.using(from_db).raw(
+            """SELECT * FROM {table}
+        WHERE {domain_clause}
+        (last_modified, id) > (%s, %s)
+        ORDER BY last_modified, id
+        LIMIT %s""".format(
+                table=LedgerValue._meta.db_table,
+                domain_clause=domain_clause
+            ),
+            values,
         )
-        # note: in memory sorting and limit not necessary since we're only queyring a single DB
         return list(results)
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
         json_doc['_id'] = doc.ledger_reference.as_id()
         return json_doc
+
+    @property
+    def count_query(self):
+        if self.domain:
+            return """SELECT * FROM {table} WHERE domain = %s""".format(
+                table=LedgerValue._meta.db_table,
+            ), [self.domain]
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):

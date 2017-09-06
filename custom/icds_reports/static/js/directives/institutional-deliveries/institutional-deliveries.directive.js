@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,7 +10,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Institutional deliveries";
+    vm.label = "Institutional deliveries";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/institutional_deliveries/map', label: 'Map'},
@@ -107,7 +107,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -183,6 +183,17 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of pregant women who delivered in a public or private medical facility in the last month. \n' +
+            '\n' +
+            'Delivery in medical instituitions is associated with a decrease maternal mortality rate',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

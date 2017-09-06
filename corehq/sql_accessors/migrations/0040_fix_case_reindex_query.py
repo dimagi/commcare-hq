@@ -19,5 +19,4 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_all_cases_modified_since(timestamp with time zone, integer)",
             "SELECT 1"
         ),
-        migrator.get_migration('get_all_cases_modified_since_3.sql'),
     ]

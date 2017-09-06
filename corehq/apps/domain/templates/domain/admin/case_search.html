@@ -1,6 +1,5 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
-{% load hqstyle_tags %}
 {% load i18n %}
 
 {% block js-inline %}{{ block.super }}
@@ -8,7 +7,7 @@
     <script src="{% static 'domain/js/case-search-config.js' %}"></script>
     <script>
      (function () {
-         var CaseSearchConfig = hqImport('domain/js/case-search-config.js').CaseSearchConfig;
+         var CaseSearchConfig = hqImport('domain/js/case-search-config').CaseSearchConfig;
          var viewModel = new CaseSearchConfig({
              values: {{ values|JSON }},
              caseTypes: {{ case_types|JSON }},

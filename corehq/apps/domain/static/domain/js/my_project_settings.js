@@ -10,7 +10,7 @@ var HQTimezoneHandler = function (o) {
 };
 
 $(function() {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     $('#my-project-settings-form').koApplyBindings(new HQTimezoneHandler({
         override: initial_page_data('override_global_tz'),
     }));

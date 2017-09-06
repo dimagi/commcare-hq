@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 <system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms">
     <orx:meta xmlns:cc="http://commcarehq.org/xforms">
-        <orx:deviceID />
+        <orx:deviceID>{{ device_id }}</orx:deviceID>
         <orx:timeStart>{{ time }}</orx:timeStart>
         <orx:timeEnd>{{ time }}</orx:timeEnd>
         <orx:username>{{ username }}</orx:username>

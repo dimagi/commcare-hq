@@ -12,20 +12,16 @@ from corehq.apps.accounting.models import (
     CreditLine,
     Invoice,
     PaymentRecord,
-    SoftwareProductType,
-    FeatureType,
     PreOrPostPay,
     StripePaymentMethod,
     LastPayment
 )
-from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     log_accounting_error,
     log_accounting_info,
 )
 from corehq.const import USER_DATE_FORMAT
-import six
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 

@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
-describe('excel_fields.js', function () {
-    var excelfields = hqImport('case_importer/js/excel_fields.js');
+describe('excel_fields', function () {
+    var excelfields = hqImport('case_importer/js/excel_fields');
     describe('sanitizeCaseField', function () {
         it('should replace spaces with underscores', function () {
             excelfields.sanitizeCaseField('my property name', 'my_property_name');

@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
-hqDefine("hqwebapp/js/rollout_modal.js", function() {
+hqDefine("hqwebapp/js/rollout_modal", function() {
     function snooze(slug) {
         $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         window.analytics.usage("Soft Rollout", "snooze", slug);
@@ -13,7 +13,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
     }
 
     $(function() {
-        var alert_user = hqImport("style/js/alert_user.js").alert_user,
+        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user,
             $modal = $("#rollout-modal"),
             slug = $modal.data("slug");
 
@@ -29,7 +29,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
         // User clicks to turn on flag
         $modal.on('click', '.flag-enable', function() {
             $.post({
-                url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "on",
                 },
@@ -56,7 +56,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
             var slug = $(this).data("slug"),
                 redirect = $(this).data("redirect");
             $.post({
-                url: hqImport("hqwebapp/js/urllib.js").reverse("toggle_" + slug),
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("toggle_" + slug),
                 data: {
                     on_or_off: "off",
                 },

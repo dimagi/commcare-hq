@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
@@ -8,8 +8,8 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'export/js/download_data_files.js' %}"></script>
     <script>
-        var copyDataFileUrl = hqImport('export/js/download_data_files.js').copyDataFileUrl;
-        var deleteDataFile = hqImport('export/js/download_data_files.js').deleteDataFile;
+        var copyDataFileUrl = hqImport('export/js/download_data_files').copyDataFileUrl;
+        var deleteDataFile = hqImport('export/js/download_data_files').deleteDataFile;
     </script>
 {% endblock %}
 

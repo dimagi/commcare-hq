@@ -114,8 +114,9 @@ def assign_cases(caselist, owner_id, acting_user=None, update=None):
             ).as_xml()) for c in filtered_cases
         ]
         # todo: this should check whether the submit_case_blocks call actually succeeds
+        device_id = __name__ + ".assign_cases"
         submit_case_blocks(caseblocks, domain, username=username,
-                           user_id=user_id)
+                           user_id=user_id, device_id=device_id)
 
     return [c._id for c in filtered_cases]
 

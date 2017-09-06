@@ -9,11 +9,14 @@ import json
 import bz2
 from collections import OrderedDict
 
-from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
 
 from couchexport.models import Format
+
+
+def _encode_if_needed(val):
+    return val.encode("utf8") if isinstance(val, unicode) else val
 
 
 class UniqueHeaderGenerator(object):
@@ -112,7 +115,7 @@ class CsvFileWriter(ExportFileWriter):
 class PartialHtmlFileWriter(ExportFileWriter):
 
     def _write_from_template(self, context):
-        self._file.write(self.template.render(Context(context)).encode('utf-8'))
+        self._file.write(self.template.render(context).encode('utf-8'))
 
     def _open(self):
         self.template = get_template("couchexport/html_export.html")
@@ -299,7 +302,8 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
+        path = _encode_if_needed(self.archive_basepath)
+        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):

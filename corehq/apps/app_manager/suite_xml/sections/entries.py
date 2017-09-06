@@ -128,6 +128,7 @@ class EntriesHelper(object):
             e.form = form.xmlns
             # Ideally all of this version check should happen in Command/Display class
             if self.app.enable_localized_menu_media:
+                form_custom_icon = form.custom_icon
                 e.command = LocalizedCommand(
                     id=id_strings.form_command(form, module),
                     menu_locale_id=id_strings.form_locale(form),
@@ -135,6 +136,11 @@ class EntriesHelper(object):
                     media_audio=bool(len(form.all_audio_paths())),
                     image_locale_id=id_strings.form_icon_locale(form),
                     audio_locale_id=id_strings.form_audio_locale(form),
+                    custom_icon_locale_id=(id_strings.form_custom_icon_locale(form, form_custom_icon.form)
+                                           if form_custom_icon and not form_custom_icon.xpath else None),
+                    custom_icon_form=(form_custom_icon.form if form_custom_icon else None),
+                    custom_icon_xpath=(form_custom_icon.xpath
+                                       if form_custom_icon and form_custom_icon.xpath else None),
                 )
             else:
                 e.command = Command(
@@ -592,7 +598,7 @@ class EntriesHelper(object):
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
-                    if not referenced_by or referenced_by['type'] != 'load' and not detail_inline else None
+                    if (not referenced_by or referenced_by['type'] != 'load') and not detail_inline else None
                 ),
                 detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
                 detail_inline=detail_inline,

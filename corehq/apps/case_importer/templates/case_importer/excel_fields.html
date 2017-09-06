@@ -1,4 +1,4 @@
-{% extends "style/two_column.html" %}
+{% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
@@ -10,7 +10,7 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function() {
-            var excelfields = hqImport('case_importer/js/excel_fields.js');
+            var excelfields = hqImport('case_importer/js/excel_fields');
             var excelFields = {{ excel_fields|JSON }};
             var caseFieldSpecs = {{ case_field_specs|JSON }};
             var excelFieldRows = excelfields.ExcelFieldRows(excelFields, caseFieldSpecs);

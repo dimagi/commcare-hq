@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/details/case_list_callout.js", function() {
+hqDefine("app_manager/js/details/case_list_callout", function() {
     var caseListLookupViewModel = function($el, state, lang, saveButton) {
         'use strict';
         var self = this,
@@ -141,7 +141,7 @@ hqDefine("app_manager/js/details/case_list_callout.js", function() {
             }
 
             if (errors.length) {
-                var alert_user = hqImport("style/js/alert_user.js").alert_user;
+                var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
                 _.each(errors, function(error){
                     alert_user(error, "danger");
                 });
@@ -179,13 +179,13 @@ hqDefine("app_manager/js/details/case_list_callout.js", function() {
             _.each(_.keys(state.lookup_field_header), function(lang) {
                 if (state.lookup_field_header[lang]) {
                     visible = state.lookup_field_header[lang]
-                        + hqImport('style/js/ui_elements/ui-element-langcode-button.js').LANG_DELIN
+                        + hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').LANG_DELIN
                         + lang;
                 }
             });
         }
 
-        self.lookup_field_header = hqImport('style/js/ui-element.js').input().val(invisible);
+        self.lookup_field_header = hqImport('hqwebapp/js/ui-element').input().val(invisible);
         self.lookup_field_header.setVisibleValue(visible);
         self.lookup_field_header.observableVal = ko.observable(self.lookup_field_header.val());
         self.lookup_field_header.on('change', function () {

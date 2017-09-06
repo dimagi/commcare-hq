@@ -7,7 +7,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
-from corehq.pillows.reportxform import get_report_xforms_reindexer
+from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -88,7 +88,7 @@ class ReportXformReindexerTest(TestCase):
         # excluded form
         self._create_form('unsupported')
 
-        reindexer = get_report_xforms_reindexer()
+        reindexer = ReportFormReindexerFactory().build()
         reindexer.reindex()
 
         # verify there

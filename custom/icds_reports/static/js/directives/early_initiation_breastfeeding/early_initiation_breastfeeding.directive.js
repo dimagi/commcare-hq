@@ -1,5 +1,5 @@
 /* global d3*/
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,7 +10,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Early Initiation of Breastfeeding";
+    vm.label = "Early Initiation of Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/early_initiation/map', label: 'Map'},
@@ -24,7 +24,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
@@ -163,6 +163,17 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children who were put to the breast within one hour of birth. \n' +
+            '\n' +
+            'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practic',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

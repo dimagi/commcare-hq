@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 window.angular.module('icdsApp').factory('maternalChildService', ['$http', function($http) {
     return {
@@ -67,7 +67,7 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
             });
         },
         getImmunizationCoverageData: function(step, params) {
-            var get_url = url('institutional_deliveries', step);
+            var get_url = url('immunization_coverage', step);
             return  $http({
                 method: "GET",
                 url: get_url,

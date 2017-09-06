@@ -11,12 +11,29 @@ from django.conf import settings
 from django.db import models
 
 
+def get_sms_custom_metadata(schedule_instance):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    custom_metadata = {}
+
+    if isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
+        custom_metadata['case_id'] = schedule_instance.case_id
+
+    if schedule_instance.memoized_schedule.custom_metadata:
+        custom_metadata.update(schedule_instance.memoized_schedule.custom_metadata)
+
+    return custom_metadata
+
+
 def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message):
     if not message:
         return
 
     metadata = MessageMetadata(
-        custom_metadata=schedule_instance.memoized_schedule.custom_metadata,
+        custom_metadata=get_sms_custom_metadata(schedule_instance),
     )
 
     if schedule_instance.memoized_schedule.is_test:

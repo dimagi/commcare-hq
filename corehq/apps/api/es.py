@@ -635,6 +635,8 @@ query_param_transforms = {
     'xmlns': lambda v: {'term': {'xmlns.exact': v}},
     'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
     'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
+    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
+    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
 }
 
 

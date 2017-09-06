@@ -18,7 +18,7 @@ from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import (
     create_restore_user,
     MockDevice,
-    synclog_from_restore_payload,
+    deprecated_synclog_from_restore_payload,
 )
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import use_sql_backend
@@ -167,6 +167,7 @@ class TestLiveQuery(TestCase):
 
     def test_clean_owners_after_livequery(self):
         device = MockDevice(self.project, self.user, {"case_sync": LIVEQUERY})
+        device.sync()
         with self.assertRaises(RestoreException):
             device.sync(case_sync=CLEAN_OWNERS)
 
@@ -203,7 +204,7 @@ class TestNewSyncSpecifics(TestCase):
         restore_payload = restore_config.get_payload().as_string()
         self.assertTrue(child_id in restore_payload)
         self.assertTrue(parent_id in restore_payload)
-        sync_log = synclog_from_restore_payload(restore_payload)
+        sync_log = deprecated_synclog_from_restore_payload(restore_payload)
         self.assertEqual(SimplifiedSyncLog, type(sync_log))
         # make both cases irrelevant by changing the owner ids
         factory.create_or_update_cases([

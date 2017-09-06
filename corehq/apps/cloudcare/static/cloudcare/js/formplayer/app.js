@@ -6,13 +6,13 @@
 
 var FormplayerFrontend = new Marionette.Application();
 
-var showError = hqImport('cloudcare/js/util.js').showError;
-var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
-var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
-var formplayerLoading = hqImport('cloudcare/js/util.js').formplayerLoading;
-var formplayerLoadingComplete = hqImport('cloudcare/js/util.js').formplayerLoadingComplete;
-var formplayerSyncComplete = hqImport('cloudcare/js/util.js').formplayerSyncComplete;
-var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
+var showError = hqImport('cloudcare/js/util').showError;
+var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;
+var showSuccess = hqImport('cloudcare/js/util').showSuccess;
+var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
+var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
+var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
+var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -82,6 +82,10 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
+FormplayerFrontend.on('clearBreadcrumbs', function () {
+    $('#persistent-case-tile').html("");
+});
+
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('.menu-scrollable-container').removeClass('hide');
@@ -137,7 +141,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
-        showError(resp.exception, $("#cloudcare-notifications"));
+        showError(resp.human_readable_message || resp.exception, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
@@ -243,8 +247,8 @@ FormplayerFrontend.on("start", function (options) {
 });
 
 FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
-    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerMenu,
-        TabIDs = hqImport('cloudcare/js/debugger/debugger.js').TabIDs,
+    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
+        TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
         user = FormplayerFrontend.request('currentUser'),
         cloudCareDebugger,
         $debug = $('#cloudcare-debugger');

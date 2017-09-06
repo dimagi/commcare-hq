@@ -95,10 +95,14 @@ def _sum(items):
 
 
 def _min(items):
+    if not items:
+        return None
     return _type_safe_agggregate(min, items)
 
 
 def _max(items):
+    if not items:
+        return None
     return _type_safe_agggregate(max, items)
 
 

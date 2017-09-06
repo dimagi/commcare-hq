@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('commtrack/js/products_and_programs.async.js', function () {
+hqDefine('commtrack/js/products_and_programs.async', function () {
     var CommtrackProductsProgramsViewModel = function (o) {
         var view_model = BaseListViewModel(o);
 
@@ -96,7 +96,7 @@ hqDefine('commtrack/js/products_and_programs.async.js', function () {
     };
 
     $(function(){
-        var options = hqImport('hqwebapp/js/initial_page_data.js').get('program_product_options');
+        var options = hqImport('hqwebapp/js/initial_page_data').get('program_product_options');
         _.each($('.ko-program-product-list'), function(list) {
             var viewModel = new CommtrackProductsProgramsViewModel(options);
             $(list).koApplyBindings(viewModel);

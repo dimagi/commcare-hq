@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from datetime import datetime
 import json
+
+from django.utils.safestring import mark_safe
+
 import langcodes
 import logging
 import urllib
@@ -57,7 +60,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
 )
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_angular_js,
     use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -454,12 +457,28 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             key=lambda role: role.name if role.name else u'\uFFFF'
         ))
 
+        show_es_issue = False
         # skip the admin role since it's not editable
         for role in user_roles[1:]:
-            role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+            try:
+                role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+            except TypeError:
+                # when query_result['hits'] returns None due to an ES issue
+                show_es_issue = True
             role.has_unpermitted_location_restriction = (
                 not self.can_restrict_access_by_location
                 and not role.permissions.access_all_locations
+            )
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
             )
         return user_roles
 
@@ -811,6 +830,10 @@ class InviteWebUserView(BaseManageWebUserView):
     template_name = "users/invite_web_user.html"
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Add Web User to Project")
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

@@ -53,7 +53,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.ota.utils import turn_off_demo_mode, demo_restore_date_created
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_angular_js,
     use_multiselect,
@@ -464,7 +464,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
             'next_url': reverse(EditCommCareUserView.urlname, args=[self.domain, kwargs['user_id']]),
             'next_url_text': _("Go back to Edit Mobile Worker"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -910,8 +910,6 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             form = CommCareAccountForm(data, domain=self.domain)
         else:
             form = CommCareAccountForm(domain=self.domain)
-
-        form.fields['phone_number'].required = True
         return form
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -1078,7 +1076,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Return to manage mobile workers"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -1151,7 +1149,7 @@ class DownloadUsersStatusView(BaseManageCommCareUserView):
             'next_url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
             'next_url_text': _("Go back to Mobile Workers"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

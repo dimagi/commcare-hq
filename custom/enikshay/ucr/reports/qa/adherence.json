@@ -4,6 +4,7 @@
         "sheel-enikshay"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "episode_for_adherence_report",

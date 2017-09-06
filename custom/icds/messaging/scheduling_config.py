@@ -1,6 +1,7 @@
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
+    CustomMatchDefinition,
     CreateScheduleInstanceActionDefinition,
 )
 from corehq.messaging.scheduling.const import VISIT_WINDOW_END
@@ -45,7 +46,8 @@ def create_beneficiary_indicator_1(domain):
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
-            recipients=(('CustomRecipient', 'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'),)
+            recipients=(('CustomRecipient', 'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'),),
+            reset_case_property_name='last_date_gmp',
         )
 
 
@@ -215,3 +217,161 @@ def create_ls_indicator_5(domain):
     _create_ls_indicator_5(domain, 1)
     _create_ls_indicator_5(domain, 2)
     _create_ls_indicator_5(domain, 3)
+
+
+def create_aww_indicator_6(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE'),
+            total_iterations=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_6'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #6: CF Visits Complete",
+            case_type='ccs_record',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        for i in [1, 2, 3, 4, 5, 6, 7]:
+            rule.add_criteria(
+                MatchPropertyDefinition,
+                property_name='cf%s_date' % i,
+                match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+            )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+        )
+
+
+def create_ls_indicator_4b(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED'),
+            total_iterations=1,
+            start_offset=7,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'ls_4b'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="LS #4b: Child Illness Reported in Referral Form",
+            case_type='person',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='last_referral_date',
+            match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='referral_health_problem',
+            match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='dob',
+            match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
+            property_value='-2192',
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
+            reset_case_property_name='last_referral_date',
+        )
+
+
+def create_aww_indicator_4(domain):
+    with transaction.atomic():
+        # Monthly schedule for the last day of the month
+        schedule = TimedSchedule.create_simple_monthly_schedule(
+            domain,
+            time(9, 30),
+            [-1],
+            CustomContent(custom_content_id='ICDS_DPT3_AND_MEASLES_ARE_DUE'),
+            total_iterations=TimedSchedule.REPEAT_INDEFINITELY
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_4'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #4: DPT3 and Measles Vaccinations Due",
+            case_type='tasks',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER',
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+        )
+
+
+def create_aww_indicator_5(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE'),
+            total_iterations=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'aww_5'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="AWW #5: Child Vaccinations Complete",
+            case_type='tasks',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='tasks_type',
+            property_value='child',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='immun_one_year_complete',
+            property_value='yes',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('Owner', None),),
+        )

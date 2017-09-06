@@ -47,11 +47,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
         {id: 3, name: 'Demographics'},
-        // {id: 4, name: 'System Usage'}, For now disable this option
+        {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
+        {id: 6, name: 'Child Beneficiary List'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
 
     var locationsCache = {};
 
@@ -135,7 +137,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
-                locationsCache.root = data.locations;
+                locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
             });
             vm.groupByLevels = vm.levels;
         }
@@ -145,11 +147,27 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
+            if (locationType.name === 'state') return 'National';
             return locationType.name;
         }).join(', ');
     };
 
+    vm.getInfoMessage = function() {
+        if (vm.selectedLevel <= 1) {
+            return null;
+        } else {
+            return "Please choose " + vm.levels[vm.selectedLevel - 2].name + " to download data by " + vm.levels[vm.selectedLevel - 1].name;
+        }
+    };
+
+    vm.showErrorMessage = function () {
+        return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
+    };
+
     vm.getLocationsForLevel = function(level) {
+        if (vm.selectedLevel === 1) {
+            return [NATIONAL_OPTION];
+        }
         if (level === 0) {
             return locationsCache.root;
         } else {
@@ -200,7 +218,11 @@ function DownloadController($location, locationHierarchy, locationsService, user
             }
         });
         vm.groupByLevels = levels;
-        vm.selectedLevel = selectedLocationIndex() + 1;
+        if (selectedLocationIndex() === -1) {
+            vm.selectedLevel = 1;
+        } else if (selectedLocationIndex() > vm.selectedLevel) {
+            vm.selectedLevel = selectedLocationIndex() + 1;
+        }
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
@@ -214,7 +236,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

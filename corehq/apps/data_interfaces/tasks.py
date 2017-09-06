@@ -130,26 +130,24 @@ def run_case_update_rules_for_domain(domain, now=None):
 
     for case_type, rules in rules_by_case_type.iteritems():
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
-        case_id_chunks = AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date)
+        case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date))
 
-        for case_ids in case_id_chunks:
-            for case in CaseAccessors(domain).iter_cases(case_ids):
-                migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
-                    last_migration_check_time)
+        for case in CaseAccessors(domain).iter_cases(case_ids):
+            migration_in_progress, last_migration_check_time = check_data_migration_in_progress(domain,
+                last_migration_check_time)
 
-                time_elapsed = datetime.utcnow() - start_run
-                max_updates = 50000 if domain == 'enikshay' else settings.MAX_RULE_UPDATES_IN_ONE_RUN
-                if (
-                    time_elapsed.seconds > HALT_AFTER or
-                    case_update_result.total_updates >= max_updates or
-                    migration_in_progress
-                ):
-                    run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
-                    notify_error("Halting rule run for domain %s." % domain)
-                    return
+            time_elapsed = datetime.utcnow() - start_run
+            if (
+                time_elapsed.seconds > HALT_AFTER or
+                case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN or
+                migration_in_progress
+            ):
+                run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
+                notify_error("Halting rule run for domain %s." % domain)
+                return
 
-                case_update_result.add_result(run_rules_for_case(case, rules, now))
-                cases_checked += 1
+            case_update_result.add_result(run_rules_for_case(case, rules, now))
+            cases_checked += 1
 
         for rule in rules:
             rule.last_run = now

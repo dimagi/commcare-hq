@@ -16,7 +16,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
@@ -41,7 +41,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.style.decorators import use_typeahead, use_angular_js
+from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
@@ -67,9 +67,13 @@ def default(request, domain):
 
 def default_data_view_url(request, domain):
     from corehq.apps.export.views import (
-        FormExportListView, CaseExportListView,
-        DeIdFormExportListView, user_can_view_deid_exports
+        CaseExportListView,
+        DataFileDownloadList,
+        DeIdFormExportListView,
+        FormExportListView,
+        user_can_view_deid_exports,
     )
+
     if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
     elif can_view_case_exports(request.couch_user, domain):
@@ -77,6 +81,9 @@ def default_data_view_url(request, domain):
 
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
+
+    if can_download_data_files(domain):
+        return reverse(DataFileDownloadList.urlname, args=[domain])
 
     raise Http404()
 
@@ -570,7 +577,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

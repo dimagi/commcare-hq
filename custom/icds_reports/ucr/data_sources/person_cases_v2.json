@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -80,7 +81,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "block_id",
         "expression": {
           "location_id_expression": {
@@ -104,7 +105,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "column_id": "district_id",
         "expression": {
           "location_id_expression": {
@@ -2241,13 +2242,19 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "operator": "eq",
-            "type": "boolean_expression",
-            "expression": {
-              "type": "property_name",
-              "property_name": "has_aadhar"
-            },
-            "property_value": "yes"
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "property_name",
+                "property_name": "aadhar_number"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
           },
           "expression_if_true": {
             "type": "conditional",
@@ -2286,16 +2293,22 @@
                     ]
                   },
                   "filter_expression": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "update",
-                        "has_aadhar"
+                    "type": "not",
+                    "filter": {
+                      "operator": "in",
+                      "type": "boolean_expression",
+                      "expression": {
+                        "type": "property_path",
+                        "property_path": [
+                          "update",
+                          "aadhar_number"
+                        ]
+                      },
+                      "property_value": [
+                        "",
+                        null
                       ]
-                    },
-                    "property_value": "yes"
+                    }
                   }
                 }
               },
@@ -2689,6 +2702,30 @@
     "sql_column_indexes": [
       {
         "column_ids": [
+          "block_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "owner_id"
+        ]
+      },
+      {
+        "column_ids": [
           "supervisor_id",
           "dob"
         ]
@@ -2703,6 +2740,12 @@
         "column_ids": [
           "supervisor_id",
           "opened_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "date_death"
         ]
       },
       {

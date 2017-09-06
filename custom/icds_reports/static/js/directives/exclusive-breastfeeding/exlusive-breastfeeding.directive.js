@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,7 +10,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Exclusive Breastfeeding";
+    vm.label = "Exclusive Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/exclusive_breastfeeding/map', label: 'Map'},
@@ -107,7 +107,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -183,6 +183,17 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of infants 0-6 months of age who are fed exclusively with breast milk. \n' +
+            '\n' +
+            'An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

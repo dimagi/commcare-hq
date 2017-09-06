@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 import datetime
+from copy import copy
+
 from django.core.serializers.json import (
     Serializer as JsonSerializer,
     DjangoJSONEncoder)
@@ -22,8 +24,10 @@ class JsonLinesSerializer(JsonSerializer):
 
     def end_object(self, obj):
         # self._current has the field data
+        json_kwargs = copy(self.json_kwargs)
+        json_kwargs['cls'] = CommCareJSONEncoder
         json.dump(self.get_dump_object(obj), self.stream,
-                  cls=CommCareJSONEncoder, **self.json_kwargs)
+                  **json_kwargs)
         self.stream.write("\n")
         self._current = None
 

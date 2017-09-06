@@ -32,7 +32,7 @@ MockRequest = namedtuple('MockRequest', 'domain')
     return_value='dummy-name'
 )
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestExportInstanceGeneration(SimpleTestCase):
@@ -170,7 +170,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 @mock.patch(
@@ -229,7 +229,7 @@ class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
     return_value='dummy-name'
 )
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
@@ -395,7 +395,7 @@ class TestExportInstance(SimpleTestCase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestExportInstanceFromSavedInstance(TestCase):

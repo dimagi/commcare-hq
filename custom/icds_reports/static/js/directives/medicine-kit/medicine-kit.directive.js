@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService,
                                              locationsService, userLocationId, storageService) {
@@ -10,7 +10,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Medicine Kit";
+    vm.label = "AWCs with Medicine Kit";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/medicine_kit/map', label: 'Map'},
@@ -104,7 +104,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -174,6 +174,15 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with a Medicine Kit',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

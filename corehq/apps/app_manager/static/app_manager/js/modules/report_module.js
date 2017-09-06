@@ -1,5 +1,5 @@
 /* globals hqDefine _ */
-hqDefine('app_manager/js/modules/report_module.js', function () {
+hqDefine('app_manager/js/modules/report_module', function () {
     // TODO: Ideally the separator would be defined in one place. Right now it is
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
@@ -12,7 +12,7 @@ hqDefine('app_manager/js/modules/report_module.js', function () {
         graph_configs = graph_configs || {};
 
         self.graphUiElements = {};
-        var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config.js').GraphConfigurationUiElement;
+        var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
             self.graphUiElements[currentReportId] = {};
@@ -302,7 +302,7 @@ hqDefine('app_manager/js/modules/report_module.js', function () {
             return multimedia;
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
                 // validate that all reports have valid data
@@ -386,8 +386,8 @@ hqDefine('app_manager/js/modules/report_module.js', function () {
     }
 
     $(function () {
-        var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-        setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
+        var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
+        setupValidation(hqImport('hqwebapp/js/initial_page_data').reverse('validate_module_for_build'));
     });
 
     return {

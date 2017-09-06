@@ -1,4 +1,4 @@
-hqDefine("reminders/js/reminders.keywords.ko.js", function() {
+hqDefine("reminders/js/reminders.keywords.ko", function() {
     var KeywordActionsViewModel = function (initial_values) {
         'use strict';
         var self = this;
@@ -95,7 +95,7 @@ hqDefine("reminders/js/reminders.keywords.ko.js", function() {
     };
 
     $(function () {
-        var kvm = new KeywordActionsViewModel(hqImport("hqwebapp/js/initial_page_data.js").get("current_values"));
+        var kvm = new KeywordActionsViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
         $('#keywords-form').koApplyBindings(kvm);
         kvm.init();
     });

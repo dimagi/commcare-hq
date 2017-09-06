@@ -4,7 +4,7 @@ from django.http import Http404
 import json
 from django.utils.safestring import mark_safe
 from corehq.apps.api.es import ReportXFormES
-from corehq.apps.style.decorators import use_timeago
+from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm

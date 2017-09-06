@@ -2,7 +2,10 @@ from datetime import datetime
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.phone.tests.utils import generate_restore_payload, get_restore_config
+from casexml.apps.phone.tests.utils import (
+    deprecated_generate_restore_payload,
+    get_restore_config,
+)
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
@@ -20,6 +23,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
 class SimpleOtaRestoreTest(TestCase):
@@ -91,8 +95,7 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
         delete_all_xforms()
         delete_all_cases()
         delete_all_sync_logs()
-        restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
-        restore_config.cache.clear()
+        get_redis_default_cache().clear()
         super(BaseOtaRestoreTest, self).tearDown()
 
 
@@ -105,7 +108,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             include_docs=True,
             reduce=False,
         ).count())
-        restore_payload = generate_restore_payload(self.project, self.restore_user, items=True)
+        restore_payload = deprecated_generate_restore_payload(
+            self.project, self.restore_user, items=True)
         sync_log = SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,
@@ -198,7 +202,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             ),
         )
 
-        restore_payload = generate_restore_payload(
+        restore_payload = deprecated_generate_restore_payload(
             project=self.project,
             user=self.restore_user,
             items=True,
@@ -228,7 +232,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
-        restore_payload = generate_restore_payload(self.project, self.restore_user, items=items)
+        restore_payload = deprecated_generate_restore_payload(
+            self.project, self.restore_user, items=items)
 
         sync_log_id = SyncLog.view(
             "phone/sync_logs_by_user",
@@ -243,7 +248,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         )
         check_xml_line_by_line(self, expected_restore_payload, restore_payload)
 
-        sync_restore_payload = generate_restore_payload(
+        sync_restore_payload = deprecated_generate_restore_payload(
             project=self.project,
             user=self.restore_user,
             restore_id=sync_log_id,
@@ -273,7 +278,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
 
-        sync_restore_payload = generate_restore_payload(
+        sync_restore_payload = deprecated_generate_restore_payload(
             self.project,
             user=self.restore_user,
             restore_id=latest_log.get_id,
@@ -312,7 +317,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])
-        restore_payload = generate_restore_payload(self.project, self.restore_user)
+        restore_payload = deprecated_generate_restore_payload(
+            self.project, self.restore_user)
         # ghetto
         self.assertTrue('<dateattr somedate="2012-01-01">' in restore_payload)
         self.assertTrue('<stringattr somestring="i am a string">' in restore_payload)

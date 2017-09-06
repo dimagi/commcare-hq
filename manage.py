@@ -6,7 +6,10 @@ import os
 import mimetypes
 from collections import namedtuple
 
+import django
+
 GeventCommand = namedtuple('GeventCommand', 'command contains')
+
 
 def _set_source_root_parent(source_root_parent):
     """
@@ -38,6 +41,17 @@ def _set_source_root_parent(source_root_parent):
 def _set_source_root(source_root):
     filedir = os.path.dirname(__file__)
     sys.path.insert(1, os.path.join(filedir, source_root))
+
+
+# HACK monkey-patch django setup to prevent second setup by django_nose
+def _setup_once(*args, **kw):
+    if not hasattr(_setup_once, "done"):
+        _setup_once.done = True
+        _setup_once.setup(*args, **kw)
+
+
+_setup_once.setup = django.setup
+django.setup = _setup_once
 
 
 def init_hq_python_path():

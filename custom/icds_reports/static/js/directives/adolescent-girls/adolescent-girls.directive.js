@@ -1,6 +1,6 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
+function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -9,7 +9,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Pregnant Women enrolled for ICDS services";
+    vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_women/map', label: 'Map'},
@@ -25,7 +25,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.filters = ['month', 'age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of adolescent girls who are enrolled for ICDS services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -53,7 +53,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Total number of adolescent girls who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
             '</div>';
     };
 
@@ -118,7 +118,7 @@ window.angular.module('icdsApp').directive('adolescentGirls', function() {
         scope: {
             data: '=',
         },
-        controller: EnrolledWomenController,
+        controller: AdolescentWomenController,
         controllerAs: '$ctrl',
     };
 });

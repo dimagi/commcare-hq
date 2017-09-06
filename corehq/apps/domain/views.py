@@ -52,7 +52,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
     use_multiselect,
@@ -678,16 +678,14 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
             if subscription.date_end is not None:
                 if subscription.is_renewed:
-
-                    next_product = self.get_product_summary(subscription.next_subscription.plan_version,
-                                                             self.account,
-                                                             subscription)
-
                     next_subscription.update({
                         'exists': True,
                         'date_start': subscription.next_subscription.date_start.strftime(USER_DATE_FORMAT),
                         'name': subscription.next_subscription.plan_version.plan.name,
-                        'price': next_product['monthly_fee'],
+                        'price': (
+                            _("USD %s /month")
+                            % subscription.next_subscription.plan_version.product_rate.monthly_fee
+                        ),
                     })
 
                 else:
@@ -753,11 +751,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
-        product_type = product_rate.product.product_type
         return {
-            'name': product_type,
+            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': product_type,
+            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
                     subscription, product_type=SoftwareProductType.ANY
@@ -2913,9 +2910,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        exclude_previews = []
-        if not toggles.APP_MANAGER_V1.enabled_for_request(self.request):
-            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
+        exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
             'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }

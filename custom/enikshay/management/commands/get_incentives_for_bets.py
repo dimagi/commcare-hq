@@ -4,9 +4,7 @@ import json
 from django.core.management.base import BaseCommand
 
 from corehq.util.log import with_progress_bar
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
-from custom.enikshay.case_utils import get_person_case_from_episode
 
 
 class Command(BaseCommand):
@@ -29,7 +27,6 @@ class Command(BaseCommand):
         parser.add_argument('filename')
 
     def handle(self, domain, repeater_id, filename, **options):
-        accessor = CaseAccessors(domain)
         records = iter_repeat_records_by_domain(domain, repeater_id=repeater_id)
         record_count = get_repeat_record_count(domain, repeater_id=repeater_id)
 
@@ -43,9 +40,9 @@ class Command(BaseCommand):
             'DTOLocation',
             'PersonId',
             'AgencyId',
-            'EnikshayApprover',  # will be empty
-            'EnikshayRole',      # will be empty
-            'EnikshayApprovalDate',  # will be empty
+            'EnikshayApprover',
+            'EnikshayRole',
+            'EnikshayApprovalDate',
             'Succeeded',    # Some records did succeed when we sent them.
                             # Include this so they don't re-pay people.
         ]
@@ -59,15 +56,8 @@ class Command(BaseCommand):
             for record in with_progress_bar(records, length=record_count):
                 try:
                     payload = json.loads(record.get_payload())['incentive_details'][0]
-                    episode_id = payload['EpisodeID']
-
-                    episode_case = accessor.get_case(episode_id)
-                    person_case = get_person_case_from_episode(domain, episode_id)
-                    payload[u'PersonId'] = person_case.case_id
-                    payload[u'AgencyId'] = episode_case.get_case_property('bets_notifying_provider_user_id')
-
                 except Exception as e:
-                    errors.append([record.payload_id, unicode(e)])
+                    errors.append([record.payload_id, record._id, unicode(e)])
                     continue
                 payload['Succeeded'] = record.succeeded
                 incentive_episode_pair = (payload.get('EpisodeID'), payload.get('EventID'),)
@@ -91,6 +81,6 @@ class Command(BaseCommand):
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
-                writer.writerow(['episode_id', 'error'])
+                writer.writerow(['episode_id', 'repeat_record_id', 'error'])
                 for error in errors:
-                    writer.writerow(errors)
+                    writer.writerow(error)

@@ -1,5 +1,5 @@
 /* global d3*/
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,7 +10,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Newborns with Low Birth Weight";
+    vm.label = "Newborns with Low Birth Weight";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/low_birth/map', label: 'Map'},
@@ -24,7 +24,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
@@ -164,6 +164,17 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of newborns with born with birth weight less than 2500 grams. \n' +
+            '\n' +
+            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

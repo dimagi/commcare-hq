@@ -1,8 +1,8 @@
-hqDefine("app_manager/js/nav_menu_media.js", function() {
+hqDefine("app_manager/js/nav_menu_media", function() {
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         _.each(initial_page_data("nav_menu_media_specifics"), function(item) {
-            var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
+            var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
             initNavMenuMedia(
                 item.qualifier || "",
                 item.menu_refs.image || "",

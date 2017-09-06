@@ -6,13 +6,11 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from mock import patch
 
-from casexml.apps.case.exceptions import CaseValueError
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.tests.util import check_user_has_case
+from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
+from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
-from casexml.apps.phone.restore import restore_cache_key
-from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -300,22 +298,44 @@ class FundamentalCaseTests(TestCase):
         post_case_blocks([case.as_xml()], domain='some-domain')
         # update the date_opened to date type to check for value on restore
         case.date_opened = case.date_opened.date()
-        check_user_has_case(self, user, case.as_xml())
+        deprecated_check_user_has_case(self, user, case.as_xml())
 
-    def test_restore_caches_cleared(self):
-        cache = get_redis_default_cache()
-        cache_key = restore_cache_key(DOMAIN, RESTORE_CACHE_KEY_PREFIX, 'user_id', version="2.0")
-        cache.set(cache_key, 'test-thing')
-        self.assertEqual(cache.get(cache_key), 'test-thing')
+    @staticmethod
+    def _submit_dummy_form(domain, user_id, device_id='', sync_log_id=None, form_id=None):
+        form_id = form_id or uuid.uuid4().hex
         form = """
             <data xmlns="http://openrosa.org/formdesigner/blah">
                 <meta>
                     <userID>{user_id}</userID>
+                    <deviceID>{device_id}</deviceID>
+                    <instanceID>{form_id}</instanceID>
                 </meta>
             </data>
         """
-        submit_form_locally(form.format(user_id='user_id'), DOMAIN)
-        self.assertIsNone(cache.get(cache_key))
+        return submit_form_locally(
+            form.format(user_id=user_id, device_id=device_id, form_id=form_id),
+            domain,
+            last_sync_token=sync_log_id,
+        )
+
+    def test_restore_caches_cleared(self):
+        sync_log_id = 'a8cac9222f42480764d6875c908040d5'
+        device_id = 'CBNMP7XCGTIIAPCIMNI2KRGY'
+        restore_payload_path_cache = RestorePayloadPathCache(
+            domain=DOMAIN,
+            user_id='user_id',
+            sync_log_id=sync_log_id,
+            device_id=device_id,
+        )
+        restore_payload_path_cache.set_value('test-thing')
+        self.assertEqual(restore_payload_path_cache.get_value(), 'test-thing')
+        self._submit_dummy_form(
+            domain=DOMAIN,
+            user_id='user_id',
+            device_id=device_id,
+            sync_log_id=sync_log_id,
+        )
+        self.assertIsNone(restore_payload_path_cache.get_value())
 
     def test_update_case_without_creating_triggers_soft_assert(self):
         def _submit_form_with_cc_version(version):
@@ -343,22 +363,13 @@ class FundamentalCaseTests(TestCase):
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
-
-        form = """
-            <data xmlns="http://openrosa.org/formdesigner/blah">
-                <meta>
-                    <userID>123</userID>
-                    <instanceID>{form_id}</instanceID>
-                </meta>
-            </data>
-        """
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
-            xform = submit_form_locally(form.format(form_id=form_id), 'domain1').xform
+            xform = self._submit_dummy_form('domain1', user_id='123', form_id=form_id).xform
             self.assertEqual(form_id, xform.form_id)
 
         with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
             # form with duplicate ID submitted to different domain gets a new ID
-            xform = submit_form_locally(form.format(form_id=form_id), 'domain2').xform
+            xform = self._submit_dummy_form('domain2', user_id='123', form_id=form_id).xform
             self.assertNotEqual(form_id, xform.form_id)
 
     def test_globally_unique_case_id(self):

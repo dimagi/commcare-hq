@@ -127,7 +127,9 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+                   host_type=request.POST.get('case_type'),
+                   host_name=request.POST.get('case_name'),
+                   device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
@@ -162,7 +164,6 @@ def get_restore_params(request):
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
                          openrosa_version=None,
                          case_sync=None):
@@ -351,7 +352,7 @@ def heartbeat(request, domain, hq_app_id):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app(domain, hq_app_id)
-        brief_app_id = app.copy_of or app.id
+        brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     return JsonResponse(info)

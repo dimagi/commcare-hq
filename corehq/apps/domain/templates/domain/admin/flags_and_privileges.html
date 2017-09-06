@@ -1,5 +1,6 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
+{% load tzmigration %}
 {% block head %}{{ block.super }}
 <style type="text/css">
     th.checkmark-column, td.checkmark-column {
@@ -102,6 +103,26 @@
                         <td><a href="{% url 'edit_toggle' feature.slug %}">{% trans "change" %}</a></td>
                     </tr>
                     {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-10">
+            <h1>Misc Flags</h1>
+        </div>
+        <div class="col-sm-10">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Feature" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                </thead>
+                <tbody>
+                    <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
+                        <td>Using new correct timezone behavior</td>
+                        <td class="checkmark-column">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>

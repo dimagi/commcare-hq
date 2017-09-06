@@ -9,6 +9,14 @@ from custom.icds.messaging.custom_recipients import (
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
+from custom.icds.rules.immunization import (
+    get_immunization_products,
+    get_immunization_anchor_date,
+    get_tasks_case_immunization_ledger_values,
+    get_map,
+    immunization_is_due,
+    child_person_case_from_tasks_case
+)
 from decimal import Decimal, InvalidOperation
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
@@ -67,6 +75,15 @@ def render_message(language_code, template, context):
 
 
 def static_negative_growth_indicator(recipient, schedule_instance):
+    if schedule_instance.case.get_case_property('zscore_grading_wfa') == 'red':
+        # If the child currently has a red score, do not send this message.
+        # We check this here instead of checking it as part of the rule criteria
+        # because if we checked it in the rule critiera, then the message would
+        # send as soon as the score becomes yellow which we don't want. We just
+        # want to skip sending it if it's red at the time this message is supposed
+        # to send.
+        return []
+
     form = get_last_growth_monitoring_form(schedule_instance.domain, schedule_instance.case_id)
     if not form:
         return []
@@ -128,3 +145,78 @@ def missed_cf_visit_to_ls(recipient, case_schedule_instance):
 
 def missed_pnc_visit_to_ls(recipient, case_schedule_instance):
     return render_missed_visit_message(recipient, case_schedule_instance, 'missed_pnc_visit_to_ls.txt')
+
+
+def child_illness_reported(recipient, case_schedule_instance):
+    if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
+        return []
+
+    if case_schedule_instance.case.type != 'person':
+        raise ValueError("Expected 'person' case")
+
+    context = {
+        'awc': case_schedule_instance.case_owner.name if case_schedule_instance.case_owner else '',
+        'child': case_schedule_instance.case.name,
+    }
+    return [render_content_for_user(recipient, 'child_illness_reported.txt', context)]
+
+
+def cf_visits_complete(recipient, case_schedule_instance):
+    if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
+        return []
+
+    if case_schedule_instance.case.type != 'ccs_record':
+        raise ValueError("Expected 'ccs_record' case")
+
+    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
+    if not mother_case:
+        return []
+
+    context = {
+        'beneficiary': mother_case.name,
+    }
+    return [render_content_for_user(recipient, 'cf_visits_complete.txt', context)]
+
+
+def dpt3_and_measles_are_due(recipient, case_schedule_instance):
+    """
+    Check if the DPT3 and Measles vaccinations are both due, and if so return the
+    reminder message.
+    """
+    case = case_schedule_instance.case
+    if case.type != 'tasks':
+        raise ValueError("Expected 'tasks' case")
+
+    if case.get_case_property('tasks_type') != 'child':
+        raise ValueError("Expected 'tasks_type' of 'child'")
+
+    products = get_immunization_products(case_schedule_instance.domain, 'child')
+    product_code_to_product = get_map(products, 'code')
+    dpt3_product = product_code_to_product['3g_dpt_3']
+    measles_product = product_code_to_product['4g_measles']
+
+    ledger_values = get_tasks_case_immunization_ledger_values(case)
+    anchor_date = get_immunization_anchor_date(case)
+    if (
+        immunization_is_due(case, anchor_date, dpt3_product, products, ledger_values) and
+        immunization_is_due(case, anchor_date, measles_product, products, ledger_values)
+    ):
+        child_person_case = child_person_case_from_tasks_case(case)
+        context = {
+            'child_name': child_person_case.name,
+        }
+        return [render_content_for_user(recipient, 'dpt3_and_measles_due.txt', context)]
+
+    return []
+
+
+def child_vaccinations_complete(recipient, case_schedule_instance):
+    case = case_schedule_instance.case
+    if case.type != 'tasks':
+        raise ValueError("Expected 'tasks' case")
+
+    child_person_case = child_person_case_from_tasks_case(case)
+    context = {
+        'child_name': child_person_case.name,
+    }
+    return [render_content_for_user(recipient, 'child_vaccinations_complete.txt', context)]

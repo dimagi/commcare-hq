@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService,
                                              locationsService, userLocationId, storageService) {
@@ -107,7 +107,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -183,6 +183,15 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Total Number of Angwanwadi Centers that were open yesterday',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

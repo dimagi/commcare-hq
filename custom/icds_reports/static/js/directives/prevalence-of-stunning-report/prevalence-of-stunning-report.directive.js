@@ -1,6 +1,6 @@
 /* global d3*/
 
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStunningReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -165,12 +165,23 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 return chart;
             },
         },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
+            '\n' +
+            'Stunting in children is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
+        },
     };
 
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });

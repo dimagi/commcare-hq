@@ -1,5 +1,5 @@
 /* global d3*/
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
@@ -140,6 +140,15 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 },
                 axisLabelDistance: 20,
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

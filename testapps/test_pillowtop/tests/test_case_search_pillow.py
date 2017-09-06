@@ -13,7 +13,7 @@ from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import delete_case_search_cases, get_case_search_to_elasticsearch_pillow, \
-    get_case_search_reindexer
+    CaseSearchReindexerFactory
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from django.test import TestCase, override_settings
@@ -75,9 +75,9 @@ class CaseSearchPillowTest(TestCase):
         undesired_case = self._make_case(domain=self.domain)  # noqa
 
         with self.assertRaises(CaseSearchNotEnabledException):
-            get_case_search_reindexer(domain=self.domain).reindex()
+            CaseSearchReindexerFactory(domain=self.domain).build().reindex()
 
-        get_case_search_reindexer(domain=other_domain).reindex()
+        CaseSearchReindexerFactory(domain=other_domain).build().reindex()
         self._assert_case_in_es(other_domain, desired_case)
 
     def test_delete_case_search_cases(self):
@@ -166,5 +166,5 @@ class CaseSearchPillowTest(TestCase):
         case = self._make_case(domain)
         CaseSearchConfig.objects.get_or_create(pk=domain, enabled=True)
         case_search_enabled_for_domain.clear(domain)
-        get_case_search_reindexer(domain).reindex()
+        CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case

@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
                                              locationsService, userLocationId, storageService) {
@@ -51,7 +51,6 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Total number of household registered: <strong>' + household + '</strong></div>';
     };
 
@@ -101,7 +100,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });

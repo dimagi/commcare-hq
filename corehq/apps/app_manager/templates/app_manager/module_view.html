@@ -1,0 +1,155 @@
+{% extends "app_manager/managed_app.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load app_manager_extras %}
+{% block head %}{{ block.super }}
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
+
+{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Module Settings' %}{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+    <style>
+        /* Prevent help icons from disturbing horizontal alignment of table headers */
+        th > .hq-help {
+            position: absolute;
+        }
+    </style>
+{% endblock %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
+    {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+        <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+        <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    {% endif %}
+    <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
+    {% include "app_manager/partials/xpathValidator.html" %}
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include 'hqmedia/partials/multimedia_js.html' %}
+    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_detail_print.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_claim.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
+
+    {% include 'hqwebapp/partials/key_value_mapping.html' %}
+    {% include 'app_manager/partials/graph_configuration_modal.html' %}
+{% endblock %}
+
+{% block pre_form_content %}
+  {% include 'app_manager/partials/module_view_heading.html' %}
+{% endblock %}
+
+{% block form-view %}
+  {% initial_page_data 'module_brief' module_brief %}
+  {% initial_page_data 'module_filter' module.module_filter %}
+  {% initial_page_data 'details' details %}
+  {% initial_page_data 'js_options' js_options %}
+  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+  {% initial_page_data 'case_list_form_options' case_list_form_options %}
+  {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
+  {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+  {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+  {% initial_page_data 'parent_modules' parent_modules %}
+  {% initial_page_data 'print_media_info' print_media_info %}
+  {% initial_page_data 'print_ref' print_ref %}
+  {% initial_page_data 'print_uploader_js' print_uploader_js %}
+  {% initial_page_data 'shadow_module_options' shadow_module_options %}
+  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+  {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+  {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
+  {% registerurl "validate_module_for_build" domain app.id module.id %}
+  <div class="tabbable appmanager-tabs-container">
+
+    {% if not module.is_surveys %}
+      <ul class="nav nav-tabs" id="module-view-tabs">
+        {% block tab-headers %}
+          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+          {% for detail in details %}
+            <li>
+              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
+                {{ detail.label }}
+              </a>
+            </li>
+            {% if detail.long %}
+              <li>
+                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
+                  {{ detail.detail_label }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          {% if add_ons.case_detail_overwrite and details and app|get_available_modules_for_case_list_configuration:module %}
+              <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+          {% endif %}
+        {% endblock %}{# endblock tab-headers #}
+      </ul>
+      <div class="spacer"></div>
+    {% endif %}
+
+    <div class="tab-content">
+      {% block tab-content %}
+        <div class="tab-pane active" id="module-settings">
+          {% include "app_manager/partials/module_view_settings.html" %}
+        </div>
+
+        {% if not module.is_surveys %}
+          {% for detail in details %}
+            <div class="tab-pane ko-template" id="{{ detail.type }}-detail-screen-config-tab">
+              {% include 'app_manager/partials/case_list.html' %}
+            </div>
+            {% if detail.long %}
+              <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
+                {% include 'app_manager/partials/case_detail.html' %}
+              </div>
+            {% endif %}
+          {% endfor %}
+          {% if add_ons.case_detail_overwrite and details %}
+            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+            {% if available_modules %}
+            <div class="tab-pane" id="module-actions">
+                {% include 'app_manager/partials/module_actions.html' %}
+            </div>
+            {% endif %}
+            {% endwith %}
+          {% endif %}
+        {% endif %}
+      {% endblock %}
+    </div>
+</div>
+
+<script type="text/html" id="module-forms-template">
+    <div class="checkbox">
+        <label>
+            <input name="incl_form_ids"
+                   type="checkbox"
+                   data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
+            <span data-bind="text: name"></span>
+        </label>
+    </div>
+</script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+    {% with print_uploader as uploader %}
+        {% include 'hqmedia/partials/multimedia_uploader.html' %}
+    {% endwith %}
+{% endif %}
+{% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
+{% endblock %}

@@ -1,4 +1,4 @@
-hqDefine("reminders/js/reminders.broadcast.ko.js", function() {
+hqDefine("reminders/js/reminders.broadcast.ko", function() {
     var BroadcastViewModel = function (initial_values) {
         'use strict';
         var self = this;
@@ -77,7 +77,7 @@ hqDefine("reminders/js/reminders.broadcast.ko.js", function() {
     };
 
     $(function () {
-        var bvm = new BroadcastViewModel(hqImport("hqwebapp/js/initial_page_data.js").get("current_values"));
+        var bvm = new BroadcastViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
         $('#broadcast-form').koApplyBindings(bvm);
         bvm.init();
     });

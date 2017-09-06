@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -68,7 +69,7 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
-        "create_index": true,
+        "create_index": false,
         "type": "expression"
       },
       {
@@ -1751,8 +1752,18 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      {"column_ids": ["supervisor_id", "edd"]},
-      {"column_ids": ["awc_id", "owner_id"]}
+      {
+        "column_ids": [
+          "supervisor_id",
+          "edd"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "owner_id"
+        ]
+      }
     ]
   }
 }

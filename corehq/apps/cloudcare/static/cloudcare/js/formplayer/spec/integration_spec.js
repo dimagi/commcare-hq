@@ -12,7 +12,7 @@ describe('FormplayerFrontend Integration', function() {
                 domain: 'domain',
                 apps: [],
             };
-            sinon.stub(Backbone.history, 'start', sinon.spy());
+            sinon.stub(Backbone.history, 'start').callsFake(sinon.spy());
         });
 
         afterEach(function() {

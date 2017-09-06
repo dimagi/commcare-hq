@@ -10,13 +10,13 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
 
     vm.ages = [
         {id: '', name: 'All'},
-        {id: '0', name: '0 months'},
-        {id: '6', name: '6 months'},
-        {id: '12', name: '12 months'},
-        {id: '24', name: '24 months'},
-        {id: '36', name: '36 months'},
-        {id: '48', name: '48 months'},
-        {id: '60', name: '60 months'},
+        {id: '0', name: '0-6 months'},
+        {id: '6', name: '6-12 months'},
+        {id: '12', name: '12-24 months'},
+        {id: '24', name: '24-36 months'},
+        {id: '36', name: '36-48 months'},
+        {id: '48', name: '48-60 months'},
+        {id: '60', name: '60-72 months'},
         {id: '72', name: '72 months'},
     ];
 
@@ -28,6 +28,11 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
             gender: vm.selectedGender,
             age: vm.selectedAge,
         });
+    };
+
+    vm.reset = function() {
+        vm.selectedAge = '';
+        vm.selectedGender = '';
     };
 
     vm.close = function () {
@@ -46,7 +51,9 @@ function AdditionalFilterController($scope, $location, $uibModal) {
         var placeholder = '';
         filtersObjects.forEach(function(filterObject) {
             if (filterObject.value) {
-                placeholder += filterObject.label + ': ' + filterObject.value + ' ';
+                var val = filterObject.value;
+                if (filterObject.label === 'Age') val += ' m';
+                placeholder += filterObject.label + ': ' + val + ' ';
             }
         });
 
@@ -84,7 +91,7 @@ AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal' ];
 AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
-    var url = hqImport('hqwebapp/js/urllib.js').reverse;
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict:'E',
         scope: {

@@ -5,10 +5,10 @@
  *
  */
 
-hqDefine('export/js/models.js', function () {
-    var constants = hqImport('export/js/const.js');
-    var utils = hqImport('export/js/utils.js');
-    var urls = hqImport('hqwebapp/js/urllib.js');
+hqDefine('export/js/models', function () {
+    var constants = hqImport('export/js/const');
+    var utils = hqImport('export/js/utils');
+    var urls = hqImport('hqwebapp/js/initial_page_data');
 
     /**
      * ExportInstance
@@ -27,6 +27,10 @@ hqDefine('export/js/models.js', function () {
         self.errorOnBuildSchema = ko.observable(false);
         self.schemaProgressText = ko.observable(gettext('Process'));
         self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
+
+        if (self.include_errors) {
+            self.initiallyIncludeErrors = ko.observable(self.include_errors());
+        }
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.

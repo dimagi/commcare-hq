@@ -251,7 +251,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     Views.PersistentCaseTileView = Views.CaseTileView.extend({
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
+            if (this.options.hasInlineTile) {
+                FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
+            }
         },
     });
 

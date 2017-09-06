@@ -1,7 +1,6 @@
-from django.conf import settings
-from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.sql_db.connections import connection_manager
 from corehq.util.decorators import ContextDecorator
 
 
@@ -11,7 +10,7 @@ class temporary_database(ContextDecorator):
     def __init__(self, database_name):
         self.database_name = database_name
         # use db1 engine to create db2 http://stackoverflow.com/a/8977109/8207
-        self.root_engine = create_engine(settings.SQL_REPORTING_DATABASE_URL)
+        self.root_engine = connection_manager.get_engine('default')
 
     def __enter__(self):
         conn = self.root_engine.connect()

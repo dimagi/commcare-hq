@@ -14,7 +14,7 @@ from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillo
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -132,16 +132,23 @@ def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kw
     )
 
 
-def get_user_reindexer():
-    return ElasticPillowReindexer(
-        pillow=get_user_pillow(),
-        change_provider=CouchViewChangeProvider(
-            couch_db=CommCareUser.get_db(),
-            view_name='users/by_username',
-            view_kwargs={
-                'include_docs': True,
-            }
-        ),
-        elasticsearch=get_es_new(),
-        index_info=USER_INDEX_INFO,
-    )
+class UserReindexerFactory(ReindexerFactory):
+    slug = 'user'
+    arg_contributors = [
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        return ElasticPillowReindexer(
+            pillow=get_user_pillow(),
+            change_provider=CouchViewChangeProvider(
+                couch_db=CommCareUser.get_db(),
+                view_name='users/by_username',
+                view_kwargs={
+                    'include_docs': True,
+                }
+            ),
+            elasticsearch=get_es_new(),
+            index_info=USER_INDEX_INFO,
+            **self.options
+        )

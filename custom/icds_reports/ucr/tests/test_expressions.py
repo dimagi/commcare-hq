@@ -1,6 +1,6 @@
 from copy import deepcopy
 import uuid
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 import mock
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -174,3 +174,20 @@ class TestFormsExpressionSpecWithFilter(TestCase):
 
         self.assertEqual(len(forms), 0)
         self.assertEqual(forms, [])
+
+
+class TestGetAppVersion(SimpleTestCase):
+    def test_cases(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "icds_get_app_version",
+            "app_version_string": {
+                "type": "property_name",
+                "property_name": "app_version_string",
+            },
+        })
+        self.assertEqual(None, expression({"app_version_string": "bar"}))
+        self.assertEqual(None, expression({}))
+        self.assertEqual(None, expression({"app_version_string": ""}))
+        self.assertEqual(9969, expression({
+            "app_version_string": "CommCare Android, version 2.36.2(433756). App v9969. "
+                                  "CommCare Version 2.36. Build 433756, built on: 2017-06-23"}))

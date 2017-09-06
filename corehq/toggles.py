@@ -458,6 +458,16 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+REPORT_BUILDER_V2 = StaticToggle(
+    "report_builder_v2",
+    "Report builder V2",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    description=(
+        'Enables the "new" report builder. Note that the "Report Builder" feature flag must also be enabled'
+    )
+)
+
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
     'Generate restore response in an asynchronous task to prevent timeouts',
@@ -1053,20 +1063,6 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V1 = StaticToggle(
-    'app_manager_v1',
-    'Turn OFF prototype for case management onboarding (App Manager V2)',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER]
-)
-
-APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
-    'app_manager_v2_template_apps',
-    'Experiment with template apps in app builder v2',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1185,14 +1181,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     'Always turn login as off',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
-)
-
-BLOBDB_RESTORE = PredictablyRandomToggle(
-    'blobdb_restore',
-    "Blobdb restore",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

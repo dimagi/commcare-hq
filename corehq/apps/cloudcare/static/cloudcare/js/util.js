@@ -1,4 +1,4 @@
-hqDefine('cloudcare/js/util.js', function () {
+hqDefine('cloudcare/js/util', function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;

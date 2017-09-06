@@ -4,7 +4,9 @@ from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.style.decorators import (
+
+from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 from django_prbac.utils import has_privilege
@@ -25,7 +27,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
 )
-from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq import privileges
@@ -178,34 +180,26 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     @memoized
-    def member_ids(self):
-        return set([u['user_id'] for u in self.members])
-
-    @property
-    @memoized
-    def all_users(self):
-        return get_simplified_users(
-            UserES().mobile_users().domain(self.domain)
-        )
-
-    @property
-    @memoized
-    def all_user_ids(self):
-        return set([u['user_id'] for u in self.all_users])
+    def formatted_member_ids(self):
+        return [{'id': u['user_id'], 'text': u['username_in_report']} for u in self.members]
 
     @property
     @memoized
     def members(self):
-        member_ids = set(self.group.get_user_ids())
-        return [u for u in self.all_users if u['user_id'] in member_ids]
+        # FYI use '_id' instead of '__group_ids' in query below in case of
+        # ES not updating immediately
+        return get_simplified_users(
+            UserES().mobile_users().domain(self.domain).term("_id", self.group.get_user_ids())
+        )
 
     @property
     @memoized
-    def user_selection_form(self):
-        form = MultipleSelectionForm(initial={
-            'selected_ids': list(self.member_ids),
-        })
-        form.fields['selected_ids'].choices = [(u['user_id'], u['username_in_report']) for u in self.all_users]
+    def group_membership_form(self):
+        form = GroupMembershipForm(
+            reverse(MobileWorkersOptionsView.urlname, args=(self.domain,)),
+            initial={'selected_ids': list(self.formatted_member_ids)}
+        )
+        form.fields['selected_ids'].widget.set_initial(self.formatted_member_ids)
         return form
 
     @property
@@ -221,8 +215,8 @@ class EditGroupMembersView(BaseGroupsView):
         return {
             'group': self.group,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
-            'num_users': len(self.member_ids),
-            'user_form': self.user_selection_form,
+            'num_users': len(self.members),
+            'group_membership_form': self.group_membership_form,
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
         }
 

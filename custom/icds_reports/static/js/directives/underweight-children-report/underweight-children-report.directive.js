@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -108,7 +108,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -140,7 +140,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             },
             x: function(d){ return d.x; },
             y: function(d){ return d.y; },
-
             color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
             clipVoronoi: false,
@@ -181,6 +180,16 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

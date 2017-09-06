@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('userreports/js/data_source_evaluator.js', function () {
+hqDefine('userreports/js/data_source_evaluator', function () {
     var DataSourceModel = function (submitUrl) {
         var self = this;
         self.submitUrl = submitUrl;
