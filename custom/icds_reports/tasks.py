@@ -30,7 +30,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
 
-            path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'create_functions.sql')
+            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
             celery_task_logger.info("Starting icds reports create_functions")
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()

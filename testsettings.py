@@ -99,3 +99,5 @@ LOGGING = {
     'version': 1,
     'loggers': {},
 }
+
+ICDS_UCR_DATABASE_ALIAS = 'default'

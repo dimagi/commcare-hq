@@ -31,7 +31,7 @@ class ConnectionManagerTests(SimpleTestCase):
         manager = ConnectionManager()
         self.assertEqual(manager.db_connection_map, {
             'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'ucr-url',
+            'ucr': 'ucr-url'
         })
 
     @override_settings(REPORTING_DATABASES={})
@@ -39,7 +39,7 @@ class ConnectionManagerTests(SimpleTestCase):
         manager = ConnectionManager()
         self.assertEqual(manager.db_connection_map, {
             'default': 'postgresql+psycopg2://:@localhost:5432/default',
-            'ucr': 'postgresql+psycopg2://:@localhost:5432/default',
+            'ucr': 'postgresql+psycopg2://:@localhost:5432/default'
         })
 
     @override_settings(REPORTING_DATABASES={'default': 'default', 'ucr': 'ucr', 'other': 'other'})
@@ -48,7 +48,7 @@ class ConnectionManagerTests(SimpleTestCase):
         self.assertEqual(manager.db_connection_map, {
             'default': 'postgresql+psycopg2://:@localhost:5432/default',
             'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-            'other': 'postgresql+psycopg2://:@localhost:5432/other',
+            'other': 'postgresql+psycopg2://:@localhost:5432/other'
         })
 
     def test_read_load_balancing(self):
@@ -63,7 +63,7 @@ class ConnectionManagerTests(SimpleTestCase):
             self.assertEqual(manager.db_connection_map, {
                 'default': 'postgresql+psycopg2://:@localhost:5432/default',
                 'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
-                'other': 'postgresql+psycopg2://:@localhost:5432/other',
+                'other': 'postgresql+psycopg2://:@localhost:5432/other'
             })
 
             # test that load balancing works with a 10% margin for randomness

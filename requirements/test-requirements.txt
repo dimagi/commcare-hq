@@ -8,3 +8,4 @@ git+git://github.com/millerdev/nose-exclude@exclude-tests-env#egg=nose-exclude
 testil
 unittest2
 requests-mock
+sqlalchemy-postgres-copy==0.5.0
