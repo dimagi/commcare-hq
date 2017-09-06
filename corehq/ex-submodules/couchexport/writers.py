@@ -16,7 +16,7 @@ from couchexport.models import Format
 
 
 def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
+    return val.encode("utf8") if isinstance(val, unicode) else val
 
 
 class UniqueHeaderGenerator(object):
