@@ -131,7 +131,7 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
 
     def test_get_outcome(self):
         with self.drtb_import(IMPORT_ROWS, "mumbai") as (csv_file, csv_rows):
-            output = DRTBImportHistoryCommand.handle_get_outcome("1", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains all the expected case ids
@@ -141,7 +141,7 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
                 5 + len(ALL_DRUGS)
             )
 
-            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("3", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains the exception raised for the row
