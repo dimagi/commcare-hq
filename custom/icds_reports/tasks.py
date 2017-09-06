@@ -96,9 +96,9 @@ def recalculate_stagnant_cases():
     case_accessor = CaseAccessors(domain)
     num_stagnant_cases = len(stagnant_cases)
     current_case_num = 0
-    for case_ids in chunked(case_ids, 100):
+    for case_ids in chunked(stagnant_cases, 100):
         current_case_num += len(case_ids)
-        cases = case_accessor.get_cases(case_ids)
+        cases = case_accessor.get_cases(list(case_ids))
         for case in cases:
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
