@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import csv
 import datetime
 
 from django.core.management import BaseCommand
@@ -36,14 +37,14 @@ class Command(BaseCommand):
             'diagnosis_test_summary',
             'datamigration_diagnosis_test_information',
         ]
-        row_format = ','.join(['{' + header + '}' for header in headers[1:]])
 
         print("Starting {} migration on {} at {}".format(
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
         ))
 
         with open(log_path, "w") as log_file:
-            print(','.join(headers), file=log_file)
+            writer = csv.writer(log_file)
+            writer.writerow(headers)
 
             for episode_case_id in accessor.get_case_ids_in_domain(type='episode'):
                 print('Looking at {}'.format(episode_case_id))
@@ -56,7 +57,7 @@ class Command(BaseCommand):
                     if test is not None:
                         update = self.get_updates(test)
                         print('Updating {}...'.format(episode_case_id))
-                        print(episode_case_id + ',' + row_format.format(**update), file=log_file)
+                        writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
 
                         if commit:
                             factory.update_case(case_id=episode_case_id, update=update)
