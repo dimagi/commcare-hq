@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_occurrence_case_from_episode
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class Command(BaseCommand):
@@ -77,7 +78,11 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_relevant_test_case(domain, episode_case):
-        occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
+        try:
+            occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
+        except ENikshayCaseNotFound:
+            return None
+
         indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([occurrence_case.case_id])
         test_cases = [
             case for case in indexed_cases
