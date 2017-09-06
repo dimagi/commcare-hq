@@ -70,7 +70,7 @@ class TestBetsUpdates(TestCase):
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
-            {'state': 'paid', 'amount_fulfilled': '100'},
+            {'state': 'paid', 'amount_paid': '100'},
             get_case(self.domain, voucher.case_id).case_json,
         )
 
@@ -189,7 +189,7 @@ class TestBetsUpdates(TestCase):
         )
         # check voucher update
         self.assertDictContainsSubset(
-            {'state': 'paid', 'amount_fulfilled': '100'},
+            {'state': 'paid', 'amount_paid': '100'},
             get_case(self.domain, voucher.case_id).case_json,
         )
 
@@ -251,9 +251,9 @@ class TestBetsUpdates(TestCase):
                 "bank_name": "",
                 "state": "paid",
                 "comments": "Cool stuff!",
-                "date_fulfilled": "2014-11-22T13:23:44.657000Z",
+                "date_paid": "2014-11-22T13:23:44.657000Z",
                 "amount_initial": "105",
-                "amount_fulfilled": "100",
+                "amount_paid": "100",
                 "payment_mode": "",
                 "check_number": "12345",
             },
