@@ -1,0 +1,95 @@
+import re
+import requests
+from dimagi.utils.logging import notify_exception
+from corehq.messaging.smsbackends.http.models import SQLSMSBackend
+from corehq.messaging.smsbackends.start_enterprise.const import (
+    SINGLE_SMS_URL,
+    LONG_TEXT_MSG_TYPE,
+    LONG_UNICODE_MSG_TYPE,
+    SUCCESS_RESPONSE_REGEX,
+    UNRETRYABLE_ERROR_MESSAGES,
+)
+from corehq.messaging.smsbackends.start_enterprise.exceptions import StartEnterpriseBackendException
+from corehq.messaging.smsbackends.start_enterprise.forms import StartEnterpriseBackendForm
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.util import strip_plus
+
+
+class StartEnterpriseBackend(SQLSMSBackend):
+    class Meta:
+        app_label = 'sms'
+        proxy = True
+
+    @classmethod
+    def get_api_id(cls):
+        return 'START_ENT'
+
+    @classmethod
+    def get_generic_name(cls):
+        return "Start Enterprise"
+
+    @classmethod
+    def get_available_extra_fields(cls):
+        return [
+            'username',
+            'password',
+            'sender_id',
+        ]
+
+    @classmethod
+    def get_form_class(cls):
+        return StartEnterpriseBackendForm
+
+    def get_params(self, msg_obj):
+        config = self.config
+        try:
+            message = str(msg_obj.text)
+            message_type = LONG_TEXT_MSG_TYPE
+        except UnicodeEncodeError:
+            message = msg_obj.text.encode('utf_16_be').encode('hex').upper()
+            message_type = LONG_UNICODE_MSG_TYPE
+
+        return {
+            'usr': config.username,
+            'pass': config.password,
+            'msisdn': strip_plus(msg_obj.phone_number),
+            'sid': config.sender_id,
+            'mt': message_type,
+            'msg': message,
+        }
+
+    @classmethod
+    def phone_number_is_valid(cls, phone_number):
+        phone_number = strip_plus(phone_number)
+        # Phone number must be an Indian phone number
+        # Also avoid processing numbers that are obviously too short
+        return phone_number.startswith('91') and len(phone_number) > 3
+
+    def send(self, msg_obj, *args, **kwargs):
+        if not self.phone_number_is_valid(msg_obj.phone_number):
+            msg_obj.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
+
+        response = requests.get(
+            SINGLE_SMS_URL,
+            params=self.get_params(msg_obj)
+        )
+        self.handle_response(msg_obj, response.status_code, response.text)
+
+    def handle_response(self, msg_obj, response_status_code, response_text):
+        if response_status_code == 200 and re.match(SUCCESS_RESPONSE_REGEX, response_text):
+            msg_obj.backend_message_id = response_text
+        else:
+            self.handle_failure(msg_obj, response_status_code, response_text)
+
+    def handle_failure(self, msg_obj, response_status_code, response_text):
+        if response_status_code != 200:
+            raise StartEnterpriseBackendException("Received unexpected status code: %s" % response_status_code)
+
+        if response_text in UNRETRYABLE_ERROR_MESSAGES:
+            msg_obj.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+            notify_exception(None, "Error with the Start Enterprise Backend: %s" % response_text)
+        else:
+            raise StartEnterpriseBackendException(
+                "Unrecognized response from Start Enterprise gateway: %s" % response_text
+            )
