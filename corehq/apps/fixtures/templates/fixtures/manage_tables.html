@@ -8,6 +8,11 @@
 {% endblock %}
 
 {% block requirejs_entry %}
+    requirejs.config({
+        bundles: {
+            'fixtures/js/built': ['jquery', 'bootstrap', 'ko.mapping', 'ko.knockout_bindings'],
+        },
+    });
     requirejs(['fixtures/js/built'], function (common) {
         requirejs(['fixtures/js/lookup-manage']);
     });
