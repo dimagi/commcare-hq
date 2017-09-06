@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from iso8601 import iso8601
 
@@ -12,6 +13,8 @@ from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_prog
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
+
+from corehq.util.soft_assert import soft_assert
 
 
 def _validate_length(length):
@@ -220,6 +223,32 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed = False
         self.case.closed_on = None
         self.case.closed_by = ''
+        self._deduplicate_indices()
+
+    def _deduplicate_indices(self):
+        # http://manage.dimagi.com/default.asp?261458
+        # Can be removed once we have a unique index on case indices
+        indices_by_id = defaultdict(list)
+        for index in self.case.indices:
+            indices_by_id[index.identifier].append(index)
+
+        for identifier, indices in indices_by_id.items():
+            if len(indices) > 1:
+                index_set = set(indices)
+                if len(index_set) == 1:
+                    for index_to_delete in indices[1:]:
+                        # delete all except the first
+                        self.case.track_delete(index_to_delete)
+                    self.case._saved_indices.reset_cache(self.case)
+                else:
+                    soft_assert('{}@dimagi.com'.format('skelly'))(
+                        False,
+                        "Multiple case indices with same identifier",
+                        {
+                            'case_id': self.case.case_id,
+                            'indices': [unicode(index) for index in index_set]
+                        }
+                    )
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
         """
