@@ -251,6 +251,9 @@ class ProgramSummaryView(View):
                 'aggregation_level': 1
             }
 
+        location = request.GET.get('location_id', '')
+        get_location_filter(location, domain, config)
+
         data = {}
         if step == 'maternal_child':
             data = get_maternal_child_data(domain, config, include_test)
