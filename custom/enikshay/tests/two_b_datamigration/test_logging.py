@@ -123,11 +123,11 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
             csv_file.seek(0)
             self.assertEqual(output, "case not found\n")
 
-            row_1_case_ids = csv_rows[0]['case_ids'].split(",")
-            for case_id in row_1_case_ids:
+            row_case_ids = csv_rows[0]['case_ids'].split(",")
+            for case_id in row_case_ids:
                 output = DRTBImportHistoryCommand.handle_get_row(case_id, csv_file)
                 csv_file.seek(0)
-                self.assertEqual(output, "row: 1\n")
+                self.assertEqual(output, "row: 2\n")
 
     def test_get_outcome(self):
         with self.drtb_import(IMPORT_ROWS, "mumbai") as (csv_file, csv_rows):
