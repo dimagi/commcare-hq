@@ -43,7 +43,7 @@ class MessageForm(Form):
     )
     recipients = MessageRecipientField(
         label=_("Recipient(s)"),
-        help_text=_("Type a username, group name or 'send to all'"),
+        help_text=_("Type a username, group name or location"),
     )
     content = ChoiceField(
         required=True,
