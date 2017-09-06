@@ -56,7 +56,8 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_functional_toilet_data_map, get_functional_toilet_data_chart, get_medicine_kit_sector_data, \
     get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
     get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
-    get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
+    get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart, \
+    get_age_filter
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -336,7 +337,7 @@ class PrevalenceOfUndernutritionView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, domain, config)
@@ -648,7 +649,7 @@ class PrevalenceOfSevereView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -690,7 +691,7 @@ class PrevalenceOfStunningView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -809,7 +810,7 @@ class ExclusiveBreastfeedingView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -850,7 +851,7 @@ class ChildrenInitiatedView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -1042,7 +1043,7 @@ class EnrolledChildrenView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -1074,10 +1075,6 @@ class EnrolledWomenView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
-
-        age = self.request.GET.get('age', None)
-        if age:
-            config.update({'age_tranche': age})
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)

@@ -257,6 +257,14 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     };
 
+    var transformLocationTypeName = function(locationTypeName) {
+        if (locationTypeName === 'awc') {
+            return locationTypeName.toUpperCase();
+        } else {
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+        }
+    };
+
     vm.getPlaceholder = function() {
         var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
 
@@ -264,7 +272,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             return 'Location';
         } else {
             var locationTypeName = selectedLocation.location_type_name;
-            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+            return transformLocationTypeName(locationTypeName);
         }
     };
 

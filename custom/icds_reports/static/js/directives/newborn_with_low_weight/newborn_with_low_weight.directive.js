@@ -13,8 +13,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.label = "Newborns with Low Birth Weight";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/low_birth/map', label: 'Map'},
-        'chart': {route: '/low_birth/chart', label: 'Chart'},
+        'map': {route: '/low_birth/map', label: 'Map View'},
+        'chart': {route: '/low_birth/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',
@@ -65,10 +65,10 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(function(response) {
@@ -139,7 +139,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

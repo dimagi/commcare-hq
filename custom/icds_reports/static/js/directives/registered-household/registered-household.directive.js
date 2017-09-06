@@ -12,7 +12,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.label = "Registered Household";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/registered_household/map', label: 'Map'},
+        'map': {route: '/registered_household/map', label: 'Map View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
@@ -57,10 +57,10 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(function(response) {

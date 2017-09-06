@@ -1839,6 +1839,13 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
+                                'slug': 'stunting_severe',
+                                'average': [],
+                                'reverseColors': True,
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                                 'slug': 'stunting_moderate',
                                 'average': [],

@@ -13,8 +13,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.label = "Children initiated appropriate complementary feeding";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/children_initiated/map', label: 'Map'},
-        'chart': {route: '/children_initiated/chart', label: 'Chart'},
+        'map': {route: '/children_initiated/map', label: 'Map View'},
+        'chart': {route: '/children_initiated/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -63,10 +63,10 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
 
@@ -158,7 +158,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -168,7 +168,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
                     var total = findValue(vm.chartData[1].values, d.value);
