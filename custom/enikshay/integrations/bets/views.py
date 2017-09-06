@@ -70,7 +70,8 @@ class VoucherUpdate(PaymentUpdate):
             return {
                 'state': 'paid',
                 'amount_paid': self.amount,
-                'date_paid': self.paymentDate.isoformat(),
+                'date_paid': self.paymentDate.date().isoformat(),
+                'time_paid': self.paymentDate.time().isoformat(),
                 'comments': self.comments or "",
                 'payment_mode': self.paymentMode or "",
                 'check_number': self.checkNumber or "",
