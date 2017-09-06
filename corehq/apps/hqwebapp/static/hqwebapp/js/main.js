@@ -274,6 +274,8 @@ hqDefine("hqwebapp/js/main", function() {
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,
+        makeSaveButton: makeSaveButton,
+        SaveButton: SaveButton,
         initSaveButtonForm: SaveButton.initForm,
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
