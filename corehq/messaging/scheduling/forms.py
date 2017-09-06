@@ -10,7 +10,7 @@ from django.forms.forms import Form
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 
