@@ -37,7 +37,6 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     """
     # TODO: Refactor this function. The length of the args matters :(
 
-    page = None
     params = {}
 
     args = [domain]
@@ -60,15 +59,12 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
                 if app.get_module(module_id).get_form(form_id).no_vellum:
                     form_view = 'view_form'
 
-    if page:
-        view_name = page
-    else:
-        view_name = {
-            1: 'default_app',
-            2: 'view_app',
-            3: 'view_module',
-            4: form_view,
-        }[len(args)]
+    view_name = {
+        1: 'default_app',
+        2: 'view_app',
+        3: 'view_module',
+        4: form_view,
+    }[len(args)]
 
     return HttpResponseRedirect(
         "%s%s" % (

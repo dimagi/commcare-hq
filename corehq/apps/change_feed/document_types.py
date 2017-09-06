@@ -100,7 +100,7 @@ def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type,
     if not doc_id:
         raise MissingMetaInformationError(u"No doc ID!!".format(document))
     return ChangeMeta(
-        document_id=doc_id or document['_id'],
+        document_id=doc_id,
         document_rev=document.get('_rev', None),
         data_source_type=data_source_type,
         data_source_name=data_source_name,

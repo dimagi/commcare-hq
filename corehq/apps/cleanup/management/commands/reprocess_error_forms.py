@@ -53,9 +53,9 @@ class Command(BaseCommand):
                 try:
                     reprocess_xform_error(form)
                 except Exception as e:
-                    raise
                     failed.append(form.form_id)
                     error_messages[str(e)] += 1
+                    raise
                 else:
                     succeeded.append(form.form_id)
 

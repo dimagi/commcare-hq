@@ -508,10 +508,7 @@ class SubscriptionForm(forms.Form):
             self.fields['funding_source'].initial = subscription.funding_source
             self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
 
-            if (
-                subscription.date_start is not None
-                and subscription.date_start <= today
-            ):
+            if subscription.date_start <= today:
                 self.fields['start_date'].help_text = '(already started)'
             if has_subscription_already_ended(subscription):
                 self.fields['end_date'].help_text = '(already ended)'

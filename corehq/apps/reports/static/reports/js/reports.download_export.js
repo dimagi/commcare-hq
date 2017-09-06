@@ -1,6 +1,6 @@
 var HQExportDownloader = function (options) {
     var self = this;
-    self.downloadLink = options.dowloadLink || '.export-action-download';
+    self.downloadLink = options.downloadLink || '.export-action-download';
     self.modal = options.modal || "#export-download-status";
     self.loadingIndicator = options.loadingIndicator || ".loading-indicator";
     self.loadedData = options.loadedData || ".loaded-data";

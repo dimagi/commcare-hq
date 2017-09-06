@@ -856,15 +856,15 @@ class CaseReminderHandler(Document):
             timedelta(days=day_of_week_offset) +
             timedelta(minutes=additional_minute_offset))
         return CaseReminderHandler.timestamp_to_utc(recipient, timestamp)
-    
+
     def spawn_reminder(self, case, now, recipient=None):
         """
         Creates a CaseReminder.
-        
+
         case    The CommCareCase for which to create the CaseReminder.
         now     The date and time to kick off the CaseReminder. This is the date and time from which all
                 offsets are calculated.
-        
+
         return  The CaseReminder
         """
         if recipient is None:
@@ -876,11 +876,14 @@ class CaseReminderHandler(Document):
                 if case is not None and case.parent is not None:
                     recipient = case.parent
         local_now = CaseReminderHandler.utc_to_local(recipient, now)
-        
+
         case_id = case.case_id if case is not None else None
-        user_id = recipient.get_id if self.recipient == RECIPIENT_USER and recipient is not None else None
-        sample_id = recipient.get_id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
-        
+        if recipient is not None:
+            user_id = recipient.get_id if self.recipient == RECIPIENT_USER else None
+            sample_id = recipient.get_id if self.recipient == RECIPIENT_SURVEY_SAMPLE else None
+        else:
+            user_id, sample_id = None, None
+
         reminder = CaseReminder(
             domain=self.domain,
             case_id=case_id,
