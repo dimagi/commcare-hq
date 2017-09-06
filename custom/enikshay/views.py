@@ -38,4 +38,9 @@ class EpisodeTaskStatusView(TemplateView):
         cache = get_redis_client()
         download_id = cache.get(CACHE_KEY.format(domain))
         download = MultipleTaskDownload.get(download_id)
-        return redirect('hq_soil_download', domain, download.download_id)
+        if download:
+            return redirect('hq_soil_download', domain, download.download_id)
+        else:
+            return HttpResponse(
+                "Task with id: {} not found. Maybe it failed, never started, or completed a long time ago"
+                .format(download_id))
