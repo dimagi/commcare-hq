@@ -1754,7 +1754,7 @@ def match_facility(domain, xlsx_facility_name):
     """
     if not xlsx_facility_name:
         return None, None
-    elif "other" in xlsx_facility_name:
+    elif "other" in xlsx_facility_name.lower():
         return xlsx_facility_name, None
     else:
         # this is really ugly but some rows have a lab code
