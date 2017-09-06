@@ -1890,9 +1890,48 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
             },
         };
+
+        vm.lineChartDaysPerWeekOptions = {
+            chart: {
+                type: 'multiBarChart',
+                height: 450,
+                width: 1100,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 150,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d.x;
+                },
+                y: function (d) {
+                    return d.y;
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 500,
+                xAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.time.format('Week of %d/%m')(new Date(d));
+                    },
+                },
+                yAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.format('d')(d);
+                    },
+                },
+                reduceXTicks: false,
+                staggerLabels: true,
+            },
+        };
+
         vm.lineChartOptions = {
             chart: {
-                type: 'lineChart',
+                type: 'multiBarChart',
                 height: 450,
                 width: 1100,
                 margin: {
@@ -1910,9 +1949,12 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 showValues: true,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
-                duration: 500,
+                duration: 1000,
                 xAxis: {
                     axisLabel: 'Weeks',
+                    tickFormat: function(d) {
+                        return d3.time.format('Week of %d/%m')(new Date(d));
+                    },
                 },
                 yAxis: {
                     axisLabel: '',
@@ -1920,6 +1962,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                         return d3.format('.2f')(d);
                     },
                 },
+                reduceXTicks: false,
+                staggerLabels: true,
             },
         };
         $scope.$apply();

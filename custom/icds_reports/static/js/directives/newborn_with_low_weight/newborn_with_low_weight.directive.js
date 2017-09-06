@@ -24,7 +24,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',

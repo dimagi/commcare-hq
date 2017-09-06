@@ -1,13 +1,28 @@
+/* global moment */
+
 function PrintReportController() {
     var vm = this;
 
     vm.print = function() {
         var innerContents = document.getElementsByClassName('report-content')[0].innerHTML;
         var head_copy = document.head;
-        var popupWinindow = window.open('', '_blank', 'width=1100,height=700,scrollbars=no,menubar=no,toolbar=no,location=no,status=no,titlebar=no');
-        popupWinindow.document.open();
-        popupWinindow.document.write(head_copy.innerHTML + '<body style="width: 1100px !important;" onload="window.print()">' + innerContents + '</body>');
-        popupWinindow.document.close();
+        var popupWindow = window.open('', '_blank', 'width=1100,height=700,scrollbars=no,menubar=no,toolbar=no,location=no,status=no,titlebar=no');
+
+        var reportNameHtml = '<div>Report Name: ' + $('#reportTitle').text() + '</div>';
+        var dateHtml = '<div>Date printed: ' + moment().format('YYYY-MM-DD') + '</div>';
+        var locationNameHtml = '<div>Location name: ' + $('#locationName').text() + '</div>';
+
+        var reportMetaData = dateHtml + reportNameHtml + locationNameHtml;
+
+        popupWindow.document.open();
+        popupWindow.document.write(
+            head_copy.innerHTML +
+            '<body style="width: 1100px !important;" onload="window.print()">' +
+            reportMetaData +
+            innerContents +
+            '</body>'
+        );
+        popupWindow.document.close();
     };
 }
 

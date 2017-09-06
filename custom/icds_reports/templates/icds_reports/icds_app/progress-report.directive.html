@@ -8,12 +8,12 @@
                     {$ $ctrl.label $}
                     <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
                 </span>
-                <span class="breadcrump-element">{$ $ctrl.title $}</span>
+                <span id="reportTitle" class="breadcrump-element">{$ $ctrl.title $}</span>
             </div>
             <div class="row">
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
         </div>
