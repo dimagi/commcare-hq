@@ -43,4 +43,4 @@ class TestStartEnterpriseBackendResponse(TestCase):
             StartEnterpriseBackendException,
             "Unrecognized response from Start Enterprise gateway: %s" % UNRECOGNIZED_ERROR_MESSAGE
         ):
-            backend.handle_response(queued_sms, 200,  UNRECOGNIZED_ERROR_MESSAGE)
+            backend.handle_response(queued_sms, 200, UNRECOGNIZED_ERROR_MESSAGE)
