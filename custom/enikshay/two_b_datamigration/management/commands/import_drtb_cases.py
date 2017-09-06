@@ -848,7 +848,8 @@ def get_disease_site_properties(column_mapping, row):
         lower().\
         replace('extra pulmonary', 'extra_pulmonary').\
         replace('lymph node', 'lymph_node').\
-        replace('pleural effusion', 'pleural_effusion')
+        replace('pleural effusion', 'pleural_effusion').\
+        replace('others', 'other')
 
     if (not re.match("^extra_pulmonary \(other - .*$", value)
         and value not in [
