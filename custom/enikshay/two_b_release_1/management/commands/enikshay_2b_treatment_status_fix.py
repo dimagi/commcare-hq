@@ -5,6 +5,8 @@ from corehq.apps.es import CaseSearchES
 from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 
+from custom.enikshay.exceptions import NikshayLocationNotFound
+
 logger = logging.getLogger('enikshay_2b_reason_for_test_fix')
 
 
@@ -74,5 +76,8 @@ class Command(BaseCommand):
                     )
 
                     if commit:
-                        factory.create_or_update_case(case_structure)
+                        try:
+                            factory.create_or_update_case(case_structure)
+                        except NikshayLocationNotFound:
+                            pass
         logger.info("Migration finished at {}".format(datetime.datetime.utcnow()))
