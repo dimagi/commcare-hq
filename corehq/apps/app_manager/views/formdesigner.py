@@ -210,13 +210,6 @@ def _get_vellum_core_context(request, domain, app, module, form):
         'dataSourcesEndpoint': reverse('get_form_data_schema',
                                        kwargs={'domain': domain,
                                                'form_unique_id': form.get_unique_id()}),
-        'dataSource': [
-            # DEPRECATED. Use dataSourcesEndpoint
-            {
-                'key': 'fixture',
-                'name': 'Fixtures',
-            },
-        ],
         'form': form.source,
         'formId': form.get_unique_id(),
         'formName': trans(form.name, app.langs),
