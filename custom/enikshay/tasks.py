@@ -138,7 +138,7 @@ class EpisodeUpdater(object):
             case_ids = (
                 CommCareCaseSQL.objects
                 .using(db)
-                .filter(domain=self.domain, type=CASE_TYPE_EPISODE)
+                .filter(domain=self.domain, type=CASE_TYPE_EPISODE, closed=False, deleted=False)
                 .values_list('case_id', flat=True)
             )
             yield case_ids
