@@ -17,7 +17,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response

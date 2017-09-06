@@ -74,8 +74,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -1196,8 +1196,6 @@ def clean_password(txt):
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
     else:
-        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-        # until then, we are using a dimagi hosted fork
         strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
         message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:

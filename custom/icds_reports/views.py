@@ -18,7 +18,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.style.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
 from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
@@ -251,6 +251,9 @@ class ProgramSummaryView(View):
                 'prev_month': tuple(prev_month.timetuple())[:3],
                 'aggregation_level': 1
             }
+
+        location = request.GET.get('location_id', '')
+        get_location_filter(location, domain, config)
 
         data = {}
         if step == 'maternal_child':
@@ -726,11 +729,8 @@ class NewbornsWithLowBirthWeightView(View):
         }
 
         gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
         if gender:
             config.update({'gender': gender})
-        if age:
-            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -768,11 +768,8 @@ class EarlyInitiationBreastfeeding(View):
         }
 
         gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
         if gender:
             config.update({'gender': gender})
-        if age:
-            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)

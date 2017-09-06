@@ -53,7 +53,7 @@ from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRO
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_legacy_jquery,
     use_jquery_ui,

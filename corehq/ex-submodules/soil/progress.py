@@ -163,6 +163,9 @@ def _get_download_context_multiple_tasks(task):
                                 # in the task when accessing the result
             errors.append(e)
         else:
-            messages.append(task_result.get("messages"))
+            try:
+                messages.append(task_result.get("messages"))
+            except AttributeError:
+                messages.append(str(task_result))
 
     return messages, errors

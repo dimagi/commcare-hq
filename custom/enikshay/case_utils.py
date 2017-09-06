@@ -298,8 +298,10 @@ def update_case(domain, case_id, updated_properties, external_id=None,
     )
 
 
-def get_person_locations(person_case):
+def get_person_locations(person_case, episode_case=None):
     """
+    picks episode case's diagnosing_facility_id if passed else falls back to person's owner id for
+    fetching the base location to get the hierarchy
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
 
@@ -309,16 +311,24 @@ def get_person_locations(person_case):
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
         return _get_private_locations(person_case)
     else:
-        return _get_public_locations(person_case)
+        return _get_public_locations(person_case, episode_case)
 
 
-def _get_public_locations(person_case):
+def _get_public_locations(person_case, episode_case):
     PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
-        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+        phi_location_id = None
+        if episode_case:
+            phi_location_id = episode_case.dynamic_case_properties().get('diagnosing_facility_id')
+        # fallback to person_case.owner_id in case diagnosing_facility_id not set on episode
+        # or if no episode case was passed
+        if not phi_location_id:
+            phi_location_id = person_case.owner_id
+        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=phi_location_id)
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            """Location with id {location_id} not found.
+            This is the diagnosing facility id for person with id: {person_id}"""
             .format(location_id=person_case.owner_id, person_id=person_case.case_id)
         )
 

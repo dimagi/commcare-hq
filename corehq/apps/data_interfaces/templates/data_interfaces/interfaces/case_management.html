@@ -69,7 +69,7 @@
                         results: (data.results
                             // white list groups and users
                             .filter(function(o) {
-                                return o.id.startsWith('u__') || o.id.startsWith('sg__');
+                                return o.id.startsWith('u__') || o.id.startsWith('sg__') || o.id.startsWith('l__');
                             })
                         )
                     };

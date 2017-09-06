@@ -379,9 +379,9 @@ var reportBuilder = function () {  // eslint-disable-line
             };
         };
 
-        var button = hqImport("style/js/main").SaveButton;
+        var button = hqImport("hqwebapp/js/main").SaveButton;
         if (config['existingReport']) {
-            button = hqImport("style/js/main").makeSaveButton({
+            button = hqImport("hqwebapp/js/main").makeSaveButton({
                 // The SAVE text is the only thing that distringuishes this from SaveButton
                 SAVE: django.gettext("Update Report"),
                 SAVING: django.gettext("Saving..."),

@@ -60,7 +60,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
 )
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_angular_js,
     use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc

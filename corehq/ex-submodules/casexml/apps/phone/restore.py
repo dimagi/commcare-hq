@@ -833,6 +833,7 @@ class RestoreConfig(object):
         timing = self.timing_context
         assert timing.is_finished()
         duration = timing.duration if timing is not None else -1
+        device_id = self.params.device_id
         if duration > 20 or status == 412:
             if status == 412:
                 # use last sync log since there is no current sync log
@@ -845,13 +846,15 @@ class RestoreConfig(object):
                 "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
                 sync_log_id,
                 self.restore_user.username,
-                self.params.device_id,
+                device_id,
                 self.domain,
                 status,
                 duration,
             )
+        is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = [
             u'status_code:{}'.format(status),
+            u'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:

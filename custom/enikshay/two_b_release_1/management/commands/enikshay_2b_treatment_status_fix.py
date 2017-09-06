@@ -36,7 +36,6 @@ class Command(BaseCommand):
         cases = (CaseSearchES()
                  .domain(domain)
                  .case_type("episode")
-                 .case_property_query("updated_by_migration", "enikshay_2b_case_properties", "must")
                  .scroll())
 
         with open(log_path, "w") as f:

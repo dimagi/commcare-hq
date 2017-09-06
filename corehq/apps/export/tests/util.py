@@ -34,3 +34,22 @@ def new_form(domain=DOMAIN, app_id=DEFAULT_APP_ID, xmlns=DEFAULT_XMLNS, **kwargs
         xmlns=xmlns,
         **kwargs
     )
+
+
+def assertContainsExportItems(item_tuples, export_group_schema):
+    """
+    :param item_tuples: list of ("path", "label") tuples representing each export item:
+    eg:  [("form.group.question2", "question_label")]
+    """
+    actual = {
+        (item.readable_path, item.label)
+        for item in export_group_schema.items
+    }
+    item_set = set(item_tuples)
+    missing = item_set - actual
+    extra = actual - item_set
+    if missing or extra:
+        def prettify(list_of_tuples):
+            return '\n  '.join(map(unicode, list_of_tuples))
+        raise AssertionError("Contains items:\n  {}\nMissing items:\n  {}\nExtra items:\n {}"
+                             .format(prettify(actual), prettify(missing), prettify(extra)))

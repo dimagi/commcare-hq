@@ -47,7 +47,7 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
-    amount = jsonobject.DecimalProperty(required=False)
+    amount = jsonobject.IntegerProperty(required=False)
     paymentDate = FlexibleDateTimeProperty(required=True)
     comments = jsonobject.StringProperty(required=False)
     failureDescription = jsonobject.StringProperty(required=False)

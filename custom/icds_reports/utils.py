@@ -1598,7 +1598,8 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     open_count_chart = {}
     attended_children_chart = {}
     for chart_row in chart_data:
-        pse_week = chart_row['pse_date'].isocalendar()[1]
+        first_day_of_week = chart_row['pse_date'] - timedelta(days=chart_row['pse_date'].isoweekday() - 1)
+        pse_week = int(first_day_of_week.strftime("%s")) * 1000
         if pse_week in open_count_chart:
             open_count_chart[pse_week] += (chart_row['open_count'] or 0)
             attended_children_chart[pse_week].append((chart_row['attended_children_percent'] or 0))
@@ -1667,8 +1668,10 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                 {
                     'label': _('AWC Days Open'),
                     'help_text': _((
-                        "Total number of days the AWC is open in the given month. The AWC is expected "
-                        "to be open 6 days a week (Not on Sundays and public holidays)"
+                        """
+                        Total number of days the AWC is open in the given month.
+                        The AWC is expected to be open 6 days a week (Not on Sundays and public holidays)
+                        """
                     )),
                     'percent': percent_increase(
                         'days_open',
@@ -1784,9 +1787,11 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        "Percentage of children with weight-for-age less than -2 standard deviations of the "
-                        "WHO Child Growth Standards median. Children who are moderately or severely underweight "
-                        "have a higher risk of mortality."
+                        """
+                        Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age
+                        less than -2 standard deviations of the WHO Child Growth Standards median.
+                        Children who are moderately or severely underweight have a higher risk of mortality.
+                        """
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -1808,10 +1813,15 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Wasting (Weight-for-Height)'),
                     'help_text': _((
-                        "Percentage of children (6-60 months) with weight-for-height below -3 standard "
-                        "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
-                        "(SAM) or wasting in children is a symptom of acute undernutrition usually "
-                        "as a consequence"
+                        """
+                        Percentage of children between 6 - 60 months enrolled for
+                        ICDS services with weight-for-height
+                        below -2 standard deviations of the WHO Child Growth Standards median.
+
+                        Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute
+                        undernutrition usually as a consequence
+                        of insufficient food intake or a high incidence of infectious diseases.
+                        """
                     )),
                     'percent': percent_diff(
                         'wasting',
@@ -1835,10 +1845,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
-                        "Percentage of children (6-60 months) with height-for-age below -2Z standard "
-                        "deviations of the WHO Child Growth Standards median. Stunting in children is a "
-                        "sign of chronic undernutrition and has long lasting harmful consequences on the "
-                        "growth of a child"
+                        """
+                            Percentage of children (6-60 months) with height-for-age below -2Z
+                            standard deviations of the WHO Child Growth Standards median.
+                            Stunting in children is a sign of chronic undernutrition and
+                            has long lasting harmful consequences on the growth of a child
+                        """
                     )),
                     'percent': percent_diff(
                         'stunting',
@@ -1860,8 +1872,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Weighing Efficiency'),
                     'help_text': _((
-                        "Percentage of children (0-5 years) who have been weighed of "
-                        "total children enrolled for ICDS services"
+                        """
+                        Percentage of children (0-5 years) who
+                        have been weighed of total children enrolled for ICDS services
+                        """
                     )),
                     'percent': percent_diff(
                         'wer_weight',
@@ -1869,12 +1883,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         prev_month_data_we,
                         'wer_eli'
                     ),
-                    'color': 'red' if percent_diff(
+                    'color': 'green' if percent_diff(
                         'wer_weight',
                         this_month_data_we,
                         prev_month_data_we,
                         'wer_eli'
-                    ) > 0 else 'green',
+                    ) > 0 else 'red',
                     'value': get_value(this_month_data_we, 'wer_weight'),
                     'all': get_value(this_month_data_we, 'wer_eli'),
                     'format': 'percent_and_div',
@@ -1885,7 +1899,14 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Newborns with Low Birth Weight'),
-                    'help_text': None,
+                    'help_text': _(
+                        """
+                        Percentage of newborns born with birth weight less than 2500 grams.
+                        Newborns with Low Birth Weight are closely associated with foetal and
+                        neonatal mortality and morbidity, inhibited growth and cognitive development,
+                        and chronic diseases later in life"
+                        """
+                    ),
                     'percent': percent_diff(
                         'low_birth',
                         this_month_data,
@@ -1905,7 +1926,14 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Early Initiation of Breastfeeding'),
-                    'help_text': None,
+                    'help_text': _(
+                        """
+                        Percentage of children who were put to the breast within one hour of birth.
+
+                        Early initiation of breastfeeding ensure the newborn recieves the ""first milk""
+                        rich in nutrients and encourages exclusive breastfeeding practic
+                        """
+                    ),
                     'percent': percent_diff(
                         'birth',
                         this_month_data,
@@ -1927,7 +1955,14 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Exclusive breastfeeding'),
-                    'help_text': None,
+                    'help_text': _(
+                        """
+                        Percentage of infants 0-6 months of age who are fed exclusively with breast milk.
+                        An infant is exclusively breastfed if they recieve only breastmilk
+                        with no additional food, liquids (even water) ensuring
+                        optimal nutrition and growth between 0 - 6 months"
+                        """
+                    ),
                     'percent': percent_diff(
                         'month_ebf',
                         this_month_data,
@@ -1947,7 +1982,14 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Children initiated appropriate Complementary Feeding'),
-                    'help_text': None,
+                    'help_text': _(
+                        """
+                        Percentage of children between 6 - 8 months given timely introduction to solid,
+                        semi-solid or soft food.
+                        Timely intiation of complementary feeding in addition to breastmilk
+                        at 6 months of age is a key feeding practice to reduce malnutrition"
+                        """
+                    ),
                     'percent': percent_diff(
                         'month_cf',
                         this_month_data,
@@ -1970,8 +2012,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Percentage of children 1 year+ who have recieved complete immunization as per "
-                        "National Immunization Schedule of India required by age 1"
+                        """
+                        Percentage of children 1 year+ who have recieved complete immunization as per
+                        National Immunization Schedule of India required by age 1.
+                        """
                     )),
                     'percent': percent_diff(
                         'immunized',
@@ -2174,7 +2218,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls who are registered'),
+                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
                     'percent': percent_increase(
                         'person_adolescent_all',
                         kpi_yesterday,

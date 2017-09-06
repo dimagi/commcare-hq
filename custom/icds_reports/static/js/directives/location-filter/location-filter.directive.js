@@ -159,7 +159,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                     return vm.hierarchy;
                 },
                 selectedLocations: function () {
-                    return vm.selectedLocations;
+                    return window.angular.copy(vm.selectedLocations);
                 },
                 locationsCache: function () {
                     return vm.locationsCache;

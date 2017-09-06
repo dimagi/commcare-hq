@@ -2,7 +2,7 @@ from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.style.decorators import use_nvd3_v3
+from corehq.apps.hqwebapp.decorators import use_nvd3_v3
 
 from custom.care_pathways.filters import GeographyFilter, MalawiPPTYearFilter, PPTYearFilter, GenderFilter, \
     GroupLeadershipFilter, CBTNameFilter, RealOrTestFilter, ScheduleFilter

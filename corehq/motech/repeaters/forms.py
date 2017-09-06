@@ -9,7 +9,7 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 
 from corehq.apps.es.users import UserES
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 
 from dimagi.utils.decorators.memoized import memoized

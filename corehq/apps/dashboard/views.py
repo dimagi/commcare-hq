@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
-from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.toggles import DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 

@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 
 from corehq.apps.reports.filters.api import MobileWorkersOptionsView
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 from django_prbac.utils import has_privilege
