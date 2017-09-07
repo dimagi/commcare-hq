@@ -48,13 +48,11 @@ class Command(BaseCommand):
     def handle(self, commit, domain, log_path, **options):
         commit = commit
         factory = CaseFactory(domain)
-
         headers = [
             'case_id',
             'testing_facility_name',
             'datamigration_testing_facility_name',
         ]
-
 
         print("Starting {} migration on {} at {}".format(
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
