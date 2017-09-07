@@ -28,6 +28,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util.global_request import get_request
+from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
@@ -320,13 +321,13 @@ class SubmissionPost(object):
             instance_ok = instance.is_normal or instance.is_duplicate
             has_error = error_message or error_nature
             if instance_ok and not has_error:
-                response = self.get_success_response()
+                response = openrosa_response.SUCCESS_RESPONSE
             else:
                 error_message = error_message or instance.problem
                 response = self.get_retry_response(error_message, error_nature)
         else:
             if instance.is_normal:
-                response = self.get_success_response()
+                response = openrosa_response.SUCCESS_RESPONSE
             else:
                 response = self.get_v2_submit_error_response(instance)
 
@@ -338,29 +339,9 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response():
-        return OpenRosaResponse(
-            # would have done ✓ but our test Nokias' fonts don't have that character
-            message=u'   √   ',
-            nature=ResponseNature.SUBMIT_SUCCESS,
-            status=201,
-        ).response()
-
-    @staticmethod
-    def submission_ignored_response():
-        return OpenRosaResponse(
-            # would have done ✓ but our test Nokias' fonts don't have that character
-            message=u'√ (this submission was ignored)',
-            nature=ResponseNature.SUBMIT_SUCCESS,
-            status=201,
-        ).response()
-
-    @staticmethod
     def get_v2_submit_error_response(doc):
         return OpenRosaResponse(
-            message=doc.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=201,
+            message=doc.problem, nature=ResponseNature.SUBMIT_ERROR, status=201,
         ).response()
 
     @staticmethod
@@ -368,9 +349,7 @@ class SubmissionPost(object):
         """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
         """
         return OpenRosaResponse(
-            message=message,
-            nature=nature,
-            status=422,
+            message=message, nature=nature, status=422,
         ).response()
 
     @staticmethod
@@ -386,16 +365,6 @@ class SubmissionPost(object):
             message="There was an error processing the form: %s" % error_instance.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=500,
-        ).response()
-
-    @staticmethod
-    def get_blacklisted_response():
-        return OpenRosaResponse(
-            message=("This submission was blocked because of an unusual volume "
-                     "of submissions from this project space.  Please contact "
-                     "support to resolve."),
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=509,
         ).response()
 
 

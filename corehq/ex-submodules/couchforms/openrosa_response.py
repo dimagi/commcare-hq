@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
@@ -33,6 +34,10 @@ def get_simple_response_xml(message, nature=''):
     return OpenRosaResponse(message, nature, status=None).xml()
 
 
+def get_openrosa_reponse(message, nature, status):
+    return OpenRosaResponse(message, nature, status).response()
+
+
 class OpenRosaResponse(object):
     """
     Response template according to
@@ -60,3 +65,18 @@ class OpenRosaResponse(object):
 
     def response(self):
         return HttpResponse(self.xml(), status=self.status)
+
+
+SUCCESS_RESPONSE = get_openrosa_reponse(u'   √   ', ResponseNature.SUBMIT_SUCCESS, 201)
+SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
+    u'√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
+)
+BLACKLISTED_RESPONSE = get_openrosa_reponse(
+    message=(
+        "This submission was blocked because of an unusual volume "
+        "of submissions from this project space.  Please contact "
+        "support to resolve."
+    ),
+    nature=ResponseNature.SUBMIT_ERROR,
+    status=509,
+)
