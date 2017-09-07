@@ -3,8 +3,8 @@ define("hqwebapp/js/common", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
-    "style/js/hq.helpers",
-    "django",
+    "hqwebapp/js/hq.helpers",
+    "hqwebapp/js/django",
     "ko.mapping",
     "ko.knockout_bindings"
 ], function(){
