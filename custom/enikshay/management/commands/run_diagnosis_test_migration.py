@@ -19,13 +19,14 @@ class Command(BaseCommand):
             "log_path",
             help="Path to write the log to"
         )
+        parser.add_argument('log_errors')
         parser.add_argument(
             '--commit',
             action='store_true',
             help="Actually modifies the cases. Without this flag, it's a dry run."
         )
 
-    def handle(self, domain, log_path, **options):
+    def handle(self, domain, log_path, log_errors, **options):
         commit = options['commit']
         accessor = CaseAccessors(domain)
         factory = CaseFactory(domain)
@@ -42,29 +43,32 @@ class Command(BaseCommand):
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
         ))
 
-        with open(log_path, "w") as log_file:
-            writer = csv.writer(log_file)
-            writer.writerow(headers)
+        with open(log_errors, 'w') as log_errors_file:
+            error_logger = csv.writer(log_errors_file)
+            error_logger.writerow(['case_id'])
+            with open(log_path, "w") as log_file:
+                writer = csv.writer(log_file)
+                writer.writerow(headers)
 
-            for episode_case_id in accessor.get_case_ids_in_domain(type='episode'):
-                print('Looking at {}'.format(episode_case_id))
-                episode_case = accessor.get_case(episode_case_id)
-                case_properties = episode_case.dynamic_case_properties()
+                for episode_case_id in accessor.get_case_ids_in_domain(type='episode'):
+                    print('Looking at {}'.format(episode_case_id))
+                    episode_case = accessor.get_case(episode_case_id)
+                    case_properties = episode_case.dynamic_case_properties()
 
-                if self.should_migrate_case(case_properties):
-                    test = self.get_relevant_test_case(domain, episode_case)
+                    if self.should_migrate_case(case_properties):
+                        test = self.get_relevant_test_case(domain, episode_case, error_logger)
 
-                    if test is not None:
-                        update = self.get_updates(test)
-                        print('Updating {}...'.format(episode_case_id))
-                        writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
+                        if test is not None:
+                            update = self.get_updates(test)
+                            print('Updating {}...'.format(episode_case_id))
+                            writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
 
-                        if commit:
-                            factory.update_case(case_id=episode_case_id, update=update)
+                            if commit:
+                                factory.update_case(case_id=episode_case_id, update=update)
+                        else:
+                            print('No relevant test found for episode {}'.format(episode_case_id))
                     else:
-                        print('No relevant test found for episode {}'.format(episode_case_id))
-                else:
-                    print('Do not migrate {}'.format(episode_case_id))
+                        print('Do not migrate {}'.format(episode_case_id))
 
         print('Migration complete at {}'.format(datetime.datetime.utcnow()))
 
@@ -78,10 +82,11 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def get_relevant_test_case(domain, episode_case):
+    def get_relevant_test_case(domain, episode_case, error_logger):
         try:
             occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
         except ENikshayCaseNotFound:
+            error_logger.writerow([episode_case.case_id])
             return None
 
         indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([occurrence_case.case_id])
