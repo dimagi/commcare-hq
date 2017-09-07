@@ -906,7 +906,7 @@ def get_treatment_outcome(column_mapping, row):
     value = column_mapping.get_value("treatment_outcome", row)
     if not value:
         return None
-    clean_value = value.lower().replace(' ', '_')
+    clean_value = value.lower().strip().replace(' ', '_')
     if clean_value not in [
             "cured",
             "died",
