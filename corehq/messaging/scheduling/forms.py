@@ -67,7 +67,7 @@ class MessageForm(Form):
         if initial:
             # TODO Recipients isn't set properly
             readonly = (initial.get('send_frequency') == 'immediately')
-            message = initial.get('message', dict)
+            message = initial.get('message', {})
             kwargs['initial']['translate'] = '*' not in kwargs['initial']
             kwargs['initial']['non_translated_message'] = message.get('*', '')
             for lang in self.project_languages:
