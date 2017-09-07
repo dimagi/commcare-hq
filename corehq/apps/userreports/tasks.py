@@ -80,6 +80,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
             # able to see if the rebuild started a long time ago without finishing.
             config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
+            config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         adapter.rebuild_table()
