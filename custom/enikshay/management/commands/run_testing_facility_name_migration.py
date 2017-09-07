@@ -72,11 +72,8 @@ class Command(BaseCommand):
                 if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
                         and not test.get_case_property('testing_facility_name'):
 
-                    datamigration_testing_facility_name = "no"
-
                     if test.get_case_property('testing_facility_saved_name'):
                         testing_facility_name = test.get_case_property('testing_facility_saved_name')
-                        datamigration_testing_facility_name = "yes"
                     else:
                         form_data = self._get_result_recorded_form(test)
                         microscopy_name = self._get_path(
@@ -101,12 +98,9 @@ class Command(BaseCommand):
                             form_data
                         )
                         testing_facility_name = microscopy_name or cbnaat_name or clinic_name
-                        if testing_facility_name:
-                            datamigration_testing_facility_name = "yes"
 
-                    writer.writerow([test.case_id, testing_facility_name, datamigration_testing_facility_name])
-
-                    if datamigration_testing_facility_name == "yes":
+                    if testing_facility_name == "yes":
+                        writer.writerow([test.case_id, testing_facility_name, "yes"])
                         case_id = test.case_id
                         print('Updating {}...'.format(case_id))
                         case_structure = CaseStructure(
@@ -115,11 +109,13 @@ class Command(BaseCommand):
                             attrs={
                                 "create": False,
                                 "update": {
-                                    "datamigration_testing_facility_name": datamigration_testing_facility_name,
+                                    "datamigration_testing_facility_name": "yes",
                                     "testing_facility_name": testing_facility_name,
                                 },
                             },
                         )
                         if commit:
                             factory.create_or_update_case(case_structure)
+                    else:
+                        writer.writerow([test.case_id, testing_facility_name, "no"])
         print("Migration finished at {}".format(datetime.datetime.utcnow()))
