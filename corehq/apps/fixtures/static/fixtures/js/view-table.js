@@ -1,12 +1,12 @@
 /* global define */
 define([
     "jquery",
-    "django",
+    "hqwebapp/js/django",
     "hqwebapp/js/initial_page_data",
     "reports/js/filters",
     "reports/js/standard_hq_report",
     "reports/js/config.dataTables.bootstrap",
-    "style/js/hq.helpers",
+    "hqwebapp/js/hq.helpers",
 ], function(
     $,
     django,
