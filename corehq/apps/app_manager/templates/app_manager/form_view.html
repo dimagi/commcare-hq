@@ -69,7 +69,7 @@
 {% block pre_form_content %}
     <div class="appmanager-page-actions">
         {% include 'app_manager/partials/app_summary_button.html' %}
-        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
+        <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
             <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
         </a>
     </div>
@@ -295,7 +295,7 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+        <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>

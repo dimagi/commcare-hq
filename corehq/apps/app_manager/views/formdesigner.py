@@ -19,7 +19,8 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
-from corehq.apps.app_manager.exceptions import AppManagerException
+from corehq.apps.app_manager.exceptions import AppManagerException, \
+    FormNotFoundException
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
 from corehq import toggles, privileges
@@ -53,7 +54,29 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
-def form_designer(request, domain, app_id, module_id=None, form_id=None):
+def form_source(request, domain, app_id, form_unique_id):
+    app = get_app(domain, app_id)
+
+    try:
+        form = app.get_form(form_unique_id)
+    except FormNotFoundException:
+        return bail(request, domain, app_id, not_found="form")
+
+    try:
+        module = form.get_module()
+    except AttributeError:
+        return bail(request, domain, app_id, not_found="module")
+
+    return _get_form_designer_view(request, domain, app, module, form)
+
+
+@require_can_edit_apps
+def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     app = get_app(domain, app_id)
 
     try:

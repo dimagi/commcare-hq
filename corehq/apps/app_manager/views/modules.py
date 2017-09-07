@@ -78,7 +78,7 @@ def get_module_template(user, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
     }
     module_brief = {
         'id': module.id,
@@ -364,7 +364,7 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_attr(request, domain, app_id, module_id, attr):
+def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
@@ -415,7 +415,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 return request.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("custom_icon_form"):
@@ -444,14 +450,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
             for mod in all_advanced_modules:
                 for form in mod.forms:
                     for action in form.actions.get_load_update_actions():
-                        if action.case_type == old_case_type and action.details_module == module_id:
+                        if action.case_type == old_case_type and action.details_module == module_unique_id:
                             action.case_type = case_type
 
-                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                    if mod.unique_id == module_unique_id or not modules_with_old_case_type_exist:
                         for action in form.actions.get_open_actions():
                             if action.case_type == old_case_type:
                                 action.case_type = case_type
@@ -532,11 +537,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
-            try:
-                app.get_module(module_id)
-                module["root_module_id"] = request.POST.get("root_module_id")
-            except ModuleNotFoundException:
-                messages.error(_("Unknown Menu"))
+            module["root_module_id"] = request.POST.get("root_module_id")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -617,13 +618,21 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def overwrite_module_case_list(request, domain, app_id, module_id):
+def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
-    source_module_id = int(request.POST['source_module_id'])
+    source_module_unique_id = request.POST['source_module_unique_id']
+
+    # temporary fallback to handle currently working app states
+    source_module_id = request.POST['source_module_unique_id']
+    if source_module_id is not None:
+        source_module = app.get_module(int(source_module_unique_id))
+        dest_module = app.get_module(module_unique_id)
+    else:
+        source_module = app.get_module_by_unique_id(source_module_unique_id)
+        dest_module = app.get_module_by_unique_id(module_unique_id)
+
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
-    source_module = app.get_module(source_module_id)
-    dest_module = app.get_module(module_id)
     if not hasattr(source_module, 'case_details'):
         messages.error(
             request,
@@ -639,7 +648,7 @@ def overwrite_module_case_list(request, domain, app_id, module_id):
         setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
         app.save()
         messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
-    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+    return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
 def _update_search_properties(module, search_properties, lang='en'):
@@ -682,7 +691,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_detail_screens(request, domain, app_id, module_id):
+def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -714,7 +723,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     }
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
 
     if detail_type == 'case':
         detail = module.case_details
@@ -829,7 +843,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_report_module(request, domain, app_id, module_id):
+def edit_report_module(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -837,7 +851,13 @@ def edit_report_module(request, domain, app_id, module_id):
     """
     params = json_request(request.POST)
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     assert isinstance(module, ReportModule)
     module.name = params['name']
 
@@ -869,12 +889,17 @@ def edit_report_module(request, domain, app_id, module_id):
     return json_response('success')
 
 
-def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
-        module = app.get_module(module_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
-        raise Http404()
+        try:
+            # temporary fallback
+            module = app.get_module(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
@@ -977,7 +1002,19 @@ def _save_case_list_lookup_params(short, case_list_lookup, lang):
 
 @require_GET
 @require_deploy_apps
-def view_module(request, domain, app_id, module_id):
+def view_module(request, domain, app_id, module_unique_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id, module_unique_id=module_unique_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_module_legacy(request, domain, app_id, module_id):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id)
 

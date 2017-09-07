@@ -4,7 +4,7 @@ from django.http import HttpResponseBadRequest
 
 from corehq.apps.app_manager.exceptions import (
     ScheduleError,
-)
+    ModuleNotFoundException)
 from dimagi.utils.web import json_response
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -16,10 +16,16 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_schedule_phases(request, domain, app_id, module_id):
+def edit_schedule_phases(request, domain, app_id, module_unique_id):
     NEW_PHASE_ID = -1
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module_by_id(module_unique_id)
+
     phases = json.loads(request.POST.get('phases'))
     changed_anchors = [(phase['id'], phase['anchor'])
                        for phase in phases if phase['id'] != NEW_PHASE_ID]
