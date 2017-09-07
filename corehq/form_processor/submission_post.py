@@ -111,8 +111,7 @@ class SubmissionPost(object):
         # errors we know about related to the content of the form
         # log the error and respond with a success code so that the phone doesn't
         # keep trying to send the form
-        instance = _transform_instance_to_error(self.interface, error, instance)
-        xforms[0] = instance
+        xforms[0] = _transform_instance_to_error(self.interface, error, instance)
         # this is usually just one document, but if an edit errored we want
         # to save the deprecated form as well
         self.interface.save_processed_models(xforms)
@@ -368,21 +367,14 @@ class SubmissionPost(object):
         ).response()
 
 
-def _transform_instance_to_error(interface, e, instance):
-    error_message = '{}: {}'.format(
-        type(e).__name__, unicode(e))
-    logging.exception((
-        u"Warning in case or stock processing "
-        u"for form {}: {}."
-    ).format(instance.form_id, error_message))
+def _transform_instance_to_error(interface, exception, instance):
+    error_message = '{}: {}'.format(type(exception).__name__, unicode(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
 def handle_unexpected_error(interface, instance, exception, message=None):
-    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
-    instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=False)
-
-    _notify_submission_error(instance, exception, error_message)
+    instance = _transform_instance_to_error(interface, exception, instance)
+    _notify_submission_error(instance, exception, instance.problem)
     FormAccessors(interface.domain).save_new_form(instance)
 
 
