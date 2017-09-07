@@ -95,7 +95,8 @@ class Command(BaseCommand):
                             form_data
                         )
                         testing_facility_name = microscopy_name or cbnaat_name or clinic_name
-                        datamigration_testing_facility_name = "yes"
+                        if testing_facility_name:
+                            datamigration_testing_facility_name = "yes"
 
                     writer.writerow([test.case_id, testing_facility_name, datamigration_testing_facility_name])
 
