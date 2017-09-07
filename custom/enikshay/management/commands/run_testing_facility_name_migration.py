@@ -1,5 +1,4 @@
 import datetime
-import logging
 import csv
 
 from corehq.apps.es import CaseSearchES
@@ -72,8 +71,8 @@ class Command(BaseCommand):
             writer.write_row(headers)
 
             for test in CaseAccessors(domain=domain).iter_cases(cases):
-                if (test.get_case_property('datamigration_testing_facility_name') != 'yes'
-                    and not test.get_case_property('testing_facility_name')):
+                if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
+                        and not test.get_case_property('testing_facility_name'):
 
                     datamigration_testing_facility_name = "no"
 
@@ -83,15 +82,24 @@ class Command(BaseCommand):
                     else:
                         form_data = self._get_result_recorded_form(test)
                         microscopy_name = self._get_path(
-                            'update_test_result microscopy ql_testing_facility_details default_dmc_name'.split(),
+                            ['update_test_result',
+                             'microscopy',
+                             'ql_testing_facility_details',
+                             'default_dmc_name'],
                             form_data
                         )
                         cbnaat_name = self._get_path(
-                            'update_test_result cbnaat ql_testing_facility_details default_cdst_name'.split(),
+                            ['update_test_result',
+                             'cbnaat',
+                             'ql_testing_facility_details',
+                             'default_cdst_name'],
                             form_data
                         )
                         clinic_name = self._get_path(
-                            'update_test_result clinical ql_testing_facility_details testing_facility_saved_name'.split(),
+                            ['update_test_result',
+                             'clinical',
+                             'ql_testing_facility_details',
+                             'testing_facility_saved_name'],
                             form_data
                         )
                         testing_facility_name = microscopy_name or cbnaat_name or clinic_name
