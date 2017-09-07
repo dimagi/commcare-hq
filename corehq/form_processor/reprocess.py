@@ -11,10 +11,11 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.change_publishers import publish_form_saved
+from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+from corehq.form_processor.change_publishers import publish_form_saved, get_cases_from_form, publish_ledger_v2_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -35,17 +36,6 @@ def reprocess_unfinished_stub(stub, save=True):
         logger.info("Ignoring stub during data migration: %s", stub.xform_id)
         return
 
-    if stub.saved:
-        # ignore for now
-        logger.info("Ignoring 'saved' stub: %s", stub.xform_id)
-        return
-
-    if not should_use_sql_backend(stub.domain):
-        # ignore for couch domains
-        logger.info('Removing stub from non SQL domain: %s', stub.xform_id)
-        save and stub.delete()
-        return
-
     form_id = stub.xform_id
     try:
         form = FormAccessorSQL.get_form(form_id)
@@ -59,10 +49,26 @@ def reprocess_unfinished_stub(stub, save=True):
     if form.is_deleted:
         save and stub.delete()
 
+    if stub.is_saved:
+        complete_ = (form.is_normal, form.initial_processing_complete)
+        assert all(complete_), complete_
+        return _perfom_post_save_actions(form, save)
+
     if form.is_normal:
         result = _reprocess_form(form, save)
         save and stub.delete()
         return result
+
+
+def _perfom_post_save_actions(form, save=True):
+    interface = FormProcessorInterface(form.domain)
+    cases = get_cases_from_form(form.domain, form)
+    cache = interface.casedb_cache(
+        domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+    )
+    with cache as casedb:
+        save and SubmissionPost.do_post_save_actions(casedb, [form], cases)
+        return ReprocessingResult(form, cases, None)
 
 
 def reprocess_xform_error(form):
