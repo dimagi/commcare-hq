@@ -6,12 +6,13 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
     var dataValueMap = function (properties) {
         var self = {};
 
+        self.dataSetMap = properties["dataSetMap"];
         self.ucrColumn = ko.observable(properties["column"]);
+        self.dataElements = ko.observableArray(properties["dataElements"]);
         self.dataElementId = ko.observable(properties["data_element_id"]);
+        self.categoryOptionCombos = ko.observableArray(properties["categoryOptionCombos"]);
         self.categoryOptionComboId = ko.observable(properties["category_option_combo_id"]);
         self.dhis2Comment = ko.observable(properties["comment"]);
-
-        self.errors = [];
 
         self.serialize = function () {
             return {
@@ -32,6 +33,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         self.ucrId = ko.observable(properties["ucr_id"]);
         self.frequency = ko.observable(properties["frequency"]);
         self.dayOfMonth = ko.observable(properties["day_to_send"]);
+        self.dataSets = ko.observableArray(properties["dataSets"]);
         self.dataSetId = ko.observable(properties["data_set_id"]);
 
         self.orgUnitId = ko.observable(properties["org_unit_id"]);
@@ -48,12 +50,29 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         self.completeDate = ko.observable(properties["complete_date"]);
         self.dataValueMaps = ko.observableArray();
 
-        self.errors = [];
+        self.dataElements = ko.observableArray([]);
+        self.categoryOptionCombos = ko.observableArray([]);
 
         self.init = function () {
+            $.get(
+                'datasets/' + self.dataSetId() + '/elems/',
+                {},
+                function (data) {
+                    self.dataElements(data);
+                }
+            );
+            $.get(
+                'datasets/' + self.dataSetId() + '/catopts/',
+                {},
+                function (data) {
+                    self.categoryOptionCombos(data);
+                }
+            );
             if (properties.hasOwnProperty("datavalue_maps") && properties["datavalue_maps"].length > 0) {
                 for (var i = 0; i < properties["datavalue_maps"].length; i++) {
-                    self.dataValueMaps.push(dataValueMap(properties["datavalue_maps"][i]));
+                    self.dataValueMaps.push(dataValueMap(
+                        Object.assign(properties["datavalue_maps"][i], {"dataSetMap": self})
+                    ));
                 }
             } else {
                 self.addDataValueMap();
@@ -61,7 +80,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         };
 
         self.addDataValueMap = function () {
-            self.dataValueMaps.push(dataValueMap({}));
+            self.dataValueMaps.push(dataValueMap({"dataSetMap": self}));
         };
 
         self.removeDataValueMap = function (dataValueMap) {
@@ -93,7 +112,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         return self;
     };
 
-    var dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
+    var dhis2MapSettings = function (dataSetMaps, sendDataUrl, dataSets) {
         var self = {};
         var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
@@ -106,7 +125,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         self.init = function () {
             if (dataSetMaps.length > 0) {
                 for (var i = 0; i < dataSetMaps.length; i++) {
-                    var map = dataSetMap(dataSetMaps[i]);
+                    var map = dataSetMap(Object.assign(dataSetMaps[i], {"dataSets": dataSets});
                     map.init();
                     self.dataSetMaps.push(map);
                 }
@@ -116,7 +135,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
         };
 
         self.addDataSetMap = function () {
-            self.dataSetMaps.push(dataSetMap({}));
+            self.dataSetMaps.push(dataSetMap({"dataSets": dataSets}));
         };
 
         self.removeDataSetMap = function (dataSetMap) {
@@ -149,7 +168,11 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
 
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            viewModel = dhis2MapSettings(initialPageData('dataset_maps'), initialPageData('send_data_url'));
+            viewModel = dhis2MapSettings(
+                initialPageData('dataset_maps'),
+                initialPageData('send_data_url'),
+                initialPageData('data_sets')
+            );
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
     });
