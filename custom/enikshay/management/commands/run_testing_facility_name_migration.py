@@ -68,7 +68,7 @@ class Command(BaseCommand):
 
         with open(log_path, "w") as log_file:
             writer = csv.writer(log_file)
-            writer.write_row(headers)
+            writer.writerow(headers)
 
             for test in CaseAccessors(domain=domain).iter_cases(case_ids):
                 if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
