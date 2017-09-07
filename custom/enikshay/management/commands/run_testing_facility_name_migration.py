@@ -8,8 +8,6 @@ from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-logger = logging.getLogger('enikshay_testing_facility_name_migration')
-
 
 class Command(BaseCommand):
 
