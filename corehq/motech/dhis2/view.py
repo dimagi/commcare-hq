@@ -16,6 +16,7 @@ from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.motech.dhis2.tasks import send_datasets, refresh_dhis2_name_cache
 from memoized import memoized
+from dimagi.utils.couch import get_redis_client
 from dimagi.utils.web import json_response
 from six.moves import range
 
@@ -89,12 +90,23 @@ class DataSetMapView(BaseProjectSettingsView):
         except Exception as err:
             return json_response({'error': str(err)}, status_code=500)
 
+    @staticmethod
+    def get_data_sets(domain):
+        cache = get_redis_client()
+        key = domain + '_dhis2_id_display_names'
+        dhis2_data = cache.get(key)
+        if dhis2_data is None:
+            refresh_dhis2_name_cache.delay(domain)
+            return [{'id': '0', 'name': _('Fetching DHIS2 names. Please refresh page in a minute.')}]
+        return [{'id': item['id'], 'name': item['name']} for item in dhis2_data['data_sets'].values()]
+
     @property
     def page_context(self):
         dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
         return {
             'dataset_maps': dataset_maps,
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
+            'data_sets': self.get_data_sets(self.request.domain),
         }
 
 
@@ -147,3 +159,30 @@ class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
     return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
+
+
+def get_data_elements(request, domain, data_set_id):
+    cache = get_redis_client()
+    key = domain + '_dhis2_id_display_names'
+    dhis2_data = cache.get(key)
+    if dhis2_data is None:
+        # This view is only called from the DataSet Map page. If we get here, DataSetMapView.get_data_sets will
+        # already have scheduled a task to fetch the names again
+        return json_response({'error': _('DHIS2 names unavailable.')}, status_code=404)
+    try:
+        return json_response(dhis2_data['data_sets'][data_set_id]['data_elements'].values())
+    except KeyError:
+        return json_response({'error': 'Unknown dataSetId'}, status_code=400)
+
+
+def get_cat_opt_combos(request, domain, data_set_id):
+    cache = get_redis_client()
+    key = domain + '_dhis2_id_display_names'
+    dhis2_data = cache.get(key)
+    if dhis2_data is None:
+        # If we get here, DataSetMapView.get_data_sets will already have scheduled a task to fetch the names again
+        return json_response({'error': _('DHIS2 names unavailable.')}, status_code=404)
+    try:
+        return json_response(dhis2_data['data_sets'][data_set_id]['category_option_combos'].values())
+    except KeyError:
+        return json_response({'error': 'Unknown dataSetId'}, status_code=400)
