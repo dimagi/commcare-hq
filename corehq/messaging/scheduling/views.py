@@ -1,5 +1,6 @@
 from functools import wraps
 
+from django.db import transaction
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -191,11 +192,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     content = SMSContent(message=messages)
                 else:
                     content = SMSContent(message={'*': values['non_translated_message']})
-                schedule = AlertSchedule.create_simple_alert(self.domain, content)
-                broadcast = ImmediateBroadcast(
-                    domain=self.domain, name=values['schedule_name'], schedule=schedule
-                )
-                broadcast.save()
+                with transaction.atomic():
+                    schedule = AlertSchedule.create_simple_alert(self.domain, content)
+                    broadcast = ImmediateBroadcast(
+                        domain=self.domain, name=values['schedule_name'], schedule=schedule
+                    )
+                    broadcast.save()
                 recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
                 refresh_alert_schedule_instances.delay(schedule, recipients)
 
