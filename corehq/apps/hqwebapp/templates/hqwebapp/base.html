@@ -423,10 +423,10 @@
                         djangoModule.gettext = django.gettext;
                     },
                     // TODO: Bundles config is for the built version only. Use it because it'd be annoying to need to say common.$, common,knockout, etc.
-                    bundles: {
+                    /*bundles: {
                         // Bundle this because it'd be annoying to have to say common.$
                         'hqwebapp/js/common': ['jquery', 'knockout', 'hqwebapp/js/initial_page_data', 'bootstrap.min', 'django', 'underscore', 'hq.helpers', 'ko.mapping', 'ko.knockout_bindings'],
-                    },
+                    },*/
                 });
                 requirejs(['hqwebapp/js/common'], function (common) {
                     requirejs(['{% block requirejs_entry %}{% endblock requirejs_entry %}']);
