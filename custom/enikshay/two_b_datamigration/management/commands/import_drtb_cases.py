@@ -1738,6 +1738,7 @@ def match_location(domain, xlsx_name, location_type=None):
             raise ValidationFailure("No location matches for {}".format(xlsx_name))
     return location.name, location.location_id
 
+
 @memoized
 def match_location_by_site_code(domain, site_code):
     """
