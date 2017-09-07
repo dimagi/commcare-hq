@@ -11,6 +11,14 @@ from corehq.blobs.exceptions import NotFound
 
 from .utils import get_index_schema_node
 
+# GLOBAL_USER_ID is expected to be a globally unique string that will never
+# change and can always be search-n-replaced in global fixture XML. The UUID
+# in this string was generated with `uuidgen` on Mac OS X 10.11.6
+# HACK if this string is present anywhere in an item list it will be replaced
+# with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
+# This is an optimization to avoid an extra XML parse/serialize cycle.
+GLOBAL_USER_ID = u'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
+
 
 def item_lists_by_domain(domain):
     ret = list()
@@ -61,31 +69,36 @@ class ItemListsProvider(FixtureProvider):
 
     def get_global_items(self, global_types, restore_state):
         restore_user = restore_state.restore_user
+        user_id = restore_user.user_id
         domain = restore_user.domain
         db = get_blob_db()
         if not restore_state.overwrite_cache:
+            global_id = GLOBAL_USER_ID.encode('utf-8')
+            b_user_id = user_id.encode('utf-8')
             try:
-                fixture_data = db.get(domain, FIXTURE_BUCKET).read()
-                return [fixture_data] if fixture_data else []
+                data = db.get(domain, FIXTURE_BUCKET).read()
+                return [data.replace(global_id, b_user_id)] if data else []
             except NotFound:
                 pass
-        global_items = self._get_global_items(global_types, restore_user)
+        global_items = self._get_global_items(global_types, domain)
         io = StringIO()
         for element in global_items:
             io.write(ElementTree.tostring(element, encoding='utf-8'))
+            # change user_id AFTER writing to string for the cache
+            element.attrib["user_id"] = user_id
         io.seek(0)
         db.put(io, domain, FIXTURE_BUCKET)
         return global_items
 
-    def _get_global_items(self, global_types, restore_user):
+    def _get_global_items(self, global_types, domain):
         if not global_types:
             return []
         items_by_type = defaultdict(list)
-        for item in FixtureDataItem.by_data_types(restore_user.domain, global_types):
+        for item in FixtureDataItem.by_data_types(domain, global_types):
             data_type = global_types[item.data_type_id]
             self._set_cached_type(item, data_type)
             items_by_type[data_type].append(item)
-        return self._get_fixtures(global_types, items_by_type, restore_user.user_id)
+        return self._get_fixtures(global_types, items_by_type, GLOBAL_USER_ID)
 
     def get_user_items(self, user_types, restore_user):
         if not user_types:
