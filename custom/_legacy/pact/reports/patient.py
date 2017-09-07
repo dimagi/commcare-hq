@@ -2,10 +2,10 @@ import logging
 from django.urls import reverse
 from django.http import Http404
 import json
+from django.utils.safestring import mark_safe
 from corehq.apps.api.es import ReportXFormES
-from corehq.apps.style.decorators import use_timeago
+from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from dimagi.utils import html
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
@@ -144,7 +144,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     def rows(self):
         if self.patient_id:
             def _format_row(row_field_dict):
-                yield html.mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
+                yield mark_safe("<a class='ajax_dialog' href='%s'>View</a>" % (
                 reverse('render_form_data', args=[self.domain, row_field_dict['_id']])))
                 yield self.format_date(row_field_dict["received_on"].replace('_', ' '))
                 yield self.format_date(row_field_dict.get("form.meta.timeStart", ""))

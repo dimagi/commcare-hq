@@ -88,30 +88,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 naturaltime(display.parse_date(display.case['modified_on'])),
             ]
 
-    @property
-    def report_context(self):
-        context = super(CaseReassignmentInterface, self).report_context
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain,
-                self.request.couch_user)
-            )
-            user_query = UserES().location(accessible_location_ids)
-            active_users = get_simplified_users(user_query)
-            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                                   for group in self.accessible_case_sharing_locations(self.request.couch_user)],
-                           )
-        else:
-            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
-            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                                   for group in self.all_case_sharing_groups],
-                           )
-        context.update(
-            users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
-                   for user in active_users],
-        )
-        return context
-
 
 class FormManagementMode(object):
     """

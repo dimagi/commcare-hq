@@ -1,0 +1,906 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="check_version">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Version" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="check_versionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="check_versionResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="IsValidateUser">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="uid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="mobno" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="IsValidateUserResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="IsValidateUserResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="IsValidUHID">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="uhid" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="IsValidUHIDResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="IsValidUHIDResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetUserdetail">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="uid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="mobno" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetUserdetailResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetUserdetailResult" type="tns:ArrayOfUserDetailSerivces" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfUserDetailSerivces">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="UserDetailSerivces" nillable="true" type="tns:UserDetailSerivces" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="UserDetailSerivces">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="HF_ID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Mobile_Number" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="HF_Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="HF_Type" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="HF_Address" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="State_Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="DIST_NAME" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Tbu_Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Sto_Code" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Dto_Code" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Tbu_Code" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetRegisteredPatients">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="stateCode" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRegisteredPatientsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetRegisteredPatientsResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InsertHFIDPatient">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="pname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="fhname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="age" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="gender" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Address" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pin" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="lno" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="mno" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="tbdiagdate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="tbstdate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Type" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="B_diagnosis" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="D_SUSTest" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Treat_I" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="usersid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="password" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Source" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InsertHFIDPatientResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InsertHFIDPatientResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InsertHFIDPatient_UATBC">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="Stocode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Dtocode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TBUcode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="HFIDNO" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="fhname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="age" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="gender" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Address" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pin" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="lno" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="mno" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="tbdiagdate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="tbstdate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Type" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="B_diagnosis" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="D_SUSTest" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Treat_I" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="usersid" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="password" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Source" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InsertHFIDPatient_UATBCResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InsertHFIDPatient_UATBCResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="HE_Registration">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="ESTABLISHMENT_TYPE" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="SECTOR" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="ESTABLISHMENT_NAME" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="MCI_HR_NO" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CONTACT_PNAME" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CONTACT_PDESIGNATION" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TELEPHONE_NO" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="MOBILE_NO" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="COMPLETE_ADDRESS" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="PINCODE" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="EMAILID" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="STATE_CODE" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DISTRICT_CODE" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TBU_CODE" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="MUST_CREATE_NEW" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="USER_ID" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="PASSWORD" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Source" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="HE_RegistrationResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="HE_RegistrationResult">
+              <s:complexType mixed="true">
+                <s:sequence>
+                  <s:any />
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetUhiddetail">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="uhid" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetUhiddetailResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="GetUhiddetailResult" type="tns:ArrayOfUHIDDetailSerivces" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ArrayOfUHIDDetailSerivces">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="UHIDDetailSerivces" nillable="true" type="tns:UHIDDetailSerivces" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="UHIDDetailSerivces">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="AppoinmentId" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Gender" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Mobileno" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Emailid" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Aadhaarid" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Appoinmentdate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Drname" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="UHID" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="InsertPatientDetails">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="pname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pgender" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="page" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="paddress" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pmob" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="ptbyr" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="pregdate" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="cname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="caddress" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="dotname" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="dotdesignation" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="InitiationDate" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="InsertPatientDetailsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="InsertPatientDetailsResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="AddLocations">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Tcode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DMCCode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Lat" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Long" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Ip_From" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="IMEI" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Regby" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Regdate" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="AddLocationsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="AddLocationsResult" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="string" nillable="true" type="s:string" />
+      <s:element name="ArrayOfUserDetailSerivces" nillable="true" type="tns:ArrayOfUserDetailSerivces" />
+      <s:element name="ArrayOfUHIDDetailSerivces" nillable="true" type="tns:ArrayOfUHIDDetailSerivces" />
+      <s:element name="int" type="s:int" />
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="check_versionSoapIn">
+    <wsdl:part name="parameters" element="tns:check_version" />
+  </wsdl:message>
+  <wsdl:message name="check_versionSoapOut">
+    <wsdl:part name="parameters" element="tns:check_versionResponse" />
+  </wsdl:message>
+  <wsdl:message name="IsValidateUserSoapIn">
+    <wsdl:part name="parameters" element="tns:IsValidateUser" />
+  </wsdl:message>
+  <wsdl:message name="IsValidateUserSoapOut">
+    <wsdl:part name="parameters" element="tns:IsValidateUserResponse" />
+  </wsdl:message>
+  <wsdl:message name="IsValidUHIDSoapIn">
+    <wsdl:part name="parameters" element="tns:IsValidUHID" />
+  </wsdl:message>
+  <wsdl:message name="IsValidUHIDSoapOut">
+    <wsdl:part name="parameters" element="tns:IsValidUHIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetUserdetailSoapIn">
+    <wsdl:part name="parameters" element="tns:GetUserdetail" />
+  </wsdl:message>
+  <wsdl:message name="GetUserdetailSoapOut">
+    <wsdl:part name="parameters" element="tns:GetUserdetailResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRegisteredPatientsSoapIn">
+    <wsdl:part name="parameters" element="tns:GetRegisteredPatients" />
+  </wsdl:message>
+  <wsdl:message name="GetRegisteredPatientsSoapOut">
+    <wsdl:part name="parameters" element="tns:GetRegisteredPatientsResponse" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatientSoapIn">
+    <wsdl:part name="parameters" element="tns:InsertHFIDPatient" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatientSoapOut">
+    <wsdl:part name="parameters" element="tns:InsertHFIDPatientResponse" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatient_UATBCSoapIn">
+    <wsdl:part name="parameters" element="tns:InsertHFIDPatient_UATBC" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatient_UATBCSoapOut">
+    <wsdl:part name="parameters" element="tns:InsertHFIDPatient_UATBCResponse" />
+  </wsdl:message>
+  <wsdl:message name="HE_RegistrationSoapIn">
+    <wsdl:part name="parameters" element="tns:HE_Registration" />
+  </wsdl:message>
+  <wsdl:message name="HE_RegistrationSoapOut">
+    <wsdl:part name="parameters" element="tns:HE_RegistrationResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetUhiddetailSoapIn">
+    <wsdl:part name="parameters" element="tns:GetUhiddetail" />
+  </wsdl:message>
+  <wsdl:message name="GetUhiddetailSoapOut">
+    <wsdl:part name="parameters" element="tns:GetUhiddetailResponse" />
+  </wsdl:message>
+  <wsdl:message name="InsertPatientDetailsSoapIn">
+    <wsdl:part name="parameters" element="tns:InsertPatientDetails" />
+  </wsdl:message>
+  <wsdl:message name="InsertPatientDetailsSoapOut">
+    <wsdl:part name="parameters" element="tns:InsertPatientDetailsResponse" />
+  </wsdl:message>
+  <wsdl:message name="AddLocationsSoapIn">
+    <wsdl:part name="parameters" element="tns:AddLocations" />
+  </wsdl:message>
+  <wsdl:message name="AddLocationsSoapOut">
+    <wsdl:part name="parameters" element="tns:AddLocationsResponse" />
+  </wsdl:message>
+  <wsdl:message name="check_versionHttpGetIn">
+    <wsdl:part name="Version" type="s:string" />
+    <wsdl:part name="Name" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="check_versionHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="IsValidateUserHttpGetIn">
+    <wsdl:part name="uid" type="s:string" />
+    <wsdl:part name="mobno" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="IsValidateUserHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="IsValidUHIDHttpGetIn">
+    <wsdl:part name="uhid" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="IsValidUHIDHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="GetUserdetailHttpGetIn">
+    <wsdl:part name="uid" type="s:string" />
+    <wsdl:part name="mobno" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="GetUserdetailHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfUserDetailSerivces" />
+  </wsdl:message>
+  <wsdl:message name="GetRegisteredPatientsHttpGetIn">
+    <wsdl:part name="stateCode" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="GetRegisteredPatientsHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatientHttpGetIn">
+    <wsdl:part name="pname" type="s:string" />
+    <wsdl:part name="fhname" type="s:string" />
+    <wsdl:part name="age" type="s:string" />
+    <wsdl:part name="gender" type="s:string" />
+    <wsdl:part name="Address" type="s:string" />
+    <wsdl:part name="pin" type="s:string" />
+    <wsdl:part name="lno" type="s:string" />
+    <wsdl:part name="mno" type="s:string" />
+    <wsdl:part name="tbdiagdate" type="s:string" />
+    <wsdl:part name="tbstdate" type="s:string" />
+    <wsdl:part name="Type" type="s:string" />
+    <wsdl:part name="B_diagnosis" type="s:string" />
+    <wsdl:part name="D_SUSTest" type="s:string" />
+    <wsdl:part name="Treat_I" type="s:string" />
+    <wsdl:part name="usersid" type="s:string" />
+    <wsdl:part name="password" type="s:string" />
+    <wsdl:part name="Source" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatientHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatient_UATBCHttpGetIn">
+    <wsdl:part name="Stocode" type="s:string" />
+    <wsdl:part name="Dtocode" type="s:string" />
+    <wsdl:part name="TBUcode" type="s:string" />
+    <wsdl:part name="HFIDNO" type="s:string" />
+    <wsdl:part name="pname" type="s:string" />
+    <wsdl:part name="fhname" type="s:string" />
+    <wsdl:part name="age" type="s:string" />
+    <wsdl:part name="gender" type="s:string" />
+    <wsdl:part name="Address" type="s:string" />
+    <wsdl:part name="pin" type="s:string" />
+    <wsdl:part name="lno" type="s:string" />
+    <wsdl:part name="mno" type="s:string" />
+    <wsdl:part name="tbdiagdate" type="s:string" />
+    <wsdl:part name="tbstdate" type="s:string" />
+    <wsdl:part name="Type" type="s:string" />
+    <wsdl:part name="B_diagnosis" type="s:string" />
+    <wsdl:part name="D_SUSTest" type="s:string" />
+    <wsdl:part name="Treat_I" type="s:string" />
+    <wsdl:part name="usersid" type="s:string" />
+    <wsdl:part name="password" type="s:string" />
+    <wsdl:part name="Source" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="InsertHFIDPatient_UATBCHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="HE_RegistrationHttpGetIn">
+    <wsdl:part name="ESTABLISHMENT_TYPE" type="s:string" />
+    <wsdl:part name="SECTOR" type="s:string" />
+    <wsdl:part name="ESTABLISHMENT_NAME" type="s:string" />
+    <wsdl:part name="MCI_HR_NO" type="s:string" />
+    <wsdl:part name="CONTACT_PNAME" type="s:string" />
+    <wsdl:part name="CONTACT_PDESIGNATION" type="s:string" />
+    <wsdl:part name="TELEPHONE_NO" type="s:string" />
+    <wsdl:part name="MOBILE_NO" type="s:string" />
+    <wsdl:part name="COMPLETE_ADDRESS" type="s:string" />
+    <wsdl:part name="PINCODE" type="s:string" />
+    <wsdl:part name="EMAILID" type="s:string" />
+    <wsdl:part name="STATE_CODE" type="s:string" />
+    <wsdl:part name="DISTRICT_CODE" type="s:string" />
+    <wsdl:part name="TBU_CODE" type="s:string" />
+    <wsdl:part name="MUST_CREATE_NEW" type="s:string" />
+    <wsdl:part name="USER_ID" type="s:string" />
+    <wsdl:part name="PASSWORD" type="s:string" />
+    <wsdl:part name="Source" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="HE_RegistrationHttpGetOut">
+    <wsdl:part name="Body" />
+  </wsdl:message>
+  <wsdl:message name="GetUhiddetailHttpGetIn">
+    <wsdl:part name="uhid" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="GetUhiddetailHttpGetOut">
+    <wsdl:part name="Body" element="tns:ArrayOfUHIDDetailSerivces" />
+  </wsdl:message>
+  <wsdl:message name="InsertPatientDetailsHttpGetIn">
+    <wsdl:part name="pname" type="s:string" />
+    <wsdl:part name="pgender" type="s:string" />
+    <wsdl:part name="page" type="s:string" />
+    <wsdl:part name="paddress" type="s:string" />
+    <wsdl:part name="pmob" type="s:string" />
+    <wsdl:part name="ptbyr" type="s:string" />
+    <wsdl:part name="pregdate" type="s:string" />
+    <wsdl:part name="cname" type="s:string" />
+    <wsdl:part name="caddress" type="s:string" />
+    <wsdl:part name="dotname" type="s:string" />
+    <wsdl:part name="dotdesignation" type="s:string" />
+    <wsdl:part name="InitiationDate" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="InsertPatientDetailsHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="AddLocationsHttpGetIn">
+    <wsdl:part name="SCode" type="s:string" />
+    <wsdl:part name="DCode" type="s:string" />
+    <wsdl:part name="Tcode" type="s:string" />
+    <wsdl:part name="DMCCode" type="s:string" />
+    <wsdl:part name="Lat" type="s:string" />
+    <wsdl:part name="Long" type="s:string" />
+    <wsdl:part name="Ip_From" type="s:string" />
+    <wsdl:part name="IMEI" type="s:string" />
+    <wsdl:part name="Regby" type="s:string" />
+    <wsdl:part name="Regdate" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="AddLocationsHttpGetOut">
+    <wsdl:part name="Body" element="tns:int" />
+  </wsdl:message>
+  <wsdl:portType name="WebServiceSoap">
+    <wsdl:operation name="check_version">
+      <wsdl:input message="tns:check_versionSoapIn" />
+      <wsdl:output message="tns:check_versionSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="IsValidateUser">
+      <wsdl:input message="tns:IsValidateUserSoapIn" />
+      <wsdl:output message="tns:IsValidateUserSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="IsValidUHID">
+      <wsdl:input message="tns:IsValidUHIDSoapIn" />
+      <wsdl:output message="tns:IsValidUHIDSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetUserdetail">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Return news listing</wsdl:documentation>
+      <wsdl:input message="tns:GetUserdetailSoapIn" />
+      <wsdl:output message="tns:GetUserdetailSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRegisteredPatients">
+      <wsdl:input message="tns:GetRegisteredPatientsSoapIn" />
+      <wsdl:output message="tns:GetRegisteredPatientsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient">
+      <wsdl:input message="tns:InsertHFIDPatientSoapIn" />
+      <wsdl:output message="tns:InsertHFIDPatientSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient_UATBC">
+      <wsdl:input message="tns:InsertHFIDPatient_UATBCSoapIn" />
+      <wsdl:output message="tns:InsertHFIDPatient_UATBCSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="HE_Registration">
+      <wsdl:input message="tns:HE_RegistrationSoapIn" />
+      <wsdl:output message="tns:HE_RegistrationSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetUhiddetail">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Return news listing</wsdl:documentation>
+      <wsdl:input message="tns:GetUhiddetailSoapIn" />
+      <wsdl:output message="tns:GetUhiddetailSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertPatientDetails">
+      <wsdl:input message="tns:InsertPatientDetailsSoapIn" />
+      <wsdl:output message="tns:InsertPatientDetailsSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="AddLocations">
+      <wsdl:input message="tns:AddLocationsSoapIn" />
+      <wsdl:output message="tns:AddLocationsSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="WebServiceHttpGet">
+    <wsdl:operation name="check_version">
+      <wsdl:input message="tns:check_versionHttpGetIn" />
+      <wsdl:output message="tns:check_versionHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="IsValidateUser">
+      <wsdl:input message="tns:IsValidateUserHttpGetIn" />
+      <wsdl:output message="tns:IsValidateUserHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="IsValidUHID">
+      <wsdl:input message="tns:IsValidUHIDHttpGetIn" />
+      <wsdl:output message="tns:IsValidUHIDHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetUserdetail">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Return news listing</wsdl:documentation>
+      <wsdl:input message="tns:GetUserdetailHttpGetIn" />
+      <wsdl:output message="tns:GetUserdetailHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRegisteredPatients">
+      <wsdl:input message="tns:GetRegisteredPatientsHttpGetIn" />
+      <wsdl:output message="tns:GetRegisteredPatientsHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient">
+      <wsdl:input message="tns:InsertHFIDPatientHttpGetIn" />
+      <wsdl:output message="tns:InsertHFIDPatientHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient_UATBC">
+      <wsdl:input message="tns:InsertHFIDPatient_UATBCHttpGetIn" />
+      <wsdl:output message="tns:InsertHFIDPatient_UATBCHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="HE_Registration">
+      <wsdl:input message="tns:HE_RegistrationHttpGetIn" />
+      <wsdl:output message="tns:HE_RegistrationHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="GetUhiddetail">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Return news listing</wsdl:documentation>
+      <wsdl:input message="tns:GetUhiddetailHttpGetIn" />
+      <wsdl:output message="tns:GetUhiddetailHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertPatientDetails">
+      <wsdl:input message="tns:InsertPatientDetailsHttpGetIn" />
+      <wsdl:output message="tns:InsertPatientDetailsHttpGetOut" />
+    </wsdl:operation>
+    <wsdl:operation name="AddLocations">
+      <wsdl:input message="tns:AddLocationsHttpGetIn" />
+      <wsdl:output message="tns:AddLocationsHttpGetOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WebServiceSoap" type="tns:WebServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="check_version">
+      <soap:operation soapAction="http://tempuri.org/check_version" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidateUser">
+      <soap:operation soapAction="http://tempuri.org/IsValidateUser" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidUHID">
+      <soap:operation soapAction="http://tempuri.org/IsValidUHID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUserdetail">
+      <soap:operation soapAction="http://tempuri.org/GetUserdetail" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRegisteredPatients">
+      <soap:operation soapAction="http://tempuri.org/GetRegisteredPatients" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient">
+      <soap:operation soapAction="http://tempuri.org/InsertHFIDPatient" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient_UATBC">
+      <soap:operation soapAction="http://tempuri.org/InsertHFIDPatient_UATBC" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="HE_Registration">
+      <soap:operation soapAction="http://tempuri.org/HE_Registration" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUhiddetail">
+      <soap:operation soapAction="http://tempuri.org/GetUhiddetail" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertPatientDetails">
+      <soap:operation soapAction="http://tempuri.org/InsertPatientDetails" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddLocations">
+      <soap:operation soapAction="http://tempuri.org/AddLocations" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WebServiceSoap12" type="tns:WebServiceSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="check_version">
+      <soap12:operation soapAction="http://tempuri.org/check_version" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidateUser">
+      <soap12:operation soapAction="http://tempuri.org/IsValidateUser" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidUHID">
+      <soap12:operation soapAction="http://tempuri.org/IsValidUHID" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUserdetail">
+      <soap12:operation soapAction="http://tempuri.org/GetUserdetail" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRegisteredPatients">
+      <soap12:operation soapAction="http://tempuri.org/GetRegisteredPatients" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient">
+      <soap12:operation soapAction="http://tempuri.org/InsertHFIDPatient" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient_UATBC">
+      <soap12:operation soapAction="http://tempuri.org/InsertHFIDPatient_UATBC" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="HE_Registration">
+      <soap12:operation soapAction="http://tempuri.org/HE_Registration" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUhiddetail">
+      <soap12:operation soapAction="http://tempuri.org/GetUhiddetail" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertPatientDetails">
+      <soap12:operation soapAction="http://tempuri.org/InsertPatientDetails" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddLocations">
+      <soap12:operation soapAction="http://tempuri.org/AddLocations" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WebServiceHttpGet" type="tns:WebServiceHttpGet">
+    <http:binding verb="GET" />
+    <wsdl:operation name="check_version">
+      <http:operation location="/check_version" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidateUser">
+      <http:operation location="/IsValidateUser" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsValidUHID">
+      <http:operation location="/IsValidUHID" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUserdetail">
+      <http:operation location="/GetUserdetail" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRegisteredPatients">
+      <http:operation location="/GetRegisteredPatients" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient">
+      <http:operation location="/InsertHFIDPatient" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertHFIDPatient_UATBC">
+      <http:operation location="/InsertHFIDPatient_UATBC" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="HE_Registration">
+      <http:operation location="/HE_Registration" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:content part="Body" type="text/xml" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetUhiddetail">
+      <http:operation location="/GetUhiddetail" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertPatientDetails">
+      <http:operation location="/InsertPatientDetails" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddLocations">
+      <http:operation location="/AddLocations" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WebService">
+    <wsdl:port name="WebServiceSoap" binding="tns:WebServiceSoap">
+      <soap:address location="http://localhost/mobileservice/webservice.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WebServiceSoap12" binding="tns:WebServiceSoap12">
+      <soap12:address location="http://localhost/mobileservice/webservice.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WebServiceHttpGet" binding="tns:WebServiceHttpGet">
+      <http:address location="http://localhost/mobileservice/webservice.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

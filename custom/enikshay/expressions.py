@@ -243,7 +243,7 @@ class DateOfReferral(ReferralExpressionBase):
     type = TypeProperty('enikshay_date_of_referral')
 
     def _handle_referral_case(self, referral):
-        return referral.dynamic_case_properties().get("date_of_referral")
+        return referral.dynamic_case_properties().get("referral_initiated_date")
 
     def _handle_trail_case(self, context, trail, domain):
         referral_id = trail.dynamic_case_properties().get("referral_id")

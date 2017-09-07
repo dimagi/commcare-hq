@@ -894,6 +894,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     class InvalidID(Exception):
         pass
 
+    class UnsuportedOperation(Exception):
+        pass
+
     def __repr__(self):
         # copied from jsonobject/base.py
         name = self.__class__.__name__
@@ -1354,20 +1357,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def to_be_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
-
-    def change_username(self, username):
-        if username == self.username:
-            return
-
-        if User.objects.filter(username=username).exists():
-            raise self.Inconsistent("User with username %s already exists" % username)
-
-        django_user = self.get_django_user()
-        django_user.DO_NOT_SAVE_COUCH_USER = True
-        django_user.username = username
-        django_user.save()
-        self.username = username
-        self.save()
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
@@ -1978,7 +1967,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             from corehq.apps.commtrack.util import submit_mapping_case_block
             submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
-    def submit_location_block(self, caseblock):
+    def submit_location_block(self, caseblock, source):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
@@ -1986,6 +1975,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
+            device_id=__name__ + ".CommCareUser." + source,
         )
 
     def remove_location_delegate(self, location):
@@ -2005,7 +1995,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
-                self.submit_location_block(caseblock)
+                self.submit_location_block(caseblock, "remove_location_delegate")
 
     def clear_location_delegates(self):
         """
@@ -2041,7 +2031,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             index=index
         )
 
-        self.submit_location_block(caseblock)
+        self.submit_location_block(caseblock, "create_location_delegates")
 
     def get_location_map_case(self):
         """
@@ -2095,6 +2085,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             class_name=self.__class__.__name__,
             self=self
         ))
+
+    @property
+    @memoized
+    def memoized_usercase(self):
+        return self.get_usercase()
 
     def get_usercase(self):
         return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)

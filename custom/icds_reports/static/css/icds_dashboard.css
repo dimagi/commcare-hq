@@ -49,6 +49,22 @@
     min-width: 200px;
 }
 
+th {
+    min-width: 100px !important;
+}
+
+.sorting:hover {
+    text-decoration: underline;
+}
+
+.sorting_asc {
+    background-color: #d9d9d9 !important;
+}
+
+.sorting_desc {
+    background-color: #d9d9d9 !important;
+}
+
 .breadcrumb {
     background-color: #ffffff !important;
 }
@@ -59,9 +75,37 @@
     border-radius: 10px;
 }
 
+.xy-tooltip {
+    color: black !important;
+}
+
+nvd3 > svg {
+    margin: 0 auto !important;
+}
+
 @media print {
-    span {
+    .white, .fa, .fa-info-circle:before, .number, .second_number {
       color: white !important;
+    }
+
+    table {
+        page-break-after: always;
+    }
+
+    .break {
+        page-break-after: always;
+    }
+
+    .report-content {
+        width: 1152px !important;
+    }
+
+    .fa-arrow-down:before {
+        color: #c61400 !important;
+    }
+
+    .fa-arrow-up:before {
+        color: #07c600 !important;
     }
 
     .report-cell {
@@ -139,6 +183,14 @@
 
 .red {
     color: #d60000;
+}
+
+.link {
+    color: #0b3e6f;
+}
+
+.link:hover {
+    text-decoration: underline;
 }
 
 .green {
@@ -293,14 +345,6 @@ h4 {
     text-align: center;
 }
 
-.fa-arrow-down {
-    color: #c61400;
-}
-
-.fa-arrow-up {
-    color: #07c600;
-}
-
 .see-more {
     float: right;
     margin-right: 40px;
@@ -310,12 +354,29 @@ h4 {
     color: #ffffff;
 }
 
+.no-decoration {
+    color: #ffffff !important;
+}
+
+.no-decoration:hover {
+    text-decoration: none !important;
+}
+
 .dropdown-menu {
     z-index: 4;
 }
 
 .dropdown {
     padding: 2px;
+    margin-right: 2px;
+}
+
+.light-grey {
+    color: #9d9d9d;
+}
+
+.light-grey:hover {
+    color: #9d9d9d;
 }
 
 .title {
@@ -368,10 +429,10 @@ h4 {
 }
 
 .small-table > .small-table-title {
-    background-color: #00A8C6;
+    background-color: #00A8C6 !important;
     font-size: 30px;
     font-weight: bold;
-    color: white;
+    color: white !important;
     margin: 0 auto;
     text-align: center;
 }
@@ -407,10 +468,10 @@ h4 {
 }
 
 .circle-green {
-    background-color: green;
+    background-color: green !important;
     border-radius: 30px;
     font-size: 20px;
-    color: white;
+    color: white !important;
     width: 40px;
     height: 40px;
     text-align: center;
@@ -418,10 +479,10 @@ h4 {
 }
 
 .circle-red {
-    background-color: red;
+    background-color: red !important;
     border-radius: 30px;
     font-size: 20px;
-    color: white;
+    color: white !important;
     width: 40px;
     height: 40px;
     text-align: center;
@@ -467,7 +528,7 @@ h4 {
 }
 
 .text-center > div {
-    height: 300px !important;
+    height: 200px !important;
 }
 
 circle {
@@ -485,8 +546,34 @@ circle {
 .uib-carousel {
     position: relative;
     bottom: 30%;
+    left: 8%;
     margin: 0 auto;
     color: white;
     font-size: 20px;
     font-weight: bolder;
+}
+
+.blank-image .uib-carousel {
+    color: black;
+}
+
+.progress-report-directive .nav-block {
+    border-radius: 10px;
+    text-align: center;
+    padding: 25px;
+    height: 250px;
+}
+
+.progress-report-directive .nav-block .caption {
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.DTFC_LeftBodyLiner > table > thead:first-child {
+    display: none;
+}
+
+table.no-footer {
+    margin: 0 !important;
 }

@@ -1,7 +1,7 @@
 /* globals ICON_PATH, leafletImage */
-ICON_PATH = hqImport("hqwebapp/js/initial_page_data.js").get('icon_path');
-hqDefine("ewsghana/js/map.js", function() {
-    var context = hqImport("hqwebapp/js/initial_page_data.js").get('context');
+ICON_PATH = hqImport("hqwebapp/js/initial_page_data").get('icon_path');
+hqDefine("ewsghana/js/map", function() {
+    var context = hqImport("hqwebapp/js/initial_page_data").get('context');
 
     function load(context, iconPath) {
         L.Icon.Default.imagePath = iconPath;

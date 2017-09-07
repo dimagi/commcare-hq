@@ -11,6 +11,21 @@ from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import send_sms, MessageMetadata
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
+from custom.icds.const import (
+    AWC_LOCATION_TYPE_CODE,
+    SUPERVISOR_LOCATION_TYPE_CODE,
+    ANDHRA_PRADESH_SITE_CODE,
+    MAHARASHTRA_SITE_CODE,
+    MADHYA_PRADESH_SITE_CODE,
+    BIHAR_SITE_CODE,
+    CHHATTISGARH_SITE_CODE,
+    JHARKHAND_SITE_CODE,
+    RAJASTHAN_SITE_CODE,
+    UTTAR_PRADESH_SITE_CODE,
+    HINDI,
+    TELUGU,
+    MARATHI,
+)
 from custom.icds.messaging.indicators import (
     AWWAggregatePerformanceIndicator,
     AWWSubmissionPerformanceIndicator,
@@ -20,23 +35,6 @@ from custom.icds.messaging.indicators import (
 )
 from datetime import datetime
 from django.conf import settings
-
-AWC_LOCATION_TYPE_CODE = 'awc'
-SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'
-
-ANDHRA_PRADESH_SITE_CODE = '28'
-MAHARASHTRA_SITE_CODE = ''
-MADHYA_PRADESH_SITE_CODE = '23'
-BIHAR_SITE_CODE = '10'
-CHHATTISGARH_SITE_CODE = '22'
-JHARKHAND_SITE_CODE = '20'
-RAJASTHAN_SITE_CODE = '08'
-UTTAR_PRADESH_SITE_CODE = 'state9'
-
-ENGLISH = 'en'
-HINDI = 'hin'
-TELUGU = 'tel'
-MARATHI = 'mar'
 
 
 @task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)

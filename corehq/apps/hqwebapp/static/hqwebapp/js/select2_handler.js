@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/select2_handler.js", function() {
+hqDefine("hqwebapp/js/select2_handler", function() {
     var BaseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)

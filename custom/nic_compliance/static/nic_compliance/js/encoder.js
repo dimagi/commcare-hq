@@ -1,4 +1,4 @@
-hqDefine('nic_compliance/js/encoder.js', function () {
+hqDefine('nic_compliance/js/encoder', function () {
     function HexParsr() {
         function paddingStr() {
             var s = Math.random().toString(36).slice(2, 8);

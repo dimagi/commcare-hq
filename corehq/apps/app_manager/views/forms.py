@@ -2,13 +2,11 @@ import logging
 import hashlib
 import re
 import json
-import uuid
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
 import itertools
 
-from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
@@ -19,6 +17,8 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from unidecode import unidecode
+
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
     get_usercase_properties
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
@@ -26,13 +26,12 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
-    ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
@@ -46,7 +45,6 @@ from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
-    get_app_manager_template,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -68,7 +66,6 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
-    CareplanForm,
     DeleteFormRecord,
     Form,
     FormActions,
@@ -83,8 +80,7 @@ from corehq.apps.app_manager.models import (
     WORKFLOW_FORM,
     CustomInstance,
     CaseReferences,
-    AdvancedModule,
-    ShadowForm,
+    CustomIcon,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -209,27 +205,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
-    return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
-    app = get_app(domain, app_id)
-    form = app.get_form(form_unique_id)
-    transaction = json.loads(request.POST.get('transaction'))
-
-    for question in transaction['fixedQuestions']:
-        setattr(form, question['name'], question['path'])
-
-    def to_dict(properties):
-        return dict((p['key'], p['path']) for p in properties)
-
-    form.custom_case_updates = to_dict(transaction['case_properties'])
-    form.case_preload = to_dict(transaction['case_preload'])
-
-    response_json = {}
-    app.save(response_json)
     return json_response(response_json)
 
 
@@ -375,6 +350,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
+    if should_edit("custom_icon_form"):
+        error_message = handle_custom_icon_edits(request, form, lang)
+        if error_message:
+            return json_response(
+                {'message': error_message},
+                status_code=400
+            )
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -387,38 +369,48 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_form(request, domain, app_id, module_id):
-    "Adds a form to an app (under a module)"
+def new_form(request, domain, app_id, module_unique_id):
+    """
+    Adds a form to an app (under a module)
+    """
     app = get_app(domain, app_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        raise HttpResponseBadRequest
+
     lang = request.COOKIES.get('lang', app.langs[0])
     form_type = request.POST.get('form_type', 'form')
     case_action = request.POST.get('case_action', 'none')
     name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
+
     if form_type == "shadow":
-        app = get_app(domain, app_id)
-        module = app.get_module(module_id)
         if module.module_type == "advanced":
             form = module.new_shadow_form(name, lang)
         else:
             raise Exception("Shadow forms may only be created under shadow modules")
     else:
-        form = app.new_form(module_id, name, lang)
+        form = module.new_form(name, lang)
 
-    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and form_type != "shadow":
+    if form_type != "shadow":
         if case_action == 'update':
             form.requires = 'case'
             form.actions.update_case = UpdateCaseAction(
                 condition=FormActionCondition(type='always'))
         elif case_action == 'open':
-            form.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+            form.actions.open_case = OpenCaseAction(
+                condition=FormActionCondition(type='always'))
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
 
     app.save()
-    # add form_id to locals()
-    form_id = form.id
-    response = back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-    return response
+    return back_to_main(
+        request, domain,
+        app_id=app.id,
+        module_unique_id=module.unique_id,
+        form_unique_id=form.unique_id
+    )
 
 
 @no_conflict_require_POST
@@ -437,14 +429,14 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return json_response({'status': 'conflict', 'xform': current_xml})
 
     dmp = diff_match_patch()
-    xform, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    save_xform(app, form, xform)
+    xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
+    xml = save_xform(app, form, xml)
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
@@ -465,13 +457,18 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 @require_GET
 @require_can_edit_apps
 def get_form_questions(request, domain, app_id):
-    module_id = request.GET.get('module_id')
-    form_id = request.GET.get('form_id')
+    form_unique_id = request.GET.get('form_unique_id')
+    module_id_temp = request.GET.get('module_id')
+    form_id_temp = request.GET.get('form_id')
     try:
         app = get_app(domain, app_id)
-        form = app.get_module(module_id).get_form(form_id)
+        if module_id_temp is not None and form_id_temp is not None:
+            # temporary fallback
+            form = app.get_module(module_id_temp).get_form(form_id_temp)
+        else:
+            form = app.get_form(form_unique_id)
         lang, langs = get_langs(request, app)
-    except (ModuleNotFoundException, IndexError):
+    except FormNotFoundException:
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
@@ -524,9 +521,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             notify_exception(request, 'Unexpected Build Error')
             form_errors.append(u"Unexpected System Error: %s" % e)
         else:
-            # remove upload questions (attachemnts) until MM Case Properties
+            # remove upload questions (attachments) until MM Case Properties
             # are released to general public
-            is_previewer = toggles.MM_CASE_PROPERTIES.enabled(request.user.username)
+            is_previewer = toggles.MM_CASE_PROPERTIES.enabled_for_request(request)
             xform_questions = [q for q in xform_questions
                                if q["tag"] != "upload" or is_previewer]
 
@@ -591,14 +588,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
-        'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
-        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
-        'allow_form_workflow': not isinstance(form, CareplanForm),
+        'allow_form_filtering': not form_has_schedule,
+        'allow_form_workflow': True,
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'root_requires_same_case': module.root_requires_same_case(),
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
@@ -611,11 +608,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
         ],
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
+        'form_icon': None,
     }
 
-    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
-        request.guided_tour = tours.NEW_APP.get_tour_data()
+    if add_ons.show("custom_icon_badges", request, form.get_app()):
+        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
@@ -642,19 +640,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    if isinstance(form, CareplanForm):
-        case_config_options.update({
-            'case_preload': [
-                {'key': key, 'path': path} for key, path in form.case_preload.items()
-            ],
-            'customCaseUpdates': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
-            'fixedQuestions': form.get_fixed_questions(),
-            'mode': form.mode,
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
-        })
-    elif isinstance(form, AdvancedForm):
+    if isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
                 programs = Program.by_domain(app.domain)
@@ -702,12 +688,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         })
 
     context.update({'case_config_options': case_config_options})
-    template = get_app_manager_template(
-        request.user,
-        "app_manager/v1/form_view.html",
-        "app_manager/v2/form_view.html",
-    )
-    return template, context
+    return "app_manager/form_view.html", context
 
 
 @require_can_edit_apps
@@ -737,9 +718,24 @@ def get_form_datums(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-def view_form(request, domain, app_id, module_id, form_id):
+def view_form_legacy(request, domain, app_id, module_id, form_id):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id, form_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_form(request, domain, app_id, form_unique_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(
+        request, domain, app_id,
+        form_unique_id=form_unique_id
+    )
 
 
 def _get_xform_source(request, app, form, filename="form.xml"):
@@ -773,12 +769,7 @@ def xform_display(request, domain, form_unique_id):
 
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
-        template = get_app_manager_template(
-            request.user,
-            'app_manager/v1/xform_display.html',
-            'app_manager/v2/xform_display.html',
-        )
-        return render(request, template, {
+        return render(request, "app_manager/xform_display.html", {
             'questions': questions_in_hierarchy(questions)
         })
     else:

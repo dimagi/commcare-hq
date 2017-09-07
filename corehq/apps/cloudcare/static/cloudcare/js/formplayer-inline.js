@@ -59,8 +59,8 @@
     };
 
     $("body").on('click', '.formplayer-link', function () {
-        var getFormUrl = hqImport('cloudcare/js/util.js').getFormUrl;
-        var getSubmitUrl = hqImport('cloudcare/js/util.js').getSubmitUrl;
+        var getFormUrl = hqImport('cloudcare/js/util').getFormUrl;
+        var getSubmitUrl = hqImport('cloudcare/js/util').getSubmitUrl;
         var $this = $(this),
             $target = $($this.data('target')),
             appId = $this.data('app-id'),

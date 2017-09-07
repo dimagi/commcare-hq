@@ -130,7 +130,7 @@
             <div class="loading">
                 <i class="fa fa-check text-success" data-bind="visible: clean "></i>
                 <i class="fa fa-spin fa-refresh" data-bind="visible: dirty"></i>
-                <i class="fa fa-remove text-danger" data-bind="visible: hasError"></i>
+                <i class="fa fa-remove text-danger clickable" data-bind="visible: hasError, click: triggerAnswer"></i>
             </div>
             <div class="widget" data-bind="
                 template: { name: entryTemplate, data: entry, afterRender: afterRender },

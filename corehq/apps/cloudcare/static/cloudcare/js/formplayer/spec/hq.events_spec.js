@@ -17,9 +17,9 @@ describe('HQ.Events', function() {
                 origin: origin,
                 data: {},
             };
-            sinon.stub(FormplayerFrontend, 'trigger', triggerSpy);
-            sinon.stub(FormplayerFrontend, 'request', requestSpy);
-            sinon.stub(window.console, 'warn', warnSpy);
+            sinon.stub(FormplayerFrontend, 'trigger').callsFake(triggerSpy);
+            sinon.stub(FormplayerFrontend, 'request').callsFake(requestSpy);
+            sinon.stub(window.console, 'warn').callsFake(warnSpy);
         });
 
         afterEach(function() {

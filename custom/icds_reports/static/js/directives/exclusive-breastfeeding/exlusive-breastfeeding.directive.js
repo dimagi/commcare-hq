@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,11 +10,11 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Exclusive Breastfeeding";
+    vm.label = "Exclusive Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/exclusive_breastfeeding/map', label: 'Map'},
-        'chart': {route: '/exclusive_breastfeeding/chart', label: 'Chart'},
+        'map': {route: '/exclusive_breastfeeding/map', label: 'Map View'},
+        'chart': {route: '/exclusive_breastfeeding/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -52,20 +52,25 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.templatePopup = function(loc, row) {
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var all = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between ages 0 - 6 months: <strong>' + all + '</strong></div><div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>' + children + '</strong></div><div>Percentage of children between 0 - 6 months exclusively breastfed.</div></ul>';
+        var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total number of children between ages 0 - 6 months: <strong>' + all + '</strong></div>' +
+            '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>' + children + '</strong></div>' +
+            '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
 
-        maternalChildService.getExclusiveBreastfeedingData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getExclusiveBreastfeedingData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -102,7 +107,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -153,7 +158,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -163,18 +168,32 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
+                    var total = findValue(vm.chartData[1].values, d.value);
+                    var value = findValue(vm.chartData[0].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between ages 0 - 6 months: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 0 - 6 months exclusively breastfed.</span>";
+                    tooltip_content += "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of infants 0-6 months of age who are fed exclusively with breast milk. \n' +
+            '\n' +
+            'An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

@@ -128,9 +128,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     actions = SchemaListProperty(CommtrackActionConfig)
     # TODO must catch ambiguous action lists (two action configs with the same 'name')
 
-    multiaction_enabled = BooleanProperty()
-    multiaction_keyword_ = StringProperty()
-
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
@@ -140,14 +137,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     stock_levels_config = SchemaProperty(StockLevelsConfig)
     ota_restore_config = SchemaProperty(StockRestoreConfig)
     individual_consumption_defaults = BooleanProperty(default=False)
-
-    @property
-    def multiaction_keyword(self):
-        return self.multiaction_keyword_
-
-    @multiaction_keyword.setter
-    def multiaction_keyword(self, val):
-        self.multiaction_keyword_ = val.lower() if val else None
 
     # configured on Subscribe Sms page
     alert_config = SchemaProperty(AlertConfig)
@@ -418,7 +407,12 @@ class StockExportColumn(ComplexExportColumn):
 def close_supply_point_case(location):
     supply_point_id = location.supply_point_id
     if supply_point_id:
-        close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
+        close_case(
+            supply_point_id,
+            location.domain,
+            const.COMMTRACK_USERNAME,
+            __name__ + ".close_supply_point_case",
+        )
 
 
 def _reopen_or_create_supply_point(location):

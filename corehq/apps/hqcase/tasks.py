@@ -40,7 +40,7 @@ def explode_cases(user_id, domain, factor, task=None):
             new_case_id = uuid.uuid4().hex
             # add new parent ids to the old to new id mapping
             old_to_new[case.case_id].append(new_case_id)
-            submit_case(case, new_case_id, domain)
+            submit_case(case, new_case_id, domain, "explode_cases[copy parents]")
             count += 1
             if task:
                 DownloadBase.set_progress(explode_case_task, count, 0)
@@ -76,7 +76,7 @@ def explode_cases(user_id, domain, factor, task=None):
             parents = {k: v[i] for k, v in parent_ids.items()}
             new_case_id = uuid.uuid4().hex
             old_to_new[case.case_id].append(new_case_id)
-            submit_case(case, new_case_id, domain, parents)
+            submit_case(case, new_case_id, domain, "explode_cases", parents)
             count += 1
             if task:
                 DownloadBase.set_progress(explode_case_task, count, 0)
@@ -86,6 +86,7 @@ def explode_cases(user_id, domain, factor, task=None):
     return {'messages': messages}
 
 
-def submit_case(case, new_case_id, domain, new_parent_ids=dict()):
+def submit_case(case, new_case_id, domain, source, new_parent_ids=dict()):
+    device_id = __name__ + "." + source
     case_block, attachments = make_creating_casexml(domain, case, new_case_id, new_parent_ids)
-    submit_case_blocks(case_block, domain, attachments=attachments)
+    submit_case_blocks(case_block, domain, attachments=attachments, device_id=device_id)

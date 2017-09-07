@@ -24,9 +24,9 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from fluff.signals import (
-    apply_index_changes,
+    migrate_tables,
     get_migration_context,
-    get_tables_with_index_changes,
+    get_tables_to_migrate,
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
@@ -51,8 +51,8 @@ def time_ucr_process_change(method):
         te = datetime.now()
         seconds = (te - ts).total_seconds()
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
-            table = args[1]
-            doc = args[2]
+            table = args[2]
+            doc = args[3]
             log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
@@ -180,9 +180,9 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
-            tables_with_index_changes -= tables_to_rebuild
-            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
+            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+            tables_to_migrate -= tables_to_rebuild
+            migrate_tables(engine, raw_diffs, tables_to_migrate)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators
@@ -215,16 +215,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
-        if change.deleted:
-            # we don't currently support hard-deletions at all.
-            # we may want to change this at some later date but seem ok for now.
-            # see https://github.com/dimagi/commcare-hq/pull/6944 for rationale
-            return
 
         domain = change.metadata.domain
         if not domain or domain not in self.table_adapters_by_domain:
             # if no domain we won't save to any UCR table
             return
+
+        if change.deleted:
+            adapters = list(self.table_adapters_by_domain[domain])
+            for table in adapters:
+                table.delete({'_id': change.metadata.document_id})
 
         async_tables = []
         doc = change.get_document()
@@ -265,7 +265,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             if duration_seen >= total_duration / 2:
                 break
 
-        for domain, duration in top_half_domains:
+        for domain, duration in top_half_domains.items():
             datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
                 'domain:{}'.format(domain)
             ])

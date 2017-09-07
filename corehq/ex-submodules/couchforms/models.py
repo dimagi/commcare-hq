@@ -239,15 +239,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 else:
                     raise
 
-    def xpath(self, path):
-        """
-        Evaluates an xpath expression like: path/to/node and returns the value
-        of that element, or None if there is no value.
-        """
-        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
-        _soft_assert(False, "Reference to xpath instead of get_data")
-        return safe_index(self, path.split("/"))
-
     def get_data(self, path):
         """
         Evaluates an xpath expression like: path/to/node and returns the value
@@ -475,9 +466,20 @@ class DefaultAuthContext(DocumentSchema):
 
 class UnfinishedSubmissionStub(models.Model):
     xform_id = models.CharField(max_length=200)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(db_index=True)
     saved = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+    date_queued = models.DateTimeField(null=True, db_index=True)
+    attempts = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return unicode(
+            "UnfinishedSubmissionStub("
+            "xform_id={s.xform_id},"
+            "timestamp={s.timestamp},"
+            "saved={s.saved},"
+            "domain={s.domain})"
+        ).format(s=self)
 
     class Meta:
         app_label = 'couchforms'

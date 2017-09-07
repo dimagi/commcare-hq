@@ -1,11 +1,11 @@
 /* globals hqDefine */
-hqDefine('hqadmin/js/authenticate_as.js', function () {
+hqDefine('hqadmin/js/authenticate_as', function () {
     $(function() {
         $('#id_username, #id_domain').change(function() {
             var username = $('#id_username').val(),
                 domain = $('#id_domain').val();
     
-            var action = hqImport('hqwebapp/js/initial_page_data.js').get('url') + username + '/';
+            var action = hqImport('hqwebapp/js/initial_page_data').get('url') + username + '/';
             if (domain) {
                 action += domain + '/';
             }

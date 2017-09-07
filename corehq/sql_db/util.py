@@ -8,57 +8,6 @@ from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 
-def get_object_from_partitioned_database(model_class, partition_value, lookup_field_name, lookup_value):
-    """
-    Determines from which database to retrieve a paritioned model object and
-    retrieves it.
-
-    :param model_class: A Django model class
-
-    :param parition_value: The value that is used to partition the model; this
-    value will be used to select the database
-
-    :param lookup_field_name: The model field on which to lookup the object
-
-    :param lookup_value: The value for which to lookup the object
-
-    :return: The model object
-    """
-    db_name = get_db_alias_for_partitioned_doc(partition_value)
-    kwargs = {
-        lookup_field_name: lookup_value,
-    }
-    return model_class.objects.using(db_name).get(**kwargs)
-
-
-def save_object_to_partitioned_database(obj, partition_value):
-    """
-    Determines to which database to save a partitioned model object and
-    saves it there.
-
-    :param obj: A Django model object
-
-    :param parition_value: The value that is used to partition the model; this
-    value will be used to select the database
-    """
-    db_name = get_db_alias_for_partitioned_doc(partition_value)
-    obj.save(using=db_name)
-
-
-def delete_object_from_partitioned_database(obj, partition_value):
-    """
-    Determines from which database to delete a partitioned model object and
-    deletes it there.
-
-    :param obj: A Django model object
-
-    :param parition_value: The value that is used to partition the model; this
-    value will be used to select the database
-    """
-    db_name = get_db_alias_for_partitioned_doc(partition_value)
-    obj.delete(using=db_name)
-
-
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
     """
     Runs a query across all partitioned databases and produces a generator
@@ -103,13 +52,13 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 def split_list_by_db_partition(partition_values):
     """
     :param partition_values: Iterable of partition values (e.g. case IDs)
-    :return: dict(db_alias -> [partition_values])
+    :return: list of tuples (db_name, list(partition_values))
     """
     mapping = defaultdict(list)
     for value in partition_values:
         db_name = get_db_alias_for_partitioned_doc(value)
         mapping[db_name].append(value)
-    return mapping
+    return list(mapping.items())
 
 
 def get_db_alias_for_partitioned_doc(partition_value):

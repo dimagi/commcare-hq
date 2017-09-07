@@ -8,9 +8,10 @@
  *
  * Modules are defined with hqDefine, and "imported" (referenced) with hqImport. Example:
  *
- * Define the module:
+ * Define the module. Note that as a convention, the module name should match the file path
+ * but exclude the .js extension.
  *   // myapp/static/myapp/js/utils.js
- *   hqDefine('myapp/js/utils.js', function () {
+ *   hqDefine('myapp/js/utils', function () {
  *      var module = {};
  *      module.util1 = function () {...};
  *      module.util2 = function () {...};
@@ -26,14 +27,14 @@
  * Reference the module in other code (either directly in the template or in another
  * file/module):
  *
- *   var utils = hqImport('myapp/js/utils.js');
+ *   var utils = hqImport('myapp/js/utils');
  *   ... utils.util1() ...
  *   ... utils.util2() ...
  *
  * You can also use the following idiom to effectively import only one property or
  * function:
  *
- *   var util1 = hqImport('myapp/js/utils.js').util1;
+ *   var util1 = hqImport('myapp/js/utils').util1;
  */
 
 var COMMCAREHQ_MODULES = {};
@@ -41,6 +42,9 @@ var COMMCAREHQ_MODULES = {};
 function hqDefine(path, moduleAccessor) {
     if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
         throw new Error("The module '" + path + "' has already been defined elsewhere.");
+    }
+    if (path.match(/\.js$/)) {
+        throw new Error("Error in '" + path + "': module names should not end in .js.");
     }
     COMMCAREHQ_MODULES[path] = moduleAccessor();
 }

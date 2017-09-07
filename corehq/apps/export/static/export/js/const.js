@@ -3,7 +3,7 @@
  * so if changing a value, ensure that both places reflect the change
  */
 
-hqDefine('export/js/const.js', function () {
+hqDefine('export/js/const', function () {
     var TAG_DELETED = 'deleted';
     var MULTISELECT_SPLIT_TYPE = 'multi-select';
     var PLAIN_SPLIT_TYPE = 'plain';

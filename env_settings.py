@@ -161,4 +161,21 @@ ES_META = {
             }
         },
     },
+    'enikshay': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 0,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
 }

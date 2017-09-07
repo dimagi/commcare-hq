@@ -1,5 +1,4 @@
-/* globals alert_user */
-hqDefine('app_manager/js/case_config_utils.js', function () {
+hqDefine('app_manager/js/case_config_utils', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
             // filter can be "all", or any of "select1", "select", or "input" separated by spaces
@@ -44,14 +43,13 @@ hqDefine('app_manager/js/case_config_utils.js', function () {
             }
             return options;
         },
-        refreshQuestions: function(questions_observable, url, moduleId, formId, event){
+        refreshQuestions: function(questions_observable, url, formUniqueId, event){
             var $el = $(event.currentTarget);
             $el.find('i').addClass('fa-spin');
             $.get({
                 url: url,
                 data: {
-                    module_id: moduleId,
-                    form_id: formId,
+                    form_unique_id: formUniqueId,
                 },
                 success: function(data) {
                     $el.addClass('btn-success').removeClass('btn-danger');
@@ -61,8 +59,8 @@ hqDefine('app_manager/js/case_config_utils.js', function () {
                 error: function(e) {
                     $el.removeClass('btn-success').addClass('btn-danger');
                     $el.find('i').removeClass('fa-spin');
-                    alert_user("Something went wrong refreshing your form properties. "
-                               + "Please refresh the page and try again", "danger");
+                    hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
+                               + "your form properties. Please refresh the page and try again", "danger"));
                 },
             });
         },

@@ -1,5 +1,5 @@
-/* globals COMMCAREHQ */
-hqDefine("reports/js/filters.js", function() {
+/* globals hqDefine, hqImport */
+hqDefine("reports/js/filters", function() {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.
@@ -37,7 +37,7 @@ hqDefine("reports/js/filters.js", function() {
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
                 var report_labels = $filterRange.data('reportLabels');
-                var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+                var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
                     report_labels, separator,
@@ -74,6 +74,62 @@ hqDefine("reports/js/filters.js", function() {
             dateFormat: 'yy-mm-dd',
         });
 
+        // Optional date ranges, optional month+year (used in accounting)
+        $(".report-filter-optional").each(function() {
+            $(this).koApplyBindings({
+                showFilterName: ko.observable($(this).data("showFilterName")),
+            });
+        });
+
+        // Single selects
+        $('.report-filter-single-option').each(function() {
+            var $filter = $(this);
+            $filter.parent().koApplyBindings({
+                select_params: $filter.data("selectOptions"),
+                current_selection: ko.observable($filter.data("selected")),
+            });
+            $filter.select2();
+        });
+        $('.report-filter-single-option-paginated').each(function() {
+            var $filter = $(this);
+            $filter.select2({
+                ajax: {
+                    url: $filter.data('url'),
+                    type: 'POST',
+                    dataType: 'json',
+                    quietMills: 250,
+                    data: function (term, page) {
+                        return {
+                            q: term,
+                            page: page,
+                            handler: $filter.data('handler'),
+                            action: $filter.data('action'),
+                        };
+                    },
+                    results: function (data, page) {
+                        if (data.success) {
+                            var limit = data.limit;
+                            var hasMore = (page * limit) < data.total;
+                            return {
+                                results: data.items,
+                                more: hasMore,
+                            };
+                        } else {
+                            console.log(data.error);
+                        }
+                    },
+                },
+                allowClear: true,
+                initSelection: function (elem, callback) {
+                    var val = $(elem).val();
+                    callback({
+                        id: val,
+                        text: val,
+                    });
+                },
+            });
+        });
+
         // Submission type (Raw Forms, Errors, & Duplicates)
         $('.report-filter-button-group').each(function() {
             linkButtonGroup(this);
@@ -81,7 +137,7 @@ hqDefine("reports/js/filters.js", function() {
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
+            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
     };
 

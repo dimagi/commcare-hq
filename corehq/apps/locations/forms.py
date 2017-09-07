@@ -4,7 +4,6 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.template import Context
 from django.template.loader import get_template
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
@@ -13,7 +12,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.style.forms.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
@@ -27,7 +26,7 @@ from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
@@ -39,10 +38,10 @@ class ParentLocWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/parent_loc_widget.html'
-        ).render(Context({
+        ).render({
             'name': name,
             'value': value,
-        }))
+        })
 
 
 class LocTypeWidget(forms.Widget):
@@ -50,10 +49,10 @@ class LocTypeWidget(forms.Widget):
     def render(self, name, value, attrs=None):
         return get_template(
             'locations/manage/partials/loc_type_widget.html'
-        ).render(Context({
+        ).render({
             'name': name,
             'value': value,
-        }))
+        })
 
 
 class LocationForm(forms.Form):

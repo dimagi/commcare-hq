@@ -12,7 +12,7 @@ from corehq.apps.data_interfaces.models import (
     CustomActionDefinition,
 )
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
@@ -52,13 +52,14 @@ def validate_case_property_name(value):
         raise ValidationError(_("Please specify a case property name."))
 
     value = value.strip()
-    property_name = re.sub('^(parent/)+', '', value)
+    property_name = re.sub('^(parent/|host/)+', '', value)
     if not property_name:
         raise ValidationError(_("Please specify a case property name."))
 
     if '/' in property_name:
         raise ValidationError(
-            _("Case property reference cannot contain '/' unless referencing the parent case with 'parent/'")
+            _("Case property reference cannot contain '/' unless referencing the parent "
+              "or host case with 'parent/' or 'host/'")
         )
 
     if not re.match('^[a-zA-Z0-9_-]+$', property_name):
@@ -580,6 +581,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'MATCH_EQUAL': MatchPropertyDefinition.MATCH_EQUAL,
             'MATCH_NOT_EQUAL': MatchPropertyDefinition.MATCH_NOT_EQUAL,
             'MATCH_HAS_VALUE': MatchPropertyDefinition.MATCH_HAS_VALUE,
+            'MATCH_HAS_NO_VALUE': MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
         }
 
     def compute_initial(self, rule):
@@ -749,7 +751,10 @@ class CaseRuleCriteriaForm(forms.Form):
             if match_type not in MatchPropertyDefinition.MATCH_CHOICES:
                 self._json_fail_hard()
 
-            if match_type == MatchPropertyDefinition.MATCH_HAS_VALUE:
+            if match_type in (
+                MatchPropertyDefinition.MATCH_HAS_VALUE,
+                MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+            ):
                 result.append({
                     'property_name': property_name,
                     'property_value': None,

@@ -54,11 +54,17 @@ class CaseProcessingResult(object):
     def get_flags_to_save(self):
         return {f.owner_id: f.case_id for f in self.dirtiness_flags}
 
-    def close_extensions(self, case_db):
+    def close_extensions(self, case_db, device_id):
         from casexml.apps.case.cleanup import close_cases
         extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
         if extensions_to_close:
-            return close_cases(extensions_to_close, self.domain, SYSTEM_USER_ID, case_db)
+            return close_cases(
+                extensions_to_close,
+                self.domain,
+                SYSTEM_USER_ID,
+                device_id,
+                case_db,
+            )
 
     def commit_dirtiness_flags(self):
         """
@@ -272,8 +278,8 @@ def _validate_indices(case_db, cases):
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version
                             _soft_assert(
-                                commcare_version < LooseVersion("2.35"),
-                                "Invalid Case Index in CC version >= 2.35", {
+                                commcare_version < LooseVersion("2.38"),
+                                "Invalid Case Index in CC version >= 2.38", {
                                     'domain': case_db.domain,
                                     'xform_id': xform.form_id,
                                     'missing_case_id': index.referenced_id,

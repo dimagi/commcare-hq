@@ -1,5 +1,5 @@
 from django.contrib import admin
-from corehq.apps.data_interfaces.models import DomainCaseRuleRun
+from corehq.apps.data_interfaces.models import DomainCaseRuleRun, CaseRuleSubmission
 
 
 class DomainCaseRuleRunAdmin(admin.ModelAdmin):
@@ -23,4 +23,22 @@ class DomainCaseRuleRunAdmin(admin.ModelAdmin):
     ordering = ['-started_on']
 
 
+class CaseRuleSubmissionAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'domain',
+        'rule',
+        'created_on',
+        'form_id',
+        'archived',
+    ]
+
+    search_fields = [
+        'domain',
+    ]
+
+    ordering = ['-created_on']
+
+
 admin.site.register(DomainCaseRuleRun, DomainCaseRuleRunAdmin)
+admin.site.register(CaseRuleSubmission, CaseRuleSubmissionAdmin)

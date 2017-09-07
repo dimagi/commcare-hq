@@ -7,7 +7,6 @@ from bulk_update.helper import bulk_update as bulk_update_helper
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 import jsonfield
-from casexml.apps.case.cleanup import close_case
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -590,6 +589,9 @@ class SQLLocation(MPTTModel):
             return cls.objects.get(location_id=location_id)
         except cls.DoesNotExist:
             return None
+
+    # For quick_find compatability
+    by_id = by_location_id
 
     def linked_supply_point(self):
         if not self.supply_point_id:

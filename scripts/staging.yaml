@@ -48,19 +48,20 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - app-manager-labs # Jenny 6/19
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
-  - je/cache-build-files # j$ 7/25
   - lwyszomi/icds_side_code # lwyszomi
-  - sk/sessions # sk 7/26
+  - fixtures-require-js-2017 # Jenny 8/23
+  - np/11.1 # NP 8/24
+  - sk/cache-sessions-2  # sk 8/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches: []
+    branches:
+      - np/111 # NP 8/24
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:

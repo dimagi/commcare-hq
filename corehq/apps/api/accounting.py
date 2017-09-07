@@ -83,7 +83,7 @@ class SoftwareProductResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = SoftwareProduct.objects.all().order_by('pk')
-        fields = ['id', 'name', 'product_type', 'last_modified']
+        fields = ['id', 'name', 'last_modified']
         resource_name = 'software_product'
 
 

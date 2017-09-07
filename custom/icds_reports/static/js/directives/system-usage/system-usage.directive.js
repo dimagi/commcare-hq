@@ -1,6 +1,6 @@
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($http, $log, $routeParams, $location, storageService, userLocationId) {
+function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -15,7 +15,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
 
     vm.getDataForStep = function(step) {
         var get_url = url('program_summary', step);
-        $http({
+        vm.myPromise = $http({
             method: "GET",
             url: get_url,
             params: $location.search(),
@@ -29,9 +29,28 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
         );
     };
 
+    $scope.$watch(function() {
+        return vm.selectedLocations;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue || !newValue || newValue.length === 0) {
+            return;
+        }
+        if (newValue.length === 6) {
+            var parent = newValue[3];
+            $location.search('location_id', parent.location_id);
+            $location.search('selectedLocationLevel', 3);
+            $location.search('location_name', parent.name);
+            storageService.setKey('message', true);
+            setTimeout(function() {
+                storageService.setKey('message', false);
+            }, 3000);
+        }
+        return newValue;
+    }, true);
+
     vm.steps = {
         "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
+        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     };
@@ -39,7 +58,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -61,7 +80,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
+SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {

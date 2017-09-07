@@ -16,7 +16,6 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from auditcare import models
 from auditcare.models import AccessAudit
-from auditcare.tables import AuditLogTable
 
 import logging
 
@@ -25,17 +24,6 @@ LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
-@login_required
-@user_passes_test(lambda u: u.is_superuser)
-def auditAll(request, template="auditcare/index.html"):
-    auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
-    realEvents = [{'user': a.user, 
-                   'date': a.event_date, 
-                   'class': a.doc_type, 
-                   'access_type': a.access_type } for a in auditEvents]
-    return render_to_response(template, 
-                              {"audit_table": AuditLogTable(realEvents, request=request)}, 
-                              context_instance=RequestContext(request))
 
 def export_all(request):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()

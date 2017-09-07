@@ -90,7 +90,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """
             <partial>
                 <datum
-                    detail-confirm="m1_case_long"
+                    {detail_confirm_attr}
                     {detail_inline_attr}
                     {detail_persistent_attr}
                     detail-select="m1_case_short"
@@ -99,7 +99,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     value="./@case_id"
                 />
             </partial>
-            """.format(detail_inline_attr=detail_inline_attr,
+            """.format(detail_confirm_attr='detail-confirm="m1_case_long"' if not detail_inline_attr else '',
+                       detail_inline_attr=detail_inline_attr,
                        detail_persistent_attr=detail_persistent_attr),
             suite,
             'entry/command[@id="m1-f0"]/../session/datum',
@@ -167,14 +168,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
-
-    def test_careplan_suite(self):
-        self._test_generic_suite('careplan')
-
-    def test_careplan_suite_own_module(self):
-        app = Application.wrap(self.get_json('careplan'))
-        app.get_module(1).display_separately = True
-        self.assertXmlEqual(self.get_xml('careplan-own-module'), app.create_suite())
 
     @commtrack_enabled(True)
     def test_product_list_custom_data(self):

@@ -178,6 +178,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             else:
                 map_active.append(app)
 
+        # sort apps by name
+        map_active = sorted(map_active, key=lambda item: item['text'].lower())
+        map_deleted = sorted(map_deleted, key=lambda item: item['text'].lower())
+
         if (bool(map_deleted) + bool(map_active)) > 1:
             self.display_app_type = True
             if map_active:

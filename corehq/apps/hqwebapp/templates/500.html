@@ -17,7 +17,7 @@
         });
     </script>
 {% endblock %}
-{% block page_name %}<h2>{% trans "Sorry, something unexpected just went wrong, and we're very sorry about it." %}</h2>{% endblock %}
+{% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
 {% block page_content %}
     <div class="row">
         {% if not enterprise_mode %}
@@ -65,7 +65,7 @@
                             Been here before? <small>Report an issue to help us get this problem fixed faster.</small>
                         {% endblocktrans %}
                     </legend>
-                    {% trans "We would appreciate it a lot if you could provide us with any additional info about what happened before you encountered this problem." %}<br><br>
+                    {% trans "We would appreciate any additional information about what happened before you encountered this problem." %}<br><br>
                     <div class="form-group">
                         <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
                         <div class="col-sm-6">

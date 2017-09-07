@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from copy import copy
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings
@@ -186,6 +185,30 @@ class IndicatorPillowTest(TestCase):
         # run pillow and check changes
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
+
+        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_deleted_doc_from_sql(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+
+        since = self.pillow.get_change_feed().get_latest_offsets()
+
+        # save case to DB - should also publish to kafka
+        case = _save_sql_case(sample_doc)
+
+        # run pillow and check changes
+        self.pillow.process_changes(since=since, forever=False)
+        self._check_sample_doc_state(expected_indicators)
+
+        # delete the case and verify it's removed
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
+        self.pillow.process_changes(since=since, forever=False)
+        self.adapter.refresh_table()
+        self.assertEqual(0, self.adapter.get_query_object().count())
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
@@ -553,30 +576,38 @@ def _save_sql_case(doc):
 
 
 class RebuildTableTest(TestCase):
+    """This test is pretty fragile because in UCRs we have a global metadata
+    object that sqlalchemy uses to keep track of tables and indexes. I've attempted
+    to work around it here, but it feels a little nasty
+    """
 
-    def teardown(self):
-        # we need to get the config multiple times in the test for it to properly
-        # recalculate the schema, so we can't have a class wide config variable
+    def tearDown(self):
+        self.adapter.drop_table()
+        self.config.delete()
+
+    def _get_config(self, extra_id):
         config = get_sample_data_source()
-        adapter = get_indicator_adapter(config)
-        adapter.drop_table()
+        config.table_id = config.table_id + extra_id
+        return config
+
+    def _setup_data_source(self, extra_id):
+        self.config = self._get_config(extra_id)
+        self.config.save()
+        pillow = get_kafka_ucr_pillow()
+        pillow.bootstrap([self.config])
+        self.adapter = get_indicator_adapter(self.config)
+        self.engine = self.adapter.engine
 
     def test_add_index(self):
         # build the table without an index
-        config = get_sample_data_source()
-        config.save()
-        self.addCleanup(config.delete)
-        pillow = get_kafka_ucr_pillow()
-        pillow.bootstrap([config])
+        self._setup_data_source('add_index')
 
-        adapter = get_indicator_adapter(config)
-        engine = adapter.engine
-        insp = reflection.Inspector.from_engine(engine)
-        table_name = get_table_name(config.domain, config.table_id)
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
         self.assertEqual(len(insp.get_indexes(table_name)), 0)
 
         # add the index to the config
-        config = get_sample_data_source()
+        config = self._get_config('add_index')
         self.addCleanup(config.delete)
         config.configured_indicators[0]['create_index'] = True
         config.save()
@@ -590,3 +621,82 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(len(insp.get_indexes(table_name)), 1)
+
+    def test_add_non_nullable_column(self):
+        self._setup_data_source('add_non_nullable_col')
+
+        # assert new date isn't in the config
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        self.assertEqual(
+            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+        )
+
+        # add the column to the config
+        config = self._get_config('add_non_nullable_col')
+        self.addCleanup(config.delete)
+        config.configured_indicators.append({
+            "column_id": "new_date",
+            "type": "raw",
+            "display_name": "new_date opened",
+            "datatype": "datetime",
+            "property_name": "other_opened_on",
+            "is_nullable": False
+        })
+        config.save()
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+
+        # mock rebuild table to ensure the table is rebuilt
+        pillow = get_kafka_ucr_pillow()
+        pillow.processors[0].rebuild_table = MagicMock()
+        pillow.bootstrap([config])
+        self.assertTrue(pillow.processors[0].rebuild_table.called)
+        # column doesn't exist because rebuild table was mocked
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(
+            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+        )
+
+        # Another time without the mock to ensure the column is there
+        pillow = get_kafka_ucr_pillow()
+        pillow.bootstrap([config])
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(
+            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 1
+        )
+
+    def test_add_nullable_column(self):
+        self._setup_data_source('add_nullable_col')
+
+        # assert new date isn't in the config
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        self.assertEqual(
+            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+        )
+
+        # add the column to the config
+        config = self._get_config('add_nullable_col')
+        self.addCleanup(config.delete)
+        config.configured_indicators.append({
+            "column_id": "new_date",
+            "type": "raw",
+            "display_name": "new_date opened",
+            "datatype": "datetime",
+            "property_name": "other_opened_on",
+            "is_nullable": True
+        })
+        config.save()
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+
+        # mock rebuild table to ensure the column is added without rebuild table
+        pillow = get_kafka_ucr_pillow()
+        pillow.processors[0].rebuild_table = MagicMock()
+        pillow.bootstrap([config])
+        self.assertFalse(pillow.processors[0].rebuild_table.called)
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(
+            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 1
+        )

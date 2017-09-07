@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.decorators.memoized import memoized
@@ -68,6 +68,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
+    get_account_name_from_default_name,
     get_money_str,
     has_subscription_already_ended,
     make_anchor_tag,
@@ -260,7 +261,7 @@ class BillingAccountBasicForm(forms.Form):
             code=self.cleaned_data['currency']
         )
         account = BillingAccount(
-            name=name,
+            name=get_account_name_from_default_name(name),
             salesforce_account_id=salesforce_account_id,
             currency=currency,
             entry_point=self.cleaned_data['entry_point'],
@@ -379,10 +380,6 @@ class SubscriptionForm(forms.Form):
     )
     delay_invoice_until = forms.DateField(
         label=ugettext_lazy("Delay Invoice Until"), widget=forms.DateInput(), required=False
-    )
-    plan_product = forms.ChoiceField(
-        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
     )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
@@ -550,7 +547,6 @@ class SubscriptionForm(forms.Form):
                 placeholder="Search for Software Plan"
             )
 
-        plan_product_field = self.plan_product_field()
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -572,7 +568,6 @@ class SubscriptionForm(forms.Form):
                 start_date_field,
                 end_date_field,
                 delay_invoice_until_field,
-                plan_product_field,
                 plan_edition_field,
                 plan_version_field,
                 domain_field,
@@ -605,27 +600,6 @@ class SubscriptionForm(forms.Form):
             )
         )
 
-    def plan_product_field(self):
-        # product type is now always commcare, but need to support old subscriptions
-        is_existing = self.subscription is not None
-        if is_existing:
-            try:
-                plan_product = self.subscription.plan_version.product_rate.product.product_type
-                self.fields['plan_product'].initial = plan_product
-            except (IndexError, SoftwarePlanVersion.DoesNotExist):
-                plan_product = (
-                    '<i class="fa fa-exclamation-triangle"></i> No Product Exists for '
-                    'the Plan (update required)'
-                )
-            return hqcrispy.B3TextField(
-                'plan_product',
-                plan_product,
-            )
-        return hqcrispy.B3TextField(
-            'plan_product',
-            SoftwareProductType.COMMCARE
-        )
-
     @transaction.atomic
     def create_subscription(self):
         account = BillingAccount.objects.get(id=self.cleaned_data['account'])
@@ -648,6 +622,10 @@ class SubscriptionForm(forms.Form):
         transfer_account = self.cleaned_data.get('active_accounts')
         if transfer_account:
             acct = BillingAccount.objects.get(id=transfer_account)
+            CreditLine.objects.filter(
+                account=self.subscription.account,  # TODO - add this constraint to postgres
+                subscription=self.subscription,
+            ).update(account=acct)
             self.subscription.account = acct
             self.subscription.save()
 
@@ -730,10 +708,6 @@ class ChangeSubscriptionForm(forms.Form):
         required=True,
         widget=forms.Textarea,
     )
-    new_plan_product = forms.ChoiceField(
-        label=ugettext_lazy("Core Product"), initial=SoftwareProductType.COMMCARE,
-        choices=SoftwareProductType.CHOICES,
-    )
     new_plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
@@ -774,7 +748,6 @@ class ChangeSubscriptionForm(forms.Form):
             crispy.Fieldset(
                 "Change Subscription",
                 crispy.Field('new_date_end', css_class="date-picker"),
-                'new_plan_product',
                 'new_plan_edition',
                 crispy.Field(
                     'new_plan_version', css_class="input-xxlarge",
@@ -827,8 +800,6 @@ class CreditForm(forms.Form):
         self.subscription = subscription
         super(CreditForm, self).__init__(*args, **kwargs)
 
-        product_choices = [('', 'Any')]
-        product_choices.extend(SoftwareProductType.CHOICES)
         self.fields['feature_type'].choices = FeatureType.CHOICES
 
         self.helper = FormHelper()
@@ -1463,33 +1434,26 @@ class SoftwarePlanVersionForm(forms.Form):
     def clean_product_rates(self):
         original_data = self.cleaned_data['product_rates']
         rates = json.loads(original_data)
-        rate_instances = []
         errors = ErrorList()
-        if not rates:
-            raise ValidationError(_("You must specify at least one product rate."))
-        for rate_data in rates:
-            rate_form = ProductRateForm(rate_data)
-            if not rate_form.is_valid():
-                errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
-            else:
-                rate_instances.append(self._retrieve_product_rate(rate_form))
+        if len(rates) != 1:
+            raise ValidationError(_("You must specify at exactly one product rate."))
+        rate_data = rates[0]
+        rate_form = ProductRateForm(rate_data)
+        if not rate_form.is_valid():
+            errors.extend(list(self._get_errors_from_subform(rate_data['name'], rate_form)))
+            rate_instance = None
+        else:
+            rate_instance = self._retrieve_product_rate(rate_form)
         if errors:
             self._errors.setdefault('product_rates', errors)
 
-        available_types = list(dict(SoftwareProductType.CHOICES).keys())
-        product_types = [r.product.product_type for r in rate_instances]
-        if any([product_types.count(p) > 1 for p in available_types]):
-            raise ValidationError(_(
-                "You may have at most ONE rate per product type "
-                "(CommCare, CommCare Supply, etc.)"
-            ))
-
-        self.new_product_rates = rate_instances
-        rate_ids = lambda x: set([r.id for r in x])
-        if (not self.is_update
-            and (self.plan_version is None
-                 or rate_ids(rate_instances).symmetric_difference(rate_ids([self.plan_version.product_rate])))):
-            self.is_update = True
+        self.new_product_rates = [rate_instance] if rate_instance else []
+        self.is_update = (
+            self.is_update or
+            self.plan_version is None or
+            rate_instance is None or
+            rate_instance.id != self.plan_version.product_rate.id
+        )
         return original_data
 
     def clean_create_new_role(self):

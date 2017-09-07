@@ -1,4 +1,4 @@
-hqDefine("users/js/web_users.js", function() {
+hqDefine("users/js/web_users", function() {
     'use strict';
     var usersApp = window.angular.module('usersApp', ['hq.web_users']);
     usersApp.config(['$httpProvider', function($httpProvider) {
@@ -8,7 +8,7 @@ hqDefine("users/js/web_users.js", function() {
         $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data.js").get("djng_current_rmi"));
+        djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data").get("djng_current_rmi"));
     }]);
 
     $(function () {
@@ -36,7 +36,7 @@ hqDefine("users/js/web_users.js", function() {
     });
 
     $(function () {
-        var url = hqImport("hqwebapp/js/urllib.js").reverse;
+        var url = hqImport("hqwebapp/js/initial_page_data").reverse;
         $('#restrict_users').on('change', function () {
             var $saveButton = $('#save_restrict_option');
             $saveButton
@@ -75,8 +75,8 @@ hqDefine("users/js/web_users.js", function() {
         });
 
         var $userRolesTable = $('#user-roles-table'),
-            initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-        hqImport('users/js/roles.js').initUserRoles($userRolesTable, {
+            initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        hqImport('users/js/roles').initUserRoles($userRolesTable, {
             userRoles: initial_page_data("user_roles"),
             defaultRole: initial_page_data("default_role"),
             saveUrl: url("post_user_role"),

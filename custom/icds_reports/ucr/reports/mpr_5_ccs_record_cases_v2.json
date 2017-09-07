@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-test",
     "icds-cas"
   ],
@@ -30,7 +31,7 @@
         "datatype": "date",
         "required": false,
         "slug": "month",
-        "field": "month_start",
+        "field": "month",
         "type": "date",
         "display": "Month for Data"
       },

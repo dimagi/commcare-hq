@@ -1,5 +1,5 @@
 /*globals hqDefine */
-hqDefine('reports_core/js/maps.js', function () {
+hqDefine('reports_core/js/maps', function () {
     var module = {},
         privates = {};
 
@@ -44,8 +44,9 @@ hqDefine('reports_core/js/maps.js', function () {
     };
 
     var initPopupTemplate = function (config) {
-        if (!privates.template) {
-            var rows = _.map(config.columns, function (col) {
+        if (!privates.template || !_.isEqual(config.columns, privates.columns)) {
+            privates.columns = config.columns;
+            var rows = _.map(privates.columns, function (col) {
                 var tr = _.template("<tr><td><%= label %></td>")(col);
                 tr += "<td><%= " + col.column_id + "%></td></tr>";
                 return tr;

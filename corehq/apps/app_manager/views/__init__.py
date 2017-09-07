@@ -18,11 +18,11 @@ from corehq.apps.app_manager.views.apps import (
     copy_app,
     default_new_app,
     delete_app,
-    delete_app_lang,
     drop_user_case,
     edit_app_attr,
     edit_app_langs,
     edit_app_ui_translations,
+    edit_add_ons,
     get_app_ui_translations,
     import_app,
     new_app,
@@ -62,7 +62,6 @@ from corehq.apps.app_manager.views.forms import (
     copy_form,
     delete_form,
     edit_advanced_form_actions,
-    edit_careplan_form_actions,
     edit_form_actions,
     edit_form_attr,
     edit_form_attr_api,
@@ -72,6 +71,7 @@ from corehq.apps.app_manager.views.forms import (
     new_form,
     patch_xform,
     undo_delete_form,
+    view_form_legacy,
     view_form,
     xform_display,
     get_form_questions,
@@ -85,6 +85,7 @@ from corehq.apps.app_manager.views.modules import (
     overwrite_module_case_list,
     undo_delete_module,
     validate_module_for_build,
+    view_module_legacy,
     view_module,
 )
 from corehq.apps.app_manager.views.multimedia import (
@@ -116,6 +117,7 @@ from corehq.apps.app_manager.views.settings import (
     commcare_profile,
     edit_commcare_profile,
     edit_commcare_settings,
+    PromptSettingsUpdateView,
 )
 from corehq.apps.app_manager.views.translations import (
     download_bulk_app_translations,
@@ -124,6 +126,7 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_ui_translations,
 )
 from corehq.apps.app_manager.views.formdesigner import (
-    form_designer,
+    form_source,
+    form_source_legacy,
     get_form_data_schema,
 )

@@ -129,6 +129,6 @@ def format_sidebar(context):
                             break
 
     return mark_safe(render_to_string(
-        'style/partials/navigation_left_sidebar.html',
+        'hqwebapp/partials/navigation_left_sidebar.html',
         {'sections': sections}
     ))

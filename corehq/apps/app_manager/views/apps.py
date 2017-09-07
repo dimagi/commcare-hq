@@ -18,8 +18,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError, AppEditingError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
@@ -27,7 +26,7 @@ from corehq.elastic import ESError
 from dimagi.utils.logging import notify_exception
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -42,7 +41,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
-    get_app_manager_template,
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.domain.models import Domain
@@ -94,8 +92,6 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V1.enabled(request.user.username):
-        return back_to_main(request, domain)
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
@@ -123,8 +119,10 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    add_ons.init_app(request, app)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
@@ -254,6 +252,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
@@ -303,10 +302,6 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
         context.update({
-            'show_care_plan': (
-                not app.has_careplan_module
-                and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
-            ),
             'show_advanced': show_advanced,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
@@ -375,8 +370,6 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
-        identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {
@@ -388,7 +381,7 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -411,11 +404,7 @@ def export_gzip(req, domain, app_id):
 
 @require_can_edit_apps
 def import_app(request, domain):
-    template = get_app_manager_template(
-        request.user,
-        "app_manager/v1/import_app.html",
-        "app_manager/v2/import_app.html",
-    )
+    template = "app_manager/import_app.html"
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
@@ -479,8 +468,7 @@ def app_settings(request, domain, app_id=None):
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id,
-                        release_manager=(not toggles.APP_MANAGER_V1.enabled(request.user.username)))
+    return view_generic(request, domain, app_id, release_manager=True)
 
 
 @no_conflict_require_POST
@@ -627,21 +615,6 @@ def get_app_ui_translations(request, domain):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def delete_app_lang(request, domain, app_id):
-    """
-    DEPRECATED
-    Called when a language (such as 'zh') is to be deleted from app.langs
-
-    """
-    lang_id = int(request.POST['index'])
-    app = get_app(domain, app_id)
-    del app.langs[lang_id]
-    app.save()
-    return back_to_main(request, domain, app_id=app_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_app_attr(request, domain, app_id, attr):
     """
     Called to edit any (supported) app attribute, given by attr
@@ -774,6 +747,18 @@ def edit_app_attr(request, domain, app_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def edit_add_ons(request, domain, app_id):
+    app = get_app(domain, app_id)
+    current = add_ons.get_dict(request, app)
+    for slug, value in request.POST.iteritems():
+        if slug in current:
+            app.add_ons[slug] = value == 'on'
+    app.save()
+    return HttpResponse(json.dumps({'success': True}))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def rearrange(request, domain, app_id, key):
     """
     This function handles any request to switch two items in a list.
@@ -792,22 +777,11 @@ def rearrange(request, domain, app_id, key):
         if "forms" == key:
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
-            try:
-                app_manager_v2 = not toggles.APP_MANAGER_V1.enabled(request.user.username)
-                app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
-            except ConflictingCaseTypeError:
-                messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+            app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V1.enabled(request.user.username):
-            messages.error(request, _(
-                'The form cannot be moved into the desired module.'
-            ))
-        else:
-            messages.error(request, _(
-                'The form can not be moved into the desired menu.'
-            ))
+        messages.error(request, _('The form can not be moved into the desired menu.'))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
         messages.error(request, _(
@@ -841,8 +815,6 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        _('You have successfully removed User Case Properties from this application.')
-        if toggles.APP_MANAGER_V1.enabled(request.user.username) else
         _('You have successfully removed User Properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)

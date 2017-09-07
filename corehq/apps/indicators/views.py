@@ -20,7 +20,7 @@ from corehq.apps.indicators.models import (
     DynamicIndicatorDefinition,
 )
 from corehq.apps.indicators.utils import get_indicator_domains, get_namespaces
-from corehq.apps.style.decorators import use_multiselect
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 

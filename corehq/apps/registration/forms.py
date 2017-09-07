@@ -22,7 +22,7 @@ import re
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
@@ -351,7 +351,7 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain and domain.commtrack_enabled:
-            self.fields['supply_point'] = forms.CharField(label='Supply Point:', required=False,
+            self.fields['supply_point'] = forms.CharField(label='Supply Point', required=False,
                                                           widget=SupplyPointSelectWidget(domain.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)

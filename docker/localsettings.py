@@ -2,8 +2,22 @@
 
 import os
 
+ICDS_UCR_DATABASE_ALIAS = 'default'
+ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
+
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
+    'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
@@ -118,7 +132,11 @@ S3_BLOB_DB_SETTINGS = {
     "url": "http://riakcs:9980/",
     "access_key": "admin-key",
     "secret_key": "admin-secret",
-    "config": {"connect_timeout": 3, "read_timeout": 5},
+    "config": {
+        "connect_timeout": 3,
+        "read_timeout": 5,
+        "signature_version": "s3"
+    },
 }
 
 KAFKA_URL = 'kafka:9092'
@@ -220,7 +238,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     CELERY_SEND_TASK_ERROR_EMAILS = True
 
     LESS_DEBUG = True
-    LESS_WATCH = False
     COMPRESS_OFFLINE = False
 
     XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'

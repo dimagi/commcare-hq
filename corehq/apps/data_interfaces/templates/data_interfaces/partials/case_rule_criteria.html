@@ -89,10 +89,11 @@
                 <option value="{{ form.constants.MATCH_EQUAL }}">{% trans "equals" %}</option>
                 <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
                 <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
+                <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
             </select>
         </div>
-        <div class="controls col-xs-2" data-bind="visible: match_type() !== '{{ form.constants.MATCH_HAS_VALUE }}'">
-            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': match_type() !== '{{ form.constants.MATCH_HAS_VALUE }}'}" />
+        <div class="controls col-xs-2" data-bind="visible: show_property_value_input()">
+            <input type="text" class="textinput form-control" data-bind="value: property_value, attr: {'required': show_property_value_input()}" />
         </div>
     </div>
 </script>

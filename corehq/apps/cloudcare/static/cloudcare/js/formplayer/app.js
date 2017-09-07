@@ -6,13 +6,13 @@
 
 var FormplayerFrontend = new Marionette.Application();
 
-var showError = hqImport('cloudcare/js/util.js').showError;
-var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
-var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
-var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
-var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
-var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
-var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
+var showError = hqImport('cloudcare/js/util').showError;
+var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;
+var showSuccess = hqImport('cloudcare/js/util').showSuccess;
+var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
+var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
+var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
+var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -82,6 +82,10 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
+FormplayerFrontend.on('clearBreadcrumbs', function () {
+    $('#persistent-case-tile').html("");
+});
+
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('.menu-scrollable-container').removeClass('hide');
@@ -97,10 +101,10 @@ FormplayerFrontend.reqres.setHandler('clearMenu', function () {
 
 $(document).on("ajaxStart", function () {
     $(".formplayer-request").addClass('formplayer-requester-disabled');
-    tfLoading();
+    formplayerLoading();
 }).on("ajaxStop", function () {
     $(".formplayer-request").removeClass('formplayer-requester-disabled');
-    tfLoadingComplete();
+    formplayerLoadingComplete();
 });
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
@@ -127,8 +131,8 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
 
-    data.onLoading = tfLoading;
-    data.onLoadingComplete = tfLoadingComplete;
+    data.onLoading = formplayerLoading;
+    data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
@@ -137,11 +141,15 @@ FormplayerFrontend.on('startForm', function (data) {
     data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
-        showError(resp.exception, $("#cloudcare-notifications"));
+        showError(resp.human_readable_message || resp.exception, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                window.analytics.workflow("[app-preview] User submitted a form");
+                window.analytics.usage("[app-preview] User submitted a form");
+            }
 
             // After end of form nav, we want to clear everything except app and sesson id
             var urlObject = Util.currentUrlToObject();
@@ -173,15 +181,16 @@ FormplayerFrontend.on('startForm', function (data) {
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
         savedDisplayOptions,
-        appId;
+        self = this;
     user.username = options.username;
-    user.apps = options.apps;
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
     user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
+
+    FormplayerFrontend.Apps.API.primeApps(user.restoreAs, options.apps);
 
     savedDisplayOptions = _.pick(
         Util.getSavedDisplayOptions(),
@@ -196,36 +205,38 @@ FormplayerFrontend.on("start", function (options) {
     });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
-    if (Backbone.history) {
-        Backbone.history.start();
-        FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.Users.Views.RestoreAsBanner({
-                model: user,
-            })
-        );
-        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-            appId = options.apps[0]['_id'];
-        }
-
-        // will be the same for every domain. TODO: get domain/username/pass from django
-        if (this.getCurrentRoute() === "") {
-            if (user.displayOptions.singleAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:singleApp", appId);
-            } else if (user.displayOptions.landingPageAppMode) {
-                FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
-                FormplayerFrontend.trigger("app:landingPageApp", appId);
-            } else {
-                FormplayerFrontend.trigger("apps:list", options.apps);
+    $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
+        var appId;
+        var apps = appCollection.toJSON();
+        if (Backbone.history) {
+            Backbone.history.start();
+            FormplayerFrontend.regions.restoreAsBanner.show(
+                new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                    model: user,
+                })
+            );
+            if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                appId = apps[0]['_id'];
             }
-            if (user.displayOptions.phoneMode) {
-                // Refresh on start of preview mode so it ensures we're on the latest app
-                // since app updates do not work.
-                FormplayerFrontend.trigger('refreshApplication', appId);
+
+            if (self.getCurrentRoute() === "") {
+                if (user.displayOptions.singleAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:singleApp", appId);
+                } else if (user.displayOptions.landingPageAppMode) {
+                    FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                    FormplayerFrontend.trigger("app:landingPageApp", appId);
+                } else {
+                    FormplayerFrontend.trigger("apps:list", apps);
+                }
+                if (user.displayOptions.phoneMode) {
+                    // Refresh on start of preview mode so it ensures we're on the latest app
+                    // since app updates do not work.
+                    FormplayerFrontend.trigger('refreshApplication', appId);
+                }
             }
         }
-    }
-
+    });
     if (options.allowedHost) {
         window.addEventListener(
             "message",
@@ -236,8 +247,8 @@ FormplayerFrontend.on("start", function (options) {
 });
 
 FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
-    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerMenu,
-        TabIDs = hqImport('cloudcare/js/debugger/debugger.js').TabIDs,
+    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
+        TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
         user = FormplayerFrontend.request('currentUser'),
         cloudCareDebugger,
         $debug = $('#cloudcare-debugger');
@@ -258,12 +269,6 @@ FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
     });
     ko.cleanNode($debug[0]);
     $debug.koApplyBindings(cloudCareDebugger);
-});
-
-FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
-    var appId = FormplayerFrontend.request('getCurrentAppId');
-    var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
-    return currentApp;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -357,7 +362,7 @@ FormplayerFrontend.on("sync", function () {
             }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
-            tfSyncComplete(response.responseJSON.status === 'error');
+            formplayerSyncComplete(response.responseJSON.status === 'error');
         }
     };
     options = {
@@ -457,17 +462,17 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
-    tfLoading();
+    formplayerLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-        tfLoadingComplete(true);
+        formplayerLoadingComplete(true);
     }).done(function(response) {
         if (response.hasOwnProperty('exception')) {
-            tfLoadingComplete(true);
+            formplayerLoadingComplete(true);
             return;
         }
 
-        tfLoadingComplete();
+        formplayerLoadingComplete();
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
@@ -492,10 +497,10 @@ FormplayerFrontend.reqres.setHandler('clearUserData', function() {
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
-    tfLoading();
+    formplayerLoading();
     resp = $.ajax(options);
     resp.fail(function () {
-        tfLoadingComplete(true);
+        formplayerLoadingComplete(true);
     }).done(function(response) {
         clearUserDataComplete(response.hasOwnProperty('exception'));
     });
@@ -510,9 +515,9 @@ FormplayerFrontend.on('navigateHome', function() {
     FormplayerFrontend.regions.breadcrumb.empty();
     if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
-        FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
+        FormplayerFrontend.trigger("app:singleApp", appId);
     } else {
-        FormplayerFrontend.navigate("/apps", { trigger: true });
+        FormplayerFrontend.trigger("apps:list");
     }
 });
 

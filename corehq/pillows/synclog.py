@@ -11,7 +11,7 @@ from pillowtop.processors.interface import PillowProcessor
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import Change
 from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
-from pillowtop.reindexer.reindexer import Reindexer
+from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
@@ -121,15 +121,11 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
 
 class UserSyncHistoryReindexer(Reindexer):
 
-    def __init__(self, doc_provider, chunk_size=1000):
+    def __init__(self, doc_provider, chunk_size=1000, reset=False):
+        self.reset = reset
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = UserSyncHistoryReindexerDocProcessor(UserSyncHistoryProcessor())
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.chunk_size = options.pop("chunksize", self.chunk_size)
-        return options
 
     def reindex(self):
         processor = DocumentProcessorController(
@@ -141,10 +137,16 @@ class UserSyncHistoryReindexer(Reindexer):
         processor.run()
 
 
-def get_user_sync_history_reindexer():
-    iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        CommCareUser,
-        WebUser
-    ])
-    return UserSyncHistoryReindexer(doc_provider)
+class UpdateUserSyncHistoryReindexerFactory(ReindexerFactory):
+    slug = 'user-sync-history'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+    ]
+
+    def build(self):
+        iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            CommCareUser,
+            WebUser
+        ])
+        return UserSyncHistoryReindexer(doc_provider, **self.options)

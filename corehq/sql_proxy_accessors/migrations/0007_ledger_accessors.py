@@ -19,5 +19,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('get_ledger_value.sql'),
-        migrator.get_migration('save_ledger_values.sql'),
     ]

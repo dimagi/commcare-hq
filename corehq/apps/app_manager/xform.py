@@ -11,13 +11,13 @@ from corehq.apps import nimbus_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, APP_V2)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
-from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
+from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
 import re
@@ -1457,20 +1457,19 @@ class XForm(WrappedNode):
 
         if 'subcases' in actions:
             subcases = actions['subcases']
-            repeat_contexts = defaultdict(int)
-            for subcase in subcases:
-                if subcase.repeat_context:
-                    repeat_contexts[subcase.repeat_context] += 1
 
-            for i, subcase in enumerate(subcases):
+            repeat_context_count = form.actions.count_subcases_per_repeat_context()
+            for subcase in subcases:
                 if not form.get_app().case_type_exists(subcase.case_type):
-                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (
+                        subcase.case_type, form.default_name()
+                    ))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
-                    nest = repeat_contexts[subcase.repeat_context] > 1
+                    nest = repeat_context_count[subcase.repeat_context] > 1
                     case_id = 'uuid()'
                 else:
                     base_path = ''
@@ -1479,10 +1478,9 @@ class XForm(WrappedNode):
                     case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
-                    name = 'subcase_%s' % i
-                    subcase_node = _make_elem('{x}%s' % name)
+                    subcase_node = _make_elem('{x}%s' % subcase.form_element_name)
                     parent_node.append(subcase_node)
-                    path = '%s%s/' % (base_path, name)
+                    path = '%s%s/' % (base_path, subcase.form_element_name)
                 else:
                     subcase_node = parent_node
                     path = base_path
@@ -1715,10 +1713,7 @@ class XForm(WrappedNode):
                     self.add_casedb()
                     configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
-        repeat_contexts = defaultdict(int)
-        for action in form.actions.open_cases:
-            if action.repeat_context:
-                repeat_contexts[action.repeat_context] += 1
+        repeat_context_count = form.actions.count_subcases_per_repeat_context()
 
         def get_action_path(action, create_subcase_node=True):
             if action.repeat_context:
@@ -1726,7 +1721,7 @@ class XForm(WrappedNode):
                 parent_node = self.instance_node.find(
                     '/{x}'.join(action.repeat_context.split('/'))[1:]
                 )
-                nest = repeat_contexts[action.repeat_context] > 1
+                nest = repeat_context_count[action.repeat_context] > 1
             else:
                 base_path = ''
                 parent_node = self.data_node
@@ -1847,149 +1842,6 @@ class XForm(WrappedNode):
                     case_id_xpath=case_id_xpath)
                 parent_case_block.add_update_block(updates)
                 node.append(parent_case_block.elem)
-
-    def add_care_plan(self, form):
-        from const import CAREPLAN_GOAL, CAREPLAN_TASK
-        from corehq.apps.app_manager.util import split_path
-        self.add_meta_2(form)
-        self.add_instance('casedb', src='jr://instance/casedb')
-
-        for property, nodeset in form.case_preload.items():
-            parent_path, property = split_path(property)
-            property_xpath = {
-                'name': 'case_name',
-                'owner_id': '@owner_id'
-            }.get(property, property)
-
-            id_xpath = {
-                'parent': CaseIDXPath(session_var('case_id')),
-                'goal': CaseIDXPath(session_var('case_id_goal'))
-            }.get(parent_path.split('/')[-1])
-
-            if id_xpath:
-                self.add_setvalue(
-                    ref=nodeset,
-                    value=id_xpath.case().property(property_xpath),
-                )
-            else:
-                raise CaseError("Unknown parent reference '{ref}' for case type '{type}'".format(
-                    ref=parent_path,
-                    type=form.get_case_type())
-                )
-
-        def add_parent_case_id(case_block):
-            parent_case_id = _make_elem('parent_case_id')
-            self.data_node.append(parent_case_id)
-            self.add_bind(
-                nodeset=self.resolve_path('parent_case_id'),
-                calculate=session_var('case_id')
-            )
-            case_block.add_index_ref(
-                'parent',
-                form.get_parent_case_type(),
-                self.resolve_path('parent_case_id')
-            )
-
-        if form.case_type == CAREPLAN_GOAL:
-            if form.mode == 'create':
-                case_block = CaseBlock(self)
-                case_block.add_create_block(
-                    relevance='true()',
-                    case_name=form.name_path,
-                    case_type=form.case_type,
-                    autoset_owner_id=False,
-                    case_id=session_var('case_id_goal_new')
-                )
-
-                case_block.add_update_block(form.case_updates())
-
-                add_parent_case_id(case_block)
-
-                # set case owner to whatever parent case owner is
-                self.add_setvalue(
-                    ref="case/create/owner_id",
-                    value=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id'),
-                    event='xforms-revalidate'
-                )
-
-                self.data_node.append(case_block.elem)
-            elif form.mode == 'update':
-                case_parent = self.data_node
-                case_block = CaseBlock(self)
-                case_block.add_update_block(form.case_updates())
-
-                idx_path = CaseIDXPath(session_var('case_id_goal'))
-                self.add_setvalue(
-                    ref='case/@case_id',
-                    value=session_var('case_id_goal')
-                )
-
-                case_block.add_close_block("%s = '%s'" % (form.close_path, 'yes'))
-
-                # preload values from case
-                self.add_setvalue(
-                    ref=form.description_path,
-                    value=idx_path.case().property('description')
-                )
-                self.add_setvalue(
-                    ref=form.date_followup_path,
-                    value=idx_path.case().property('date_followup')
-                )
-
-                # load task case ID's into child_tasks node
-                self.add_setvalue(
-                    ref=self.resolve_path('child_tasks'),
-                    value="join(' ', %s)" % CaseTypeXpath(CAREPLAN_TASK).case().select(
-                        'index/goal', session_var('case_id_goal'), quote=False
-                    ).select('@status', 'open').slash('@case_id')
-                )
-
-                case_parent.append(case_block.elem)
-
-                task_case_block = CaseBlock(self, path='tasks_to_close/')
-                task_case_block.elem.append(make_case_elem('close'))
-                self.add_bind(
-                    nodeset=self.resolve_path('tasks_to_close/case/@case_id'),
-                    calculate='selected-at(%s, ../../@index)' % self.resolve_path('child_tasks')
-                )
-
-                self.data_node.find('{x}tasks_to_close').append(task_case_block.elem)
-        elif form.case_type == CAREPLAN_TASK:
-            if form.mode == 'create':
-                path = 'task_repeat/'
-                case_block = CaseBlock(self, path=self.resolve_path(path))
-                case_block.add_create_block(
-                    relevance='true()',
-                    case_name=form.name_path,
-                    case_type=CAREPLAN_TASK,
-                    autoset_owner_id=False,
-                    delay_case_id=True,
-                    make_relative=True
-                )
-
-                # set case owner to whatever parent case owner is
-                self.add_bind(
-                    nodeset="%scase/create/owner_id" % path,
-                    calculate=CaseIDXPath(self.resolve_path('parent_case_id')).case().property('@owner_id')
-                )
-
-                case_block.add_update_block(form.case_updates(), make_relative=True)
-
-                add_parent_case_id(case_block)
-                case_block.add_index_ref('goal', CAREPLAN_GOAL, session_var('case_id_goal'))
-
-                self.data_node.find('{x}task_repeat').append(case_block.elem)
-            elif form.mode == 'update':
-                case_block = CaseBlock(self)
-                case_block.add_update_block(form.case_updates())
-
-                self.add_setvalue(
-                    ref='case/@case_id',
-                    value=CaseIDXPath(session_var('case_id_task'))
-                )
-                relevance = "%s = '%s'" % (self.resolve_path(form.close_path), 'yes')
-                case_block.add_close_block(relevance)
-                self.data_node.append(case_block.elem)
 
     def get_scheduler_case_updates(self):
         """

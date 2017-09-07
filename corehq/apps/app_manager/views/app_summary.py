@@ -10,14 +10,14 @@ from django.views.generic import View
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.exceptions import XFormException
-from corehq.apps.app_manager.util import get_app_manager_template, get_form_data
+from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -26,15 +26,10 @@ from couchexport.shortcuts import export_response
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/v1/summary.html'
+    template_name = 'app_manager/summary.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
-        self.template_name = get_app_manager_template(
-            request.user,
-            self.template_name,
-            'app_manager/v2/summary.html',
-        )
         return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -114,17 +109,22 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 def _get_name_map(app):
     name_map = {}
     for module in app.get_modules():
-        keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+        keywords = {'domain': app.domain, 'app_id': app.id, 'module_unique_id': module.unique_id}
         module_url = reverse('view_module', kwargs=keywords)
+
         name_map[module.unique_id] = {
             'module_name': module.name,
             'module_url': module_url,
         }
         for form in module.get_forms():
-            keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+
+            keywords = {'domain': app.domain, 'app_id': app.id,
+                        'module_unique_id': module.unique_id}
             module_url = reverse('view_module', kwargs=keywords)
-            keywords['form_id'] = form.id
+            del keywords['module_unique_id']
+            keywords['form_unique_id'] = form.unique_id
             form_url = reverse('view_form', kwargs=keywords)
+
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,

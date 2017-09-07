@@ -1,5 +1,5 @@
 /* global d3*/
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,11 +10,11 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Newborns with Low Birth Weight";
+    vm.label = "Newborns with Low Birth Weight";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/low_birth/map', label: 'Map'},
-        'chart': {route: '/low_birth/chart', label: 'Chart'},
+        'map': {route: '/low_birth/map', label: 'Map View'},
+        'chart': {route: '/low_birth/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',
@@ -24,7 +24,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
@@ -54,19 +54,24 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div><div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div></ul>';
+        var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
+            '<div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
+            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
-        maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getNewbornLowBirthData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -134,7 +139,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -144,18 +149,32 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return day['y'];
                     };
 
+                    var total = findValue(vm.chartData[0].values, d.value);
+                    var value = findValue(vm.chartData[1].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of newborns born with birth weight less than 2500 grams</span>";
+                    tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
+                    tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of newborns with born with birth weight less than 2500 grams. \n' +
+            '\n' +
+            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

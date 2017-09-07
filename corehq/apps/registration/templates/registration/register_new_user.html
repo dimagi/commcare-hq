@@ -11,9 +11,10 @@
         <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
         <script src="{% static 'jquery-ui/ui/effect-slide.js' %}"></script>
         <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-        <script src="{% static 'style/js/password_validators.ko.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
         <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
+        <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
 {% endblock %}
@@ -88,5 +89,5 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include 'style/includes/modal_eula.html' %}
+    {% include 'hqwebapp/includes/modal_eula.html' %}
 {% endblock %}

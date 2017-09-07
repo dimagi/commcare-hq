@@ -1,5 +1,5 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/urllib.js').reverse;
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
@@ -10,11 +10,11 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Prevalence of Undernutrition (weight-for-age)";
+    vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/underweight_children/map', label: 'Map'},
-        'chart': {route: '/underweight_children/chart', label: 'Chart'},
+        'map': {route: '/underweight_children/map', label: 'Map View'},
+        'chart': {route: '/underweight_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -51,22 +51,27 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
-        var severely_underweight = row ? $filter('indiaNumbers')(row.severely_underweight) : 'N/A';
-        var moderately_underweight = row ? $filter('indiaNumbers')(row.moderately_underweight) : 'N/A';
-        var normal = row ? $filter('indiaNumbers')(row.normal) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Underweight: <strong>' + severely_underweight + '</strong></div><div>Moderately Underweight: <strong>' + moderately_underweight +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
+        var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / (row.total || 1)) : 'N/A';
+        var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
+        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>' + loc.properties.name + '</p>' +
+            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
+            '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
+            '<div>% Normal: <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
-        maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -103,7 +108,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -126,6 +131,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,
@@ -134,7 +140,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             },
             x: function(d){ return d.x; },
             y: function(d){ return d.y; },
-
             color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
             clipVoronoi: false,
@@ -154,7 +159,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -170,12 +175,21 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age below -2 standard deviations of the WHO Child Growth Standards median (moderately underweight) or weight-for-age below -3 standard deviations of the WHO Growth Standards median (severely underweight).</span>";
 
                     return tooltip_content;
                 });
                 return chart;
             },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
         },
     };
 

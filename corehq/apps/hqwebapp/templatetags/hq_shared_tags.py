@@ -146,7 +146,7 @@ def domains_for_user(context, request, selected_domain=None):
              request.couch_user.is_superuser)
         ),
     }
-    return mark_safe(render_to_string('style/includes/domain_list_dropdown.html', ctxt))
+    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt))
 
 
 @register.simple_tag
@@ -640,12 +640,12 @@ def registerurl(parser, token):
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return ("<script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>"
-                    .format(json.dumps(url_name), json.dumps(url)))
+            return (u"<div data-name=\"{}\" data-value={}></div>"
+                    .format(url_name, json.dumps(url)))
 
     nodelist = NodeList([FakeNode()])
 
-    return AddToBlockNode(nodelist, 'js-inline')
+    return AddToBlockNode(nodelist, 'registered_urls')
 
 
 @register.simple_tag
@@ -672,3 +672,8 @@ def initial_page_data(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'initial_page_data')
+
+
+@register.inclusion_tag('hqwebapp/basic_errors.html')
+def bootstrap_form_errors(form):
+    return {'form': form}

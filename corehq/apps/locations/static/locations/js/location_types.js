@@ -1,6 +1,6 @@
 /* globals _, ko, $ */
 
-hqDefine('locations/js/location_types.js', function(){
+hqDefine('locations/js/location_types', function(){
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
@@ -339,7 +339,7 @@ hqDefine('locations/js/location_types.js', function(){
     }
 
     $(function() {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             loc_types = initial_page_data('location_types'),
             commtrack_enabled = initial_page_data('commtrack_enabled'),
             model = new LocationSettingsViewModel(loc_types, commtrack_enabled);

@@ -1,12 +1,10 @@
 from unittest import skip
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
-from casexml.apps.phone.tests.utils import (
-    synclog_from_restore_payload,
-    generate_restore_payload,
-    create_restore_user,
+from casexml.apps.case.mock import CaseBlock, CaseStructure
+from casexml.apps.phone.tests.test_sync_mode import (
+    BaseSyncTest, DeprecatedBaseSyncTest, PARENT_TYPE
 )
-from casexml.apps.case.tests.util import assert_user_has_cases
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.case.xml import V1
 from corehq.apps.groups.models import Group
 from casexml.apps.phone.restore import RestoreConfig
 from dimagi.utils.decorators.profile import line_profile
@@ -24,27 +22,53 @@ REFERRED_TO_GROUP = 'other_group'
 REFERRAL_TYPE = 'referral'
 
 
-class SyncPerformanceTest(SyncBaseTest):
+class SyncPerformanceTest(DeprecatedBaseSyncTest):
     """
     Tests the interaction of two users in sync mode doing various things
     """
+
+    def _createCaseStubs(self, id_list, **kwargs):
+        # TODO remove this when these tests use MockDevice
+        case_attrs = {'create': True}
+        case_attrs.update(kwargs)
+        return self.factory.create_or_update_cases(
+            [CaseStructure(case_id=case_id, attrs=case_attrs) for case_id in id_list],
+        )
+
+    def _postFakeWithSyncToken(self, caseblocks, token_id):
+        # TODO remove this when these tests use MockDevice
+        if not isinstance(caseblocks, list):
+            # can't use list(caseblocks) since that returns children of the node
+            # http://lxml.de/tutorial.html#elements-are-lists
+            caseblocks = [caseblocks]
+        return self.factory.post_case_blocks(caseblocks, form_extras={"last_sync_token": token_id})
+
+    @classmethod
+    def setUpClass(cls):
+        # purposely skip BaseSyncTest and DeprecatedBaseSyncTest setUpClass
+        super(BaseSyncTest, cls).setUpClass()
+        cls.project = Domain(name='sync-performance-tests')
+        cls.project.save()
+        cls.user = create_restore_user(
+            cls.project.name,
+            USERNAME,
+        )
+        cls.other_user = create_restore_user(
+            domain=cls.project.name,
+            username=OTHER_USERNAME,
+        )
+        cls.referral_user = create_restore_user(
+            domain=cls.project.name,
+            username=REFERRAL_USERNAME,
+        )
 
     def setUp(self):
         super(SyncPerformanceTest, self).setUp()
         # the other user is an "owner" of the original users cases as well,
         # for convenience
-        self.project = Domain(name='sync-performance-tests')
-        self.project.save()
         self.factory.domain = self.project.name
-        self.other_user = create_restore_user(
-            domain=self.project.name,
-            username=OTHER_USERNAME,
-        )
-
-        self.referral_user = create_restore_user(
-            domain=self.project.name,
-            username=REFERRAL_USERNAME,
-        )
+        self.referral_device = self.get_device(user=self.referral_user)
+        self.referral_device.sync(version=V1)
 
         self.shared_group = Group(
             domain=self.project.name,
@@ -63,19 +87,14 @@ class SyncPerformanceTest(SyncBaseTest):
         self.referral_group.save()
 
         # this creates the initial blank sync token in the database
-        self.other_sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.other_user
-        ))
-        self.referral_sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.referral_user
-        ))
+        other_device = self.get_device(user=self.other_user)
+        other_sync_log = other_device.sync(version=V1).log
 
-        self.assertTrue(self.shared_group._id in self.other_sync_log.owner_ids_on_phone)
-        self.assertTrue(self.other_user.user_id in self.other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.shared_group._id in other_sync_log.owner_ids_on_phone)
+        self.assertTrue(self.other_user.user_id in other_sync_log.owner_ids_on_phone)
 
-        self.sync_log = synclog_from_restore_payload(generate_restore_payload(
-            self.project, self.user
-        ))
+        device = self.get_device(user=self.user)
+        self.sync_log = device.sync(version=V1).log
         self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
         self.assertTrue(self.user.user_id in self.sync_log.owner_ids_on_phone)
 
@@ -109,7 +128,8 @@ class SyncPerformanceTest(SyncBaseTest):
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         all_cases = id_list + new_case_ids
-        assert_user_has_cases(self, self.referral_user, all_cases, restore_id=self.referral_sync_log.get_id)
+        sync = self.referral_device.sync()
+        self.assertEqual(set(all_cases), set(sync.cases))
 
     @skip('Comment out to profile')
     @line_profile([
@@ -156,4 +176,5 @@ class SyncPerformanceTest(SyncBaseTest):
         self._postFakeWithSyncToken(caseblocks, self.sync_log.get_id)
 
         all_cases = parent_cases + child_cases + referreal_cases
-        assert_user_has_cases(self, self.referral_user, all_cases, restore_id=self.referral_sync_log.get_id)
+        sync = self.referral_device.sync()
+        self.assertEqual(set(all_cases), set(sync.cases))

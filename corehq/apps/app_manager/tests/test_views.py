@@ -8,7 +8,6 @@ from mock import patch
 
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
-from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
 from corehq.apps.builds.models import BuildSpec
 
@@ -166,10 +165,11 @@ class TestViews(TestCase):
         content = content[0]
         self.assertEqual(content['copy_of'], self.app.id)
 
-        kwargs['module_id'] = module.id
+        kwargs['module_unique_id'] = module.unique_id
         self._test_status_codes(['view_module'], kwargs)
 
-        kwargs['form_id'] = form.id
+        del kwargs['module_unique_id']
+        kwargs['form_unique_id'] = form.unique_id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
     def test_advanced_module(self, mock):
@@ -178,7 +178,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_report_module(self, mockh):
@@ -187,7 +187,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_shadow_module(self, mockh):
@@ -196,20 +196,7 @@ class TestViews(TestCase):
         self._test_status_codes(['view_module'], {
             'domain': self.domain.name,
             'app_id': self.app.id,
-            'module_id': module.id,
-        })
-
-    def test_careplan_module(self, mock):
-        target_module = self.app.add_module(Module.new_module("Module0", "en"))
-        target_module.case_type = 'person'
-
-        module = new_careplan_module(self.app, 'Module1', 'en', target_module)
-
-        self.app.save()
-        self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
-            'app_id': self.app.id,
-            'module_id': module.id,
+            'module_unique_id': module.unique_id,
         })
 
     def test_dashboard(self, mock):

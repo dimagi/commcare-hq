@@ -23,6 +23,10 @@ class IncompatibleFormTypeException(AppManagerException):
     pass
 
 
+class AddOnNotFoundException(AppManagerException, IndexError):
+    pass
+
+
 class AppEditingError(AppManagerException):
     pass
 
@@ -32,10 +36,6 @@ class ModuleIdMissingException(AppManagerException):
 
 
 class RearrangeError(AppEditingError):
-    pass
-
-
-class ConflictingCaseTypeError(AppEditingError):
     pass
 
 

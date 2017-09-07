@@ -3,7 +3,7 @@ import datetime
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import CommandError, BaseCommand
 from pillowtop.feed.interface import Change
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import REINDEX_FNS
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
 
@@ -33,10 +33,10 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         pillow = options.get('pillow', 'MISSING')
-        if pillow not in REINDEX_FNS:
+        if pillow not in FACTORIES_BY_SLUG:
             raise CommandError('--pillow must be specified and must be one of:\n{}'
-                               .format(', '.join(REINDEX_FNS.keys())))
-        reindexer = REINDEX_FNS[pillow]()
+                               .format(', '.join(FACTORIES_BY_SLUG.keys())))
+        reindexer = FACTORIES_BY_SLUG[pillow]().build()
         if not isinstance(reindexer.doc_provider, CouchDocumentProvider):
             raise CommandError("This command only works with couch pillows,"
                                "although it shouldn't be too hard to adapt.")

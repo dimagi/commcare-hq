@@ -14,7 +14,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, DatabaseColumn, Aggr
     DataFormatter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.users.models import CommCareUser
 from custom.pnlppgi.filters import WeekFilter, LocationBaseDrilldownOptionFilter

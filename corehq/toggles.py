@@ -307,12 +307,6 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-APP_BUILDER_CAREPLAN = StaticToggle(
-    'careplan',
-    'Careplan module',
-    TAG_EXPERIMENTAL
-)
-
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -325,7 +319,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -391,7 +385,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -419,8 +413,8 @@ IS_DEVELOPER = StaticToggle(
 MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
-    TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag',
+    TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
@@ -462,6 +456,16 @@ REPORT_BUILDER = StaticToggle(
     'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+REPORT_BUILDER_V2 = StaticToggle(
+    "report_builder_v2",
+    "Report builder V2",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    description=(
+        'Enables the "new" report builder. Note that the "Report Builder" feature flag must also be enabled'
+    )
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -522,7 +526,7 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
-    help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -657,7 +661,7 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options',
+    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -666,7 +670,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -752,7 +756,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
-    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -1059,13 +1063,6 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V1 = StaticToggle(
-    'app_manager_v1',
-    'Turn OFF prototype for case management onboarding (App Manager V2)',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER]
-)
-
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',
@@ -1186,14 +1183,6 @@ LOGIN_AS_ALWAYS_OFF = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BLOBDB_RESTORE = PredictablyRandomToggle(
-    'blobdb_restore',
-    "Blobdb restore",
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-)
-
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'highlight_feature_flags',
     'Highlight / Mark Feature Flags in the UI',
@@ -1231,7 +1220,8 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
 
 PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
-    'Expose phone apk heartbeat URL and add it profile.xml',
+    "Ability to configure a mobile feature to prompt "
+    "users to update to latest CommCare app and apk",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
@@ -1247,5 +1237,12 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'Used for ICDS emergencies when UCR sync is killing the DB',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

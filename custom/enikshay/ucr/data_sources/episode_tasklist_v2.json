@@ -1,0 +1,2694 @@
+{
+  "domains": [
+    "enikshay",
+    "sheel-enikshay",
+    "enikshay-reports-qa",
+    "enikshay-test"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "config": {
+    "referenced_doc_type": "CommCareCase",
+    "asynchronous": true,
+    "engine_id": "ucr",
+    "description": "",
+    "base_item_expression": {},
+    "table_id": "episode_task_list_v2",
+    "display_name": "episode (task list) v2",
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "type"
+          },
+          "comment": null,
+          "property_value": "episode"
+        },
+        {
+          "operator": "not_eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "named",
+            "name": "owner_id"
+          },
+          "comment": null,
+          "property_value": "_archive_"
+        },
+        {
+          "operator": "not_eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "named",
+            "name": "owner_id"
+          },
+          "comment": null,
+          "property_value": "_invalid_"
+        },
+        {
+          "filter": {
+            "operator": "in",
+            "type": "boolean_expression",
+            "expression": {
+              "datatype": "string",
+              "type": "named",
+              "name": "owner_id"
+            },
+            "comment": null,
+            "property_value": [
+              null,
+              ""
+            ]
+          },
+          "comment": null,
+          "type": "not"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "named",
+          "name": "owner_id"
+        },
+        "column_id": "owner_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "name"
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "owner_id"
+          }
+        },
+        "column_id": "owner_name"
+      },
+      {
+        "comment": "TODO: REMOVE?",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "owner_id"
+          },
+          "type": "location_type_name"
+        },
+        "column_id": "location_type"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "owner_id"
+          },
+          "type": "location_parent_id"
+        },
+        "column_id": "tu_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "owner_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "column_id": "dto_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "name"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "datatype": null,
+            "type": "named",
+            "name": "person_id"
+          }
+        },
+        "column_id": "person_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "opened_on"
+        },
+        "column_id": "date_opened"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "patient_type_choice"
+        },
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "patient_type",
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "episode_type"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "episode_type"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "is_active"
+        },
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "is_active",
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "has_open_referral"
+        },
+        "column_id": "awaiting_claim"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "date_of_diagnosis"
+        },
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "date_of_diagnosis",
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "is_confirmed"
+        },
+        "column_id": "is_confirmed"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "is_pending"
+        },
+        "column_id": "is_pending"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "evaluator",
+          "context_variables": {
+            "has_open_referral": {
+              "type": "named",
+              "name": "has_open_referral"
+            },
+            "is_pending": {
+              "type": "named",
+              "name": "is_pending"
+            },
+            "is_confirmed": {
+              "type": "named",
+              "name": "is_confirmed"
+            }
+          },
+          "statement": "is_pending and is_confirmed and has_open_referral == 0"
+        },
+        "column_id": "treatment_not_initiated"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "hiv_status"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "datatype": null,
+            "type": "named",
+            "name": "person_id"
+          }
+        },
+        "column_id": "hiv_status"
+      },
+      {
+        "comment": "TODO: REMOVE?",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "hiv_status"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "datatype": null,
+            "type": "named",
+            "name": "person_id"
+          }
+        },
+        "column_id": "hiv_status_unknown"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "hiv_not_updated",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "hiv_status"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                      }
+                    },
+                    "comment": null,
+                    "property_value": "unknown"
+                  },
+                  {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "hiv_status"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                      }
+                    },
+                    "comment": null,
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                ]
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "named",
+                  "name": "has_open_referral"
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": 0
+              }
+            ]
+          },
+          "expression_if_true": 1,
+          "type": "conditional",
+          "expression_if_false": 0
+        },
+        "column_id": "hiv_not_updated"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "diabetes_not_updated",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "type": "or",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                      }
+                    },
+                    "comment": null,
+                    "property_value": "unknown"
+                  },
+                  {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                      }
+                    },
+                    "comment": null,
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                ]
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "named",
+                  "name": "has_open_referral"
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": 0
+              }
+            ]
+          },
+          "expression_if_true": 1,
+          "type": "conditional",
+          "expression_if_false": 0
+        },
+        "column_id": "diabetes_not_updated"
+      },
+      {
+        "comment": "TODO: Remove? There is no result recorded property on episode",
+        "create_index": false,
+        "display_name": "result_recorded",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "result_recorded",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "result_recorded"
+        }
+      },
+      {
+        "comment": "TODO: Remove? This looks like it belongs on the test data source",
+        "create_index": false,
+        "display_name": "test results awaited",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "evaluator",
+          "context_variables": {
+            "has_open_referral": {
+              "type": "named",
+              "name": "has_open_referral"
+            },
+            "test_requested": {
+              "type": "named",
+              "name": "test_requested"
+            },
+            "result_recorded": {
+              "type": "named",
+              "name": "result_recorded"
+            }
+          },
+          "statement": "test_requested and result_recorded and has_open_referral == 0"
+        },
+        "column_id": "test_results_awaited"
+      },
+      {
+        "comment": "TODO: Remove? This is not a property on the episode",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "test_requested_date"
+        },
+        "column_id": "test_requested_date"
+      },
+      {
+        "comment": "TODO: This seems incorrect since it only looks at has open referral",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "named",
+              "name": "has_open_referral"
+            },
+            "comment": null,
+            "property_value": 0
+          },
+          "expression_if_true": 1,
+          "type": "conditional",
+          "expression_if_false": 0
+        },
+        "column_id": "adherence_information_missing"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "last adherence date",
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": "date",
+          "type": "named",
+          "name": "last_adherence_date"
+        },
+        "column_id": "last_adherence_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "treatment_initiation_date"
+        },
+        "column_id": "treatment_initiation_date"
+      },
+      {
+        "comment": "TODO: Figure out why we need both this and last_adherence_date",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "operator": "in",
+            "expression": {
+              "type": "named",
+              "name": "last_adherence_date"
+            },
+            "type": "boolean_expression",
+            "comment": null,
+            "property_value": [
+              null,
+              ""
+            ]
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "treatment_initiation_date"
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "type": "named",
+            "name": "last_adherence_date"
+          }
+        },
+        "column_id": "last_good_adherence_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "cp_test_count"
+        },
+        "column_id": "cp_test_count"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "cp_or_ip_test_count"
+        },
+        "column_id": "cp_or_ip_test_count"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": "date",
+          "type": "named",
+          "name": "follow_up_due_anchor_date"
+        },
+        "column_id": "follow_up_due_anchor_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "evaluator",
+          "context_variables": {
+            "has_open_referral": {
+              "type": "named",
+              "name": "has_open_referral"
+            },
+            "ip_threshold_crossed": {
+              "datatype": "integer",
+              "type": "named",
+              "name": "ip_threshold_crossed"
+            },
+            "cp_or_ip_test_count": {
+              "datatype": "integer",
+              "type": "named",
+              "name": "cp_or_ip_test_count"
+            },
+            "cp_threshold_crossed": {
+              "datatype": "integer",
+              "type": "named",
+              "name": "cp_threshold_crossed"
+            },
+            "cp_test_count": {
+              "datatype": "integer",
+              "type": "named",
+              "name": "cp_test_count"
+            }
+          },
+          "statement": "((cp_threshold_crossed and cp_test_count == 0) or (ip_threshold_crossed and cp_or_ip_test_count == 0)) and has_open_referral == 0"
+        },
+        "column_id": "follow_up_due"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "home_visit_pending"
+        },
+        "column_id": "home_visit_pending"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "is_pulmonary"
+        },
+        "column_id": "is_pulmonary"
+      },
+      {
+        "comment": "TODO: Remove. This looks like its from a test",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "date_reported"
+        },
+        "column_id": "date_reported"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "household_visit_anchor_date"
+        },
+        "column_id": "household_visit_anchor_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "household_visit_anchor_date_non_null"
+        },
+        "column_id": "household_visit_anchor_date_non_null"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "evaluator",
+          "context_variables": {
+            "has_open_referral": {
+              "type": "named",
+              "name": "has_open_referral"
+            },
+            "household_visit_anchor_date_non_null": {
+              "type": "named",
+              "name": "household_visit_anchor_date_non_null"
+            },
+            "home_visit_pending": {
+              "type": "named",
+              "name": "home_visit_pending"
+            }
+          },
+          "statement": "household_visit_anchor_date_non_null and home_visit_pending and has_open_referral == 0"
+        },
+        "column_id": "new_patient_household_visit"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "drug_formulations contains fdc",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "fdc_drug_formulations"
+        },
+        "column_id": "fdc_drug_formulations"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "refill_next_date",
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "operator": "in",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "refill_next_date"
+            },
+            "type": "boolean_expression",
+            "comment": null,
+            "property_value": [
+              null,
+              ""
+            ]
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "treatment_initiation_date"
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "refill_next_date"
+          }
+        },
+        "column_id": "refill_next_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "fdc_task_list",
+        "datatype": "integer",
+        "expression": {
+          "type": "named",
+          "name": "fdc_task_list"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "fdc_task_list"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "outcome_due_date",
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "outcome_due_date"
+        },
+        "column_id": "outcome_due_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "outcome_due",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "outcome_due"
+        },
+        "column_id": "outcome_due"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "treatment_outcome",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "treatment_outcome"
+        },
+        "column_id": "treatment_outcome"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "treatment_initiated",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "treatment_initiated"
+        },
+        "column_id": "treatment_initiated"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "referred_outcome_due"
+        },
+        "column_id": "referred_outcome_due"
+      },
+      {
+        "comment": "TODO: Remove awaiting_claim since this is the same definition",
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "has_open_referral"
+        },
+        "column_id": "open_referral"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "date_of_referral"
+        },
+        "column_id": "date_of_referral"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "treatment_card_completed_date"
+        },
+        "column_id": "treatment_card_completed_date"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "closed",
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "closed"
+        },
+        "column_id": "closed"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "treatment_outcome_happened"
+        },
+        "column_id": "treatment_outcome_happened"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "string",
+          "type": "named",
+          "name": "adherence_schedule_type"
+        },
+        "column_id": "adherence_schedule_type"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "treatment_initiated_not_null"
+        },
+        "column_id": "treatment_initiated_not_null"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "treatment_initiated_not_no"
+        },
+        "column_id": "treatment_initiated_not_no"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "treatment_supporter_designation_is_null"
+        },
+        "column_id": "treatment_supporter_designation_is_null"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "evaluator",
+          "context_variables": {
+            "secondary_owner_drtb_count_is_zero": {
+              "type": "named",
+              "name": "secondary_owner_drtb_count_is_zero"
+            },
+            "date_referral_to_drtb_center_is_null": {
+              "type": "named",
+              "name": "date_referral_to_drtb_center_is_null"
+            }
+          },
+          "statement": "date_referral_to_drtb_center_is_null or secondary_owner_drtb_count_is_zero"
+        },
+        "column_id": "no_assigned_drtb_c"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "test_type_cbnaat_count_is_zero"
+        },
+        "column_id": "test_type_cbnaat_count_is_zero"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "hiv_status_is_reactive"
+        },
+        "column_id": "hiv_status_is_reactive"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "patient_type_choice_not_new_not_null"
+        },
+        "column_id": "patient_type_choice_not_new_not_null"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "follow_up_dstb_test_tb_detected_count"
+        },
+        "column_id": "follow_up_dstb_test_tb_detected_count"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "key_populations_includes_known_contact"
+        },
+        "column_id": "key_populations_includes_known_contact"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "history_of_att"
+        },
+        "column_id": "history_of_att"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "string",
+          "type": "named",
+          "name": "fl_test_due_reason"
+        },
+        "column_id": "fl_test_due_reason"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "expression": {
+          "datatype": "integer",
+          "type": "named",
+          "name": "is_confirmed_tb"
+        },
+        "column_id": "is_confirmed_tb"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": "date",
+          "type": "named",
+          "name": "trigger_date"
+        },
+        "column_id": "fl_test_due_trigger_date"
+      }
+    ],
+    "named_expressions": {
+      "occurrence_id": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "referenced_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "indices"
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      "test_requested": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "test_requested_date"
+          },
+          "type": "boolean_expression",
+          "property_value": ""
+        },
+        "expression_if_true": 0,
+        "type": "conditional",
+        "comment": "Remove: not a property on episodes",
+        "expression_if_false": 1
+      },
+      "treatment_initiated_not_null": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "treatment_initiated"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "",
+            null
+          ]
+        },
+        "expression_if_true": 0,
+        "type": "conditional",
+        "expression_if_false": 1
+      },
+      "adherence_date_outcome_due": {
+        "datatype": "date",
+        "type": "property_name",
+        "property_name": "adherence_date_outcome_due"
+      },
+      "fdc_drug_formulations": {
+        "test": {
+          "operator": "in_multi",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "drug_formulations"
+          },
+          "property_value": "fdc"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "referred_outcome_due": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "named",
+            "name": "outcome_due"
+          },
+          "property_value": 1
+        },
+        "expression_if_true": {
+          "type": "named",
+          "name": "has_open_referral"
+        },
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "history_of_att": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "history_of_att"
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "named",
+              "name": "person_id"
+            }
+          },
+          "property_value": "yes"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "date_of_referral": {
+        "value_expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "referral_initiated_date"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "named",
+          "name": "open_referral_id"
+        }
+      },
+      "outcome_due_date": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "type": "property_name",
+            "property_name": "treatment_initiation_date"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "",
+            null
+          ]
+        },
+        "expression_if_true": {
+          "type": "property_name",
+          "property_name": "no_exist"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "test": {
+            "operator": "in",
+            "expression": {
+              "type": "named",
+              "name": "adherence_date_outcome_due"
+            },
+            "type": "boolean_expression",
+            "property_value": [
+              "",
+              null
+            ]
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "15_months_after_treatment_initiation"
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "type": "named",
+            "name": "outcome_due_date_min"
+          }
+        }
+      },
+      "owner_id": {
+        "value_expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "owner_id"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "named",
+          "name": "person_id"
+        }
+      },
+      "test_type_cbnaat_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "closed"
+                },
+                "type": "boolean_expression",
+                "property_value": false
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "property_value": "test"
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "test_type_value"
+                },
+                "type": "boolean_expression",
+                "property_value": "cbnaat"
+              }
+            ]
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "get_subcases",
+            "case_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        }
+      },
+      "is_confirmed": {
+        "test": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "episode_type"
+              },
+              "type": "boolean_expression",
+              "property_value": "confirmed_tb"
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "episode_type"
+              },
+              "type": "boolean_expression",
+              "property_value": "confirmed_drtb"
+            }
+          ]
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "fl_test_due_reason": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "type": "named",
+            "name": "is_confirmed_tb"
+          },
+          "type": "boolean_expression",
+          "property_value": 1
+        },
+        "expression_if_true": {
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "patient_type_choice_not_new_not_null"
+            },
+            "type": "boolean_expression",
+            "property_value": 1
+          },
+          "expression_if_true": "not_new_patient",
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "operator": "eq",
+              "expression": {
+                "type": "named",
+                "name": "key_populations_includes_known_contact"
+              },
+              "type": "boolean_expression",
+              "property_value": 1
+            },
+            "expression_if_true": "contact_known_tb_patient",
+            "type": "conditional",
+            "expression_if_false": {
+              "test": {
+                "operator": "eq",
+                "expression": {
+                  "type": "named",
+                  "name": "history_of_att"
+                },
+                "type": "boolean_expression",
+                "property_value": 1
+              },
+              "expression_if_true": "history_anti_tb_treatment",
+              "type": "conditional",
+              "expression_if_false": {
+                "test": {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "named",
+                    "name": "hiv_status_is_reactive"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": 1
+                },
+                "expression_if_true": "hiv_reactive",
+                "type": "conditional",
+                "expression_if_false": {
+                  "test": {
+                    "operator": "eq",
+                    "expression": {
+                      "type": "named",
+                      "name": "follow_up_dstb_test_tb_detected_count"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": 0
+                  },
+                  "expression_if_true": "failed_qa_for_fl_reason_check",
+                  "type": "conditional",
+                  "expression_if_false": "follow_up_test_tb_detected"
+                }
+              }
+            }
+          }
+        },
+        "type": "conditional",
+        "expression_if_false": "fl_test_not_triggered"
+      },
+      "is_confirmed_tb": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "episode_type"
+          },
+          "type": "boolean_expression",
+          "property_value": "confirmed_tb"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "last_adherence_date": {
+        "aggregation_fn": "last_item",
+        "type": "reduce_items",
+        "items_expression": {
+          "map_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "adherence_date"
+          },
+          "type": "map_items",
+          "items_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+              },
+              "property_value": "adherence"
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "get_subcases",
+              "case_id_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "_id"
+              }
+            }
+          }
+        }
+      },
+      "is_pulmonary": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "disease_classification"
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          },
+          "property_value": "pulmonary"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "key_populations_includes_known_contact": {
+        "test": {
+          "operator": "in_multi",
+          "expression": {
+            "constant": "known_patient_contact",
+            "type": "constant"
+          },
+          "type": "boolean_expression",
+          "property_value": {
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "key_populations"
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "treatment_initiated_not_no": {
+        "test": {
+          "operator": "not_eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "treatment_initiated"
+          },
+          "type": "boolean_expression",
+          "property_value": "no"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "treatment_outcome_happened": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "type": "property_name",
+            "property_name": "treatment_outcome"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "not_evaluated",
+            "",
+            null
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": 0
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "constant",
+          "constant": 1
+        }
+      },
+      "person_id": {
+        "value_expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "referenced_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "array_index",
+            "array_expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "indices"
+            },
+            "index_expression": {
+              "type": "constant",
+              "constant": 0
+            }
+          }
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "named",
+          "name": "occurrence_id"
+        }
+      },
+      "follow_up_dstb_tb_detected_most_recent_date": {
+        "aggregation_fn": "max",
+        "type": "reduce_items",
+        "items_expression": {
+          "map_expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "date_reported"
+          },
+          "type": "map_items",
+          "items_expression": {
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "closed"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": false
+                },
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "test"
+                },
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "rft_general"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "follow_up_dstb"
+                },
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "result"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "tb_detected"
+                }
+              ]
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "get_subcases",
+              "case_id_expression": {
+                "type": "named",
+                "name": "occurrence_id"
+              }
+            }
+          }
+        }
+      },
+      "trigger_date": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "named",
+            "name": "fl_test_due_reason"
+          },
+          "type": "boolean_expression",
+          "property_value": "follow_up_test_tb_detected"
+        },
+        "expression_if_true": {
+          "datatype": "date",
+          "type": "named",
+          "name": "follow_up_dstb_tb_detected_most_recent_date"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "datatype": "string",
+              "type": "named",
+              "name": "fl_test_due_reason"
+            },
+            "type": "boolean_expression",
+            "property_value": "fl_test_not_triggered"
+          },
+          "expression_if_true": "",
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "treatment_initiation_date"
+          }
+        }
+      },
+      "fdc_task_list": {
+        "datatype": "integer",
+        "type": "evaluator",
+        "context_variables": {
+          "treatment_initiation_date": {
+            "type": "property_name",
+            "property_name": "treatment_initiation_date"
+          },
+          "treatment_outcome_happened": {
+            "type": "named",
+            "name": "treatment_outcome_happened"
+          },
+          "fdc_drug_formulations": {
+            "type": "named",
+            "name": "fdc_drug_formulations"
+          }
+        },
+        "statement": "treatment_initiation_date and fdc_drug_formulations and not treatment_outcome_happened"
+      },
+      "cp_test_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "operator": "eq",
+            "expression": {
+              "type": "identity"
+            },
+            "type": "boolean_expression",
+            "property_value": "end_of_cp"
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "named",
+            "name": "all_test_reasons"
+          }
+        }
+      },
+      "follow_up_dstb_test_tb_detected_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "closed"
+                },
+                "type": "boolean_expression",
+                "property_value": false
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "property_value": "test"
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "rft_general"
+                },
+                "type": "boolean_expression",
+                "property_value": "follow_up_dstb"
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "result"
+                },
+                "type": "boolean_expression",
+                "property_value": "tb_detected"
+              }
+            ]
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "get_subcases",
+            "case_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        }
+      },
+      "test_type_cbnaat_count_is_zero": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "integer",
+            "type": "named",
+            "name": "test_type_cbnaat_count"
+          },
+          "property_value": 0
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "test_type_fl_line_probe_assay_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "closed"
+                },
+                "type": "boolean_expression",
+                "property_value": false
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "property_value": "test"
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "test_type_value"
+                },
+                "type": "boolean_expression",
+                "property_value": "fl_line_probe_assay"
+              }
+            ]
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "get_subcases",
+            "case_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        }
+      },
+      "adherence_schedule_type": {
+        "default": {
+          "type": "constant",
+          "constant": "no_adherence_schedule"
+        },
+        "cases": {
+          "schedule_mwf": {
+            "type": "constant",
+            "constant": "intermittent"
+          },
+          "schedule_trs": {
+            "type": "constant",
+            "constant": "intermittent"
+          },
+          "schedule_daily": {
+            "type": "constant",
+            "constant": "daily"
+          }
+        },
+        "type": "switch",
+        "switch_on": {
+          "type": "property_name",
+          "property_name": "adherence_schedule_id"
+        }
+      },
+      "all_test_reasons": {
+        "map_expression": {
+          "type": "coalesce",
+          "expression": {
+            "type": "property_name",
+            "property_name": "rft_dstb_followup"
+          },
+          "default_expression": {
+            "type": "property_name",
+            "property_name": "follow_up_test_reason"
+          }
+        },
+        "type": "map_items",
+        "items_expression": {
+          "filter_expression": {
+            "operator": "eq",
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "test"
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "get_subcases",
+            "case_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        }
+      },
+      "outcome_due_date_min": {
+        "aggregation_fn": "min",
+        "type": "reduce_items",
+        "items_expression": {
+          "expressions": [
+            {
+              "datatype": "date",
+              "type": "property_name",
+              "property_name": "adherence_date_outcome_due"
+            },
+            {
+              "date_expression": {
+                "datatype": "date",
+                "type": "property_name",
+                "property_name": "treatment_initiation_date"
+              },
+              "type": "add_days",
+              "count_expression": 450
+            }
+          ],
+          "type": "iterator"
+        }
+      },
+      "household_visit_anchor_date_non_null": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "type": "named",
+            "name": "household_visit_anchor_date"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "",
+            null
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": 0
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "constant",
+          "constant": 1
+        }
+      },
+      "home_visit_pending": {
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "in",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "value_expression": {
+                      "type": "property_name",
+                      "property_name": "initial_home_visit_status"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "type": "named",
+                      "name": "occurrence_id"
+                    }
+                  },
+                  "property_value": [
+                    "pending",
+                    "",
+                    null
+                  ]
+                },
+                {
+                  "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "value_expression": {
+                        "type": "property_name",
+                        "property_name": "initial_home_visit_status"
+                      },
+                      "type": "related_doc",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                      }
+                    },
+                    "property_value": "completed"
+                  },
+                  "type": "not"
+                }
+              ]
+            },
+            {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "is_confirmed"
+              },
+              "property_value": 1
+            }
+          ]
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "secondary_owner_drtb_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "closed"
+                },
+                "type": "boolean_expression",
+                "property_value": false
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "property_value": "secondary_owner"
+              },
+              {
+                "operator": "eq",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "secondary_owner_type"
+                },
+                "type": "boolean_expression",
+                "property_value": "drtb"
+              }
+            ]
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "get_subcases",
+            "case_id_expression": {
+              "type": "named",
+              "name": "occurrence_id"
+            }
+          }
+        }
+      },
+      "follow_up_due_anchor_date": {
+        "test": {
+          "operator": "gt",
+          "expression": {
+            "datatype": "integer",
+            "type": "named",
+            "name": "cp_or_ip_test_count"
+          },
+          "type": "boolean_expression",
+          "property_value": 0
+        },
+        "expression_if_true": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "adherence_cp_date_threshold_crossed"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "adherence_ip_date_threshold_crossed"
+        }
+      },
+      "hiv_status_is_reactive": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "hiv_status"
+            },
+            "type": "related_doc",
+            "related_doc_type": "CommCareCase",
+            "doc_id_expression": {
+              "type": "named",
+              "name": "person_id"
+            }
+          },
+          "property_value": "reactive"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "date_referral_to_drtb_center_is_null": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "date_referral_to_drtb_center"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "",
+            null
+          ]
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "outcome_due": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "type": "property_name",
+            "property_name": "treatment_initiated"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "yes_phi",
+            "yes_private"
+          ]
+        },
+        "expression_if_true": {
+          "type": "named",
+          "name": "treatment_outcome_happened"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "constant",
+          "constant": 0
+        }
+      },
+      "ip_threshold_crossed": {
+        "test": {
+          "operator": "in",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "adherence_ip_date_threshold_crossed"
+          },
+          "property_value": [
+            null,
+            ""
+          ]
+        },
+        "expression_if_true": {
+          "constant": 0,
+          "type": "constant"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "constant": 1,
+          "type": "constant"
+        }
+      },
+      "15_months_after_treatment_initiation": {
+        "date_expression": {
+          "datatype": "date",
+          "type": "property_name",
+          "property_name": "treatment_initiation_date"
+        },
+        "type": "add_days",
+        "count_expression": 450
+      },
+      "open_referral_id": {
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "case_id"
+        },
+        "type": "nested",
+        "argument_expression": {
+          "aggregation_fn": "first_item",
+          "type": "reduce_items",
+          "items_expression": {
+            "filter_expression": {
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "closed"
+              },
+              "type": "boolean_expression",
+              "property_value": false
+            },
+            "type": "filter_items",
+            "items_expression": {
+              "type": "get_subcases",
+              "case_id_expression": {
+                "type": "named",
+                "name": "occurrence_id"
+              }
+            }
+          }
+        }
+      },
+      "cp_threshold_crossed": {
+        "test": {
+          "operator": "in",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "adherence_cp_date_threshold_crossed"
+          },
+          "property_value": [
+            null,
+            ""
+          ]
+        },
+        "expression_if_true": {
+          "constant": 0,
+          "type": "constant"
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "constant": 1,
+          "type": "constant"
+        }
+      },
+      "treatment_supporter_designation_is_null": {
+        "test": {
+          "operator": "in",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "treatment_supporter_designation"
+          },
+          "property_value": [
+            "",
+            null
+          ]
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "cp_or_ip_test_count": {
+        "aggregation_fn": "count",
+        "type": "reduce_items",
+        "items_expression": {
+          "filter_expression": {
+            "operator": "in",
+            "expression": {
+              "type": "identity"
+            },
+            "type": "boolean_expression",
+            "property_value": [
+              "end_of_cp",
+              "end_of_ip"
+            ]
+          },
+          "type": "filter_items",
+          "items_expression": {
+            "type": "named",
+            "name": "all_test_reasons"
+          }
+        }
+      },
+      "has_open_referral": {
+        "test": {
+          "operator": "gt",
+          "type": "boolean_expression",
+          "expression": {
+            "aggregation_fn": "count",
+            "type": "reduce_items",
+            "items_expression": {
+              "filter_expression": {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "type"
+                    },
+                    "property_value": "referral"
+                  },
+                  {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "property_value": false
+                  }
+                ]
+              },
+              "type": "filter_items",
+              "items_expression": {
+                "type": "get_subcases",
+                "case_id_expression": {
+                  "type": "named",
+                  "name": "occurrence_id"
+                }
+              }
+            }
+          },
+          "property_value": 0
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": 1
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "constant",
+          "constant": 0
+        }
+      },
+      "patient_type_choice_not_new_not_null": {
+        "test": {
+          "operator": "in",
+          "expression": {
+            "type": "property_name",
+            "property_name": "patient_type_choice"
+          },
+          "type": "boolean_expression",
+          "property_value": [
+            "new",
+            "",
+            null
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": 0
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "type": "constant",
+          "constant": 1
+        }
+      },
+      "secondary_owner_drtb_count_is_zero": {
+        "test": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": "integer",
+            "type": "named",
+            "name": "secondary_owner_drtb_count"
+          },
+          "property_value": 0
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "result_recorded": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "result_recorded"
+          },
+          "type": "boolean_expression",
+          "property_value": "yes"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "comment": "TODO: remove. This is a test expression",
+        "expression_if_false": 0
+      },
+      "is_pending": {
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "datatype": "string",
+            "type": "property_name",
+            "property_name": "episode_pending_registration"
+          },
+          "type": "boolean_expression",
+          "property_value": "yes"
+        },
+        "expression_if_true": 1,
+        "type": "conditional",
+        "expression_if_false": 0
+      },
+      "household_visit_anchor_date": {
+        "type": "evaluator",
+        "context_variables": {
+          "a": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "date_of_diagnosis"
+          },
+          "b": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "date_reported"
+          }
+        },
+        "statement": "a if (a != None and ((b != None and a <= b) or b == None)) else b"
+      }
+    },
+    "named_filters": {}
+  }
+}

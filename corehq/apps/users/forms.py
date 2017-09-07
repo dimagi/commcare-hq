@@ -5,6 +5,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
+
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
@@ -14,7 +16,6 @@ from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
 from django.template.loader import get_template
-from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
@@ -35,7 +36,7 @@ from corehq.apps.hqwebapp.utils import decode_password
 from crispy_forms import layout as cb3_layout
 from crispy_forms import helper as cb3_helper
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -444,7 +445,12 @@ class CommCareAccountForm(forms.Form):
     username = forms.CharField(required=True)
     password = forms.CharField(widget=PasswordInput(), required=True, min_length=1)
     password_2 = forms.CharField(label='Password (reenter)', widget=PasswordInput(), required=True, min_length=1)
-    phone_number = forms.CharField(max_length=80, required=False)
+    phone_number = forms.CharField(
+        max_length=80,
+        required=False,
+        help_text=ugettext_lazy("Please enter number, including "
+                                "international code, in digits only.")
+    )
 
     def __init__(self, *args, **kwargs):
         if 'domain' not in kwargs:
@@ -453,18 +459,15 @@ class CommCareAccountForm(forms.Form):
         super(forms.Form, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-lg-3'
+        self.helper.field_class = 'col-lg-9'
         self.helper.layout = Layout(
             Fieldset(
-                'Create new Mobile Worker account',
+                _("Mobile Worker's Primary Information"),
                 'username',
                 'password',
                 'password_2',
                 'phone_number',
-                Div(
-                    Div(HTML("Please enter number, including international code, in digits only."),
-                        css_class="controls"),
-                    css_class="control-group"
-                )
             )
         )
 
@@ -709,6 +712,39 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         )
 
 
+class GroupMembershipForm(forms.Form):
+    selected_ids = forms.Field(
+        label=ugettext_lazy("Group Membership"),
+        required=False,
+        widget=Select2Ajax(multiple=True),
+    )
+
+    def __init__(self, group_api_url, *args, **kwargs):
+        submit_label = kwargs.pop('submit_label', "Update")
+        fieldset_title = kwargs.pop(
+            'fieldset_title', ugettext_lazy("Edit Group Membership"))
+
+        super(GroupMembershipForm, self).__init__(*args, **kwargs)
+        self.fields['selected_ids'].widget.set_url(group_api_url)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                fieldset_title,
+                crispy.Field('selected_ids'),
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', submit_label)
+                )
+            )
+        )
+
+
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
@@ -738,7 +774,7 @@ class MultipleSelectionForm(forms.Form):
         <script>
             // Multiselect widget
             $(function () {
-                var multiselect_utils = hqImport('style/js/multiselect_utils');
+                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
                     django.gettext("Available Things"),
@@ -819,14 +855,14 @@ class SupplyPointSelectWidget(forms.Widget):
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
-        return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
+        return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
             'id': self.id,
             'name': name,
             'value': ','.join(loc.location_id for loc in locations),
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
-        }))
+        })
 
 
 class PrimaryLocationWidget(forms.Widget):
@@ -845,12 +881,12 @@ class PrimaryLocationWidget(forms.Widget):
         self.source_css_id = source_css_id
 
     def render(self, name, value, attrs=None):
-        return get_template('locations/manage/partials/drilldown_location_widget.html').render(Context({
+        return get_template('locations/manage/partials/drilldown_location_widget.html').render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
             'value': value or ''
-        }))
+        })
 
 
 class CommtrackUserForm(forms.Form):

@@ -1,11 +1,13 @@
 from __future__ import print_function
 
+import logging
 from copy import copy
 from datetime import datetime
 from itertools import groupby
 from functools import partial
 from collections import defaultdict, OrderedDict, namedtuple
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.datastructures import OrderedSet
@@ -21,13 +23,13 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
+from corehq.util.global_request import get_request_domain
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -41,13 +43,14 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_app,
 )
-from corehq.apps.app_manager.models import Application, AdvancedFormActions
+from corehq.apps.app_manager.models import (
+    Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.util.global_request import get_request
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
@@ -82,8 +85,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-)
-from corehq.apps.export.exceptions import BadExportConfiguration
+    CASE_CLOSE_TO_BOOLEAN)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -325,7 +327,7 @@ class ExportColumn(DocumentSchema):
                 help_text=_(u'The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif get_request() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request().domain):
+        elif get_request_domain() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request_domain()):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)
@@ -782,6 +784,7 @@ class ExportInstance(BlobMixin, Document):
                     top=False,
                     **column_initialization_data
                 )
+                cls.__insert_case_name(table, top=False)
             else:
                 cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
         elif export_type == CASE_EXPORT:
@@ -822,10 +825,9 @@ class ExportInstance(BlobMixin, Document):
         """
         properties = map(copy, properties)
         if top:
-            insert_fn = partial(table.columns.insert, 0)
             properties = reversed(properties)
-        else:
-            insert_fn = table.columns.append
+
+        insert_fn = cls._get_insert_fn(table, top)
 
         for static_column in properties:
             index, existing_column = table.get_column(
@@ -841,6 +843,36 @@ class ExportInstance(BlobMixin, Document):
 
             if not existing_column:
                 insert_fn(static_column)
+
+    @classmethod
+    def __insert_case_name(cls, table, top=True):
+        """
+        Inserts a case_name column if necessary
+
+        :param table: A TableConfiguration instance
+        :param top: When True inserts the columns at the top, when false at the bottom
+        """
+        insert_fn = cls._get_insert_fn(table, top)
+
+        from corehq.apps.export.system_properties import get_case_name_column
+        case_id_columns = {
+            _path_nodes_to_string(column.item.path[:-1]): column
+            for column in table.columns if column.item.path[-1].name == '@case_id'
+        }
+        case_name_columns = {
+            _path_nodes_to_string(column.item.path[:-2]): column
+            for column in table.columns if column.item.path[-1].name == 'case_name'
+        }
+        for path, column in case_id_columns.items():
+            if path not in case_name_columns:
+                insert_fn(get_case_name_column(column.item))
+
+    @staticmethod
+    def _get_insert_fn(table, top):
+        if top:
+            return partial(table.columns.insert, 0)
+        else:
+            return table.columns.append
 
     @property
     def file_size(self):
@@ -1288,7 +1320,7 @@ class CaseInferredSchema(InferredSchema):
 
 class FormInferredSchema(InferredSchema):
     xmlns = StringProperty(required=True)
-    app_id = StringProperty(required=True)
+    app_id = StringProperty()
 
     @property
     def identifier(self):
@@ -1370,8 +1402,7 @@ class ExportDataSchema(Document):
                     identifier,
                 )
             except Exception as e:
-                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-                _soft_assert(False, 'Failed to process app {}. {}'.format(app._id, e))
+                logging.exception('Failed to process app {}. {}'.format(app._id, e))
                 continue
 
             # Only record the version of builds on the schema. We don't care about
@@ -1390,8 +1421,7 @@ class ExportDataSchema(Document):
         try:
             current_schema = cls._reorder_schema_from_app(current_schema, app_id, identifier)
         except Exception as e:
-            _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-            _soft_assert(False, 'Failed to process app during reorder {}. {}'.format(app._id, e))
+            logging.exception('Failed to process app during reorder {}. {}'.format(app_id, e))
 
         current_schema.domain = domain
         current_schema.app_id = app_id
@@ -1410,6 +1440,9 @@ class ExportDataSchema(Document):
         try:
             app = get_app(current_schema.domain, app_id)
         except Http404:
+            return current_schema
+
+        if isinstance(app, RemoteApp):
             return current_schema
 
         ordered_schema = cls._process_app_build(
@@ -1556,7 +1589,7 @@ class FormExportDataSchema(ExportDataSchema):
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
         if not app_id:
-            raise BadExportConfiguration('Must include app id for form data schemas')
+            return []
         return [app_id]
 
     @staticmethod
@@ -1577,43 +1610,178 @@ class FormExportDataSchema(ExportDataSchema):
         if not forms:
             return current_schema
 
+        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
+        xform_schema = cls._generate_schema_from_xform(
+            xform,
+            app.langs,
+            app.master_id,  # If it's not a copy, must be current
+            app.version,
+        )
+
+        schemas = [current_schema, xform_schema]
+        schemas.extend(cls._add_export_items_for_cases(app, xform_schema, forms, xform))
+
+        return cls._merge_schemas(*schemas)
+
+    @classmethod
+    def _add_export_items_for_cases(cls, app, xform_schema, forms, xform):
+        root_group_schema = xform_schema.group_schemas[0]
+        assert root_group_schema.path == []
+
         case_updates = OrderedSet()
         for form in forms:
             for update in form.get_case_updates(form.get_module().case_type):
                 case_updates.add(update)
-        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
-        open_case_actions = OrderedSet()
+
+        for form in forms:
+            if not form.uses_cases:
+                continue
+
+            if form.form_type == 'module_form':
+                case_properties = {}
+                actions = form.active_actions()
+                if 'open_case' in actions:
+                    action = actions['open_case']
+                    if 'external_id' in action and action.external_id:
+                        case_properties['external_id'] = action.external_id
+                if 'update_case' in actions:
+                    case_properties.update(actions['update_case'].update)
+
+                cls._add_export_items_for_case(
+                    root_group_schema, '/data', case_properties,
+                    'case', None, [], create='open_case' in actions, close='close_case' in actions
+                )
+
+                if 'usercase_update' in actions and actions['usercase_update'].update:
+                    cls._add_export_items_for_case(
+                        root_group_schema, '/data/commcare_usercase', actions['usercase_update'].update,
+                        'case', None, [], create='open_case' in actions, close='close_case' in actions
+                    )
+            else:
+                all_actions = [form.actions]
+                if hasattr(form, 'extra_actions'):
+                    # shadow forms can have extra actions
+                    all_actions.append(form.extra_actions)
+                for actions in all_actions:
+                    for action in actions.load_update_cases:
+                        cls._add_export_items_for_case(
+                            root_group_schema, '/data/{}'.format(action.form_element_name),
+                            action.case_properties, action.case_tag, None, [],
+                            create=False, close=action.close_condition.is_active()
+                        )
+
+                    for action in actions.open_cases:
+                        if not action.is_subcase:
+                            cls._add_export_items_for_case(
+                                root_group_schema, '/data/{}'.format(action.form_element_name),
+                                action.case_properties, action.case_tag, None, [],
+                                create=True, close=action.close_condition.is_active()
+                            )
+
+        repeats_with_subcases = []
+        non_repeating_subcases = []
         for form in forms:
             if isinstance(form.actions, AdvancedFormActions):
-                actions = form.actions.open_cases
+                actions = list(form.actions.get_open_subcase_actions())
             else:
-                actions = form.actions.subcases
-            for action in actions:
-                open_case_actions.add(action)
+                actions = list(form.actions.get_subcases())
 
-        repeats_with_subcases = {
-            open_case_action for open_case_action in open_case_actions
-            if open_case_action.repeat_context
-        }
-        xform_schema = cls._generate_schema_from_xform(
-            xform,
-            case_updates,
-            app.langs,
-            app.copy_of or app._id,  # If it's not a copy, must be current
-            app.version,
-        )
-        schemas = [current_schema, xform_schema]
+            repeat_context_count = form.actions.count_subcases_per_repeat_context()
+
+            for action in actions:
+                if action.repeat_context:
+                    action.nest = repeat_context_count[action.repeat_context] > 1
+                    repeats_with_subcases.append(action)
+                else:
+                    non_repeating_subcases.append(action)
+
+        for subcase_action in non_repeating_subcases:
+            root_path = "/data/{}".format(subcase_action.form_element_name)  # always nest in root
+            cls._add_export_items_from_subcase_action(root_group_schema, root_path, subcase_action, [])
+
+        subcase_schemas = []
         if repeats_with_subcases:
             repeat_case_schema = cls._generate_schema_from_repeat_subcases(
                 xform,
                 repeats_with_subcases,
                 app.langs,
-                app.copy_of or app._id,  # If it's not a copy, must be current
+                app.master_id,
                 app.version,
             )
-            schemas.append(repeat_case_schema)
+            subcase_schemas.append(repeat_case_schema)
+        return subcase_schemas
 
-        return cls._merge_schemas(*schemas)
+    @classmethod
+    def _add_export_items_from_subcase_action(cls, group_schema, root_path, subcase_action, repeats):
+        label_prefix = subcase_action.form_element_name
+        index_relationships = []
+        if isinstance(subcase_action, OpenSubCaseAction) and subcase_action.relationship:
+            index_relationships = [CaseIndex(
+                reference_id=DEFAULT_CASE_INDEX_IDENTIFIERS[subcase_action.relationship],
+                relationship=subcase_action.relationship,
+            )]
+        elif hasattr(subcase_action, 'case_indices'):
+            index_relationships = subcase_action.case_indices
+
+        cls._add_export_items_for_case(
+            group_schema, root_path, subcase_action.case_properties,
+            label_prefix, subcase_action.repeat_context, repeats, case_indices=index_relationships
+        )
+
+    @classmethod
+    def _add_export_items_for_case(cls, group_schema, root_path, case_properties, label_prefix,
+                                   repeat_context, repeats, case_indices=None, create=True, close=False):
+        def _add_to_group_schema(path, label, transform=None):
+            group_schema.items.append(ExportItem(
+                path=_question_path_to_path_nodes(path, repeats),
+                label=u'{}.{}'.format(label_prefix, label),
+                last_occurrences=group_schema.last_occurrences,
+                tag=PROPERTY_TAG_CASE,
+                transform=transform
+            ))
+
+        # Add case attributes
+        for case_attribute in CASE_ATTRIBUTES:
+            path = u'{}/case/{}'.format(root_path, case_attribute)
+            _add_to_group_schema(path, case_attribute)
+
+        # Add case updates
+        for case_property, case_path in case_properties.iteritems():
+            if repeat_context:
+                # This removes the repeat part of the path. For example, if inside
+                # a repeat group that has the following path:
+                #
+                # /data/repeat/other_group/question
+                #
+                # We want to create a path that looks like:
+                #
+                # /data/repeat/case/update/other_group/question
+                path_suffix = case_path[len(repeat_context) + 1:]
+            else:
+                path_suffix = case_property
+            path = u'{}/case/update/{}'.format(root_path, path_suffix)
+            _add_to_group_schema(path, u'update.{}'.format(case_property))
+
+        # Add case create properties
+        if create:
+            for case_create_element in CASE_CREATE_ELEMENTS:
+                path = u'{}/case/create/{}'.format(root_path, case_create_element)
+                _add_to_group_schema(path, u'create.{}'.format(case_create_element))
+
+        if close:
+            path = u'{}/case/close'.format(root_path)
+            _add_to_group_schema(path, u'close', transform=CASE_CLOSE_TO_BOOLEAN)
+
+        # Add case index information
+        if case_indices:
+            for index in case_indices:
+                props = ('#text', '@case_type',)
+                if index.relationship == 'extension':
+                    props = props + ('@relationship',)
+                for prop in props:
+                    identifier = index.reference_id or 'parent'
+                    path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
+                    _add_to_group_schema(path, u'index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
@@ -1632,41 +1800,16 @@ class FormExportDataSchema(ExportDataSchema):
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
 
-        def _add_to_group_schema(group_schema, path, label):
-            group_schema.items.append(ExportItem(
-                path=_question_path_to_path_nodes(path, repeats),
-                label=label,
-                last_occurrences={app_id: app_version},
-            ))
-
         for subcase_action in repeats_with_subcases:
+            root_path = subcase_action.repeat_context
+            if subcase_action.nest:
+                root_path = '{}/{}'.format(root_path, subcase_action.form_element_name)
+
             group_schema = ExportGroupSchema(
-                path=_question_path_to_path_nodes(subcase_action.repeat_context, repeats),
+                path=_question_path_to_path_nodes(root_path, repeats),
                 last_occurrences={app_id: app_version},
             )
-            # Add case attributes
-            for case_attribute in CASE_ATTRIBUTES:
-                path = u'{}/case/{}'.format(subcase_action.repeat_context, case_attribute)
-                _add_to_group_schema(group_schema, path, u'case.{}'.format(case_attribute))
-
-            # Add case updates
-            for case_property, case_path in subcase_action.case_properties.iteritems():
-                # This removes the repeat part of the path. For example, if inside
-                # a repeat group that has the following path:
-                #
-                # /data/repeat/other_group/question
-                #
-                # We want to create a path that looks like:
-                #
-                # /data/repeat/case/update/other_group/question
-                path_suffix = case_path[len(subcase_action.repeat_context):]
-                path = u'{}/case/update{}'.format(subcase_action.repeat_context, path_suffix)
-                _add_to_group_schema(group_schema, path, u'case.update.{}'.format(case_property))
-
-            # Add case create properties
-            for case_create_element in CASE_CREATE_ELEMENTS:
-                path = u'{}/case/create/{}'.format(subcase_action.repeat_context, case_create_element)
-                _add_to_group_schema(group_schema, path, u'case.create.{}'.format(case_create_element))
+            cls._add_export_items_from_subcase_action(group_schema, root_path, subcase_action, repeats)
 
             schema.group_schemas.append(group_schema)
         return schema
@@ -1679,7 +1822,7 @@ class FormExportDataSchema(ExportDataSchema):
         ]
 
     @classmethod
-    def _generate_schema_from_xform(cls, xform, case_updates, langs, app_id, app_version):
+    def _generate_schema_from_xform(cls, xform, langs, app_id, app_version):
         questions = xform.get_questions(langs, include_triggers=True)
         repeats = cls._get_repeat_paths(xform, langs)
         schema = cls()
@@ -1717,23 +1860,10 @@ class FormExportDataSchema(ExportDataSchema):
                         app_version,
                         repeats,
                     )
+                    if question['value'].endswith('case/close'):
+                        # for save to case
+                        item.transform = CASE_CLOSE_TO_BOOLEAN
                     group_schema.items.append(item)
-
-            if group_path is None:
-                for case_update_field in case_updates:
-                    group_schema.items.append(
-                        ExportItem(
-                            path=[
-                                PathNode(name='form'),
-                                PathNode(name='case'),
-                                PathNode(name='update'),
-                                PathNode(name=case_update_field)
-                            ],
-                            label="case.update.{}".format(case_update_field),
-                            tag=PROPERTY_TAG_CASE,
-                            last_occurrences={app_id: app_version},
-                        )
-                    )
 
             schema.group_schemas.append(group_schema)
 
@@ -1823,18 +1953,18 @@ class CaseExportDataSchema(ExportDataSchema):
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
-            app.copy_of or app._id,  # If not copy, must be current app
+            app.master_id,  # If not copy, must be current app
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
             case_schemas.append(cls._generate_schema_for_parent_case(
-                app.copy_of or app._id,
+                app.master_id,
                 app.version,
             ))
 
         case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
-            app.copy_of or app._id,
+            app.master_id,
             app.version,
         ))
         case_schemas.append(current_schema)

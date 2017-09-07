@@ -475,21 +475,13 @@ class TestMigrateBackend(TestCase):
         mod.DemoUserRestoreReindexAccessor,
     ]
 
-    def _sql_save(self, obj, rex):
-        if rex.is_sharded():
-            # HACK why does it have to be so hard to use form_processor
-            # even just for testing...
-            obj.save(using='default')
-        else:
-            obj.save()
-
     def CaseAttachmentSQL_save(self, obj, rex):
         obj.attachment_id = uuid.uuid4()
         obj.case_id = "not-there"
         obj.name = "name"
         obj.identifier = "what is this?"
         obj.md5 = "blah"
-        self._sql_save(obj, rex)
+        obj.save()
 
     def XFormAttachmentSQL_save(self, obj, rex):
         obj.attachment_id = uuid.uuid4()
@@ -497,12 +489,12 @@ class TestMigrateBackend(TestCase):
         obj.name = "name"
         obj.identifier = "what is this?"
         obj.md5 = "blah"
-        self._sql_save(obj, rex)
+        obj.save()
 
     def DemoUserRestore_save(self, obj, rex):
         obj.attachment_id = uuid.uuid4()
         obj.demo_user_id = "not-there"
-        self._sql_save(obj, rex)
+        obj.save()
 
     def setUp(self):
         lost_db = TemporaryFilesystemBlobDB()  # must be created before other dbs
@@ -574,10 +566,7 @@ class TestMigrateBackend(TestCase):
         for doc in self.couch_docs:
             doc.get_db().delete_doc(doc._id)
         for doc in self.sql_docs:
-            if isinstance(doc, PartitionedModel):
-                doc.delete(using='default')
-            else:
-                doc.delete()
+            doc.delete()
 
     def test_migrate_backend(self):
         # verify: migration not complete

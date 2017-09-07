@@ -1,6 +1,6 @@
 /* globals hqDefine */
-hqDefine("domain/js/internal_settings.js", function() {
-    var areas = hqImport('hqwebapp/js/initial_page_data.js').get('areas');
+hqDefine("domain/js/internal_settings", function() {
+    var areas = hqImport('hqwebapp/js/initial_page_data').get('areas');
     function update_subareas() {
         var $subarea = $subarea || $('[name="sub_area"]');
         var chosen_sub_area = $subarea.val();
@@ -52,7 +52,7 @@ hqDefine("domain/js/internal_settings.js", function() {
         });
     });
     
-    var multiselect_utils = hqImport('style/js/multiselect_utils');
+    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
     multiselect_utils.createFullMultiselectWidget(
         'id_countries',
         django.gettext("Available Countries"),

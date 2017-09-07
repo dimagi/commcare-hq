@@ -391,13 +391,12 @@ BEGIN
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(gender)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx8') || ' ON ' || quote_ident(_tablename5) || '(age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(age_tranche)';
 
 
 	--Roll up by location
@@ -467,12 +466,11 @@ BEGIN
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx6') || ' ON ' || quote_ident(_tablename4) || '(gender)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx7') || ' ON ' || quote_ident(_tablename4) || '(age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx6') || ' ON ' || quote_ident(_tablename4) || '(age_tranche)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
@@ -493,11 +491,10 @@ BEGIN
 		'FROM ' || quote_ident(_tablename4) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, gender, age_tranche)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx5') || ' ON ' || quote_ident(_tablename3) || '(gender)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx6') || ' ON ' || quote_ident(_tablename3) || '(age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx5') || ' ON ' || quote_ident(_tablename3) || '(age_tranche)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
@@ -518,10 +515,9 @@ BEGIN
 		'FROM ' || quote_ident(_tablename3) || ' ' ||
 		'GROUP BY state_id, district_id, month, gender, age_tranche)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx4') || ' ON ' || quote_ident(_tablename2) || '(gender)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx5') || ' ON ' || quote_ident(_tablename2) || '(age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx4') || ' ON ' || quote_ident(_tablename2) || '(age_tranche)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
@@ -634,12 +630,11 @@ BEGIN
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(ccs_status)';
 
     -- may want a double index on month and caste for aggregate  location query
 
@@ -703,11 +698,10 @@ BEGIN
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, ccs_status)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx6') || ' ON ' || quote_ident(_tablename4) || '(ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(ccs_status)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
@@ -728,10 +722,9 @@ BEGIN
 		'FROM ' || quote_ident(_tablename4) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, ccs_status)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx5') || ' ON ' || quote_ident(_tablename3) || '(ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(ccs_status)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
@@ -752,9 +745,8 @@ BEGIN
 		'FROM ' || quote_ident(_tablename3) || ' ' ||
 		'GROUP BY state_id, district_id, month, ccs_status)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx4') || ' ON ' || quote_ident(_tablename2) || '(ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(ccs_status)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
@@ -843,12 +835,11 @@ BEGIN
 		'WHERE (aggregation_level = 5 AND month = ' || quote_literal(_start_date) || ') '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, caste, disabled, minority, resident, aggregation_level)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(beneficiary_type)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -868,11 +859,10 @@ BEGIN
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month, beneficiary_type)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx6') || ' ON ' || quote_ident(_tablename4) || '(beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(beneficiary_type)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
@@ -892,10 +882,9 @@ BEGIN
 		'FROM ' || quote_ident(_tablename4) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month, beneficiary_type)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx5') || ' ON ' || quote_ident(_tablename3) || '(beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(beneficiary_type)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
@@ -915,9 +904,8 @@ BEGIN
 		'FROM ' || quote_ident(_tablename3) || ' ' ||
 		'GROUP BY state_id, district_id, month, beneficiary_type)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx4') || ' ON ' || quote_ident(_tablename2) || '(beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(beneficiary_type)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
@@ -973,6 +961,7 @@ DECLARE
 	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
+	_female text;
 	_month_end_11yr date;
 	_month_start_15yr date;
 	_month_end_15yr date;
@@ -989,6 +978,7 @@ BEGIN
 	_null_value = NULL;
 	_yes_text = 'yes';
 	_no_text = 'no';
+	_female = 'F';
 	_tablename1 := 'agg_awc' || '_' || _start_date || '_1';
 	_tablename2 := 'agg_awc' || '_' || _start_date || '_2';
 	_tablename3 := 'agg_awc' || '_' || _start_date || '_3';
@@ -1032,11 +1022,10 @@ BEGIN
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx4') || ' ON ' || quote_ident(_tablename5) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx5') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
 
 	-- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
@@ -1158,10 +1147,10 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
 		'FROM ' || quote_ident(_person_tablename) || ' ' ||
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
@@ -1242,11 +1231,11 @@ BEGIN
 
 	-- Update num launched AWCs based on previous month as well
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-	   'is_launched = ut.is_launched, ' ||
-	   'num_launched_awcs = ut.num_launched_awcs ' ||
-    'FROM (SELECT is_launched, num_launched_awcs, awc_id ' ||
+	   'is_launched = ' || quote_literal(_yes_text) || ', ' ||
+	   'num_launched_awcs = 1 ' ||
+    'FROM (SELECT DISTINCT(awc_id) ' ||
        'FROM agg_awc ' ||
-	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
+	'WHERE month <= ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Update training status based on the previous month as well
@@ -1317,7 +1306,7 @@ BEGIN
 		'ls_awc_not_open_unknown = ut.ls_awc_not_open_unknown, ' ||
 		'ls_awc_not_open_other = ut.ls_awc_not_open_other ' ||
 	'FROM (SELECT ' ||
-		'location_id AS awc_id, ' ||
+		'awc_id AS awc_id, ' ||
 		'month, ' ||
 		'sum(count) AS ls_supervision_visit, ' ||
 		'CASE WHEN sum(count) > 0 THEN 1 ELSE 0 END AS ls_num_supervised, ' ||
@@ -1331,7 +1320,7 @@ BEGIN
 		'sum(awc_not_open_unknown) AS ls_awc_not_open_unknown, ' ||
 		'sum(awc_not_open_other) AS ls_awc_not_open_other '
 		'FROM ' || quote_ident(_ls_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY location_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 
@@ -1372,7 +1361,7 @@ BEGIN
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
-	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+	'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
 
@@ -1508,10 +1497,9 @@ BEGIN
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1531,9 +1519,8 @@ BEGIN
 		'FROM ' || quote_ident(_tablename4) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1553,8 +1540,7 @@ BEGIN
 		'FROM ' || quote_ident(_tablename3) || ' ' ||
 		'GROUP BY state_id, district_id, month)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1777,8 +1763,7 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
 
 	-- Aggregate daily attendance table.
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
@@ -1796,13 +1781,13 @@ BEGIN
 		'sum(cases_person), ' ||
 		'sum(cases_person_all), ' ||
 		'sum(cases_person_has_aadhaar), ' ||
-		'avg(cases_child_health), ' ||
+		'sum(cases_child_health), ' ||
 		'sum(cases_child_health_all), ' ||
 		'sum(cases_ccs_pregnant), ' ||
 		'sum(cases_ccs_pregnant_all), ' ||
-		'avg(cases_ccs_lactating), ' ||
+		'sum(cases_ccs_lactating), ' ||
 		'sum(cases_ccs_lactating_all), ' ||
-		'avg(cases_person_adolescent_girls_11_14), ' ||
+		'sum(cases_person_adolescent_girls_11_14), ' ||
 		'sum(cases_person_adolescent_girls_15_18), ' ||
 		'sum(cases_person_adolescent_girls_11_14_all), ' ||
 		'sum(cases_person_adolescent_girls_15_18_all), ' ||
