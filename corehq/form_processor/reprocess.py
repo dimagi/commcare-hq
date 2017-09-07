@@ -46,6 +46,10 @@ def reprocess_unfinished_stub(stub, save=True):
         save and stub.delete()
         return
 
+    reprocess_unfinished_stub_with_form(stub, form, save)
+
+
+def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if form.is_deleted:
         save and stub.delete()
 
@@ -55,7 +59,7 @@ def reprocess_unfinished_stub(stub, save=True):
         return _perfom_post_save_actions(form, save)
 
     if form.is_normal:
-        result = _reprocess_form(form, save)
+        result = reprocess_form(form, save, lock_form=lock)
         save and stub.delete()
         return result
 
@@ -86,7 +90,7 @@ def reprocess_xform_error(form):
     if not form.is_error:
         raise ReprocessingError('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
 
-    return _reprocess_form(form).form
+    return reprocess_form(form).form
 
 
 def reprocess_xform_error_by_id(form_id, domain=None):
@@ -96,7 +100,7 @@ def reprocess_xform_error_by_id(form_id, domain=None):
     return reprocess_xform_error(form)
 
 
-def _reprocess_form(form, save=True, lock_form=True):
+def reprocess_form(form, save=True, lock_form=True):
     interface = FormProcessorInterface(form.domain)
     lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else False
     with LockManager(form, lock):

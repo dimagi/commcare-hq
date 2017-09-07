@@ -179,17 +179,18 @@ class SubmissionPost(object):
 
                 elif instance.is_duplicate:
                     submission_type = 'duplicate'
+                    existing_form = xforms[1]
                     stub = UnfinishedSubmissionStub.objects.filter(
                         domain=instance.domain,
-                        xform_id=instance.orig_id
+                        xform_id=existing_form.form_id
                     ).first()
 
                     if stub:
-                        # reprocess_stub
-                        pass
-                    elif xforms[1].is_error:
-                        # trigger reprocessing
-                        pass
+                        from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
+                        reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+                    elif existing_form.is_error:
+                        from corehq.form_processor.reprocess import reprocess_form
+                        reprocess_form(existing_form, lock_form=False)
                     self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
