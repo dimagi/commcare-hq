@@ -10,14 +10,13 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
 
     vm.ages = [
         {id: '', name: 'All'},
-        {id: '0', name: '0-6 months'},
-        {id: '6', name: '6-12 months'},
-        {id: '12', name: '12-24 months'},
-        {id: '24', name: '24-36 months'},
-        {id: '36', name: '36-48 months'},
-        {id: '48', name: '48-60 months'},
-        {id: '60', name: '60-72 months'},
-        {id: '72', name: '72 months'},
+        {id: '6', name: '0-6 months'},
+        {id: '12', name: '6-12 months'},
+        {id: '24', name: '12-24 months'},
+        {id: '36', name: '24-36 months'},
+        {id: '48', name: '36-48 months'},
+        {id: '60', name: '48-60 months'},
+        {id: '72', name: '60-72 months'},
     ];
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
@@ -28,6 +27,11 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
             gender: vm.selectedGender,
             age: vm.selectedAge,
         });
+    };
+
+    vm.reset = function() {
+        vm.selectedAge = '';
+        vm.selectedGender = '';
     };
 
     vm.close = function () {

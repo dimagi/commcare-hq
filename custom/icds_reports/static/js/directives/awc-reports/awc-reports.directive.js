@@ -1840,10 +1840,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data.recorded_weight !== void(0) ? data.recorded_weight : "---") + '</div>';
+            html += '<div>Weight: ' + (data !== void(0) ? data.recorded_weight : "Data not Entered") + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data.recorded_height !== void(0) ? data.recorded_height : "---") + '</div>';
+            html += '<div>Height: ' + (data !== void(0) ? data.recorded_height : "Data not Entered") + '</div>';
         }
         return html;
     };
@@ -1888,6 +1888,82 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                         return '<strong>Total number of children between ' + y +':</strong> ' + value;
                     },
 
+            },
+        };
+
+        vm.lineChartDaysPerWeekOptions = {
+            chart: {
+                type: 'multiBarChart',
+                height: 450,
+                width: 1100,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 150,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d.x;
+                },
+                y: function (d) {
+                    return d.y;
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 500,
+                xAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.time.format('Week of %d/%m')(new Date(d));
+                    },
+                },
+                yAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.format('d')(d);
+                    },
+                },
+                reduceXTicks: false,
+                staggerLabels: true,
+            },
+        };
+
+        vm.lineChartOptions = {
+            chart: {
+                type: 'multiBarChart',
+                height: 450,
+                width: 1100,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 50,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d.x;
+                },
+                y: function (d) {
+                    return d.y;
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 1000,
+                xAxis: {
+                    axisLabel: 'Weeks',
+                    tickFormat: function(d) {
+                        return d3.time.format('Week of %d/%m')(new Date(d));
+                    },
+                },
+                yAxis: {
+                    axisLabel: '',
+                    tickFormat: function(d) {
+                        return d3.format('.3f')(d);
+                    },
+                },
+                reduceXTicks: false,
+                staggerLabels: true,
             },
         };
         $scope.$apply();

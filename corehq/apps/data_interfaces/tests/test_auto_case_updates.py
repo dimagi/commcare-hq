@@ -168,9 +168,6 @@ class AutomaticCaseUpdateTest(TestCase):
         FormProcessorTestUtils.delete_all_cases(self.domain)
         super(AutomaticCaseUpdateTest, self).tearDown()
 
-    def _get_case_ids(self, *args, **kwargs):
-        return [[self.case_id]]
-
     def _get_case(self):
         return self.case_db.get_case(self.case_id)
 
@@ -186,7 +183,9 @@ class AutomaticCaseUpdateTest(TestCase):
     @run_with_all_backends
     def test_rule(self):
         now = datetime(2015, 10, 22, 0, 0)
-        with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids', new=self._get_case_ids):
+        with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids') as case_ids_patch:
+            case_ids_patch.return_value = [self.case_id]
+
             # No update: both dates are 27 days away
             last_modified = datetime(2015, 9, 25, 12, 0)
             _update_case(self.domain, self.case_id, last_modified, date(2015, 9, 25))
@@ -1516,7 +1515,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.get_case_ids') as case_ids_patch:
-                case_ids_patch.return_value = [[case.case_id]]
+                case_ids_patch.return_value = [case.case_id]
                 self.assertRuleRunCount(0)
 
                 # Case does not match, nothing to update

@@ -34,7 +34,8 @@ class Command(BaseCommand):
                 print('Currently on chunk {}'.format(chunk_num))
                 case_tupes = [(case_id, {}, True) for case_id in orphan_case_chunk]
                 try:
-                    xform, cases = bulk_update_cases(self.domain, case_tupes)
+                    xform, cases = bulk_update_cases(
+                        self.domain, case_tupes, self.__module__)
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print('submission error')

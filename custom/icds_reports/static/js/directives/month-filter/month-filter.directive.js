@@ -57,15 +57,13 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
 
     vm.getPlaceholder = function() {
-        var month = $location.search().month;
-        var year = $location.search().year;
-        var formattedMonth = moment(month, 'MM').format('MMMM');
 
-        if (month && year) {
-            return formattedMonth + ' ' + year;
-        } else {
-            return 'Month/Year';
-        }
+        var now = moment().utc();
+
+        var month = $location.search().month || now.month() + 1;
+        var year = $location.search().year || now.year();
+        var formattedMonth = moment(month, 'MM').format('MMMM');
+        return formattedMonth + ' ' + year;
     };
 
     vm.open = function () {

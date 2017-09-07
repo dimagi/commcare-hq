@@ -77,6 +77,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         vm.map = {
             scope: vm.scope,
             rightLegend: vm.data && vm.data[0] !== void(0) ? vm.data[0].rightLegend : null,
+            label: vm.data && vm.data[0] !== void(0) ? vm.data[0].label : null,
             data: vm.data && vm.data[0] !== void(0) ? vm.data[0].data : null,
             fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
             height: Datamap.prototype[vm.type].objects[vm.scope].height,
@@ -127,17 +128,22 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (vm.map.data) {
             _.extend(vm.mapPlugins, {
                 customLegend: function () {
-                    var html = ['<div style="height: 20px !important">'];
+                    var html = ['<div style="height: 30px !important">', '<div class="row" style="font-size: 15px;">' + this.options.label + '</div>',];
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
-                        html.push('<div><span style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 20px; height: 20px;">__',
-                            '</span><span style="padding: 5px;">' + fillKey + '</span></div>');
+                        html.push(
+                            '<div class="row" style="margin-bottom: 5px;">',
+                            '<div class="col-md-1" style="color: '+ this.options.fills[fillKey] +' !important; background-color: ' + this.options.fills[fillKey] + ' !important; width: 30px; height: 30px;"></div>',
+                            '<div class="col-md-10">',
+                            '<span style="font-size: 15px;">' + fillKey + '</span>',
+                            '</div>',
+                            '</div>'
+                        );
                     }
                     html.push('</div>');
-
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend')
-                        .attr('style', 'width: 150px; left 0; top: 5%;')
+                        .attr('style', 'width: 300px; left: 5%; top: 5%;')
                         .html(html.join(''));
                 },
             });
@@ -158,12 +164,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             html += '<tr/>';
                         }
                         html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; border-bottom: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px; border-bottom: 1px solid black;">' + this.options.rightLegend['info'] + '</td>';
-                        html += '<tr/>';
-                        html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; font-size: 2em; "><i class="fa fa-clock-o" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
+                        html += '<td style="border-right: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px;">' + this.options.rightLegend['info'] + '</td>';
                         html += '<tr/>';
                         html += '</table>';
                         d3.select(this.options.element).append('div')

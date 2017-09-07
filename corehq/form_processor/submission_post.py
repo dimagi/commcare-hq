@@ -192,7 +192,8 @@ class SubmissionPost(object):
                     else:
                         instance.initial_processing_complete = True
                         self.save_processed_models(xforms, case_stock_result)
-                        case_stock_result.case_result.close_extensions(case_db)
+                        case_stock_result.case_result.close_extensions(case_db,
+                            "SubmissionPost-%s-close_extensions" % instance.form_id)
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:
@@ -204,9 +205,11 @@ class SubmissionPost(object):
 
     def _invalidate_caches(self, xform):
         for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
-            self._invalidate_caches_for_device_id(xform, device_id)
+            self._invalidate_restore_payload_path_cache(xform, device_id)
+            if ASYNC_RESTORE.enabled(self.domain):
+                self._invalidate_async_restore_task_id_cache(xform, device_id)
 
-    def _invalidate_caches_for_device_id(self, xform, device_id):
+    def _invalidate_restore_payload_path_cache(self, xform, device_id):
         """invalidate cached initial restores"""
         restore_payload_path_cache = RestorePayloadPathCache(
             domain=self.domain,
@@ -216,10 +219,7 @@ class SubmissionPost(object):
         )
         restore_payload_path_cache.invalidate()
 
-        if ASYNC_RESTORE.enabled(self.domain):
-            self._invalidate_async_caches(xform, device_id)
-
-    def _invalidate_async_caches(self, xform, device_id):
+    def _invalidate_async_restore_task_id_cache(self, xform, device_id):
         async_restore_task_id_cache = AsyncRestoreTaskIdCache(
             domain=self.domain,
             user_id=xform.user_id,

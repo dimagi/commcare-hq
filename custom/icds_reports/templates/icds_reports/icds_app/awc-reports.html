@@ -3,14 +3,14 @@
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+                <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
             </div>
             <div class="row">
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
         </div>
@@ -20,19 +20,23 @@
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-show="$ctrl.data">
-            <div class="row " ng-show="$ctrl.step === 'system_usage'">
-                <kpi data="$ctrl.data.kpi"></kpi>
-            </div>
-            <div class="row black" ng-show="$ctrl.step === 'pse'">
-                <div class="row no-margin" ng-repeat="chart in $ctrl.data.charts">
-                    <h2 class="center">{$ chart[0].key $}</h2>
-                    <nvd3 options="$ctrl.chartOptions" data="chart" class="with-3d-shadow with-transitions"></nvd3>
-                </div>
+            <div class="row" ng-show="$ctrl.step === 'pse'">
                 <div class="row no-margin">
+                    <kpi data="$ctrl.data.kpi"></kpi>
+                </div>
+                <div class="row no-margin black">
+                    <h2 class="center">{$ $ctrl.data.charts[0][0].key $}</h2>
+                    <nvd3 options="$ctrl.lineChartDaysPerWeekOptions" data="$ctrl.data.charts[0]" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+                <div class="row no-margin black">
+                    <h2 class="center">{$ $ctrl.data.charts[1][0].key $}</h2>
+                    <nvd3 options="$ctrl.lineChartOptions" data="$ctrl.data.charts[1]" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+                <div class="row no-margin black">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
                 </div>
-                <div class="row no-margin">
+                <div class="row no-margin black">
                     <h2 class="center">PSE Photo Submissions</h2>
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
@@ -82,26 +86,26 @@
                     </thead>
                     <tbody>
                         <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
-                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.month_with_data].case_id)"><span>{$ row[$ctrl.data.month_with_data].person_name $}</span></td>
-                            <td>{$ row[$ctrl.data.month_with_data].dob $}</td>
-                            <td style="min-width: 80px;">{$ row[$ctrl.data.month_with_data].age $}</td>
-                            <td>{$ row[$ctrl.data.month_with_data].fully_immunized_date $}</td>
+                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)"><span>{$ row.person_name || 'Data not Entered' $}</span></td>
+                            <td>{$ row.dob || 'Data not Entered' $}</td>
+                            <td style="min-width: 80px;">{$ row.age || 'Data not Entered' $}</td>
+                            <td>{$ row.fully_immunized_date || 'Data not Entered' $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
-                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
-                                    {$ row[month].nutrition_status $}
+                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
+                                    {$ row[month].nutrition_status || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].stunning $}
+                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].stunning || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].wasting $}
+                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].wasting || 'Data not Entered' $}
                                 </span>
                             </td>
-                            <td ng-repeat-end="">{$ row[month].pse_days_attended $}</td>
+                            <td ng-repeat-end="">{$ row[month].pse_days_attended || 'Data not Entered' $}</td>
                         </tr>
                     </tbody>
                 </table>

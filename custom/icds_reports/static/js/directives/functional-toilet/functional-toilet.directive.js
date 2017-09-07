@@ -10,11 +10,11 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with functional toilet";
+    vm.label = "AWCs with Functional Toilet";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/functional_toilet/map', label: 'Map'},
-        'chart': {route: '/functional_toilet/chart', label: 'Chart'},
+        'map': {route: '/functional_toilet/map', label: 'Map View'},
+        'chart': {route: '/functional_toilet/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
@@ -61,10 +61,10 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = infrastructureService.getFunctionalToiletData(vm.step, vm.filtersData).then(function(response) {
@@ -155,7 +155,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

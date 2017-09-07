@@ -1,0 +1,73 @@
+{% extends "app_manager/managed_app.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block head %}{{ block.super }}
+  {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
+{% block js %}{{  block.super }}
+  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
+  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
+  <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
+  <script src="{% static "jsdiff/diff.js" %}"></script>
+  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
+  <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+  <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
+  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
+  {% if app.get_doc_type == "Application" %}
+      <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
+      <script src="{% static 'translations/js/translations.js' %}"></script>
+  {% endif %}
+  <script src="{% static 'app_manager/js/add_ons.js' %}"></script>
+{% endblock js %}
+
+{% block pre_form_content %}
+  <div class="appmanager-page-actions">
+      {% include 'app_manager/partials/app_summary_button.html' %}
+  </div>
+
+  <div class="appmanager-edit-title appmanager-edit-app-title">
+    <inline-edit params="
+        value: '{{ app.name|escapejs }}',
+        containerClass: 'h3 app-title',
+        url: '{% url "edit_app_attr" domain app.id 'name' %}',
+        placeholder: '{% trans "Untitled App"|escapejs %}',
+        postSave: function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); },
+        rows: 1,
+        saveValueName: 'name',
+        nodeName: 'input',
+    "></inline-edit>
+  </div>
+
+  <div class="appmanager-edit-description">
+    <inline-edit params="
+        value: '{{ app.short_comment|escapejs }}',
+        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+        placeholder: '{% trans "Enter app description here"|escapejs %}',
+        saveValueName: 'comment',
+        cols: 50,
+    "></inline-edit>
+  </div>
+{% endblock %}
+
+{% block form-view %}
+  {% registerurl "edit_add_ons" domain app.id %}
+  <div class="appmanager-tabs-container">
+  {% block app_view_tabs %}{% endblock app_view_tabs %}
+  </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% for uploader in uploaders %}
+{% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% endfor %}
+{% include 'app_manager/partials/password_setter_modal.html' %}
+{% include 'app_manager/partials/toggle_diff_modal.html' %}
+{% endblock %}

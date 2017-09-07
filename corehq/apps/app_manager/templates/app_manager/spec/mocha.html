@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-{% include "style/includes/angular.html" %}
+{% include "hqwebapp/includes/angular.html" %}
 <script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
@@ -25,5 +25,5 @@
 {% endblock %}
 
 {% block fixtures %}
-{% include 'app_manager/v1/partials/download_async_modal.html' with element_id='download-zip-modal-test' %}
+{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal-test' %}
 {% endblock %}

@@ -652,7 +652,9 @@ class ViewMultimediaFile(View):
         data, content_type = self.multimedia.get_display_file()
         if self.thumb:
             data = CommCareImage.get_thumbnail_data(data, self.thumb)
-        return HttpResponse(data, content_type=content_type)
+        response = HttpResponse(data, content_type=content_type)
+        response['Content-Disposition'] = 'filename="download{}"'.format(self.multimedia.get_file_extension())
+        return response
 
 
 def iter_index_files(app, build_profile_id=None):

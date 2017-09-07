@@ -1,8 +1,8 @@
 import sqlalchemy
 from sqlalchemy import *
-from django.conf import settings
-from sqlalchemy.engine.url import make_url
 from datetime import date
+
+from corehq.sql_db.connections import connection_manager
 
 metadata = sqlalchemy.MetaData()
 
@@ -27,7 +27,7 @@ region_table = Table("region_report_data",
 
 
 def load_data():
-    engine = create_engine(make_url(settings.SQL_REPORTING_DATABASE_URL))
+    engine = connection_manager.get_engine('default')
     metadata.bind = engine
     user_table.drop(engine, checkfirst=True)
     region_table.drop(engine, checkfirst=True)

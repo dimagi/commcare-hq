@@ -18,6 +18,7 @@ from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -97,14 +98,13 @@ from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
     use_ko_validation,
     use_angular_js)
-from corehq.apps.style.forms.widgets import DateRangePickerWidget
-from corehq.apps.style.utils import format_angular_error, format_angular_success
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
@@ -2355,6 +2355,10 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     page_title = ugettext_noop("Download Form Exports")
     filter_form_class = EmwfFilterFormExport
     export_filter_class = LocationRestrictedMobileWorkerFilter
+
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        return False
 
 
 @location_safe

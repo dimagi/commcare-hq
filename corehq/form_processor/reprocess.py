@@ -143,7 +143,7 @@ def _reprocess_form(form, save=True):
                     if save:
                         # only rebuild cases that were updated
                         detail = FormReprocessRebuild(form_id=form.form_id)
-                        interface.hard_rebuild_case(case.case_id, detail)
+                        interface.hard_rebuild_case(case.case_id, detail, lock=False)
                 save and case_post_save.send(case.__class__, case=case)
 
             for ledger in ledgers:

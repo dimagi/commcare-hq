@@ -26,10 +26,22 @@ ALLOWED_CASE_IDENTIFIER_TYPES = [
 
 
 def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
-                       xmlns=SYSTEM_FORM_XMLNS, attachments=None,
-                       form_id=None, form_extras=None, case_db=None, device_id=None):
+                       xmlns=None, attachments=None, form_id=None,
+                       form_extras=None, case_db=None, device_id=None):
     """
     Submits casexml in a manner similar to how they would be submitted from a phone.
+
+    :param xmlns: Form XMLNS. Format: IRI or URN. Historically this was
+    used in some places to uniquely identify the subsystem that posted
+    the cases; `device_id` is now recommended for that purpose. Going
+    forward, it is recommended to use the default value along with
+    `device_id`, which indicates that the cases were submitted by an
+    internal system process.
+    :param device_id: Identifier for the source of posted cases. Ideally
+    this should uniquely identify the subsystem that is posting cases to
+    make it easier to trace the source. All new code should use this
+    argument. A human recognizable value is recommended outside of test
+    code. Example: "auto-close-rule-<GUID>"
 
     returns the UID of the resulting form.
     """
@@ -39,13 +51,13 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns,
+        'xmlns': xmlns or SYSTEM_FORM_XMLNS,
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,
         'username': username,
         'user_id': user_id or "",
-        'device_id': device_id,
+        'device_id': device_id or "",
     })
     form_extras = form_extras or {}
 
@@ -192,17 +204,20 @@ def _process_case_block(domain, case_block, attachments, old_case_id):
     return ET.tostring(root), ret_attachments
 
 
-def submit_case_block_from_template(domain, template, context, xmlns=None, user_id=None):
+def submit_case_block_from_template(domain, template, context, xmlns=None,
+        user_id=None, device_id=None):
     case_block = render_to_string(template, context)
     # Ensure the XML is formatted properly
     # An exception is raised if not
     case_block = ElementTree.tostring(ElementTree.XML(case_block))
 
-    user_id = user_id or SYSTEM_USER_ID
-    kwargs = {}
-    if xmlns:
-        kwargs['xmlns'] = xmlns
-    return submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
+    return submit_case_blocks(
+        case_block,
+        domain,
+        user_id=user_id or SYSTEM_USER_ID,
+        xmlns=xmlns,
+        device_id=device_id,
+    )
 
 
 def _get_update_or_close_case_block(case_id, case_properties=None, close=False):
@@ -217,7 +232,8 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False):
     return CaseBlock(case_id, **kwargs)
 
 
-def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
+def update_case(domain, case_id, case_properties=None, close=False,
+                xmlns=None, device_id=None):
     """
     Updates or closes a case (or both) by submitting a form.
     domain - the case's domain
@@ -226,21 +242,19 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
                       to ignore case updates, leave this argument out
     close - True to close the case, False otherwise
     xmlns - pass in an xmlns to use it instead of the default
+    device_id - see submit_case_blocks device_id docs
     """
-    kwargs = {}
-    if xmlns:
-        kwargs['xmlns'] = xmlns
-
     caseblock = _get_update_or_close_case_block(case_id, case_properties, close)
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml()),
         domain,
         user_id=SYSTEM_USER_ID,
-        **kwargs
+        xmlns=xmlns,
+        device_id=device_id,
     )
 
 
-def bulk_update_cases(domain, case_changes):
+def bulk_update_cases(domain, case_changes, device_id):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
@@ -249,6 +263,7 @@ def bulk_update_cases(domain, case_changes):
         case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                           to ignore case updates, leave this argument out
         close - True to close the case, False otherwise
+    device_id - see submit_case_blocks device_id docs
     """
     case_blocks = []
     for case_id, case_properties, close in case_changes:
@@ -257,4 +272,4 @@ def bulk_update_cases(domain, case_changes):
         # An exception is raised if not
         case_block = ElementTree.tostring(case_block.as_xml())
         case_blocks.append(case_block)
-    return submit_case_blocks(case_blocks, domain)
+    return submit_case_blocks(case_blocks, domain, device_id=device_id)

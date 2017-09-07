@@ -16,10 +16,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            // only referenced in v2 template
-            self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
-        }
+        self.customPropertiesCollapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", "custom-properties", false);
 
         self.settings = [];
         self.settingsIndex = {};
@@ -249,16 +246,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     return setting.visible();
                 });
             });
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                section.reallyCollapse = ko.computed(function () {
-                    var el = document.getElementById(section.id);
-                    return section.collapse &&
-                        (!el || !el.classList.contains("in")) &&
-                        !_(section.settings).some(function (setting) { return setting.hasError(); });
-                });
-            } else {
-                section.collapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", section.id, section.collapse);
-            }
+            section.collapse = hqImport("app_manager/js/section_changer").shouldCollapse("app-settings", section.id, section.collapse);
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
             });
@@ -317,16 +305,14 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
         });
 
         var $saveContainer = $("#settings-save-btn");
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
-        }
+        hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });

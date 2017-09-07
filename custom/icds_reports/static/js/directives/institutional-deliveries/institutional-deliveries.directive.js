@@ -10,11 +10,11 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% Institutional deliveries";
+    vm.label = "Institutional deliveries";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/institutional_deliveries/map', label: 'Map'},
-        'chart': {route: '/institutional_deliveries/chart', label: 'Chart'},
+        'map': {route: '/institutional_deliveries/map', label: 'Map View'},
+        'chart': {route: '/institutional_deliveries/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -63,10 +63,10 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
 
@@ -158,7 +158,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -168,7 +168,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
                     var total = findValue(vm.chartData[1].values, d.value);

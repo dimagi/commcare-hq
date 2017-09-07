@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from corehq.apps.reports.cache import request_cache
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from custom.world_vision.charts import WVPieChart as PieChart
 from corehq.apps.reports.sqlreport import calculate_total_row
 from corehq.apps.reports.standard import ProjectReportParametersMixin, CustomProjectReport

@@ -52,7 +52,7 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
     use_multiselect,
@@ -2910,9 +2910,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        exclude_previews = []
-        if not toggles.APP_MANAGER_V1.enabled_for_request(self.request):
-            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
+        exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
             'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }

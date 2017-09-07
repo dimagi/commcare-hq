@@ -58,17 +58,9 @@
                 "display_name": "voucher_district_id",
                 "datatype": "string",
                 "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "voucher_district_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_district_id"
                 },
                 "is_primary_key": false,
                 "transform": {},

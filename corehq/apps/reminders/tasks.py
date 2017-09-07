@@ -94,7 +94,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
 @no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
 def fire_reminder(reminder_id, domain):
     try:
-        if reminder_rate_limiter.can_perform_action(domain):
+        if settings.ENTERPRISE_MODE or reminder_rate_limiter.can_perform_action(domain):
             _fire_reminder(reminder_id)
         else:
             fire_reminder.apply_async(args=[reminder_id, domain], countdown=60)

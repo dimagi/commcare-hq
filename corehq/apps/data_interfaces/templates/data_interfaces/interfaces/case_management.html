@@ -53,6 +53,7 @@
         }, 1000);
 
         $('#reassign_owner_select').select2({
+            placeholder: '{% trans "Search for users or groups" %}',
             ajax: {
                 url: '{% url "case_list_options" domain %}',
                 data: function (term, page) {
@@ -68,7 +69,7 @@
                         results: (data.results
                             // white list groups and users
                             .filter(function(o) {
-                                return o.id.startsWith('u__') || o.id.startsWith('sg__');
+                                return o.id.startsWith('u__') || o.id.startsWith('sg__') || o.id.startsWith('l__');
                             })
                         )
                     };

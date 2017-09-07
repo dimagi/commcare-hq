@@ -40,13 +40,16 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
                 Menus.Controller.showMenu(menuResponse);
             }).fail(function() {
-                FormplayerFrontend.trigger('navigateHome');
+                // if it didn't go through, then it displayed an error message.
+                // the right thing to do is then to just stay in the same place.
             });
         },
 
         selectDetail: function(caseId, detailIndex, isPersistent) {
             var urlObject = Util.currentUrlToObject();
-            urlObject.addStep(caseId);
+            if (!isPersistent) {
+                urlObject.addStep(caseId);
+            }
             var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
@@ -186,6 +189,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxWidth: detailObject.maxWidth,
                 maxHeight: detailObject.maxHeight,
                 prefix: 'persistent',
+                hasInlineTile: detailObject.hasInlineTile,
             });
         },
     };

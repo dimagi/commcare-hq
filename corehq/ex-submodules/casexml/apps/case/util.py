@@ -47,6 +47,9 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, d
 
     Extras is used to add runtime attributes to the form before
     sending it off to the case (current use case is sync-token pairing)
+
+    See `device_id` parameter documentation at
+    `corehq.apps.hqcase.utils.submit_case_blocks`.
     """
     from corehq.apps.hqcase.utils import submit_case_blocks
 

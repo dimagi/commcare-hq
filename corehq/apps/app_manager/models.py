@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -127,7 +127,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
     LocationXpathValidationError,
@@ -181,6 +180,10 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
+
+
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
 
 
 def jsonpath_update(datum_context, value):
@@ -256,7 +259,11 @@ class IndexedSchema(DocumentSchema):
         return self._i
 
     def __eq__(self, other):
-        return other and (self.id == other.id) and (self._parent == other._parent)
+        return (
+            other and isinstance(other, IndexedSchema)
+            and (self.id == other.id)
+            and (self._parent == other._parent)
+        )
 
     class Getter(object):
 
@@ -366,7 +373,7 @@ class OpenCaseAction(FormAction):
     external_id = StringProperty()
 
 
-class OpenSubCaseAction(FormAction):
+class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
     case_name = StringProperty()
@@ -378,6 +385,10 @@ class OpenSubCaseAction(FormAction):
     relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    @property
+    def form_element_name(self):
+        return 'subcase_{}'.format(self.id)
 
 
 class FormActions(DocumentSchema):
@@ -398,6 +409,8 @@ class FormActions(DocumentSchema):
 
     subcases = SchemaListProperty(OpenSubCaseAction)
 
+    get_subcases = IndexedSchema.Getter('subcases')
+
     def all_property_names(self):
         names = set()
         names.update(self.update_case.update.keys())
@@ -405,6 +418,9 @@ class FormActions(DocumentSchema):
         for subcase in self.subcases:
             names.update(subcase.case_properties.keys())
         return names
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.subcases])
 
 
 class CaseIndex(DocumentSchema):
@@ -665,6 +681,9 @@ class AdvancedFormActions(DocumentSchema):
         add_actions('open', self.get_open_actions())
 
         return meta
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.get_open_subcase_actions()])
 
 
 class FormSource(object):
@@ -1027,7 +1046,11 @@ class FormBase(DocumentSchema):
         meta = {
             'form_type': self.form_type,
             'module': module.get_module_info() if module else {},
-            'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
+            'form': {
+                "id": self.id if hasattr(self, 'id') else None,
+                "name": self.name,
+                'unique_id': self.unique_id,
+            }
         }
 
         xml_valid = False
@@ -1382,6 +1405,18 @@ class JRResourceProperty(StringProperty):
         return value
 
 
+class CustomIcon(DocumentSchema):
+    """
+    A custom icon to display next to a module or a form.
+    The property "form" identifies what kind of icon this would be, for ex: badge
+    One can set either a simple text to display or
+    an xpath expression to be evaluated for example count of cases within.
+    """
+    form = StringProperty()
+    text = DictProperty(unicode)
+    xpath = StringProperty()
+
+
 class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
@@ -1389,6 +1424,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
+    custom_icons = SchemaListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -1441,6 +1477,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def audio_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def custom_icon_form_and_text_by_language(self, lang):
+        custom_icon = self.custom_icon
+        if custom_icon:
+            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
+            return custom_icon.form, custom_icon_text
+        return None, None
 
     def _set_media(self, media_attr, lang, media_path):
         """
@@ -1497,6 +1540,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
         if for_default:
             return self.audio_by_language(lang, strict=False)
 
+    @property
+    def custom_icon(self):
+        if self.custom_icons:
+            return self.custom_icons[0]
+
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
@@ -1535,7 +1583,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
-            a = getattr(self.actions, action_type)
+            getter = 'get_{}'.format(action_type)
+            if hasattr(self.actions, getter):
+                # user getter if there is one
+                a = list(getattr(self.actions, getter)())
+            else:
+                a = getattr(self.actions, action_type)
             if isinstance(a, list):
                 if a:
                     actions[action_type] = a
@@ -2308,6 +2361,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def requires_case_details(self):
         return False
 
+    def root_requires_same_case(self):
+        return self.root_module \
+            and self.root_module.case_type == self.case_type \
+            and self.root_module.all_forms_require_a_case()
+
     def get_case_types(self):
         return set([self.case_type])
 
@@ -2315,6 +2373,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         return {
             'id': self.id,
             'name': self.name,
+            'unique_id': self.unique_id,
         }
 
     def get_app(self):
@@ -2624,7 +2683,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, Form):
             new_form = form
-        elif isinstance(form, AdvancedForm) and not form.actions.get_all_actions():
+        elif isinstance(form, AdvancedForm) and not len(list(form.actions.get_all_actions())):
             new_form = Form(
                 name=form.name,
                 form_filter=form.form_filter,
@@ -4309,6 +4368,12 @@ class VersionedDoc(LazyBlobDoc):
     def id(self):
         return self._id
 
+    @property
+    def master_id(self):
+        """Return the ID of the 'master' app. For app builds this is the ID
+        of the app they were built from otherwise it's just the app's ID."""
+        return self.copy_of or self._id
+
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
             increment_version = not self.copy_of
@@ -5061,7 +5126,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
 
-        LatestAppInfo(self.copy_of or self.id, self.domain).clear_caches()
+        LatestAppInfo(self.master_id, self.domain).clear_caches()
 
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
@@ -5438,7 +5503,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
-            'uniqueid': self.copy_of or self.id,
+            'uniqueid': self.master_id,
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
@@ -5704,11 +5769,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
         """
-        The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the rearrangement (confusingly) goes through anyway.
+        The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
@@ -5720,7 +5783,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if app_manager_v2 and not isinstance(form, AdvancedForm):
+            if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5733,9 +5796,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type and not app_manager_v2:
-            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
-            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         return update_unique_ids(source)
@@ -6280,13 +6340,17 @@ class GlobalAppConfig(Document):
         default="off"
     )
 
+    # corresponding versions to which user should be prompted to update to
+    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
+    app_version = IntegerProperty(default=LATEST_APP_VALUE)
+
     @classmethod
     def for_app(cls, app):
         """
         Returns the actual config object for the app or an unsaved
             default object
         """
-        app_id = app.copy_of or app.id
+        app_id = app.master_id
 
         res = cls.get_db().view(
             "global_app_config_by_app_id/view",

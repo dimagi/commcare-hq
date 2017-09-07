@@ -9,8 +9,8 @@ from alembic.operations import Operations
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
-import sqlalchemy
 
+from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from fluff.util import metadata as fluff_metadata
 
@@ -74,7 +74,7 @@ def catch_signal(sender, **kwargs):
                 }
 
     print('\tchecking fluff SQL tables for schema changes')
-    engine = sqlalchemy.create_engine(settings.SQL_REPORTING_DATABASE_URL)
+    engine = connection_manager.get_engine('default')
 
     with engine.begin() as connection:
         migration_context = get_migration_context(connection, table_pillow_map.keys())

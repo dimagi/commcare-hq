@@ -10,11 +10,11 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Weighing Scale: Mother and Child";
+    vm.label = "AWCs with Weighing Scale: Mother and Child";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/adult_weight_scale/map', label: 'Map'},
-        'chart': {route: '/adult_weight_scale/chart', label: 'Chart'},
+        'map': {route: '/adult_weight_scale/map', label: 'Map View'},
+        'chart': {route: '/adult_weight_scale/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
@@ -61,10 +61,10 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = infrastructureService.getAdultWeightScaleData(vm.step, vm.filtersData).then(function(response) {
@@ -155,7 +155,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

@@ -16,15 +16,17 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
 
-def close_cases(case_ids, domain, user, case_db=None):
+def close_cases(case_ids, domain, user, device_id, case_db=None):
     """
     Close cases by submitting a close forms.
 
     Accepts submitting user as a user object or a fake system user string.
 
+    See `device_id` parameter documentation at
+    `corehq.apps.hqcase.utils.submit_case_blocks`.
+
     Returns the form id of the closing form.
     """
-
     if hasattr(user, '_id'):
         user_id = user._id
         username = user.username
@@ -38,11 +40,18 @@ def close_cases(case_ids, domain, user, case_db=None):
         close=True,
     ).as_xml()) for case_id in case_ids]
 
-    return submit_case_blocks(case_blocks, domain, username, user_id, case_db=case_db)[0].form_id
+    return submit_case_blocks(
+        case_blocks,
+        domain,
+        username,
+        user_id,
+        device_id=device_id,
+        case_db=case_db,
+    )[0].form_id
 
 
-def close_case(case_id, domain, user):
-    return close_cases([case_id], domain, user)
+def close_case(case_id, domain, user, device_id):
+    return close_cases([case_id], domain, user, device_id)
 
 
 def rebuild_case_from_actions(case, actions):
@@ -98,7 +107,7 @@ def safe_hard_delete(case):
     interface.hard_delete_case_and_forms(case, forms)
 
 
-def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
+def claim_case(domain, owner_id, host_id, host_type=None, host_name=None, device_id=None):
     """
     Claim a case identified by host_id for claimant identified by owner_id.
 
@@ -124,7 +133,7 @@ def claim_case(domain, owner_id, host_id, host_type=None, host_name=None):
             )
         }
     ).as_xml()
-    post_case_blocks([claim_case_block], {'domain': domain})
+    post_case_blocks([claim_case_block], {'domain': domain}, device_id=device_id)
     return claim_id
 
 

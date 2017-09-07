@@ -1,7 +1,7 @@
 /* globals hqDefine django hqLayout hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
-    var module = hqImport("style/js/main").eventize({});
+    var module = hqImport("hqwebapp/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
     _private.prependedPageTitle = "";
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/app_manager', function () {
         if (module.fetchAndShowFormValidation) {
             module.fetchAndShowFormValidation();
         }
-        hqImport("style/js/main").updateDOM(update);
+        hqImport("hqwebapp/js/main").updateDOM(update);
     };
 
     module.setupValidation = function (validation_url) {
@@ -95,44 +95,13 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     module.init = function (args) {
-
         _initCommcareVersion(args);
         _initSaveButtons();
         _initMenuItemSorting();
         _initLangs();
-        _initNewItemForm();
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            // legacy JS
-            $('#form-tabs').show();
-            $('#forms').tab('show');
-
-            $('select.applications').change(function () {
-                var url = $(this).find('option:selected').attr('value');
-                $(document).attr('location', url);
-            });
-
-            // Auto set input and select values according to the following 'div.immutable'
-            $('select').each(function () {
-                var val = $(this).next('div.immutable').text();
-                if (val) {
-                    $(this).find('option').prop('selected', false);
-                    $(this).find('option[value="' + val + '"]').prop('selected', true);
-                }
-            });
-            $('input[type="text"]').each(function () {
-                var val = $(this).next('div.immutable').text();
-                if (val) {
-                    $(this).attr('value', val);
-                }
-            });
-        } else {
-            _initResponsiveMenus();
-            _initAddItemPopovers();
-            _initPublishStatus();
-        }
-
-
+        _initResponsiveMenus();
+        _initAddItemPopovers();
+        _initPublishStatus();
     };
 
     /**
@@ -225,21 +194,44 @@ hqDefine('app_manager/js/app_manager', function () {
             var pop = this;
             $('.popover-additem').on('click', function (e) {
                 $(pop).popover('hide');
-                var dataType = $(e.target).closest('button').data('type');
-                $('#new-module-type').val(dataType);
-                if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
-                    var form = $('#new-module-form');
-                    if (!form.data('clicked')) {
-                        form.data('clicked', 'true');
-                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                        if (dataType === "case") {
-                            window.analytics.usage("Added Case List Menu");
-                            window.analytics.workflow("Added Case List Menu");
-                        } else if (dataType === "survey") {
-                            window.analytics.usage("Added Surveys Menu");
-                            window.analytics.workflow("Added Surveys Menu");
+                var dataType = $(e.target).closest('button').data('type'),
+                    isForm =  $(e.target).closest('button').data('form-type') !== undefined,
+                    stopSubmit = $(e.target).closest('button').data('stopsubmit') === 'yes',
+                    $form;
+
+                if (stopSubmit) return;
+
+                if (isForm) {
+                    var caseAction =  $(e.target).closest('button').data('case-action'),
+                        $popoverContent = $(e.target).closest(".popover-content > *"),
+                        moduleId = $popoverContent.data("module-unique-id"),
+                        $trigger = $('.js-add-new-item[data-module-unique-id="' + moduleId + '"]');
+
+                    $form = $popoverContent.find("form");
+                    $form.find("input[name='case_action']").val(caseAction);
+                    $form.find("input[name='form_type']").val(dataType);
+                    if (!$form.data('clicked')) {
+                        $form.data('clicked', 'true');
+                        $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                        $form.submit();
+                    }
+
+                } else {
+                    $('#new-module-type').val(dataType);
+                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
+                        $form = $('#new-module-form');
+                        if (!$form.data('clicked')) {
+                            $form.data('clicked', 'true');
+                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                            if (dataType === "case") {
+                                window.analytics.usage("Added Case List Menu");
+                                window.analytics.workflow("Added Case List Menu");
+                            } else if (dataType === "survey") {
+                                window.analytics.usage("Added Surveys Menu");
+                                window.analytics.workflow("Added Surveys Menu");
+                            }
+                            $form.submit();
                         }
-                        form.submit();
                     }
                 }
             });
@@ -272,57 +264,6 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     /**
-     * Initialize the new form in to handle a click event from the add item
-     * popover icons.
-     * @private
-     */
-    var _initNewItemForm = function () {
-        $('.new-module').on('click', function (e) {
-            e.preventDefault();
-            var dataType = $(this).data('type');
-            $('#new-module-type').val(dataType);
-            var form = $('#new-module-form');
-            if (!form.data('clicked')) {
-                form.data('clicked', 'true');
-                $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                form.submit();
-            }
-        });
-
-        $('.new-form').on('click', function (e) {
-            e.preventDefault();
-            var dataType = $(this).data("type");
-            var moduleId = $(this).data("module");
-            var form = $("#form-to-create-new-form-for-module-" + moduleId);
-            $("input[name=form_type]", form).val(dataType);
-            if (!form.data('clicked')) {
-                form.data('clicked', 'true');
-                $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
-                form.submit();
-            }
-        });
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            $(document).on('click', '.js-new-form', function (e) {
-                e.preventDefault();
-                var $a = $(this),
-                    $popoverContent = $a.closest(".popover-content > *"),
-                    $form = $popoverContent.find("form"),
-                    action = $a.data("case-action"),
-                    moduleId = $popoverContent.data("module-id"),
-                    $trigger = $('.js-add-new-item[data-module-id="' + moduleId + '"]');
-                $form.attr("action", hqImport("hqwebapp/js/initial_page_data").reverse("new_form", moduleId));
-                $form.find("input[name='case_action']").val(action);
-                $form.find("input[name='form_type']").val($a.data("form-type"));
-                if (!$form.data('clicked')) {
-                    $form.data('clicked', 'true');
-                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
-                    $form.submit();
-                }
-            });
-        }
-    };
-
-    /**
      * Initialize sorting in the app manager menu.
      * @private
      */
@@ -333,111 +274,106 @@ hqDefine('app_manager/js/app_manager', function () {
                 $(related).data(name, value);
             });
         }
-
-        $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass(hqImport("style/js/main").icons.GRIP);
-        $('.sortable').each(function () {
-            var min_elem = $(this).hasClass('sortable-forms') ? 1 : 2;
-            if ($(this).children().not('.sort-disabled').length < min_elem) {
-                var $sortable = $(this);
-                $('.drag_handle', this).each(function () {
-                    if ($(this).closest('.sortable')[0] === $sortable[0]) {
-                        $(this).removeClass('drag_handle').hide();
-                    }
-                });
-            }
-        });
-
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            $('.js-appnav-drag-module').on('mouseenter', function() {
-                $(this).closest('.js-sorted-li').addClass('appnav-highlight');
-            }).on('mouseleave', function () {
-                $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
+        function resetIndexes($sortable) {
+            var parentVar = $sortable.data('parentvar');
+            var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
+            _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
+                $(elem).data('index', i);
+                var indexVar = $(elem).data('indexvar');
+                updateRelatedTags($(elem), indexVar, i);
+                if (parentVar) {
+                    $(elem).data(parentVar, parentValue);
+                    updateRelatedTags($(elem), parentVar, parentValue);
+                }
             });
         }
+
+        $('.sortable .sort-action').addClass('sort-disabled');
+        $('.drag_handle').addClass(hqImport("hqwebapp/js/main").icons.GRIP);
+
+        $('.js-appnav-drag-module').on('mouseenter', function() {
+            $(this).closest('.js-sorted-li').addClass('appnav-highlight');
+        }).on('mouseleave', function () {
+            $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
+        });
+
+        // Initialize sorting behavior for both modules and forms
         $('.sortable').each(function () {
             var $sortable = $(this);
             var sorting_forms = $sortable.hasClass('sortable-forms');
-            var min_elem = $(this).hasClass('sortable-forms') ? 0 : 1;
-            if ($(this).children().not('.sort-disabled').length > min_elem) {
-                var init_dict = {
-                    handle: '.drag_handle ',
-                    items: ">*:not(.sort-disabled)",
-                    update: function (e, ui) {
-                        // because the event is triggered on both sortables when moving between one sortable list to
-                        // another, do a check to see if this is the sortable list we're moving the item to
-                        if ($sortable.find(ui.item).length < 1) {
-                            return;
-                        }
+            var init_dict = {
+                handle: '.drag_handle ',
+                items: ">*:not(.sort-disabled)",
+                update: function (e, ui) {
+                    // because the event is triggered on both sortables when moving between one sortable list to
+                    // another, do a check to see if this is the sortable list we're moving the item to
+                    if ($sortable.find(ui.item).length < 1) {
+                        return;
+                    }
 
-                        var to = -1,
-                            from = -1,
-                            to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
-                            moving_to_new_module = false,
-                            $form;
+                    var to = -1,
+                        from = -1,
+                        to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
+                        moving_to_new_module = false,
+                        $form;
 
-                        // if you're moving modules or moving forms within the same module, use this logic to find to and from
-                        if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
-                            $(this).children().not('.sort-disabled').each(function (i) {
-                                var index = parseInt($(this).data('index'), 10);
-                                if (from !== -1) {
-                                    if (from === index) {
-                                        to = i;
-                                        return false;
-                                    }
-                                }
-                                if (i !== index) {
-                                    if (i + 1 === index) {
-                                        from = i;
-                                    } else {
-                                        to = i;
-                                        from = index;
-                                        return false;
-                                    }
-                                }
-                            });
-                        } else { //moving forms to a new submodule
-                            $(this).children().not('.sort-disabled').each(function (i) {
-                                if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
-                                    moving_to_new_module = true;
+                    // if you're moving modules or moving forms within the same module, use this logic to find to and from
+                    if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
+                        $(this).children().not('.sort-disabled').each(function (i) {
+                            var index = parseInt($(this).data('index'), 10);
+                            if (from !== -1) {
+                                if (from === index) {
                                     to = i;
-                                    from = parseInt(ui.item.data('index'), 10);
                                     return false;
                                 }
-                            });
+                            }
+                            if (i !== index) {
+                                if (i + 1 === index) {
+                                    from = i;
+                                } else {
+                                    to = i;
+                                    from = index;
+                                    return false;
+                                }
+                            }
+                        });
+                    } else { //moving forms to a new submodule
+                        $(this).children().not('.sort-disabled').each(function (i) {
+                            if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
+                                moving_to_new_module = true;
+                                to = i;
+                                from = parseInt(ui.item.data('index'), 10);
+                                return false;
+                            }
+                        });
+                    }
+
+                    if (moving_to_new_module || to !== from) {
+                        var from_module_id = parseInt(ui.item.data('moduleid'), 10);
+                        $form = $(this).find('> .sort-action form');
+                        $form.find('[name="from"], [name="to"]').remove();
+                        $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
+                        $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
+                        if (sorting_forms) {
+                            $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
+                            $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString() + '" />');
                         }
 
-                        if (moving_to_new_module || to !== from) {
-                            var from_module_id = parseInt(ui.item.data('moduleid'), 10);
-                            $form = $(this).find('> .sort-action form');
-                            $form.find('[name="from"], [name="to"]').remove();
-                            $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-                            $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
-                            if (sorting_forms) {
-                                $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
-                                $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
-                            }
-
-                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                                // disable sortable
-                                $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
-                                $sortable.sortable('option', 'disabled', true);
-                            } else {
-                                // Show loading screen and disable rearranging
-                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                                $sortable.find('.drag_handle').remove();
-                            }
-                            $form.submit();
+                        resetIndexes($sortable);
+                        if (from_module_id !== to_module_id) {
+                            var $parentSortable = $sortable.parents(".sortable"),
+                                $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                            resetIndexes($fromSortable);
                         }
-
+                        $.post($form.attr('action'), $form.serialize(), function () {});
                         module.setPublishStatus(true);
                     }
-                };
-                if (sorting_forms) {
-                    init_dict["connectWith"] = '.sortable-forms';
                 }
-                $(this).sortable(init_dict);
+            };
+            if (sorting_forms) {
+                init_dict["connectWith"] = '.sortable-forms';
             }
+            $(this).sortable(init_dict);
         });
         $('.sort-action').hide();
     };
@@ -451,7 +387,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $forms.each(function () {
             var $form = $(this),
                 $buttonHolder = $form.find('.save-button-holder'),
-                button = hqImport("style/js/main").initSaveButtonForm($form, {
+                button = hqImport("hqwebapp/js/main").initSaveButtonForm($form, {
                     unsavedMessage: gettext("You have unsaved changes"),
                     success: function (data) {
                         var key;
@@ -471,9 +407,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            if (!hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-                hqImport("app_manager/js/section_changer").attachToForm($form);
-            }
+            hqImport("app_manager/js/section_changer").attachToForm($form);
         });
     };
 

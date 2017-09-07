@@ -10,11 +10,11 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Medicine Kit";
+    vm.label = "AWCs with Medicine Kit";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/medicine_kit/map', label: 'Map'},
-        'chart': {route: '/medicine_kit/chart', label: 'Chart'},
+        'map': {route: '/medicine_kit/map', label: 'Map View'},
+        'chart': {route: '/medicine_kit/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
@@ -61,10 +61,10 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = infrastructureService.getMedicineKitData(vm.step, vm.filtersData).then(function(response) {
@@ -155,7 +155,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

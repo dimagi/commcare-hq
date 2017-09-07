@@ -46,9 +46,9 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
             return false;
         }
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
-                i = value;
+        window.angular.forEach(vm.selectedLocations, function (value, index) {
+            if (value && value.location_id === userLocationId) {
+                i = index;
             }
         });
         return selectedLocationIndex() !== -1 && i >= level;
@@ -159,7 +159,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                     return vm.hierarchy;
                 },
                 selectedLocations: function () {
-                    return vm.selectedLocations;
+                    return window.angular.copy(vm.selectedLocations);
                 },
                 locationsCache: function () {
                     return vm.locationsCache;
@@ -257,6 +257,14 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     };
 
+    var transformLocationTypeName = function(locationTypeName) {
+        if (locationTypeName === 'awc') {
+            return locationTypeName.toUpperCase();
+        } else {
+            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+        }
+    };
+
     vm.getPlaceholder = function() {
         var selectedLocation = vm.selectedLocations[selectedLocationIndex()];
 
@@ -264,7 +272,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             return 'Location';
         } else {
             var locationTypeName = selectedLocation.location_type_name;
-            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+            return transformLocationTypeName(locationTypeName);
         }
     };
 

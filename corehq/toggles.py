@@ -1063,20 +1063,6 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V1 = StaticToggle(
-    'app_manager_v1',
-    'Turn OFF prototype for case management onboarding (App Manager V2)',
-    TAG_ONE_OFF,
-    [NAMESPACE_USER]
-)
-
-APP_MANAGER_V2_TEMPLATE_APPS = StaticToggle(
-    'app_manager_v2_template_apps',
-    'Experiment with template apps in app builder v2',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 USER_TESTING_SIMPLIFY = StaticToggle(
     'user_testing_simplify',
     'Simplify the UI for user testing experiments',

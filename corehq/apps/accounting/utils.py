@@ -66,11 +66,12 @@ def fmt_product_rate_dict(product, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
     """
+    from corehq.apps.accounting.models import SoftwareProductType
     if product_rate is None:
         product_rate = product.get_rate()
     return {
         'name': product.name,
-        'product_type': product.product_type,
+        'product_type': SoftwareProductType.COMMCARE,
         'product_id': product.id,
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),

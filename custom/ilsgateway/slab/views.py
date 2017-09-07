@@ -8,7 +8,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.locations.views import LocationsListView
 from corehq.apps.reports.standard import CustomProjectReport
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_multiselect,
 )

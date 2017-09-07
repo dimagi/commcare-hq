@@ -79,6 +79,7 @@ from tastypie.resources import Resource
 from corehq import privileges
 from functools import wraps
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
@@ -320,6 +321,11 @@ def is_location_safe(view_fn, view_args, view_kwargs):
         else:
             return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
     return False
+
+
+def report_class_is_location_safe(report_class):
+    cls = to_function(report_class)
+    return cls and getattr(cls, 'slug', None) in LOCATION_SAFE_HQ_REPORTS
 
 
 def user_can_access_location_id(domain, user, location_id):

@@ -28,7 +28,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         self.caseReferenceNotAllowed = ko.computed(function() {
             var moduleUsesCase = initial_page_data('all_other_forms_require_a_case') && initial_page_data('form_requires') === 'case';
-            if (!moduleUsesCase || initial_page_data('put_in_root')) {
+            if (!moduleUsesCase || (initial_page_data('put_in_root') && !initial_page_data('root_requires_same_case'))) {
                 // We want to determine here if the filter expression references
                 // any case but the user case.
                 var filter = self.formFilter();
@@ -62,52 +62,6 @@ hqDefine("app_manager/js/forms/form_view", function() {
         // Validation for build
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
-
-        // CloudCare "Preview Form" URL
-        if (initial_page_data('allow_cloudcare') && hqImport('hqwebapp/js/toggles').toggleEnabled('APP_MANAGER_V1')) {
-            // tag the 'preview in cloudcare' button with the right url
-            // unfortunately, has to be done in javascript
-            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                var url = urlRoot;
-                if (appId !== undefined) {
-                    url = url + "view/" + appId;
-                    if (moduleId !== undefined) {
-                        url = url + "/" + moduleId;
-                        if (formId !== undefined) {
-                            url = url + "/" + formId;
-                            if (caseId !== undefined) {
-                                url = url + "/" + caseId;
-                            }
-                        }
-                    }
-                }
-                return url;
-            };
-            // build the previewCommand in the format that the CommCareSession will understand
-            var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
-                var urlObject = new Util.CloudcareUrl({
-                    'appId': appId,
-                    'previewCommand': 'm' + moduleId + '-f' + formId,
-                });
-                return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
-            };
-
-            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
-                app_id = initial_page_data('app_id'),
-                module_id = initial_page_data('module_id'),
-                form_id = initial_page_data('form_id');
-            var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
-
-            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-            $('#cloudcare-preview-url').click(function() {
-                ga_track_event('CloudCare', 'Click "Preview Form"');
-                analytics.workflow("Clicked Preview Form");
-                if (initial_page_data('user_age_in_days') === 0) {
-                    ga_track_event('CloudCare', 'Clicked "Preview Form" within first 24 hours');
-                    analytics.workflow('Clicked "Preview Form" within first 24 hours');
-                }
-            });
-        }
 
         // Settings > Logic
         var $formFilter = $('#form-filter');

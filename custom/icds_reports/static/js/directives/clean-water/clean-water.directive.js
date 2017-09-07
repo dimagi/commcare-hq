@@ -10,11 +10,11 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "% AWCs with Clean Drinking Water";
+    vm.label = "AWCs with Clean Drinking Water";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/clean_water/map', label: 'Map'},
-        'chart': {route: '/clean_water/chart', label: 'Chart'},
+        'map': {route: '/clean_water/map', label: 'Map View'},
+        'chart': {route: '/clean_water/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
@@ -61,10 +61,10 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = infrastructureService.getCleanWaterData(vm.step, vm.filtersData).then(function(response) {
@@ -155,7 +155,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

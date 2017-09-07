@@ -1,3 +1,4 @@
+import weakref
 from uuid import uuid4
 from xml.etree import ElementTree
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
@@ -123,6 +124,7 @@ class MockDevice(object):
 
     def __init__(self, project, user, restore_options=None,
             sync=False, default_case_type="case", default_owner_id=None):
+        self.id = uuid4().hex
         self.project = project
         self.user = user
         self.user_id = user.user_id
@@ -189,6 +191,7 @@ class MockDevice(object):
             token = self.last_sync.restore_id if self.last_sync else None
             form = self.case_factory.post_case_blocks(
                 self.case_blocks,
+                device_id=self.id,
                 form_extras={"last_sync_token": token},
                 user_id=self.user_id,
             )[0]
@@ -198,6 +201,9 @@ class MockDevice(object):
     def get_restore_config(self, **options):
         for name, value in self.restore_options.items():
             options.setdefault(name, value)
+        if "device_id" in options:
+            raise ValueError("illegal parameter: device_id")
+        options["device_id"] = self.id
         options.setdefault('version', V2)
         if self.last_sync is not None and 'restore_id' not in options:
             options['restore_id'] = self.last_sync.restore_id
@@ -209,17 +215,26 @@ class MockDevice(object):
         # restore
         restore_config = self.get_restore_config(**config)
         payload = restore_config.get_payload().as_string()
-        self.last_sync = SyncResult(restore_config, payload, form)
+        self.last_sync = SyncResult(self, restore_config, payload, form)
         return self.last_sync
 
 
 class SyncResult(object):
 
-    def __init__(self, config, payload, form):
+    def __init__(self, device, config, payload, form):
+        self.device = device
         self.config = config
         self.payload = payload
         self.form = form
         self.xml = ElementTree.fromstring(payload)
+
+    @property
+    def device(self):
+        return self._device()
+
+    @device.setter
+    def device(self, value):
+        self._device = weakref.ref(value)
 
     @property
     @memoized
@@ -265,7 +280,7 @@ class SyncResult(object):
             domain=self.config.domain,
             user_id=self.config.restore_user.user_id,
             sync_log_id=self.restore_id,
-            device_id=None,
+            device_id=self.device.id,
         ).get_value())
 
 

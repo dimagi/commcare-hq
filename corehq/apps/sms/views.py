@@ -27,7 +27,7 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_timepicker,
     use_typeahead,
     use_select2,

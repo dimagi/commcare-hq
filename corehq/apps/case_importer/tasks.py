@@ -8,7 +8,6 @@ from corehq.apps.case_importer.tracking.analytics import \
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.util.datadog.gauges import datadog_gauge_task
-from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.case_importer.const import LookupErrors, ImportErrors
@@ -17,7 +16,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.util.soft_assert import soft_assert
 import uuid
@@ -63,7 +61,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
-    prime_offset = 1  # used to prevent back-to-back priming
 
     user = CouchUser.get_by_user_id(config.couch_user_id, domain)
     username = user.username
@@ -84,6 +81,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     domain,
                     username,
                     user_id,
+                    device_id=__name__ + ".do_import",
                 )
 
                 if form.is_error:
@@ -126,13 +124,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         # skip first row (header row)
         if i == 0:
             continue
-
-        if not is_bigcouch():
-            priming_progress = match_count + created_count + prime_offset
-            if priming_progress % PRIME_VIEW_FREQUENCY == 0:
-                prime_views(POOL_SIZE)
-                # increment so we can't possibly prime on next iteration
-                prime_offset += 1
 
         search_id = importer_util.parse_search_id(config, columns, row)
 
