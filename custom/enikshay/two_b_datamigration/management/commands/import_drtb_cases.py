@@ -993,11 +993,12 @@ def get_test_summary(properties):
 
 def get_cbnaat_resistance(column_mapping, row):
     value = column_mapping.get_value("cbnaat_result", row)
-    if value is None:
+    if not value:
         return None
-    if value not in ["sensitive", "resistant"]:
+    clean_value = value.lower().strip()
+    if clean_value not in ["tb detected, rif resistance detected", "tb detected, rif sensitive"]:
         raise FieldValidationFailure(value, "cbnaat result")
-    return value == "resistant"
+    return clean_value == "tb detected, rif resistance detected"
 
 
 def clean_mumbai_lpa_resistance_value(value):
@@ -1640,25 +1641,22 @@ def clean_socioeconomic_status(value):
 
 
 def clean_result(value):
+    value = value.lower().strip()
     return {
         None: NO_RESULT,
-        NO_RESULT: NO_RESULT,
-        NOT_DETECTED: NOT_DETECTED,
-        DETECTED: DETECTED,
-        "Sample rejected": NO_RESULT,
-        "Result awaited": NO_RESULT,
+        NO_RESULT.lower(): NO_RESULT,
+        NOT_DETECTED.lower(): NOT_DETECTED,
+        DETECTED.lower(): DETECTED,
+        "sample rejected": NO_RESULT,
+        "result awaited": NO_RESULT,
         "conta": NO_RESULT,
-        "Conta": NO_RESULT,
-        "CONTA": NO_RESULT,
-        "Contaminated": NO_RESULT,
-        "NA": NO_RESULT,
-        "Neg": NO_RESULT,
-        "NEG": NOT_DETECTED,
-        "Negative": NOT_DETECTED,
-        "Negetive": NOT_DETECTED,
+        "contaminated": NO_RESULT,
+        "na": NO_RESULT,
+        "neg": NOT_DETECTED,
+        "negetive": NOT_DETECTED,
         "negative": NOT_DETECTED,
         "pos": DETECTED,
-        "Positive": DETECTED,
+        "positive": DETECTED,
     }[value]
 
 
