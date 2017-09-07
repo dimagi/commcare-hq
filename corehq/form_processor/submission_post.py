@@ -17,20 +17,23 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
+from corehq.const import OPENROSA_VERSION_3
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.exceptions import CouchSaveAborted
+from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.util.global_request import get_request
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log
 
 from celery.task.control import revoke as revoke_celery_task
@@ -78,6 +81,8 @@ class SubmissionPost(object):
         # always None except in the case where a system form is being processed as part of another submission
         # e.g. for closing extension cases
         self.case_db = case_db
+
+        self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -148,6 +153,7 @@ class SubmissionPost(object):
         cases = []
         ledgers = []
         submission_type = 'unknown'
+        response_nature = error_message = None
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -182,6 +188,7 @@ class SubmissionPost(object):
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
+                        response_nature = ResponseNature.PROCESSING_FAILURE
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -191,16 +198,15 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
-                        self.save_processed_models(xforms, case_stock_result)
-                        case_stock_result.case_result.close_extensions(case_db,
-                            "SubmissionPost-%s-close_extensions" % instance.form_id)
+                        error_message = self.save_processed_models(case_db, xforms, case_stock_result)
+                        if error_message:
+                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:
                     submission_type = 'error'
 
-            errors = self.process_signals(instance)
-            response = self._get_open_rosa_response(instance, errors)
+            response = self._get_open_rosa_response(instance, error_message, response_nature)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _invalidate_caches(self, xform):
@@ -233,24 +239,43 @@ class SubmissionPost(object):
             revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
 
-    def save_processed_models(self, xforms, case_stock_result):
-        from casexml.apps.case.signals import case_post_save
+    def save_processed_models(self, case_db, xforms, case_stock_result):
         instance = xforms[0]
-        with unfinished_submission(instance) as unfinished_submission_stub:
-            self.interface.save_processed_models(
-                xforms,
-                case_stock_result.case_models,
-                case_stock_result.stock_result
-            )
+        try:
+            with unfinished_submission(instance) as unfinished_submission_stub:
+                self.interface.save_processed_models(
+                    xforms,
+                    case_stock_result.case_models,
+                    case_stock_result.stock_result
+                )
 
-            unfinished_submission_stub.saved = True
-            unfinished_submission_stub.save()
+                unfinished_submission_stub.saved = True
+                unfinished_submission_stub.save()
 
+                self._do_post_save_actions(case_db, xforms, case_stock_result)
+        except PostSaveError:
+            return "Error performing post save operations"
+
+    def _do_post_save_actions(self, case_db, xforms, case_stock_result):
+        instance = xforms[0]
+        try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
-            for case in case_stock_result.case_models:
-                case_post_save.send(case.__class__, case=case)
+            self._fire_post_save_signals(instance, case_stock_result.case_models)
+
+            case_stock_result.case_result.close_extensions(
+                case_db,
+                "SubmissionPost-%s-close_extensions" % instance.form_id
+            )
+        except PostSaveError:
+            raise
+        except Exception:
+            notify_exception(get_request(), "Error performing post save actions during form processing", {
+                'domain': instance.domain,
+                'form_id': instance.form_id,
+            })
+            raise PostSaveError
 
     @staticmethod
     def process_xforms_for_cases(xforms, case_db):
@@ -277,27 +302,33 @@ class SubmissionPost(object):
     def get_response(self):
         return self.run().response
 
-    def process_signals(self, instance):
-        feedback = successful_form_received.send_robust(None, xform=instance)
-        errors = []
-        for func, resp in feedback:
-            if resp and isinstance(resp, Exception):
-                error_message = unicode(resp)
-                logging.error((
-                    u"Receiver app: problem sending "
-                    u"post-save signal %s for xform %s: %s: %s"
-                ) % (func, instance.form_id, type(resp).__name__, error_message))
-                errors.append(error_message)
-        if errors:
-            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.formdb.update_form_problem_and_state(instance)
-        return errors
+    def _fire_post_save_signals(self, instance, cases):
+        from casexml.apps.case.signals import case_post_save
+        error_message = "Error occurred during form submission post save (%s)"
+        error_details = {'domain': instance.domain, 'form_id': instance.form_id}
+        results = successful_form_received.send_robust(None, xform=instance)
+        has_errors = log_signal_errors(results, error_message, error_details)
 
-    def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal and not errors:
-            response = self.get_success_response()
+        for case in cases:
+            results = case_post_save.send_robust(case.__class__, case=case)
+            has_errors &= log_signal_errors(results, error_message, error_details)
+        if has_errors:
+            raise PostSaveError
+
+    def _get_open_rosa_response(self, instance, error_message=None, error_nature=None):
+        if self.is_openrosa_version3:
+            instance_ok = instance.is_normal or instance.is_duplicate
+            has_error = error_message or error_nature
+            if instance_ok and not has_error:
+                response = self.get_success_response()
+            else:
+                error_message = error_message or instance.problem
+                response = self.get_retry_response(error_message, error_nature)
         else:
-            response = self.get_failure_response(instance)
+            if instance.is_normal:
+                response = self.get_success_response()
+            else:
+                response = self.get_v2_submit_error_response(instance)
 
         # this hack is required for ODK
         response["Location"] = self.location
@@ -325,11 +356,21 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_failure_response(doc):
+    def get_v2_submit_error_response(doc):
         return OpenRosaResponse(
             message=doc.problem,
             nature=ResponseNature.SUBMIT_ERROR,
             status=201,
+        ).response()
+
+    @staticmethod
+    def get_retry_response(message, nature):
+        """Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+        """
+        return OpenRosaResponse(
+            message=message,
+            nature=nature,
+            status=422,
         ).response()
 
     @staticmethod
