@@ -145,12 +145,8 @@ class FormProcessorInterface(object):
             logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            xforms_being_saved = [form.form_id for form in forms if form]
-            error_message = u'Unexpected error bulk saving docs during form processing ({})'.format(
-                ', '.join(xforms_being_saved),
-            )
             from corehq.form_processor.submission_post import handle_unexpected_error
-            handle_unexpected_error(self, forms.submitted, e, error_message)
+            handle_unexpected_error(self, forms.submitted, e)
             e.sentry_capture = False  # we've already notified
             raise
 

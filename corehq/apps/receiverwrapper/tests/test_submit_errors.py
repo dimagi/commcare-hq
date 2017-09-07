@@ -1,7 +1,9 @@
 # coding: utf-8
 import contextlib
 
+from django.db.utils import InternalError
 from django.test import TestCase
+from mock import patch
 
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -138,6 +140,26 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self.assertEqual(503, res.status_code)
         message = "Service Temporarily Unavailable"
         self.assertIn(message, res.content)
+
+    def test_error_saving_normal_form(self):
+        sql_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
+            side_effect=InternalError
+        )
+        couch_patch = patch(
+            'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
+            side_effect=InternalError
+        )
+        with sql_patch, couch_patch:
+            with self.assertRaises(InternalError):
+                _, res = self._submit('form_with_case.xml', OPENROSA_VERSION_3)
+
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        self.assertEqual(1, len(stubs))
+
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertTrue(form.is_error)
+        self.assertTrue(form.initial_processing_complete)
 
 
 @use_sql_backend
