@@ -19,7 +19,7 @@ from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
-
+from dimagi.utils.couch import LockManager
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
 
@@ -90,85 +90,87 @@ def reprocess_xform_error_by_id(form_id, domain=None):
     return reprocess_xform_error(form)
 
 
-def _reprocess_form(form, save=True):
-    logger.info('Reprocessing form: %s (%s)', form.form_id, form.domain)
-    # reset form state prior to processing
-    if should_use_sql_backend(form.domain):
-        form.state = XFormInstanceSQL.NORMAL
-    else:
-        form.doc_type = 'XFormInstance'
-
-    form.initial_processing_complete = True
-    form.problem = None
-
+def _reprocess_form(form, save=True, lock_form=True):
     interface = FormProcessorInterface(form.domain)
-    accessors = FormAccessors(form.domain)
-    cache = interface.casedb_cache(
-        domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
-    )
-    with cache as casedb:
-        try:
-            case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
-        except (IllegalCaseId, UsesReferrals, MissingProductId,
-                PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
-            error_message = '{}: {}'.format(type(e).__name__, unicode(e))
-            form = interface.xformerror_from_xform_instance(form, error_message)
-            accessors.update_form_problem_and_state(form)
-            return ReprocessingResult(form, [], [])
-
-        stock_result = case_stock_result.stock_result
-        assert stock_result.populated
-
-        cases = case_stock_result.case_models
-        _log_changes('unfiltered', cases, stock_result.models_to_save, stock_result.models_to_delete)
-
-        ledgers = []
+    lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else False
+    with LockManager(form, lock):
+        logger.info('Reprocessing form: %s (%s)', form.form_id, form.domain)
+        # reset form state prior to processing
         if should_use_sql_backend(form.domain):
-            cases = _filter_already_processed_cases(form, cases)
-            cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
-            if save:
-                for case in cases:
-                    CaseAccessorSQL.save_case(case)
-
-            ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
-            ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
-            if save:
-                LedgerAccessorSQL.save_ledger_values(ledgers)
-
-            if save:
-                FormAccessorSQL.update_form_problem_and_state(form)
-                publish_form_saved(form)
-
-            _log_changes('filtered', cases, ledgers, [])
-
-            # rebuild cases and ledgers that were affected
-            for case in cases:
-                if case.case_id in cases_needing_rebuild:
-                    logger.info('Rebuilding case: %s', case.case_id)
-                    if save:
-                        # only rebuild cases that were updated
-                        detail = FormReprocessRebuild(form_id=form.form_id)
-                        interface.hard_rebuild_case(case.case_id, detail, lock=False)
-                save and case_post_save.send(case.__class__, case=case)
-
-            for ledger in ledgers:
-                if ledger.ledger_reference in ledgers_updated:
-                    logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
-                    if save:
-                        # only rebuild upated ledgers
-                        interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
-
+            form.state = XFormInstanceSQL.NORMAL
         else:
-            if save:
-                with bulk_atomic_blobs([form] + cases):
-                    XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
-                    XFormInstance.get_db().bulk_save(cases)
-                stock_result.commit()
+            form.doc_type = 'XFormInstance'
 
-        save and case_stock_result.stock_result.finalize()
-        save and case_stock_result.case_result.commit_dirtiness_flags()
+        form.initial_processing_complete = True
+        form.problem = None
 
-    return ReprocessingResult(form, cases, ledgers)
+        accessors = FormAccessors(form.domain)
+        cache = interface.casedb_cache(
+            domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+        )
+        with cache as casedb:
+            try:
+                case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+            except (IllegalCaseId, UsesReferrals, MissingProductId,
+                    PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+                error_message = '{}: {}'.format(type(e).__name__, unicode(e))
+                form = interface.xformerror_from_xform_instance(form, error_message)
+                accessors.update_form_problem_and_state(form)
+                return ReprocessingResult(form, [], [])
+
+            stock_result = case_stock_result.stock_result
+            assert stock_result.populated
+
+            cases = case_stock_result.case_models
+            _log_changes('unfiltered', cases, stock_result.models_to_save, stock_result.models_to_delete)
+
+            ledgers = []
+            if should_use_sql_backend(form.domain):
+                cases = _filter_already_processed_cases(form, cases)
+                cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
+                if save:
+                    for case in cases:
+                        CaseAccessorSQL.save_case(case)
+
+                ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
+                ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
+                if save:
+                    LedgerAccessorSQL.save_ledger_values(ledgers)
+
+                if save:
+                    FormAccessorSQL.update_form_problem_and_state(form)
+                    publish_form_saved(form)
+
+                _log_changes('filtered', cases, ledgers, [])
+
+                # rebuild cases and ledgers that were affected
+                for case in cases:
+                    if case.case_id in cases_needing_rebuild:
+                        logger.info('Rebuilding case: %s', case.case_id)
+                        if save:
+                            # only rebuild cases that were updated
+                            detail = FormReprocessRebuild(form_id=form.form_id)
+                            interface.hard_rebuild_case(case.case_id, detail, lock=False)
+                    save and case_post_save.send(case.__class__, case=case)
+
+                for ledger in ledgers:
+                    if ledger.ledger_reference in ledgers_updated:
+                        logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
+                        if save:
+                            # only rebuild upated ledgers
+                            interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
+
+            else:
+                if save:
+                    with bulk_atomic_blobs([form] + cases):
+                        XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
+                        XFormInstance.get_db().bulk_save(cases)
+                    stock_result.commit()
+
+            save and case_stock_result.stock_result.finalize()
+            save and case_stock_result.case_result.commit_dirtiness_flags()
+
+        return ReprocessingResult(form, cases, ledgers)
 
 
 def _log_changes(slug, cases, stock_updates, stock_deletes):
