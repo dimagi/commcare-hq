@@ -64,3 +64,87 @@ def get_ucr_data(report_config, date_filter, date_span):
     filter_values = get_filter_values(report_config.ui_filters, filter_params)
     data_source.set_filter_values(filter_values)
     return data_source.get_data()
+
+
+def fetch_id_display_name_dict(api, list_endpoint):
+    item_dict = {
+        # '<id>': {
+        #     'id': '<id>',
+        #     'name': '<displayName>',
+        # },
+        # # ...
+    }
+    resp = api.get(list_endpoint, params={'paging': 'false'})
+    resp_json = resp.json()
+    for item in resp_json[list_endpoint]:
+        item_id = item['id']
+        item_dict[item_id] = {
+            'id': item_id,
+            'name': item['displayName'],
+        }
+    return item_dict
+
+
+def fetch_data_sets(api, data_elements, category_option_combos):
+    data_sets = {
+        # '<id>': {
+        #     'id': '<id>',
+        #     'name': '<displayName>',
+        #     'data_elements': {
+        #         '<id>': {
+        #             'id': '<id>',
+        #             'name': '<displayName>',
+        #         },
+        #         # ...
+        #     },
+        #     'category_option_combos': {
+        #         '<id>': {
+        #             'id': '<id>',
+        #             'name': '<displayName>',
+        #         },
+        #         # ...
+        #     }
+        # },
+        # # ...
+    }
+    resp = api.get('dataSets', params={'paging': 'false'})
+    data_sets_json = resp.json()  # {"dataSets":[{"id":"lyLU2wR22tC","displayName":"ART monthly summary"},...]}
+    for data_set in data_sets_json['dataSets']:
+        data_set_id = data_set['id']
+        # Get details for each data set to find its data elements
+        resp = api.get('dataSets/' + data_set_id)
+        data_set_json = resp.json()
+        data_sets[data_set_id] = {
+            'id': data_set_id,
+            'name': data_set['displayName'],
+            'data_elements': {},
+            'category_option_combos': {},
+        }
+        for data_set_element in data_set_json['dataSetElements']:
+            data_element_id = data_set_element['dataElement']['id']
+            try:
+                data_sets[data_set_id]['data_elements'][data_element_id] = data_elements[data_element_id]
+            except KeyError:
+                # TODO: This is a good place to log the fact that a data element of the data set was not found
+                pass
+        resp = api.get('categoryCombos/' + data_set_json['categoryCombo']['id'])
+        category_combo_json = resp.json()
+        if 'categoryOptionCombos' in category_combo_json:
+            for category_option_combo in category_combo_json['categoryOptionCombos']:
+                coc_id = category_option_combo['id']
+                try:
+                    data_sets[data_set_id]['category_option_combos'][coc_id] = category_option_combos[coc_id]
+                except KeyError:
+                    # TODO: Logging
+                    pass
+    return data_sets
+
+
+def fetch_dhis2_id_display_names(api):
+    """
+    Fetches IDs and display names from DHIS2 for dropdowns in HQ
+    """
+    data_elements = fetch_id_display_name_dict(api, 'dataElements')
+    category_option_combos = fetch_id_display_name_dict(api, 'categoryOptionCombos')
+    data_sets = fetch_data_sets(api, data_elements, category_option_combos)
+    return data_sets
