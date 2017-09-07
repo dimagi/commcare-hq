@@ -1754,7 +1754,6 @@ def match_location_by_site_code(domain, site_code):
         raise ValidationFailure("No location matches for {}".format(site_code))
 
 
-
 def match_facility(domain, xlsx_facility_name):
     """
     Given lab facility name taken from the spreadsheet, return the name and id of the matching location in HQ.
