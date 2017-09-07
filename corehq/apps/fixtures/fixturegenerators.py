@@ -63,8 +63,11 @@ class ItemListsProvider(FixtureProvider):
                 global_types[data_type._id] = data_type
             else:
                 user_types[data_type._id] = data_type
-        items = self.get_global_items(global_types, restore_state)
-        items.extend(self.get_user_items(user_types, restore_user))
+        items = []
+        if global_types:
+            items.extend(self.get_global_items(global_types, restore_state))
+        if user_types:
+            items.extend(self.get_user_items(user_types, restore_user))
         return items
 
     def get_global_items(self, global_types, restore_state):
@@ -91,8 +94,6 @@ class ItemListsProvider(FixtureProvider):
         return global_items
 
     def _get_global_items(self, global_types, domain):
-        if not global_types:
-            return []
         items_by_type = defaultdict(list)
         for item in FixtureDataItem.by_data_types(domain, global_types):
             data_type = global_types[item.data_type_id]
@@ -101,8 +102,6 @@ class ItemListsProvider(FixtureProvider):
         return self._get_fixtures(global_types, items_by_type, GLOBAL_USER_ID)
 
     def get_user_items(self, user_types, restore_user):
-        if not user_types:
-            return []
         items_by_type = defaultdict(list)
         for item in restore_user.get_fixture_data_items():
             try:
