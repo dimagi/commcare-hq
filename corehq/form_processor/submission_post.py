@@ -179,6 +179,17 @@ class SubmissionPost(object):
 
                 elif instance.is_duplicate:
                     submission_type = 'duplicate'
+                    stub = UnfinishedSubmissionStub.objects.filter(
+                        domain=instance.domain,
+                        xform_id=instance.orig_id
+                    ).first()
+
+                    if stub:
+                        # reprocess_stub
+                        pass
+                    elif xforms[1].is_error:
+                        # trigger reprocessing
+                        pass
                     self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
