@@ -15,7 +15,7 @@
     "engine_id": "ucr",
     "description": "",
     "base_item_expression": {},
-    "table_id": "test_tasklist_v2",
+    "table_id": "test_task_list_v2",
     "display_name": "test (task list) v2",
     "configured_filter": {
       "type": "and",
