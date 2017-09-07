@@ -1197,7 +1197,9 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "date_reported": date_reported,
         "culture_type": culture_type,
         "test_type_label": get_culture_type_label(culture_type) or 'Culture',
-        "result": clean_result(column_mapping.get_value("culture_result", row))
+        "result": clean_result(column_mapping.get_value("culture_result", row)),
+        "drug_resistance_list": '',
+        "drug_sensitive_list": '',
     }
     properties['result_summary_display'] = get_test_summary(properties)
     return properties
