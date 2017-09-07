@@ -7,20 +7,7 @@
     {% trans 'Manage Lookup Tables' %}
 {% endblock %}
 
-{% block requirejs_entry %}
-    // TODO: This is for the built version only
-    requirejs.config({
-        /*bundles: {
-            'hqwebapp/js/common': ['jquery', 'knockout', 'hqwebapp/js/initial_page_data', 'bootstrap', 'django', 'underscore', 'hq.helpers', 'ko.mapping', 'ko.knockout_bindings'],
-            'fixtures/js/built': ['reports/js/filters.js', 'reports/js/standard_hq_report.js', 'reports/js/config.dataTables.bootstrap'],
-        },*/
-    });
-    requirejs(['hqwebapp/js/common'], function (common) {
-        requirejs(['fixtures/js/built'], function (fixtures) {
-            requirejs(['fixtures/js/lookup-manage']);
-        });
-    });
-{% endblock requirejs_entry %}
+{% block requirejs_entry %}fixtures/js/lookup-manage{% endblock requirejs_entry %}
 
 {% block page_content %}
 {% registerurl 'download_fixtures' domain %}

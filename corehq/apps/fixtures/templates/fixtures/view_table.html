@@ -16,9 +16,7 @@
     {% endif%}
 {% endblock %}
 
-{% block requirejs_entry %}
-    requirejs(["{% static 'fixtures/js/view-table.js' %}"]);
-{% endblock requirejs_entry %}
+{% block requirejs_entry %}fixtures/js/view-table{% endblock requirejs_entry %}
 
 {% block page_content %}
     {% initial_page_data 'renderReportTables' 1 %}

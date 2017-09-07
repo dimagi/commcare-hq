@@ -6,7 +6,6 @@ define([
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
-    "hqwebapp/js/hq.helpers",
 ], function(
     $,
     ko,
