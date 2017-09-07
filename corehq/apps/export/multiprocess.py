@@ -142,7 +142,7 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
     won't show the traceback
     """
     logger.info('    Processing page {} started (attempt {})'.format(page_number, attempts))
-    progress_queue = getattr(run_export, 'queue', None)
+    progress_queue = getattr(run_export_with_logging, 'queue', None)
     update_frequency = min(1000, int(doc_count / 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, progress_queue, update_frequency)
     try:
