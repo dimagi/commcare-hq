@@ -15,7 +15,7 @@
     "engine_id": "ucr",
     "description": "",
     "base_item_expression": {},
-    "table_id": "episode_tasklist_v2",
+    "table_id": "episode_task_list_v2",
     "display_name": "episode (task list) v2",
     "configured_filter": {
       "type": "and",
