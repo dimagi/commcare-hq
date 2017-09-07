@@ -997,8 +997,8 @@ class MessagingTab(UITab):
             if self.project.uses_new_reminders:
                 from corehq.messaging.scheduling.views import (
                     BroadcastListView as NewBroadcastListView,
-                    CreateMessageView,
-                    EditMessageView,
+                    CreateScheduleView,
+                    EditScheduleView,
                 )
                 messages_urls.extend([
                     {
@@ -1007,11 +1007,11 @@ class MessagingTab(UITab):
                         'subpages': [
                             {
                                 'title': _("New Message"),
-                                'urlname': CreateMessageView.urlname,
+                                'urlname': CreateScheduleView.urlname,
                             },
                             {
                                 'title': _("Edit Message"),
-                                'urlname': EditMessageView.urlname,
+                                'urlname': EditScheduleView.urlname,
                             },
                         ],
                         'show_in_dropdown': True,

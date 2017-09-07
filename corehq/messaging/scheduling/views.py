@@ -126,7 +126,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         return super(BroadcastListView, self).get(*args, **kwargs)
 
 
-class CreateMessageView(BaseMessagingSectionView, AsyncHandlerMixin):
+class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_message'
     page_title = _('Create a Message')
     template_name = 'scheduling/create_message.html'
@@ -136,7 +136,7 @@ class CreateMessageView(BaseMessagingSectionView, AsyncHandlerMixin):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_select2
     def dispatch(self, *args, **kwargs):
-        return super(CreateMessageView, self).dispatch(*args, **kwargs)
+        return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
     @cached_property
     def project_timezone(self):
@@ -203,7 +203,7 @@ class CreateMessageView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class EditMessageView(CreateMessageView):
+class EditScheduleView(CreateScheduleView):
     urlname = 'edit_message'
     page_title = _('Edit Message')
 
@@ -256,7 +256,7 @@ class EditMessageView(CreateMessageView):
             _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
             _soft_assert(False, "Someone tried to edit an 'immediate' message")
             return HttpResponseBadRequest(_("Cannot edit messages that were sent immediately"))
-        super(EditMessageView, self).post(request, *args, **kwargs)
+        super(EditScheduleView, self).post(request, *args, **kwargs)
 
 
 @login_and_domain_required
