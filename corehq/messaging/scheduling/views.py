@@ -269,7 +269,6 @@ def possible_sms_recipients(request, domain):
     # TODO Add locations
     # TODO Add mobile worker groups
     # TODO will need to know doc type as well
-    # TODO Support "send to all"
     query = request.GET.get('name', '').lower()
     users = get_search_users_in_domain_es_query(domain, query, 10, 0)
     users = users.mobile_users().source(('_id', 'base_username')).run().hits
