@@ -1206,7 +1206,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
 def clean_culture_type(value):
     if not value:
         return None
-    clean_value = value.lower()
+    clean_value = value.lower().strip()
     try:
         return {
             "lc": "lc",
