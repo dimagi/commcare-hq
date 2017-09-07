@@ -248,6 +248,7 @@ class EditScheduleView(CreateScheduleView):
             'send_frequency': 'immediately',
             'recipients': ret,
             'content': 'sms',
+            # only works for SMS
             'message': schedule.memoized_events[0].content.message,
         }
         return MessageForm(initial=initial, **self.form_kwargs)
