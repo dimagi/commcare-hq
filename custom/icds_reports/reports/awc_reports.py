@@ -831,10 +831,10 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
     }
 
 
-def get_awc_report_beneficiary(domain, awc_id, month, two_before):
+def get_awc_report_beneficiary(domain, awc_site_code, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_id=awc_id,
+        awc_site_code="awc_site_code",
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72

@@ -272,10 +272,11 @@ def get_location_filter(location, domain, config):
                 )[0].code
             else:
                 loc_level = LocationTypes.AWC
+
             for loc in locations:
-                location_key = '%s_id' % loc.location_type.code
+                location_key = '%s_site_code' % loc.location_type.code
                 config.update({
-                    location_key: loc.location_id,
+                    location_key: loc.site_code,
                 })
             config.update({
                 'aggregation_level': aggregation_level
