@@ -1689,11 +1689,10 @@ def result_label(result):
 
 
 def clean_date(messy_date_string):
-    messy_date_string = messy_date_string.strip()
     if messy_date_string:
         if isinstance(messy_date_string, datetime.date):
             return messy_date_string
-        if messy_date_string == "?":
+        if messy_date_string == "?" or not messy_date_string.strip():
             return None
 
         # The excel library we use should actually import dates correctly if the column format is date.
