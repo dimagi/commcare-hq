@@ -5,6 +5,7 @@ from django.db.utils import InternalError
 from django.test import TestCase
 from mock import patch
 
+from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
 from django.test.client import Client
@@ -17,6 +18,7 @@ from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTest
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.test_utils import flag_enabled, TestFileMixin
 from couchforms.models import UnfinishedSubmissionStub
+from couchforms.openrosa_response import ResponseNature
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
@@ -152,7 +154,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         )
         with sql_patch, couch_patch:
             with self.assertRaises(InternalError):
-                _, res = self._submit('form_with_case.xml', OPENROSA_VERSION_3)
+                _, res = self._submit('form_with_case.xml')
 
         stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
         self.assertEqual(1, len(stubs))
@@ -160,6 +162,27 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
         self.assertTrue(form.is_error)
         self.assertTrue(form.initial_processing_complete)
+
+    def _test_case_processing_error(self, openrosa_version):
+        with patch('casexml.apps.case.xform._get_or_update_cases', side_effect=IllegalCaseId):
+            _, res = self._submit('form_with_case.xml', open_rosa_header=openrosa_version)
+
+        if openrosa_version == OPENROSA_VERSION_3:
+            self.assertEqual(422, res.status_code)
+            self.assertIn(ResponseNature.PROCESSING_FAILURE, res.content)
+        else:
+            self.assertEqual(201, res.status_code)
+            self.assertIn(ResponseNature.SUBMIT_ERROR, res.content)
+
+        form = FormAccessors(self.domain).get_form('ad38211be256653bceac8e2156475666')
+        self.assertTrue(form.is_error)
+        self.assertFalse(form.initial_processing_complete)
+
+    def test_case_processing_error_2_0(self):
+        self._test_case_processing_error(OPENROSA_VERSION_2)
+
+    def test_case_processing_error_3_0(self):
+        self._test_case_processing_error(OPENROSA_VERSION_3)
 
 
 @use_sql_backend
