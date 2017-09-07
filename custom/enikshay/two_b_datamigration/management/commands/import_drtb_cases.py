@@ -1832,7 +1832,7 @@ class _PersonIdGenerator(object):
     @classmethod
     def get_user(cls, domain, phi_id):
         users = get_users_by_location_id(domain, phi_id)
-        for user in sorted(users, lambda u: u.username):
+        for user in sorted(users, key=lambda u: u.username):
             if user.user_data['id_issuer_body']:
                 return user
         raise Exception("No suitable user found at location {}".format(phi_id))
