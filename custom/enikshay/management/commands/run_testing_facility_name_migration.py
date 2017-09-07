@@ -99,7 +99,7 @@ class Command(BaseCommand):
                         )
                         testing_facility_name = microscopy_name or cbnaat_name or clinic_name
 
-                    if testing_facility_name == "yes":
+                    if testing_facility_name:
                         writer.writerow([test.case_id, testing_facility_name, "yes"])
                         case_id = test.case_id
                         print('Updating {}...'.format(case_id))
