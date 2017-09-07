@@ -1062,6 +1062,8 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "case"],
             ["domain", "referenced_id"],
         ]
+        # add this once all duplicate have been removed
+        # unique_together = ('case', 'identifier')
         db_table = CommCareCaseIndexSQL_DB_TABLE
         app_label = "form_processor"
 
