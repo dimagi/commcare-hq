@@ -1736,6 +1736,22 @@ def match_location(domain, xlsx_name, location_type=None):
             raise ValidationFailure("No location matches for {}".format(xlsx_name))
     return location.name, location.location_id
 
+@memoized
+def match_location_by_site_code(domain, site_code):
+    """
+    Given a site code, return the name and id of the matching location in HQ.
+    """
+    if not site_code:
+        return None, None
+    site_code = site_code.strip()
+
+    location = SQLLocation.objects.get_or_None(domain=domain, site_code=site_code)
+    if location:
+        return location.name, location.location_id
+    else:
+        raise ValidationFailure("No location matches for {}".format(site_code))
+
+
 
 def match_facility(domain, xlsx_facility_name):
     """
@@ -1752,11 +1768,11 @@ def match_facility(domain, xlsx_facility_name):
             return match_location(domain, xlsx_facility_name, location_type="cdst")
         except ValidationFailure:
             try:
-                cbnaat_facility_name = "cbnaat_" + xlsx_facility_name.strip().replace('-', '_').lower()
-                return match_location(domain, cbnaat_facility_name, location_type="cdst")
+                cbnaat_site_code = "cbnaat_" + xlsx_facility_name.strip().replace('-', '_').lower()
+                return match_location_by_site_code(domain, cbnaat_site_code)
             except ValidationFailure:
-                cdst_facility_name = "cdst_" + xlsx_facility_name.strip().replace('-', '_').lower()
-                return match_location(domain, cdst_facility_name, location_type="cdst")
+                cdst_site_code = "cdst_" + xlsx_facility_name.strip().replace('-', '_').lower()
+                return match_location_by_site_code(domain, cdst_site_code)
 
 
 def match_phi(domain, xlsx_phi_name):
