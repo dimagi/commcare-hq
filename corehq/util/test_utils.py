@@ -96,7 +96,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_path(cls, name, ext, override_path=None):
-        return os.path.join(cls.get_base(override_path), '%s.%s' % (name, ext))
+        return os.path.join(cls.get_base(override_path), '%s%s' % (name, ext))
 
     @classmethod
     def get_file(cls, name, ext, override_path=None):
@@ -105,16 +105,16 @@ class TestFileMixin(object):
 
     @classmethod
     def write_xml(cls, name, xml, override_path=None):
-        with open(cls.get_path(name, 'xml', override_path), 'w') as f:
+        with open(cls.get_path(name, '.xml', override_path), 'w') as f:
             return f.write(xml)
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, 'json', override_path))
+        return json.loads(cls.get_file(name, '.json', override_path))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
-        return cls.get_file(name, 'xml', override_path)
+        return cls.get_file(name, '.xml', override_path)
 
 
 def flag_enabled(toggle_class_string):
