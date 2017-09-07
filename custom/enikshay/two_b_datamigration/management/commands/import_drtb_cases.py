@@ -1311,12 +1311,14 @@ def convert_sensitivity(sensitivity_value):
     return {
         "sensitive": "sensitive",
         "resistant": "resistant",
+        "resisant": "resistant",
+        "resisitant": "resistant",
         "unknown": "unknown",
         "s": "sensitive",
         "r": "resistant",
         "conta": "unknown",
         "": "unknown",
-    }[sensitivity_value.lower()]
+    }[sensitivity_value.lower().strip()]
 
 
 def convert_treatment_status(status_in_xlsx):
