@@ -278,7 +278,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             actionButton: '#double-management',
             searchButton: '#case-list-search-button',
             paginators: '.page-link',
-            columnHeader: '.module-caselist-header',
+            columnHeader: '.header-clickable',
         },
 
         events: {
@@ -330,6 +330,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
+                sortIndices: this.options.sortIndices,
+                columnSortable: function(index) {
+                    return this.sortIndices.indexOf(index) > -1;
+                },
+                columnVisible: function(index) {
+                    return !(this.widthHints && this.widthHints[index] === 0);
+                },
             };
         },
     });
