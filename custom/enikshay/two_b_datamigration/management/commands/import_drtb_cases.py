@@ -1689,6 +1689,7 @@ def result_label(result):
 
 
 def clean_date(messy_date_string):
+    messy_date_string = messy_date_string.strip()
     if messy_date_string:
         if isinstance(messy_date_string, datetime.date):
             return messy_date_string
