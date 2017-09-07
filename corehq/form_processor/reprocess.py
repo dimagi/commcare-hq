@@ -167,8 +167,7 @@ def _reprocess_form(form, save=True, lock_form=True):
                         XFormInstance.get_db().bulk_save(cases)
                     stock_result.commit()
 
-            save and case_stock_result.stock_result.finalize()
-            save and case_stock_result.case_result.commit_dirtiness_flags()
+            save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
 
         return ReprocessingResult(form, cases, ledgers)
 

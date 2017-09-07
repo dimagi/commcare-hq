@@ -263,17 +263,18 @@ class SubmissionPost(object):
                 unfinished_submission_stub.saved = True
                 unfinished_submission_stub.save()
 
-                self._do_post_save_actions(case_db, xforms, case_stock_result)
+                self.do_post_save_actions(case_db, xforms, case_stock_result)
         except PostSaveError:
             return "Error performing post save operations"
 
-    def _do_post_save_actions(self, case_db, xforms, case_stock_result):
+    @staticmethod
+    def do_post_save_actions(case_db, xforms, case_stock_result):
         instance = xforms[0]
         try:
             case_stock_result.case_result.commit_dirtiness_flags()
             case_stock_result.stock_result.finalize()
 
-            self._fire_post_save_signals(instance, case_stock_result.case_models)
+            SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
             case_stock_result.case_result.close_extensions(
                 case_db,
@@ -313,7 +314,8 @@ class SubmissionPost(object):
     def get_response(self):
         return self.run().response
 
-    def _fire_post_save_signals(self, instance, cases):
+    @staticmethod
+    def _fire_post_save_signals(instance, cases):
         from casexml.apps.case.signals import case_post_save
         error_message = "Error occurred during form submission post save (%s)"
         error_details = {'domain': instance.domain, 'form_id': instance.form_id}
