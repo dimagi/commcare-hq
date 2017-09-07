@@ -58,17 +58,19 @@ class Command(BaseCommand):
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
         ))
 
-        cases = (CaseSearchES()
-                 .domain(domain)
-                 .case_type("test")
-                 .case_property_query("result_recorded", "yes", "must")
-                 .values_list('case_id', flat=True))
+        case_ids = [
+            hit['_id'] for hit in (CaseSearchES()
+                                   .domain(domain)
+                                   .case_type("test")
+                                   .case_property_query("result_recorded", "yes", "must")
+                                   .run().hits)
+        ]
 
         with open(log_path, "w") as log_file:
             writer = csv.writer(log_file)
-            writer.write_row(headers)
+            writer.writerow(headers)
 
-            for test in CaseAccessors(domain=domain).iter_cases(cases):
+            for test in CaseAccessors(domain=domain).iter_cases(case_ids):
                 if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
                         and not test.get_case_property('testing_facility_name'):
 
