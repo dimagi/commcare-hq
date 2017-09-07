@@ -51,7 +51,6 @@ branches:
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
   - lwyszomi/icds_side_code # lwyszomi
-  - bmb/appv2-unique-urls # BMB 8/10
   - fixtures-require-js-2017 # Jenny 8/23
   - np/11.1 # NP 8/24
   - sk/cache-sessions-2  # sk 8/25
