@@ -67,58 +67,64 @@ class Command(BaseCommand):
                                    .run().hits)
         ]
 
+        failed_tests = []
+
         with open(log_path, "w") as log_file:
             writer = csv.writer(log_file)
             writer.writerow(headers)
 
             for test in CaseAccessors(domain=domain).iter_cases(case_ids):
-                if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
-                        and not test.get_case_property('testing_facility_name'):
+                try:
+                    if test.get_case_property('datamigration_testing_facility_name') != 'yes' \
+                            and not test.get_case_property('testing_facility_name'):
 
-                    if test.get_case_property('testing_facility_saved_name'):
-                        testing_facility_name = test.get_case_property('testing_facility_saved_name')
-                    else:
-                        form_data = self._get_result_recorded_form(test)
-                        microscopy_name = self._get_path(
-                            ['update_test_result',
-                             'microscopy',
-                             'ql_testing_facility_details',
-                             'default_dmc_name'],
-                            form_data
-                        )
-                        cbnaat_name = self._get_path(
-                            ['update_test_result',
-                             'cbnaat',
-                             'ql_testing_facility_details',
-                             'default_cdst_name'],
-                            form_data
-                        )
-                        clinic_name = self._get_path(
-                            ['update_test_result',
-                             'clinical',
-                             'ql_testing_facility_details',
-                             'testing_facility_saved_name'],
-                            form_data
-                        )
-                        testing_facility_name = microscopy_name or cbnaat_name or clinic_name
+                        if test.get_case_property('testing_facility_saved_name'):
+                            testing_facility_name = test.get_case_property('testing_facility_saved_name')
+                        else:
+                            form_data = self._get_result_recorded_form(test)
+                            microscopy_name = self._get_path(
+                                ['update_test_result',
+                                 'microscopy',
+                                 'ql_testing_facility_details',
+                                 'default_dmc_name'],
+                                form_data
+                            )
+                            cbnaat_name = self._get_path(
+                                ['update_test_result',
+                                 'cbnaat',
+                                 'ql_testing_facility_details',
+                                 'default_cdst_name'],
+                                form_data
+                            )
+                            clinic_name = self._get_path(
+                                ['update_test_result',
+                                 'clinical',
+                                 'ql_testing_facility_details',
+                                 'testing_facility_saved_name'],
+                                form_data
+                            )
+                            testing_facility_name = microscopy_name or cbnaat_name or clinic_name
 
-                    if testing_facility_name:
-                        writer.writerow([test.case_id, testing_facility_name, "yes"])
-                        case_id = test.case_id
-                        print('Updating {}...'.format(case_id))
-                        case_structure = CaseStructure(
-                            case_id=case_id,
-                            walk_related=False,
-                            attrs={
-                                "create": False,
-                                "update": {
-                                    "datamigration_testing_facility_name": "yes",
-                                    "testing_facility_name": testing_facility_name,
+                        if testing_facility_name:
+                            writer.writerow([test.case_id, testing_facility_name, "yes"])
+                            case_id = test.case_id
+                            print('Updating {}...'.format(case_id))
+                            case_structure = CaseStructure(
+                                case_id=case_id,
+                                walk_related=False,
+                                attrs={
+                                    "create": False,
+                                    "update": {
+                                        "datamigration_testing_facility_name": "yes",
+                                        "testing_facility_name": testing_facility_name,
+                                    },
                                 },
-                            },
-                        )
-                        if commit:
-                            factory.create_or_update_case(case_structure)
-                    else:
-                        writer.writerow([test.case_id, testing_facility_name, "no"])
+                            )
+                            if commit:
+                                factory.create_or_update_case(case_structure)
+                        else:
+                            writer.writerow([test.case_id, testing_facility_name, "no"])
+                except:
+                    failed_tests.append(test.case_id)
         print("Migration finished at {}".format(datetime.datetime.utcnow()))
+        print("Failed tests: {}".format(failed_tests))
