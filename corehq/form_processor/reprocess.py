@@ -134,18 +134,17 @@ def _reprocess_form(form, save=True, lock_form=True):
             if should_use_sql_backend(form.domain):
                 cases = _filter_already_processed_cases(form, cases)
                 cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
+
+                ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
+                stock_result.models_to_save = ledgers
+                ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
+
                 if save:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)
-
-                ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
-                ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
-                if save:
                     LedgerAccessorSQL.save_ledger_values(ledgers)
-
-                if save:
                     FormAccessorSQL.update_form_problem_and_state(form)
-                    publish_form_saved(form)
+                    FormProcessorSQL._publish_changes(ProcessedForms(form), cases, stock_result)
 
                 _log_changes('filtered', cases, ledgers, [])
 
