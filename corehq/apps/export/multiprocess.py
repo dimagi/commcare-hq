@@ -232,6 +232,7 @@ class MultiprocessExporter(object):
         self.is_zip = isinstance(get_writer(export_instance.export_format), ZippedExportWriter)
 
     def __enter__(self):
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -343,6 +344,7 @@ def _add_compressed_page_to_zip(zip_file, page_number, zip_path_to_add):
 
 def _output_progress(queue, total_docs):
     """Poll the queue for ProgressValue objects and log progress to logger"""
+    logger.debug('Starting progress reporting process')
     page_progress = {}
     progress = total_dumped = 0
     start = time.time()
