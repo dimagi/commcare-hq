@@ -21,13 +21,6 @@ class MessageRecipientField(CharField):
             return []
         return value.split(',')
 
-    def validate(self, value):
-        # TODO Will need to add more than user ids
-        # TODO batch id verification
-        for user_id in value:
-            CommCareUser.get_db().get(user_id)
-
-
 class MessageForm(Form):
     schedule_name = CharField(
         required=True,
@@ -65,7 +58,6 @@ class MessageForm(Form):
         initial = kwargs.get('initial')
         readonly = False
         if initial:
-            # TODO Recipients isn't set properly
             readonly = (initial.get('send_frequency') == 'immediately')
             message = initial.get('message', {})
             kwargs['initial']['translate'] = '*' not in kwargs['initial']
@@ -137,7 +129,10 @@ class MessageForm(Form):
 
     def clean_recipients(self):
         data = self.cleaned_data['recipients']
+        # TODO Will need to add more than user ids
+        # TODO batch id verification
+        for user_id in data:
+            user = CommCareUser.get_db().get(user_id)
+            assert user['domain'] == self.domain, "User must be in the same domain"
 
-        # Always return a value to use as the new cleaned data, even if
-        # this method didn't change it.
         return data
