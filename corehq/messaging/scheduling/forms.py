@@ -21,6 +21,7 @@ class MessageRecipientField(CharField):
             return []
         return value.split(',')
 
+
 class MessageForm(Form):
     schedule_name = CharField(
         required=True,
