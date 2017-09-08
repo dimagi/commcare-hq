@@ -279,6 +279,7 @@ MUMBAI_MAP = {
     "key_populations": 16,
     "initial_home_visit_date": 18,
     "aadhaar_number": 19,
+    "drtb_center_code": 21,
     "district_name": 22,
     "phi_name": 25,
     "reason_for_testing": 27,
@@ -557,7 +558,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
-        domain, city_constants, person_case_properties['dto_id'])
+        domain, city_constants, column_mapping, row, person_case_properties['dto_id'])
 
     # We do this as a separate step because we don't want to generate ids if there is going to be an exception
     # raised while generating the other properties.
@@ -727,9 +728,11 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
     if not treatment_card_completed_date:
         treatment_card_completed_date = treatment_initiation_date
 
+    drtb_center_name, drtb_center_id = get_drtb_center_location(domain, column_mapping, row, city_constants)
+
     properties = {
         "owner_id": "-",
-        "treatment_initiating_drtb_center_id": city_constants.drtb_center_id,
+        "treatment_initiating_drtb_center_id": drtb_center_id,
         "episode_type": "confirmed_drtb",
         "episode_pending_registration": "no",
         "is_active": "yes",
@@ -1502,18 +1505,19 @@ def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initi
         return str(int(round((date_tested - treatment_initiation_date).days / 30.4)))
 
 
-def get_secondary_owner_case_properties(domain, city_constants, district_id):
-    name, loc_id = get_drtb_hiv_location(domain, district_id)
+def get_secondary_owner_case_properties(domain, city_constants, column_mapping, row, district_id):
+    drtb_hiv_name, drtb_hiv_id = get_drtb_hiv_location(domain, district_id)
+    drtb_c_name, drtb_c_id = get_drtb_center_location(domain, column_mapping, row, city_constants)
     return [
         {
-            "secondary_owner_name": city_constants.drtb_center_name,
+            "secondary_owner_name": drtb_c_name,
             "secondary_owner_type": "drtb",
-            "owner_id": city_constants.drtb_center_id,
+            "owner_id": drtb_c_id,
         },
         {
-            "secondary_owner_name": name,
+            "secondary_owner_name": drtb_hiv_name,
             "secondary_owner_type": "drtb-hiv",
-            "owner_id": loc_id,
+            "owner_id": drtb_hiv_id,
         }
     ]
 
@@ -1806,6 +1810,15 @@ def get_drtb_hiv_location(domain, district_id):
         location_type__code="drtb-hiv"
     )
     return drtb_hiv.name, drtb_hiv.location_id
+
+
+def get_drtb_center_location(domain, column_mapping, row, city_constants):
+    if column_mapping.get_value("drtb_center_code", row):
+        value = column_mapping.get_value("drtb_center_code", row)
+        site_code = "drtb_" + value.strip().lower().replace('-', '_')
+        return match_location_by_site_code(domain, site_code)
+    else:
+        return city_constants.drtb_center_name, city_constants.drtb_center_id
 
 
 class _PersonIdGenerator(object):
