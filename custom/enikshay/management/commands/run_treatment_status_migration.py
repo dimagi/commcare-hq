@@ -74,6 +74,7 @@ class Command(BaseCommand):
                         treatment_initiated = "yes_phi"
                         treatment_status = "initiated_first_line_treatment"
                     else:
+                        treatment_initiated = "yes_phi"
                         treatment_status = "initiated_outside_facility"
 
                     if treatment_initiated == current_treatment_initiated \
