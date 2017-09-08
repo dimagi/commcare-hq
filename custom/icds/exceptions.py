@@ -1,0 +1,4 @@
+
+
+class CaseRelationshipError(Exception):
+    pass
