@@ -3,9 +3,7 @@ from functools import wraps
 from django.db import transaction
 from django.http import (
     Http404,
-    HttpResponseBadRequest,
     HttpResponseRedirect,
-    JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -14,14 +12,12 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import MessageForm
@@ -31,12 +27,12 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
 )
+from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_alert_schedule_instances_for_schedule,
 )
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -256,7 +252,5 @@ class EditScheduleView(CreateScheduleView):
     def post(self, request, *args, **kwargs):
         values = self.message_form.cleaned_data
         if values['send_frequency'] == 'immediately':
-            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(False, "Someone tried to edit an 'immediate' message")
-            return HttpResponseBadRequest(_("Cannot edit messages that were sent immediately"))
+            raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
         super(EditScheduleView, self).post(request, *args, **kwargs)
