@@ -7,14 +7,16 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.db import connections
+from django.db import Error, connections
 
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.util.decorators import serial_task
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -57,8 +59,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
         aggregate_tables.delay(aggregation_tasks[0], aggregation_tasks[1:])
 
 
-@task(queue='background_queue')
-def aggregate_tables(current_task, future_tasks):
+@task(queue='background_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
+def aggregate_tables(self, current_task, future_tasks):
     aggregation_type = current_task.type
     aggregation_date = current_task.date
 
@@ -78,7 +80,21 @@ def aggregate_tables(current_task, future_tasks):
                         aggregation_date, aggregation_type
                     )
                 )
-                cursor.execute(sql_to_execute, {"date": aggregation_date})
+
+                try:
+                    cursor.execute(sql_to_execute, {"date": aggregation_date})
+                except Error as exc:
+                    notify_exception(
+                        None,
+                        message="Error occurred during ICDS aggregation",
+                        details={
+                            'type': aggregation_type,
+                            'date': aggregation_date,
+                            'error': exc,
+                        }
+                    )
+                    self.retry(exc=exc)
+
                 celery_task_logger.info(
                     "Ended icds reports {} update_{}_aggregate_tables".format(
                         aggregation_date, aggregation_type
@@ -87,6 +103,11 @@ def aggregate_tables(current_task, future_tasks):
 
     if future_tasks:
         aggregate_tables.delay(future_tasks[0], future_tasks[1:])
+    else:
+        # temporary soft assert to verify it's completing
+        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+        _soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+        celery_task_logger.info("Aggregation has completed")
 
 
 @periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
