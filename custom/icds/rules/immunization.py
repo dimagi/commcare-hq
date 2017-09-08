@@ -26,6 +26,10 @@ from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from custom.icds.case_relationships import (
+    child_person_case_from_tasks_case,
+    ccs_record_case_from_tasks_case,
+)
 from datetime import datetime, date, timedelta
 
 
@@ -59,43 +63,6 @@ def get_tasks_case_immunization_ledger_values(tasks_case):
 
 def get_immunization_date(ledger_value):
     return date(1970, 1, 1) + timedelta(days=ledger_value.balance)
-
-
-def get_and_check_parent_case(subcase, identifier, relationship, expected_case_type):
-    related = subcase.get_parent(identifier=identifier, relationship=relationship)
-    if len(related) != 1:
-        raise ValueError("Expected exactly 1 matching case, found %s" % len(related))
-
-    parent_case = related[0]
-    if parent_case.type != expected_case_type:
-        raise ValueError("Expected case type %s, found %s" % (expected_case_type, parent_case.type))
-
-    return parent_case
-
-
-def child_person_case_from_tasks_case(tasks_case):
-    child_health_case = get_and_check_parent_case(
-        tasks_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'child_health'
-    )
-
-    return get_and_check_parent_case(
-        child_health_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'person'
-    )
-
-
-def ccs_record_case_from_tasks_case(tasks_case):
-    return get_and_check_parent_case(
-        tasks_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'ccs_record'
-    )
 
 
 def get_date(value):

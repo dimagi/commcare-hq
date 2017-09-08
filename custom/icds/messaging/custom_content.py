@@ -2,6 +2,9 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from custom.icds.case_relationships import (
+    child_person_case_from_tasks_case,
+)
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
     HINDI, TELUGU, MARATHI)
 from custom.icds.messaging.custom_recipients import (
@@ -14,9 +17,7 @@ from custom.icds.rules.immunization import (
     get_immunization_anchor_date,
     get_tasks_case_immunization_ledger_values,
     get_map,
-    immunization_is_due,
-    child_person_case_from_tasks_case
-)
+    immunization_is_due
 from decimal import Decimal, InvalidOperation
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
