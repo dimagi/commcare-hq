@@ -260,21 +260,3 @@ class EditScheduleView(CreateScheduleView):
             _soft_assert(False, "Someone tried to edit an 'immediate' message")
             return HttpResponseBadRequest(_("Cannot edit messages that were sent immediately"))
         super(EditScheduleView, self).post(request, *args, **kwargs)
-
-
-@login_and_domain_required
-@_requires_new_reminder_framework()
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-def possible_sms_recipients(request, domain):
-    # TODO Add case groups
-    # TODO Add locations
-    # TODO Add mobile worker groups
-    # TODO will need to know doc type as well
-    query = request.GET.get('name', '').lower()
-    users = get_search_users_in_domain_es_query(domain, query, 10, 0)
-    users = users.mobile_users().source(('_id', 'base_username')).run().hits
-    ret = [
-        {'id': user['_id'], 'name': user['base_username']}
-        for user in users
-    ]
-    return JsonResponse(ret, safe=False)
