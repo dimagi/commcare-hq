@@ -51,6 +51,7 @@ branches:
   - br/kill-old-cloucare  # Danny 7/21
   - fixtures-require-js-2017 # Jenny 8/23
   - np/11.1 # NP 8/24
+  - jls/move-style-less # Jenny 9/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
