@@ -67,6 +67,7 @@ class Command(BaseCommand):
                         if test is not None:
                             update = self.get_updates(test)
                             print('Updating {}...'.format(episode_case_id))
+                            assert set(update) == set(updated_properties)
                             writer.writerow(
                                 [episode_case_id]
                                 + [update[key] for key in updated_properties]
