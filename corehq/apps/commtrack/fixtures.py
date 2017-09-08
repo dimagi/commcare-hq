@@ -18,7 +18,7 @@ def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=
 
     name_plural = "{}s".format(name)
     root = ElementTree.Element('fixture',
-                               attrib={
+                               {
                                    'id': id,
                                    'user_id': restore_user.user_id
                                })

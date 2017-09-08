@@ -90,7 +90,7 @@ class ItemListsProvider(FixtureProvider):
         }
         if data_type.is_indexed:
             attrib['indexed'] = 'true'
-        fixture_element = ElementTree.Element('fixture', attrib=attrib)
+        fixture_element = ElementTree.Element('fixture', attrib)
         item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:

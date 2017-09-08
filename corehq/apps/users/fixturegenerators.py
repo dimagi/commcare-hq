@@ -47,11 +47,11 @@ class UserGroupsFixtureProvider(FixtureProvider):
             </groups>
         </fixture>
         """
-        xFixture = ElementTree.Element('fixture', attrib={'id': self.id, 'user_id': restore_user.user_id})
+        xFixture = ElementTree.Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         xGroups = ElementTree.SubElement(xFixture, 'groups')
 
         for group in groups:
-            xGroup = ElementTree.SubElement(xGroups, 'group', attrib={'id': group.get_id})
+            xGroup = ElementTree.SubElement(xGroups, 'group', {'id': group.get_id})
             xName = ElementTree.SubElement(xGroup, 'name')
             xName.text = group.name
             if group.metadata:
