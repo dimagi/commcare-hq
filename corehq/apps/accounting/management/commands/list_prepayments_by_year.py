@@ -44,11 +44,8 @@ class Command(BaseCommand):
         )
 
         if year is not None:
-            start = date(year, 1, 1)
-            end = date(year, 12, 31)
             credit_adjs = credit_adjs.filter(
-                date_created__gte=start,
-                date_created__lte=end
+                date_created__year=year,
             )
 
         for credit_adj in credit_adjs:
