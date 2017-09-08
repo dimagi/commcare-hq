@@ -103,7 +103,7 @@ def reprocess_xform_error_by_id(form_id, domain=None):
 
 def reprocess_form(form, save=True, lock_form=True):
     interface = FormProcessorInterface(form.domain)
-    lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else False
+    lock = interface.acquire_lock_for_xform(form.form_id) if lock_form else None
     with LockManager(form, lock):
         logger.info('Reprocessing form: %s (%s)', form.form_id, form.domain)
         # reset form state prior to processing
