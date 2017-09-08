@@ -64,28 +64,34 @@ class Command(BaseCommand):
                     current_treatment_initiating_facility_id = \
                         episode.get_case_property('treatment_initiating_facility_id')
 
-                    if current_treatment_status == 'initiated_outside_rntcp':
+                    if current_treatment_status == "initiated_outside_rntcp" \
+                            or current_treatment_initiated == "yes_private":
+                        # this should ideally not need a migration but checking anyway
+                        treatment_initiated = "yes_private"
+                        treatment_status = "initiated_outside_rntcp"
+                    elif current_diagnosing_facility_id == current_treatment_initiating_facility_id:
+                        treatment_initiated = "yes_phi"
+                        treatment_status = "initiated_first_line_treatment"
+                    else:
+                        treatment_status = "initiated_outside_facility"
+
+                    if treatment_initiated == current_treatment_initiated \
+                            and treatment_status == current_treatment_status:
                         # skip
                         writer.writerow([episode.case_id,
                                          current_treatment_initiated,
                                          current_treatment_status,
                                          current_diagnosing_facility_id,
-                                         current_diagnosing_facility_id,
+                                         current_treatment_initiating_facility_id,
                                          None,
                                          None,
                                          "no"])
                     else:
-                        treatment_initiated = "yes_phi"
-                        if current_diagnosing_facility_id == current_treatment_initiating_facility_id:
-                            treatment_status = "initiated_first_line_treatment"
-                        else:
-                            treatment_status = "initiated_outside_facility"
-
                         writer.writerow([episode.case_id,
                                          current_treatment_initiated,
                                          current_treatment_status,
                                          current_diagnosing_facility_id,
-                                         current_diagnosing_facility_id,
+                                         current_treatment_initiating_facility_id,
                                          treatment_initiated,
                                          treatment_status,
                                          "yes"])
