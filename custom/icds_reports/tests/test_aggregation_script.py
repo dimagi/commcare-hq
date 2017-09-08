@@ -14,6 +14,7 @@ import postgres_copy
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
+from corehq.util.test_utils import softer_assert
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -153,6 +154,7 @@ class AggregationScriptTest(TransactionTestCase):
                 postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
 
     @classmethod
+    @softer_assert()
     def setUpClass(cls):
         super(AggregationScriptTest, cls).setUpClass()
         _call_center_domain_mock = mock.patch(
