@@ -278,11 +278,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    # don't retry errors until we figure out how to distinguish between
-    # doc save errors and data source config errors
-    retry_errors = False
-
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
@@ -303,6 +299,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         assert len(self.processors) == 1
         self._processor = self.processors[0]
         assert self._processor.bootstrapped is not None
+
+        # retry errors defaults to False because there is not a solution to
+        # distinguish between doc save errors and data source config errors
+        self.retry_errors = retry_errors
 
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
@@ -348,4 +348,5 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        retry_errors=True
     )
