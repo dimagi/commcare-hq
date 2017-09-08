@@ -6,6 +6,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
