@@ -150,4 +150,6 @@ $.fn.koApplyBindings = function (context) {
     this.removeClass('ko-template');
 };
 
+    // Return something so that hqModules understands that the module has been defined
+    return 1;
 });
