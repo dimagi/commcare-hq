@@ -10,7 +10,7 @@
         Z-index gives you control over the stacking order of elements. The challenge is that
         it acts like a global variable and, like any global variable, gets hard to keep track of.
         HQ deals with this as best as it can, by declaring numeric z-index values as variables in
-        <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/style/static/style/less/_hq/includes/variables.less">variables.less</a>
+        <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/less/_hq/includes/variables.less">variables.less</a>
         and using the variables in other LESS files. This isn't perfect, but it at least gives us
         one place to define HQ-specific absolute z-index values - which also need to play nicely
         with Bootstrap's z-index list.
