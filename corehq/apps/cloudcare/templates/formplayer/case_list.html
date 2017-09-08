@@ -26,8 +26,12 @@
             <thead>
               <tr>
                 <% _.each(headers, function(header, index) { %>
-                  <% if (!(widthHints) || !(widthHints[index] === 0)) { %>
-                    <th class="module-caselist-header"> <%= header %></th>
+                  <% if (columnVisible(index)) { %>
+                    <% if (columnSortable(index)) { %>
+                        <th class="module-caselist-header header-clickable formplayer-request" data-id="<%= index %>"> <%= header %></th>
+                    <% } else { %>
+                        <th class="module-caselist-header" data-id="<%= index %>"> <%= header %></th>
+                    <% } %>
                   <% } %>
                 <% }); %>
               </tr>
