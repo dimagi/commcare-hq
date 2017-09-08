@@ -621,15 +621,9 @@ def undo_delete_module(request, domain, record_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     source_module_unique_id = request.POST['source_module_unique_id']
-
-    # temporary fallback to handle currently working app states
-    source_module_id = request.POST['source_module_unique_id']
-    if source_module_id is not None:
-        source_module = app.get_module(int(source_module_unique_id))
-        dest_module = app.get_module(module_unique_id)
-    else:
-        source_module = app.get_module_by_unique_id(source_module_unique_id)
-        dest_module = app.get_module_by_unique_id(module_unique_id)
+    
+    source_module = app.get_module_by_unique_id(source_module_unique_id)
+    dest_module = app.get_module_by_unique_id(module_unique_id)
 
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
