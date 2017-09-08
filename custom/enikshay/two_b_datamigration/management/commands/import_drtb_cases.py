@@ -516,11 +516,11 @@ class MumbaiColumnMapping(ColumnMapping):
     def _get_follow_up_start_index(cls, month):
         if month == 36:
             # For some reason the sheet jumps from 33 to 36, so just special casing it.
-            index = 170
-        else:
-            assert month >= 3 and month <= 33
-            offset = (month - 3) * 3
-            index = cls.follow_up_culture_index_start + offset
+            # This will just treat month=36 as the next columns after month 33
+            month = 34
+
+        offset = (month - 3) * 3
+        index = cls.follow_up_culture_index_start + offset
         return index
 
 
