@@ -48,9 +48,7 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
-  - lwyszomi/icds_side_code # lwyszomi
   - fixtures-require-js-2017 # Jenny 8/23
   - np/11.1 # NP 8/24
   - orangejenny-patch-1 # Jenny 9/7
