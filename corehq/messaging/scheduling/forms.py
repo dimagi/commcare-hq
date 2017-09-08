@@ -60,7 +60,7 @@ class MessageForm(Form):
         if initial:
             readonly = (initial.get('send_frequency') == 'immediately')
             message = initial.get('message', {})
-            kwargs['initial']['translate'] = '*' not in kwargs['initial']
+            kwargs['initial']['translate'] = '*' not in message
             kwargs['initial']['non_translated_message'] = message.get('*', '')
             for lang in self.project_languages:
                 kwargs['initial']['message_%s' % lang] = message.get(lang, '')
