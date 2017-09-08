@@ -319,7 +319,7 @@ MUMBAI_MAP = {
     "dst_type": 62,
     "Lfx": 63,  # Levo
     "Eto": 64,  # Ethio
-    # "Cyclo": 65,  # TODO: (WAITING) unknown drug mapping
+    "Cs": 65,  # Cycloserine
     "E": 66,  # Etham
     "Z": 67,  # PZA
     "Km": 68,  # Kana
@@ -331,11 +331,11 @@ MUMBAI_MAP = {
     "H (0.4)": 74,
     "H (0.1)": 75,  # High dose INH
     "PAS": 76,  # Na-Pas
-    # "Oflox": 77,  # TODO: (WAITING) unknown drug mapping
+    "Oflox": 77,  # Oflox
     "S": 78,
     "Clr": 79,
     "R": 80,  # Rif
-    # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
+    "Amoxyclav": 81,
     "Am": 82,
     "dst_result_date": 83,
     "treatment_initiation_date": 89,
@@ -366,6 +366,9 @@ DRUG_COLUMN_TO_APP_ID_MAP = {
     "Eto": "eto",
     "Clr": "clr",
     "Azi": "azi",
+    "Cs": "cs",
+    "Oflox": "ofx",
+    "Amoxyclav": "amx_clv",
 }
 
 # This is a copy of part of the "resistance_drug" fixture
@@ -392,6 +395,9 @@ ALL_DRUGS = {
     "azi": "21",
     "bdq": "22",
     "dlm": "23",
+    "cs": "24",
+    "ofx": "25",
+    "amx_clv": "26",
 }
 
 # A map of drug names used in the mumbai sheet to drug ids
