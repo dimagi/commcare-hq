@@ -1,5 +1,5 @@
 from collections import defaultdict
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType

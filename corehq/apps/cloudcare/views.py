@@ -1,6 +1,6 @@
 import json
 import urllib
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.urls import reverse

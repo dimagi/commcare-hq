@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 def simple_fixture_generator(restore_user, id, name, fields, data_fn, last_sync=None):

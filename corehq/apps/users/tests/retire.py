@@ -2,7 +2,7 @@ from django.test import TestCase
 import mock
 
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain

@@ -30,7 +30,7 @@ from custom.icds.messaging.custom_content import (
     render_message,
 )
 from django.test import TestCase
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 TEST_GROWTH_FORM_XML = """<?xml version="1.0" ?>

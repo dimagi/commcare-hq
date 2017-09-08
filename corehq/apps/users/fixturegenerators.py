@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.xml import get_data_element

@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import call_fixture_generator

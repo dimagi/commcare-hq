@@ -1,6 +1,6 @@
 import itertools
 import logging
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from django.utils.translation import ugettext_noop
 

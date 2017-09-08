@@ -10,7 +10,7 @@ from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult

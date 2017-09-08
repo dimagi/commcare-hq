@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from casexml.apps.case.xml.generator import safe_element
 from casexml.apps.phone.xml import get_casedb_element
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 class CaseDBFixture(object):

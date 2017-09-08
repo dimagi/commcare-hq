@@ -1,8 +1,8 @@
 import datetime
 import re
 import uuid
-import xml.etree.ElementTree as ET
-from xml.etree import ElementTree
+import xml.etree.cElementTree as ET
+from xml.etree import cElementTree as ElementTree
 
 from django.core.files.uploadedfile import UploadedFile
 from django.template.loader import render_to_string

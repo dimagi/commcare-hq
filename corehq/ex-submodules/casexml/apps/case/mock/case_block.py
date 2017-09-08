@@ -1,7 +1,7 @@
 import copy
 import numbers
 from datetime import datetime, date
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple

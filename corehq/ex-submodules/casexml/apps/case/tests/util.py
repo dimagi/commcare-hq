@@ -2,7 +2,7 @@ import os
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally

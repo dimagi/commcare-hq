@@ -1,5 +1,5 @@
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from datetime import date, datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory

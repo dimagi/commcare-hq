@@ -1,7 +1,7 @@
 import uuid
 import mock
 import os
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.locations.views import LocationFieldsView

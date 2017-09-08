@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.utils.translation import ugettext as _
 
 from casexml.apps.phone.fixtures import FixtureProvider

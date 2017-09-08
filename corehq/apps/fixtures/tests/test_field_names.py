@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase, SimpleTestCase
 

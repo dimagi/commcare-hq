@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.test import override_settings
 import mock
 from casexml.apps.case.const import CASE_INDEX_CHILD

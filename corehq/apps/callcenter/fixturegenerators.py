@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from datetime import datetime
 import pytz
 
