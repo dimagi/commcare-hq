@@ -3,7 +3,7 @@ from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
 from corehq.apps.reports.commtrack.standard import CommtrackReportMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
-from corehq.apps.style.decorators import use_maps
+from corehq.apps.hqwebapp.decorators import use_maps
 
 
 class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):

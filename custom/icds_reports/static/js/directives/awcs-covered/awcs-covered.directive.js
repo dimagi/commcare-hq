@@ -12,7 +12,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.label = "AWC Covered";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/awcs_covered/map', label: 'Map'},
+        'map': {route: '/awcs_covered/map', label: 'Map View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
@@ -64,10 +64,10 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {

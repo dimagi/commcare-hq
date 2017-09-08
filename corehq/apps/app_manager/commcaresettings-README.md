@@ -9,12 +9,12 @@ A new setting can be defined in commcare-app-settings.yaml or commcare-profile-s
 This page documents the YAML configuration found in these locations:
 * [commcare-app-settings.yaml](https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-app-settings.yaml):
 Settings that are specific to CommCare HQ's configurations
-* [v1/commcare-profile-settings.yaml](https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/v1/commcare-profile-settings.yaml):
+* [commcare-profile-settings.yaml](https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml):
 Settings that are 1-to-1 with CommCare mobile profile features/properties
-* [v1/commcare-settings-layout.yaml](https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/v1/commcare-settings-layout.yaml):
+* [commcare-settings-layout.yaml](https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-settings-layout.yaml):
 Determines how these settings are grouped and laid out on the app settings page
 
-Each of `commcare-app-settings.yaml` and `v1/commcare-profile-settings.yaml` contain a yaml list
+Each of `commcare-app-settings.yaml` and `commcare-profile-settings.yaml` contain a yaml list
 with each element containing the following properties:
 
 ## Required properties

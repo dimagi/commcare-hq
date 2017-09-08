@@ -167,7 +167,7 @@ from .util import (
     group_filter,
     users_matching_filter,
     resync_case_to_es)
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
     use_datatables,

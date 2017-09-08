@@ -30,7 +30,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
 
-            path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'create_functions.sql')
+            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
             celery_task_logger.info("Starting icds reports create_functions")
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
@@ -96,13 +96,13 @@ def recalculate_stagnant_cases():
     case_accessor = CaseAccessors(domain)
     num_stagnant_cases = len(stagnant_cases)
     current_case_num = 0
-    for case_ids in chunked(case_ids, 100):
+    for case_ids in chunked(stagnant_cases, 1000):
         current_case_num += len(case_ids)
-        cases = case_accessor.get_cases(case_ids)
+        cases = case_accessor.get_cases(list(case_ids))
         for case in cases:
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
-            "Resaved %d / %d cases".format(current_case_num, num_stagnant_cases)
+            "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
         )
 
 

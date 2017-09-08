@@ -13,8 +13,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.label = "Early Initiation of Breastfeeding";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/early_initiation/map', label: 'Map'},
-        'chart': {route: '/early_initiation/chart', label: 'Chart'},
+        'map': {route: '/early_initiation/map', label: 'Map View'},
+        'chart': {route: '/early_initiation/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',
@@ -24,7 +24,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
@@ -65,10 +65,10 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = maternalChildService.earlyInitiationBreastfeeding(vm.step, vm.filtersData).then(function(response) {
@@ -138,7 +138,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -148,7 +148,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
                     var total = findValue(vm.chartData[1].values, d.value);

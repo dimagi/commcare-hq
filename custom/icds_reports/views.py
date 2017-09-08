@@ -18,45 +18,66 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.apps.style.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
 from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 
+from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
+from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
+    get_adolescent_girls_sector_data
+from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
+    get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
+from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
+    get_awc_daily_status_data_map, get_awc_daily_status_sector_data
+from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
+from custom.icds_reports.reports.awc_opened import get_awc_opened_data
+from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
+    get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details
+from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data
+from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
+from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
+    get_children_initiated_data_map, get_children_initiated_sector_data
+from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
+    get_clean_water_sector_data
+from custom.icds_reports.reports.demographics_data import get_demographics_data
+from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_chart,\
+    get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
+from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
+    get_enrolled_children_data_map, get_enrolled_children_sector_data
+from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, get_enrolled_women_sector_data
+from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
+    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
+from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
+    get_functional_toilet_data_map, get_functional_toilet_sector_data
+from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
+    get_immunization_coverage_data_map, get_immunization_coverage_sector_data
+from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_chart, \
+    get_infants_weight_scale_data_map, get_infants_weight_scale_sector_data
+from custom.icds_reports.reports.institutional_deliveries_sector import get_institutional_deliveries_data_chart,\
+    get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
+from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map,\
+    get_lactating_enrolled_women_sector_data
+from custom.icds_reports.reports.maternal_child import get_maternal_child_data
+from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
+    get_medicine_kit_sector_data
+from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_chart, \
+    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map
+from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_chart,\
+    get_prevalence_of_severe_data_map, get_prevalence_of_severe_sector_data
+from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_chart, \
+    get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
+from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
+    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
+from custom.icds_reports.reports.registered_household import get_registered_household_data_map,\
+    get_registered_household_sector_data
+
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
-from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
-    get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
-    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
-    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
-    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details, \
-    get_prevalence_of_undernutrition_sector_data, get_prevalence_of_severe_sector_data, \
-    get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, \
-    get_prevalence_of_stunning_sector_data, get_prevalence_of_stunning_data_map, \
-    get_prevalence_of_stunning_data_chart, get_exclusive_breastfeeding_sector_data, \
-    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart, \
-    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, \
-    get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, \
-    get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart, \
-    get_children_initiated_sector_data, get_children_initiated_data_map, \
-    get_children_initiated_data_chart, get_institutional_deliveries_sector_data, \
-    get_institutional_deliveries_data_map, get_institutional_deliveries_data_chart, \
-    get_immunization_coverage_sector_data, get_immunization_coverage_data_map, \
-    get_immunization_coverage_data_chart, get_awc_daily_status_sector_data, \
-    get_awc_daily_status_data_map, get_awc_daily_status_data_chart, get_awcs_covered_sector_data, \
-    get_awcs_covered_data_map, get_registered_household_sector_data, get_registered_household_data_map, \
-    get_enrolled_children_sector_data, get_enrolled_children_data_map, get_enrolled_children_data_chart, \
-    get_enrolled_women_data_map, get_enrolled_women_sector_data, get_lactating_enrolled_women_sector_data, \
-    get_lactating_enrolled_women_data_map, get_adolescent_girls_sector_data, get_adolescent_girls_data_map, \
-    get_adhaar_sector_data, get_adhaar_data_map, get_adhaar_data_chart, get_clean_water_sector_data, \
-    get_clean_water_data_map, get_clean_water_data_chart, get_functional_toilet_sector_data, \
-    get_functional_toilet_data_map, get_functional_toilet_data_chart, get_medicine_kit_sector_data, \
-    get_medicine_kit_data_map, get_medicine_kit_data_chart, get_infants_weight_scale_sector_data, \
-    get_infants_weight_scale_data_map, get_infants_weight_scale_data_chart, \
-    get_adult_weight_scale_sector_data, get_adult_weight_scale_data_map, get_adult_weight_scale_data_chart
+from custom.icds_reports.utils import get_age_filter, get_location_filter
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -251,6 +272,9 @@ class ProgramSummaryView(View):
                 'aggregation_level': 1
             }
 
+        location = request.GET.get('location_id', '')
+        get_location_filter(location, domain, config)
+
         data = {}
         if step == 'maternal_child':
             data = get_maternal_child_data(domain, config, include_test)
@@ -333,7 +357,7 @@ class PrevalenceOfUndernutritionView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, domain, config)
@@ -645,7 +669,7 @@ class PrevalenceOfSevereView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -687,7 +711,7 @@ class PrevalenceOfStunningView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -725,11 +749,8 @@ class NewbornsWithLowBirthWeightView(View):
         }
 
         gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
         if gender:
             config.update({'gender': gender})
-        if age:
-            config.update({'age_tranche': age})
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -767,11 +788,8 @@ class EarlyInitiationBreastfeeding(View):
         }
 
         gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
         if gender:
             config.update({'gender': gender})
-        if age:
-            config.update({'age_tranche': age})
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -812,7 +830,7 @@ class ExclusiveBreastfeedingView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -853,7 +871,7 @@ class ChildrenInitiatedView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -1045,7 +1063,7 @@ class EnrolledChildrenView(View):
         if gender:
             config.update({'gender': gender})
         if age:
-            config.update({'age_tranche': age})
+            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -1077,10 +1095,6 @@ class EnrolledWomenView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
-
-        age = self.request.GET.get('age', None)
-        if age:
-            config.update({'age_tranche': age})
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)

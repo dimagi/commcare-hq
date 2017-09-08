@@ -95,7 +95,7 @@ describe('WebForm', function() {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Formplayer.Utils, 'initialRender');
-            sinon.stub(window, 'getIx', function() { return 3; });
+            sinon.stub(window, 'getIx').callsFake(function() { return 3; });
         });
 
         afterEach(function() {
@@ -125,8 +125,8 @@ describe('WebForm', function() {
                 sess = new WebFormSession(params),
                 sess2 = new WebFormSession(params);
 
-            sinon.stub(sess, 'newRepeat', spy);
-            sinon.stub(sess2, 'newRepeat', spy2);
+            sinon.stub(sess, 'newRepeat').callsFake(spy);
+            sinon.stub(sess2, 'newRepeat').callsFake(spy2);
 
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
             assert.isFalse(spy.calledOnce);

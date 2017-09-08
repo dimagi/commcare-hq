@@ -12,7 +12,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_women/map', label: 'Map'},
+        'map': {route: '/enrolled_women/map', label: 'Map View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
@@ -60,10 +60,10 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getAdolescentGirlsData(vm.step, vm.filtersData).then(function(response) {

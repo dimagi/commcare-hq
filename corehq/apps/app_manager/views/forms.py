@@ -369,22 +369,29 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_form(request, domain, app_id, module_id):
-    "Adds a form to an app (under a module)"
+def new_form(request, domain, app_id, module_unique_id):
+    """
+    Adds a form to an app (under a module)
+    """
     app = get_app(domain, app_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        raise HttpResponseBadRequest
+
     lang = request.COOKIES.get('lang', app.langs[0])
     form_type = request.POST.get('form_type', 'form')
     case_action = request.POST.get('case_action', 'none')
     name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
+
     if form_type == "shadow":
-        app = get_app(domain, app_id)
-        module = app.get_module(module_id)
         if module.module_type == "advanced":
             form = module.new_shadow_form(name, lang)
         else:
             raise Exception("Shadow forms may only be created under shadow modules")
     else:
-        form = app.new_form(module_id, name, lang)
+        form = module.new_form(name, lang)
 
     if form_type != "shadow":
         if case_action == 'update':
@@ -392,15 +399,18 @@ def new_form(request, domain, app_id, module_id):
             form.actions.update_case = UpdateCaseAction(
                 condition=FormActionCondition(type='always'))
         elif case_action == 'open':
-            form.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+            form.actions.open_case = OpenCaseAction(
+                condition=FormActionCondition(type='always'))
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
 
     app.save()
-    # add form_id to locals()
-    form_id = form.id
-    response = back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-    return response
+    return back_to_main(
+        request, domain,
+        app_id=app.id,
+        module_unique_id=module.unique_id,
+        form_unique_id=form.unique_id
+    )
 
 
 @no_conflict_require_POST
@@ -447,13 +457,18 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 @require_GET
 @require_can_edit_apps
 def get_form_questions(request, domain, app_id):
-    module_id = request.GET.get('module_id')
-    form_id = request.GET.get('form_id')
+    form_unique_id = request.GET.get('form_unique_id')
+    module_id_temp = request.GET.get('module_id')
+    form_id_temp = request.GET.get('form_id')
     try:
         app = get_app(domain, app_id)
-        form = app.get_module(module_id).get_form(form_id)
+        if module_id_temp is not None and form_id_temp is not None:
+            # temporary fallback
+            form = app.get_module(module_id_temp).get_form(form_id_temp)
+        else:
+            form = app.get_form(form_unique_id)
         lang, langs = get_langs(request, app)
-    except (ModuleNotFoundException, IndexError):
+    except FormNotFoundException:
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
@@ -703,9 +718,24 @@ def get_form_datums(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-def view_form(request, domain, app_id, module_id, form_id):
+def view_form_legacy(request, domain, app_id, module_id, form_id):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id, form_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_form(request, domain, app_id, form_unique_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(
+        request, domain, app_id,
+        form_unique_id=form_unique_id
+    )
 
 
 def _get_xform_source(request, app, form, filename="form.xml"):

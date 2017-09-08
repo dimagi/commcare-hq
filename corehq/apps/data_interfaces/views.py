@@ -41,7 +41,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.style.decorators import use_typeahead, use_angular_js
+from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface

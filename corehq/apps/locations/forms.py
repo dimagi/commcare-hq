@@ -12,7 +12,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 
-from corehq.apps.style.forms.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 

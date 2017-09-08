@@ -69,8 +69,9 @@ class VoucherUpdate(PaymentUpdate):
         if self.status == SUCCESS:
             return {
                 'state': 'paid',
-                'amount_fulfilled': self.amount,
-                'date_fulfilled': self.paymentDate.isoformat(),
+                'amount_paid': self.amount,
+                'date_paid': self.paymentDate.date().isoformat(),
+                'time_paid': self.paymentDate.time().isoformat(),
                 'comments': self.comments or "",
                 'payment_mode': self.paymentMode or "",
                 'check_number': self.checkNumber or "",

@@ -164,12 +164,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             html += '<tr/>';
                         }
                         html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; border-bottom: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px; border-bottom: 1px solid black;">' + this.options.rightLegend['info'] + '</td>';
-                        html += '<tr/>';
-                        html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; font-size: 2em; "><i class="fa fa-clock-o" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
+                        html += '<td style="border-right: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
+                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px;">' + this.options.rightLegend['info'] + '</td>';
                         html += '<tr/>';
                         html += '</table>';
                         d3.select(this.options.element).append('div')

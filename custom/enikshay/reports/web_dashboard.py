@@ -3,7 +3,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter

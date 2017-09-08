@@ -154,7 +154,7 @@ MIDDLEWARE = [
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
 ]
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 # time in minutes before forced logout due to inactivity
 INACTIVITY_TIMEOUT = 60 * 24 * 14
@@ -294,6 +294,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
+    'corehq.messaging.smsbackends.start_enterprise',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -790,10 +791,10 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 # Django Compressor
 COMPRESS_PRECOMPILERS = (
-    ('text/less', 'corehq.apps.style.precompilers.LessFilter'),
+    ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
 COMPRESS_ENABLED = True
-COMPRESS_JS_COMPRESSOR = 'corehq.apps.style.uglify.JsUglifySourcemapCompressor'
+COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
@@ -1508,6 +1509,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
+    'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
@@ -1859,6 +1861,7 @@ STATIC_UCR_REPORTS = [
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
@@ -1946,11 +1949,13 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 

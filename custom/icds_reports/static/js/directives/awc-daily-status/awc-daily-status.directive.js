@@ -13,8 +13,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.label = "AWC Daily Status";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/awc_daily_status/map', label: 'Map'},
-        'chart': {route: '/awc_daily_status/chart', label: 'Chart'},
+        'map': {route: '/awc_daily_status/map', label: 'Map View'},
+        'chart': {route: '/awc_daily_status/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage AWCs',
@@ -63,10 +63,10 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
 
@@ -158,7 +158,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -168,7 +168,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
+                        return d3.format(",.2f")(day['y']);
                     };
 
                     var total = findValue(vm.chartData[1].values, d.value);
