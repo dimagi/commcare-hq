@@ -30,13 +30,19 @@ class Command(BaseCommand):
         commit = options['commit']
         accessor = CaseAccessors(domain)
         factory = CaseFactory(domain)
-        headers = [
-            'case_id',
+        updated_properties = [
             'diagnosis_test_result_date',
             'diagnosis_lab_facility_name',
             'diagnosis_test_lab_serial_number',
             'diagnosis_test_summary',
             'datamigration_diagnosis_test_information',
+        ]
+        headers = [
+            'case_id',
+        ] + updated_properties + [
+            'test.test_type_label',
+            'test.test_type_value',
+            'episode.diagnosis_test_type_label',
         ]
 
         print("Starting {} migration on {} at {}".format(
@@ -61,7 +67,15 @@ class Command(BaseCommand):
                         if test is not None:
                             update = self.get_updates(test)
                             print('Updating {}...'.format(episode_case_id))
-                            writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
+                            writer.writerow(
+                                [episode_case_id]
+                                + [update[key] for key in updated_properties]
+                                + [
+                                    test.dynamic_case_properties().get('test_type_label', ''),
+                                    test.dynamic_case_properties().get('test_type_value', ''),
+                                    case_properties.get('diagnosis_test_type_label', '')
+                                ]
+                            )
 
                             if commit:
                                 factory.update_case(case_id=episode_case_id, update=update)
