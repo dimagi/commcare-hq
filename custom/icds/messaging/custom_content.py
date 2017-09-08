@@ -4,13 +4,12 @@ from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from custom.icds.case_relationships import (
     child_person_case_from_tasks_case,
+    child_person_case_from_child_health_case,
+    mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
     HINDI, TELUGU, MARATHI)
-from custom.icds.messaging.custom_recipients import (
-    get_child_health_host_case,
-    mother_person_case_from_ccs_record_case,
-)
+from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
 from custom.icds.rules.immunization import (
     get_immunization_products,
@@ -89,8 +88,9 @@ def static_negative_growth_indicator(recipient, schedule_instance):
     if not form:
         return []
 
-    host_case = get_child_health_host_case(schedule_instance.domain, schedule_instance.case_id)
-    if not host_case:
+    try:
+        child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
+    except CaseRelationshipError:
         return []
 
     try:
@@ -112,7 +112,7 @@ def static_negative_growth_indicator(recipient, schedule_instance):
         template = 'beneficiary_negative_growth.txt'
 
     language_code = recipient.get_language_code() or DEFAULT_LANGUAGE
-    context = {'child_name': host_case.name}
+    context = {'child_name': child_person_case.name}
     return [render_message(language_code, template, context)]
 
 
@@ -126,11 +126,17 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
     if not isinstance(recipient, CommCareUser):
         return []
 
-    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
+    try:
+        mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
+    except CaseRelationshipError:
+        return []
+
+    if case_schedule_instance.case_owner is None:
+        return []
 
     context = {
-        'awc': case_schedule_instance.case_owner.name if case_schedule_instance.case_owner else '',
-        'beneficiary': mother_case.name if mother_case else '',
+        'awc': case_schedule_instance.case_owner.name,
+        'beneficiary': mother_case.name,
     }
 
     return [render_content_for_user(recipient, template, context)]
@@ -166,11 +172,9 @@ def cf_visits_complete(recipient, case_schedule_instance):
     if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
         return []
 
-    if case_schedule_instance.case.type != 'ccs_record':
-        raise ValueError("Expected 'ccs_record' case")
-
-    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
-    if not mother_case:
+    try:
+        mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
+    except CaseRelationshipError:
         return []
 
     context = {
