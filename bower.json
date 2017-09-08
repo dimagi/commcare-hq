@@ -79,7 +79,8 @@
     "mocha": "2.3.3",
     "sinon": "http://sinonjs.org/releases/sinon-2.3.2.js",
     "angular-mocks": "1.4.4",
-    "jasmine-fixture": "2.0.0"
+    "jasmine-fixture": "2.0.0",
+    "bower-knockout-mapping": "2.1.0"
   },
   "private": true,
   "resolutions": {
