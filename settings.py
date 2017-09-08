@@ -800,8 +800,8 @@ COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
 'compressor.filters.cssmin.rCSSMinFilter']
 
 LESS_B3_PATHS = {
-    'variables': '../../../style/less/_hq/includes/variables',
-    'mixins': '../../../style/less/_hq/includes/mixins',
+    'variables': '../../../hqwebapp/less/_hq/includes/variables',
+    'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
 LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
