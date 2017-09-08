@@ -1,3 +1,4 @@
+/* global define, jQuery, ko */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as
@@ -39,14 +40,58 @@
 
 var COMMCAREHQ_MODULES = {};
 
-function hqDefine(path, moduleAccessor) {
-    if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
-        throw new Error("The module '" + path + "' has already been defined elsewhere.");
+function hqDefine(path, dependencies, moduleAccessor) {
+    if (arguments.length === 2) {
+        return hqDefine(path, [], dependencies);
     }
-    if (path.match(/\.js$/)) {
-        throw new Error("Error in '" + path + "': module names should not end in .js.");
-    }
-    COMMCAREHQ_MODULES[path] = moduleAccessor();
+
+    (function(factory) {
+        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+            define(path, dependencies, factory);
+        } else {
+            if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
+                throw new Error("The module '" + path + "' has already been defined elsewhere.");
+            }
+            if (path.match(/\.js$/)) {
+                throw new Error("Error in '" + path + "': module names should not end in .js.");
+            }
+            COMMCAREHQ_MODULES[path] = factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
+        }
+    }(moduleAccessor));
+}
+
+// Stopgap for modules that are sometimes used by RequireJS and sometimes not, but
+// which have not yet been converted to hqDefine. When not on a RequireJS page,
+// moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+function hqGlobal(path, dependencies, moduleAccessor) {
+    var thirdParty = {
+        'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'knockout': typeof ko === 'undefined' ? undefined : ko,
+        'ko': typeof ko === 'undefined' ? undefined : ko,
+        'underscore': typeof _ === 'undefined' ? undefined : _,
+    };
+    (function(factory) {
+        if (typeof define === 'function' && define.amd) {
+            define(path, dependencies, factory);
+        } else {
+            var args = [];
+            for (var i = 0; i < dependencies.length; i++) {
+                var dependency = dependencies[i];
+                if (dependency in thirdParty) {
+                    args[i] = thirdParty[dependency];
+                } else if (dependency in COMMCAREHQ_MODULES) {
+                    args[i] = hqImport(dependency);
+                }
+            }
+            if (!(path in COMMCAREHQ_MODULES)) {
+                if (path.match(/\.js$/)) {
+                    throw new Error("Error in '" + path + "': module names should not end in .js.");
+                }
+                COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
+            }
+        }
+    }(moduleAccessor));
 }
 
 function hqImport(path) {

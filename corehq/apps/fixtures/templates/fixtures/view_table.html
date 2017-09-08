@@ -16,11 +16,7 @@
     {% endif%}
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-    <script src="{% static 'reports/js/filters.js' %}"></script>
-    <script src="{% static 'fixtures/js/view-table.js' %}"></script>
-{% endblock %}
+{% block requirejs_entry %}fixtures/js/view-table{% endblock requirejs_entry %}
 
 {% block page_content %}
     {% initial_page_data 'renderReportTables' 1 %}
