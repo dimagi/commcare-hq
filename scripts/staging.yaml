@@ -63,7 +63,8 @@ submodules:
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
-    branches: []
+    branches:
+      - jls/move-style-less # Jenny 9/8
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
