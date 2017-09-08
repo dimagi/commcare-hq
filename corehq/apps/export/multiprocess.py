@@ -86,7 +86,7 @@ class OutputPaginator(object):
     def _new_file(self):
         if self.file:
             self.file.close()
-        fileobj = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+        fileobj = tempfile.NamedTemporaryFile(prefix='cchq_export_dump_', mode='wb', delete=False)
         self.path = fileobj.name
         self.file = gzip.GzipFile(fileobj=fileobj)
 
