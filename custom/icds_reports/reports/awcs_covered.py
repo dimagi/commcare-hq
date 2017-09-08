@@ -55,6 +55,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
+    fills.update({'Not launched': GREY})
     fills.update({'defaultFill': GREY})
 
     return [

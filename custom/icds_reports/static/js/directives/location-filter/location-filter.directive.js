@@ -1,3 +1,13 @@
+var transformLocationTypeName = function(locationTypeName) {
+    if (locationTypeName === 'awc') {
+        return locationTypeName.toUpperCase();
+    } else if (locationTypeName === 'supervisor') {
+        return 'Sector';
+    } else {
+        return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
+    }
+};
+
 function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
@@ -12,7 +22,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
-            return locationType.name.charAt(0).toUpperCase() + locationType.name.slice(1);
+            return transformLocationTypeName(locationType.name);
         }).join(', ');
     };
 
@@ -255,14 +265,6 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             });
         }
 
-    };
-
-    var transformLocationTypeName = function(locationTypeName) {
-        if (locationTypeName === 'awc') {
-            return locationTypeName.toUpperCase();
-        } else {
-            return locationTypeName.charAt(0).toUpperCase() + locationTypeName.slice(1);
-        }
     };
 
     vm.getPlaceholder = function() {
