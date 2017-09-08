@@ -102,7 +102,7 @@ def recalculate_stagnant_cases():
         for case in cases:
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
-            "Resaved %d / %d cases".format(current_case_num, num_stagnant_cases)
+            "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
         )
 
 
