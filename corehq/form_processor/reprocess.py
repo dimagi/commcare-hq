@@ -52,6 +52,7 @@ def reprocess_unfinished_stub(stub, save=True):
 def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if form.is_deleted:
         save and stub.delete()
+        return ReprocessingResult(form, None, None)
 
     if stub.is_saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
