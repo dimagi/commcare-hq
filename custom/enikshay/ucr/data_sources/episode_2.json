@@ -8503,16 +8503,16 @@
                 "column_id": "is_enrolled_in_private"
             },
             {
-                "display_name": "adherence_total_doses_taken",
+                "display_name": "total_expected_doses_taken",
                 "transform": {},
                 "datatype": "integer",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
-                "column_id": "adherence_total_doses_taken",
+                "column_id": "total_expected_doses_taken",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "adherence_total_doses_taken"
+                    "property_name": "total_expected_doses_taken"
                 }
             }
         ],
