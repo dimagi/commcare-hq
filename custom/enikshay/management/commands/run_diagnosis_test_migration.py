@@ -65,21 +65,24 @@ class Command(BaseCommand):
                         test = self.get_relevant_test_case(domain, episode_case, error_logger)
 
                         if test is not None:
-                            update = self.get_updates(test)
-                            print('Updating {}...'.format(episode_case_id))
-                            assert set(update) == set(updated_properties)
-                            writer.writerow(
-                                [episode_case_id]
-                                + [update[key] for key in updated_properties]
-                                + [
-                                    test.dynamic_case_properties().get('test_type_label', ''),
-                                    test.dynamic_case_properties().get('test_type_value', ''),
-                                    case_properties.get('diagnosis_test_type_label', '')
-                                ]
-                            )
+                            if case_properties.get('test_type_label') == test.dynamic_case_properties().get('test_type_label'):
+                                update = self.get_updates(test)
+                                print('Updating {}...'.format(episode_case_id))
+                                assert set(update) == set(updated_properties)
+                                writer.writerow(
+                                    [episode_case_id]
+                                    + [update[key] for key in updated_properties]
+                                    + [
+                                        test.dynamic_case_properties().get('test_type_label', ''),
+                                        test.dynamic_case_properties().get('test_type_value', ''),
+                                        case_properties.get('diagnosis_test_type_label', '')
+                                    ]
+                                )
 
-                            if commit:
-                                factory.update_case(case_id=episode_case_id, update=update)
+                                if commit:
+                                    factory.update_case(case_id=episode_case_id, update=update)
+                            else:
+                                print('episode.test_type_label != test.test_type_label: {}'.format(episode_case_id))
                         else:
                             print('No relevant test found for episode {}'.format(episode_case_id))
                     else:
