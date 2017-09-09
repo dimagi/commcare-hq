@@ -52,18 +52,20 @@ class Command(BaseCommand):
 
         if source_repeater_id and not dest_repeater_id:
             self.fire_in_place = True
-            proceed = raw_input("""Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
-            This would be a retrigger in place and not async. Result will be stored in a csv file for
-            reference later (enter "yes" to proceed).
-            """.format(
+            proceed = raw_input("""
+                   Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
+                   This would be a retrigger in place and not async. Result will be stored in a csv file for
+                   reference later (enter "yes" to proceed).
+                """.format(
                 repeater_id=source_repeater_id,
                 state=state if state else 'ALL states'
             ))
         elif source_repeater_id and dest_repeater_id:
-            proceed = raw_input("""Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
-                        This would add new repeat records for {dest_repeater_id} with payload id from the former repeat
-                        record. Result will be stored in a csv file for reference later (enter "yes" to proceed).
-                        """.format(
+            proceed = raw_input("""
+                   Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
+                   This would add new repeat records for {dest_repeater_id} with payload id from the former repeat
+                   record. Result will be stored in a csv file for reference later (enter "yes" to proceed).
+                """.format(
                 repeater_id=source_repeater_id,
                 dest_repeater_id=dest_repeater_id,
                 state=state if state else 'ALL states'
@@ -83,7 +85,7 @@ class Command(BaseCommand):
             print("Mission Aborted!")
 
     def setup_result_file(self):
-        result_file = "retrigger_stats_{timestamp}.csv".format(timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        result_file = "retrigger_stats_{ts}.csv".format(ts=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
         result_buffer = open(result_file, 'w')
         fieldnames = self.get_header()
         self.writer = csv.DictWriter(result_buffer, fieldnames=fieldnames)
