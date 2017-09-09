@@ -4,9 +4,7 @@
 
 {% block title %}{% trans "Data Dictionary" %}{% endblock %}\
 
-{% block js %}
-<script src="{% static 'data_dictionary/js/data_dictionary.js' %}"></script>
-{% endblock %}
+{% block requirejs_entry %}data_dictionary/js/data_dictionary{% endblock requirejs_entry %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
