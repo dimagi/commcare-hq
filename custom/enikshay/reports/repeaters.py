@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
@@ -47,10 +49,13 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         repeater_id = self.request.GET.get('repeater', None)
         state = self.request.GET.get('record_state', None)
         if self.is_rendered_as_email:
+            same_time_yesterday = datetime.today() - timedelta(days=1)
             return [
                 [
                     get_repeat_record_count(self.domain, repeater_id, "SUCCESS"),
+                    get_repeat_record_count(self.domain, repeater_id, "SUCCESS", same_time_yesterday),
                     get_repeat_record_count(self.domain, repeater_id, "CANCELLED"),
+                    get_repeat_record_count(self.domain, repeater_id, "CANCELLED", same_time_yesterday),
                 ]
             ]
         return [self._make_row(record) for record in
@@ -61,7 +66,9 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         if self.is_rendered_as_email:
             columns = [
                 DataTablesColumn(_('Successful Records')),
+                DataTablesColumn(_('Successful Records in Last 24 hours')),
                 DataTablesColumn(_('Cancelled Records')),
+                DataTablesColumn(_('Cancelled Records in Last 24 hours')),
             ]
         else:
             columns = [
