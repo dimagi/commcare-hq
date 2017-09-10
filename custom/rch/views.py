@@ -15,7 +15,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.locations.dbaccessors import user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.style.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2
 from custom.rch.forms import BeneficiariesFilterForm
 from custom.rch.models import RCHRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
 

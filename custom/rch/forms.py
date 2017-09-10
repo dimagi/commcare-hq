@@ -6,7 +6,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import StrictButton
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from custom.rch.models import AreaMapping
 
 
