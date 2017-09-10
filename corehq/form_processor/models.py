@@ -143,6 +143,7 @@ class RestrictedManager(RequireDBManager):
 
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
 
     # states should be powers of 2
@@ -462,6 +463,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
@@ -494,6 +496,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
 
 
 class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'form_id'
     objects = RestrictedManager()
 
     ARCHIVE = 'archive'
@@ -581,6 +584,7 @@ class SupplyPointCaseMixin(object):
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
@@ -790,6 +794,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     def get_opening_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE)
 
+    @memoized
+    def get_form_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM)
+
     def _transactions_by_type(self, transaction_type):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         if self.is_saved():
@@ -888,6 +896,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     class Meta:
         index_together = [
+            ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
             ["domain", "external_id", "type"],
         ]
@@ -896,6 +905,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
 
 class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
@@ -971,6 +981,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
 
 
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
@@ -1050,6 +1061,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     # types should be powers of 2
@@ -1064,6 +1076,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPE_CASE_CLOSE = 256
     TYPE_CASE_INDEX = 512
     TYPE_CASE_ATTACHMENT = 1024
+    TYPE_REBUILD_FORM_REPROCESS = 2048
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
         (TYPE_REBUILD_WITH_REASON, 'rebuild_with_reason'),
@@ -1071,6 +1084,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         (TYPE_REBUILD_USER_ARCHIVED, 'user_archived_rebuild'),
         (TYPE_REBUILD_FORM_ARCHIVED, 'form_archive_rebuild'),
         (TYPE_REBUILD_FORM_EDIT, 'form_edit_rebuild'),
+        (TYPE_REBUILD_FORM_REPROCESS, 'form_reprocessed_rebuild'),
         (TYPE_LEDGER, 'ledger'),
         (TYPE_CASE_CREATE, 'case_create'),
         (TYPE_CASE_CLOSE, 'case_close'),
@@ -1159,7 +1173,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             (self.TYPE_REBUILD_FORM_EDIT & self.type) or
             (self.TYPE_REBUILD_USER_ARCHIVED & self.type) or
             (self.TYPE_REBUILD_USER_REQUESTED & self.type) or
-            (self.TYPE_REBUILD_WITH_REASON & self.type)
+            (self.TYPE_REBUILD_WITH_REASON & self.type) or
+            (self.TYPE_REBUILD_FORM_REPROCESS & self.type)
         )
 
     @property
@@ -1310,10 +1325,16 @@ class FormEditRebuild(CaseTransactionDetail):
     deprecated_form_id = StringProperty()
 
 
-class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
+class FormReprocessRebuild(CaseTransactionDetail):
+    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    form_id = StringProperty()
+
+
+class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
@@ -1389,6 +1410,7 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
 
 
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
+    partition_attr = 'case_id'
     objects = RestrictedManager()
 
     TYPE_BALANCE = 1

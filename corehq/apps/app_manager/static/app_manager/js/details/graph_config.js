@@ -1,5 +1,5 @@
-/* global Clipboard */
-hqDefine('app_manager/js/details/graph_config.js', function () {
+/* global Clipboard, hqDefine, hqImport */
+hqDefine('app_manager/js/details/graph_config', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property
      * of this view model allows us to integrate the knockout elements with the
@@ -61,7 +61,7 @@ hqDefine('app_manager/js/details/graph_config.js', function () {
         };
 
         self.ui.koApplyBindings(self);
-        eventize(self);
+        hqImport("hqwebapp/js/main").eventize(self);
 
         /**
          * Return an object representing this graph configuration that is suitable

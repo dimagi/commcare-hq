@@ -1,7 +1,7 @@
 // This file depends on hqwebapp/js/select2_handler.js
-hqDefine("accounting/js/accounting.software_plan_version_handler.js", function() {
+hqDefine("accounting/js/accounting.software_plan_version_handler", function() {
     $(function() {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
             initial_page_data('role'),
             initial_page_data('feature_rates'),
@@ -129,7 +129,7 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
     
         self.init = function () {
             if (options.multiSelectField) {
-                var multiselect_utils = hqImport('style/js/multiselect_utils');
+                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_' + options.multiSelectField.slug,
                     options.multiSelectField.titleSelect,
@@ -220,7 +220,7 @@ hqDefine("accounting/js/accounting.software_plan_version_handler.js", function()
     };
     
     
-    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler.js").BaseSelect2Handler;
+    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler;
     var Select2RateHandler = function (options, currentValue) {
         'use strict';
         BaseSelect2Handler.call(this, options);

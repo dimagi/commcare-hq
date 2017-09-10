@@ -1,5 +1,4 @@
 {% extends "domain/base_change_plan.html" %}
-{% load hqstyle_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load compress %}
@@ -26,7 +25,7 @@
 {% endblock %}
 
 {% block form_content %}
-{% initial_page_data 'pricing_table' pricing_table %}
+{% initial_page_data 'editions' editions %}
 {% initial_page_data 'current_edition' current_edition %}
 {% initial_page_data 'is_renewal' is_renewal|BOOL %}
 <p class="lead">

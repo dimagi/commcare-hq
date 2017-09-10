@@ -1,5 +1,5 @@
 /* globals CodeMirror, gettext */
-hqDefine('cloudcare/js/debugger/debugger.js', function () {
+hqDefine('cloudcare/js/debugger/debugger', function () {
 
     /**
      * These define tabs that are availabe in the debugger.
@@ -153,7 +153,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             this.formattedQuestionsHtml(response.formattedQuestions);
             this.instanceXml(response.instanceXml);
             this.evalXPath.autocomplete(response.questionList);
-            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
             this.updating(false);
         }.bind(this));
     };
@@ -175,7 +175,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             }
         ).done(function(response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
-            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);
             this.updating(false);
         }.bind(this));
     };
@@ -194,11 +194,41 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         });
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
-        self.recentXPathQueries = ko.observableArray();
         self.$xpath = null;
-        self.codeMirrorResult = null;
-        self.result = ko.observable('');
-        self.success = ko.observable(true);
+        self.newXPathQuery = function (data) {
+            return {
+                status: data.status,
+                output: data.output,
+                xpath: data.xpath,
+                successResult: function () {
+                    if (this.success()) {
+                        return self.formatResult(data.output);
+                    }
+                },
+                errorResult: function () {
+                    if (!this.success()) {
+                        return data.output || gettext('Error evaluating expression.');
+                    }
+                },
+                success: function () {
+                    return this.status === 'accepted';
+                },
+            };
+        };
+        self.xPathQuery = ko.observable(null);
+        self.recentXPathQueries = ko.observableArray();
+        self.setRecentXPathQueries = function (rawQueries) {
+            self.recentXPathQueries(_.map(rawQueries, self.newXPathQuery));
+        };
+
+        var resultRegex = new RegExp(
+            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>\n*([\\s\\S]*?)\\s*</result>\\s*|' +
+            '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
+
+        self.formatResult = function (output) {
+            return output.replace(resultRegex, "$1");
+        };
+
         self.onSubmitXPath = function() {
             self.evaluate(self.xpath());
         };
@@ -234,41 +264,19 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 },
                 self.options.sessionType
             ).done(function(response) {
-                self.success(response.status === "accepted");
-                self.recentXPathQueries.unshift({
+                var xPathQuery = self.newXPathQuery({
                     status: response.status,
                     output: response.output,
                     xpath: xpath,
                 });
+                self.xPathQuery(xPathQuery);
+                self.recentXPathQueries.unshift(xPathQuery);
                 // Ensure at the maximum we only show 6 queries
                 self.recentXPathQueries(
                     self.recentXPathQueries.slice(0, 6)
                 );
-                if (self.success()) {
-                    self.result(response.output);
-                } else {
-                    self.result(response.output || gettext('Error evaluating expression.'));
-                }
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
-        };
-
-        self.afterRender = function() {
-            var options = {
-                mode: 'xml',
-                viewportMargin: Infinity,
-                readOnly: true,
-            };
-            self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
-            self.codeMirrorResult.setSize(null, 200);
-        };
-
-        self.result.subscribe(function(newResult) {
-            self.codeMirrorResult.setValue(newResult);
-        });
-
-        self.isSuccess = function(query) {
-            return query.status === 'accepted';
         };
 
         self.onMouseUp = function() {
@@ -380,6 +388,29 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             });
         },
     };
+
+    _.delay(function  () {
+        ko.bindingHandlers.codeMirror = {
+            /* copied and edited from https://stackoverflow.com/a/33966345/240553 */
+            init: function(element, valueAccessor) {
+                var options = {
+                    mode: 'xml',
+                    viewportMargin: Infinity,
+                    readOnly: true,
+                };
+                options.value = ko.unwrap(valueAccessor());
+                var editor = CodeMirror.fromTextArea(element, options);
+                editor.setSize(null, 200);  // hard-coded right now;
+                element.editor = editor;
+            },
+            update: function(element, valueAccessor) {
+                var observedValue = ko.unwrap(valueAccessor());
+                if (element.editor) {
+                    element.editor.setValue(observedValue);
+                }
+            },
+        };
+    });
 
     return {
         CloudCareDebuggerFormEntry: CloudCareDebuggerFormEntry,

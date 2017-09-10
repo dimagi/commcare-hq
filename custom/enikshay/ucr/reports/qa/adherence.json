@@ -1,8 +1,10 @@
 {
     "domains": [
-        "enikshay-reports-qa"
+        "enikshay-reports-qa",
+        "sheel-enikshay"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "episode_for_adherence_report",
@@ -53,7 +55,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "external_id",
+                "field": "person_id_property",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary ID"
@@ -257,9 +259,12 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
                 "aggregation": "simple",
-                "field": "episode_fo",
+                "field": "fo",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Assigned FO"
@@ -334,10 +339,43 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "adherence_registered",
+                "field": "three_day_adherence_score",
                 "calculate_total": false,
                 "type": "field",
-                "display": "% Adherence Reported"
+                "display": "% Adherence Reported - Last 3 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "one_week_adherence_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Adherence Reported - Last 7 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "two_week_adherence_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Adherence Reported - Last 2 weeks"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "month_adherence_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Adherence Reported - Last 30 days"
             },
             {
                 "sortable": false,
@@ -653,10 +691,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "unknown_doses",
+                "field": "three_day_unknown_score",
                 "calculate_total": false,
                 "type": "field",
-                "display": "% Unknown Doses"
+                "display": "% Unknown Doses - Last 3 days"
             },
             {
                 "sortable": false,
@@ -664,10 +702,76 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "missed_doses",
+                "field": "one_week_unknown_score",
                 "calculate_total": false,
                 "type": "field",
-                "display": "% Missed Doses"
+                "display": "% Unknown Doses - Last 7 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "two_week_unknown_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Unknown Doses - Last 2 weeks"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "month_unknown_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Unknown Doses - Last 30 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "three_day_missed_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Missed Doses - Last 3 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "one_week_missed_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Missed Doses - Last 7 days"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "two_week_missed_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Missed Doses - Last 2 weeks"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "month_missed_score",
+                "calculate_total": false,
+                "type": "field",
+                "display": "% Missed Doses - Last 30 days"
             },
             {
                 "sortable": false,

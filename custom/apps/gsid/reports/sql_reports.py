@@ -9,7 +9,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SummingSqlTabularRepor
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.standard.maps import GenericMapReport
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.style.decorators import use_maps, maps_prefer_canvas, use_nvd3
+from corehq.apps.hqwebapp.decorators import use_maps, maps_prefer_canvas, use_nvd3
 from corehq.apps.userreports.util import get_table_name
 from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date

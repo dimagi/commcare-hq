@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -19,7 +20,7 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
+from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
@@ -31,7 +32,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     prefix_usercase_properties,
     module_offers_search,
-    module_case_hierarchy_has_circular_reference, get_app_manager_template)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultimedia
@@ -58,7 +59,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -67,29 +68,17 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(user, module):
     if isinstance(module, AdvancedModule):
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view_advanced.html",
-            "app_manager/v2/module_view_advanced.html",
-        )
+        return "app_manager/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return get_app_manager_template(
-            user,
-            'app_manager/v1/module_view_report.html',
-            'app_manager/v2/module_view_report.html',
-        )
+        return "app_manager/module_view_report.html"
     else:
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view.html",
-            "app_manager/v2/module_view.html",
-        )
+        return "app_manager/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
     }
     module_brief = {
         'id': module.id,
@@ -375,7 +364,7 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_attr(request, domain, app_id, module_id, attr):
+def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
@@ -389,6 +378,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
         "display_separately": None,
@@ -403,7 +393,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
-        "display_style": None
+        "display_style": None,
+        "custom_icon_form": None,
+        "custom_icon_text_body": None,
+        "custom_icon_xpath": None,
     }
 
     if attr not in attributes:
@@ -422,9 +415,23 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 return request.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
+    if should_edit("custom_icon_form"):
+        error_message = handle_custom_icon_edits(request, module, lang)
+        if error_message:
+            return json_response(
+                {'message': error_message},
+                status_code=400
+            )
+
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
@@ -443,14 +450,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
             for mod in all_advanced_modules:
                 for form in mod.forms:
                     for action in form.actions.get_load_update_actions():
-                        if action.case_type == old_case_type and action.details_module == module_id:
+                        if action.case_type == old_case_type and action.details_module == module_unique_id:
                             action.case_type = case_type
 
-                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                    if mod.unique_id == module_unique_id or not modules_with_old_case_type_exist:
                         for action in form.actions.get_open_actions():
                             if action.case_type == old_case_type:
                                 action.case_type = case_type
@@ -478,6 +484,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         module.case_list_form.form_id = request.POST.get('case_list_form_id')
     if should_edit('case_list_form_label'):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
+    if should_edit('case_list_post_form_workflow'):
+        module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
     if should_edit('case_list_form_media_image'):
         new_path = process_media_attribute(
             'case_list_form_media_image',
@@ -529,11 +537,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
-            try:
-                app.get_module(module_id)
-                module["root_module_id"] = request.POST.get("root_module_id")
-            except ModuleNotFoundException:
-                messages.error(_("Unknown Menu"))
+            module["root_module_id"] = request.POST.get("root_module_id")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -549,6 +553,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
 
 def _new_advanced_module(request, domain, app, name, lang):
     module = app.add_module(AdvancedModule.new_module(name, lang))
+    _init_module_case_type(module)
     module_id = module.id
     app.new_form(module_id, _("Untitled Form"), lang)
 
@@ -613,13 +618,21 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def overwrite_module_case_list(request, domain, app_id, module_id):
+def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
-    source_module_id = int(request.POST['source_module_id'])
+    source_module_unique_id = request.POST['source_module_unique_id']
+
+    # temporary fallback to handle currently working app states
+    source_module_id = request.POST['source_module_unique_id']
+    if source_module_id is not None:
+        source_module = app.get_module(int(source_module_unique_id))
+        dest_module = app.get_module(module_unique_id)
+    else:
+        source_module = app.get_module_by_unique_id(source_module_unique_id)
+        dest_module = app.get_module_by_unique_id(module_unique_id)
+
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
-    source_module = app.get_module(source_module_id)
-    dest_module = app.get_module(module_id)
     if not hasattr(source_module, 'case_details'):
         messages.error(
             request,
@@ -635,7 +648,7 @@ def overwrite_module_case_list(request, domain, app_id, module_id):
         setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
         app.save()
         messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
-    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+    return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
 def _update_search_properties(module, search_properties, lang='en'):
@@ -678,7 +691,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_detail_screens(request, domain, app_id, module_id):
+def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -710,7 +723,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     }
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
 
     if detail_type == 'case':
         detail = module.case_details
@@ -825,7 +843,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_report_module(request, domain, app_id, module_id):
+def edit_report_module(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -833,7 +851,13 @@ def edit_report_module(request, domain, app_id, module_id):
     """
     params = json_request(request.POST)
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     assert isinstance(module, ReportModule)
     module.name = params['name']
 
@@ -865,27 +889,28 @@ def edit_report_module(request, domain, app_id, module_id):
     return json_response('success')
 
 
-def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
-        module = app.get_module(module_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
-        raise Http404()
+        try:
+            # temporary fallback
+            module = app.get_module(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string(get_app_manager_template(
-            request.user,
-            'app_manager/v1/partials/build_errors.html',
-            'app_manager/v2/partials/build_errors.html',
-        ), {
+    response_html = render_to_string("app_manager/partials/build_errors.html", {
         'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
         'domain': domain,
         'langs': langs,
-        'lang': lang
+        'lang': lang,
     })
     if ajax:
         return json_response({'error_html': response_html})
@@ -902,41 +927,35 @@ def new_module(request, domain, app_id):
     module_type = request.POST.get('module_type', 'case')
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
-
-        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
-            if module_type == 'case':
-                name = name or 'Case List'
-            else:
-                name = name or 'Surveys'
+        if module_type == 'case':
+            name = name or 'Case List'
+        else:
+            name = name or 'Surveys'
 
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V1.enabled(request.user.username):
-            app.new_form(module_id, "Untitled Form", lang)
-        else:
-            if module_type == 'case':
+        unstructured = add_ons.show("empty_case_lists", request, app)
+        if module_type == 'case':
+            if not unstructured:
+                form_id = 0
+
                 # registration form
-                register = app.new_form(module_id, _("Register"), lang)
+                register = app.new_form(module_id, _("Registration Form"), lang)
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, _("Followup"), lang)
+                followup = app.new_form(module_id, _("Followup Form"), lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
-                # make case type unique across app
-                app_case_types = [m.case_type for m in app.modules if m.case_type]
-                if len(app_case_types):
-                    module.case_type = app_case_types[0]
-                else:
-                    module.case_type = 'case'
-            else:
-                app.new_form(module_id, _("Survey"), lang)
+            _init_module_case_type(module)
+        else:
             form_id = 0
+            app.new_form(module_id, _("Survey"), lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
@@ -957,6 +976,16 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
+# Set initial module case type, copying from another module in the same app
+def _init_module_case_type(module):
+    app = module.get_app()
+    app_case_types = [m.case_type for m in app.modules if m.case_type]
+    if len(app_case_types):
+        module.case_type = app_case_types[0]
+    else:
+        module.case_type = 'case'
+
+
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
     short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
@@ -973,7 +1002,19 @@ def _save_case_list_lookup_params(short, case_list_lookup, lang):
 
 @require_GET
 @require_deploy_apps
-def view_module(request, domain, app_id, module_id):
+def view_module(request, domain, app_id, module_unique_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id, module_unique_id=module_unique_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_module_legacy(request, domain, app_id, module_id):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id)
 

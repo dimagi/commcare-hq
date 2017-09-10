@@ -1,7 +1,7 @@
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import validate_phone_number
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton, FormActions
 from crispy_forms.helper import FormHelper

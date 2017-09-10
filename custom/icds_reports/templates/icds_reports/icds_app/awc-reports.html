@@ -3,57 +3,52 @@
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+                <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < -1 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
         </div>
-        <div class="col-md-6">
-            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
-        </div>
-        <div class="col-md-1">
-            <div class="row">
-                <div class="col-md-4">
-                    <print-report></print-report>
-                </div>
-                <div class="col-md-4">
-                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
-                     popover-placement="left"
-                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
-                </div>
-            </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations" is-open-modal="$ctrl.message"></filters>
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div class="alert alert-info" ng-show="$ctrl.message && !$ctrl.myPromise" style="margin-top: 30px;">
-            <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
-        </div>
         <div ng-show="$ctrl.data">
-            <div class="row " ng-show="$ctrl.step === 'system_usage'">
-                <kpi data="$ctrl.data.kpi"></kpi>
-            </div>
-            <div class="row black" ng-show="$ctrl.step === 'pse'">
-                <div class="row no-margin" ng-repeat="chart in $ctrl.data.charts">
-                    <h2 class="center">{$ chart[0].key $}</h2>
-                    <nvd3 options="$ctrl.chartOptions" data="chart" class="with-3d-shadow with-transitions"></nvd3>
-                </div>
+            <div class="row" ng-show="$ctrl.step === 'pse'">
                 <div class="row no-margin">
+                    <kpi data="$ctrl.data.kpi"></kpi>
+                </div>
+                <div class="row no-margin black">
+                    <h2 class="center">{$ $ctrl.data.charts[0][0].key $}</h2>
+                    <nvd3 options="$ctrl.lineChartDaysPerWeekOptions" data="$ctrl.data.charts[0]" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+                <div class="row no-margin black">
+                    <h2 class="center">{$ $ctrl.data.charts[1][0].key $}</h2>
+                    <nvd3 options="$ctrl.lineChartOptions" data="$ctrl.data.charts[1]" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+                <div class="row no-margin black">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
                 </div>
-                <div class="row no-margin">
+                <div class="row no-margin black">
                     <h2 class="center">PSE Photo Submissions</h2>
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
-                            <div style="display: inline-block" ng-repeat="img in images track by img.id">
-                                <img class="slider-image" ng-src="{$ img.image $}">
-                                <div class="uib-carousel">{$ img.date $}</div>
+                            <div style="display: inline-block; width: 200px; height: 200px" ng-repeat="img in images track by img.id" ng-class="{'blank-image': !img.image}">
+                                <img class="slider-image" ng-src="{$ img.image $}" style="width: 200px; height: 200px">
+                                <div class="uib-carousel">
+                                    <span ng-hide="img.image">No Photo Available</span>
+                                    <span ng-hide="!img.image">&nbsp;</span>
+                                </div>
+                                <div class="uib-carousel">
+                                    {$ img.date $}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -75,7 +70,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2">Name</th>
-                            <th rowspan="2">Date of Birth</th>
+                            <th rowspan="2"> Date of Birth</th>
                             <th rowspan="2">Current Age (In Years)</th>
                             <th rowspan="2">1 Year Immunizations Complete</th>
                             <th colspan="4" ng-repeat="month in $ctrl.data.months">
@@ -91,26 +86,26 @@
                     </thead>
                     <tbody>
                         <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
-                            <td><span class="pointer" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.last_month].case_id)">{$ row[$ctrl.data.last_month].person_name $}</span></td>
-                            <td>{$ row[$ctrl.data.last_month].dob $}</td>
-                            <td>{$ row[$ctrl.data.last_month].age $}</td>
-                            <td>{$ row[$ctrl.data.last_month].fully_immunized_date $}</td>
+                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)"><span>{$ row.person_name || 'Data not Entered' $}</span></td>
+                            <td>{$ row.dob || 'Data not Entered' $}</td>
+                            <td style="min-width: 80px;">{$ row.age || 'Data not Entered' $}</td>
+                            <td>{$ row.fully_immunized_date || 'Data not Entered' $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
-                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
-                                    {$ row[month].nutrition_status $}
+                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
+                                    {$ row[month].nutrition_status || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].stunning $}
+                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].stunning || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].wasting $}
+                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].wasting || 'Data not Entered' $}
                                 </span>
                             </td>
-                            <td ng-repeat-end="">{$ row[month].pse_days_attended $}</td>
+                            <td ng-repeat-end="">{$ row[month].pse_days_attended || 'Data not Entered' $}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -153,8 +148,10 @@
                 <h4>Growth Monitoring:</h4>
                 <h4 class="center">Weight For Age:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
-                <h4 class="center">Weight For Height:</h4>
+                <h4 class="center">Height For Age:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
+                <h4 class="center">Weight For Height:</h4>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
         </div>
         </div>

@@ -1,8 +1,8 @@
-hqDefine("reports/js/base.js", function() {
+hqDefine("reports/js/base", function() {
     $(function() {
-        hqImport("reports/js/filters.js").init();
+        hqImport("reports/js/filters").init();
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var defaultConfig = initial_page_data('default_config') || {};
         if (initial_page_data('has_datespan')) {
             defaultConfig.date_range = 'last7';
@@ -19,7 +19,7 @@ hqDefine("reports/js/base.js", function() {
                 filterForm: $("#reportFilters"),
                 items: initial_page_data('report_configs'),
                 defaultItem: defaultConfig,
-                saveUrl: hqImport("hqwebapp/js/urllib.js").reverse("add_report_config"),
+                saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
             });
         }
 

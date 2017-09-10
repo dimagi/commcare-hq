@@ -162,13 +162,19 @@ Container.prototype.fromJS = function(json) {
                 if (ko.utils.unwrapObservable(options.target.serverError)) {
                     options.data.answer = _.clone(options.target.answer());
                 }
+                if (options.target.choices && _.isEqual(options.target.choices(), options.data.choices)) {
+                    // replacing the full choice list if it has a few thousand items
+                    // is actually quite expensive and can freeze the page for seconds.
+                    // at the very least we can skip entirely when there's no change.
+                    delete options.data.choices;
+                }
                 return options.target;
             },
             key: function(data) {
                 return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
             }
         }
-    }
+    };
     ko.mapping.fromJS(json, mapping, self);
 };
 
@@ -420,11 +426,12 @@ function Question(json, parent) {
     };
     self.afterRender = function() { self.entry.afterRender(); };
 
-    self.onchange = _.throttle(function() {
+    self.triggerAnswer = function() {
         $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
         $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
-    }, self.throttle);
+    };
+    self.onchange = _.throttle(self.triggerAnswer, self.throttle);
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
@@ -589,7 +596,9 @@ Formplayer.Errors = {
         "Technical Details: ",
     TIMEOUT_ERROR: "CommCareHQ has detected a possible network connectivity problem. " +
         "Please make sure you are connected to the " +
-        "Internet in order to submit your form."
+        "Internet in order to submit your form.",
+    LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
+        'Please try again later.'),
 };
 
 Formplayer.Utils.touchformsError = function(message) {
@@ -619,7 +628,7 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
-        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerFormEntry,
+        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);

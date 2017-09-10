@@ -18,15 +18,6 @@ MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
-    def consume_options(self, options):
-        """Called from the management command with the command line
-        options.
-
-        :param options: command line options dict
-        :return: dict of unprocessed options
-        """
-        return options
-
     def clean(self):
         """
             Cleans the index.
@@ -42,6 +33,71 @@ class Reindexer(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
+class ReindexerFactory(six.with_metaclass(ABCMeta)):
+    slug = None
+    arg_contributors = None
+
+    def __init__(self, **options):
+        self.options = options
+
+    @classmethod
+    def add_arguments(cls, parser):
+        if not cls.arg_contributors:
+            return
+
+        for contributor in cls.arg_contributors:
+            contributor(parser)
+
+    @abstractmethod
+    def build(self):
+        """
+        :param options: dict of options
+        :return: a fully configured reindexer
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def elastic_reindexer_args(parser):
+        parser.add_argument(
+            '--in-place',
+            action='store_true',
+            dest='in_place',
+            help='Run the reindex in place - assuming it is against a live index.'
+        )
+
+    @staticmethod
+    def resumable_reindexer_args(parser):
+            parser.add_argument(
+                '--reset',
+                action='store_true',
+                dest='reset',
+                help='Reset a resumable reindex'
+            )
+            parser.add_argument(
+                '--chunksize',
+                type=int,
+                action='store',
+                dest='chunk_size',
+                default=1000,
+                help='Number of docs to process at a time'
+            )
+
+    @staticmethod
+    def limit_db_args(parser):
+        parser.add_argument(
+            '--limit-to-db',
+            dest='limit_to_db',
+            help="Limit the reindexer to only a specific SQL database. Allows running multiple in parallel."
+        )
+
+    @staticmethod
+    def domain_arg(parser):
+        parser.add_argument(
+            '--domain',
+            dest='domain',
+        )
+
+
 class PillowReindexer(Reindexer):
     def __init__(self, pillow):
         self.pillow = pillow
@@ -54,12 +110,8 @@ class PillowChangeProviderReindexer(PillowReindexer):
         super(PillowChangeProviderReindexer, self).__init__(pillow)
         self.change_provider = change_provider
 
-    def consume_options(self, options):
-        self.start_from = options.pop("start_from", None)
-        return options
-
     def reindex(self):
-        for i, change in enumerate(self.change_provider.iter_all_changes(start_from=self.start_from)):
+        for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
                 self.pillow.process_change(change)
             except Exception:
@@ -95,14 +147,11 @@ def _set_checkpoint(pillow):
 class ElasticPillowReindexer(PillowChangeProviderReindexer):
     in_place = False
 
-    def __init__(self, pillow, change_provider, elasticsearch, index_info):
+    def __init__(self, pillow, change_provider, elasticsearch, index_info, in_place=False):
         super(ElasticPillowReindexer, self).__init__(pillow, change_provider)
         self.es = elasticsearch
         self.index_info = index_info
-
-    def consume_options(self, options):
-        super(ElasticPillowReindexer, self).consume_options(options)
-        self.in_place = options.pop("in-place", False)
+        self.in_place = in_place
 
     def clean(self):
         _clean_index(self.es, self.index_info)
@@ -141,7 +190,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
 
         for change, exception in error_collector.errors:
-            pillow_logging.error("Error procesing doc %s: %s", change.id, exception)
+            pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
 
         payloads = prepare_bulk_payloads(bulk_changes, MAX_PAYLOAD_SIZE)
         if len(payloads) > 1:
@@ -192,7 +241,10 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
     in_place = False
 
     def __init__(self, doc_provider, elasticsearch, index_info,
-                 doc_filter=None, doc_transform=None, chunk_size=1000, pillow=None):
+                 doc_filter=None, doc_transform=None, chunk_size=1000, pillow=None,
+                 reset=False, in_place=False):
+        self.reset = reset
+        self.in_place = in_place
         self.doc_provider = doc_provider
         self.es = elasticsearch
         self.index_info = index_info
@@ -201,14 +253,6 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
             self.es, self.index_info, doc_filter, doc_transform
         )
         self.pillow = pillow
-
-    def consume_options(self, options):
-        self.reset = options.pop("reset", False)
-        self.in_place = options.pop("in-place", False)
-        chunk_size = options.pop("chunksize", None)
-        if chunk_size:
-            self.chunk_size = chunk_size
-        return options
 
     def clean(self):
         _clean_index(self.es, self.index_info)

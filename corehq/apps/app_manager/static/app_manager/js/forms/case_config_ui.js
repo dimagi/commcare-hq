@@ -1,8 +1,8 @@
-/*globals $, COMMCAREHQ, ko, _*/
+/*globals $, hqDefine, hqImport, ko, _*/
 
-hqDefine('app_manager/js/forms/case_config_ui.js', function () {
+hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
-    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
         // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];
@@ -48,7 +48,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
@@ -67,7 +67,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
@@ -76,7 +76,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
             }
         });
 
-        self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
+        self.saveUsercaseButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
@@ -90,7 +90,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                     },
                     dataType: 'json',
                     success: function (data) {
-                        var app_manager = hqImport('app_manager/js/app_manager.js');
+                        var app_manager = hqImport('app_manager/js/app_manager');
                         app_manager.updateDOM(data.update);
                         self.setUsercasePropertiesMap(data.setUsercasePropertiesMap);
                     }
@@ -128,8 +128,8 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
         };
 
-        self.refreshQuestions = function(url, moduleId, formId, event){
-            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
+        self.refreshQuestions = function(url, formUniqueId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, formUniqueId, event);
         };
         self.getAnswers = function (condition) {
             return caseConfigUtils.getAnswers(self.questions(), condition);
@@ -246,6 +246,13 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
                 }
                 return 'update';
             }()));
+
+        self.showLeadRegistration = ko.computed(function() {
+            return self.actionType() === 'open';
+        });
+        self.showLeadFollowup = ko.computed(function() {
+            return self.actionType() === 'update';
+        });
 
         self.actionType.subscribe(function (value) {
             var required;
@@ -980,7 +987,7 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
     };
 
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         if (initial_page_data('has_form_source')) {
             var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
                 home: $('#case-config-ko'),

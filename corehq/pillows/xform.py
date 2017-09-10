@@ -21,10 +21,11 @@ from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
     XFormDuplicate, SubmissionErrorLog
+from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def is_valid_date(txt):
@@ -126,6 +127,14 @@ def transform_xform_for_elasticsearch(doc_dict):
 
     if 'backend_id' not in doc_ret:
         doc_ret['backend_id'] = 'couch'
+
+    server_modified_on = doc_ret['received_on']
+    if doc_ret.get('edited_on', None):
+        # doesn't take archiving and unarchiving into account
+        received_on = string_to_utc_datetime(doc_ret['received_on'])
+        edited_on = string_to_utc_datetime(doc_ret['edited_on'])
+        server_modified_on = max(received_on, edited_on).isoformat()
+    doc_ret['server_modified_on'] = server_modified_on
     return doc_ret
 
 
@@ -153,35 +162,61 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     )
 
 
-def get_couch_form_reindexer():
-    iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
-        XFormInstance,
-        XFormArchived,
-        XFormError,
-        XFormDeprecated,
-        XFormDuplicate,
-        ('XFormInstance-Deleted', XFormInstance),
-        ('HQSubmission', XFormInstance),
-        SubmissionErrorLog,
-    ])
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch,
-        pillow=get_xform_to_elasticsearch_pillow(),
-    )
+class CouchFormReindexerFactory(ReindexerFactory):
+    slug = 'form'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+    ]
+
+    def build(self):
+        iteration_key = "CouchXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
+        doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+            XFormInstance,
+            XFormArchived,
+            XFormError,
+            XFormDeprecated,
+            XFormDuplicate,
+            ('XFormInstance-Deleted', XFormInstance),
+            ('HQSubmission', XFormInstance),
+            SubmissionErrorLog,
+        ])
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=XFORM_INDEX_INFO,
+            doc_filter=xform_pillow_filter,
+            doc_transform=transform_xform_for_elasticsearch,
+            pillow=get_xform_to_elasticsearch_pillow(),
+            **self.options
+        )
 
 
-def get_sql_form_reindexer():
-    iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer".format(XFORM_INDEX_INFO.index)
-    doc_provider = SqlDocumentProvider(iteration_key, FormReindexAccessor())
-    return ResumableBulkElasticPillowReindexer(
-        doc_provider,
-        elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
-        doc_filter=xform_pillow_filter,
-        doc_transform=transform_xform_for_elasticsearch
-    )
+class SqlFormReindexerFactory(ReindexerFactory):
+    slug = 'sql-form'
+    arg_contributors = [
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.limit_db_args,
+        ReindexerFactory.domain_arg,
+    ]
+
+    def build(self):
+        limit_to_db = self.options.pop('limit_to_db', None)
+        domain = self.options.pop('domain', None)
+
+        iteration_key = "SqlXFormToElasticsearchPillow_{}_reindexer_{}_{}".format(
+            XFORM_INDEX_INFO.index, limit_to_db or 'all', domain or 'all'
+        )
+        limit_db_aliases = [limit_to_db] if limit_to_db else None
+
+        reindex_accessor = FormReindexAccessor(domain=domain, limit_db_aliases=limit_db_aliases)
+        doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
+            elasticsearch=get_es_new(),
+            index_info=XFORM_INDEX_INFO,
+            doc_filter=xform_pillow_filter,
+            doc_transform=transform_xform_for_elasticsearch,
+            **self.options
+        )

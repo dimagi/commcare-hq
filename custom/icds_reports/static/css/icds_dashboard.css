@@ -49,6 +49,22 @@
     min-width: 200px;
 }
 
+th {
+    min-width: 100px !important;
+}
+
+.sorting:hover {
+    text-decoration: underline;
+}
+
+.sorting_asc {
+    background-color: #d9d9d9 !important;
+}
+
+.sorting_desc {
+    background-color: #d9d9d9 !important;
+}
+
 .breadcrumb {
     background-color: #ffffff !important;
 }
@@ -167,6 +183,14 @@ nvd3 > svg {
 
 .red {
     color: #d60000;
+}
+
+.link {
+    color: #0b3e6f;
+}
+
+.link:hover {
+    text-decoration: underline;
 }
 
 .green {
@@ -321,14 +345,6 @@ h4 {
     text-align: center;
 }
 
-.fa-arrow-down {
-    color: #c61400;
-}
-
-.fa-arrow-up {
-    color: #07c600;
-}
-
 .see-more {
     float: right;
     margin-right: 40px;
@@ -338,12 +354,29 @@ h4 {
     color: #ffffff;
 }
 
+.no-decoration {
+    color: #ffffff !important;
+}
+
+.no-decoration:hover {
+    text-decoration: none !important;
+}
+
 .dropdown-menu {
     z-index: 4;
 }
 
 .dropdown {
     padding: 2px;
+    margin-right: 2px;
+}
+
+.light-grey {
+    color: #9d9d9d;
+}
+
+.light-grey:hover {
+    color: #9d9d9d;
 }
 
 .title {
@@ -495,7 +528,7 @@ h4 {
 }
 
 .text-center > div {
-    height: 300px !important;
+    height: 200px !important;
 }
 
 circle {
@@ -513,8 +546,34 @@ circle {
 .uib-carousel {
     position: relative;
     bottom: 30%;
+    left: 8%;
     margin: 0 auto;
     color: white;
     font-size: 20px;
     font-weight: bolder;
+}
+
+.blank-image .uib-carousel {
+    color: black;
+}
+
+.progress-report-directive .nav-block {
+    border-radius: 10px;
+    text-align: center;
+    padding: 25px;
+    height: 250px;
+}
+
+.progress-report-directive .nav-block .caption {
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.DTFC_LeftBodyLiner > table > thead:first-child {
+    display: none;
+}
+
+table.no-footer {
+    margin: 0 !important;
 }

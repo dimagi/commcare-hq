@@ -1,6 +1,5 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load hq_shared_tags %}
-{% load hqstyle_tags %}
 {% load i18n %}
 
 {% block view-tabs %}
@@ -17,8 +16,8 @@
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script>
-        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
-            asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
+        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport(),
+            asyncHQReport = hqImport("reports/js/standard_hq_report").getAsyncHQReport();
     </script>
 {% endblock %}
 

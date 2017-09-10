@@ -102,6 +102,10 @@ class FormProcessorInterface(object):
         """
         return self.processor.store_attachments(xform, attachments)
 
+    def copy_attachments(self, from_form, to_form):
+        """Copy attachments from one for to another (exlucding form.xml)"""
+        self.processor.copy_attachments(from_form, to_form)
+
     def is_duplicate(self, xform_id, domain=None):
         """
         Check if there is already a form with the given ID. If domain is specified only check for
@@ -165,8 +169,8 @@ class FormProcessorInterface(object):
     def assign_new_id(self, xform):
         return self.processor.assign_new_id(xform)
 
-    def hard_rebuild_case(self, case_id, detail):
-        return self.processor.hard_rebuild_case(self.domain, case_id, detail)
+    def hard_rebuild_case(self, case_id, detail, lock=True):
+        return self.processor.hard_rebuild_case(self.domain, case_id, detail, lock=lock)
 
     def get_cases_from_forms(self, case_db, xforms):
         """

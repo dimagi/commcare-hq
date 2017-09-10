@@ -24,9 +24,9 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from fluff.signals import (
-    apply_index_changes,
+    migrate_tables,
     get_migration_context,
-    get_tables_with_index_changes,
+    get_tables_to_migrate,
     get_tables_to_rebuild,
     reformat_alembic_diffs
 )
@@ -51,8 +51,8 @@ def time_ucr_process_change(method):
         te = datetime.now()
         seconds = (te - ts).total_seconds()
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
-            table = args[1]
-            doc = args[2]
+            table = args[2]
+            doc = args[3]
             log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
@@ -180,9 +180,9 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_with_index_changes = get_tables_with_index_changes(diffs, table_names)
-            tables_with_index_changes -= tables_to_rebuild
-            apply_index_changes(engine, raw_diffs, tables_with_index_changes)
+            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+            tables_to_migrate -= tables_to_rebuild
+            migrate_tables(engine, raw_diffs, tables_to_migrate)
 
     def _rebuild_es_tables(self, adapters):
         # note unlike sql rebuilds this doesn't rebuild the indicators
@@ -265,7 +265,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             if duration_seen >= total_duration / 2:
                 break
 
-        for domain, duration in top_half_domains:
+        for domain, duration in top_half_domains.items():
             datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
                 'domain:{}'.format(domain)
             ])
@@ -278,11 +278,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    # don't retry errors until we figure out how to distinguish between
-    # doc save errors and data source config errors
-    retry_errors = False
-
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
@@ -303,6 +299,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         assert len(self.processors) == 1
         self._processor = self.processors[0]
         assert self._processor.bootstrapped is not None
+
+        # retry errors defaults to False because there is not a solution to
+        # distinguish between doc save errors and data source config errors
+        self.retry_errors = retry_errors
 
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
@@ -348,4 +348,5 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        retry_errors=True
     )

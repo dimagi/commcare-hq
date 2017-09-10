@@ -251,7 +251,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     Views.PersistentCaseTileView = Views.CaseTileView.extend({
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
+            if (this.options.hasInlineTile) {
+                FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
+            }
         },
     });
 
@@ -276,12 +278,14 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             actionButton: '#double-management',
             searchButton: '#case-list-search-button',
             paginators: '.page-link',
+            columnHeader: '.header-clickable',
         },
 
         events: {
             'click @ui.actionButton': 'caseListAction',
             'click @ui.searchButton': 'caseListSearch',
             'click @ui.paginators': 'paginateAction',
+            'click @ui.columnHeader': 'columnSortAction',
             'keypress': 'keyAction',
         },
 
@@ -307,6 +311,11 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             FormplayerFrontend.trigger("menu:paginate", pageSelection);
         },
 
+        columnSortAction: function (e) {
+            var columnSelection = $(e.currentTarget).data("id") + 1;
+            FormplayerFrontend.trigger("menu:sort", columnSelection);
+        },
+
         templateHelpers: function () {
             return {
                 title: this.options.title,
@@ -321,6 +330,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
+                sortIndices: this.options.sortIndices,
+                columnSortable: function(index) {
+                    return this.sortIndices.indexOf(index) > -1;
+                },
+                columnVisible: function(index) {
+                    return !(this.widthHints && this.widthHints[index] === 0);
+                },
             };
         },
     });

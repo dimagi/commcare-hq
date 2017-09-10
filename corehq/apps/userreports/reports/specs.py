@@ -68,6 +68,7 @@ class BaseReportColumn(JsonObject):
     column_id = StringProperty(required=True)
     display = DefaultProperty()
     description = StringProperty()
+    visible = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, obj):
@@ -147,7 +148,6 @@ class FieldColumn(ReportColumn):
         'percent_of_total',
     ])
     sortable = BooleanProperty(default=False)
-    visible = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, obj):

@@ -1181,3 +1181,22 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(upload))
+
+    def test_delete_unsaved(self):
+        self.create_location_types(FLAT_LOCATION_TYPES)
+
+        basic_tree = [
+            # (name, site_code, location_type, parent_code, location_id,
+            # do_delete, external_id, latitude, longitude, index)
+            ('S2', 's2', 'state', '', '', False) + extra_stub_args,
+            ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
+            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,  # delete unsaved
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            basic_tree
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(basic_tree[:-1]))

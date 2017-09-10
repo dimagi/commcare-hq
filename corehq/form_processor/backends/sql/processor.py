@@ -1,11 +1,12 @@
 import datetime
 import logging
 import uuid
-from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
+from contextlib2 import ExitStack
 from django.db import transaction
+
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -16,12 +17,12 @@ from corehq.form_processor.change_publishers import (
     republish_all_changes_for_form)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
-from couchforms.const import ATTACHMENT_NAME
-
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from couchforms.const import ATTACHMENT_NAME
+from dimagi.utils.couch import acquire_lock, release_lock
 
 
 class FormProcessorSQL(object):
@@ -45,6 +46,21 @@ class FormProcessorSQL(object):
             xform_attachments.append(xform_attachment)
 
         xform.unsaved_attachments = xform_attachments
+
+    @classmethod
+    def copy_attachments(cls, from_form, to_form):
+        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        for name, att in from_form.attachments.items():
+            to_form.unsaved_attachments.append(XFormAttachmentSQL(
+                name=att.name,
+                attachment_id=uuid.uuid4(),
+                content_type=att.content_type,
+                content_length=att.content_length,
+                properties=att.properties,
+                blob_id=att.blob_id,
+                blob_bucket=att.blobdb_bucket(),
+                md5=att.md5,
+            ))
 
     @classmethod
     def new_xform(cls, form_data):
@@ -75,19 +91,16 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-
-        db_names = {get_db_alias_for_partitioned_doc(processed_forms.submitted.form_id)}
+        db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
-            db_names |= {get_db_alias_for_partitioned_doc(processed_forms.deprecated.form_id)}
+            db_names |= {processed_forms.deprecated.db}
 
         if cases:
-            db_names |= {get_db_alias_for_partitioned_doc(case.case_id) for case in cases}
+            db_names |= {case.db for case in cases}
 
         if stock_result:
             db_names |= {
-                get_db_alias_for_partitioned_doc(ledger_value.case_id)
-                for ledger_value in stock_result.models_to_save
+                ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
         with ExitStack() as stack:
@@ -231,23 +244,27 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail):
-        try:
-            case = CaseAccessorSQL.get_case(case_id)
-            assert case.domain == domain
-            found = True
-        except CaseNotFound:
+    def hard_rebuild_case(domain, case_id, detail, lock=True):
+        case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
+        found = bool(case)
+        if not found:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
-            found = False
+            if lock:
+                lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
+                acquire_lock(lock_obj, degrade_gracefully=False)
 
-        case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
-        if case.is_deleted and not found:
-            return None
+        try:
+            assert case.domain == domain, (case.domain, domain)
+            case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+            if case.is_deleted and not case.is_saved():
+                return None
 
-        case.server_modified_on = rebuild_transaction.server_date
-        CaseAccessorSQL.save_case(case)
-        publish_case_saved(case)
-        return case
+            case.server_modified_on = rebuild_transaction.server_date
+            CaseAccessorSQL.save_case(case)
+            publish_case_saved(case)
+            return case
+        finally:
+            release_lock(lock_obj, degrade_gracefully=True)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):

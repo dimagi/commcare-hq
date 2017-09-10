@@ -1,7 +1,6 @@
 from collections import defaultdict
 import re
 
-from corehq.apps.app_manager.util import get_app_manager_template
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext
 from corehq.apps.app_manager import static_strings
@@ -33,24 +32,13 @@ def _translate_setting(setting, prop):
 def _load_custom_commcare_settings(user=None):
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
-    with open(os.path.join(
-            path,
-            get_app_manager_template(
-                user,
-                'v1/commcare-profile-settings.yaml',
-                'v2/commcare-profile-settings.yaml'
-            )
-    )) as f:
+    with open(os.path.join(path, 'commcare-profile-settings.yaml')) as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
 
-    with open(os.path.join(path, get_app_manager_template(
-        user,
-        'v1/commcare-app-settings.yaml',
-        'v2/commcare-app-settings.yaml'
-    ))) as f:
+    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
@@ -71,13 +59,7 @@ def _load_commcare_settings_layout(doc_type, user):
         for setting in _load_custom_commcare_settings(user)
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(
-            path,
-            get_app_manager_template(
-                user,
-                'v1/commcare-settings-layout.yaml',
-                'v2/commcare-settings-layout.yaml'
-            ))) as f:
+    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
         layout = yaml.load(f)
 
     for section in layout:

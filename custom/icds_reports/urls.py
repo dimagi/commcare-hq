@@ -3,7 +3,11 @@ from django.conf.urls import url
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
     AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
     ExportIndicatorView, ProgressReportView, PrevalenceOfSevereView, PrevalenceOfStunningView, \
-    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding
+    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
+    ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
+    AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
+    LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage
 
 from custom.rch.views import BeneficariesList
 
@@ -43,4 +47,69 @@ urlpatterns = [
         r'^exclusive-breastfeeding/(?P<step>[\w-]+)/',
         ExclusiveBreastfeedingView.as_view(),
         name='exclusive-breastfeeding'),
+    url(
+        r'^children_initiated/(?P<step>[\w-]+)/',
+        ChildrenInitiatedView.as_view(),
+        name='children_initiated'),
+    url(
+        r'^institutional_deliveries/(?P<step>[\w-]+)/',
+        InstitutionalDeliveriesView.as_view(),
+        name='institutional_deliveries'),
+    url(
+        r'^immunization_coverage/(?P<step>[\w-]+)/',
+        ImmunizationCoverageView.as_view(),
+        name='immunization_coverage'),
+    url(
+        r'^awc_daily_status/(?P<step>[\w-]+)/',
+        AWCDailyStatusView.as_view(),
+        name='awc_daily_status'),
+    url(
+        r'^awcs_covered/(?P<step>[\w-]+)/',
+        AWCsCoveredView.as_view(),
+        name='awcs_covered'),
+    url(
+        r'^registered_household/(?P<step>[\w-]+)/',
+        RegisteredHouseholdView.as_view(),
+        name='registered_household'),
+    url(
+        r'^enrolled_children/(?P<step>[\w-]+)/',
+        EnrolledChildrenView.as_view(),
+        name='enrolled_children'),
+    url(
+        r'^enrolled_women/(?P<step>[\w-]+)/',
+        EnrolledWomenView.as_view(),
+        name='enrolled_women'),
+    url(
+        r'^lactating_enrolled_women/(?P<step>[\w-]+)/',
+        LactatingEnrolledWomenView.as_view(),
+        name='lactating_enrolled_women'),
+    url(
+        r'^adolescent_girls/(?P<step>[\w-]+)/',
+        AdolescentGirlsView.as_view(),
+        name='adolescent_girls'),
+    url(
+        r'^adhaar/(?P<step>[\w-]+)/',
+        AdhaarBeneficiariesView.as_view(),
+        name='adhaar'),
+    url(
+        r'^clean_water/(?P<step>[\w-]+)/',
+        CleanWaterView.as_view(),
+        name='clean_water'),
+    url(
+        r'^functional_toilet/(?P<step>[\w-]+)/',
+        FunctionalToiletView.as_view(),
+        name='functional_toilet'),
+    url(
+        r'^medicine_kit/(?P<step>[\w-]+)/',
+        MedicineKitView.as_view(),
+        name='medicine_kit'),
+    url(
+        r'^infants_weight_scale/(?P<step>[\w-]+)/',
+        InfantsWeightScaleView.as_view(),
+        name='infants_weight_scale'),
+    url(
+        r'^adult_weight_scale/(?P<step>[\w-]+)/',
+        AdultWeightScaleView.as_view(),
+        name='adult_weight_scale'),
+    url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname)
 ]

@@ -9,7 +9,7 @@ from corehq.apps.programs.models import Program
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.graph_models import LineChart, MultiBarChart, PieChart
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from custom.ewsghana.filters import EWSRestrictionLocationFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.common import ALL_OPTION

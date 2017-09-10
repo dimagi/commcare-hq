@@ -9,10 +9,12 @@ from corehq.apps.app_manager.views import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    PromptSettingsUpdateView,
     view_app,
     download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
     upload_bulk_app_translations, multimedia_ajax, releases_ajax, current_app_version, paginate_releases,
-    release_build, view_module, view_form, get_form_datums, form_designer, update_build_comment, export_gzip,
+    release_build, view_module, view_module_legacy, view_form, view_form_legacy,
+    get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
     xform_display, get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
@@ -22,7 +24,7 @@ from corehq.apps.app_manager.views import (
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, get_form_questions, pull_master_app,
+    direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -34,13 +36,11 @@ app_urls = [
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
     url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
-    url(r'^multimedia/$', view_app, name='app_multimedia'),  # can delete once APP_MANAGER_V2 is rolled out
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
-    url(r'^copy/$', view_app, name='app_copy'),  # can delete once APP_MANAGER_V2 is rolled out
-    url(r'^delete/$', view_app, name='app_delete'),  # can delete once APP_MANAGER_V2 is rolled out
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
     url(r'^settings/$', app_settings, name='app_settings'),
+    url(r'^add_ons/edit/$', edit_add_ons, name='edit_add_ons'),
     url(r'^releases_ajax/$', releases_ajax, name='release_manager_ajax'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
     url(r'^releases/json/$', paginate_releases, name='paginate_releases'),
@@ -49,13 +49,17 @@ app_urls = [
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', release_build,
         name='unrelease_build', kwargs={'is_released': False}),
     url(r'^releases/profiles/$', LanguageProfilesView.as_view(), name=LanguageProfilesView.urlname),
-    url(r'^modules-(?P<module_id>[\w-]+)/$', view_module, name='view_module'),
+    url(r'^modules-(?P<module_id>[\w-]+)/$', view_module_legacy,
+        name='view_module_legacy'),
+    url(r'^module/(?P<module_unique_id>[\w-]+)/$', view_module, name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
-        view_form, name='view_form'),
+        view_form_legacy, name='view_form_legacy'),
+    url(r'^form/(?P<form_unique_id>[\w-]+)/$', view_form, name='view_form'),
     url(r'^get_form_datums/$', get_form_datums, name='get_form_datums'),
     url(r'^get_form_questions/$', get_form_questions, name='get_form_questions'),
+    url(r'^form/(?P<form_unique_id>[\w-]+)/source/$', form_source, name='form_source'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
-        form_designer, name='form_source'),
+        form_source_legacy, name='form_source_legacy'),
     url(r'^app_data/$', AppDataView.as_view(), name=AppDataView.urlname),
     url(r'^summary/$', AppSummaryView.as_view(), name=AppSummaryView.urlname),
     url(r'^summary/case/download/$', DownloadCaseSummaryView.as_view(), name=DownloadCaseSummaryView.urlname),
@@ -63,7 +67,8 @@ app_urls = [
     url(r'^summary/app/download/$', DownloadAppSummaryView.as_view(), name=DownloadAppSummaryView.urlname),
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
-    url(r'^copy/gzip$', export_gzip, name='gzip_app')
+    url(r'^copy/gzip$', export_gzip, name='gzip_app'),
+    url(r'^update_prompts/$', PromptSettingsUpdateView.as_view(), name=PromptSettingsUpdateView.urlname),
 ]
 
 
@@ -83,7 +88,8 @@ urlpatterns = [
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
     url(r'^new_app/$', new_app, name='new_app'),
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
-    url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', new_form, name='new_form'),
+    url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
+        new_form, name='new_form'),
     url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
     url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
@@ -94,7 +100,7 @@ urlpatterns = [
     url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         delete_form, name="delete_form"),
 
-    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         overwrite_module_case_list, name='overwrite_module_case_list'),
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$', copy_form, name='copy_form'),
 
@@ -123,20 +129,21 @@ urlpatterns = [
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_visit_schedule, name='edit_visit_schedule'),
-    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', edit_schedule_phases,
+    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
+        edit_schedule_phases,
         name='edit_schedule_phases'),
 
     # multimedia stuff
     url(r'^multimedia/(?P<app_id>[\w-]+)/download/$',
         multimedia_list_download, name='multimedia_list_download'),
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
-    url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
-    url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<attr>[\w-]+)/$',
+    url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         edit_module_attr, name='edit_module_attr'),
-    url(r'^edit_report_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^edit_report_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_report_module, name='edit_report_module'),
-    url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         validate_module_for_build, name='validate_module_for_build'),
 
     url(r'^commcare_profile/(?P<app_id>[\w-]+)/$', commcare_profile, name='commcare_profile'),

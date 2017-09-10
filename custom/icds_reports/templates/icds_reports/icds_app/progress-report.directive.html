@@ -1,60 +1,108 @@
-<div class="preogress-report-directive">
+{% load static %}
+
+<div class="progress-report-directive">
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+                <span class="breadcrump-element">
+                    {$ $ctrl.label $}
+                    <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
+                </span>
+                <span id="reportTitle" class="breadcrump-element">{$ $ctrl.title $}</span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < -1 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-7">
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
-        <div class="col-md-1">
+    </div>
+    <div class="report-content">
+        <div ng-if="$ctrl.data === void(0)">
+            <h2>No Data</h2>
+        </div>
+        <div ng-if="!$ctrl.report">
             <div class="row">
                 <div class="col-md-4">
-                    <print-report></print-report>
+                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
+                        <img style="width: 152px;" src="{% static 'img/maternal_and_child.png' %}"/>
+                        <div class="caption">Maternal and Child Nutrition</div>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
-                     popover-placement="left"
-                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
+                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #f9c700;" ng-click="$ctrl.goToReport('interventions')">
+                        <img src="{% static 'img/interventions.png' %}"/>
+                        <div class="caption">Interventions</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #ff8400;"  ng-click="$ctrl.goToReport('behavior_change')">
+                        <img style="width: 152px;" src="{% static 'img/behavior_change.png' %}"/>
+                        <div class="caption">Behavior Change</div>
+                    </div>
                 </div>
             </div>
+            <div class="row" style="margin-top: 20px;">
+                <div class="col-md-4">
+                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #47b700;"  ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
+                        <img src="{% static 'img/water_sanitation_hygiene.png' %}"/>
+                        <div class="caption">Water, Sanitation and Hygiene</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #00bdc5" ng-click="$ctrl.goToReport('demographics')">
+                        <img style="width: 100%" src="{% static 'img/demographics.png' %}"/>
+                        <div class="caption">Demographics</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #9060c8;" ng-click="$ctrl.goToReport('all')">
+                        <img src="{% static 'img/all.png' %}"/>
+                        <div class="caption">All</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
-    <div ng-if="$ctrl.data === void(0)">
-        <h2>No Data</h2>
-    </div>
-    <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
-            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
-        </div>
-        <div class="row no-margin" ng-repeat="section in $ctrl.data">
-            <table class="table black">
-                <thead>
+        <div cg-busy="$ctrl.myPromise" ng-if="$ctrl.report">
+            <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
+                <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+            </div>
+            <div>
+                <button class="btn btn-info btn-sm right" ng-click="$ctrl.report = null">Back</button>
+            </div>
+            <div class="row no-margin" ng-repeat="section in $ctrl.data">
+                <table class="table black">
+                    <thead>
                     <tr>
                         <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>
                         <th class="col-md-1" ng-repeat="month in section.months">
                             <span ng-bind-html="month"></span>
                         </th>
-                        <th class="col-md-1">National Average</th>
+                        <th class="col-md-1">
+                            <div class="pointer" uib-popover="National average is calculated using the previous calendar month's data"
+                               popover-placement="top"
+                               popover-trigger="'mouseenter'">
+                                <span>National Average </span>
+                                <i class="fa fa-info-circle"></i>
+                            </div>
+                        </th>
                     </tr>
-                </thead>
-                <tbody>
+                    </thead>
+                    <tbody>
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="($index !== 0 && row.average !== void(0)) || row.format === 'percent'">{$ cell.html | number:2 $} %</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
-                            <span ng-if="row.average !== void(0)">{$ $ctrl.sumValues(row.average) | number:2 $} %</span>
-                            <span ng-if="row.average === void(0)">---</span>
+                            <span ng-if="row.average.html !== void(0)">{$ row.average.html | number:2 $} %</span>
+                            <span ng-if="row.average.html === void(0)">---</span>
                         </td>
                     </tr>
                     <tr ng-if="!row.data" ng-repeat="row in section.rows_config">
@@ -64,8 +112,9 @@
                         <td>---</td>
                         <td>---</td>
                     </tr>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

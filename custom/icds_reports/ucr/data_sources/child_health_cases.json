@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -1495,14 +1496,31 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 5
-    },
     "sql_column_indexes": [
-      {"column_ids": ["awc_id", "date_death"]},
-      {"column_ids": ["awc_id", "dob"]},
-      {"column_ids": ["supervisor_id", "dob"]}
+      {
+        "column_ids": [
+          "awc_id",
+          "date_death"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "modified_on"
+        ]
+      }
     ]
   }
 }

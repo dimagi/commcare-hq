@@ -4,6 +4,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "test_2b",
@@ -143,6 +144,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Age"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_id_property",
+                "calculate_total": false,
+                "type": "field",
+                "display": "eNikshay ID"
             },
             {
                 "sortable": false,

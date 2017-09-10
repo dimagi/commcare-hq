@@ -1,8 +1,10 @@
 {
     "domains": [
-        "enikshay-reports-qa"
+        "enikshay-reports-qa",
+        "sheel-enikshay"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "config": {
@@ -379,6 +381,30 @@
                     }
                 },
                 "column_id": "external_id"
+            },
+            {
+                "display_name": "person/person_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "person_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "person_id_property"
             },
             {
                 "display_name": "person/sex",
@@ -6334,26 +6360,6 @@
                 }
             },
             {
-                "display_name": "one_week_adherence_score",
-                "column_id": "one_week_adherence_score",
-                "datatype": "string",
-                "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "one_week_adherence_score"
-                }
-            },
-            {
-                "display_name": "month_adherence_score",
-                "column_id": "month_adherence_score",
-                "datatype": "string",
-                "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "month_adherence_score"
-                }
-            },
-            {
                 "display_name": "adherence_tracking_mechanism",
                 "column_id": "adherence_tracking_mechanism",
                 "datatype": "string",
@@ -8831,7 +8837,7 @@
                 },
                 "column_id": "month_adherence_score_other"
             },
-                        {
+            {
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
@@ -8957,6 +8963,211 @@
                     }
                 },
                 "column_id": "visit_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score"
+                },
+                "column_id": "three_day_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score"
+                },
+                "column_id": "one_week_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score"
+                },
+                "column_id": "two_week_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score"
+                },
+                "column_id": "month_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_unknown_score"
+                },
+                "column_id": "three_day_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_unknown_score"
+                },
+                "column_id": "one_week_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_unknown_score"
+                },
+                "column_id": "two_week_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_unknown_score"
+                },
+                "column_id": "month_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_missed_score"
+                },
+                "column_id": "three_day_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_missed_score"
+                },
+                "column_id": "one_week_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_missed_score"
+                },
+                "column_id": "two_week_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_missed_score"
+                },
+                "column_id": "month_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "fo"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "fo"
             }
         ],
         "named_filters": {

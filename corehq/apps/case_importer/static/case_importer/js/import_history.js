@@ -1,5 +1,5 @@
-hqDefine('case_importer/js/import_history.js', function () {
-    var urllib = hqImport('hqwebapp/js/urllib.js');
+hqDefine('case_importer/js/import_history', function () {
+    var urllib = hqImport('hqwebapp/js/initial_page_data');
     function RecentUploads() {
         var self = {};
         // this is used both for the state of the ajax request

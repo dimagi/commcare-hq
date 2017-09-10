@@ -70,7 +70,7 @@ class TestCloneDomain(TestCase):
                 for loc in SQLLocation.active_objects.filter(domain=domain)
             ]
 
-        self.make_clone(include=['locations'])
+        self.make_clone(include=['locations', 'location_types'])
 
         self.assertItemsEqual(
             location_types_snapshot(self.old_domain),

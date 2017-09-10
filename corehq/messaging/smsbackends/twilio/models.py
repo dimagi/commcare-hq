@@ -1,7 +1,7 @@
 from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin, SMS
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
-from twilio import TwilioRestException
-from twilio.rest import TwilioRestClient
+from twilio.base.exceptions import TwilioRestException
+from twilio.rest import Client
 from django.conf import settings
 
 #https://www.twilio.com/docs/api/errors/reference
@@ -47,8 +47,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                             "instances of PhoneLoadBalancingMixin")
 
         config = self.config
-        client = TwilioRestClient(config.account_sid, config.auth_token,
-            timeout=settings.SMS_GATEWAY_TIMEOUT)
+        client = Client(config.account_sid, config.auth_token)
         to = msg.phone_number
         from_ = orig_phone_number
         msg.system_phone_number = from_

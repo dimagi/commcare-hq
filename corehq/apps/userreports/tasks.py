@@ -68,7 +68,7 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -80,14 +80,15 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
             # able to see if the rebuild started a long time ago without finishing.
             config.meta.build.initiated = datetime.utcnow()
             config.meta.build.finished = False
+            config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         adapter.rebuild_table()
-        iteratively_build_table(config)
+        _iteratively_build_table(config, limit=limit)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_provider=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -100,7 +101,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.build_table()
-        iteratively_build_table(config, in_place=True)
+        _iteratively_build_table(config, in_place=True, doc_id_provider=doc_id_provider)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -117,16 +118,31 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
                               resume_helper)
             last_id = relevant_ids[-1]
-            iteratively_build_table(config, last_id, resume_helper)
+            _iteratively_build_table(config, last_id, resume_helper)
 
 
-def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=False):
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def recalculate_indicators(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    adapter = get_indicator_adapter(config)
+    doc_id_provider = adapter.get_distinct_values('doc_id', 10000)[0]
+    rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
+
+
+def _iteratively_build_table(config, last_id=None, resume_helper=None,
+                             in_place=False, doc_id_provider=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
     relevant_ids = []
     document_store = get_document_store(config.domain, config.referenced_doc_type)
-    for relevant_id in document_store.iter_document_ids(last_id):
+
+    if not doc_id_provider:
+        doc_id_provider = document_store.iter_document_ids(last_id)
+
+    for i, relevant_id in enumerate(doc_id_provider):
+        if last_id is None and i >= limit > -1:
+            break
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
             resume_helper.set_ids_to_resume_from(relevant_ids)
@@ -205,6 +221,12 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
     return objects
 
 
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def delete_data_source_task(domain, config_id):
+    from corehq.apps.userreports.views import delete_data_source_shared
+    delete_data_source_shared(domain, config_id)
+
+
 @periodic_task(run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     queue_async_indicators.delay()
@@ -212,8 +234,11 @@ def run_queue_async_indicators_task():
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
-    day_ago = datetime.utcnow() - timedelta(days=1)
-    indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
+    day_ago = start - timedelta(days=1)
+    # don't requeue anything that has been retired more than 20 times
+    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
         # don't requeue anything that's be queued in the past day
@@ -222,6 +247,8 @@ def queue_async_indicators():
 
     for k, indicators in indicators_by_domain_doc_type.items():
         _queue_indicators(indicators)
+        if datetime.utcnow() > cutoff:
+            break
 
 
 def _queue_indicators(indicators):
@@ -348,6 +375,10 @@ def async_indicators_metrics():
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
+
+    # Don't use ORM summing because it would attempt to get every value in DB
+    unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
+    datadog_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
 
 
 def _indicator_metrics(date_created=None):

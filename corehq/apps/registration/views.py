@@ -1,4 +1,3 @@
-import urllib
 from datetime import datetime
 import logging
 from django.conf import settings
@@ -32,7 +31,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_jquery_ui, \
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from django.contrib.auth.models import User
@@ -377,7 +376,7 @@ def confirm_domain(request, guid=None):
 
     requested_domain = Domain.get_by_name(req.domain)
     view_name = "dashboard_default"
-    if not toggles.APP_MANAGER_V1.enabled(request.user.username) and not domain_has_apps(req.domain):
+    if not domain_has_apps(req.domain):
         view_name = "default_new_app"
 
     # Has guid already been confirmed?
@@ -403,6 +402,7 @@ def confirm_domain(request, guid=None):
         % (requesting_user.username))
     track_workflow(requesting_user.email, "Confirmed new project")
     track_confirmed_account_on_hubspot.delay(requesting_user)
+    request.session['CONFIRM'] = True
     return HttpResponseRedirect(reverse(view_name, args=[requested_domain]))
 
 

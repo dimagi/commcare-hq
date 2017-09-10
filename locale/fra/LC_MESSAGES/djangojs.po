@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-27 22:16+0000\n"
+"POT-Creation-Date: 2017-09-05 20:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -23,12 +23,23 @@ msgstr ""
 msgid "Please enter a valid email."
 msgstr "Veuillez entrer une adresse e-mail valide"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:210
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:67
+#: corehq/apps/locations/static/locations/js/location_types.js:350
+#: corehq/apps/reminders/static/reminders/js/reminders.js:12
+msgid "You have unsaved changes."
+msgstr "Vous avez des modifications non sauvegardées."
+
+#: corehq/apps/app_manager/static/app_manager/js/add_ons.js:24
+msgid "There was an error saving."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:180
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Ajouter"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:455
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:403
 msgid "You have unsaved changes"
 msgstr "Vous avez des modifications non sauvegardées."
 
@@ -36,8 +47,14 @@ msgstr "Vous avez des modifications non sauvegardées."
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
 
+#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:63
+msgid ""
+"Something went wrong refreshing your form properties. Please refresh the "
+"page and try again"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:528
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:426
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
 msgid "Copied!"
 msgstr "Copié!"
 
@@ -185,25 +202,19 @@ msgstr "Image"
 msgid "Audio"
 msgstr "Audio"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1090
 msgid "Icon"
 msgstr "Icône"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1089
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
-msgid " (Preview!)"
-msgstr "(Aperçu!)"
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1094
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1095
 msgid "Conditional ID Mapping"
 msgstr "Mappage d'identifiant conditionnel"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1100
 msgid "Calculate"
 msgstr "Calculer"
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1103
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1104
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -226,23 +237,23 @@ msgstr "Vous avez des paramètres de dossier non sauvegardées"
 msgid "You have unchanged user properties settings"
 msgstr "Vous avez des paramètres d'utilisateur non sauvegardées"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:680
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:687
 msgid "Property updated by two questions"
 msgstr "La propriété a été mise à jour par deux questions"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:684
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:691
 msgid "Inside the wrong repeat!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:689
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:696
 msgid "Property uses unrecognized prefix <strong>"
 msgstr "La propriété utilise un préfixe non reconnu<strong>"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:716
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:723
 msgid "Two properties load to the same question"
 msgstr "Deux propriétés chargent la même question"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:124
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:116
 msgid "Edit Form"
 msgstr "Modifier formulaire"
 
@@ -250,27 +261,27 @@ msgstr "Modifier formulaire"
 msgid "Form Settings"
 msgstr "Paramètres de formulaire."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:121
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:75
 msgid "Home Screen"
 msgstr "Écran d'accueil"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:122
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:76
 msgid "First Menu"
-msgstr ""
+msgstr "Premier Menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:123
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:77
 msgid "Menu: "
-msgstr ""
+msgstr "Menu: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Parent Menu: "
-msgstr ""
+msgstr "Menu parent:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:127
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
 msgid "Previous Screen"
 msgstr "Écran précédent"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:136
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:90
 msgid "Link to other form"
 msgstr "Ouvrir un autre formulaire"
 
@@ -284,29 +295,33 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr "Valeur non reconnue"
 
-#: corehq/apps/app_manager/static/app_manager/js/managed_app.js:46
-msgid "Edit in form builder"
-msgstr "Modifier dans le générateur de formulaire"
-
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:9
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:8
 msgid "Module Settings"
 msgstr "Paramètres de module"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:79
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:78
 msgid "Case type is required."
 msgstr "Type de dossier est requis."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:85
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Les types de dossiers peuvent comporter uniquement les caractères a-z, 0-9 "
 "et '-' and '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:91
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:90
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
+msgid "Go back to case list"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+msgid "Proceed with registered case"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:139
 msgid "Show All"
@@ -366,7 +381,8 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:45
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
-#: corehq/apps/style/static/style/js/main.js:253
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:236
+#: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr "Une erreur est survenue au cours de l'enregistrement"
 
@@ -374,39 +390,39 @@ msgstr "Une erreur est survenue au cours de l'enregistrement"
 msgid "Select a user"
 msgstr "Sélectionner un utilisateur"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:44
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:36
 msgid "(Default)"
 msgstr "(Par défaut)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:374
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:366
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Désolé, ça n'a pas fonctionné. Veuillez rafraîchir la page et réessayer"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:408
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:400
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 "La liste des versions a changé depuis votre dernier chargement de la page."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:413
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:405
 msgid "No new changes!"
 msgstr "Pas de nouvelles modifications!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:158
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:155
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr "Mettez à jour CommCare%s pour cette option!"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:160
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:157
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr "Mettez à jour CommCare%s !"
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:171
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:168
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:321
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:309
 msgid "You have unsaved settings."
 msgstr "Vous avez des paramètres non sauvegardées."
 
@@ -495,9 +511,9 @@ msgid "Change Question Type To"
 msgstr "Changer le type de question à"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:240
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:38
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
-#: corehq/apps/style/static/style/js/main.js:257
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-input-map.js:38
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -547,12 +563,12 @@ msgid "XML mismatch"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:6
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-input-map.js:25
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:25
 msgid "key"
 msgstr "clé"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:6
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-input-map.js:26
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:26
 msgid "value"
 msgstr "valeur"
 
@@ -594,7 +610,6 @@ msgstr "Questions inconnues:"
 msgid "no formatting"
 msgstr "pas de formatage"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:10
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Custom"
 msgstr "Peronnaliser"
@@ -759,7 +774,7 @@ msgstr "Texte"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Phone Number or Numeric ID"
-msgstr ""
+msgstr "Numéro de téléphone ou identifiant numérique"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:171
@@ -772,11 +787,11 @@ msgstr "Entier"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Audio Capture"
-msgstr ""
+msgstr "Enregistrement audio"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Image Capture"
-msgstr ""
+msgstr "Capture d'image"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Image Size"
@@ -807,11 +822,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Video Capture"
-msgstr ""
+msgstr "Enregistrement vidéo"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Signature Capture"
-msgstr ""
+msgstr "Capture de signature"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "GPS"
@@ -831,7 +846,7 @@ msgstr "Heure"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Long"
-msgstr ""
+msgstr "Long"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Decimal"
@@ -847,7 +862,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Whitespace in values is not allowed."
-msgstr ""
+msgstr "L'espace blanc dans les valeurs n'est pas autorisé."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "This choice value has been used in the same question"
@@ -882,7 +897,7 @@ msgstr "Liste de questions"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Repeat Group"
-msgstr ""
+msgstr "Répéter groupe "
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid "Repeat Count"
@@ -925,7 +940,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:13
 msgid "Form does not have a Name! The default form name will be used"
-msgstr ""
+msgstr "Le formulaire n'a pas de nom! Le nom par défaut sera utilisé"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:13
 msgid ""
@@ -972,7 +987,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:13
 msgid "output value"
-msgstr ""
+msgstr "valeur de sortie"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Validation Failed"
@@ -980,7 +995,7 @@ msgstr "Echec de validation"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Please fix the error before leaving this page:"
-msgstr ""
+msgstr "Veuillez corriger l'erreur avant de quitter cette page:"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Edit <span class='property-name'>Expression</span> (Advanced)"
@@ -995,6 +1010,8 @@ msgid ""
 "You are currently in Advanced Mode because your logic is too complicated for "
 "Simple Mode."
 msgstr ""
+"Vous êtes actuellement en mode avancé car votre logique est trop compliquée "
+"pour le mode simple."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "XPath Expression"
@@ -1002,7 +1019,7 @@ msgstr "Expression de XPath"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "You can drag a question into the box."
-msgstr ""
+msgstr "Vous pouvez faire glisser une question dans la boîte."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
@@ -1033,8 +1050,8 @@ msgstr "Ajouter expression"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:541
-#: corehq/apps/export/static/export/js/models.js:199
-#: corehq/apps/style/static/style/js/main.js:249
+#: corehq/apps/export/static/export/js/models.js:203
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:232
 #: corehq/apps/users/static/users/js/web_users.js:46
 msgid "Save"
 msgstr "Enregistrer"
@@ -1048,7 +1065,7 @@ msgstr "Annuler"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Drag question here"
-msgstr ""
+msgstr "Faites glisser la question ici"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "is equal to"
@@ -1121,15 +1138,15 @@ msgstr "Erreurs dans le formulaire"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Form has reference errors."
-msgstr ""
+msgstr "Le formulaire contient des erreurs de référence."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Look for questions marked with $1 and fix the errors."
-msgstr ""
+msgstr "Recherchez les questions marquées avec $1 et réparez les erreurs."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Form has validation errors."
-msgstr ""
+msgstr "Le formulaire comporte des erreurs de validation."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Number"
@@ -1141,7 +1158,7 @@ msgstr "Groupes"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Multimedia Capture"
-msgstr ""
+msgstr "Capture multimédia"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
@@ -1151,16 +1168,16 @@ msgstr "Avancés"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Expand Editor"
-msgstr ""
+msgstr "Développer l'éditeur"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Shrink Editor"
-msgstr ""
+msgstr "Diminuer l'éditeur"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 msgid "Export Form Contents"
-msgstr ""
+msgstr "Exporter le contenu des formulaires"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 msgid "Edit Source XML"
@@ -1186,7 +1203,7 @@ msgstr ""
 msgid "Update Source"
 msgstr "Mettre à jour la source"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 msgid ""
 "This is the raw XML. You can edit or paste into this box to make changes to "
 "your form. Press 'Update Source' to save changes, or 'Close' to cancel."
@@ -1373,7 +1390,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 msgid "External App"
-msgstr ""
+msgstr "Application externe"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 msgid "Insert Android Application ID"
@@ -1381,7 +1398,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 msgid "change your subscription"
-msgstr ""
+msgstr "changer l'abonnement"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 msgid ""
@@ -1545,15 +1562,15 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "custom..."
-msgstr ""
+msgstr "personnaliser..."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "New Content Type"
-msgstr ""
+msgstr "Nouveau type de contenu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Content Type"
-msgstr ""
+msgstr "Type de contenu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid ""
@@ -1564,7 +1581,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "{name} (or multimedia) is required."
-msgstr ""
+msgstr "{nom} (ou multimédia) est exigé."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "{name} (or multimedia) is required for all languages."
@@ -1576,7 +1593,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "{name} is not a valid ID."
-msgstr ""
+msgstr "{nom} n'est pas un identifiant valide."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Multimedia was not copied; it must be uploaded separately."
@@ -1588,7 +1605,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Validation Message"
-msgstr ""
+msgstr "Message de validation"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Can't have a Validation Message Itext ID without a Validation Condition"
@@ -1616,7 +1633,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Help Message"
-msgstr ""
+msgstr "Message d'aide"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Help Itext ID"
@@ -1624,7 +1641,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add Other Content"
-msgstr ""
+msgstr "Ajouter un autre contenu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add Multimedia"
@@ -1740,8 +1757,8 @@ msgid "Property Name"
 msgstr "Nom de propriété "
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:123
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:130
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:123
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:130
 msgid "Calculation"
 msgstr "Calcul"
 
@@ -1826,23 +1843,23 @@ msgstr ""
 msgid "Close Case"
 msgstr "Fermer le dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Close Condition"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Update Case"
 msgstr "Mettre à jour le dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Properties To Update"
-msgstr ""
+msgstr "Propriétés à mettre à jour"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Use Index"
 msgstr "Utiliser l'index"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Index Properties"
 msgstr "Propriétés de l'index "
 
@@ -1867,7 +1884,7 @@ msgid "Inlined attachments must have an attachment name"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/export/static/export/js/models.js:199
+#: corehq/apps/export/static/export/js/models.js:203
 msgid "Create"
 msgstr "Créer"
 
@@ -1953,6 +1970,14 @@ msgstr "Remplacer"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "No Reference"
+msgstr "Pas de références"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+msgid "Advanced: Show Path"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+msgid "Hide Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
@@ -2041,6 +2066,14 @@ msgstr ""
 msgid "Unknown question type:"
 msgstr "Type de question inconnu:"
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
+msgid "Enter command"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
+msgid "Command Bar"
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:18
 msgid "Form Data"
 msgstr "Données de formulaire"
@@ -2053,7 +2086,7 @@ msgstr "Formulaire XML. "
 msgid "Evaluate XPath"
 msgstr "Évaluez le XPath."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:250
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:210
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2074,16 +2107,32 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:144
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:594
+#, fuzzy
+#| msgid "An error occurred emailing you report. Please try again."
+msgid ""
+"Another process prevented us from servicing your request. Please try again "
+"later."
+msgstr ""
+"Une erreur est survenue lors de l'envoi du rapport par courrier "
+"électronique. Veuillez essayer à nouveau."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:332
+#, fuzzy
+#| msgid "Oops, there was a problem loading this section. Please try again."
+msgid "We were unable to save this answer. Please try again later."
+msgstr "Il semble qu'une erreur se soit glissée. Veuillez essayer à nouveau."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:148
 msgid "Form successfully saved"
 msgstr "Formulaire enregistré"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:354
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:362
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:382
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:390
 msgid "Please wait..."
 msgstr "Veuillez patienter..."
 
@@ -2097,7 +2146,7 @@ msgstr ""
 msgid "Completed: "
 msgstr "Complété:"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:44
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:50
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2121,7 +2170,7 @@ msgstr "Non"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:44
 msgid "Log in as "
-msgstr ""
+msgstr "Se connecter en tant que"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:48
 msgid "Yes, log in as this user"
@@ -2212,15 +2261,15 @@ msgstr ""
 msgid "Show previous versions"
 msgstr "Afficher les versions précédentes"
 
-#: corehq/apps/export/static/export/js/download_data_files.js:16
+#: corehq/apps/export/static/export/js/download_data_files.js:17
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:25
+#: corehq/apps/export/static/export/js/download_data_files.js:26
 msgid "Data file URL copied to clipboard."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_data_files.js:47
+#: corehq/apps/export/static/export/js/download_data_files.js:48
 msgid "Data file deleted."
 msgstr ""
 
@@ -2229,79 +2278,67 @@ msgid "Download Requested"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:28
-#: corehq/apps/export/static/export/js/models.js:105
+#: corehq/apps/export/static/export/js/models.js:109
 msgid "Process"
 msgstr "Processus"
 
-#: corehq/apps/export/static/export/js/models.js:95
+#: corehq/apps/export/static/export/js/models.js:99
 msgid "Processing..."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:114
+#: corehq/apps/export/static/export/js/models.js:118
 msgid "Refresh page"
-msgstr ""
+msgstr "Reactualiser la page"
 
-#: corehq/apps/export/static/export/js/models.js:177
+#: corehq/apps/export/static/export/js/models.js:181
 msgid "Web Page (Excel Dashboards)"
 msgstr "Page Web (Tableau de bord Excel)"
 
-#: corehq/apps/export/static/export/js/models.js:179
+#: corehq/apps/export/static/export/js/models.js:183
 msgid "CSV (Zip file)"
 msgstr "CSV (fichier Zip)"
 
-#: corehq/apps/export/static/export/js/models.js:181
+#: corehq/apps/export/static/export/js/models.js:185
 msgid "Excel (older versions)"
 msgstr "Excel (versions plus anciennes)"
 
-#: corehq/apps/export/static/export/js/models.js:183
+#: corehq/apps/export/static/export/js/models.js:187
 msgid "Excel 2007"
 msgstr "Excel 2007"
 
-#: corehq/apps/export/static/export/js/models.js:493
+#: corehq/apps/export/static/export/js/models.js:500
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:603
+#: corehq/apps/export/static/export/js/models.js:610
 msgid "Sensitive ID"
 msgstr "Identifiant sensible"
 
-#: corehq/apps/export/static/export/js/models.js:605
+#: corehq/apps/export/static/export/js/models.js:612
 msgid "Sensitive Date"
 msgstr "Date sensible"
 
-#: corehq/apps/export/static/export/js/models.js:607
+#: corehq/apps/export/static/export/js/models.js:614
 msgid "None"
 msgstr "Aucun"
 
-#: corehq/apps/groups/static/groups/js/group_members.js:10
-msgid "Available Workers"
-msgstr ""
-
-#: corehq/apps/groups/static/groups/js/group_members.js:11
-msgid "Workers in Group"
-msgstr ""
-
-#: corehq/apps/groups/static/groups/js/group_members.js:12
-msgid "Search Workers..."
-msgstr ""
-
-#: corehq/apps/groups/static/groups/js/group_members.js:18
+#: corehq/apps/groups/static/groups/js/group_members.js:7
 msgid "Group Information"
 msgstr "Information de groupe"
 
-#: corehq/apps/groups/static/groups/js/group_members.js:53
+#: corehq/apps/groups/static/groups/js/group_members.js:42
 msgid "The following changes will not be saved: "
 msgstr "Les changements suivant n'ont pas été sauvés :"
 
-#: corehq/apps/groups/static/groups/js/group_members.js:74
+#: corehq/apps/groups/static/groups/js/group_members.js:63
 msgid "Successfully saved "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:78
+#: corehq/apps/groups/static/groups/js/group_members.js:67
 msgid "Failed to save "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:127
+#: corehq/apps/groups/static/groups/js/group_members.js:130
 msgid "Please wait and do not navigate away..."
 msgstr "Veuillez patienter..."
 
@@ -2315,7 +2352,7 @@ msgstr "Démarrer"
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
 msgid "Show All References"
-msgstr ""
+msgstr "Afficher toutes les références"
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:14
 msgid "Show Only Missing References"
@@ -2327,6 +2364,51 @@ msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:213
 msgid "Upload "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:54
+msgid "Error saving, please try again."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:233
+#: corehq/apps/userreports/static/userreports/js/report_config.js:387
+msgid "Saving..."
+msgstr "En train d'enregistrer"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:234
+#: corehq/apps/userreports/static/userreports/js/report_config.js:388
+#: corehq/apps/users/static/users/js/web_users.js:55
+msgid "Saved"
+msgstr "Enregistré"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:235
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
+#: corehq/apps/userreports/static/userreports/js/report_config.js:389
+msgid "Try Again"
+msgstr "Essayer de nouveau"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:241
+msgid "Deleting..."
+msgstr "En cours de suppression"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:242
+msgid "Deleted"
+msgstr "Supprimé"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:244
+msgid "There was an error deleting"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:58
+msgid "Add All"
+msgstr "Ajouter tout"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:63
+msgid "Remove All"
+msgstr "Supprimer tout"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js:12
+msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:41
@@ -2344,22 +2426,63 @@ msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:40
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:21
+msgid "Edit"
+msgstr "Modifier"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:29
+msgid "Edit Mapping for "
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:34
+msgid "Add Key &rarr; Value Mapping"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:38
+msgid "Done"
+msgstr "Terminé"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:79
+msgid "Click <strong>Edit</strong> below to add mappings"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:124
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:131
+msgid "Calculation is duplicated"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:125
+msgid "Add Image"
+msgstr "Ajouter image"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:132
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:139
+msgid "Add Key, Value Mapping"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:137
+msgid "Key"
+msgstr "Clef"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:138
+msgid "Key is duplicated"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:10
+msgid "Not a valid email"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/location.js:41
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_types.js:350
-#: corehq/apps/reminders/static/reminders/js/reminders.js:12
-msgid "You have unsaved changes."
-msgstr "Vous avez des modifications non sauvegardées."
-
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:89
 msgid "Please enter your name."
-msgstr ""
+msgstr "Veuillez saisir votre nom"
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:98
 msgid "Please specify an email."
-msgstr ""
+msgstr "Veuillez spécifier une adresse mail."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:125
 msgid "There is already a user with this email."
@@ -2371,11 +2494,11 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:143
 msgid "Please specify a password."
-msgstr ""
+msgstr "Veuillez spécifier un mot de passe."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:163
 msgid "Please specify a project name."
-msgstr ""
+msgstr "Veuillez spécifier un nom de projet."
 
 #: corehq/apps/registration/static/registration/js/password.js:25
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:67
@@ -2582,15 +2705,15 @@ msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:29
 msgid "Streets"
-msgstr ""
+msgstr "Rues"
 
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:30
 msgid "Satellite"
-msgstr ""
+msgstr "Satellite"
 
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
 msgid "Show All Dates"
-msgstr ""
+msgstr "Afficher toutes les dates"
 
 #: corehq/apps/sms/static/sms/js/phone_number_filter.js:3
 msgid "That have phone numbers"
@@ -2605,162 +2728,92 @@ msgstr ""
 msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:250
-msgid "Saving..."
-msgstr "En train d'enregistrer"
-
-#: corehq/apps/style/static/style/js/main.js:251
-#: corehq/apps/users/static/users/js/web_users.js:55
-msgid "Saved"
-msgstr "Enregistré"
-
-#: corehq/apps/style/static/style/js/main.js:252
-#: corehq/apps/style/static/style/js/main.js:260
-msgid "Try Again"
-msgstr "Essayer de nouveau"
-
-#: corehq/apps/style/static/style/js/main.js:258
-msgid "Deleting..."
-msgstr "En cours de suppression"
-
-#: corehq/apps/style/static/style/js/main.js:259
-msgid "Deleted"
-msgstr "Supprimé"
-
-#: corehq/apps/style/static/style/js/main.js:261
-msgid "There was an error deleting"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/multiselect_utils.js:58
-msgid "Add All"
-msgstr "Ajouter tout"
-
-#: corehq/apps/style/static/style/js/multiselect_utils.js:63
-msgid "Remove All"
-msgstr "Supprimer tout"
-
-#: corehq/apps/style/static/style/js/password_validators.ko.js:12
-msgid "Your password is too weak! Try adding numbers or symbols."
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-list.js:21
-msgid "Edit"
-msgstr "Modifier"
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-list.js:29
-msgid "Edit Mapping for "
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-list.js:34
-msgid "Add Key &rarr; Value Mapping"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-list.js:38
-msgid "Done"
-msgstr "Terminé"
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-list.js:79
-msgid "Click <strong>Edit</strong> below to add mappings"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:124
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:131
-msgid "Calculation is duplicated"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:125
-msgid "Add Image"
-msgstr "Ajouter image"
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:132
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:139
-msgid "Add Key, Value Mapping"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:137
-msgid "Key"
-msgstr "Clef"
-
-#: corehq/apps/style/static/style/js/ui_elements/ui-element-key-val-mapping.js:138
-msgid "Key is duplicated"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/validators.ko.js:10
-msgid "Not a valid email"
-msgstr ""
-
-#: corehq/apps/translations/static/translations/js/translations.js:25
+#: corehq/apps/translations/static/translations/js/translations.js:26
 msgid "Delete Translation"
 msgstr "Supprimer la traduction"
 
-#: corehq/apps/translations/static/translations/js/translations.js:38
-#: corehq/apps/translations/static/translations/js/translations.js:109
+#: corehq/apps/translations/static/translations/js/translations.js:39
+#: corehq/apps/translations/static/translations/js/translations.js:110
 msgid "Add Translation"
 msgstr "Ajouter une traduction"
 
-#: corehq/apps/translations/static/translations/js/translations.js:121
+#: corehq/apps/translations/static/translations/js/translations.js:122
 msgid "Auto fill translations"
 msgstr ""
 
-#: corehq/apps/translations/static/translations/js/translations.js:143
+#: corehq/apps/translations/static/translations/js/translations.js:144
 msgid "Auto Fill translations"
 msgstr ""
 
-#: corehq/apps/translations/static/translations/js/translations.js:144
+#: corehq/apps/translations/static/translations/js/translations.js:145
 msgid ""
 "This will pick the most common translations for your selected language. You "
 "can then edit them as needed."
 msgstr ""
 
-#: corehq/apps/translations/static/translations/js/translations.js:155
+#: corehq/apps/translations/static/translations/js/translations.js:156
 msgid "You have unsaved user interface translations."
 msgstr ""
 
-#: corehq/apps/translations/static/translations/js/translations.js:173
+#: corehq/apps/translations/static/translations/js/translations.js:174
 msgid "Parameters formatting problem!"
 msgstr ""
 
-#: corehq/apps/translations/static/translations/js/translations.js:255
+#: corehq/apps/translations/static/translations/js/translations.js:256
 msgid ""
 "Autofill is not available in English (en). Please change your language using "
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:388
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:332
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:347
+#: corehq/apps/userreports/static/userreports/js/report_config.js:230
+#: corehq/apps/userreports/static/userreports/js/report_config.js:248
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:373
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:388
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:374
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:333
+#: corehq/apps/userreports/static/userreports/js/report_config.js:231
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:374
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:334
+#: corehq/apps/userreports/static/userreports/js/report_config.js:232
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:375
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:389
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:348
+#: corehq/apps/userreports/static/userreports/js/report_config.js:249
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:389
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
+#: corehq/apps/userreports/static/userreports/js/report_config.js:250
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:390
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:401
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:401
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:431
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:390
+#: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:431
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
@@ -2768,34 +2821,38 @@ msgstr ""
 msgid "Form"
 msgstr "Formulaire"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:44
+#: corehq/apps/userreports/static/userreports/js/report_config.js:386
+msgid "Update Report"
+msgstr "Mettre à jour le rapport"
+
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"
 msgstr "Le mot de passe a été modifié avec succès"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:47
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:48
 msgid "Password was not changed "
 msgstr "Le mot de passe n'a pas été changé"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:49
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:50
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:398
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:95
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
 msgid "Available Groups"
 msgstr "Groupes disponibles"
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:96
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:97
 msgid "Groups with this User"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:97
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:98
 msgid "Search Group..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:108
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:109
 msgid "Group membership has changed."
 msgstr "L'adhésion au groupe a été modifiée."
 
@@ -2884,6 +2941,12 @@ msgstr ""
 msgid "(filtered from _MAX_ total messages)"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:133
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
 msgstr ""
+
+#~ msgid "show"
+#~ msgstr "afficher"
+
+#~ msgid "hide"
+#~ msgstr "masquer"

@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 describe('AppDiff', function() {
-    var AppDiff = hqImport('app_manager/js/releases/app_diff.js');
+    var AppDiff = hqImport('app_manager/js/releases/app_diff');
 
     describe('HtmlUtils', function() {
         var HtmlUtils = AppDiff.HtmlUtils;

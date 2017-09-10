@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -31,7 +31,7 @@
         var saveURL = "{% url "edit_sms_languages" domain %}";
         var edit = true;
         var validate = true;
-        var SupportedLanguages = hqImport('app_manager/js/supported_languages.js').SupportedLanguages;
+        var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
         var sl = new SupportedLanguages({
             langs: langs,
             saveURL: saveURL,
@@ -53,12 +53,12 @@
         </div>
         <div class="tab-content">
             <div id="supported-languages" class="tab-pane active">
-                    {% include "app_manager/v1/partials/supported-languages.html" %}
+                    {% include "app_manager/partials/supported-languages.html" %}
             </div>
             <div id="translations-tab" class="tab-pane">
                 <div>
                     <section>
-                        {% include "style/partials/bulk_upload.html" %}
+                        {% include "hqwebapp/partials/bulk_upload.html" %}
                     </section>
                 </div>
             </div>

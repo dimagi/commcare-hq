@@ -1,4 +1,4 @@
-hqDefine('accounting/js/adjust-balance-modal.js', function () {
+hqDefine('accounting/js/adjust-balance-modal', function () {
     var AdjustBalanceFormModel = function () {
         var self = this;
         self.adjustmentType = ko.observable("current");

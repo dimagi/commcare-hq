@@ -61,6 +61,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
     domain_has_privilege,
+    get_account_name_from_default_name,
     get_privileges,
     log_accounting_error,
 )
@@ -73,8 +74,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -1195,8 +1196,6 @@ def clean_password(txt):
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
     else:
-        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-        # until then, we are using a dimagi hosted fork
         strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
         message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:
@@ -1552,19 +1551,15 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     future_subscriptions.update(date_end=F('date_start'))
 
                 if self.current_subscription is not None:
-                    subscription = self.current_subscription.change_plan(
+                    self.current_subscription.change_plan(
                         self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 else:
-                    subscription = Subscription.new_domain_subscription(
+                    Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -1572,11 +1567,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT
                     )
-                    subscription.is_active = True
-                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                        # this point can only be reached if the initiating user was a superuser
-                        subscription.do_not_invoice = True
-                    subscription.save()
                 return True
         except Exception as e:
             log_accounting_error(
@@ -1584,7 +1574,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 % (self.domain, self.plan_version.plan.name, e.message),
                 show_stack_trace=True,
             )
-        return False
+            return False
 
 
 class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
@@ -1680,6 +1670,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     funding_source=FundingSource.CLIENT,
                     new_version=self.renewed_version,
                 )
+                return True
         except SubscriptionRenewalError as e:
             log_accounting_error(
                 "Subscription for %(domain)s failed to renew due to: %(error)s." % {
@@ -1687,7 +1678,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                     'error': e,
                 }
             )
-        return True
+            return False
 
 
 class ProBonoForm(forms.Form):
@@ -1798,7 +1789,7 @@ class InternalSubscriptionManagementForm(forms.Form):
             account = matching_accounts[0]
         else:
             account = BillingAccount(
-                name=self.account_name,
+                name=get_account_name_from_default_name(self.account_name),
                 created_by=self.web_user,
                 created_by_domain=self.domain,
                 currency=Currency.get_default(),

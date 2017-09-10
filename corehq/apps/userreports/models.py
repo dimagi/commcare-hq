@@ -87,6 +87,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    rebuilt_asynchronously = BooleanProperty(default=False)
 
 
 class DataSourceMeta(DocumentSchema):
@@ -353,6 +354,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
     created_by_builder = BooleanProperty(default=False)
+    report_builder_version = StringProperty(default="")
     # `True` if this report was ever edited in the advanced JSON UIs (after June 7, 2016)
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()

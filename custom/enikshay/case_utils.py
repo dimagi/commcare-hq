@@ -5,6 +5,7 @@ from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import hqnottest
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -182,6 +183,15 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
     if not open_referral_cases:
         return None
     if len(open_referral_cases) == 1:
@@ -199,6 +209,15 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
+
+    # Also check for trails on the occurrence
+    occurrence_case_ids = [
+        case.case_id for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_OCCURRENCE and not case.closed
+    ]
+    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
+    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+
     trails_with_server_opened_on = []
     for trail in trail_cases:
         server_opened_on = trail.actions[0].server_date
@@ -263,22 +282,26 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     return open_pertinent_adherence_cases
 
 
-def update_case(domain, case_id, updated_properties, external_id=None):
+def update_case(domain, case_id, updated_properties, external_id=None,
+                device_id=__name__ + ".update_case"):
     kwargs = {
         'case_id': case_id,
         'update': updated_properties,
     }
     if external_id is not None:
-        kwargs.update({'external_id': external_id})
+        kwargs['external_id'] = external_id
 
     post_case_blocks(
         [CaseBlock(**kwargs).as_xml()],
-        {'domain': domain}
+        {'domain': domain},
+        device_id=device_id,
     )
 
 
-def get_person_locations(person_case):
+def get_person_locations(person_case, episode_case=None):
     """
+    picks episode case's diagnosing_facility_id if passed else falls back to person's owner id for
+    fetching the base location to get the hierarchy
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
 
@@ -288,16 +311,24 @@ def get_person_locations(person_case):
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
         return _get_private_locations(person_case)
     else:
-        return _get_public_locations(person_case)
+        return _get_public_locations(person_case, episode_case)
 
 
-def _get_public_locations(person_case):
+def _get_public_locations(person_case, episode_case):
     PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
-        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+        phi_location_id = None
+        if episode_case:
+            phi_location_id = episode_case.dynamic_case_properties().get('diagnosing_facility_id')
+        # fallback to person_case.owner_id in case diagnosing_facility_id not set on episode
+        # or if no episode case was passed
+        if not phi_location_id:
+            phi_location_id = person_case.owner_id
+        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=phi_location_id)
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            """Location with id {location_id} not found.
+            This is the diagnosing facility id for person with id: {person_id}"""
             .format(location_id=person_case.owner_id, person_id=person_case.case_id)
         )
 
@@ -470,3 +501,35 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
 
 def get_prescription_from_voucher(domain, voucher_id):
     return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
+
+
+def get_all_episode_ids(domain):
+    case_accessor = CaseAccessors(domain)
+    case_ids = case_accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
+    return case_ids
+
+
+def iter_all_active_person_episode_cases(domain, case_ids):
+    """From a list of case_ids, return all the active episodes and associate person case
+    """
+    case_accessor = CaseAccessors(domain)
+    episode_cases = case_accessor.iter_cases(case_ids)
+    for episode_case in episode_cases:
+        if episode_case.type != CASE_TYPE_EPISODE:
+            continue
+
+        if episode_case.closed:
+            continue
+
+        try:
+            person_case = get_person_case_from_episode(domain, episode_case.case_id)
+        except ENikshayCaseNotFound:
+            continue
+
+        if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+            continue
+
+        if person_case.closed:
+            continue
+
+        yield person_case, episode_case

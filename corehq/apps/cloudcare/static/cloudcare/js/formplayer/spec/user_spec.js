@@ -44,7 +44,7 @@ describe('User', function () {
                 username: username,
             };
             window.localStorage.clear();
-            sinon.stub(FormplayerFrontend, 'request', function() { return dummyUser; });
+            sinon.stub(FormplayerFrontend, 'request').callsFake(function() { return dummyUser; });
         });
 
         afterEach(function() {

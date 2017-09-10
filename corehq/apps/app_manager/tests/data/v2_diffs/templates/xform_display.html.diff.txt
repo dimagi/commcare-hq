@@ -1,9 +1,0 @@
---- 
-+++ 
-@@ -1,5 +1,5 @@
- {% extends 'style/base.html' %}
- {% load i18n %}
- {% block content %}
--    {% include 'app_manager/v1/xform_display_tree.html' %}
-+    {% include 'app_manager/v2/xform_display_tree.html' %}
- {% endblock %}

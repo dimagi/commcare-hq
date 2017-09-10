@@ -1,5 +1,5 @@
 from collections import namedtuple
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 
 FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
@@ -25,6 +25,10 @@ def get_extra_permissions():
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
     yield ReportPermission(
         SMS_EXPORT_PERMISSION, DownloadNewSmsExportView.page_title, lambda domain: True)
+
+
+def can_download_data_files(domain):
+    return toggles.DATA_FILE_DOWNLOAD.enabled(domain)
 
 
 def can_view_form_exports(couch_user, domain):

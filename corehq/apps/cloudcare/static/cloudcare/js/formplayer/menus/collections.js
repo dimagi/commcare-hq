@@ -31,6 +31,8 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'maxHeight',
             'widthHints',
             'useUniformUnits',
+            'hasInlineTile',
+            'sortIndices',
         ],
 
         commandProperties: [

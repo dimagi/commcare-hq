@@ -13,8 +13,8 @@ from custom.icds.messaging.indicators import (
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
-from custom.icds.tasks import (run_weekly_indicators, HINDI, TELUGU, MARATHI,
-    ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE)
+from custom.icds.const import HINDI, TELUGU, MARATHI, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE
+from custom.icds.tasks import run_weekly_indicators
 from django.test import TestCase, override_settings
 from mock import patch, call
 

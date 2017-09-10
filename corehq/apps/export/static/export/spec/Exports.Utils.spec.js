@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 describe('Export Utility functions', function() {
-    var constants = hqImport('export/js/const.js');
-    var utils = hqImport('export/js/utils.js');
-    var models = hqImport('export/js/models.js');
+    var constants = hqImport('export/js/const');
+    var utils = hqImport('export/js/utils');
+    var models = hqImport('export/js/models');
 
     describe('#getTagCSSClass', function() {
         it('Should get regular tag class', function() {

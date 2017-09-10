@@ -465,7 +465,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                                 'somehow in domain %(domain)r'
                             ) % {'username': user.username, 'domain': user.domain})
                         if username and user.username != username:
-                            user.change_username(username)
+                            raise UserUploadError(_(
+                                'Changing usernames is not supported: %(username)r to %(new_username)r'
+                            ) % {'username': user.username, 'new_username': username})
                         if is_password(password):
                             user.set_password(password)
                         status_row['flag'] = 'updated'
@@ -526,10 +528,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     # following blocks require user doc id, so it needs to be saved if new user
                     user.save()
                     if can_assign_locations:
-                        if (user.location_id and not location_ids or
-                           user.location_id not in location_ids):
+                        locations_updated = set(user.assigned_location_ids) != set(location_ids)
+                        primary_location_removed = (user.location_id and not location_ids or
+                                                    user.location_id not in location_ids)
+
+                        if primary_location_removed:
                             user.unset_location()
-                        if set(user.assigned_location_ids) != set(location_ids):
+                        if locations_updated:
                             user.reset_locations(location_ids)
 
                     if is_password(password):

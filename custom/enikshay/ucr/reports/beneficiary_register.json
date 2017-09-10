@@ -3,6 +3,7 @@
         "enikshay"
     ],
     "server_environment": [
+        "enikshay",
         "softlayer"
     ],
     "data_source_table": "episode",
@@ -19,10 +20,10 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Date of Notification",
-                "field": "date_of_notification",
+                "display": "Treatment Initiation Date",
+                "field": "treatment_initiation_date",
                 "type": "date",
-                "slug": "date_of_notification"
+                "slug": "treatment_initiation_date"
             },
             {
                 "compare_as_string": false,
@@ -54,7 +55,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "external_id",
+                "field": "person_id_property",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary ID"
@@ -269,7 +270,7 @@
                     "custom_type": "owner_display"
                 },
                 "aggregation": "simple",
-                "field": "episode_fo",
+                "field": "fo",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Assigned FO"
@@ -429,7 +430,13 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "F": "Initiated on Treatment",
+                        "N": "Not Initiated on Treatment"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "treatment_initiation_status",
                 "calculate_total": false,

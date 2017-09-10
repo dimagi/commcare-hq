@@ -4,7 +4,6 @@ from django.conf.urls import url
 
 from auditcare.utils import logout_template, login_template
 from auditcare.views import (
-    auditAll,
     audited_login,
     audited_logout,
     audited_views,
@@ -28,7 +27,6 @@ is_tests = filter(is_test_trace, traces)
 
 
 urlpatterns = [
-    url(r'^auditor/$', auditAll, name='auditAll'),
     url(r'^auditor/export/$', export_all, name='export_all_audits'),
     url(r'^auditor/models/$', model_histories, name='model_histories'),
     url(r'^auditor/views/$', audited_views, name='audit_views'),

@@ -1,8 +1,7 @@
 from datetime import datetime
 from lxml import etree
 
-from casexml.apps.case.xml import V2
-from casexml.apps.phone.tests.utils import generate_restore_payload
+from casexml.apps.phone.tests.utils import MockDevice
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.parsing import json_format_datetime
@@ -131,8 +130,8 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 
 def get_ota_balance_xml(project, user):
-    xml = generate_restore_payload(project, user.to_ota_restore_user(), version=V2)
-    return extract_balance_xml(xml)
+    device = MockDevice(project, user.to_ota_restore_user())
+    return extract_balance_xml(device.sync().payload)
 
 
 def extract_balance_xml(xml_payload):

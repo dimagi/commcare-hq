@@ -1,5 +1,6 @@
 {
   "domains": [
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
     "icds-cas",
@@ -3655,9 +3656,12 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY",
-    "es_index_settings": {
-      "number_of_shards": 4
-    }
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "inserted_at"
+        ]
+      }
+    ]
   }
 }

@@ -14,6 +14,7 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
         'date_queued',
     ]
     list_filter = ('doc_type', 'domain')
+    search_fields = ('doc_id',)
 
 
 admin.site.register(AsyncIndicator, AsyncIndicatorAdmin)

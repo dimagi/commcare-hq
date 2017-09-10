@@ -1,5 +1,5 @@
 /*globals hqDefine, ko, $ */
-hqDefine('commtrack/js/sms.js', function () {
+hqDefine('commtrack/js/sms', function () {
     'use strict';
     function CommtrackSettingsViewModel(other_sms_codes) {
         this.actions = ko.observableArray();
@@ -149,7 +149,7 @@ hqDefine('commtrack/js/sms.js', function () {
     }
 
     $(function () {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get;
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         var settings = initial_page_data('settings');
         var other_sms_codes = initial_page_data('other_sms_codes');
         initCommtrackSettingsView($('#settings'), settings, other_sms_codes);

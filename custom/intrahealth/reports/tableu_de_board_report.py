@@ -1,7 +1,7 @@
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealtMixin
 from custom.intrahealth.sqldata import *

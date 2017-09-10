@@ -1,11 +1,12 @@
 /* globals ko, $ */
 
-hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
+hqDefine("data_interfaces/js/case_rule_criteria", function() {
 
     var CaseRuleCriteria = function(initial, constants) {
         'use strict';
         var self = this;
 
+        self.constants = constants;
         self.case_type = ko.observable();
         self.criteria = ko.observableArray();
         self.selected_case_filter_id = ko.observable();
@@ -146,7 +147,8 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
                 if(
                     value.match_type === constants.MATCH_EQUAL ||
                     value.match_type === constants.MATCH_NOT_EQUAL ||
-                    value.match_type === constants.MATCH_HAS_VALUE
+                    value.match_type === constants.MATCH_HAS_VALUE ||
+                    value.match_type === constants.MATCH_HAS_NO_VALUE
                 ) {
                     obj = new MatchPropertyDefinition('case-property-filter');
                     obj.property_name(value.property_name);
@@ -204,6 +206,13 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
         self.property_name = ko.observable();
         self.property_value = ko.observable();
         self.match_type = ko.observable();
+
+        self.show_property_value_input = ko.computed(function() {
+            return (
+                self.match_type() !== criteria_model.constants.MATCH_HAS_VALUE &&
+                self.match_type() !== criteria_model.constants.MATCH_HAS_NO_VALUE
+            );
+        });
     };
 
     var CustomMatchDefinition = function(ko_template_id) {
@@ -227,8 +236,8 @@ hqDefine("data_interfaces/js/case_rule_criteria.js", function() {
 
     $(function() {
         criteria_model = new CaseRuleCriteria(
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_initial'),
-            hqImport("hqwebapp/js/initial_page_data.js").get('criteria_constants')
+            hqImport("hqwebapp/js/initial_page_data").get('criteria_initial'),
+            hqImport("hqwebapp/js/initial_page_data").get('criteria_constants')
         );
         $('#rule-criteria').koApplyBindings(criteria_model);
         criteria_model.load_initial();

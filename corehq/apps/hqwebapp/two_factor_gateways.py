@@ -3,7 +3,7 @@ from urllib import urlencode
 from django.utils import translation
 from django.utils.translation import ugettext as _
 from django.utils.translation import pgettext
-from twilio.rest import TwilioRestClient
+from twilio.rest import Client
 from django.contrib.sites.models import Site
 from django.urls import reverse
 
@@ -24,11 +24,11 @@ class Gateway(object):
         sid = backends[0].extra_fields['account_sid']
         token = backends[0].extra_fields['auth_token']
         self.from_number = backends[0].load_balancing_numbers[0]
-        self.client = TwilioRestClient(sid, token)
+        self.client = Client(sid, token)
 
     def send_sms(self, device, token):
         message = _('Your authentication token is %s') % token
-        self.client.sms.messages.create(
+        self.client.api.account.messages.create(
             to=device.number.as_e164,
             from_=self.from_number,
             body=message)
@@ -40,7 +40,7 @@ class Gateway(object):
         url = reverse('two_factor:twilio_call_app', kwargs={'token': token})
         url = '%s?%s' % (url, urlencode({'locale': locale}))
         uri = 'https://%s%s' % (Site.objects.get_current().domain, url)
-        self.client.calls.create(to=device.number.as_e164, from_=self.from_number,
+        self.client.api.account.calls.create(to=device.number.as_e164, from_=self.from_number,
                                  url=uri, method='GET', if_machine='Hangup', timeout=15)
 
 

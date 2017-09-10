@@ -158,6 +158,15 @@ class ESXFormInstance(DictObject):
     def name(self):
         return self.form_data.get(const.TAG_NAME, "")
 
+    @property
+    def server_modified_on(self):
+        server_modified_on = self._data.get('server_modified_on', None)
+        if not server_modified_on:
+            server_modified_on = self._data.get('edited_on', None)
+        if not server_modified_on:
+            server_modified_on = self._data['received_on']
+        return server_modified_on
+
 
 class ESCase(DictObject, CaseToXMLMixin):
     """This wrapper around case data returned from ES which

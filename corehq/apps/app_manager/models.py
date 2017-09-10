@@ -35,7 +35,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -120,13 +120,13 @@ from corehq.apps.app_manager.util import (
     module_case_hierarchy_has_circular_reference,
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
+    LatestAppInfo,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
     LocationXpathValidationError,
@@ -164,6 +164,12 @@ ALL_WORKFLOWS = [
 # allow all options as fallback except the one for form linking
 WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
+WORKFLOW_CASE_LIST = 'case_list'  # Return back to the caselist after registering a case
+REGISTRATION_FORM_WORFLOWS = [
+    WORKFLOW_DEFAULT,
+    WORKFLOW_CASE_LIST,
+]
+
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
 FIELD_SEPARATOR = ':'
@@ -174,6 +180,10 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
 }
+
+
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
 
 
 def jsonpath_update(datum_context, value):
@@ -249,7 +259,11 @@ class IndexedSchema(DocumentSchema):
         return self._i
 
     def __eq__(self, other):
-        return other and (self.id == other.id) and (self._parent == other._parent)
+        return (
+            other and isinstance(other, IndexedSchema)
+            and (self.id == other.id)
+            and (self._parent == other._parent)
+        )
 
     class Getter(object):
 
@@ -359,7 +373,7 @@ class OpenCaseAction(FormAction):
     external_id = StringProperty()
 
 
-class OpenSubCaseAction(FormAction):
+class OpenSubCaseAction(FormAction, IndexedSchema):
 
     case_type = StringProperty()
     case_name = StringProperty()
@@ -371,6 +385,10 @@ class OpenSubCaseAction(FormAction):
     relationship = StringProperty(choices=['child', 'extension'], default='child')
 
     close_condition = SchemaProperty(FormActionCondition)
+
+    @property
+    def form_element_name(self):
+        return 'subcase_{}'.format(self.id)
 
 
 class FormActions(DocumentSchema):
@@ -391,6 +409,8 @@ class FormActions(DocumentSchema):
 
     subcases = SchemaListProperty(OpenSubCaseAction)
 
+    get_subcases = IndexedSchema.Getter('subcases')
+
     def all_property_names(self):
         names = set()
         names.update(self.update_case.update.keys())
@@ -398,6 +418,9 @@ class FormActions(DocumentSchema):
         for subcase in self.subcases:
             names.update(subcase.case_properties.keys())
         return names
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.subcases])
 
 
 class CaseIndex(DocumentSchema):
@@ -658,6 +681,9 @@ class AdvancedFormActions(DocumentSchema):
         add_actions('open', self.get_open_actions())
 
         return meta
+
+    def count_subcases_per_repeat_context(self):
+        return Counter([action.repeat_context for action in self.get_open_subcase_actions()])
 
 
 class FormSource(object):
@@ -1020,7 +1046,11 @@ class FormBase(DocumentSchema):
         meta = {
             'form_type': self.form_type,
             'module': module.get_module_info() if module else {},
-            'form': {"id": self.id if hasattr(self, 'id') else None, "name": self.name}
+            'form': {
+                "id": self.id if hasattr(self, 'id') else None,
+                "name": self.name,
+                'unique_id': self.unique_id,
+            }
         }
 
         xml_valid = False
@@ -1375,6 +1405,18 @@ class JRResourceProperty(StringProperty):
         return value
 
 
+class CustomIcon(DocumentSchema):
+    """
+    A custom icon to display next to a module or a form.
+    The property "form" identifies what kind of icon this would be, for ex: badge
+    One can set either a simple text to display or
+    an xpath expression to be evaluated for example count of cases within.
+    """
+    form = StringProperty()
+    text = DictProperty(unicode)
+    xpath = StringProperty()
+
+
 class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
@@ -1382,6 +1424,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
+    custom_icons = SchemaListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -1434,6 +1477,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def audio_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def custom_icon_form_and_text_by_language(self, lang):
+        custom_icon = self.custom_icon
+        if custom_icon:
+            custom_icon_text = custom_icon.text.get(lang, custom_icon.text.get(self.get_app().default_language))
+            return custom_icon.form, custom_icon_text
+        return None, None
 
     def _set_media(self, media_attr, lang, media_path):
         """
@@ -1490,6 +1540,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
         if for_default:
             return self.audio_by_language(lang, strict=False)
 
+    @property
+    def custom_icon(self):
+        if self.custom_icons:
+            return self.custom_icons[0]
+
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'module_form'
@@ -1528,7 +1583,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def _get_active_actions(self, types):
         actions = {}
         for action_type in types:
-            a = getattr(self.actions, action_type)
+            getter = 'get_{}'.format(action_type)
+            if hasattr(self.actions, getter):
+                # user getter if there is one
+                a = list(getattr(self.actions, getter)())
+            else:
+                a = getattr(self.actions, action_type)
             if isinstance(a, list):
                 if a:
                     actions[action_type] = a
@@ -2220,6 +2280,10 @@ class DetailPair(DocumentSchema):
 class CaseListForm(NavMenuItemMediaMixin):
     form_id = FormIdProperty('modules[*].case_list_form.form_id')
     label = DictProperty()
+    post_form_workflow = StringProperty(
+        default=WORKFLOW_DEFAULT,
+        choices=REGISTRATION_FORM_WORFLOWS,
+    )
 
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
@@ -2297,6 +2361,11 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def requires_case_details(self):
         return False
 
+    def root_requires_same_case(self):
+        return self.root_module \
+            and self.root_module.case_type == self.case_type \
+            and self.root_module.all_forms_require_a_case()
+
     def get_case_types(self):
         return set([self.case_type])
 
@@ -2304,6 +2373,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         return {
             'id': self.id,
             'name': self.name,
+            'unique_id': self.unique_id,
         }
 
     def get_app(self):
@@ -2613,7 +2683,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         if isinstance(form, Form):
             new_form = form
-        elif isinstance(form, AdvancedForm) and not form.actions.get_all_actions():
+        elif isinstance(form, AdvancedForm) and not len(list(form.actions.get_all_actions())):
             new_form = Form(
                 name=form.name,
                 form_filter=form.form_filter,
@@ -3636,6 +3706,12 @@ def _filter_by_location_id(user, ui_filter):
                               'request_user': user})
 
 
+def _filter_by_location_ids(user, ui_filter):
+    from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
+    return ui_filter.value(**{ui_filter.name: CHOICE_DELIMITER.join(user.assigned_location_ids),
+                              'request_user': user})
+
+
 def _filter_by_username(user, ui_filter):
     from corehq.apps.reports_core.filters import Choice
     return Choice(value=user.raw_username, display=None)
@@ -3661,6 +3737,7 @@ def get_auto_filter_configurations():
         AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
                          _("The user's case sharing group")),
         AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('location_ids', _filter_by_location_ids, _("All of the user's assigned locations")),
         AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
                          _("The parent location of the user's assigned location")),
         AutoFilterConfig('username', _filter_by_username, _("The user's username")),
@@ -4291,6 +4368,12 @@ class VersionedDoc(LazyBlobDoc):
     def id(self):
         return self._id
 
+    @property
+    def master_id(self):
+        """Return the ID of the 'master' app. For app builds this is the ID
+        of the app they were built from otherwise it's just the app's ID."""
+        return self.copy_of or self._id
+
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
             increment_version = not self.copy_of
@@ -4374,11 +4457,7 @@ class VersionedDoc(LazyBlobDoc):
         for field in self._meta_fields:
             if field in source:
                 del source[field]
-        _attachments = {}
-        for name in self.lazy_list_attachments():
-            if re.match(ATTACHMENT_REGEX, name):
-                # FIXME loss of metadata (content type, etc.)
-                _attachments[name] = self.lazy_fetch_attachment(name)
+        _attachments = self.get_attachments()
 
         # the '_attachments' value is a dict of `name: blob_content`
         # pairs, and is part of the exported (serialized) app interface
@@ -4387,6 +4466,21 @@ class VersionedDoc(LazyBlobDoc):
         source = self.scrub_source(source)
 
         return json.dumps(source) if dump_json else source
+
+    def get_attachments(self):
+        attachments = {}
+        for name in self.lazy_list_attachments():
+            if re.match(ATTACHMENT_REGEX, name):
+                # FIXME loss of metadata (content type, etc.)
+                attachments[name] = self.lazy_fetch_attachment(name)
+        return attachments
+
+    def save_attachments(self, attachments):
+        with self.atomic_blobs():
+            for name, attachment in attachments.items():
+                if re.match(ATTACHMENT_REGEX, name):
+                    self.put_attachment(attachment, name)
+        return self
 
     @classmethod
     def from_source(cls, source, domain):
@@ -4589,6 +4683,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             self.save()
 
         return self
+
+    @property
+    @memoized
+    def global_app_config(self):
+        return GlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -4797,11 +4896,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
-    def advanced_app_builder(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'true') == 'true'
-
-    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,
@@ -4911,14 +5005,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @absolute_url_property
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
-
-    @property
-    def odk_profile_display_url(self):
-        return self.short_odk_url or self.odk_profile_url
-
-    @property
-    def odk_media_profile_display_url(self):
-        return self.short_odk_media_url or self.odk_media_profile_url
 
     def get_odk_qr_code(self, with_media=False, build_profile_id=None):
         """Returns a QR code, as a PNG to install on CC-ODK"""
@@ -5039,6 +5125,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
+
+        LatestAppInfo(self.master_id, self.domain).clear_caches()
+
         user = getattr(view_utils.get_request(), 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
@@ -5167,6 +5256,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     mobile_ucr_sync_interval = IntegerProperty()
+
+    add_ons = DictProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5412,7 +5503,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'app_profile': app_profile,
             'cc_user_domain': cc_user_domain(self.domain),
             'include_media_suite': with_media,
-            'uniqueid': self.copy_of or self.id,
+            'uniqueid': self.master_id,
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
@@ -5452,6 +5543,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return (
             self.supports_practice_users and
             domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
+    @property
+    @memoized
+    def enable_update_prompts(self):
+        return (
+            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
     @memoized
@@ -5670,11 +5769,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j, app_manager_v2=False):
+    def rearrange_forms(self, to_module_id, from_module_id, i, j):
         """
-        The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the rearrangement (confusingly) goes through anyway.
+        The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
@@ -5686,7 +5783,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             pass
         try:
             form = from_module.forms.pop(j)
-            if app_manager_v2:
+            if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5699,9 +5796,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             to_module.add_insert_form(from_module, form, index=i, with_source=True)
         except IndexError:
             raise RearrangeError()
-        if to_module.case_type != from_module.case_type and not app_manager_v2:
-            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
-            raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
         return update_unique_ids(source)
@@ -6163,10 +6257,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
-    with app.atomic_blobs():
-        for name, attachment in attachments.items():
-            if re.match(ATTACHMENT_REGEX, name):
-                app.put_attachment(attachment, name)
+    app.save_attachments(attachments)
 
     if not app.is_remote_app():
         for _, m in app.get_media_objects():
@@ -6232,6 +6323,51 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
+
+
+class GlobalAppConfig(Document):
+    # this should be the unique id of the app (not of a versioned copy)
+    app_id = StringProperty()
+    domain = StringProperty()
+
+    # these let mobile prompt updates for application and APK
+    app_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+    apk_prompt = StringProperty(
+        choices=["off", "on", "forced"],
+        default="off"
+    )
+
+    # corresponding versions to which user should be prompted to update to
+    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
+    app_version = IntegerProperty(default=LATEST_APP_VALUE)
+
+    @classmethod
+    def for_app(cls, app):
+        """
+        Returns the actual config object for the app or an unsaved
+            default object
+        """
+        app_id = app.master_id
+
+        res = cls.get_db().view(
+            "global_app_config_by_app_id/view",
+            key=[app_id, app.domain],
+            reduce=False,
+            include_docs=True,
+        ).one()
+
+        if res:
+            return cls(res['doc'])
+        else:
+            # return default config
+            return cls(app_id=app_id, domain=app.domain)
+
+    def save(self, *args, **kwargs):
+        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
 # backwards compatibility with suite-1.0.xml

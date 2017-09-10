@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _
-from corehq.apps.users.forms import MultipleSelectionForm
 
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.groups.models import Group, DeleteGroupRecord
@@ -149,13 +148,13 @@ def _update_group_membership(request, domain, group_id):
     if group.domain != domain:
         return HttpResponseForbidden()
 
-    form = MultipleSelectionForm(request.POST)
-    form.fields['selected_ids'].choices = [(id, 'throwaway') for id in CommCareUser.ids_by_domain(domain)]
-    if form.is_valid():
-        group.users = form.cleaned_data['selected_ids']
-        group.save()
-        messages.success(request, _("Group %s updated!") % group.name)
-    else:
-        messages.error(request, _("Form not valid. A user may have been deleted while you were viewing this page"
-                                  "Please try again."))
+    selected_users = request.POST.get('selected_ids').split(',')
+
+    # check to make sure no users were deleted at time of making group
+    all_users = CommCareUser.ids_by_domain(domain)
+    safe_ids = filter(lambda u: u in all_users, selected_users)
+
+    group.users = safe_ids
+    group.save()
+    messages.success(request, _("Group %s updated!") % group.name)
     return HttpResponseRedirect(reverse("group_members", args=[domain, group_id]))

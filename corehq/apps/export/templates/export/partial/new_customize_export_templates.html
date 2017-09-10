@@ -103,13 +103,13 @@
                                 {% trans "Display" %}<br />
                                 {% if export_instance.type == 'form' %}
                                 <a
-                                    class="btn btn-xs btn-primary"
-                                    data-bind="click: table.useLabels">
+                                    class="btn btn-xs"
+                                    data-bind="click: table.useLabels, css: { 'btn-primary': table.displayType() === 'labels', 'btn-default': table.displayType() !== 'labels'}">
                                     {% trans "Use question labels" %}
                                 </a>
                                 <a
-                                    class="btn btn-xs btn-default"
-                                    data-bind="click: table.useIds">
+                                    class="btn btn-xs"
+                                    data-bind="click: table.useIds, css: { 'btn-primary': table.displayType() === 'ids', 'btn-default': table.displayType() !== 'ids'}">
                                     {% trans "Use question ids" %}
                                 </a>
                                 {% endif %}
@@ -179,7 +179,7 @@
                                     <span data-bind="foreach: { data: column.tags, as: 'tag' }">
                                         <span data-bind="
                                             text: tag,
-                                            attr: { class: hqImport('export/js/utils.js').getTagCSSClass(tag) }"></span>
+                                            attr: { class: hqImport('export/js/utils').getTagCSSClass(tag) }"></span>
                                     </span>
 
                                     <!-- ko if: !column.isEditable() -->
@@ -222,11 +222,11 @@
                                                 }
                                             "></span>
                                             <select style="width:200px" class="form-control" data-bind="
-                                                options: hqImport('export/js/const.js').USER_DEFINED_SPLIT_TYPES,
+                                                options: hqImport('export/js/const').USER_DEFINED_SPLIT_TYPES,
                                                 value: column.split_type,
                                             "/></select>
                                         </div>
-                                        <!-- ko if: column.split_type() === hqImport('export/js/const.js').MULTISELECT_SPLIT_TYPE -->
+                                        <!-- ko if: column.split_type() === hqImport('export/js/const').MULTISELECT_SPLIT_TYPE -->
                                         <div class="form-group">
                                             <button class="btn btn-default btn-xs" data-bind="
                                                 visible: !column.showOptions(),

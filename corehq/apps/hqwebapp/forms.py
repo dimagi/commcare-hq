@@ -156,7 +156,7 @@ class FormListForm(object):
     columns = None  # list configuring the columns to display
 
     child_form_data = forms.CharField(widget=forms.HiddenInput)
-    template = "style/partials/form_list_form.html"
+    template = "hqwebapp/partials/form_list_form.html"
 
     def __init__(self, data=None, request=None, *args, **kwargs):
         self.request = request

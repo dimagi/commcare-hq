@@ -1,7 +1,7 @@
-hqDefine("scheduling/js/broadcasts_list.js", function() {
+hqDefine("scheduling/js/broadcasts_list", function() {
     $(function() {
-        var list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("new_list_broadcasts"),
-            loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
+        var list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("new_list_broadcasts"),
+            loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src");
 
         $("#scheduled-table").dataTable({
             "lengthChange": false,
@@ -77,9 +77,10 @@ hqDefine("scheduling/js/broadcasts_list.js", function() {
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function(data) {
-                        // TODO link this to the view
-                        return data;
+                    "render": function(name, something, args) {
+                        var id = args[2],
+                            url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_message', id);
+                        return "<a href='" + url + "'>" + name + "</a>";
                     },
                 },
             ],

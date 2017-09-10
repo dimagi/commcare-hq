@@ -1,10 +1,11 @@
-hqDefine("hqwebapp/js/select2_handler.js", function() {
+hqDefine("hqwebapp/js/select2_handler", function() {
     var BaseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)
         'use strict';
         var self = this;
         self.fieldName = options.fieldName;
+        self.multiple = options.multiple || false;
         self.value = ko.observable();
     
         self.clear = function () {
@@ -54,6 +55,7 @@ hqDefine("hqwebapp/js/select2_handler.js", function() {
             fieldInput.select2({
                 minimumInputLength: 0,
                 allowClear: true,
+                multiple: self.multiple,
                 ajax: {
                     quietMillis: 150,
                     url: '',
