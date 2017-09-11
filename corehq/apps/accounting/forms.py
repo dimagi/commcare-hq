@@ -59,7 +59,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
-    SoftwareProduct,
     SoftwareProductRate,
     SoftwareProductType,
     Subscription,
@@ -1327,17 +1326,6 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             return {}
 
-    @property
-    @memoized
-    def current_products_to_rates(self):
-        if self.plan_version is not None:
-            product_rate = self.plan_version.product_rate
-            return {
-                product_rate.product.id: product_rate
-            }
-        else:
-            return {}
-
     @staticmethod
     def _get_errors_from_subform(form_name, subform):
         for field, field_errors in subform._errors.items():
@@ -1372,26 +1360,22 @@ class SoftwarePlanVersionForm(forms.Form):
         return current_rate
 
     def _retrieve_product_rate(self, rate_form):
-        product = SoftwareProduct.objects.get(id=rate_form['product_id'].value())
-        new_rate = rate_form.get_instance(product)
+        new_rate = rate_form.get_instance()
         if rate_form.is_new():
             # a brand new rate
             self.is_update = True
             return new_rate
-        if product.id not in self.current_products_to_rates:
-            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
-            # also mark the form as updated
-            current_rate = product.get_rate(default_instance=False)
-            if current_rate is None:
+        try:
+            current_rate = SoftwareProductRate.objects.get(id=rate_form['rate_id'].value())
+            # note: custom implementation of SoftwareProductRate.__eq__ here...
+            if not current_rate == new_rate:
+                self.is_update = True
                 return new_rate
-            self.is_update = True
-        else:
-            current_rate = self.current_products_to_rates[product.id]
-        # note: custom implementation of SoftwareProductRate.__eq__ here...
-        if not current_rate == new_rate:
+            else:
+                return current_rate
+        except SoftwareProductRate.DoesNotExist:
             self.is_update = True
             return new_rate
-        return current_rate
 
     def clean_feature_rates(self):
         original_data = self.cleaned_data['feature_rates']
@@ -1583,11 +1567,12 @@ class ProductRateForm(forms.ModelForm):
     """
     A form for creating a new ProductRate.
     """
-    # product id will point to a  select2 field, hence the CharField here.
-    product_id = forms.CharField(
-        required=False,
+
+    name = forms.CharField(
+        required=True,
         widget=forms.HiddenInput,
     )
+
     rate_id = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -1595,7 +1580,7 @@ class ProductRateForm(forms.ModelForm):
 
     class Meta:
         model = SoftwareProductRate
-        fields = ['monthly_fee']
+        fields = ['monthly_fee', 'name']
 
     def __init__(self, data=None, *args, **kwargs):
         super(ProductRateForm, self).__init__(data, *args, **kwargs)
@@ -1617,10 +1602,8 @@ class ProductRateForm(forms.ModelForm):
     def is_new(self):
         return not self['rate_id'].value()
 
-    def get_instance(self, product):
-        instance = self.save(commit=False)
-        instance.product = product
-        return instance
+    def get_instance(self):
+        return self.save(commit=False)
 
 
 class EnterprisePlanContactForm(forms.Form):

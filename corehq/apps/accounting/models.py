@@ -596,7 +596,7 @@ class SoftwareProductRate(models.Model):
         app_label = 'accounting'
 
     def __str__(self):
-        return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
+        return '%s @ $%s /month' % (self.name, self.monthly_fee)
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__) or not self.name == other.name:
