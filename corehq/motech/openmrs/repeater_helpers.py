@@ -176,7 +176,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         [case_block['@case_id'] for case_block in case_blocks], ordered=True)
     for case, case_block in zip(cases, case_blocks):
         assert case_block['@case_id'] == case.case_id
-        if case.type in case_types:
+        if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
