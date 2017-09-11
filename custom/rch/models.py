@@ -133,11 +133,11 @@ class AreaMapping(models.Model):
 
     @classmethod
     def fetch_awc_ids_for_state(cls, state_id):
-        return list(cls.objects.filter(state_id=state_id).values_list('awcid', flat=True).distinct().all())
+        return list(cls.objects.filter(stcode=state_id).values_list('awcid', flat=True).distinct().all())
 
     @classmethod
     def fetch_village_ids_for_state(cls, state_id):
-        return list(cls.objects.filter(state_id=state_id).values_list('village_code', flat=True).distinct().all())
+        return list(cls.objects.filter(stcode=state_id).values_list('village_code', flat=True).distinct().all())
 
     @classmethod
     def fetch_awc_ids_for_district(cls, district_id):
