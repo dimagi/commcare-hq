@@ -27,7 +27,7 @@
             id: 'uuid-exportWithFileData',
             formname: 'Test Export With File Data',
             exportType: 'form',
-            isAutoRebuildEnabled: true
+            isAutoRebuildEnabled: true,
         },
         exportDeId: {
             downloadUrl: '/a/test-exports/data/export/custom/form/download',
@@ -39,7 +39,7 @@
             id: 'uuid-exportDeId',
             formname: 'Test Export De-Id',
             exportType: 'form',
-            isAutoRebuildEnabled: true
+            isAutoRebuildEnabled: true,
         },
         exportSimple: {
             downloadUrl: '/a/test-exports/data/export/custom/form/download',
@@ -51,7 +51,7 @@
             id: 'uuid-exportSimple',
             formname: 'Test Export Simple',
             exportType: 'form',
-            isAutoRebuildEnabled: true
+            isAutoRebuildEnabled: true,
         }
     };
 

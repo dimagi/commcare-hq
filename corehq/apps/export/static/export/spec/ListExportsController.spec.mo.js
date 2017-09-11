@@ -4,7 +4,7 @@ describe('ListExportsController Unit Tests', function() {
     var mockBackendUrls = {
         GET_EXPORTS_LIST: '/fake/exports/list',
         UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data',
-        TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled'
+        TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled',
     };
 
     beforeEach(function () {
@@ -14,23 +14,23 @@ describe('ListExportsController Unit Tests', function() {
                 get_exports_list: {
                     url: mockBackendUrls.GET_EXPORTS_LIST,
                     headers: {
-                        'DjNg-Remote-Method': 'get_exports_list'
+                        'DjNg-Remote-Method': 'get_exports_list',
                     },
-                    method: 'auto'
+                    method: 'auto',
                 },
                 update_emailed_export_data: {
                     url: mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA,
                     headers: {
-                        'DjNg-Remote-Method': 'update_emailed_export_data'
+                        'DjNg-Remote-Method': 'update_emailed_export_data',
                     },
-                    method: 'auto'
+                    method: 'auto',
                 },
                 toggle_saved_export_enabled_state: {
                     url: mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE,
                     headers: {
-                        'DjNg-Remote-Method': 'toggle_saved_export_enabled_state'
+                        'DjNg-Remote-Method': 'toggle_saved_export_enabled_state',
                     },
-                    method: 'auto'
+                    method: 'auto',
                 }
             });
         }]);
@@ -190,7 +190,7 @@ describe('ListExportsController Unit Tests', function() {
                 .when('POST', mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE)
                 .respond({
                     success: true,
-                    isAutoRebuildEnabled: false
+                    isAutoRebuildEnabled: false,
                 });
                 createController();
                 $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);

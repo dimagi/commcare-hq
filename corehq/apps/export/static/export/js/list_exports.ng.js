@@ -91,7 +91,7 @@
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;
-                }
+                },
             });
             clipboard.onClick($event);
             clipboard.destroy();
@@ -132,7 +132,7 @@
             component.savingAutoRebuildChange = true;
             djangoRMI.toggle_saved_export_enabled_state({
                 'component': component,
-                'export': exp
+                'export': exp,
             })
                 .success(function (data) {
                     if (data.success) {
