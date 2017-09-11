@@ -51,7 +51,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         }
         map_data.update({name: row_values})
 
-    total_awcs = sum(map(lambda x: x['awcs'], map_data.values()))
+    total_awcs = sum(map(lambda x: (x['awcs'] or 0), map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
