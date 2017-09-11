@@ -1,5 +1,7 @@
+import six
 from xml.etree import ElementTree
 from django.test import TestCase
+from corehq.blobs import get_blob_db
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.fixtures import fixturegenerators
@@ -7,7 +9,7 @@ from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data_types, \
     get_fixture_data_types_in_domain
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
-    FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership
+    FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership, FIXTURE_BUCKET
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 
@@ -99,6 +101,7 @@ class FixtureDataTest(TestCase):
         delete_all_users()
         delete_all_fixture_data_types()
         get_fixture_data_types_in_domain.clear(self.domain)
+        get_blob_db().delete(self.domain, FIXTURE_BUCKET)
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):
@@ -246,3 +249,81 @@ class FixtureDataTest(TestCase):
             """.format(self.user.user_id),
             '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )
+
+    def test_user_data_type_with_item(self):
+        cookie = self.make_data_type("cookie", is_global=False)
+        latte = self.make_data_type("latte", is_global=True)
+        self.make_data_item(cookie, "2.50")
+        self.make_data_item(latte, "5.75")
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        # make sure each fixture is there, and only once
+        self.assertEqual(
+            [item.attrib['id'] for item in fixtures],
+            [
+                'item-list:latte-index',
+                'item-list:cookie-index',
+                'item-list:district',
+            ],
+        )
+
+    def test_empty_user_data_types(self):
+        self.make_data_type("cookie", is_global=False)
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        # make sure each fixture is there, and only once
+        self.assertEqual(
+            [item.attrib['id'] for item in fixtures],
+            [
+                'item-list:cookie-index',
+                'item-list:district',
+            ],
+        )
+
+    def test_cached_global_fixture_user_id(self):
+        sandwich = self.make_data_type("sandwich", is_global=True)
+        self.make_data_item(sandwich, "7.39")
+        frank = self.user.to_ota_restore_user()
+        sammy = CommCareUser.create(self.domain, 'sammy', '***').to_ota_restore_user()
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, frank)
+        self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
+        self.assertTrue(get_blob_db().exists(self.domain, FIXTURE_BUCKET))
+
+        bytes_ = six.binary_type
+        fixtures = [ElementTree.fromstring(f) if isinstance(f, bytes_) else f
+            for f in call_fixture_generator(fixturegenerators.item_lists, sammy)]
+        self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
+
+    def make_data_type(self, name, is_global):
+        data_type = FixtureDataType(
+            domain=self.domain,
+            tag="{}-index".format(name),
+            is_global=is_global,
+            name=name.title(),
+            fields=[
+                FixtureTypeField(field_name="cost", properties=[]),
+            ],
+            item_attributes=[],
+        )
+        data_type.save()
+        self.addCleanup(data_type.delete)
+        return data_type
+
+    def make_data_item(self, data_type, cost):
+        data_item = FixtureDataItem(
+            domain=self.domain,
+            data_type_id=data_type._id,
+            fields={
+                "cost": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value=cost,
+                        properties={},
+                    )]
+                ),
+            },
+            item_attributes={},
+        )
+        data_item.save()
+        self.addCleanup(data_item.delete)
+        return data_item
