@@ -9,7 +9,7 @@ hqGlobal("reports/js/filters", [
     $,
     ko,
     hqMain,
-    standardHQReport
+    standardHQReportModule
 ) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
@@ -48,7 +48,7 @@ hqGlobal("reports/js/filters", [
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
                 var report_labels = $filterRange.data('reportLabels');
-                var standardHQReport = standardHQReport.getStandardHQReport();
+                var standardHQReport = standardHQReportModule.getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
                     report_labels, separator,
