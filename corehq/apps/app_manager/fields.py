@@ -160,8 +160,8 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True, form_labels=None,
-                 form_placeholders=None, case_placeholders=None):
+    def __init__(self, domain, user, as_dict=True, form_placeholders=None,
+                 case_placeholders=None, form_labels=None):
         self.domain = domain
         self.user = user
         self.as_dict = as_dict
