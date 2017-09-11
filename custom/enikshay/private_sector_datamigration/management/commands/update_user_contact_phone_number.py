@@ -26,6 +26,8 @@ class Command(BaseCommand):
         if location_ids:
             locs_matching_type = locs_matching_type.filter(location_id__in=location_ids)
 
+        count = 0
+
         for _, loc in enumerate(with_progress_bar(locs_matching_type)):
             private_sector_agency_id = loc.metadata.get('private_sector_agency_id', '')
             if not private_sector_agency_id.isdigit():
@@ -43,3 +45,7 @@ class Command(BaseCommand):
             if not contact_phone_number and len(user_detail.mobileNumber) == 10:
                 location_user.user_data['contact_phone_number'] = '91' + user_detail.mobileNumber
                 location_user.save()
+                print 'Updated %s' % location_user.user_id
+                count += 1
+
+        print '%d users updated.' % count
