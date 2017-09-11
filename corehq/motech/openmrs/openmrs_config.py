@@ -42,6 +42,13 @@ class CaseProperty(ValueSource):
         return case_trigger_info.updates.get(self.case_property)
 
 
+class FormQuestion(ValueSource):
+    form_question = StringProperty()  # e.g. "/data/foo/bar"
+
+    def get_value(self, case_trigger_info):
+        return case_trigger_info.form_question_values.get(self.form_question)
+
+
 class ConstantString(ValueSource):
     value = StringProperty()
 
@@ -62,6 +69,21 @@ class CasePropertyConcept(CaseProperty):
         except KeyError:
             raise ValueError('OpenMRS concept not found for value "{}" of case property "{}".'.format(
                 value, self.case_property))
+
+
+class FormQuestionConcept(FormQuestion):
+    """
+    Maps form question values to OpenMRS concepts
+    """
+    value_concepts = DictProperty()
+
+    def get_value(self, case_trigger_info):
+        value = super(FormQuestionConcept, self).get_value(case_trigger_info)
+        try:
+            return self.value_concepts[value]
+        except KeyError:
+            raise ValueError('OpenMRS concept not found for value "{}" of form question "{}".'.format(
+                value, self.form_question))
 
 
 class OpenmrsCaseConfig(DocumentSchema):
