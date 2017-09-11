@@ -1367,7 +1367,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     bulk_save = save_docs
 
-    def save(self, **params):
+    def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
@@ -1382,9 +1382,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
             super(CouchUser, self).save(**params)
 
-        from .signals import couch_user_post_save
-        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+        if fire_signals:
+            from .signals import couch_user_post_save
+            results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1528,14 +1529,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, **params):
+    def save(self, fire_signals=True, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
-        super(CommCareUser, self).save(**params)
+        super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
-        from .signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
-                                                      is_new_user=is_new_user)
-        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+        if fire_signals:
+            from .signals import commcare_user_post_save
+            results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
+                                                          is_new_user=is_new_user)
+            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
