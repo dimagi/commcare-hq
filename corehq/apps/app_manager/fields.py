@@ -19,7 +19,7 @@ ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['applic
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
-    'forms_by_app_by_module', 'placeholders'
+    'forms_by_app_by_module', 'labels', 'placeholders'
 ])
 AppFormRMIPlaceholder = collections.namedtuple('AppFormRMIPlaceholder', [
     'application', 'module', 'form'
@@ -160,10 +160,17 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True, form_placeholders=None, case_placeholders=None):
+    def __init__(self, domain, user, as_dict=True, form_placeholders=None,
+                 case_placeholders=None, form_labels=None):
         self.domain = domain
         self.user = user
         self.as_dict = as_dict
+        default_form_labels = AppFormRMIPlaceholder(
+            application=_("Application"),
+            module=_("Menu"),
+            form=_("Form"),
+        )
+        self.form_labels = form_labels or default_form_labels
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
             module=_("Select Menu"),
@@ -176,6 +183,7 @@ class ApplicationDataRMIHelper(object):
         )
         self.case_placeholders = case_placeholders or default_case_placeholder
         if self.as_dict:
+            self.form_labels = self.form_labels._asdict()
             self.form_placeholders = self.form_placeholders._asdict()
             self.case_placeholders = self.case_placeholders._asdict()
 
@@ -470,6 +478,7 @@ class ApplicationDataRMIHelper(object):
             apps_by_type=self._get_applications_by_type(self.as_dict),
             modules_by_app=modules_by_app,
             forms_by_app_by_module=forms_by_app_by_module,
+            labels=self.form_labels,
             placeholders=self.form_placeholders,
         )
         if self.as_dict:
