@@ -63,6 +63,7 @@ class _UserCaseHelper(object):
 
     def create_user_case(self, case_type, commcare_user, fields):
         fields['hq_user_id'] = commcare_user._id
+        fields.pop('case_type', None)
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
