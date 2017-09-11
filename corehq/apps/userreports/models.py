@@ -350,6 +350,27 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         es_index_settings.pop('doc_type')
         return {"settings": es_index_settings}
 
+    def get_case_type_or_xmlns_filter(self):
+        def _get_property_value(config_filter, prop_name):
+            if (config_filter['type'] != 'boolean_expression'
+                    or config_filter['operator'] != 'eq'):
+                return None
+            expression = config_filter['expression']
+            if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
+                return config_filter['property_value']
+            return None
+
+        if self.referenced_doc_type == 'CommCareCase':
+            prop_value = _get_property_value(self.configured_filter, 'type')
+            if prop_value:
+                return prop_value
+        elif self.referenced_doc_type == 'XFormInstance':
+            prop_value = _get_property_value(self.configured_filter, 'xmlns')
+            if prop_value:
+                return prop_value
+
+        return None
+
 
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
