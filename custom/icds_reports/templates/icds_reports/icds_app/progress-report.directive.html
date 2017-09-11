@@ -97,11 +97,12 @@
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
-                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.format === 'percent'">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
-                            <span ng-if="row.average.html !== void(0)">{$ row.average.html | number:2 $} %</span>
+                            <span ng-if="row.average.html !== void(0) && row.format === 'percent'">{$ row.average.html | number:2 $} %</span>
+                            <span ng-if="row.average.html !== void(0) && row.format !== 'percent'">{$ row.average.html | indiaNumbers $}</span>
                             <span ng-if="row.average.html === void(0)">---</span>
                         </td>
                     </tr>
