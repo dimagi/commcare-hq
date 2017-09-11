@@ -65,6 +65,19 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.exceptions import XFormNotFound
 
 
+# default language to user's preference, followed by first app's default, followed by english
+def _default_lang(request, apps):
+    if request.couch_user.language:
+        return request.couch_user.language
+
+    try:
+        return apps[0]['langs'][0]
+    except Exception:
+        pass
+
+    return 'en'
+
+
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
@@ -106,7 +119,7 @@ class FormplayerMain(View):
         role = user.get_role(domain)
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
-        apps = sorted(apps, key=lambda app: app['name'])
+        apps = sorted(apps, key=lambda app: app['name'][app['langs'][0]])
         return apps
 
     @staticmethod
@@ -152,19 +165,9 @@ class FormplayerMain(View):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
         apps = self.get_web_apps_available_to_user(domain, restore_as)
 
-        def _default_lang():
-            try:
-                return apps[0]['langs'][0]
-            except Exception:
-                return 'en'
-
-        # default language to user's preference, followed by
-        # first app's default, followed by english
-        language = request.couch_user.language or _default_lang()
-
         context = {
             "domain": domain,
-            "language": language,
+            "language": _default_lang(request, apps),
             "apps": apps,
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.couch_user.username,
@@ -216,19 +219,9 @@ class FormplayerPreviewSingleApp(View):
         if role and not role.permissions.view_web_app(app):
             raise Http404()
 
-        def _default_lang():
-            try:
-                return app['langs'][0]
-            except Exception:
-                return 'en'
-
-        # default language to user's preference, followed by
-        # first app's default, followed by english
-        language = request.couch_user.language or _default_lang()
-
         context = {
             "domain": domain,
-            "language": language,
+            "language": _default_lang(request, [app]),
             "apps": [app],
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.user.username,
@@ -386,7 +379,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
-        app=app.name,
+        app=app.default_name(),
         form=form_name,
     )
 

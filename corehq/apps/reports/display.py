@@ -86,7 +86,7 @@ class _FormType(object):
         form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         if form and form.get('app'):
             langs = form['app']['langs']
-            app_name = form['app']['name']
+            app_name = form['app']['name'][langs[0]]
 
             if form.get('is_user_registration'):
                 form_name = "User Registration"

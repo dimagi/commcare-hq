@@ -79,4 +79,4 @@ class Command(BaseCommand):
         if not name:
             name = app_source['name']
         app = import_app(app_source, target_domain, {'name': name})
-        return "Created app '{}' at /a/{}/apps/view/{}/".format(app.name, app.domain, app.id)
+        return "Created app '{}' at /a/{}/apps/view/{}/".format(app.default_name(), app.domain, app.id)

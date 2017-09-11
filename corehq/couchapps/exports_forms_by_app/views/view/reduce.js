@@ -14,8 +14,8 @@ function (key, values) {
                 // pick the one that's not deleted
                 value = value.app_deleted ? values[i] : value;
             } else {
-                // arbitrarily pick the one with the shortest app_name
-                value = values[i].app.name.length > value.app.name.length ? value : values[i];
+                // arbitrarily pick one
+                value = values[i];
             }
             value.duplicate = true;
         } else if (!value.app && values[i].app) {

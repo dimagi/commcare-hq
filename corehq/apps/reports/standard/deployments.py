@@ -118,7 +118,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         except ResourceNotFound:
             pass
         else:
-            return app.name
+            return app.default_name()
 
     def get_data_for_app(self, options, app_id):
         try:
@@ -463,7 +463,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
         def link(app):
             return u'<a href="{}">{}</a>'.format(
                 reverse('view_app', args=[self.domain, app.get_id]),
-                app.name,
+                app.default_name(),
             )
         return {
             app.get_id: link(app)

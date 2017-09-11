@@ -205,7 +205,7 @@ class AppManagerTest(TestCase):
         old_name = 'old name'
         new_name = 'new name'
         app = Application.wrap(self._yesno_source)
-        app.name = old_name
+        app.name[app.langs[0]] = old_name
         app.save()
 
         copy = app.make_build()
@@ -213,14 +213,14 @@ class AppManagerTest(TestCase):
 
         self.assertEqual(copy.name, old_name)
 
-        app.name = new_name
+        app.name[app.langs[0]] = new_name
         app.save()
         app = Application.get(app.get_id)
-        self.assertEqual(app.name, new_name)
+        self.assertEqual(app.default_name(), new_name)
 
         app = app.make_reversion_to_copy(copy)
         app.save()
-        self.assertEqual(app.name, old_name)
+        self.assertEqual(app.default_name(), old_name)
 
     def test_jad_settings(self):
         self.app.build_spec = BuildSpec(version='2.2.0', build_number=1)

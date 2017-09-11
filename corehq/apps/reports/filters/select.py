@@ -102,7 +102,7 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
     def options(self):
         apps_for_domain = get_brief_apps_in_domain(self.domain)
         return [(app.get_id, _("%(name)s [up to build %(version)s]") % {
-            'name': app.name,
+            'name': app.default_name(),
             'version': app.version}) for app in apps_for_domain]
 
 

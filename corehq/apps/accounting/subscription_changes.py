@@ -363,7 +363,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'num_apps': num_apps,
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
+                'title': app['name'][app['langs'][0]],  # TODO: use trans instead?
                 'url': reverse('view_app', args=[domain.name, app['_id']])
             } for app in cloudcare_enabled_apps],
         )
@@ -628,7 +628,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 'num_apps': len(apps),
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
-                'title': app['name'],
+                'title': app['name'][app['langs'][0]],
                 'url': reverse('view_app', args=[project.name, app['_id']])
             } for app in apps],
         )

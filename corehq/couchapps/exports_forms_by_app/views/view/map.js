@@ -13,7 +13,7 @@ function (doc) {
                 if (form.xmlns) {
                     value = {
                         xmlns: form.xmlns,
-                        app: {name: app.name, langs: app.langs, id: app._id},
+                        app: {name: app.name[app.langs[0]], langs: app.langs, id: app._id},
                         module: {name: module.name, id: m},
                         form: {name: form.name, id: f},
                         app_deleted: doc.doc_type === "Application-Deleted" || doc.doc_type === "LinkedApplication-Deleted"
@@ -28,7 +28,7 @@ function (doc) {
             if (form.xmlns) {
                 value = {
                     xmlns: form.xmlns,
-                    app: {name: app.name, langs: app.langs, id: app._id},
+                    app: {name: app.name[app.langs[0]], langs: app.langs, id: app._id},
                     is_user_registration: true,
                     app_deleted: doc.doc_type === "Application-Deleted" || doc.doc_type === "LinkedApplication-Deleted"
                 };

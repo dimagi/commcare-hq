@@ -50,7 +50,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
             'form_name_map': _get_name_map(self.app),
             'langs': self.app.langs,
             'app_id': self.app.id,
-            'app_name': self.app.name,
+            'app_name': self.app.default_name(),
         }
 
     @property
@@ -61,7 +61,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
                 'url': reverse('view_app', args=[self.domain, self.app_id]),
             },
             {
-                'title': self.app.name,
+                'title': self.app.default_name(),
                 'url': reverse('view_app', args=[self.domain, self.app_id]),
             }
         ]
@@ -176,10 +176,10 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
-        headers = [(self.app.name, tuple(APP_SUMMARY_EXPORT_HEADER_NAMES))]
-        data = [(self.app.name, [
+        headers = [(self.app.name[language], tuple(APP_SUMMARY_EXPORT_HEADER_NAMES))]
+        data = [(self.app.name[language], [
             AppSummaryRow(
-                app=self.app.name,
+                app=self.app.name[language],
                 comments=self.app.comment,
             )
         ])]
@@ -191,9 +191,9 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 case_list_filter = None
 
             data += [
-                (self.app.name, [
+                (self.app.name[language], [
                     AppSummaryRow(
-                        app=self.app.name,
+                        app=self.app.name[language],
                         module=_get_translated_module_name(self.app, module.unique_id, language),
                         display_filter=module.module_filter,
                         case_type=module.case_type,
@@ -223,9 +223,9 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                         )
                     )
                 data += [
-                    (self.app.name, [
+                    (self.app.name[language], [
                         AppSummaryRow(
-                            app=self.app.name,
+                            app=self.app.name[language],
                             module=_get_translated_module_name(self.app, module.unique_id, language),
                             form=_get_translated_form_name(self.app, form.get_unique_id(), language),
                             display_filter=form.form_filter,
@@ -245,7 +245,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             export_string,
             Format.XLS_2007,
             u'{app_name} v.{app_version} - App Summary ({lang})'.format(
-                app_name=self.app.name,
+                app_name=self.app.name[language],
                 app_version=self.app.version,
                 lang=language
             ),
@@ -314,7 +314,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             export_string,
             Format.XLS_2007,
             u'{app_name} v.{app_version} - Form Summary ({lang})'.format(
-                app_name=self.app.name,
+                app_name=self.app.name[language],
                 app_version=self.app.version,
                 lang=language
             ),
@@ -405,7 +405,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             export_string,
             Format.XLS_2007,
             u'{app_name} v.{app_version} - Case Summary ({lang})'.format(
-                app_name=self.app.name,
+                app_name=self.app.name[language],
                 app_version=self.app.version,
                 lang=language
             ),

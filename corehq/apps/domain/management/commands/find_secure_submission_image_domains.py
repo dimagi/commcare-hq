@@ -15,7 +15,7 @@ class Command(BaseCommand):
                             if question['type'] in ('Image', 'Audio', 'Video'):
                                 csv_writer.writerow([
                                     domain.name,
-                                    app.name,
+                                    app.default_name(),
                                     domain.creating_user
                                 ])
                                 return

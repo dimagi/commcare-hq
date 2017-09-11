@@ -1218,7 +1218,7 @@ class FormBase(DocumentSchema):
     @property
     def full_path_name(self):
         return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
-            'app_name': self.get_app().name,
+            'app_name': self.get_app().default_name(),
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
         }
@@ -5673,7 +5673,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return obj
         if not error:
             error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
-                app_name=self.name, unique_id=unique_id)
+                app_name=self.default_name(), unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
     def get_forms(self, bare=True):

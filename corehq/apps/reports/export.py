@@ -146,7 +146,7 @@ class ApplicationBulkExport(BulkExport):
         try:
             app = Application.get(self.export_id)
             if app:
-                filename = "%s-%s.%s" %(app.name, app.get_id, file_ext)
+                filename = "%s-%s.%s" %(app.default_name(), app.get_id, file_ext)
         except Exception:
             pass
         return filename

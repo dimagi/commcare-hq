@@ -65,7 +65,7 @@ class Command(BaseCommand):
                     save_xform(app, form, f.read())
 
         app.save()
-        print('successfully updated {}'.format(app.name))
+        print('successfully updated {}'.format(app.default_name()))
         if options['deploy']:
             # make build and star it
             comment = options.get('comment', 'form changes from {0}'.format(datetime.utcnow().strftime(SERVER_DATETIME_FORMAT_NO_SEC)))

@@ -36,7 +36,7 @@ class CopyApplicationForm(forms.Form):
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles']
         if app:
-            self.fields['name'].initial = app.name
+            self.fields['name'].initial = app.default_name()
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
