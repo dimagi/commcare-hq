@@ -1,5 +1,5 @@
 ({
-    mainConfigFile: "corehq/apps/fixtures/static/hq.js",
+    mainConfigFile: "corehq/apps/hqwebapp/static/hqwebapp/js/hq.js",
     baseUrl: 'staticfiles',
     optimize: "none",
     fileExclusionRegExp: /(^\.)|(\.css$)/,

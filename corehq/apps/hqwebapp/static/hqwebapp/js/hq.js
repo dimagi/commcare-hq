@@ -9,7 +9,6 @@ requirejs.config({
         "hq_extensions": "hqwebapp/js/hq_extensions.jquery",
         "rmi": "jquery.rmi/jquery.rmi",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
-        //"django": "hqwebapp/js/django",     // TODO: needs to be uncommented to run r.js...try naming the module in my django.js?
         "knockout": "knockout/dist/knockout.debug",
         "ko.mapping": "style/lib/knockout_plugins/knockout_mapping.ko.min",
         "datatables": "datatables/media/js/jquery.dataTables.min",
