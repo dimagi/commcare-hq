@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
-from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import unit_testing_only
