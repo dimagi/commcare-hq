@@ -458,7 +458,7 @@ def get_cases(request, domain):
 
 @cloudcare_api
 @cache_page(60 * 30)
-def get_fixtures(request, domain, user_id, fixture_id=None):
+def get_fixtures(request, domain, user_id, fixture_id):
     try:
         user = CommCareUser.get_by_user_id(user_id)
     except CouchUser.AccountTypeError:
@@ -471,19 +471,13 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
 
     assert user.is_member_of(domain)
     restore_user = user.to_ota_restore_user()
-    if not fixture_id:
-        ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(restore_user):
-            ret.append(fixture)
-        return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
-    else:
-        fixture = generator.get_fixture_by_id(fixture_id, restore_user)
-        if not fixture:
-            raise Http404
-        assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-            fixture_id, len(fixture.getchildren())
-        )
-        return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+    fixture = generator.get_fixture_by_id(fixture_id, restore_user)
+    if not fixture:
+        raise Http404
+    assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+        fixture_id, len(fixture.getchildren())
+    )
+    return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
 
 
 class ReadableQuestions(View):
