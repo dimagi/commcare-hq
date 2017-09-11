@@ -1924,6 +1924,10 @@ class BaseNewExportView(BaseExportView):
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
+        if not export._rev and getattr(settings, "ENTERPRISE_MODE"):
+            # default auto rebuild to False for enterprise clusters
+            # only do this on first save to prevent disabling on every edit
+            export.auto_rebuild_enabled = False
         export.save()
         messages.success(
             request,
