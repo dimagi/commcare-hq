@@ -237,10 +237,10 @@ class B3MultiField(LayoutObject):
         })
 
         if not (self.field_class or self.label_class):
-            return render_to_string(self.template, context)
+            return render_to_string(self.template, context.flatten())
 
         with edited_classes(context, self.label_class, self.field_class):
-            rendered_view = render_to_string(self.template, context)
+            rendered_view = render_to_string(self.template, context.flatten())
         return rendered_view
 
     def _get_errors(self, form, fields):
