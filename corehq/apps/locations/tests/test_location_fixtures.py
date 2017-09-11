@@ -32,6 +32,12 @@ from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations,
     _get_location_data_fields
 from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
 
+EMPTY_LOCATION_FIXTURE_TEMPLATE = """
+<fixture id='commtrack:locations' user_id='{}'>
+  <empty_element/>
+</fixture>
+"""
+
 
 class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
@@ -101,7 +107,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
-        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
         fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
@@ -488,7 +494,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
-        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
         fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 

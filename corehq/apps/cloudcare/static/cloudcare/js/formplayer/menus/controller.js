@@ -231,6 +231,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxWidth: menuResponse.maxWidth,
                 useUniformUnits: menuResponse.useUniformUnits,
                 isPersistentDetail: menuResponse.isPersistentDetail,
+                sortIndices: menuResponse.sortIndices,
             };
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);

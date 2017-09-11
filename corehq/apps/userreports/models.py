@@ -87,6 +87,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    rebuilt_asynchronously = BooleanProperty(default=False)
 
 
 class DataSourceMeta(DocumentSchema):

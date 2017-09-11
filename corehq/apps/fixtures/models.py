@@ -20,6 +20,8 @@ from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 
+FIXTURE_BUCKET = 'domain-fixtures'
+
 
 class FixtureTypeField(DocumentSchema):
     field_name = StringProperty()
