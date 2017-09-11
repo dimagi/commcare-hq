@@ -706,39 +706,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Treatment Supporter Details - Designation"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "private_nikshay_registered",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Nikshay Registered"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "private_nikshay_error",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Notification Error"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "external_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "eNikshay External ID"
             }
         ]
     }
