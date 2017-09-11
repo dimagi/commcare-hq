@@ -91,7 +91,7 @@
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;
-                },
+                }
             });
             clipboard.onClick($event);
             clipboard.destroy();
@@ -124,6 +124,23 @@
                         analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
+                    }
+                });
+        };
+        $scope.updateDisabledState = function (component, exp) {
+            $('#modalEnableDisableAutoRefresh-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
+            component.savingAutoRebuildChange = true;
+            djangoRMI.toggle_saved_export_enabled_state({
+                'component': component,
+                'export': exp
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        var exportType = _(exp.exportType).capitalize();
+                        var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
+                        analytics.usage(event, exportType, "Saved");
+                        exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
+                        component.savingAutoRebuildChange = false;
                     }
                 });
         };

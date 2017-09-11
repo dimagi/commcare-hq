@@ -3,7 +3,8 @@ describe('ListExportsController Unit Tests', function() {
 
     var mockBackendUrls = {
         GET_EXPORTS_LIST: '/fake/exports/list',
-        UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data'
+        UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data',
+        TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled'
     };
 
     beforeEach(function () {
@@ -21,6 +22,13 @@ describe('ListExportsController Unit Tests', function() {
                     url: mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA,
                     headers: {
                         'DjNg-Remote-Method': 'update_emailed_export_data'
+                    },
+                    method: 'auto'
+                },
+                toggle_saved_export_enabled_state: {
+                    url: mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE,
+                    headers: {
+                        'DjNg-Remote-Method': 'toggle_saved_export_enabled_state'
                     },
                     method: 'auto'
                 }
@@ -171,6 +179,37 @@ describe('ListExportsController Unit Tests', function() {
 
             it('analytics ok', function() {
                 assert.isTrue(analytics.usage.calledWith("Update Saved Export", "Form", "Saved"));
+                $httpBackend.flush();
+            });
+        });
+        describe('updateDisabledState()', function () {
+            var exportToUpdate, component;
+
+            beforeEach(function () {
+                $httpBackend
+                .when('POST', mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE)
+                .respond({
+                    success: true,
+                    isAutoRebuildEnabled: false
+                });
+                createController();
+                $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
+                $httpBackend.flush();
+                $httpBackend.expectPOST(mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE);
+                exportToUpdate = currentScope.exports[0];
+                component = exportToUpdate.emailedExport;
+                currentScope.updateDisabledState(component, exportToUpdate);
+            });
+
+            it('success ok', function() {
+                assert.isTrue(component.savingAutoRebuildChange);
+                $httpBackend.flush();
+                assert.isFalse(component.savingAutoRebuildChange);
+                assert.isFalse(exportToUpdate.isAutoRebuildEnabled);
+            });
+
+            it('analytics ok', function() {
+                assert.isTrue(analytics.usage.calledWith("Disable Saved Export", "Form", "Saved"));
                 $httpBackend.flush();
             });
         });

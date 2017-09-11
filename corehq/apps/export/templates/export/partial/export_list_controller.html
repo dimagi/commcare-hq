@@ -171,6 +171,28 @@
                                             {% trans "Updating Data, please wait..." %}
                                         </button>
                                     </div>
+                                    {% angularjs %}
+                                    <div>
+                                        <button type="button"
+                                                class="btn btn-default btn-xs"
+                                                ng-show="!export.emailedExport.savingAutoRebuildChange"
+                                                data-toggle="modal"
+                                                data-target="#modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                            <i class="fa fa-check" ng-show="export.isAutoRebuildEnabled"></i>
+                                            <i class="fa fa-ban" ng-show="!export.isAutoRebuildEnabled"></i>
+                                            <span ng-show="!export.isAutoRebuildEnabled">{% trans "Enable Auto Update" %}</span>
+                                            <span ng-show="export.isAutoRebuildEnabled">{% trans "Disable Auto Update" %}</span>
+                                        </button>
+                                        {% endangularjs %}
+                                        <button type="button"
+                                                class="btn btn-default btn-xs"
+                                                ng-show="export.emailedExport.savingAutoRebuildChange"
+                                                disabled="disabled">
+                                            <i class="fa fa-check" ng-show="export.isAutoRebuildEnabled"></i>
+                                            <i class="fa fa-ban" ng-show="!export.isAutoRebuildEnabled"></i>
+                                            {% trans "Saving, please wait..." %}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
@@ -270,9 +292,49 @@
                                             </div>
                                         </div>
                                     </div>
+                                {% endangularjs %}
+                                {% angularjs %}
+                                <div class="modal fade"
+                                         id="modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                        {% endangularjs %}
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                                                    <h4 class="modal-title">{% trans "Confirm data updates." %}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p ng-if="export.isDailySaved && !export.isAutoRebuildEnabled">
+                                                        {% blocktrans %}
+                                                        This will enable the automatic rebuild of this export on a daily basis.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                    <p ng-if="export.isDailySaved && export.isAutoRebuildEnabled">
+                                                        {% blocktrans %}
+                                                        This will disable the automatic rebuild of this export on a daily basis.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <a href="#"
+                                                       class="btn btn-default"
+                                                       data-dismiss="modal">{% trans "Cancel" %}</a>
+                                                    <button type="button"
+                                                            class="btn btn-primary"
+                                                            ng-click="updateDisabledState(export.emailedExport, export)">
+                                                        <span ng-if="export.isAutoRebuildEnabled">
+                                                            {% trans "Disable auto rebuild" %}
+                                                        </span>
+                                                        <span ng-if="!export.isAutoRebuildEnabled">
+                                                            {% trans "Enable auto rebuild" %}
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            {% endangularjs %}
                         </td>
                         {% if has_edit_permissions %}
                         {% angularjs %}

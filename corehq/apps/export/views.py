@@ -1247,6 +1247,19 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         return format_angular_success({})
 
     @allow_remote_invocation
+    def toggle_saved_export_enabled_state(self, in_data):
+        if in_data['export']['isLegacy']:
+            format_angular_error('Legacy export not supported', True)
+
+        export_instance_id = in_data['export']['id']
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
+        export_instance.save()
+        return format_angular_success({
+            'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
+        })
+
+    @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
         if not in_data['export']['isLegacy']:
             return self.update_emailed_es_export_data(in_data)
@@ -1386,6 +1399,7 @@ class DailySavedExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'isDailySaved': True,
+            'isAutoRebuildEnabled': export.auto_rebuild_enabled,
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
