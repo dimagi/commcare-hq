@@ -4,8 +4,104 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
+from custom.icds.case_relationships import (
+    child_health_case_from_tasks_case,
+    ccs_record_case_from_tasks_case,
+    child_person_case_from_child_health_case,
+    mother_person_case_from_child_person_case,
+    mother_person_case_from_ccs_record_case,
+    mother_person_case_from_child_health_case,
+    child_person_case_from_tasks_case,
+)
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.tests.base import BaseICDSTest
+
+
+class CaseRelationshipTest(BaseICDSTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseRelationshipTest, cls).setUpClass()
+        cls.mother_person_case = cls.create_case('person')
+        cls.child_person_case = cls.create_case(
+            'person',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_identifier='mother',
+            parent_relationship='child'
+        )
+        cls.child_health_case = cls.create_case(
+            'child_health',
+            parent_case_id=cls.child_person_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension'
+        )
+        cls.child_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.child_health_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'child'},
+        )
+        cls.ccs_record_case = cls.create_case(
+            'ccs_record',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_case_type=cls.mother_person_case.type,
+            parent_identifier='parent',
+            parent_relationship='child'
+        )
+        cls.mother_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.ccs_record_case.case_id,
+            parent_case_type=cls.ccs_record_case.type,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'pregnancy'},
+        )
+
+    def test_relationships(self):
+        self.assertEqual(
+            child_health_case_from_tasks_case(self.child_tasks_case).case_id,
+            self.child_health_case.case_id
+        )
+
+        self.assertEqual(
+            ccs_record_case_from_tasks_case(self.mother_tasks_case).case_id,
+            self.ccs_record_case.case_id
+        )
+
+        self.assertEqual(
+            child_person_case_from_child_health_case(self.child_health_case).case_id,
+            self.child_person_case.case_id
+        )
+
+        self.assertEqual(
+            mother_person_case_from_child_person_case(self.child_person_case).case_id,
+            self.mother_person_case.case_id
+        )
+
+        self.assertEqual(
+            mother_person_case_from_ccs_record_case(self.ccs_record_case).case_id,
+            self.mother_person_case.case_id
+        )
+
+        self.assertEqual(
+            mother_person_case_from_child_health_case(self.child_health_case).case_id,
+            self.mother_person_case.case_id
+        )
+
+        self.assertEqual(
+            child_person_case_from_tasks_case(self.child_tasks_case).case_id,
+            self.child_person_case.case_id
+        )
+
+    def test_case_type_mismatch(self):
+        with self.assertRaises(ValueError):
+            child_health_case_from_tasks_case(self.child_person_case)
+
+    def test_parent_case_type_mismatch(self):
+        with self.assertRaises(CaseRelationshipError):
+            child_health_case_from_tasks_case(self.mother_tasks_case)
 
 
 class CustomRecipientTest(BaseICDSTest):
