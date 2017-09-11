@@ -1,7 +1,8 @@
+/* globals hqGlobal */
 hqGlobal('hqwebapp/js/main', [
     "jquery",
     "underscore",
-    "hqwebapp/js/alert_user"
+    "hqwebapp/js/alert_user",
 ], function(
     $,
     _,

@@ -1,3 +1,4 @@
+/* globals define */
 define("fixtures/js/built", [
     "reports/js/filters",
     "reports/js/standard_hq_report",

@@ -1,4 +1,4 @@
-// this is really corehq/apps/hqwebapp/static/hqwebapp/js/common.js
+/* globals define */
 define("hqwebapp/js/common", [
     "jquery",
     "knockout",

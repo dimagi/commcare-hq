@@ -1,3 +1,4 @@
+/* globals hqGlobal */
 /*
     This is the knockout-based, javascript analog of messages in Django.
 
@@ -15,7 +16,7 @@
 hqGlobal('hqwebapp/js/alert_user', [
     "jquery",
     "knockout",
-    "hqwebapp/js/hq.helpers"
+    "hqwebapp/js/hq.helpers",
 ], function(
     $,
     ko

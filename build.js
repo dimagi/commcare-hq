@@ -13,4 +13,4 @@
             exclude: ["hqwebapp/js/common"],
         },
     ],
-})
+});
