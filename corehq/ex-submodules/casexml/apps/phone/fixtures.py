@@ -81,8 +81,9 @@ class FixtureGenerator(object):
 
     def _get_fixtures(self, restore_user, fixture_id=None):
         providers = self.get_providers(restore_user, fixture_id=fixture_id)
+        restore_state = _get_restore_state(restore_user)
         return itertools.chain(*[
-            provider(_get_restore_state(restore_user))
+            provider(restore_state)
             for provider in providers
         ])
 
