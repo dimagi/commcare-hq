@@ -4,7 +4,8 @@ define('data_dictionary/js/data_dictionary', [
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
-    "hqwebapp/js/hq.helpers"
+    "hqwebapp/js/hq.helpers",
+    "jquery-ui/ui/sortable"
 ], function(
     $,
     ko,

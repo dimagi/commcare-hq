@@ -417,7 +417,7 @@
             <script src="{% static 'hq.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
-                    deps: ['hqwebapp/js/django', 'knockout', 'ko.mapping', 'ko.knockout_bindings'],
+                    deps: ['hqwebapp/js/django', 'knockout', 'ko.mapping'],
                     callback: function (djangoModule, ko, mapping) {
                         ko.mapping = mapping;
                         djangoModule.gettext = django.gettext;

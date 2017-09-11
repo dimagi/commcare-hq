@@ -3,7 +3,7 @@ define("hqwebapp/js/common", [
     "jquery",
     "knockout",
     "ko.mapping",
-    "ko.knockout_bindings",
+    "hqwebapp/js/knockout_bindings.ko",
     "hqwebapp/js/alert_user",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
