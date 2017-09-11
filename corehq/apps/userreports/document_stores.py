@@ -6,12 +6,12 @@ from corehq.util.couch import get_db_by_doc_type
 from pillowtop.dao.couch import CouchDocumentStore
 
 
-def get_document_store(domain, doc_type):
+def get_document_store(domain, doc_type, case_type_or_xmlns=None):
     use_sql = should_use_sql_backend(domain)
     if use_sql and doc_type == 'XFormInstance':
-        return ReadonlyFormDocumentStore(domain)
+        return ReadonlyFormDocumentStore(domain, xmlns=case_type_or_xmlns)
     elif use_sql and doc_type == 'CommCareCase':
-        return ReadonlyCaseDocumentStore(domain)
+        return ReadonlyCaseDocumentStore(domain, case_type=case_type_or_xmlns)
     elif doc_type == LOCATION_DOC_TYPE:
         return ReadonlyLocationDocumentStore(domain)
     else:
