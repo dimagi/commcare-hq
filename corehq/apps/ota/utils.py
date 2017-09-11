@@ -212,4 +212,4 @@ def update_device_id(user, device_id):
         if not user.is_demo_user:
             updated = user.update_device_id_last_used(device_id)
             if updated:
-                user.save()
+                user.save(fire_signals=False)
