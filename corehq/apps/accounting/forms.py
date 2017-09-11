@@ -1043,7 +1043,7 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    product_id = forms.CharField(
+    product_rate_id = forms.CharField(
         required=False,
         label="Search for or Create Product"
     )
@@ -1213,7 +1213,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('product_rates', data_bind="value: productRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Product",
-                    InlineField('product_id', css_class="input-xxlarge",
+                    InlineField('product_rate_id', css_class="input-xxlarge",
                                 data_bind="value: productRates.select2.value"),
                     StrictButton(
                         "Select Product",
@@ -1298,7 +1298,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['product_rates'].value(),
             'handlerSlug': SoftwareProductRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'product_id',
+                'fieldName': 'product_rate_id',
             }
         }
 

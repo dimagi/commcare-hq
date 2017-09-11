@@ -119,7 +119,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     slug = 'select2_rate'
     allowed_actions = [
         'feature_id',
-        'product_id',
+        'product_rate_id',
     ]
 
     @property
@@ -132,7 +132,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
         return [(f.id, f.name, f.feature_type) for f in features.all()]
 
     @property
-    def product_id_response(self):
+    def product_rate_id_response(self):
         product_rates = SoftwareProductRate.objects
         if self.existing:
             product_rates = product_rates.exclude(name__in=self.existing)
