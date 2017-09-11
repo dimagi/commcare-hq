@@ -133,9 +133,12 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None,
                              in_place=False, doc_id_provider=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
+    case_type_or_xmlns = config.get_case_type_or_xmlns_filter()
 
     relevant_ids = []
-    document_store = get_document_store(config.domain, config.referenced_doc_type)
+    document_store = get_document_store(
+        config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
+    )
 
     if not doc_id_provider:
         doc_id_provider = document_store.iter_document_ids(last_id)
