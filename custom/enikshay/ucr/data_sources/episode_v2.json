@@ -15,8 +15,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "episode_2",
-        "display_name": "episode_2",
+        "table_id": "episode_v2",
+        "display_name": "Episode v2",
         "configured_filter": {
             "type": "and",
             "filters": [
