@@ -67,7 +67,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
             celery_task_logger.info("Ended icds reports update_daily_aggregate_table")
 
 
-@periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
+@periodic_task(
+    queue='background_queue',
+    run_every=crontab(day_of_week='sunday', minute=0, hour=21),
+    acks_late=True
+)
 def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
