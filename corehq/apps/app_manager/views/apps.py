@@ -252,8 +252,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
-    # Not used in APP_MANAGER_V2
-    context['is_app_view'] = True
+    context['edit_name_url'] = reverse('edit_app_attr', args=(app.domain, app.get_id, 'name'))
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
     except ValueError:
@@ -668,7 +667,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('cloudcare_enabled', None),
         ('anonymous_cloudcare_enabled', None),
         ('manage_urls', None),
-        ('name', None),
         ('platform', None),
         ('recipients', None),
         ('text_input', None),
@@ -693,6 +691,7 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("name"):
         clear_app_cache(request, domain)
         name = hq_settings['name']
+        app.name[lang] = name
         resp['update'].update({
             '.variable-app_name': name,
             '[data-id="{id}"]'.format(id=app_id): ApplicationsTab.make_app_title(name, app.doc_type),

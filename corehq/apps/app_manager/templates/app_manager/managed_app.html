@@ -46,7 +46,7 @@
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
                class="appnav-responsive">
-                <span class="variable-app_name appname-text">{{ app.name }}</span>
+                <span class="variable-app_name appname-text">{{ app.name|trans:langs }}</span>
             </a>
           </h2>
           <div id="js-publish-status"

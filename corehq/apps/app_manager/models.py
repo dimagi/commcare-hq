@@ -5236,7 +5236,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     """
     modules = SchemaListProperty(ModuleBase)
-    name = StringProperty()
+    name = DictProperty(unicode)
     # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
     # ended up not using a schema because properties is a reserved word
     profile = DictProperty()
@@ -5284,6 +5284,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
+        if isinstance(data['name'], basestring):
+            key = data['langs'][0] if 'langs' in data and len(data['langs']) else 'en'
+            data['name'] = {
+                key: data['name']
+            }
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
@@ -5296,6 +5301,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             self.multimedia_map = {}
 
         return self
+
+    @memoized
+    def default_name(self):
+        return trans(
+            self.name,
+            [self.default_language] + self.langs,
+            include_lang=False
+        )
 
     def save(self, *args, **kwargs):
         super(Application, self).save(*args, **kwargs)
@@ -5691,7 +5704,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang],
+        app = cls(domain=domain, modules=[], name={lang: name}, langs=[lang],
                   date_created=datetime.datetime.utcnow(), vellum_case_management=True)
         return app
 
@@ -6091,7 +6104,7 @@ class RemoteApp(ApplicationBase):
 
     @classmethod
     def new_app(cls, domain, name, lang='en'):
-        app = cls(domain=domain, name=name, langs=[lang])
+        app = cls(domain=domain, name={lang: name}, langs=[lang])
         return app
 
     def create_profile(self, is_odk=False, langs=None):

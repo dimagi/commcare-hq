@@ -34,16 +34,7 @@
   </div>
 
   <div class="appmanager-edit-title appmanager-edit-app-title">
-    <inline-edit params="
-        value: '{{ app.name|escapejs }}',
-        containerClass: 'h3 app-title',
-        url: '{% url "edit_app_attr" domain app.id 'name' %}',
-        placeholder: '{% trans "Untitled App"|escapejs %}',
-        postSave: function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); },
-        rows: 1,
-        saveValueName: 'name',
-        nodeName: 'input',
-    "></inline-edit>
+    {% inline_edit_trans app.name langs edit_name_url saveValueName='name' containerClass='h3 app-title' postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); }," %}
   </div>
 
   <div class="appmanager-edit-description">
