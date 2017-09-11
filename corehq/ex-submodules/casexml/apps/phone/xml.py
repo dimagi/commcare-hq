@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import logging
 from xml.sax import saxutils
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.case import const
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\

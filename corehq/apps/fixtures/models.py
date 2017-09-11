@@ -1,5 +1,5 @@
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin

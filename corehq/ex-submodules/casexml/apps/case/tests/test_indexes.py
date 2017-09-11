@@ -1,6 +1,6 @@
 import re
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 import datetime
 from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs

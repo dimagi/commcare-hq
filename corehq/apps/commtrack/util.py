@@ -1,6 +1,6 @@
 import uuid
 from collections import namedtuple
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const

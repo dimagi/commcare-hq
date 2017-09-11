@@ -54,7 +54,7 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 

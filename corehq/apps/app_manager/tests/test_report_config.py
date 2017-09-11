@@ -1,5 +1,5 @@
 import os
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
 import mock
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator

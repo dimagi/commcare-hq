@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 import uuid
 
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 import datetime
 
 from django.conf import settings

@@ -1,7 +1,8 @@
+from xml.etree import cElementTree as ElementTree
+
 import six
-from xml.etree import ElementTree
 from django.test import TestCase
-from corehq.blobs import get_blob_db
+
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.fixtures import fixturegenerators
@@ -12,6 +13,7 @@ from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership, FIXTURE_BUCKET
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
+from corehq.blobs import get_blob_db
 
 
 class FixtureDataTest(TestCase):

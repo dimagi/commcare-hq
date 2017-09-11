@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'

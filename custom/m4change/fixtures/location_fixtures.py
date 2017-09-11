@@ -32,14 +32,14 @@ class LocationFixtureProvider(FixtureProvider):
             </locations>
         </fixture>
         """
-        root = ElementTree.Element('fixture', attrib={
+        root = ElementTree.Element('fixture', {
             'id': self.id,
             'user_id': restore_user.user_id
         })
 
         locations_element = ElementTree.Element('locations')
         location = get_location(location_id)
-        location_element = ElementTree.Element('location', attrib={
+        location_element = ElementTree.Element('location', {
             'name': location.name,
             'id': location.location_id
         })

@@ -1,6 +1,6 @@
 import weakref
 from uuid import uuid4
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure

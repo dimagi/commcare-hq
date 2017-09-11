@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.mock import CaseBlock
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.domain.models import Domain

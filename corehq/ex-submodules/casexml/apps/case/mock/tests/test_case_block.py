@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.test import SimpleTestCase
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 
 

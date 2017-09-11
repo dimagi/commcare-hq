@@ -1,6 +1,6 @@
 from itertools import groupby
 from collections import defaultdict
-from xml.etree.ElementTree import Element
+from xml.etree.cElementTree import Element
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type

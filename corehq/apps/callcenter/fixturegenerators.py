@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from datetime import datetime
 import pytz
 
@@ -117,14 +117,14 @@ def gen_fixture(restore_user, indicator_set):
     name = indicator_set.name
     data = indicator_set.get_data()
 
-    fixture = ElementTree.Element('fixture', attrib={
+    fixture = ElementTree.Element('fixture', {
         'id': ':'.join((IndicatorsFixturesProvider.id, name)),
         'user_id': restore_user.user_id,
         'date': indicator_set.reference_date.isoformat()
     })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
     for case_id, indicators in data.iteritems():
-        group = ElementTree.SubElement(indicators_node, 'case', attrib={'id': case_id})
+        group = ElementTree.SubElement(indicators_node, 'case', {'id': case_id})
         for name, value in indicators.items():
             indicator = ElementTree.SubElement(group, name)
             indicator.text = str(value)
