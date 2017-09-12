@@ -1,12 +1,9 @@
 {
     "domains": [
-        "enikshay",
-        "sheel-enikshay",
-        "enikshay-reports-qa"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
@@ -15,8 +12,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "episode_2b",
-        "display_name": "Episode (2b)",
+        "table_id": "episode_2b_v2",
+        "display_name": "Episode (2b) V2",
         "configured_filter": {
             "operator": "eq",
             "expression": {
