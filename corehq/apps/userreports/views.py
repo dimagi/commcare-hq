@@ -1072,9 +1072,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         # Don't allow rebuilds if there have been more than 1 million forms or cases
         domain = DomainES().in_domains(self.domain).run().hits[0]
         doc_type = self.config.referenced_doc_type
-        if doc_type == 'CommCareCase':
-            return domain.get('cp_n_cases', 0) < 1000000
-        elif doc_type == 'XFormInstance':
+        if doc_type == 'XFormInstance':
             return domain.get('cp_n_forms', 0) < 1000000
         return True
 
