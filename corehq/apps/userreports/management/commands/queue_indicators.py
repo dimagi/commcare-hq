@@ -5,6 +5,7 @@ from django.core.management import BaseCommand
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.tasks import _queue_indicators
 
+
 class Command(BaseCommand):
 
     def handle(self, **options):
