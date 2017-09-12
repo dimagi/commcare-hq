@@ -61,7 +61,7 @@ hqGlobal('hqwebapp/js/main', [
 
         $('.submit').click(function (e) {
             var $form = $(this).closest('.form, form'),
-                data = $form.my_serialize(),
+                data = $form.find('[name]').serialize(),
                 action = $form.attr('action') || $form.data('action');
 
             e.preventDefault();

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-05 20:04+0000\n"
+"POT-Creation-Date: 2017-09-12 19:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,12 +33,12 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:180
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:179
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:403
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:391
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -46,7 +46,7 @@ msgstr ""
 msgid "Oops, there was a problem loading this section. Please try again."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:63
+#: corehq/apps/app_manager/static/app_manager/js/case_config_utils.js:62
 msgid ""
 "Something went wrong refreshing your form properties. Please refresh the "
 "page and try again"
@@ -2083,7 +2083,7 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:594
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:600
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2098,7 +2098,7 @@ msgid "Form successfully saved"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:362
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
 msgid "Waiting for server progress"
 msgstr ""
 
@@ -2116,7 +2116,7 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:50
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:49
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2391,7 +2391,7 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:72
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:74
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""

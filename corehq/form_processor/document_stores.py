@@ -13,9 +13,10 @@ from pillowtop.dao.interface import ReadOnlyDocumentStore
 
 class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
-    def __init__(self, domain):
+    def __init__(self, domain, xmlns=None):
         self.domain = domain
         self.form_accessors = FormAccessors(domain=domain)
+        self.xmlns = xmlns
 
     def get_document(self, doc_id):
         try:
@@ -25,6 +26,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
+        # todo: add migration for function that filters by xmlns
         return iter(self.form_accessors.get_all_form_ids_in_domain())
 
     def iter_documents(self, ids):
@@ -34,9 +36,10 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
-    def __init__(self, domain):
+    def __init__(self, domain, case_type=None):
         self.domain = domain
         self.case_accessors = CaseAccessors(domain=domain)
+        self.case_type = case_type
 
     def get_document(self, doc_id):
         try:
@@ -46,7 +49,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        return iter(self.case_accessors.get_case_ids_in_domain())
+        return iter(self.case_accessors.get_case_ids_in_domain(type=self.case_type))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):

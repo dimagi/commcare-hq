@@ -1,6 +1,6 @@
 import settings
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime

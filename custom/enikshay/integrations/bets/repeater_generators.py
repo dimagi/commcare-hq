@@ -1,8 +1,7 @@
 from datetime import datetime, date
 import json
 import jsonobject
-import pytz
-from pytz import timezone
+import phonenumbers
 
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
@@ -45,12 +44,16 @@ from .const import (
 from .utils import get_bets_location_json
 
 
+def _get_district_location_id(pcp_location):
+    return _get_district_location(pcp_location).location_id
+
+
 def _get_district_location(pcp_location):
     try:
         district_location = pcp_location.parent
         if district_location.location_type.code != 'dto':
             raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
-        return pcp_location.parent.location_id
+        return district_location
     except AttributeError:
         raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
 
@@ -119,7 +122,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -149,7 +152,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -208,7 +211,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -236,7 +239,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -268,7 +271,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -325,7 +328,7 @@ class VoucherPayload(BETSPayload):
             Location=fulfilled_by_location_id,
             # always round to nearest whole number, but send a string...
             Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=agency_user.raw_username,
@@ -543,16 +546,21 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     @staticmethod
     def serialize(domain, user):
         location = user.get_sql_location(domain)
+        district_location = _get_district_location(location)
+        org_id = (
+            location.metadata.get('private_sector_org_id')
+            or district_location.metadata.get('private_sector_org_id')
+        )
         user_json = {
             "username": user.raw_username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "default_phone_number": user.user_data.get("contact_phone_number"),
+            "default_phone_number": get_national_number(user.user_data.get("contact_phone_number")),
             "id": user._id,
-            "phone_numbers": user.phone_numbers,
+            "phone_numbers": map(get_national_number, user.phone_numbers),
             "email": user.email,
-            "dtoLocation": _get_district_location(location),
-            "privateSectorOrgId": location.metadata.get('private_sector_org_id', ''),
+            "dtoLocation": district_location.location_id,
+            "privateSectorOrgId": org_id,
             "resource_uri": "",
         }
         user_json['user_data'] = {
@@ -614,5 +622,14 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
         # This is the "real" phone number
-        case_json["properties"]["phone_number"] = case_properties.get("contact_phone_number", "")
+        case_json["properties"]["phone_number"] = get_national_number(
+            case_properties.get("contact_phone_number", "")
+        )
         return case_json
+
+
+def get_national_number(phonenumber):
+    try:
+        return str(phonenumbers.parse(phonenumber, "IN").national_number)
+    except phonenumbers.NumberParseException:
+        return ""

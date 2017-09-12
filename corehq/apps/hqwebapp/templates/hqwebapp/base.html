@@ -2,6 +2,14 @@
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-52MT7FS');</script>
+        <!-- End Google Tag Manager -->
+
         {% captureas title_block %}{% block title %}{% endblock title %}{% endcaptureas %}
         {% captureas title_context_block %}{% block title_context %}{% endblock title_context %}{% endcaptureas %}
         <title>
@@ -25,7 +33,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/bootstrap.debug.less' %}" />
+                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -33,17 +41,17 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/style.debug.less' %}" />
+                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
         {% else %}
         {% compress css %}
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/bootstrap.less' %}" />
+                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -51,11 +59,11 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/font-commcare.less' %}" />
+                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'style/less/style.less' %}" />
+                  href="{% static 'hqwebapp/less/style.less' %}" />
         {% endcompress %}
         {% endif %}
 
@@ -139,7 +147,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="screen"
-                  href="{% static "style/less/components/multiselect/multiselect.less" %}" />
+                  href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
         {% endcompress %}
         {% endif %}
 
@@ -243,6 +251,10 @@
         {% endif %}
     </head>
     <body>
+        <!-- Google Tag Manager (noscript) -->
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-52MT7FS"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        <!-- End Google Tag Manager (noscript) -->
         {% block background_content %}{% endblock %}
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->

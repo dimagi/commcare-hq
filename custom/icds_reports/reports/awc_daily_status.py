@@ -109,16 +109,16 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'blue': OrderedDict(),
-        'green': OrderedDict()
+        'open_in_day': OrderedDict(),
+        'launched': OrderedDict()
     }
 
     dates = [dt for dt in rrule(DAILY, dtstart=last, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['open_in_day'][miliseconds] = {'y': 0, 'all': 0}
+        data['launched'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -134,8 +134,8 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_day
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['open_in_day'][date_in_miliseconds]['y'] += in_day
+        data['launched'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -151,7 +151,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['green'].iteritems()
+                    } for key, value in data['launched'].iteritems()
                 ],
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
@@ -164,7 +164,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in data['open_in_day'].iteritems()
                 ],
                 "key": "Total AWCs open yesterday",
                 "strokeWidth": 2,

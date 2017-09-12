@@ -1,4 +1,4 @@
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.utils.translation import ugettext as _
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -49,27 +49,26 @@ class IndicatorFixtureProvider(FixtureProvider):
               </group>
            </fixture>
         """
-        def _el(tag, text, attrib=None):
-            attrib = attrib or {}
-            el = ElementTree.Element(tag, attrib=attrib)
+        def _el(tag, text, _attrib=None):
+            el = ElementTree.Element(tag, _attrib or {})
             el.text = unicode(text)
             return el
 
         def _indicator_to_fixture(indicator):
             ind_el = ElementTree.Element('indicator',
-                attrib={
+                {
                     'id': indicator.slug,
                 },
             )
             done, due = data_provider.get_indicator_data(indicator)
-            ind_el.append(_el('name', indicator.name, attrib={'lang': 'en'}))
-            ind_el.append(_el('name', _(indicator.name), attrib={'lang': 'hin'}))
+            ind_el.append(_el('name', indicator.name, {'lang': 'en'}))
+            ind_el.append(_el('name', _(indicator.name), {'lang': 'hin'}))
             ind_el.append(_el('done', done))
             ind_el.append(_el('due', due))
             clients = ElementTree.Element('clients')
             for case_id, data in data_provider.get_case_data(indicator).items():
                 client = ElementTree.Element('client',
-                    attrib={
+                    {
                         'id': case_id,
                         'status': 'done' if data['num'] else 'due',
                     }
@@ -82,10 +81,10 @@ class IndicatorFixtureProvider(FixtureProvider):
         # switch to hindi so we can use our builtin translations
         with localize('hin'):
             root = ElementTree.Element('fixture',
-                attrib={'id': self.id, 'user_id': restore_user_id},
+                {'id': self.id, 'user_id': restore_user_id},
             )
             group = ElementTree.Element('group',
-                attrib={
+                {
                     'id': data_provider.groups[0]._id,
                     'team': data_provider.groups[0].name
                 },

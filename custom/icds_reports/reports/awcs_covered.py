@@ -51,7 +51,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         }
         map_data.update({name: row_values})
 
-    total_awcs = sum(map(lambda x: x['awcs'], map_data.values()))
+    total_awcs = sum(map(lambda x: (x['awcs'] or 0), map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -125,7 +125,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
             'awcs': awcs
         }
         for prop, value in row_values.iteritems():
-            tooltips_data[name][prop] += value
+            tooltips_data[name][prop] += (value or 0)
 
     for name, value_dict in tooltips_data.iteritems():
         chart_data['blue'].append([name, value_dict['districts']])
