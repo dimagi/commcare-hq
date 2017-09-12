@@ -3,7 +3,7 @@ import bz2
 import logging
 from django import forms
 from django.utils.translation import ugettext as _
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
