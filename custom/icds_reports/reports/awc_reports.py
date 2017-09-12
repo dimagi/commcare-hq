@@ -819,10 +819,10 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                         'person_aadhaar',
                         kpi_yesterday,
                         kpi_two_days_ago,
-                        'all_cases'
+                        'all_persons'
                     ),
                     'value': get_value(kpi_yesterday, 'person_aadhaar'),
-                    'all': get_value(kpi_yesterday, 'all_cases'),
+                    'all': get_value(kpi_yesterday, 'all_persons'),
                     'format': 'div',
                     'frequency': 'day'
                 }
