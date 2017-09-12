@@ -16,7 +16,8 @@ from custom.icds.rules.immunization import (
     get_immunization_anchor_date,
     get_tasks_case_immunization_ledger_values,
     get_map,
-    immunization_is_due
+    immunization_is_due,
+)
 from decimal import Decimal, InvalidOperation
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
