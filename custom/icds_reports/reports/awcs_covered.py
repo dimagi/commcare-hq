@@ -125,7 +125,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
             'awcs': awcs
         }
         for prop, value in row_values.iteritems():
-            tooltips_data[name][prop] += value
+            tooltips_data[name][prop] += (value or 0)
 
     for name, value_dict in tooltips_data.iteritems():
         chart_data['blue'].append([name, value_dict['districts']])
