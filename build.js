@@ -1,10 +1,11 @@
 ({
     mainConfigFile: "corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js",
     baseUrl: 'staticfiles',
-    fileExclusionRegExp: /(^\.)|(\.css$)/,
+    fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)/,
     dir: 'staticfiles',
     allowSourceOverwrites: true,
     keepBuildDir: true,
+    skipDirOptimize: true,  // could turn this off to minify everything (including bower_components), which takes a while
     modules: [
         // Third-party modules
         {
