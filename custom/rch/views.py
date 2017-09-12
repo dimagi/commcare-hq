@@ -8,6 +8,10 @@ from django.core import serializers
 from django.utils.decorators import method_decorator
 from django.conf import settings
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from djangular.views.mixins import (
+    JSONResponseMixin,
+    allow_remote_invocation,
+)
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -15,7 +19,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.locations.dbaccessors import user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2, use_angular_js
 from custom.rch.forms import BeneficiariesFilterForm
 from custom.rch.models import RCHRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
 
@@ -25,7 +29,7 @@ RECORDS_PER_PAGE = 200
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
                    login_and_domain_required], name='dispatch')
-class BeneficariesList(TemplateView):
+class BeneficariesList(JSONResponseMixin, TemplateView):
     urlname = 'rch_cas_dashboard'
     http_method_names = ['get', 'post']
 
@@ -35,10 +39,14 @@ class BeneficariesList(TemplateView):
 
     @method_decorator(require_superuser)
     @use_select2
+    @use_angular_js
     def dispatch(self, request, *args, **kwargs):
-        return super(BeneficariesList, self).dispatch(request, *args, **kwargs)
+        response = super(BeneficariesList, self).dispatch(request, *args, **kwargs)
+        # set cookie for pagination
+        response.set_cookie('hq.pagination.limit.rch_cas_beneficiaries.%s' % request.domain, RECORDS_PER_PAGE)
+        return response
 
-    def _set_rch_beneficiaries(self, include_matched_beneficiaries, only_matched=False):
+    def _set_rch_beneficiaries(self, include_matched_beneficiaries, only_matched=False, in_data=None):
         """
         Location Hierarchy: State -> District -> Village -> AWC
         Filters down-up Village -> District -> State
@@ -61,27 +69,27 @@ class BeneficariesList(TemplateView):
             self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=False)
         village_ids = []
 
-        village_code = self.request.GET.get('village_code')
+        village_code = in_data.get('village_code')
         if village_code:
             village_ids = village_ids + [village_code]
 
         # find corresponding village(s) for the selected awc id to search
         # rch records by their village
-        awcid = self.request.GET.get('awcid')
+        awcid = in_data.get('awcid')
         if awcid:
             village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
 
         if not village_ids:
             # Fallback to search by district
-            dtcode = self.request.GET.get('dtcode')
+            dtcode = in_data.get('dtcode')
             if dtcode:
                 village_ids = AreaMapping.fetch_village_ids_for_district(dtcode)
 
         if not village_ids:
             # Fallback to search by state
-            stcode = self.request.GET.get('stcode')
+            stcode = in_data.get('stcode')
             if stcode:
-                village_ids = AreaMapping.fetch_village_ids_by_state(stcode)
+                village_ids = AreaMapping.fetch_village_ids_for_state(stcode)
 
         if village_ids:
             self.beneficiaries = self.beneficiaries.filter(village_id__in=village_ids)
@@ -91,7 +99,7 @@ class BeneficariesList(TemplateView):
         self.beneficiaries = []
         return False
 
-    def _set_cas_beneficiaries(self, include_matched_beneficiaries):
+    def _set_cas_beneficiaries(self, include_matched_beneficiaries, in_data=None):
         """
         Location Hierarchy: State -> District -> Village -> AWC
         Filters down-up AWC -> Village -> District -> State
@@ -112,23 +120,23 @@ class BeneficariesList(TemplateView):
 
         # find corresponding awc_id(s) for the selected village id to search
         # cas records by their awc_ids set as owner_id
-        village_code = self.request.GET.get('village_code')
+        village_code = in_data.get('village_code')
         if village_code:
             awc_ids = awc_ids + AreaMapping.fetch_awc_ids_for_village_id(village_code)
 
-        awc_id = self.request.GET.get('awcid')
+        awc_id = in_data.get('awcid')
         if awc_id:
             awc_ids = awc_ids + [awc_id]
 
         # if no village or awc then simply filter by all AWC IDs under the district
         if not awc_ids:
-            dtcode = self.request.GET.get('dtcode')
+            dtcode = in_data.get('dtcode')
             if dtcode:
                 awc_ids = AreaMapping.fetch_awc_ids_for_district(dtcode)
 
         # if no village or awc then simply filter by all AWC IDs under the state
         if not awc_ids:
-            stcode = self.request.GET.get('stcode')
+            stcode = in_data.get('stcode')
             if stcode:
                 awc_ids = AreaMapping.fetch_awc_ids_for_state(stcode)
 
@@ -148,42 +156,47 @@ class BeneficariesList(TemplateView):
         self.beneficiaries = []
         return False
 
-    def _set_context_for_cas_records(self, context):
-        include_matched_beneficiaries = (self.request.GET.get('matched') == 'on')
-        if self._set_cas_beneficiaries(include_matched_beneficiaries):
-            cas_records = self.beneficiaries.run()
+    def _set_context_for_cas_records(self, context, in_data=None):
+        include_matched_beneficiaries = (in_data.get('matched') == 'on')
+        size = in_data.get('limit')
+        offset = (in_data.get('page') - 1) * in_data.get('limit')
+        if self._set_cas_beneficiaries(include_matched_beneficiaries, in_data=in_data):
+            cas_records = self.beneficiaries.start(offset).size(size).run()
             if cas_records:
                 context['beneficiaries'] = cas_records.hits
                 context['beneficiaries_total'] = cas_records.total
                 context['beneficiaries_count'] = len(cas_records.hits)
 
-    def _set_context_for_rch_records(self, context):
-        include_matched_beneficiaries = (self.request.GET.get('matched') == 'on')
-        if self._set_rch_beneficiaries(include_matched_beneficiaries):
+    def _set_context_for_rch_records(self, context, in_data=None):
+        include_matched_beneficiaries = (in_data.get('matched') == 'on')
+        size = in_data.get('limit')
+        offset = (in_data.get('page') - 1) * in_data.get('limit')
+        if self._set_rch_beneficiaries(include_matched_beneficiaries, in_data=in_data):
             context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries.order_by()[:RECORDS_PER_PAGE]
+            context['beneficiaries'] = self.beneficiaries[offset:offset+size]
 
-    def _set_context_for_matched_records(self, context):
+    def _set_context_for_matched_records(self, context, in_data=None):
         self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
-        if self._set_rch_beneficiaries(True, only_matched=True):
+        size = in_data.get('limit')
+        offset = (in_data.get('page') - 1) * in_data.get('limit')
+        if self._set_rch_beneficiaries(True, only_matched=True, in_data=in_data):
             context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries.order_by()[:RECORDS_PER_PAGE]
+            context['beneficiaries'] = self.beneficiaries[offset:offset+size]
 
-    def _set_beneficiaries(self, context, present_in):
+    def _set_beneficiaries(self, context, in_data):
         context['beneficiaries'] = []
+        present_in = in_data.get('present_in')
         if present_in == 'cas':
-            self._set_context_for_cas_records(context)
+            self._set_context_for_cas_records(context, in_data)
         elif present_in == 'rch':
-            self._set_context_for_rch_records(context)
+            self._set_context_for_rch_records(context, in_data)
         elif present_in == 'both':
-            self._set_context_for_matched_records(context)
+            self._set_context_for_matched_records(context, in_data)
 
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
         context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
-        present_in = self.request.GET.get('present_in')
-        if present_in:
-            self._set_beneficiaries(context, present_in)
+        context['pagination_limit_cookie_name'] = 'hq.pagination.limit.rch_cas_beneficiaries.%s' % self.request.domain
         return context
 
     def get_template_names(self):
@@ -194,6 +207,26 @@ class BeneficariesList(TemplateView):
         elif self.request.GET.get('present_in') == 'both':
             return "common/beneficiaries_list.html"
         return self.template_name
+
+    @allow_remote_invocation
+    def get_pagination_data(self, in_data):
+        context = {}
+        if in_data.get('present_in'):
+            self._set_beneficiaries(context, in_data)
+
+        if in_data.get('present_in') == 'cas':
+            itemList = context.get('beneficiaries')
+        else:
+            itemList = map(lambda beneficiary: json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields'),
+                                context.get('beneficiaries'))
+        return {
+            'response': {
+                'itemList': itemList,
+                'total': context.get('beneficiaries_total', 0),
+                'page': in_data.get('page'),
+            },
+            'success': True,
+        }
 
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),

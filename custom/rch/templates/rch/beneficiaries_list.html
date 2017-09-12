@@ -1,7 +1,47 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
 {% load compress %}
 {% load crispy_forms_tags %}
+{% load djangular_tags %}
+
+{% block title %}{% if current_page.title %}{{ current_page.title }} : {% endif %}{{ section.page_name }} :: {% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+$("#id_village_code").select2();
+$("#id_awcid").select2();
+
+(function (angular, undefined) {
+    'use strict';
+    var rchCasBenificiariesApp = angular.module('rchCasBenificiariesApp', ['hq.pagination']);
+    rchCasBenificiariesApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
+    }]);
+
+    rchCasBenificiariesApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure({% djng_current_rmi %});
+    }]);
+    rchCasBenificiariesApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
+
+    rchCasBenificiariesApp.constant('paginationCustomData', {
+       present_in: $("#id_present_in").val(),
+       stcode: $("#id_stcode").val(),
+       village_code: $("#id_village_code").val(),
+       awcid: $("#id_awcid").val(),
+       matched: $("#id_matched")[0].checked
+    });
+}(window.angular));
+</script>
+{% endblock %}
 
 {% block page_content %}
     <div class="row">
@@ -10,50 +50,67 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-12">
-        <strong>RCH Beneficiaries:</strong>
-        {% if beneficiaries %}
-            <strong>{{ beneficiaries.count }} / {{ beneficiaries_total }}</strong>
-            <table class="table table-striped table-bordered">
+    <div ng-app="rchCasBenificiariesApp" ng-controller="PaginatedListController as paginationController">
+    <div class="panel panel-default"
+         ng-cloak>
+        <div class="panel-heading">
+            <h3 class="panel-title">{% trans 'RCH Beneficiaries' %}</h3>
+        </div>
+        <div class="panel-body">
+            <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
+                {% blocktrans %}
+                    <strong>No rch records. Try changing the filter.</strong>
+                {% endblocktrans %}
+            </div>
+            <div class="pull-right" style="clear: right;">
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"
+                            ng-show="paginatedItems.length > 0"></pagination>
+            </div>
+            <table class="table table-striped table-responsive"
+                   style="margin-bottom: 0;"
+                   ng-show="paginatedItems.length > 0">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Aadhar Number</th>
-                        <th>RCH ID</th>
-                        <th>MDDS Village Code</th>
-                        <th>RCH Village Name</th>
-                        <th>DOB</th>
+                        <th class="col-xs-3">{% trans "Name" %}</th>
+                        <th class="col-xs-2">{% trans "Aadhar Number" %}</th>
+                        <th class="col-xs-2">{% trans "RCH ID" %}</th>
+                        <th class="col-xs-2">{% trans "MDDS Village Code" %}</th>
+                        <th class="col-xs-3">{% trans "RCH Village Name" %}</th>
+                        <th class="col-xs-3">{% trans "DOB" %}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for beneficiary in beneficiaries %}
-                        <tr>
-                            <td>
-                                <a href='{% url "beneficiary_view" request.domain beneficiary.id %}'>
-                                    {{beneficiary.name}}
-                                </a>
-                            </td>
-                            <td>{{ beneficiary.aadhar_num }}</td>
-                            <td>{{ beneficiary.rch_id}}</td>
-                            <td>{{ beneficiary.village_id}}</td>
-                            <td>{{ beneficiary.village_name }}</td>
-                            <td>{{ beneficiary.dob }}</td>
-                        </tr>
-                    {% endfor %}
+                    <tr ng-repeat="beneficiary in paginatedItems">
+                        {% angularjs %}
+                        <td>{{ beneficiary.name }}</td>
+                        <td>{{ beneficiary.aadhar_num }}</td>
+                        <td>{{ beneficiary.rch_id }}</td>
+                        <td>{{ beneficiary.village_id }}</td>
+                        <td>{{ beneficiary.village_name }}</td>
+                        <td>{{ beneficiary.dob }}</td>
+                        {% endangularjs %}
+                    </tr>
                 </tbody>
             </table>
-        {% else %}
-            <p>No Beneficiaries</p>
-        {% endif %}
-      </div>
+            <div class="pull-right" style="clear: right;">
+                <pagination direction-links="true"
+                            total-items="total"
+                            items-per-page="limit"
+                            previous-text="&laquo;"
+                            next-text="&raquo;"
+                            max-size="maxSize"
+                            ng-model="currentPage"
+                            ng-change="pageChanged()"
+                            ng-show="paginatedItems.length > 0"></pagination>
+            </div>
+        </div>
     </div>
-{% endblock %}
-
-{% block js-inline %}
-    {{ block.super }}
-    <script>
-        $("#id_village_code").select2();
-        $("#id_awcid").select2();
-    </script>
+    </div>
 {% endblock %}
