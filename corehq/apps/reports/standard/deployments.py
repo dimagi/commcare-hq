@@ -54,7 +54,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
-    primary_sort_prop = None
 
     @property
     def headers(self):
@@ -89,14 +88,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         else:
             return {'reporting_metadata.last_submission_for_user.submission_date': 'desc'}
 
-    @property
-    def sort_base(self):
-        return '.'.join(self.primary_sort_prop.split('.')[:2])
-
-    @property
-    def sort_filter(self):
-        return self.sort_base + '.app_id'
-
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
         res = []
@@ -109,21 +100,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 col_id = int(self.request.GET[col_key])
                 col = self.headers.header[col_id]
                 sort_prop = getattr(col, sort_prop_name) or col.prop_name
-                if x == 0:
-                    self.primary_sort_prop = sort_prop
-                if self.selected_app_id:
-                    sort_dict = {
-                        sort_prop: {
-                            "order": sort_dir,
-                            "nested_filter": {
-                                "term": {
-                                    self.sort_filter: self.selected_app_id
-                                }
-                            }
-                        }
-                    }
-                else:
-                    sort_dict = {sort_prop: sort_dir}
+                sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
@@ -168,9 +145,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
-            user_query = user_query.nested(
-                self.sort_base,
-                filters.term(self.sort_filter, self.selected_app_id)
+            user_query = user_query.filter(
+                filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
             )
         return user_query
 
