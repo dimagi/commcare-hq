@@ -44,12 +44,16 @@ from .const import (
 from .utils import get_bets_location_json
 
 
+def _get_district_location_id(pcp_location):
+    return _get_district_location(pcp_location).location_id
+
+
 def _get_district_location(pcp_location):
     try:
         district_location = pcp_location.parent
         if district_location.location_type.code != 'dto':
             raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
-        return pcp_location.parent.location_id
+        return district_location
     except AttributeError:
         raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
 
@@ -118,7 +122,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -148,7 +152,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -207,7 +211,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -235,7 +239,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -267,7 +271,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -324,7 +328,7 @@ class VoucherPayload(BETSPayload):
             Location=fulfilled_by_location_id,
             # always round to nearest whole number, but send a string...
             Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=agency_user.raw_username,
@@ -555,7 +559,7 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
             "id": user._id,
             "phone_numbers": map(get_national_number, user.phone_numbers),
             "email": user.email,
-            "dtoLocation": district_location,
+            "dtoLocation": district_location.location_id,
             "privateSectorOrgId": org_id,
             "resource_uri": "",
         }
