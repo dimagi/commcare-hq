@@ -12,7 +12,7 @@ def download_saved_export(export_id, dest_dir=None):
     dest_dir = (dest_dir or settings.SHARED_DRIVE_ROOT).rstrip()
     export_instance = get_properly_wrapped_export_instance(export_id)
     export_archive_path = '{}/{}_{}.zip'.format(
-        settings.SHARED_DRIVE_ROOT,
+        dest_dir,
         safe_filename(export_instance.name.encode('ascii', 'replace') or 'Export'),
         datetime.utcnow().isoformat()
     )
