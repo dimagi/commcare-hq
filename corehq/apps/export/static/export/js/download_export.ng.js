@@ -1,3 +1,4 @@
+/* global analytics */
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
