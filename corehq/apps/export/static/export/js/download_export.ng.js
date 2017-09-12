@@ -105,7 +105,7 @@
         self._getGroups();
 
         var exportType = $scope.exportList[0].export_type;
-        self.exportType = _(exportType).capitalize();
+        self.exportType = hqImport('export/js/utils').capitalize(exportType);
 
         self.sendAnalytics = function () {
             _.each($scope.formData.user_types, function (user_type) {
@@ -267,7 +267,8 @@
         });
 
         $scope.sendAnalytics = function () {
-            analytics.usage("Download Export", _(exportDownloadService.exportType).capitalize(), "Saved");
+            analytics.usage("Download Export",
+                            hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
             analytics.workflow("Clicked Download button");
         };
     };
