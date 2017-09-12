@@ -10,7 +10,7 @@ from custom.icds.exceptions import CaseRelationshipError
 
 def recipient_mother_person_case_from_child_health_case(case_schedule_instance):
     try:
-        mother_person_case_from_child_health_case(case_schedule_instance.case)
+        return mother_person_case_from_child_health_case(case_schedule_instance.case)
     except CaseRelationshipError:
         return None
 
