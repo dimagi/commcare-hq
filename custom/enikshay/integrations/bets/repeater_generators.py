@@ -1,8 +1,7 @@
 from datetime import datetime, date
 import json
 import jsonobject
-import pytz
-from pytz import timezone
+import phonenumbers
 
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
@@ -547,9 +546,9 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
             "username": user.raw_username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "default_phone_number": user.user_data.get("contact_phone_number"),
+            "default_phone_number": get_national_number(user.user_data.get("contact_phone_number")),
             "id": user._id,
-            "phone_numbers": user.phone_numbers,
+            "phone_numbers": map(get_national_number, user.phone_numbers),
             "email": user.email,
             "dtoLocation": _get_district_location(location),
             "privateSectorOrgId": location.metadata.get('private_sector_org_id', ''),
@@ -614,5 +613,14 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
         # This is the "real" phone number
-        case_json["properties"]["phone_number"] = case_properties.get("contact_phone_number", "")
+        case_json["properties"]["phone_number"] = get_national_number(
+            case_properties.get("contact_phone_number", "")
+        )
         return case_json
+
+
+def get_national_number(phonenumber):
+    try:
+        return str(phonenumbers.parse(phonenumber, "IN").national_number)
+    except phonenumbers.NumberParseException:
+        return ""
