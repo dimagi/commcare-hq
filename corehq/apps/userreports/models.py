@@ -352,7 +352,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def get_case_type_or_xmlns_filter(self):
         def _get_property_value(config_filter, prop_name):
-            if (config_filter['type'] != 'boolean_expression'
+            if (config_filter.get('type') != 'boolean_expression'
                     or config_filter['operator'] != 'eq'):
                 return None
             expression = config_filter['expression']
