@@ -167,7 +167,6 @@
         {% endif %}
 
         {% if request.use_jquery_ui and not request.use_requirejs %}
-        {# TODO: add to requirejs_paths as needed - and probably separate out as its own include #}
         {% compress js %}
             <!-- UI libraries needed for all other widgets and interactions -->
             <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
