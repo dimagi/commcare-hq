@@ -75,7 +75,8 @@ class TestDeleteCommand(TestCase, ImportDRTBTestMixin):
             self._refersh_es(all_case_ids)
 
             # Confirm that cases are in ES
-            self.assertEqual(case_query.count(), 54 + 1)
+            # 30 cases per person = 25 resistance + 1 drtb + 1 sdps + 1 person + 1 episode + 1 occurrence
+            self.assertEqual(case_query.count(), (2 * 30) + 1)
 
             # Run the deletion script
             call_command('delete_imported_drtb_cases', self.domain, "foo", "--commit")

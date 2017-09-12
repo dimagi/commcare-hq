@@ -240,7 +240,7 @@ hqDefine('export/js/models', function () {
      */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
-            analyticsExportType = _.capitalize(this.type()),
+            analyticsExportType = utils.capitalize(this.type()),
             args,
             eventCategory;
 

@@ -1,7 +1,7 @@
 import datetime
 import random
 import string
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 from casexml.apps.case.mock import CaseBlock
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.domain.models import Domain
@@ -63,6 +63,7 @@ class _UserCaseHelper(object):
 
     def create_user_case(self, case_type, commcare_user, fields):
         fields['hq_user_id'] = commcare_user._id
+        fields.pop('case_type', None)
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,

@@ -1,6 +1,6 @@
 from itertools import groupby
 from collections import defaultdict
-from xml.etree.ElementTree import Element
+from xml.etree.cElementTree import Element
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
@@ -98,6 +98,13 @@ class HierarchicalLocationSerializer(object):
 
         if root_locations:
             _append_children(root_node, locations_db, root_locations, data_fields)
+        else:
+            # There is a bug on mobile versions prior to 2.27 where
+            # a parsing error will cause mobile to ignore the element
+            # after this one if this element is empty.
+            # So we have to add a dummy empty_element child to prevent
+            # this element from being empty.
+            root_node.append(Element("empty_element"))
         return [root_node]
 
 

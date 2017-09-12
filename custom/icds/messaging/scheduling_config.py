@@ -254,6 +254,41 @@ def create_aww_indicator_6(domain):
         )
 
 
+def create_ls_indicator_4a(domain):
+    with transaction.atomic():
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            domain,
+            time(9, 0),
+            CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED'),
+            total_iterations=1,
+        )
+        schedule.default_language_code = 'hin'
+        schedule.custom_metadata = {'icds_indicator': 'ls_4a'}
+        schedule.save()
+        rule = AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name="LS #4a: Child Fever Reported in Exclusive Breastfeeding form",
+            case_type='person',
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            migrated=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='last_reported_fever_date',
+            match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CustomRecipient', 'ICDS_SUPERVISOR_FROM_AWC_OWNER'),),
+            reset_case_property_name='last_reported_fever_date',
+        )
+
+
 def create_ls_indicator_4b(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(

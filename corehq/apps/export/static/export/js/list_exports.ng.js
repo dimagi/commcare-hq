@@ -120,7 +120,7 @@
             })
                 .success(function (data) {
                     if (data.success) {
-                        var exportType = _(exp.exportType).capitalize();
+                        var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;

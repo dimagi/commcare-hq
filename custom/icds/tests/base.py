@@ -5,7 +5,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.tests.utils import use_sql_backend
 from django.test import TestCase
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 @use_sql_backend

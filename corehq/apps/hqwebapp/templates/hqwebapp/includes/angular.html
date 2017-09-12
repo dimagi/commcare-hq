@@ -5,5 +5,8 @@
 <script src="{% static 'angular-message-format/angular-message-format.js' %}"></script>
 <script src="{% static 'angular-messages/angular-messages.js' %}"></script>
 <script src="{% static 'angular-cookies/angular-cookies.js' %}"></script>
-<script src="{% static 'style/lib/angular-ui/ui-bootstrap-tpls-0.11.2.min.js' %}"></script>
+
+<!-- Using the most up-to-date version of this breaks the mobile workers page -->
+<script src="{% static 'angular-bootstrap-legacy/ui-bootstrap-tpls.min.js' %}"></script>
+
 <script src="{% static 'djangular/js/django-angular.min.js' %}"></script>

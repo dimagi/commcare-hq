@@ -1,6 +1,6 @@
 from datetime import datetime, date
 import uuid
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from dateutil.relativedelta import relativedelta
 from django.test import override_settings

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.tests.utils import call_fixture_generator

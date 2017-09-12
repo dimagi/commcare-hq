@@ -44,6 +44,12 @@ class Command(BaseCommand):
             change = FakeChange(case_id, fake_change_doc)
             AsyncIndicator.update_indicators(change, config_ids)
 
+        for config in configs:
+            if not config.is_static:
+                config.meta.build.rebuilt_asynchronously = True
+                config.save()
+
+
     def _get_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()

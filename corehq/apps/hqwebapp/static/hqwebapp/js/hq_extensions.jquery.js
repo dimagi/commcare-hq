@@ -37,13 +37,4 @@
             return params;
         }
     });
-
-    $.fn.closest_form = function () {
-        return this.closest('form, .form');
-    };
-    $.fn.my_serialize = function () {
-        var data = this.find('[name]').serialize();
-        return data;
-    };
-
 }());

@@ -1065,6 +1065,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
             'can_rebuild': self.can_rebuild,
+            'used_by_reports': self.get_reports(),
         }
 
     @property
@@ -1124,6 +1125,11 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     EditDataSourceView.urlname, args=[self.domain, config._id])
                 )
         return self.get(request, *args, **kwargs)
+
+    def get_reports(self):
+        reports = StaticReportConfiguration.by_domain(self.domain)
+        reports += ReportConfiguration.by_domain(self.domain)
+        return [report for report in reports if report.table_id == self.config.table_id]
 
     def get(self, request, *args, **kwargs):
         if self.config.is_deactivated:
@@ -1447,7 +1453,7 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished})
+    return json_response({'isBuilt': config.meta.build.finished or config.meta.build.rebuilt_asynchronously})
 
 
 def _get_report_filter(domain, report_id, filter_id):

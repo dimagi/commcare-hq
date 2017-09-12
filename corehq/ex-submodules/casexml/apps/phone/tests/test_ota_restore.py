@@ -26,6 +26,10 @@ from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
+def get_registration_xml(restore_user):
+    return xml.tostring(xml.get_registration_element(restore_user))
+
+
 class SimpleOtaRestoreTest(TestCase):
 
     def setUp(self):
@@ -39,11 +43,11 @@ class SimpleOtaRestoreTest(TestCase):
     def test_registration_xml(self):
         user = create_restore_user()
         check_xml_line_by_line(self, dummy_user_xml(user),
-                               xml.get_registration_xml(user))
+                               get_registration_xml(user))
 
     def test_username_doesnt_have_domain(self):
         user = create_restore_user(username=normalize_username('withdomain', domain='thedomain'))
-        restore_payload = xml.get_registration_xml(user)
+        restore_payload = get_registration_xml(user)
         self.assertTrue('thedomain' not in restore_payload)
 
     def test_name_and_number(self):
@@ -52,7 +56,7 @@ class SimpleOtaRestoreTest(TestCase):
             last_name=None,
             phone_number='555555',
         )
-        payload = xml.get_registration_xml(user)
+        payload = get_registration_xml(user)
 
         def assertRegistrationData(key, val):
             if val is None:

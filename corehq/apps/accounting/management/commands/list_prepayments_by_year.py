@@ -30,23 +30,25 @@ class Command(BaseCommand):
     help = 'Print to the console a CSV of credit adjustment info for the given year.'
 
     def add_arguments(self, parser):
-        parser.add_argument('year', type=int)
+        parser.add_argument('year', nargs='?', type=int)
 
     def handle(self, year, **options):
         print('Note,Project Space,Web User,Date Created,Amount,Subscription Type,ID in database')
 
-        start = date(year, 1, 1)
-        end = date(year, 12, 31)
-        for credit_adj in CreditAdjustment.objects.filter(
-            date_created__gte=start,
-            date_created__lte=end
-        ).filter(
+        credit_adjs = CreditAdjustment.objects.filter(
             reason=CreditAdjustmentReason.MANUAL,
         ).exclude(
             web_user__isnull=True
         ).exclude(
             web_user=''
-        ):
+        )
+
+        if year is not None:
+            credit_adjs = credit_adjs.filter(
+                date_created__year=year,
+            )
+
+        for credit_adj in credit_adjs:
             related_subscription = _get_subscription_from_credit_adj(credit_adj)
             print(u','.join(map(
                 _make_value_safe_for_csv,

@@ -77,7 +77,7 @@ def enikshay_task(self):
         try:
             task_group = EpisodeUpdater(domain).run()
         except Exception as e:
-            logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
+            logger.error("error calculating reconciliation task for domain {}: {}".format(domain, e))
 
         download = MultipleTaskDownload()
         download.set_task(task_group)
@@ -497,6 +497,9 @@ class EpisodeAdherenceUpdate(object):
                 True,
                 "No fixture item found with schedule_id {}".format(adherence_schedule_id)
             )
+        total_expected_doses_taken = ((datetime.date.today() - adherence_schedule_date_start).days / 7.0)\
+                                     * doses_per_week
+        update['total_expected_doses_taken'] = total_expected_doses_taken
 
         return update
 

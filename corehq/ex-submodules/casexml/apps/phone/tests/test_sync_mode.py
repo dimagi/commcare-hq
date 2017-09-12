@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.test.utils import override_settings
 from django.test import TestCase
 

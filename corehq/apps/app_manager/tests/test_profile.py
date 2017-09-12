@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-import xml.etree.ElementTree as ET
+import xml.etree.cElementTree as ET
 
 from corehq.apps.builds.models import BuildSpec
 from corehq import toggles
