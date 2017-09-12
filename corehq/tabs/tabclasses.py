@@ -11,7 +11,6 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -34,6 +33,8 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
 )
 from corehq.form_processor.utils import use_new_exports
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
@@ -1555,6 +1556,12 @@ def _get_administration_section(domain):
             'title': _(Dhis2LogListView.page_title),
             'url': reverse(Dhis2LogListView.urlname, args=[domain])
         }])
+
+    if toggles.OPENMRS_INTEGRATION.enabled(domain):
+        administration.append({
+            'title': _(OpenmrsImporterView.page_title),
+            'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
 
     return administration
 
