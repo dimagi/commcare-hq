@@ -52,6 +52,7 @@ branches:
 #  - fixtures-require-js-2017 # Jenny 8/23
   - np/11.1 # NP 8/24
   - nh/concept-map # Norman 9/9
+  - nh/openmrs-pull  # Norman 9/12
   - np/billing/kill-softwareproduct # NP 9/11
 submodules:
   submodules/touchforms-src:
