@@ -121,6 +121,9 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
+
+    last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
+
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_30_days, now), **config
     ).values(
@@ -139,7 +142,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     )
 
     chart_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_three_months, selected_month), **config
+        pse_date__range=(last_three_months, last_day_of_next_month), **config
     ).values('awc_name', 'pse_date', 'attended_children_percent').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
