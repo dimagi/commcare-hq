@@ -128,6 +128,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
+    @memoized
     def get_payload(self, repeat_record):
         return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
@@ -439,6 +440,7 @@ class RepeatRecordAttempt(DocumentSchema):
     success_response = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    payload = StringProperty()
 
     @property
     def message(self):
@@ -620,6 +622,7 @@ class RepeatRecord(Document):
             success_response=self._format_response(response) if response else None,
             next_check=None,
             succeeded=True,
+            payload=self.get_payload(),
         )
 
     def handle_failure(self, response):
@@ -647,6 +650,7 @@ class RepeatRecord(Document):
                 success_response=None,
                 next_check=None,
                 succeeded=False,
+                payload=self.get_payload(),
             )
 
     def cancel(self):
