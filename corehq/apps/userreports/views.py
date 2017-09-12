@@ -1127,11 +1127,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         return self.get(request, *args, **kwargs)
 
     def get_reports(self):
-        if self.read_only:
-            reports = StaticReportConfiguration.by_domain(self.domain)
-        else:
-            reports = ReportConfiguration.by_domain(self.domain)
-
+        reports = StaticReportConfiguration.by_domain(self.domain)
+        reports += ReportConfiguration.by_domain(self.domain)
         return [report for report in reports if report.table_id == self.config.table_id]
 
     def get(self, request, *args, **kwargs):
