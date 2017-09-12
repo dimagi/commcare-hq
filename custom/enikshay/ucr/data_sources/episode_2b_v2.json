@@ -2129,6 +2129,86 @@
                     "property_name": "treatment_supporter_designation"
                 },
                 "column_id": "treatment_supporter_designation"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "private_nikshay_registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "private_nikshay_registered"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "private_nikshay_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "nikshay_registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "nikshay_registered"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "nikshay_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "private_nikshay_error",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "private_nikshay_error"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "private_nikshay_error"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "nikshay_error",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "nikshay_error"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "nikshay_error"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "external_id",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "external_id"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "external_id"
             }
         ],
         "named_filters": {
