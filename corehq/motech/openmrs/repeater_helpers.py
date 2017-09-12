@@ -172,7 +172,7 @@ CaseTriggerInfo = namedtuple('CaseTriggerInfo',
 def get_form_question_values(form_json):
     """
     Returns question-value pairs to result where questions are given as "/data/foo/bar"
-    
+
     >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
     {'/data/foo/bar': 'baz'}
 
