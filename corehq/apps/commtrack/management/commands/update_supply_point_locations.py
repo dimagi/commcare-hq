@@ -17,6 +17,7 @@ def needs_update(case):
 
 
 def case_block(case):
+    print('case_id={},old owner_id={},new owner_id={}'.format(case['_id'], case['owner_id'], case['location_id']))
     return ElementTree.tostring(CaseBlock(
         create=False,
         case_id=case['_id'],
@@ -35,25 +36,31 @@ def get_cases(domain):
     return iter_docs(CommCareCase.get_db(), supply_point_ids)
 
 
-def update_supply_points(domain):
+def update_supply_points(domain, commit):
     device_id = __name__ + ".update_supply_points"
     case_blocks = (case_block(c) for c in get_cases(domain) if needs_update(c))
-    if case_blocks:
+    if case_blocks and commit:
         for chunk in chunked(case_blocks, 100):
-            submit_case_blocks(chunk, domain, device_id=device_id)
+            xform, _ = submit_case_blocks(chunk, domain, device_id=device_id)
             print("updated {} cases on domain {}".format(len(chunk), domain))
+            print("form id = {}".format(xform.form_id))
 
 
 class Command(BaseCommand):
     help = ("Make sure all supply point cases have their owner_id set "
             "to the location_id")
 
-    def handle(self, **options):
-        all_domains = Domain.get_all_names()
-        total = len(all_domains)
+    def add_arguments(self, parser):
+        parser.add_argument('domains', nargs='*')
+        parser.add_argument('--commit', action='store_true')
+
+    def handle(self, domains, commit, **options):
+        if not domains:
+            domains = Domain.get_all_names()
+        total = len(domains)
         finished = 0
-        for domain in all_domains:
-            update_supply_points(domain)
+        for domain in domains:
+            update_supply_points(domain, commit)
             finished += 1
             if finished % 100 == 0:
                 print("Processed {} of {} domains".format(finished, total))
