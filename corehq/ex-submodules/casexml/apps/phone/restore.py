@@ -18,7 +18,7 @@ from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
-from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
+from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
@@ -173,21 +173,6 @@ class FileRestoreResponse(RestoreResponse):
             ext=self.EXTENSION
         )
 
-    def __add__(self, other):
-        if not isinstance(other, FileRestoreResponse):
-            raise NotImplemented()
-
-        response = FileRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-
-        self.response_body.seek(0)
-        other.response_body.seek(0)
-
-        shutil.copyfileobj(self.response_body, response.response_body)
-        shutil.copyfileobj(other.response_body, response.response_body)
-
-        return response
-
     def finalize(self):
         """
         Creates the final file with start and ending tag
@@ -247,21 +232,6 @@ class BlobRestoreResponse(RestoreResponse):
             suffix=suffix or '',
             ext=self.EXTENSION
         )
-
-    def __add__(self, other):
-        if not isinstance(other, BlobRestoreResponse):
-            raise NotImplementedError
-
-        response = BlobRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-
-        self.response_body.seek(0)
-        other.response_body.seek(0)
-
-        shutil.copyfileobj(self.response_body, response.response_body)
-        shutil.copyfileobj(other.response_body, response.response_body)
-
-        return response
 
     def finalize(self):
         """
@@ -760,20 +730,16 @@ class RestoreConfig(object):
         """
         This function returns a RestoreResponse class that encapsulates the response.
         """
-        with self.restore_state.restore_class(
-                self.restore_user.username, items=self.params.include_item_count) as response:
-            element_providers = get_element_providers(self.timing_context)
-            for provider in element_providers:
+        username = self.restore_user.username
+        count_items = self.params.include_item_count
+        with self.restore_state.restore_class(username, count_items) as response:
+            for provider in get_element_providers(self.timing_context):
                 with self.timing_context(provider.__class__.__name__):
-                    for element in provider.get_elements(self.restore_state):
-                        response.append(element)
+                    response.extend(provider.get_elements(self.restore_state))
 
-            full_response_providers = get_full_response_providers(self.timing_context, async_task)
-            for provider in full_response_providers:
+            for provider in get_async_providers(self.timing_context, async_task):
                 with self.timing_context(provider.__class__.__name__):
-                    partial_response = provider.get_response(self.restore_state)
-                    response = response + partial_response
-                    partial_response.close()
+                    provider.extend_response(self.restore_state, response)
 
             response.finalize()
             return response

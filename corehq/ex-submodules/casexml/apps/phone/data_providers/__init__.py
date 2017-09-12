@@ -21,7 +21,7 @@ def get_element_providers(timing_context):
     ]
 
 
-def get_full_response_providers(timing_context, async_task=None):
+def get_async_providers(timing_context, async_task=None):
     """
     Get restore providers that return their own fully formed responses
 
