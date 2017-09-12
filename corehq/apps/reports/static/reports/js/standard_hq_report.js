@@ -10,12 +10,12 @@
 hqGlobal("reports/js/standard_hq_report", [
     'jquery',
     'underscore',
-    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/built',
     'bootstrap',
 ], function(
     $,
     _,
-    initialPageData
+    hq
 ) {
     var standardReport = undefined,
         asyncReport = undefined;
@@ -35,14 +35,14 @@ hqGlobal("reports/js/standard_hq_report", [
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else if (typeof HQReport !== 'undefined') {
                 // Standard reports
-                var reportOptions = _.extend({}, initialPageData.get('js_options'), {
+                var reportOptions = _.extend({}, hq.initialPageData.get('js_options'), {
                     emailSuccessMessage: gettext('Report successfully emailed'),
                     emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
                 });
-                if (initialPageData.get('startdate')) {
+                if (hq.initialPageData.get('startdate')) {
                     reportOptions.datespan = {
-                        startdate: initialPageData.get('startdate'),
-                        enddate: initialPageData.get('enddate'),
+                        startdate: hq.initialPageData.get('startdate'),
+                        enddate: hq.initialPageData.get('enddate'),
                     };
                 }
                 var standardHQReport = new HQReport(reportOptions);
@@ -58,7 +58,7 @@ hqGlobal("reports/js/standard_hq_report", [
             return asyncReport;
         }
 
-        var reportOptions = initialPageData.get('js_options') || {};
+        var reportOptions = hq.initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: getStandard(),

@@ -8,7 +8,6 @@ define("fixtures/js/built", [
     standardHQReportModule,
     datatablesConfig
 ){
-    /* in non-development environments, this will be overwritten by r.js */
     return {
         filters: filters,
         standardHQReportModule: standardHQReportModule,

@@ -2,16 +2,16 @@
 define([
     "jquery",
     "hqwebapp/js/django",
-    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/built",
     "fixtures/js/built",
 ], function(
     $,
     django,
-    initialPageData,
+    hq,
     fixtures
 ) {
-    if (initialPageData.get('renderReportTables')) {
-        var reportTables = fixtures.datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
+    if (hq.initialPageData.get('renderReportTables')) {
+        var reportTables = fixtures.datatablesConfig.HQReportDataTables(hq.initialPageData.get('dataTablesOptions')),
             standardHQReport = fixtures.standardHQReportModule.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
