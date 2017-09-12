@@ -10,8 +10,8 @@ define("hqwebapp/js/built", [
     main
 ){
     return {
-        alertUser,
-        initialPageData,
-        main
+        alertUser: alertUser,
+        initialPageData: initialPageData,
+        main: main
     };
 });
