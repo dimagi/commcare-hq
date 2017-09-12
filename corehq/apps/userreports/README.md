@@ -1218,6 +1218,20 @@ operator. e.g.
 (If `pre_value` is an array and `datatype` is not "array", it is assumed that
 `datatype` refers to the data type of the items in the array.)
 
+You can optionally specify the operator that the prevalue filter uses by adding a pre_operator argument. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["maybe", "yes"],
+  "pre_operator": "between"
+}
+```
+
+Note that instead of using `eq`, `gt`, etc, you will need to use `=`, `>`, etc.
+
 ### Dynamic choice lists
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
