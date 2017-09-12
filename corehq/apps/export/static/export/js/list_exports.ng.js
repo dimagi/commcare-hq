@@ -109,7 +109,7 @@
             $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function() {
-            analytics.workflow("Clicked Export button");
+            window.analytics.workflow("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
@@ -121,7 +121,7 @@
                 .success(function (data) {
                     if (data.success) {
                         var exportType = _(exp.exportType).capitalize();
-                        analytics.usage("Update Saved Export", exportType, "Saved");
+                        window.analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
                     }
@@ -138,7 +138,7 @@
                     if (data.success) {
                         var exportType = _(exp.exportType).capitalize();
                         var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
-                        analytics.usage(event, exportType, "Saved");
+                        window.analytics.usage(event, exportType, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
                         component.savingAutoRebuildChange = false;
                     }
