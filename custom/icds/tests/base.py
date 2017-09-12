@@ -45,3 +45,46 @@ class BaseICDSTest(TestCase):
         case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
         cls.created_case_ids.append(case.case_id)
         return case
+
+    @classmethod
+    def create_basic_related_cases(cls):
+        cls.mother_person_case = cls.create_case('person')
+        cls.child_person_case = cls.create_case(
+            'person',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_identifier='mother',
+            parent_relationship='child'
+        )
+        cls.child_health_case = cls.create_case(
+            'child_health',
+            parent_case_id=cls.child_person_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension'
+        )
+        cls.child_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.child_health_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'child'},
+        )
+        cls.ccs_record_case = cls.create_case(
+            'ccs_record',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_case_type=cls.mother_person_case.type,
+            parent_identifier='parent',
+            parent_relationship='child'
+        )
+        cls.mother_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.ccs_record_case.case_id,
+            parent_case_type=cls.ccs_record_case.type,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'pregnancy'},
+        )
+        cls.lone_child_person_case = cls.create_case('person')
+        cls.lone_child_health_case = cls.create_case('child_health')
+        cls.lone_child_tasks_case = cls.create_case('tasks', update={'tasks_type': 'child'})
+        cls.lone_ccs_record_case = cls.create_case('ccs_record')
+        cls.lone_mother_tasks_case = cls.create_case('tasks', update={'tasks_type': 'pregnancy'})

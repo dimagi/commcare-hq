@@ -24,46 +24,7 @@ class CaseRelationshipTest(BaseICDSTest):
     @classmethod
     def setUpClass(cls):
         super(CaseRelationshipTest, cls).setUpClass()
-        cls.mother_person_case = cls.create_case('person')
-        cls.child_person_case = cls.create_case(
-            'person',
-            parent_case_id=cls.mother_person_case.case_id,
-            parent_identifier='mother',
-            parent_relationship='child'
-        )
-        cls.child_health_case = cls.create_case(
-            'child_health',
-            parent_case_id=cls.child_person_case.case_id,
-            parent_identifier='parent',
-            parent_relationship='extension'
-        )
-        cls.child_tasks_case = cls.create_case(
-            'tasks',
-            parent_case_id=cls.child_health_case.case_id,
-            parent_identifier='parent',
-            parent_relationship='extension',
-            update={'tasks_type': 'child'},
-        )
-        cls.ccs_record_case = cls.create_case(
-            'ccs_record',
-            parent_case_id=cls.mother_person_case.case_id,
-            parent_case_type=cls.mother_person_case.type,
-            parent_identifier='parent',
-            parent_relationship='child'
-        )
-        cls.mother_tasks_case = cls.create_case(
-            'tasks',
-            parent_case_id=cls.ccs_record_case.case_id,
-            parent_case_type=cls.ccs_record_case.type,
-            parent_identifier='parent',
-            parent_relationship='extension',
-            update={'tasks_type': 'pregnancy'},
-        )
-        cls.lone_child_person_case = cls.create_case('person')
-        cls.lone_child_health_case = cls.create_case('child_health')
-        cls.lone_child_tasks_case = cls.create_case('tasks', update={'tasks_type': 'child'})
-        cls.lone_ccs_record_case = cls.create_case('ccs_record')
-        cls.lone_mother_tasks_case = cls.create_case('tasks', update={'tasks_type': 'pregnancy'})
+        cls.create_basic_related_cases()
 
     def test_relationships(self):
         self.assertEqual(
@@ -132,29 +93,7 @@ class CustomRecipientTest(BaseICDSTest):
     @classmethod
     def setUpClass(cls):
         super(CustomRecipientTest, cls).setUpClass()
-        cls.mother_person_case = cls.create_case('person')
-        cls.child_person_case = cls.create_case(
-            'person',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'mother',
-            'child'
-        )
-        cls.child_health_extension_case = cls.create_case(
-            'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension'
-        )
-        cls.lone_child_health_extension_case = cls.create_case('child_health')
-        cls.ccs_record_case = cls.create_case(
-            'ccs_record',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'parent',
-            'child'
-        )
+        cls.create_basic_related_cases()
 
         cls.location_types = setup_location_types(cls.domain,
             [SUPERVISOR_LOCATION_TYPE_CODE, AWC_LOCATION_TYPE_CODE])
@@ -168,7 +107,7 @@ class CustomRecipientTest(BaseICDSTest):
             self.assertEqual(
                 cls(
                     domain=self.domain,
-                    case_id=self.child_health_extension_case.case_id,
+                    case_id=self.child_health_case.case_id,
                     recipient_type='CustomRecipient',
                     recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
                 ).recipient.case_id,
@@ -178,7 +117,7 @@ class CustomRecipientTest(BaseICDSTest):
             self.assertIsNone(
                 cls(
                     domain=self.domain,
-                    case_id=self.lone_child_health_extension_case.case_id,
+                    case_id=self.lone_child_health_case.case_id,
                     recipient_type='CustomRecipient',
                     recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
                 ).recipient
