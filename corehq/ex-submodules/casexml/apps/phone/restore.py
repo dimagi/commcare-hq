@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
+import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from couchdbkit import ResourceNotFound
@@ -101,30 +102,30 @@ class StockSettings(object):
 
 class RestoreResponse(object):
     start_tag_template = (
-        '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
-        '<message nature="{nature}">Successfully restored account {username}!</message>'
+        b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+        b'<message nature="%(nature)s">Successfully restored account %(username)s!</message>'
     )
-    items_template = ' items="{}"'
-    closing_tag = '</OpenRosaResponse>'
+    items_template = b' items="%s"'
+    closing_tag = b'</OpenRosaResponse>'
 
     def __init__(self, username=None, items=False):
         self.username = username
         self.items = items
         self.num_items = 0
-        self.finalized = False
-
-    def close(self):
-        self.response_body.close()
 
     def __enter__(self):
+        self.response_body = tempfile.TemporaryFile('w+b')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        try:
+            self._finalize()
+        finally:
+            self.response_body.close()
 
     def append(self, xml_element):
         self.num_items += 1
-        if isinstance(xml_element, basestring):
+        if isinstance(xml_element, six.binary_type):
             self.response_body.write(xml_element)
         else:
             self.response_body.write(xml_util.tostring(xml_element))
@@ -133,8 +134,31 @@ class RestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def finalize(self):
-        raise NotImplemented()
+    def _write_response_to_file(self, fileobj):
+        # Add 1 to num_items to account for message element
+        items = (self.items_template % (self.num_items + 1)) if self.items else b''
+        fileobj.write(self.start_tag_template % {
+            b"items": items,
+            b"username": self.username.encode("utf8"),
+            b"nature": ResponseNature.OTA_RESTORE_SUCCESS.encode("utf8"),
+        })
+
+        self.response_body.seek(0)
+        shutil.copyfileobj(self.response_body, fileobj)
+
+        fileobj.write(self.closing_tag)
+
+    def _finalize(self):
+        """
+        Create the final file with start and ending tag
+
+        Subclasses may override this and call
+        `self._write_response_to_file(fileobj)`
+        to write the complete response to a file.
+        The response body will be unavailable after
+        `self.__exit__(...)` (the method that calls
+        this) is called.
+        """
 
     def as_string(self):
         raise NotImplemented()
@@ -156,42 +180,21 @@ class RestoreResponse(object):
 
 class FileRestoreResponse(RestoreResponse):
 
-    BODY_TAG_SUFFIX = '-body'
     EXTENSION = 'xml'
 
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
         self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
 
-        self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
-
-    def get_filename(self, suffix=None):
-        return "{filename}{suffix}.{ext}".format(
+    def get_filename(self):
+        return "{filename}.{ext}".format(
             filename=self.filename,
-            suffix=suffix or '',
-            ext=self.EXTENSION
+            ext=self.EXTENSION,
         )
 
-    def finalize(self):
-        """
-        Creates the final file with start and ending tag
-        """
+    def _finalize(self):
         with open(self.get_filename(), 'w') as response:
-            # Add 1 to num_items to account for message element
-            items = self.items_template.format(self.num_items + 1) if self.items else ''
-            response.write(self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS
-            ))
-
-            self.response_body.seek(0)
-            shutil.copyfileobj(self.response_body, response)
-
-            response.write(self.closing_tag)
-
-        self.finalized = True
-        self.close()
+            self._write_response_to_file(response)
 
     def as_file(self):
         return open(self.get_filename(), 'r')
@@ -223,37 +226,17 @@ class BlobRestoreResponse(RestoreResponse):
         super(BlobRestoreResponse, self).__init__(username, items)
         self.identifier = 'restore-response-{}'.format(uuid4().hex)
 
-        self.response_body = tempfile.TemporaryFile('w+')
-
-    def get_filename(self, suffix=None):
-        return "{identifier}{suffix}.{ext}".format(
+    def get_filename(self):
+        return "{identifier}.{ext}".format(
             identifier=self.identifier,
-            suffix=suffix or '',
             ext=self.EXTENSION
         )
 
-    def finalize(self):
-        """
-        Creates the final file with start and ending tag
-        """
-        with tempfile.TemporaryFile('w+') as response:
-            # Add 1 to num_items to account for message element
-            items = self.items_template.format(self.num_items + 1) if self.items else ''
-            response.write(self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS
-            ))
-
-            self.response_body.seek(0)
-            shutil.copyfileobj(self.response_body, response)
-
-            response.write(self.closing_tag)
+    def _finalize(self):
+        with tempfile.TemporaryFile('w+b') as response:
+            self._write_response_to_file(response)
             response.seek(0)
             get_blob_db().put(response, self.get_filename(), timeout=60)
-
-        self.finalized = True
-        self.close()
 
     def as_file(self):
         return get_blob_db().get(self.get_filename())
@@ -738,8 +721,7 @@ class RestoreConfig(object):
                 with self.timing_context(provider.__class__.__name__):
                     provider.extend_response(self.restore_state, response)
 
-            response.finalize()
-            return response
+        return response
 
     def get_response(self):
         async = self.async
