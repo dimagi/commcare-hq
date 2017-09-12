@@ -77,52 +77,13 @@ class CustomContentTest(BaseICDSTest):
         cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', location=cls.awc2)
         cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', location=cls.ls1)
 
-        cls.mother_person_case = cls.create_case(
-            'person',
-            update={'language_code': 'en'},
-            case_name="Sam",
-            owner_id=cls.awc1.location_id,
-        )
-        cls.child_person_case = cls.create_case(
-            'person',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'mother',
-            'child',
-            case_name="Joe",
-            owner_id=cls.awc1.location_id,
-        )
-        cls.child_health_extension_case = cls.create_case(
+        cls.create_basic_related_cases(cls.awc1.location_id)
+        cls.red_child_health_case = cls.create_case(
             'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension',
-            owner_id=cls.awc1.location_id,
-        )
-        cls.child_tasks_case = cls.create_case(
-            'tasks',
-            cls.child_health_extension_case.case_id,
-            cls.child_health_extension_case.type,
-            'parent',
-            'extension',
-            owner_id=cls.awc1.location_id,
-        )
-        cls.red_child_health_extension_case = cls.create_case(
-            'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension',
+            parent_case_id=cls.child_person_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension',
             update={'zscore_grading_wfa': 'red'},
-            owner_id=cls.awc1.location_id,
-        )
-        cls.ccs_record_case = cls.create_case(
-            'ccs_record',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'parent',
-            'child',
             owner_id=cls.awc1.location_id,
         )
 
@@ -131,18 +92,18 @@ class CustomContentTest(BaseICDSTest):
 
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
-            case_id=self.child_health_extension_case.case_id,
+            case_id=self.child_health_case.case_id,
         )
 
         # Test when current weight is greater than previous
-        submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '10.4')
+        submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.4')
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
             []
         )
 
         # Test when current weight is equal to previous
-        submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '10.1')
+        submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.1')
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has remained static in the last "
@@ -150,7 +111,7 @@ class CustomContentTest(BaseICDSTest):
         )
 
         # Test when current weight is less than previous
-        submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '9.9')
+        submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
@@ -158,16 +119,16 @@ class CustomContentTest(BaseICDSTest):
         )
 
         # Test ignoring forms with the wrong xmlns
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value1'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value2'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value3'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value4'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value5'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value6'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value7'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value8'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value9'})
-        update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value10'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value1'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value2'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value3'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value4'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value5'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value6'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value7'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value8'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value9'})
+        update_case(self.domain, self.child_health_case.case_id, {'property': 'value10'})
 
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
@@ -180,11 +141,11 @@ class CustomContentTest(BaseICDSTest):
 
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
-            case_id=self.red_child_health_extension_case.case_id,
+            case_id=self.red_child_health_case.case_id,
         )
 
         # Current weight is less than previous, but grade is red, so no messages are sent
-        submit_growth_form(self.domain, self.red_child_health_extension_case.case_id, '10.1', '9.9')
+        submit_growth_form(self.domain, self.red_child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
             []

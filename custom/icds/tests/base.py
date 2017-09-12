@@ -53,19 +53,27 @@ class BaseICDSTest(TestCase):
         return case
 
     @classmethod
-    def create_basic_related_cases(cls):
-        cls.mother_person_case = cls.create_case('person')
+    def create_basic_related_cases(cls, owner_id=None):
+        cls.mother_person_case = cls.create_case(
+            'person',
+            update={'language_code': 'en'},
+            case_name="Sam",
+            owner_id=owner_id,
+        )
         cls.child_person_case = cls.create_case(
             'person',
             parent_case_id=cls.mother_person_case.case_id,
             parent_identifier='mother',
-            parent_relationship='child'
+            parent_relationship='child',
+            case_name="Joe",
+            owner_id=owner_id,
         )
         cls.child_health_case = cls.create_case(
             'child_health',
             parent_case_id=cls.child_person_case.case_id,
             parent_identifier='parent',
-            parent_relationship='extension'
+            parent_relationship='extension',
+            owner_id=owner_id,
         )
         cls.child_tasks_case = cls.create_case(
             'tasks',
@@ -73,13 +81,15 @@ class BaseICDSTest(TestCase):
             parent_identifier='parent',
             parent_relationship='extension',
             update={'tasks_type': 'child'},
+            owner_id=owner_id,
         )
         cls.ccs_record_case = cls.create_case(
             'ccs_record',
             parent_case_id=cls.mother_person_case.case_id,
             parent_case_type=cls.mother_person_case.type,
             parent_identifier='parent',
-            parent_relationship='child'
+            parent_relationship='child',
+            owner_id=owner_id,
         )
         cls.mother_tasks_case = cls.create_case(
             'tasks',
@@ -88,9 +98,27 @@ class BaseICDSTest(TestCase):
             parent_identifier='parent',
             parent_relationship='extension',
             update={'tasks_type': 'pregnancy'},
+            owner_id=owner_id,
         )
-        cls.lone_child_person_case = cls.create_case('person')
-        cls.lone_child_health_case = cls.create_case('child_health')
-        cls.lone_child_tasks_case = cls.create_case('tasks', update={'tasks_type': 'child'})
-        cls.lone_ccs_record_case = cls.create_case('ccs_record')
-        cls.lone_mother_tasks_case = cls.create_case('tasks', update={'tasks_type': 'pregnancy'})
+        cls.lone_child_person_case = cls.create_case(
+            'person',
+            owner_id=owner_id,
+        )
+        cls.lone_child_health_case = cls.create_case(
+            'child_health',
+            owner_id=owner_id,
+        )
+        cls.lone_child_tasks_case = cls.create_case(
+            'tasks',
+            update={'tasks_type': 'child'},
+            owner_id=owner_id,
+        )
+        cls.lone_ccs_record_case = cls.create_case(
+            'ccs_record',
+            owner_id=owner_id,
+        )
+        cls.lone_mother_tasks_case = cls.create_case(
+            'tasks',
+            update={'tasks_type': 'pregnancy'},
+            owner_id=owner_id,
+        )
