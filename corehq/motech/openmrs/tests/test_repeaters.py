@@ -33,6 +33,7 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     created=True,
                     closed=False,
                     extra_fields={},
+                    form_question_values={},
                 )
             ]
         )
@@ -51,6 +52,7 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     created=False,
                     closed=False,
                     extra_fields={},
+                    form_question_values={},
                 )
             ]
         )
