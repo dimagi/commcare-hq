@@ -24,6 +24,7 @@ from custom.icds.messaging.custom_content import (
     render_message,
 )
 from custom.icds.tests.base import BaseICDSTest
+from mock import patch
 
 
 TEST_GROWTH_FORM_XML = """<?xml version="1.0" ?>
@@ -55,33 +56,6 @@ class CustomContentTest(BaseICDSTest):
     @classmethod
     def setUpClass(cls):
         super(CustomContentTest, cls).setUpClass()
-        cls.mother_person_case = cls.create_case(
-            'person',
-            update={'language_code': 'en'},
-        )
-        cls.child_person_case = cls.create_case(
-            'person',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'mother',
-            'child',
-            case_name="Joe"
-        )
-        cls.child_health_extension_case = cls.create_case(
-            'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension'
-        )
-        cls.red_child_health_extension_case = cls.create_case(
-            'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension',
-            update={'zscore_grading_wfa': 'red'},
-        )
 
         cls.location_types = setup_location_types(cls.domain, [
             STATE_TYPE_CODE,
@@ -102,6 +76,55 @@ class CustomContentTest(BaseICDSTest):
         cls.user1 = CommCareUser.create(cls.domain, 'mobile-1', 'abc', location=cls.awc1)
         cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', location=cls.awc2)
         cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', location=cls.ls1)
+
+        cls.mother_person_case = cls.create_case(
+            'person',
+            update={'language_code': 'en'},
+            case_name="Sam",
+            owner_id=cls.awc1.location_id,
+        )
+        cls.child_person_case = cls.create_case(
+            'person',
+            cls.mother_person_case.case_id,
+            cls.mother_person_case.type,
+            'mother',
+            'child',
+            case_name="Joe",
+            owner_id=cls.awc1.location_id,
+        )
+        cls.child_health_extension_case = cls.create_case(
+            'child_health',
+            cls.child_person_case.case_id,
+            cls.child_person_case.type,
+            'parent',
+            'extension',
+            owner_id=cls.awc1.location_id,
+        )
+        cls.child_tasks_case = cls.create_case(
+            'tasks',
+            cls.child_health_extension_case.case_id,
+            cls.child_health_extension_case.type,
+            'parent',
+            'extension',
+            owner_id=cls.awc1.location_id,
+        )
+        cls.red_child_health_extension_case = cls.create_case(
+            'child_health',
+            cls.child_person_case.case_id,
+            cls.child_person_case.type,
+            'parent',
+            'extension',
+            update={'zscore_grading_wfa': 'red'},
+            owner_id=cls.awc1.location_id,
+        )
+        cls.ccs_record_case = cls.create_case(
+            'ccs_record',
+            cls.mother_person_case.case_id,
+            cls.mother_person_case.type,
+            'parent',
+            'child',
+            owner_id=cls.awc1.location_id,
+        )
 
     def test_static_negative_growth_indicator(self):
         c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
@@ -165,6 +188,97 @@ class CustomContentTest(BaseICDSTest):
         self.assertEqual(
             c.get_list_of_messages(self.mother_person_case, schedule_instance),
             []
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_missed_cf_visit_to_aww(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_AWW')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.ccs_record_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user1, schedule_instance),
+            ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_missed_cf_visit_to_ls(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_LS')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.ccs_record_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user3, schedule_instance),
+            ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_missed_pnc_visit_to_ls(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_MISSED_PNC_VISIT_TO_LS')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.ccs_record_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user3, schedule_instance),
+            ["AWC awc1 has not reported a visit during the PNC within one week of delivery for Sam"],
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_child_illness_reported(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.child_person_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user3, schedule_instance),
+            ["AWC awc1 has reported illness for the child Joe. Please ensure that AWW follows up with mother "
+             "immediately"],
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_cf_visits_complete(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.ccs_record_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user1, schedule_instance),
+            ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
+        )
+
+    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
+    def test_child_vaccinations_complete(self, language_code_patch):
+        c = CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.child_tasks_case.case_id,
+        )
+
+        language_code_patch.return_value = ENGLISH
+        self.assertEqual(
+            c.get_list_of_messages(self.user1, schedule_instance),
+            ["Congratulations! You've given all the vaccines to Joe"],
         )
 
     def test_get_state_code(self):

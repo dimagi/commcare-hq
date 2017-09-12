@@ -29,7 +29,7 @@ class BaseICDSTest(TestCase):
 
     @classmethod
     def create_case(cls, case_type, parent_case_id=None, parent_case_type=None, parent_identifier=None,
-            parent_relationship=None, update=None, case_name=None):
+            parent_relationship=None, update=None, case_name=None, owner_id=None):
 
         kwargs = {}
         if parent_case_id:
@@ -37,6 +37,9 @@ class BaseICDSTest(TestCase):
 
         if case_name:
             kwargs['case_name'] = case_name
+
+        if owner_id:
+            kwargs['owner_id'] = owner_id
 
         caseblock = CaseBlock(
             uuid.uuid4().hex,
