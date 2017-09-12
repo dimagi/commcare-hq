@@ -19,6 +19,7 @@ from custom.icds.tests.base import BaseICDSTest
 
 
 class CaseRelationshipTest(BaseICDSTest):
+    domain = 'icds-case-relationship-test'
 
     @classmethod
     def setUpClass(cls):
@@ -58,6 +59,11 @@ class CaseRelationshipTest(BaseICDSTest):
             parent_relationship='extension',
             update={'tasks_type': 'pregnancy'},
         )
+        cls.lone_child_person_case = cls.create_case('person')
+        cls.lone_child_health_case = cls.create_case('child_health')
+        cls.lone_child_tasks_case = cls.create_case('tasks', update={'tasks_type': 'child'})
+        cls.lone_ccs_record_case = cls.create_case('ccs_record')
+        cls.lone_mother_tasks_case = cls.create_case('tasks', update={'tasks_type': 'pregnancy'})
 
     def test_relationships(self):
         self.assertEqual(
@@ -102,6 +108,22 @@ class CaseRelationshipTest(BaseICDSTest):
     def test_parent_case_type_mismatch(self):
         with self.assertRaises(CaseRelationshipError):
             child_health_case_from_tasks_case(self.mother_tasks_case)
+
+    def test_no_parent_case(self):
+        with self.assertRaises(CaseRelationshipError):
+            child_health_case_from_tasks_case(self.lone_child_tasks_case)
+
+        with self.assertRaises(CaseRelationshipError):
+            ccs_record_case_from_tasks_case(self.lone_mother_tasks_case)
+
+        with self.assertRaises(CaseRelationshipError):
+            child_person_case_from_child_health_case(self.lone_child_health_case)
+
+        with self.assertRaises(CaseRelationshipError):
+            mother_person_case_from_child_person_case(self.lone_child_person_case)
+
+        with self.assertRaises(CaseRelationshipError):
+            mother_person_case_from_ccs_record_case(self.lone_ccs_record_case)
 
 
 class CustomRecipientTest(BaseICDSTest):
