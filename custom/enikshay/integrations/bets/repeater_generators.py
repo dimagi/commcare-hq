@@ -542,6 +542,11 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     @staticmethod
     def serialize(domain, user):
         location = user.get_sql_location(domain)
+        district_location = _get_district_location(location)
+        org_id = (
+            location.metadata.get('private_sector_org_id')
+            or district_location.metadata.get('private_sector_org_id')
+        )
         user_json = {
             "username": user.raw_username,
             "first_name": user.first_name,
@@ -550,8 +555,8 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
             "id": user._id,
             "phone_numbers": map(get_national_number, user.phone_numbers),
             "email": user.email,
-            "dtoLocation": _get_district_location(location),
-            "privateSectorOrgId": location.metadata.get('private_sector_org_id', ''),
+            "dtoLocation": district_location,
+            "privateSectorOrgId": org_id,
             "resource_uri": "",
         }
         user_json['user_data'] = {
