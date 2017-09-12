@@ -3,8 +3,6 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE, RECORD_CANCELLED_STATE
-from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater, RepeatRecord
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.apps.users.signals import commcare_user_post_save
@@ -29,7 +27,7 @@ from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
     is_valid_archived_submission, is_valid_person_submission, case_was_created,
     is_migrated_uatbc_episode, string_to_date_or_None)
-from .utils import get_bets_location_json
+from .utils import get_bets_location_json, queued_payload, get_bets_user_json
 
 
 class BETSRepeaterMixin(object):
@@ -393,7 +391,21 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
                 and location.location_type.code in self.location_types_to_forward)
 
     def allowed_to_forward(self, user):
-        # new payload is different to old payload
+        # if this user is already in the repeater queue don't add another one
+        if queued_payload(user.domain, user.user_id):
+            return False
+
+        # If this user has already been forwarded without any changes, then
+        # don't send it to BETS again
+        successful_records = user.user_data.get('BETS_user_repeat_record_ids')
+        if successful_records:
+            latest_record_id = successful_records.split(" ")[-1]
+            latest_record = RepeatRecord.get(latest_record_id)
+            previous_payload = latest_record.attempts[-1].payload if latest_record.attempts else {}
+            current_payload = unicode(get_bets_user_json(user.domain, user))
+            if current_payload == previous_payload:
+                return False
+
         return (user.user_data.get('user_level', None) == 'real'
                 and any(self._is_relevant_location(loc)
                         for loc in user.get_sql_locations(self.domain)))
@@ -416,10 +428,8 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
 
     def allowed_to_forward(self, location):
         # if this location is already in the repeater queue, don't forward again
-        records = get_repeat_records_by_payload_id(location.domain, location.location_id)
-        for record in records:
-            if record.state not in [RECORD_SUCCESS_STATE, RECORD_CANCELLED_STATE]:
-                return False
+        if queued_payload(location.domain, location.location_id):
+            return False
 
         # If this location has already been forwarded without any changes, then
         # don't send it to BETS again
