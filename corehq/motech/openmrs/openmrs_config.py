@@ -1,4 +1,5 @@
 from dimagi.ext.couchdbkit import (
+    DictProperty,
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
@@ -6,6 +7,13 @@ from dimagi.ext.couchdbkit import (
     SchemaProperty,
     StringProperty,
 )
+
+
+def recurse_subclasses(cls):
+    return (
+        cls.__subclasses__() +
+        [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
+    )
 
 
 class IdMatcher(DocumentSchema):
@@ -18,7 +26,7 @@ class ValueSource(DocumentSchema):
     def wrap(cls, data):
         if cls is ValueSource:
             return {
-                sub._doc_type: sub for sub in cls.__subclasses__()
+                sub._doc_type: sub for sub in recurse_subclasses(cls)
             }[data['doc_type']].wrap(data)
         else:
             return super(ValueSource, cls).wrap(data)
@@ -34,11 +42,48 @@ class CaseProperty(ValueSource):
         return case_trigger_info.updates.get(self.case_property)
 
 
+class FormQuestion(ValueSource):
+    form_question = StringProperty()  # e.g. "/data/foo/bar"
+
+    def get_value(self, case_trigger_info):
+        return case_trigger_info.form_question_values.get(self.form_question)
+
+
 class ConstantString(ValueSource):
     value = StringProperty()
 
     def get_value(self, case_trigger_info):
         return self.value
+
+
+class CasePropertyConcept(CaseProperty):
+    """
+    Maps case property values to OpenMRS concepts
+    """
+    value_concepts = DictProperty()
+
+    def get_value(self, case_trigger_info):
+        value = super(CasePropertyConcept, self).get_value(case_trigger_info)
+        try:
+            return self.value_concepts[value]
+        except KeyError:
+            raise ValueError('OpenMRS concept not found for value "{}" of case property "{}".'.format(
+                value, self.case_property))
+
+
+class FormQuestionConcept(FormQuestion):
+    """
+    Maps form question values to OpenMRS concepts
+    """
+    value_concepts = DictProperty()
+
+    def get_value(self, case_trigger_info):
+        value = super(FormQuestionConcept, self).get_value(case_trigger_info)
+        try:
+            return self.value_concepts[value]
+        except KeyError:
+            raise ValueError('OpenMRS concept not found for value "{}" of form question "{}".'.format(
+                value, self.form_question))
 
 
 class OpenmrsCaseConfig(DocumentSchema):
