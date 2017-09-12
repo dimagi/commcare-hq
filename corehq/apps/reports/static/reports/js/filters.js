@@ -4,7 +4,7 @@ hqGlobal("reports/js/filters", [
     'knockout',
     'hqwebapp/js/main',
     'reports/js/standard_hq_report',
-    'select2',
+    'select2-3.5.2-legacy/select2',
 ], function(
     $,
     ko,

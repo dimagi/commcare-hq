@@ -1,12 +1,5 @@
 {% load hq_shared_tags %}
-{% if request.use_requirejs %}
-    "jquery.form": "{% static 'jquery-form/jquery.form' %}",
-    "underscore": "{% static 'underscore/underscore' %}",
-    "underscore-mixins": "{% static 'hqwebapp/js/underscore-mixins' %}",
-    "jquery.cookie": "{% static 'jquery.cookie/jquery.cookie' %}",
-    "hq_extensions": "{% static 'hqwebapp/js/hq_extensions.jquery' %}",
-    "rmi": "{% static 'jquery.rmi/jquery.rmi' %}",
-{% else %}
+{% if not request.use_requirejs %}
     <script src="{% static 'jquery-form/jquery.form.js' %}"></script>
     <script src="{% static 'underscore/underscore.js' %}"></script>
     <script src="{% static 'hqwebapp/js/underscore-mixins.js' %}"></script>
