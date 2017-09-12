@@ -5,7 +5,7 @@ from corehq.motech.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
-def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
+def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
     problem_log = []
     person_uuids = []
     logger.debug(case_trigger_infos)
@@ -20,6 +20,7 @@ def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
     if len(person_uuids) == 1 and all(person_uuid for person_uuid in person_uuids):
         person_uuid, = person_uuids
         info, = case_trigger_infos
+        info.form_question_values.update(form_question_values)
         for form_config in openmrs_config.form_configs:
             logger.debug('send_openmrs_visit?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
@@ -35,7 +36,7 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime)
         visit_datetime=visit_datetime,
         values_for_concept={obs.concept: [obs.value.get_value(info)]
                             for obs in form_config.openmrs_observations
-                            if obs.value.get_value(info)},
+                            if obs.value.get_value(info)},  # TODO: form_question_values
         encounter_type=form_config.openmrs_encounter_type,
         openmrs_form=form_config.openmrs_form,
         visit_type=form_config.openmrs_visit_type,

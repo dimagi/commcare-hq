@@ -166,7 +166,40 @@ class PatientSearchParser(object):
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields'])
+                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+
+def get_form_question_values(form_json):
+    """
+    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
+
+    """
+    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+
+    def _recurse_form_questions(form_dict, path, result_):
+        for key, value in form_dict.items():
+            if key in _reserved_keys:
+                continue
+            new_path = path + [key]
+            if isinstance(value, list):
+                # Repeat group
+                for v in value:
+                    assert isinstance(v, dict)
+                    _recurse_form_questions(v, new_path, result_)
+            elif isinstance(value, dict):
+                # Group
+                _recurse_form_questions(value, new_path, result_)
+            else:
+                # key is a question and value is its answer
+                question = '/'.join(new_path)
+                result_[question] = value
+
+    result = {}
+    _recurse_form_questions(form_json['form'], ['/data'], result)
+    return result
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
@@ -176,7 +209,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         [case_block['@case_id'] for case_block in case_blocks], ordered=True)
     for case, case_block in zip(cases, case_blocks):
         assert case_block['@case_id'] == case.case_id
-        if case.type in case_types:
+        if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
@@ -185,7 +218,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,
-                extra_fields={field: case.get_case_property(field) for field in extra_fields}
+                extra_fields={field: case.get_case_property(field) for field in extra_fields},
+                form_question_values={}
             ))
     return result
 
