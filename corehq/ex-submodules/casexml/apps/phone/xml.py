@@ -108,10 +108,6 @@ def get_casedb_element(case):
     return CaseDBXMLGenerator(case).get_element()
 
 
-def get_casedb_xml(case):
-    return tostring(get_casedb_element(case))
-
-
 def get_registration_element(restore_user):
     root = safe_element("Registration")
     root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
@@ -121,10 +117,6 @@ def get_registration_element(restore_user):
     root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
     root.append(get_data_element('user_data', restore_user.user_session_data))
     return root
-
-
-def get_registration_xml(restore_user):
-    return tostring(get_registration_element(restore_user))
 
 
 def get_data_element(name, dict):

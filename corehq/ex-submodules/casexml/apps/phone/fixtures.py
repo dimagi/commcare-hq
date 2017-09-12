@@ -103,12 +103,6 @@ class FixtureGenerator(object):
             elif fixture.attrib.get("id") == fixture_id:
                 return fixture
 
-    def get_fixtures(self, restore_user):
-        """
-        Gets all fixtures associated with an OTA restore operation
-        """
-        return self._get_fixtures(restore_user)
-
 
 generator = FixtureGenerator()
 
