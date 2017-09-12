@@ -829,6 +829,53 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         location = self.make_location('flea_bottom', metadata={'is_test': 'yes'})
         self.assertEqual(0, len(self.repeat_records().all()))
 
+        # saving a record multiple times shouldn't retrigger
+        location = self.make_location('kings_landing')
+        self.assertEqual(1, len(self.repeat_records().all()))
+        location.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # modifying the record and saving it shouldn't retrigger if the record hasn't sent
+        location = self.make_location('dorn')
+        self.assertEqual(2, len(self.repeat_records().all()))
+        record = list(self.repeat_records())[-1]
+        location.metadata['private_sector_org_id'] = "new data!"
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        mock_response_json = {
+            "code": 200,
+            "meta": {
+                "failCount": "0",
+                "successCount": "1",
+                "totalCount": "1",
+            },
+            "response": [
+                {
+                    "status": "Success",
+                    "failureDescription": ""
+                }
+            ]
+        }
+        with mock.patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+            mock_response = mock.MagicMock()
+            mock_response.status_code = 200
+            mock_response.json = mock.MagicMock(return_value=mock_response_json)
+            mock_post.return_value = mock_response
+            record.fire()
+            # record gets taken out of queue
+            self.assertEqual(1, len(self.repeat_records().all()))
+
+        location = SQLLocation.objects.get(location_id=location.location_id)
+        self.assertEqual(
+            location.metadata.get('BETS_location_repeat_record_ids'),
+            record._id
+        )
+        # updating the location after a successful send, should add this location to the queue
+        location.metadata['private_sector_org_id'] = 'Woop!'
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):

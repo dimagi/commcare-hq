@@ -575,6 +575,17 @@ class BETSLocationPayloadGenerator(LocationPayloadGenerator):
     def get_payload(self, repeat_record, location):
         return json.dumps(get_bets_location_json(location))
 
+    def handle_success(self, response, location, repeat_record):
+        existing_ids = location.metadata.get('BETS_location_repeat_record_ids')
+        if existing_ids:
+            location.metadata['BETS_location_repeat_record_ids'] = "{} {}".format(
+                existing_ids,
+                repeat_record._id
+            )                   # space separated list to follow xform convention
+        else:
+            location.metadata['BETS_location_repeat_record_ids'] = repeat_record._id
+        location.save()
+
 
 class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
     case_properties = [
