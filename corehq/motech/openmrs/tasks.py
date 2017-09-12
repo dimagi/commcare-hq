@@ -42,7 +42,29 @@ def get_caseblock(patient, case_type, owner_id):
     case_name = ' '.join((patient['givenName'], patient['familyName']))
     fields_to_update = {
         # TODO: Map column names to properties similar to openmrs_config.case_config
-        # 'dob': patient['birthdate'],  # API currently returning as a long int
+        'nid': patient['NID'],
+        'nome': patient['nome_inicial'],
+        'apelido': patient['apelido'],
+        'numero_de_telefone': patient['Telefone'],
+        'provincia': patient['provincia'],
+        'distrito': patient['distrito'],
+        'avenida': patient['localidade'],
+        'bairro': patient['bairro'],
+        'celula': patient['Referencia'],
+        'genero': patient['genero'],
+        'data_do_nacimento': patient['data_do_nacimento'],  # "sql-date"
+        'numero_de_filhos': patient['filhos'],
+        'numero_de_filhos_testados': patient['testados'],
+        'numero_de_filhos_positivos': patient['positivos'],
+        'parceiro_serologia': patient['serologia'],
+        'numero_conviventes': patient['conviventes'],
+        'tarv_elegivel': patient['tarv_elegivel'],
+        'estado_tarv': patient['estado_tarv'],
+        'gravida': patient['gravida'],
+        'coinfectado': patient['coinfectado'],
+        'a_faltar': patient['a_faltar'],
+        'data_ultima_consulta': patient['data_ultima_consulta'],  # "sql-timestamp"
+        'data_proxima_consulta': patient['data_proxima_consulta'],  # "sql-timestamp"
     }
     return CaseBlock(
         create=True,
