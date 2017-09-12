@@ -33,7 +33,11 @@
 </div>
 {% if needs_agreement %}
     <script>
+    {% if request.use_requirejs %}
+        requirejs(['jquery', 'bootstrap'], function($) {
+    {% else %}
         $(function(){
+    {% endif %}
             $('#eulaModal').modal('show');
         });
     </script>
