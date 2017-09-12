@@ -124,7 +124,7 @@ class CustomContent(Content):
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
-    def get_list_of_messages(self):
+    def get_list_of_messages(self, recipient, schedule_instance):
         if self.custom_content_id not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT:
             raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
 
@@ -133,7 +133,7 @@ class CustomContent(Content):
         )
         messages = custom_function(recipient, schedule_instance)
 
-        if not isinstance(content, list):
+        if not isinstance(messages, list):
             raise TypeError("Expected content to be a list of messages")
 
         return messages
@@ -144,5 +144,5 @@ class CustomContent(Content):
             return
 
         # Empty list is ok, we just won't send anything
-        for message in self.get_list_of_messages():
+        for message in self.get_list_of_messages(recipient, schedule_instance):
             send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message)

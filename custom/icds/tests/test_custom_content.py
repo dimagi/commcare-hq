@@ -1,13 +1,8 @@
-import uuid
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.hqcase.utils import submit_case_blocks, update_case
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.messaging.scheduling.models import CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from custom.icds.const import (
     AWC_LOCATION_TYPE_CODE,
@@ -23,14 +18,12 @@ from custom.icds.const import (
     MARATHI,
 )
 from custom.icds.messaging.custom_content import (
-    static_negative_growth_indicator,
     GROWTH_MONITORING_XMLNS,
     get_state_code,
     get_language_code_for_state,
     render_message,
 )
-from django.test import TestCase
-from xml.etree import ElementTree
+from custom.icds.tests.base import BaseICDSTest
 
 
 TEST_GROWTH_FORM_XML = """<?xml version="1.0" ?>
@@ -56,15 +49,16 @@ def submit_growth_form(domain, case_id, weight_prev, weight_child):
     submit_form_locally(xml, domain)
 
 
-@use_sql_backend
-class CustomContentTest(TestCase):
+class CustomContentTest(BaseICDSTest):
     domain = 'icds-custom-content-test'
 
     @classmethod
     def setUpClass(cls):
         super(CustomContentTest, cls).setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
-        cls.mother_person_case = cls.create_case('person')
+        cls.mother_person_case = cls.create_case(
+            'person',
+            update={'language_code': 'en'},
+        )
         cls.child_person_case = cls.create_case(
             'person',
             cls.mother_person_case.case_id,
@@ -80,14 +74,14 @@ class CustomContentTest(TestCase):
             'parent',
             'extension'
         )
-
-        update_case(
-            cls.domain,
-            cls.mother_person_case.case_id,
-            {'language_code': 'en'},
+        cls.red_child_health_extension_case = cls.create_case(
+            'child_health',
+            cls.child_person_case.case_id,
+            cls.child_person_case.type,
+            'parent',
+            'extension',
+            update={'zscore_grading_wfa': 'red'},
         )
-
-        cls.mother_person_case = CaseAccessors(cls.domain).get_case(cls.mother_person_case.case_id)
 
         cls.location_types = setup_location_types(cls.domain, [
             STATE_TYPE_CODE,
@@ -109,39 +103,9 @@ class CustomContentTest(TestCase):
         cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', location=cls.awc2)
         cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', location=cls.ls1)
 
-    @classmethod
-    def tearDownClass(cls):
-        CaseAccessorSQL.hard_delete_cases(
-            cls.domain,
-            [
-                cls.mother_person_case.case_id,
-                cls.child_person_case.case_id,
-                cls.child_health_extension_case.case_id,
-            ]
-        )
-        cls.domain_obj.delete()
-        super(CustomContentTest, cls).tearDownClass()
-
-    @classmethod
-    def create_case(cls, case_type, parent_case_id=None, parent_case_type=None, parent_identifier=None,
-            parent_relationship=None, case_name=None):
-
-        kwargs = {}
-        if parent_case_id:
-            kwargs['index'] = {parent_identifier: (parent_case_type, parent_case_id, parent_relationship)}
-
-        if case_name:
-            kwargs['case_name'] = case_name
-
-        caseblock = CaseBlock(
-            uuid.uuid4().hex,
-            case_type=case_type,
-            create=True,
-            **kwargs
-        )
-        return submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
-
     def test_static_negative_growth_indicator(self):
+        c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
+
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.child_health_extension_case.case_id,
@@ -150,14 +114,14 @@ class CustomContentTest(TestCase):
         # Test when current weight is greater than previous
         submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '10.4')
         self.assertEqual(
-            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case, schedule_instance),
             []
         )
 
         # Test when current weight is equal to previous
         submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '10.1')
         self.assertEqual(
-            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has remained static in the last "
              "month. Please consult your AWW for necessary advice."]
         )
@@ -165,7 +129,7 @@ class CustomContentTest(TestCase):
         # Test when current weight is less than previous
         submit_growth_form(self.domain, self.child_health_extension_case.case_id, '10.1', '9.9')
         self.assertEqual(
-            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
         )
@@ -183,9 +147,24 @@ class CustomContentTest(TestCase):
         update_case(self.domain, self.child_health_extension_case.case_id, {'property': 'value10'})
 
         self.assertEqual(
-            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
+        )
+
+    def test_static_negative_growth_indicator_with_red_status(self):
+        c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
+
+        schedule_instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            case_id=self.red_child_health_extension_case.case_id,
+        )
+
+        # Current weight is less than previous, but grade is red, so no messages are sent
+        submit_growth_form(self.domain, self.red_child_health_extension_case.case_id, '10.1', '9.9')
+        self.assertEqual(
+            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            []
         )
 
     def test_get_state_code(self):
