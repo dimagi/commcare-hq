@@ -62,27 +62,27 @@ class Command(BaseCommand):
                     case_properties = episode_case.dynamic_case_properties()
 
                     if self.should_migrate_case(case_properties):
-                        test = self.get_relevant_test_case(domain, episode_case, error_logger)
+                        episode_diagnosis_test_type_label = case_properties.get('diagnosis_test_type_label')
+                        test = self.get_relevant_test_case(
+                            domain, episode_case, episode_diagnosis_test_type_label, error_logger
+                        )
 
                         if test is not None:
-                            if case_properties.get('test_type_label') == test.dynamic_case_properties().get('test_type_label'):
-                                update = self.get_updates(test)
-                                print('Updating {}...'.format(episode_case_id))
-                                assert set(update) == set(updated_properties)
-                                writer.writerow(
-                                    [episode_case_id]
-                                    + [update[key] for key in updated_properties]
-                                    + [
-                                        test.dynamic_case_properties().get('test_type_label', ''),
-                                        test.dynamic_case_properties().get('test_type_value', ''),
-                                        case_properties.get('diagnosis_test_type_label', '')
-                                    ]
-                                )
+                            update = self.get_updates(test)
+                            print('Updating {}...'.format(episode_case_id))
+                            assert set(update) == set(updated_properties)
+                            writer.writerow(
+                                [episode_case_id]
+                                + [update[key] for key in updated_properties]
+                                + [
+                                    test.dynamic_case_properties().get('test_type_label', ''),
+                                    test.dynamic_case_properties().get('test_type_value', ''),
+                                    episode_diagnosis_test_type_label
+                                ]
+                            )
 
-                                if commit:
-                                    factory.update_case(case_id=episode_case_id, update=update)
-                            else:
-                                print('episode.test_type_label != test.test_type_label: {}'.format(episode_case_id))
+                            if commit:
+                                factory.update_case(case_id=episode_case_id, update=update)
                         else:
                             print('No relevant test found for episode {}'.format(episode_case_id))
                     else:
@@ -100,7 +100,7 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def get_relevant_test_case(domain, episode_case, error_logger):
+    def get_relevant_test_case(domain, episode_case, episode_diagnosis_test_type_label, error_logger):
         try:
             occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
         except ENikshayCaseNotFound:
@@ -113,6 +113,7 @@ class Command(BaseCommand):
             if case.type == 'test'
             and case.get_case_property('rft_general') == 'diagnosis_dstb'
             and case.get_case_property('result') == 'tb_detected'
+            and case.get_case_property('test_type_label') == episode_diagnosis_test_type_label
         ]
         if test_cases:
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
