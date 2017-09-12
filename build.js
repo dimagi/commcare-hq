@@ -1,9 +1,10 @@
 ({
     mainConfigFile: "corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js",
     baseUrl: 'staticfiles',
-    optimize: "none",
     fileExclusionRegExp: /(^\.)|(\.css$)/,
-    dir: 'built',   // TODO: send to staticfiles instead, rather than copying, but r.js throws an error
+    dir: 'staticfiles',
+    allowSourceOverwrites: true,
+    keepBuildDir: true,
     modules: [
         // Third-party modules
         {
