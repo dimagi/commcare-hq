@@ -54,7 +54,6 @@ from casexml.apps.phone.const import (
     CLEAN_OWNERS,
     LIVEQUERY,
 )
-from casexml.apps.phone.utils import get_restore_response_class
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -320,7 +319,7 @@ class CachedResponse(object):
 
     def __init__(self, domain, payload_path):
         self.payload_path = payload_path
-        self.restore_class = get_restore_response_class()
+        self.restore_class = BlobRestoreResponse
         self.payload = self.restore_class.get_payload(self.payload_path) if payload_path else None
 
     def __nonzero__(self):
@@ -405,9 +404,7 @@ class RestoreState(object):
     reasons.
     """
 
-    @property
-    def restore_class(self):
-        return get_restore_response_class()
+    restore_class = BlobRestoreResponse
 
     def __init__(self, project, restore_user, params, async=False,
                  overwrite_cache=False, case_sync=None):
