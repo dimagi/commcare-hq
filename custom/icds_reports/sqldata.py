@@ -243,14 +243,30 @@ class NationalAggregationDataSource(SqlData):
         return self.data_source.columns[1:]
 
 
-class AggChildHealthMonthlyDataSource(SqlData):
+class ProgressReportSqlData(SqlData):
+
+    @property
+    def filters(self):
+        filters = [
+            EQ('aggregation_level', 'aggregation_level')
+        ]
+        keys = ['state_id', 'district_id', 'block_id', 'supervisor_id']
+        for key in keys:
+            if key in self.config:
+                filters.append(
+                    EQ(key, key)
+                )
+        return filters
+
+
+class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -275,13 +291,9 @@ class AggChildHealthMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
+        filters = super(AggChildHealthMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -511,13 +523,13 @@ class AggChildHealthMonthlyDataSource(SqlData):
         ]
 
 
-class AggCCSRecordMonthlyDataSource(SqlData):
+class AggCCSRecordMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_ccs_record_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -533,15 +545,9 @@ class AggCCSRecordMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
-
+        filters = super(AggCCSRecordMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -639,13 +645,13 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         ]
 
 
-class AggAWCMonthlyDataSource(SqlData):
+class AggAWCMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -657,12 +663,10 @@ class AggAWCMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level'),
-            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
-        ]
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
+        filters = super(AggAWCMonthlyDataSource, self).filters
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -1893,6 +1897,13 @@ class ProgressReport(object):
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
                         'rows_config': [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who are anemic',
+                                'slug': 'severe_anemic',
+                                'average': [],
+                                'format': 'percent'
+                            },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women with tetanus completed',
