@@ -21,5 +21,11 @@
             name: "hqwebapp/js/built",
             exclude: ["hqwebapp/js/common"],
         },
+
+        // App-specific modules
+        {
+            name: "fixtures/js/built",
+            exclude: ["hqwebapp/js/common", "hqwebapp/js/built"],
+        },
     ],
 });
