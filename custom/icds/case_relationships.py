@@ -76,3 +76,8 @@ def mother_person_case_from_child_health_case(child_health_case):
 def child_person_case_from_tasks_case(tasks_case):
     child_health_case = child_health_case_from_tasks_case(tasks_case)
     return child_person_case_from_child_health_case(child_health_case)
+
+
+def mother_person_case_from_tasks_case(tasks_case):
+    ccs_record_case = ccs_record_case_from_tasks_case(tasks_case)
+    return mother_person_case_from_ccs_record_case(ccs_record_case)

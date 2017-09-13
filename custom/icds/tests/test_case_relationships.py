@@ -6,6 +6,7 @@ from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
     mother_person_case_from_child_health_case,
     child_person_case_from_tasks_case,
+    mother_person_case_from_tasks_case,
 )
 from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.tests.base import BaseICDSTest
@@ -55,6 +56,11 @@ class CaseRelationshipTest(BaseICDSTest):
             self.child_person_case.case_id
         )
 
+        self.assertEqual(
+            mother_person_case_from_tasks_case(self.mother_tasks_case).case_id,
+            self.mother_person_case.case_id
+        )
+
     def test_case_type_mismatch(self):
         with self.assertRaises(ValueError):
             child_health_case_from_tasks_case(self.child_person_case)
@@ -62,6 +68,9 @@ class CaseRelationshipTest(BaseICDSTest):
     def test_parent_case_type_mismatch(self):
         with self.assertRaises(CaseRelationshipError):
             child_health_case_from_tasks_case(self.mother_tasks_case)
+
+        with self.assertRaises(CaseRelationshipError):
+            ccs_record_case_from_tasks_case(self.child_tasks_case)
 
     def test_no_parent_case(self):
         with self.assertRaises(CaseRelationshipError):
