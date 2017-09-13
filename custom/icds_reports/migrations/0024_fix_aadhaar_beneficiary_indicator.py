@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from corehq.sql_db.operations import noop_migration
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
@@ -12,9 +11,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('icds_reports',
-         '0020_combine_person_query'),
+         '0023_fix_view'),
     ]
 
     operations = [
-            noop_migration(),
+        migrator.get_migration('update_tables10.sql'),
+        migrator.get_migration('create_datasource_views.sql'),
     ]

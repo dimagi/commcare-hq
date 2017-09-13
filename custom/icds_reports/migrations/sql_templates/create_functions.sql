@@ -962,18 +962,24 @@ DECLARE
 	_yes_text text;
 	_no_text text;
 	_female text;
+	_month_end_6yr date;
+	_month_start_11yr date;
 	_month_end_11yr date;
 	_month_start_15yr date;
 	_month_end_15yr date;
 	_month_start_18yr date;
+	_month_end_49yr date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
 	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+	_month_end_6yr = (_end_date + INTERVAL ' - 6 YEAR')::DATE;
+	_month_start_11yr = (_start_date + INTERVAL ' - 11 YEAR')::DATE;
 	_month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
 	_month_start_15yr = (_start_date + INTERVAL ' - 15 YEAR')::DATE;
 	_month_end_15yr = (_end_date + INTERVAL ' - 15 YEAR')::DATE;
 	_month_start_18yr = (_start_date + INTERVAL ' - 18 YEAR')::DATE;
+	_month_end_49yr = (_end_date + INTERVAL ' - 49 YEAR')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
 	_yes_text = 'yes';
@@ -1138,6 +1144,7 @@ BEGIN
 		'cases_person = ut.cases_person, ' ||
 		'cases_person_all = ut.cases_person_all, ' ||
 		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar, ' ||
+		'cases_person_beneficiary = ut.cases_person_beneficiary, ' ||
 		'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
 		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
 		'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
@@ -1146,7 +1153,15 @@ BEGIN
 		'awc_id, ' ||
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
-		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
+		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
+                  ' AND (dob <= ' || quote_literal(_month_end_6yr) ||
+                  ' OR (dob >= ' || quote_literal(_month_start_11yr) || ' AND dob <= ' || quote_literal(_month_end_49yr) || '))' ||
+                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_start_date) || ')' ||
+      ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
+		'sum(CASE WHEN (dob <= ' || quote_literal(_month_end_6yr) ||
+                  ' OR (dob >= ' || quote_literal(_month_start_11yr) || ' AND dob <= ' || quote_literal(_month_end_49yr) || '))' ||
+                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_start_date) || ')' ||
+      ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
@@ -1477,7 +1492,8 @@ BEGIN
         'sum(cases_person_adolescent_girls_15_18), ' ||
         'sum(cases_person_adolescent_girls_11_14_all), ' ||
         'sum(cases_person_adolescent_girls_15_18_all), ' ||
-        'sum(infra_infant_weighing_scale) ';
+        'sum(infra_infant_weighing_scale), ' ||
+        'sum(cases_person_beneficiary) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1698,6 +1714,7 @@ BEGIN
 	    'cases_person, ' ||
 	    'cases_person_all, ' ||
 	    'cases_person_has_aadhaar, ' ||
+	    'cases_person_beneficiary, ' ||
 	    'cases_child_health, ' ||
 	    'cases_child_health_all, ' ||
 	    'cases_ccs_pregnant, ' ||
@@ -1737,6 +1754,7 @@ BEGIN
             'cases_person, ' ||
             'cases_person_all, ' ||
             'cases_person_has_aadhaar, ' ||
+            'cases_person_beneficiary, ' ||
             'cases_child_health, ' ||
             'cases_child_health_all, ' ||
             'cases_ccs_pregnant, ' ||
@@ -1781,6 +1799,7 @@ BEGIN
 		'sum(cases_person), ' ||
 		'sum(cases_person_all), ' ||
 		'sum(cases_person_has_aadhaar), ' ||
+		'sum(cases_person_beneficiary), ' ||
 		'sum(cases_child_health), ' ||
 		'sum(cases_child_health_all), ' ||
 		'sum(cases_ccs_pregnant), ' ||
