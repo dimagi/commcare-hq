@@ -449,8 +449,16 @@
                         ko.mapping = mapping;
                         djangoModule.gettext = django.gettext;
                     },
+                    {% if not DEBUG %}
+                    bundles: {
+                        // Bundle this because it'd be annoying to have to say common.$
+                        'hqwebapp/js/common': ['jquery', 'knockout', 'bootstrap.min', 'django', 'underscore', 'ko.mapping', 'ko.knockout_bindings'],
+                    },
+                    {% endif %}
                 });
-                requirejs(['{% block requirejs_entry %}{% endblock requirejs_entry %}']);
+                requirejs(['hqwebapp/js/common'], function (common) {
+                    requirejs(['{% block requirejs_entry %}{% endblock requirejs_entry %}']);
+                });
             </script>
         {% endif %}
 
@@ -554,7 +562,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if not not request.use_requirejs %}
+        {% if not request.use_requirejs %}
         {% if request.use_maps or request.use_maps_async %}
         {% compress js %}
         <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
