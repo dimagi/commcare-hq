@@ -1,4 +1,5 @@
-/* global DOMPurify */
+/* global hqGlobal, DOMPurify */
+hqGlobal("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
@@ -733,3 +734,5 @@ ko.bindingHandlers.bind_element = {
         }
     }
 };
+
+});
