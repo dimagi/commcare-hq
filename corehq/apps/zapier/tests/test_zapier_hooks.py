@@ -142,7 +142,8 @@ class TestZapierIntegration(TestCase):
             )
             self.assertIsNotNone(subscription.repeater_id)
             self.assertNotEqual(subscription.repeater_id, '')
-            self.assertEqual(repeater_class.get_db().get(subscription.repeater_id)['doc_type'], repeater_class.__name__)
+            self.assertEqual(repeater_class.get_db().get(subscription.repeater_id)['doc_type'],
+                             repeater_class.__name__)
 
     def test_subscribe_error(self):
         data = {
