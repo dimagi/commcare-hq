@@ -213,10 +213,10 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
         'red': []
     }
 
-    tooltips_data = defaultdict(lambda: {
+    tooltips_data = {
         'in_day': 0,
         'all': 0
-    })
+    }
 
     for row in data:
         valid = row['all']

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -209,6 +209,11 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
         'red': []
     }
 
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'low_birth': 0,
+    })
+
     for row in data:
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
@@ -228,6 +233,9 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
 
         value = (low_birth or 0) * 100 / float(in_month or 1)
 
+        tooltips_data[name]['low_birth'] += low_birth
+        tooltips_data[name]['in_month'] += (in_month or 0)
+
         if value <= 20.0:
             loc_data['green'] += 1
         elif 20.0 <= value <= 60.0:
@@ -243,6 +251,7 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
     chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
+        "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['green'],
