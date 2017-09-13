@@ -79,10 +79,12 @@ hqGlobal("reports/js/filters", [
         }
 
         // Date ranges (used in accounting)
-        $('.date-range').datepicker({
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: 'yy-mm-dd',
+        $('.date-range').each(function() {
+            $(this).datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: 'yy-mm-dd',
+            });
         });
 
         // Optional date ranges, optional month+year (used in accounting)
