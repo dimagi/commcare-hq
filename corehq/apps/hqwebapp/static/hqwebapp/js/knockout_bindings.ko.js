@@ -1,5 +1,5 @@
-/* global hqGlobal, DOMPurify */
-hqGlobal("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout'], function($, ko) {
+/* global hqDefine, DOMPurify */
+hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
