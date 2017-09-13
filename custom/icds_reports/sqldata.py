@@ -477,7 +477,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Children (0 - 28 Days) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_0')]
+                    filters=self.filters + [EQ('age_tranche', 'age_0')],
+                    alias='zero'
                 ),
                 slug='zero'
             ),
@@ -485,7 +486,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Children (28 Days - 6 mo) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_6')]
+                    filters=self.filters + [EQ('age_tranche', 'age_6')],
+                    alias='one'
                 ),
                 slug='one'
             ),
@@ -493,7 +495,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Children (6 mo - 1 year) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_12')]
+                    filters=self.filters + [EQ('age_tranche', 'age_12')],
+                    alias='two'
                 ),
                 slug='two'
             ),
@@ -504,7 +507,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     filters=self.filters + [OR([
                         EQ('age_tranche', 'age_24'),
                         EQ('age_tranche', 'age_36')
-                    ])]
+                    ])],
+                    alias='three'
                 ),
                 slug='three'
             ),
@@ -516,7 +520,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                         EQ('age_tranche', 'age_48'),
                         EQ('age_tranche', 'age_60'),
                         EQ('age_tranche', 'age_72')
-                    ])]
+                    ])],
+                    alias='four'
                 ),
                 slug='four'
             )
@@ -1074,7 +1079,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         if self.loc_level > 4:
             columns.extend([
                 DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('Gender', SimpleColumn('ccs_status'), slug='ccs_status'),
+                DatabaseColumn('CCS Status', SimpleColumn('ccs_status'), slug='ccs_status'),
                 DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
                 DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
                 DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
@@ -1218,12 +1223,16 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         agg_columns = [
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [
-                    OR([
-                        RawFilter("age_tranche = '0'"),
-                        RawFilter("age_tranche = '6'")
-                    ])
-                ]),
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [
+                        OR([
+                            RawFilter("age_tranche = '0'"),
+                            RawFilter("age_tranche = '6'")
+                        ])
+                    ],
+                    alias='num_children_0_6mo_enrolled_for_services'
+                ),
                 slug='num_children_0_6mo_enrolled_for_services'
             ),
             DatabaseColumn(
@@ -1236,7 +1245,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '24'"),
                             RawFilter("age_tranche = '36'")
                         ])
-                    ]
+                    ],
+                    alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
             ),
@@ -1250,7 +1260,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '60'"),
                             RawFilter("age_tranche = '72'")
                         ])
-                    ]
+                    ],
+                    alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'
             ),
