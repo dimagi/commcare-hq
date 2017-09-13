@@ -123,7 +123,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
 
                 var content = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(data.all) + "</strong></p>";
-                content += "<p>% of children " + x + ": <strong>" + d3.format(".2%")(data.y / data.all) + "</strong></p>";
+                var average = (data.all !== 0) ? d3.format(".2%")(data.y / data.all) : 0;
+
+                content += "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
                 return content;
             },
             clipVoronoi: false,
