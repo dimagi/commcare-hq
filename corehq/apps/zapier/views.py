@@ -59,7 +59,7 @@ class SubscribeView(View):
                 application_id=data['application'],
                 form_xmlns=data['form'],
             )
-        elif data['event'] == EventTypes.NEW_CASE:
+        elif data['event'] in (EventTypes.NEW_CASE, EventTypes.UPDATE_CASE):
             subscription = ZapierSubscription.objects.create(
                 domain=domain,
                 user_id=str(request.couch_user.get_id),
