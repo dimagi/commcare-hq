@@ -437,6 +437,21 @@
 
         {# javascript below this line #}
 
+        {% if request.use_requirejs %}
+            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+            <script src="{% static 'requirejs/require.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+            <script type="text/javascript">
+                requirejs.config({
+                    deps: ['knockout', 'ko.mapping'],
+                    callback: function (ko, mapping) {
+                        ko.mapping = mapping;
+                    },
+                });
+                requirejs(['{% block requirejs_entry %}{% endblock requirejs_entry %}']);
+            </script>
+        {% endif %}
+
         {# HQ Specific Libraries #}
         {% if not request.use_requirejs %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
