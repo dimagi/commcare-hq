@@ -174,6 +174,11 @@ class RestoreResponse(object):
         '''
         raise NotImplemented()
 
+    def get_http_response(self):
+        filename = self.get_filename()
+        headers = {'Content-Length': self.get_content_length(filename)}
+        return stream_response(self.as_file(), headers)
+
     def __str__(self):
         return self.as_string()
 
@@ -212,10 +217,6 @@ class FileRestoreResponse(RestoreResponse):
     def as_string(self):
         with open(self.get_filename(), 'r') as f:
             return f.read()
-
-    def get_http_response(self):
-        headers = {'Content-Length': os.path.getsize(self.get_filename())}
-        return stream_response(open(self.get_filename(), 'r'), headers)
 
 
 class BlobRestoreResponse(RestoreResponse):
@@ -258,10 +259,6 @@ class BlobRestoreResponse(RestoreResponse):
             return blob.read()
         finally:
             blob.close()
-
-    def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(self.get_filename())}
-        return stream_response(get_blob_db().get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
