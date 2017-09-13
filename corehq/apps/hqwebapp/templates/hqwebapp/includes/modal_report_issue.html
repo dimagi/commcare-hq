@@ -146,7 +146,11 @@
     </div>
     {% addtoblock js-inline %}
     <script>
+    {% if request.use_requirejs %}
+        requirejs(['jquery', 'bootstrap'], function($) {
+    {% else %}
         $(window).on('load', function(){
+    {% endif %}
             $('#modalTrial30Day').modal('show');
         });
     </script>
