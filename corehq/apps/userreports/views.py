@@ -1065,6 +1065,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
             'can_rebuild': self.can_rebuild,
+            'used_by_reports': self.get_reports(),
         }
 
     @property
@@ -1122,6 +1123,11 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     EditDataSourceView.urlname, args=[self.domain, config._id])
                 )
         return self.get(request, *args, **kwargs)
+
+    def get_reports(self):
+        reports = StaticReportConfiguration.by_domain(self.domain)
+        reports += ReportConfiguration.by_domain(self.domain)
+        return [report for report in reports if report.table_id == self.config.table_id]
 
     def get(self, request, *args, **kwargs):
         if self.config.is_deactivated:

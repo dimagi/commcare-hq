@@ -700,7 +700,7 @@ class UserRepeaterTest(TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_user(self, location):
+    def make_user(self, location, user_data=None):
         user = CommCareUser.create(
             self.domain,
             "davos.shipwright@stannis.gov",
@@ -709,6 +709,8 @@ class UserRepeaterTest(TestCase):
             commit=False,
         )
         user.user_data['user_level'] = 'real'
+        if user_data:
+            user.user_data.update(user_data)
         user.save()
         self.addCleanup(user.delete)
         return user
@@ -722,6 +724,14 @@ class UserRepeaterTest(TestCase):
             {'dtoLocation': self.dto_location.location_id,
              'privateSectorOrgId': self.private_location.metadata['private_sector_org_id']},
             json.loads(records[0].get_payload())
+        )
+
+    def test_private_user_payload(self):
+        self.make_user(self.private_location, {'contact_phone_number': "911234567890"})
+        record = self.repeat_records().all()[0]
+        self.assertEqual(
+            json.loads(record.get_payload())['default_phone_number'],
+            "1234567890"
         )
 
     def test_public_user(self):
@@ -859,6 +869,7 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
     def create_person_case(self, location_id, private=True):
         case = get_person_case_structure(None, self.episode_id)
         case.attrs['owner_id'] = location_id
+        case.attrs['update']['contact_phone_number'] = '911234567890'
         case.attrs['update'][ENROLLED_IN_PRIVATE] = "true" if private else "false"
         return self.factory.create_or_update_cases([case])[0]
 
@@ -889,3 +900,12 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
         # frivolous update shouldn't trigger another repeat
         update_case(self.domain, real_person.case_id, {frivolous_case_property: "blue"})
         self.assertEqual(2, len(self.repeat_records().all()))
+
+    def test_payload(self):
+        self.create_person_case(self.real_location.location_id)
+        record = self.repeat_records().all()[0]
+        payload = json.loads(record.get_payload())
+        self.assertEqual(
+            payload['properties']['phone_number'],
+            '1234567890'  # "91" is removed
+        )

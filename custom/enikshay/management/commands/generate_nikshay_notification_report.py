@@ -58,7 +58,7 @@ class Command(BaseCommand):
         )
 
     def _search_person_using_enikshay_id(self, enikshay_id):
-        return self.search.case_property_query("person_id", enikshay_id).values_list(['_id', ], flat=True)
+        return self.search.case_property_query("person_id", enikshay_id).values_list('_id', flat=True)
 
     def _load_episode_ids_from_person(self, file_path):
         """

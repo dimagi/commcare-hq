@@ -478,9 +478,10 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
 
 
 def _should_not_rebuild_export(export, last_access_cutoff):
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
     return (
         last_access_cutoff
+        and export.auto_rebuild_enabled
         and export.last_accessed
         and export.last_accessed < last_access_cutoff
     )

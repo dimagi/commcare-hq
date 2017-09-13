@@ -154,6 +154,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             $('.variable-form_name').text(name);
             hqImport('app_manager/js/app_manager').updatePageTitle(name);
             $('#edit-form-name-modal').modal('hide');
+            $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
     });

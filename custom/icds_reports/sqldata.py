@@ -243,14 +243,30 @@ class NationalAggregationDataSource(SqlData):
         return self.data_source.columns[1:]
 
 
-class AggChildHealthMonthlyDataSource(SqlData):
+class ProgressReportSqlData(SqlData):
+
+    @property
+    def filters(self):
+        filters = [
+            EQ('aggregation_level', 'aggregation_level')
+        ]
+        keys = ['state_id', 'district_id', 'block_id', 'supervisor_id']
+        for key in keys:
+            if key in self.config:
+                filters.append(
+                    EQ(key, key)
+                )
+        return filters
+
+
+class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -275,13 +291,9 @@ class AggChildHealthMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
+        filters = super(AggChildHealthMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -465,7 +477,8 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 'Children (0 - 28 Days) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_0')]
+                    filters=self.filters + [EQ('age_tranche', 'age_0')],
+                    alias='zero'
                 ),
                 slug='zero'
             ),
@@ -473,7 +486,8 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 'Children (28 Days - 6 mo) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_6')]
+                    filters=self.filters + [EQ('age_tranche', 'age_6')],
+                    alias='one'
                 ),
                 slug='one'
             ),
@@ -481,7 +495,8 @@ class AggChildHealthMonthlyDataSource(SqlData):
                 'Children (6 mo - 1 year) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_12')]
+                    filters=self.filters + [EQ('age_tranche', 'age_12')],
+                    alias='two'
                 ),
                 slug='two'
             ),
@@ -492,7 +507,8 @@ class AggChildHealthMonthlyDataSource(SqlData):
                     filters=self.filters + [OR([
                         EQ('age_tranche', 'age_24'),
                         EQ('age_tranche', 'age_36')
-                    ])]
+                    ])],
+                    alias='three'
                 ),
                 slug='three'
             ),
@@ -504,20 +520,21 @@ class AggChildHealthMonthlyDataSource(SqlData):
                         EQ('age_tranche', 'age_48'),
                         EQ('age_tranche', 'age_60'),
                         EQ('age_tranche', 'age_72')
-                    ])]
+                    ])],
+                    alias='four'
                 ),
                 slug='four'
             )
         ]
 
 
-class AggCCSRecordMonthlyDataSource(SqlData):
+class AggCCSRecordMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_ccs_record_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -533,15 +550,9 @@ class AggCCSRecordMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
-
+        filters = super(AggCCSRecordMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -639,13 +650,13 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         ]
 
 
-class AggAWCMonthlyDataSource(SqlData):
+class AggAWCMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -657,12 +668,10 @@ class AggAWCMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level'),
-            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
-        ]
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
+        filters = super(AggAWCMonthlyDataSource, self).filters
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -1214,12 +1223,16 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         agg_columns = [
             DatabaseColumn(
                 'num_children_0_6mo_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [
-                    OR([
-                        RawFilter("age_tranche = '0'"),
-                        RawFilter("age_tranche = '6'")
-                    ])
-                ]),
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [
+                        OR([
+                            RawFilter("age_tranche = '0'"),
+                            RawFilter("age_tranche = '6'")
+                        ])
+                    ],
+                    alias='num_children_0_6mo_enrolled_for_services'
+                ),
                 slug='num_children_0_6mo_enrolled_for_services'
             ),
             DatabaseColumn(
@@ -1232,7 +1245,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '24'"),
                             RawFilter("age_tranche = '36'")
                         ])
-                    ]
+                    ],
+                    alias='num_children_6mo3yr_enrolled_for_services'
                 ),
                 slug='num_children_6mo3yr_enrolled_for_services'
             ),
@@ -1246,7 +1260,8 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '60'"),
                             RawFilter("age_tranche = '72'")
                         ])
-                    ]
+                    ],
+                    alias='num_children_3yr6yr_enrolled_for_services'
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'
             ),
@@ -1893,6 +1908,13 @@ class ProgressReport(object):
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
                         'rows_config': [
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who are anemic',
+                                'slug': 'severe_anemic',
+                                'average': [],
+                                'format': 'percent'
+                            },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women with tetanus completed',
