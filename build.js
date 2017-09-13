@@ -11,6 +11,10 @@
         {
             name: "hqwebapp/js/common",
         },
+        {
+            name: "hqwebapp/js/jquery-ui",
+            exclude: ["hqwebapp/js/common"],
+        },
 
         // Modules common to HQ
         {
