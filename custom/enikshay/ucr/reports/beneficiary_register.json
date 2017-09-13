@@ -577,7 +577,7 @@
                             "property_name": "adherence_total_doses_taken"
                         }
                     },
-                    "statement": "str(round(float(b * 100) / a), 2) + '%'"
+                    "statement": "str(round(float(b * 100) / a, 2)) + '%'"
                 },
                 "type": "expression",
                 "display": "Total Adherence Score",
