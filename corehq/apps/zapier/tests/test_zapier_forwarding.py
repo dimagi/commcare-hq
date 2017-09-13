@@ -35,7 +35,7 @@ class TestZapierCaseForwarding(TestCase):
         ZapierSubscription.objects.all().delete()
 
     @run_with_all_backends
-    def test_case_forwarding(self):
+    def test_create_case_forwarding(self):
         subscription = ZapierSubscription.objects.create(
             domain=self.domain,
             user_id=str(self.web_user._id),
@@ -43,6 +43,8 @@ class TestZapierCaseForwarding(TestCase):
             url='http://example.com/lets-make-some-cases/',
             case_type='animal',
         )
+
+        # creating a case should trigger the repeater
         case_id = uuid.uuid4().hex
         post_case_blocks(
             [
@@ -57,3 +59,15 @@ class TestZapierCaseForwarding(TestCase):
         self.assertEqual(1, len(repeat_records))
         record = repeat_records[0]
         self.assertEqual(case_id, record.payload_id)
+
+        # updating a case should not
+        post_case_blocks(
+            [
+                CaseBlock(
+                    create=False,
+                    case_id=case_id,
+                ).as_xml()
+            ], domain=self.domain
+        )
+        repeat_records = list(RepeatRecord.all(domain=self.domain))
+        self.assertEqual(1, len(repeat_records))
