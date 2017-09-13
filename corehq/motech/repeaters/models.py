@@ -369,6 +369,7 @@ class CreateCaseRepeater(CaseRepeater):
     # note: the logic for how this is managed is handled in signals.create_case_repeat_records
     # so this class actually does nothing except exist to be able to differentiate the two
     # at the repeater and repeat record level. otherwise it's exactly the same as CaseRepeater
+    friendly_name = _("Forward Cases on Creation Only")
     pass
 
 
@@ -378,6 +379,7 @@ class UpdateCaseRepeater(CaseRepeater):
     Used by the Zapier integration.
     """
     # see note above
+    friendly_name = _("Forward Cases on Update Only")
     pass
 
 
