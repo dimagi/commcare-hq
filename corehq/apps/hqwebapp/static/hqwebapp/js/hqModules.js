@@ -39,30 +39,16 @@
 
 var COMMCAREHQ_MODULES = {};
 
+/*
+ * Transitional version of "define" to handle both RequireJS and non-RequireJS pages.
+ * Signature deliberately matches that of "define". On non-RequireJS pages, the dependencies
+ * argument is optional, and moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+ */
 function hqDefine(path, dependencies, moduleAccessor) {
     if (arguments.length === 2) {
         return hqDefine(path, [], dependencies);
     }
 
-    (function(factory) {
-        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
-            define(path, dependencies, factory);
-        } else {
-            if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
-                throw new Error("The module '" + path + "' has already been defined elsewhere.");
-            }
-            if (path.match(/\.js$/)) {
-                throw new Error("Error in '" + path + "': module names should not end in .js.");
-            }
-            COMMCAREHQ_MODULES[path] = factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
-        }
-    }(moduleAccessor));
-}
-
-// Stopgap for modules that are sometimes used by RequireJS and sometimes not, but
-// which have not yet been converted to hqDefine. When not on a RequireJS page,
-// moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
-function hqGlobal(path, dependencies, moduleAccessor) {
     var thirdParty = {
         'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
         'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
@@ -88,6 +74,9 @@ function hqGlobal(path, dependencies, moduleAccessor) {
                     throw new Error("Error in '" + path + "': module names should not end in .js.");
                 }
                 COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
+            }
+            else {
+                throw new Error("The module '" + path + "' has already been defined elsewhere.");
             }
         }
     }(moduleAccessor));
