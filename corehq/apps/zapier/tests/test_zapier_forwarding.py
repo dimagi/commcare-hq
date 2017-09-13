@@ -18,8 +18,6 @@ class TestZapierCaseForwarding(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierCaseForwarding, cls).setUpClass()
-        from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-        delete_all_users()
         cls.domain = DOMAIN
         cls.domain_object, cls.web_user, cls.api_key = bootrap_domain_for_zapier(cls.domain)
 
