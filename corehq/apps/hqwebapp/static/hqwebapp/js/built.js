@@ -1,5 +1,5 @@
 /* globals define */
-define("hqwebapp/js/built", [
+hqGlobal("hqwebapp/js/built", [
     "hqwebapp/js/alert_user",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",

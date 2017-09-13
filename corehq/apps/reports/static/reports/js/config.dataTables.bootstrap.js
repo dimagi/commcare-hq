@@ -1,5 +1,5 @@
 /* global hqDefine, jQuery */
-hqDefine("reports/js/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
+hqGlobal("reports/js/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
     var HQReportDataTables = function(options) {
         var self = this;
         self.dataTableElem = options.dataTableElem || '.datatable';
