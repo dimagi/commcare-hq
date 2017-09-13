@@ -885,13 +885,10 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     return config
 
 
-def get_beneficiary_details(domain, case_id, month, show_test=False):
+def get_beneficiary_details(case_id, month):
     data = ChildHealthMonthlyView.objects.filter(
         case_id=case_id, month__lte=datetime(*month)
     ).order_by('month')
-
-    if not show_test:
-        data = apply_exclude(domain, data)
 
     beneficiary = {
         'weight': [],
