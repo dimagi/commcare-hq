@@ -1,4 +1,4 @@
-/* globals hqGlobal, COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
+/* globals hqDefine, COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
@@ -7,7 +7,7 @@
 
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
-hqGlobal("reports/js/standard_hq_report", [
+hqDefine("reports/js/standard_hq_report", [
     'jquery',
     'underscore',
     'hqwebapp/js/built',

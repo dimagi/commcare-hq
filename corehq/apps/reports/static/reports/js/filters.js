@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqGlobal("reports/js/filters", [
+hqDefine("reports/js/filters", [
     'jquery',
     'knockout',
     'hqwebapp/js/built',
