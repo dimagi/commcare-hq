@@ -1,4 +1,5 @@
-$(function() {
+/* global hqGlobal */
+hqGlobal("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({
             url: '/announcements/clear/' + announcementID
@@ -43,7 +44,6 @@ $(function() {
         $.timeago.settings.allowFuture = true;
         $(".timeago").timeago();
     }
-});
 
 window.onerror = function(message, file, line, col, error) {
     $.post('/jserror/', {
@@ -159,4 +159,7 @@ $.ajaxSetup({
             xhr.setRequestHeader("X-CSRFToken", $csrf_token);
         }
     },
+
+    // Return something so that hqModules understands that the module has been defined
+    return 1;
 });
