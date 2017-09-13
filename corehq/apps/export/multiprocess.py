@@ -339,12 +339,11 @@ class MultiprocessExporter(object):
 
         return final_file_obj.name
 
-    def upload(self, final_path, clean=True):
+    def upload(self, final_path):
         logger.info('Uploading final export')
         with open(final_path, 'r') as payload:
             save_export_payload(self.export_instance, payload)
-        if clean:
-            os.remove(final_path)
+        os.remove(final_path)
 
 
 def _add_compressed_page_to_zip(zip_file, page_number, zip_path_to_add):
