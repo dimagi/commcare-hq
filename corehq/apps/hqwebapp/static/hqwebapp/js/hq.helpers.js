@@ -1,5 +1,5 @@
-/* global hqGlobal */
-hqGlobal("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
+/* global hqDefine */
+hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({
             url: '/announcements/clear/' + announcementID
