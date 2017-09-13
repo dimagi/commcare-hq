@@ -127,7 +127,7 @@ def rebuild_export_mutiprocess(export_id, num_processes, page_size=100000):
     exporter = MultiprocessExporter(export_instance, total_docs, num_processes)
     paginator = OutputPaginator(export_id)
     with exporter, paginator:
-        for index, doc in enumerate(get_export_documents(export_instance, filters)):
+        for doc in get_export_documents(export_instance, filters):
             paginator.write(doc)
             if paginator.page_size == page_size:
                 _log_page_dumped(paginator)
