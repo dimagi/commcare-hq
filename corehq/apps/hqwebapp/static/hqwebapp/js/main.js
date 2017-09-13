@@ -1,5 +1,5 @@
-/* globals hqGlobal */
-hqGlobal('hqwebapp/js/main', [
+/* globals hqDefine */
+hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
     "hqwebapp/js/alert_user",
