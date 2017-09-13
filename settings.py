@@ -1754,6 +1754,7 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
+    'corehq.motech.repeaters.models.UpdateCaseRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',

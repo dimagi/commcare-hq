@@ -364,10 +364,20 @@ class CaseRepeater(Repeater):
 class CreateCaseRepeater(CaseRepeater):
     """
     Just like CaseRepeater but only create records if the case is being created.
+    Used by the Zapier integration.
     """
     # note: the logic for how this is managed is handled in signals.create_case_repeat_records
     # so this class actually does nothing except exist to be able to differentiate the two
     # at the repeater and repeat record level. otherwise it's exactly the same as CaseRepeater
+    pass
+
+
+class UpdateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being updated.
+    Used by the Zapier integration.
+    """
+    # see note above
     pass
 
 
