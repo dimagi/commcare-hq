@@ -713,8 +713,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     def indices(self):
         indices = self._saved_indices()
 
-        to_delete = [to_delete.identifier for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
-        indices = [index for index in indices if index.identifier not in to_delete]
+        to_delete = [
+            (to_delete.id, to_delete.identifier)
+            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+        ]
+        indices = [index for index in indices if (index.id, index.identifier) not in to_delete]
 
         indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
 
@@ -725,7 +728,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.indices or self.reverse_indices
 
     def has_index(self, index_id):
-        return index_id in (i.identifier for i in self.indices)
+        return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
@@ -1040,6 +1043,9 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
+
     def __unicode__(self):
         return (
             "CaseIndex("
@@ -1056,6 +1062,8 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "case"],
             ["domain", "referenced_id"],
         ]
+        # add this once all duplicate have been removed
+        # unique_together = ('case', 'identifier')
         db_table = CommCareCaseIndexSQL_DB_TABLE
         app_label = "form_processor"
 
