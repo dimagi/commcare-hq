@@ -109,3 +109,43 @@ class TestZapierCaseForwarding(TestCase):
         self.assertEqual(1, len(repeat_records))
         record = repeat_records[0]
         self.assertEqual(case_id, record.payload_id)
+
+    @run_with_all_backends
+    def test_changed_case_forwarding(self):
+        subscription = ZapierSubscription.objects.create(
+            domain=self.domain,
+            user_id=str(self.web_user._id),
+            event_name=EventTypes.CHANGED_CASE,
+            url='http://example.com/lets-make-some-cases/',
+            case_type='animal',
+        )
+
+        # creating a case should NOT trigger the repeater
+        case_id = uuid.uuid4().hex
+        post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id=case_id,
+                    case_type='animal',
+                ).as_xml()
+            ], domain=self.domain
+        )
+        repeat_records = list(RepeatRecord.all(domain=self.domain))
+        self.assertEqual(1, len(repeat_records))
+        record = repeat_records[0]
+        self.assertEqual(case_id, record.payload_id)
+
+        # updating a case should
+        post_case_blocks(
+            [
+                CaseBlock(
+                    create=False,
+                    case_id=case_id,
+                ).as_xml()
+            ], domain=self.domain
+        )
+        repeat_records = list(RepeatRecord.all(domain=self.domain))
+        self.assertEqual(2, len(repeat_records))
+        for record in repeat_records:
+            self.assertEqual(case_id, record.payload_id)

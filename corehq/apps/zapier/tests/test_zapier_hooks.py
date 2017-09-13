@@ -6,7 +6,7 @@ from django.test.testcases import TestCase
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier, cleanup_repeaters_for_domain
 from corehq.motech.repeaters.models import FormRepeater, CreateCaseRepeater
-from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.apps.zapier.models import ZapierSubscription
 
@@ -120,51 +120,29 @@ class TestZapierIntegration(TestCase):
         self.assertIsNotNone(subscription.repeater_id)
         self.assertNotEqual(subscription.repeater_id, '')
 
-    def test_subscribe_case_create(self):
-        data = {
-            "subscription_url": ZAPIER_URL,
-            "target_url": ZAPIER_URL,
-            "event": EventTypes.NEW_CASE,
-            "case_type": CASE_TYPE
-        }
-        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
-                                    data=json.dumps(data),
-                                    content_type='application/json; charset=utf-8',
-                                    HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
-        self.assertEqual(response.status_code, 200)
+    def test_subscribe_case_events(self):
+        for event, repeater_class in CASE_TYPE_REPEATER_CLASS_MAP.items():
+            url = ZAPIER_URL + '/{}'.format(event)  # because urls must be unique
+            data = {
+                "subscription_url": ZAPIER_URL,
+                "target_url": url,
+                "event": event,
+                "case_type": CASE_TYPE
+            }
+            response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
+                                        data=json.dumps(data),
+                                        content_type='application/json; charset=utf-8',
+                                        HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
+            self.assertEqual(response.status_code, 200)
 
-        subscription = ZapierSubscription.objects.get(
-            url=ZAPIER_URL
-        )
-        self.assertListEqual(
-            [subscription.url, subscription.user_id, subscription.domain, subscription.case_type],
-            [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, CASE_TYPE]
-        )
-        self.assertIsNotNone(subscription.repeater_id)
-        self.assertNotEqual(subscription.repeater_id, '')
-
-    def test_subscribe_case_update(self):
-        data = {
-            "subscription_url": ZAPIER_URL,
-            "target_url": ZAPIER_URL,
-            "event": EventTypes.UPDATE_CASE,
-            "case_type": CASE_TYPE
-        }
-        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
-                                    data=json.dumps(data),
-                                    content_type='application/json; charset=utf-8',
-                                    HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
-        self.assertEqual(response.status_code, 200)
-
-        subscription = ZapierSubscription.objects.get(
-            url=ZAPIER_URL
-        )
-        self.assertListEqual(
-            [subscription.url, subscription.user_id, subscription.domain, subscription.case_type],
-            [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, CASE_TYPE]
-        )
-        self.assertIsNotNone(subscription.repeater_id)
-        self.assertNotEqual(subscription.repeater_id, '')
+            subscription = ZapierSubscription.objects.get(url=url)
+            self.assertListEqual(
+                [subscription.url, subscription.user_id, subscription.domain, subscription.case_type],
+                [url, self.web_user.get_id, TEST_DOMAIN, CASE_TYPE]
+            )
+            self.assertIsNotNone(subscription.repeater_id)
+            self.assertNotEqual(subscription.repeater_id, '')
+            self.assertEqual(repeater_class.get_db().get(subscription.repeater_id)['doc_type'], repeater_class.__name__)
 
     def test_subscribe_error(self):
         data = {
