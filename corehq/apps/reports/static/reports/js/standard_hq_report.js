@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
+/* globals hqGlobal, COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
@@ -7,9 +7,17 @@
 
     This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
-hqDefine("reports/js/standard_hq_report", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-        standardReport = undefined,
+hqGlobal("reports/js/standard_hq_report", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/built',
+    'bootstrap',
+], function(
+    $,
+    _,
+    hq
+) {
+    var standardReport = undefined,
         asyncReport = undefined;
 
     var getStandard = function() {
@@ -27,14 +35,14 @@ hqDefine("reports/js/standard_hq_report", function() {
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else if (typeof HQReport !== 'undefined') {
                 // Standard reports
-                var reportOptions = _.extend({}, initial_page_data('js_options'), {
+                var reportOptions = _.extend({}, hq.initialPageData.get('js_options'), {
                     emailSuccessMessage: gettext('Report successfully emailed'),
                     emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
                 });
-                if (initial_page_data('startdate')) {
+                if (hq.initialPageData.get('startdate')) {
                     reportOptions.datespan = {
-                        startdate: initial_page_data('startdate'),
-                        enddate: initial_page_data('enddate'),
+                        startdate: hq.initialPageData.get('startdate'),
+                        enddate: hq.initialPageData.get('enddate'),
                     };
                 }
                 var standardHQReport = new HQReport(reportOptions);
@@ -50,7 +58,7 @@ hqDefine("reports/js/standard_hq_report", function() {
             return asyncReport;
         }
 
-        var reportOptions = initial_page_data('js_options') || {};
+        var reportOptions = hq.initialPageData.get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: getStandard(),
