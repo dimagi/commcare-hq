@@ -1371,6 +1371,9 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
 class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHealthEstablishmentPayloadGenerator, self).setUp()
+        self.domain = 'domain'
+        self.project = Domain(name=self.domain)
+        self.project.save()
 
         self.repeater = NikshayHealthEstablishmentRepeater(
             domain=self.domain,
