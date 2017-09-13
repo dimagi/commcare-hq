@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "episode_v2",
     "report_id": "beneficiary_register",
     "config": {
         "description": "",
@@ -567,17 +567,17 @@
                     "type": "evaluator",
                     "context_variables": {
                         "a": {
-                            "datatype": "date",
+                            "datatype": "integer",
                             "type": "property_name",
-                            "property_name": "treatment_initiation_date"
+                            "property_name": "total_expected_doses_taken"
                         },
                         "b": {
                             "datatype": "integer",
                             "type": "property_name",
-                            "property_name": "aggregated_score_count_taken"
+                            "property_name": "adherence_total_doses_taken"
                         }
                     },
-                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
+                    "statement": "str(round(float(b * 100) / a), 2) + '%'"
                 },
                 "type": "expression",
                 "display": "Total Adherence Score",
