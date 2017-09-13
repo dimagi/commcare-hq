@@ -453,7 +453,6 @@
         <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
@@ -469,6 +468,8 @@
 
         {% if not request.use_requirejs %}
         {% include "hqwebapp/includes/ko.html" %}
+        <!-- koApplyBindings in hq.helpers depends on knockout -->
+        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
         {% compress js %}
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}
