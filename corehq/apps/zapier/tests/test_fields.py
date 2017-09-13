@@ -1,20 +1,10 @@
-import json
-
-from django.urls import reverse
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
-from tastypie.models import ApiKey
 from tastypie.resources import Resource
 
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
-from corehq.apps.zapier.views import ZapierCreateCase, ZapierUpdateCase
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.util import remove_advanced_fields
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 class TestRemoveAdvancedFields(SimpleTestCase):
