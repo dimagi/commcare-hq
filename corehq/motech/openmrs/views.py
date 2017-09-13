@@ -1,14 +1,22 @@
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.views import BaseAdminProjectSettingsView
+from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
-from corehq.motech.openmrs.forms import OpenmrsConfigForm
-from corehq.motech.openmrs.repeater_helpers import Requests, \
-    get_patient_identifier_types, get_person_attribute_types
+from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
+from corehq.motech.openmrs.repeater_helpers import (
+    Requests,
+    get_patient_identifier_types,
+    get_person_attribute_types,
+)
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from dimagi.utils.decorators.memoized import memoized
 
@@ -112,3 +120,33 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
 
     attempt = repeater.fire_for_record(record)
     return JsonResponse(attempt.to_json())
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
+class OpenmrsImporterView(BaseAdminProjectSettingsView):
+    urlname = 'openmrs_importer_view'
+    page_title = ugettext_lazy("OpenMRS Importers")
+    template_name = 'openmrs/importers.html'
+
+    def post(self, request, *args, **kwargs):
+        form = self.openmrs_importer_form
+        if form.is_valid():
+            form.save(self.domain)
+            get_openmrs_importers_by_domain.clear(request.domain)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @property
+    @memoized
+    def openmrs_importer_form(self):
+        importers = get_openmrs_importers_by_domain(self.request.domain)
+        initial = dict(importers[0]) if importers else {}  # TODO: Support multiple
+        if self.request.method == 'POST':
+            return OpenmrsImporterForm(self.request.POST, initial=initial)
+        return OpenmrsImporterForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'openmrs_importer_form': self.openmrs_importer_form}
