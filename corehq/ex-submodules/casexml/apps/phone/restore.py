@@ -254,11 +254,8 @@ class BlobRestoreResponse(RestoreResponse):
         return get_blob_db().size(identifier)
 
     def as_string(self):
-        try:
-            blob = get_blob_db().get(self.get_filename())
+        with get_blob_db().get(self.get_filename()) as blob:
             return blob.read()
-        finally:
-            blob.close()
 
 
 class AsyncRestoreResponse(object):
