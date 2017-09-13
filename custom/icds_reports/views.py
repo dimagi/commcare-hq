@@ -534,10 +534,8 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                domain,
                 self.request.GET.get('case_id'),
-                tuple(month.timetuple())[:3],
-                include_test
+                tuple(month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 
