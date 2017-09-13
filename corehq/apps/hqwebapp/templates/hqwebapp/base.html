@@ -439,7 +439,7 @@
                     {% if not DEBUG %}
                     bundles: {
                         // Bundle this because it'd be annoying to have to say common.$
-                        'hqwebapp/js/common': ['jquery', 'knockout', 'bootstrap.min', 'django', 'underscore', 'ko.mapping', 'ko.knockout_bindings'],
+                        'hqwebapp/js/common': ['jquery', 'knockout', 'bootstrap.min', 'hqwebapp/js/django', 'underscore', 'ko.mapping', 'ko.knockout_bindings'],
                     },
                     {% endif %}
                 });
