@@ -169,9 +169,9 @@ def run_export(export_instance, page_number, dump_path, doc_count, progress_trac
 def _get_export_documents_from_file(dump_path, doc_count):
     """Mimic the results of an ES scroll query but get results from jsonlines file"""
     def _doc_iter():
-        with gzip.open(dump_path) as f:
-            for line in f.readlines():
-                yield json.loads(line)
+        with gzip.open(dump_path) as file:
+            for line in file:
+                yield json.loads(line.decode())
         os.remove(dump_path)
 
     return ScanResult(doc_count, _doc_iter())
