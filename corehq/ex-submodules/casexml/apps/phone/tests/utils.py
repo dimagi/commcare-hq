@@ -286,7 +286,6 @@ class SyncResult(object):
 
 def delete_cached_response(response):
     if isinstance(response, BlobRestoreResponse):
-        key = response.get_filename()
-        get_blob_db().delete(key)
+        get_blob_db().delete(response.name)
     else:
         raise NotImplementedError(type(response).__name__)

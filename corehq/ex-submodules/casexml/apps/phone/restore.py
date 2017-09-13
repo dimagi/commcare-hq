@@ -719,7 +719,7 @@ class RestoreConfig(object):
         return response
 
     def set_cached_payload_if_necessary(self, resp, duration):
-        cache_payload_path = resp.get_filename()
+        cache_payload_path = resp.name
         # on initial sync, only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
