@@ -3,13 +3,11 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-<script src="{% static 'fixtures/js/lookup-manage.js' %}"></script>
-{% endblock %}
-
 {% block page_title %}
     {% trans 'Manage Lookup Tables' %}
 {% endblock %}
+
+{% block requirejs_entry %}fixtures/js/lookup-manage{% endblock requirejs_entry %}
 
 {% block page_content %}
 {% registerurl 'download_fixtures' domain %}
