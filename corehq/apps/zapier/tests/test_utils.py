@@ -3,6 +3,7 @@ from tastypie.models import ApiKey
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
 
 
 ZapierDomainConfig = namedtuple('ZapierDomainConfig', 'domain web_user api_key')
@@ -20,3 +21,10 @@ def bootrap_domain_for_zapier(domain_name):
     web_user = WebUser.create(domain_name, 'test', '******')
     api_key_object, _ = ApiKey.objects.get_or_create(user=web_user.get_django_user())
     return ZapierDomainConfig(domain_object, web_user, api_key_object.key)
+
+
+def cleanup_repeaters_for_domain(domain):
+    for repeater in FormRepeater.by_domain(domain):
+            repeater.delete()
+    for repeater in CaseRepeater.by_domain(domain):
+        repeater.delete()
