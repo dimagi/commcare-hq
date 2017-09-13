@@ -1,5 +1,5 @@
 import datetime
-from xml.etree.ElementTree import Element
+from xml.etree.cElementTree import Element
 from django.utils.translation import ugettext as _
 
 from casexml.apps.phone.fixtures import FixtureProvider

@@ -1,5 +1,5 @@
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -19,6 +19,8 @@ from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
+
+FIXTURE_BUCKET = 'domain-fixtures'
 
 
 class FixtureTypeField(DocumentSchema):

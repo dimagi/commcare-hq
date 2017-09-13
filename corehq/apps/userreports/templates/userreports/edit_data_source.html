@@ -53,4 +53,19 @@
   </form>
   {% endif %}
 {% endif %}
+
+{% if not used_by_reports  %}
+    <label class="label label-danger">Datasource currently unused</label>
+{% else %}
+    <fieldset>
+        <legend>Reports dependent on this datasource</legend>
+        <ul>
+            {% for report in used_by_reports %}
+                <li>{{report}}</li>
+            {% endfor %}
+        </ul>
+    </fieldset>
+{% endif %}
+
+
 {% endblock %}

@@ -6,7 +6,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):

@@ -243,14 +243,30 @@ class NationalAggregationDataSource(SqlData):
         return self.data_source.columns[1:]
 
 
-class AggChildHealthMonthlyDataSource(SqlData):
+class ProgressReportSqlData(SqlData):
+
+    @property
+    def filters(self):
+        filters = [
+            EQ('aggregation_level', 'aggregation_level')
+        ]
+        keys = ['state_id', 'district_id', 'block_id', 'supervisor_id']
+        for key in keys:
+            if key in self.config:
+                filters.append(
+                    EQ(key, key)
+                )
+        return filters
+
+
+class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -275,13 +291,9 @@ class AggChildHealthMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
+        filters = super(AggChildHealthMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -511,13 +523,13 @@ class AggChildHealthMonthlyDataSource(SqlData):
         ]
 
 
-class AggCCSRecordMonthlyDataSource(SqlData):
+class AggCCSRecordMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_ccs_record_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -533,15 +545,9 @@ class AggCCSRecordMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level')
-        ]
-
+        filters = super(AggCCSRecordMonthlyDataSource, self).filters
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
-
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -639,13 +645,13 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         ]
 
 
-class AggAWCMonthlyDataSource(SqlData):
+class AggAWCMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-test-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
-        self.loc_key = '%s_site_code' % loc_level
+        self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
@@ -657,12 +663,10 @@ class AggAWCMonthlyDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [
-            EQ('aggregation_level', 'aggregation_level'),
-            NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states)))
-        ]
-        if self.loc_key in self.config and self.config[self.loc_key]:
-            filters.append(EQ(self.loc_key, self.loc_key))
+        filters = super(AggAWCMonthlyDataSource, self).filters
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+
         if 'month' in self.config and self.config['month']:
             filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
@@ -1783,7 +1787,8 @@ class ProgressReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Weighing Efficiency (Children <5 weighed)',
                                 'slug': 'status_weighed',
-                                'average': []
+                                'average': [],
+                                'format': 'percent',
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1797,6 +1802,7 @@ class ProgressReport(object):
                                           'severely underweight (weight-for-age)',
                                 'slug': 'severely_underweight',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
@@ -1805,13 +1811,15 @@ class ProgressReport(object):
                                           'are moderately underweight (weight-for-age)',
                                 'slug': 'moderately_underweight',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 0-5 years who are at normal weight-for-age',
                                 'slug': 'status_normal',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1819,6 +1827,7 @@ class ProgressReport(object):
                                           'malnutrition (weight-for-height)',
                                 'slug': 'wasting_severe',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
@@ -1829,19 +1838,22 @@ class ProgressReport(object):
                                 ),
                                 'slug': 'wasting_moderate',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 60 months with normal weight-for-height',
                                 'slug': 'wasting_normal',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
                                 'slug': 'stunting_severe',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
@@ -1849,13 +1861,15 @@ class ProgressReport(object):
                                 'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                                 'slug': 'stunting_moderate',
                                 'average': [],
+                                'format': 'percent',
                                 'reverseColors': True,
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 60 months with normal height-for-age',
                                 'slug': 'stunting_normal',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -1874,7 +1888,8 @@ class ProgressReport(object):
                                 'header': 'Children 1 year+ who have recieved complete '
                                           'immunization required by age 1.',
                                 'slug': 'fully_immunized',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     },
@@ -1884,33 +1899,45 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
+                                'header': 'Pregnant women who are anemic',
+                                'slug': 'severe_anemic',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women with tetanus completed',
                                 'slug': 'tetanus_complete',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women who received ANC 1 by delivery',
                                 'slug': 'anc_1',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women who received ANC 2 by delivery',
                                 'slug': 'anc_2',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women who received ANC 3 by delivery',
                                 'slug': 'anc_3',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women who received ANC 4 by delivery',
                                 'slug': 'anc_4',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -1928,14 +1955,16 @@ class ProgressReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children who were put to the breast within one hour of birth.',
                                 'slug': 'breastfed_at_birth',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Infants 0-6 months of age who '
                                           'are fed exclusively with breast milk.',
                                 'slug': 'exclusively_breastfed',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1944,32 +1973,37 @@ class ProgressReport(object):
                                     "semi-solid or soft food."
                                 ),
                                 'slug': 'cf_initiation',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 24 months complementary feeding',
                                 'slug': 'complementary_feeding',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 24 months consuming at least 4 food groups',
                                 'slug': 'diet_diversity',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 24 months consuming adequate food',
                                 'slug': 'diet_quantity',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 24 months '
                                           'whose mothers handwash before feeding',
                                 'slug': 'handwashing',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     },
@@ -1981,13 +2015,15 @@ class ProgressReport(object):
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Women resting during pregnancy',
                                 'slug': 'resting',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Women eating an extra meal during pregnancy',
                                 'slug': 'extra_meal',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -1997,7 +2033,8 @@ class ProgressReport(object):
                                     "breastfeeding during home visit"
                                 ),
                                 'slug': 'trimester',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -2015,13 +2052,15 @@ class ProgressReport(object):
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'AWCs with clean drinking water',
                                 'slug': 'clean_water',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'AWCs with functional toilet',
                                 'slug': 'functional_toilet',
-                                'average': []
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -2038,98 +2077,135 @@ class ProgressReport(object):
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Number of Households',
-                                'slug': 'cases_household'
+                                'slug': 'cases_household',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total Number of Household Members',
-                                'slug': 'cases_person_all'
+                                'slug': 'cases_person_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total number of members enrolled at AWC',
-                                'slug': 'cases_person'
+                                'slug': 'cases_person',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Adhaar seeded beneficiaries',
                                 'slug': 'aadhar',
-                                'format': 'percent'
+                                'format': 'percent',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total pregnant women ',
-                                'slug': 'cases_ccs_pregnant_all'
+                                'slug': 'cases_ccs_pregnant_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total pregnant women enrolled for servics at AWC',
-                                'slug': 'cases_ccs_pregnant'
+                                'slug': 'cases_ccs_pregnant',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total lactating women',
-                                'slug': 'cases_ccs_lactating_all'
+                                'slug': 'cases_ccs_lactating_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total lactating women registered for services at AWC',
-                                'slug': 'cases_ccs_lactating'
+                                'slug': 'cases_ccs_lactating',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total children (0-6 years)',
-                                'slug': 'cases_child_health_all'
+                                'slug': 'cases_child_health_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total chldren (0-6 years) enrolled for ICDS services',
-                                'slug': 'cases_child_health'
+                                'slug': 'cases_child_health',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children (0-28 days)  enrolled for ICDS services',
-                                'slug': 'zero'
+                                'slug': 'zero',
+                                'average': [],
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children (28 days - 6 months)  enrolled for ICDS services',
-                                'slug': 'one'
+                                'slug': 'one',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children (6 months - 1 year)  enrolled for ICDS services',
-                                'slug': 'two'
+                                'slug': 'two',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children (1 year - 3 years)  enrolled for ICDS services',
-                                'slug': 'three'
+                                'slug': 'three',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children (3 years - 6 years)  enrolled for ICDS services',
-                                'slug': 'four'
+                                'slug': 'four',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Adolescent girls (11-14 years)',
-                                'slug': 'cases_person_adolescent_girls_11_14_all'
+                                'slug': 'cases_person_adolescent_girls_11_14_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Adolescent girls (15-18 years)',
-                                'slug': 'cases_person_adolescent_girls_15_18_all'
+                                'slug': 'cases_person_adolescent_girls_15_18_all',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
-                                'slug': 'cases_person_adolescent_girls_11_14'
+                                'slug': 'cases_person_adolescent_girls_11_14',
+                                'average': [],
+
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
-                                'slug': 'cases_person_adolescent_girls_15_18'
+                                'slug': 'cases_person_adolescent_girls_15_18',
+                                'average': [],
+
                             }
                         ]
                     },

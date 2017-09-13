@@ -1,6 +1,6 @@
 import traceback
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task

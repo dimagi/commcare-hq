@@ -86,7 +86,7 @@ class OutputPaginator(object):
     def _new_file(self):
         if self.file:
             self.file.close()
-        fileobj = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+        fileobj = tempfile.NamedTemporaryFile(prefix='cchq_export_dump_', mode='wb', delete=False)
         self.path = fileobj.name
         self.file = gzip.GzipFile(fileobj=fileobj)
 
@@ -142,7 +142,7 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
     won't show the traceback
     """
     logger.info('    Processing page {} started (attempt {})'.format(page_number, attempts))
-    progress_queue = getattr(run_export, 'queue', None)
+    progress_queue = getattr(run_export_with_logging, 'queue', None)
     update_frequency = min(1000, int(doc_count / 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, progress_queue, update_frequency)
     try:
@@ -232,6 +232,7 @@ class MultiprocessExporter(object):
         self.is_zip = isinstance(get_writer(export_instance.export_format), ZippedExportWriter)
 
     def __enter__(self):
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -343,6 +344,7 @@ def _add_compressed_page_to_zip(zip_file, page_number, zip_path_to_add):
 
 def _output_progress(queue, total_docs):
     """Poll the queue for ProgressValue objects and log progress to logger"""
+    logger.debug('Starting progress reporting process')
     page_progress = {}
     progress = total_dumped = 0
     start = time.time()

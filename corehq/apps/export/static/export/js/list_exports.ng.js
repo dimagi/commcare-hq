@@ -120,7 +120,7 @@
             })
                 .success(function (data) {
                     if (data.success) {
-                        var exportType = _(exp.exportType).capitalize();
+                        var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         window.analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
@@ -136,7 +136,7 @@
             })
                 .success(function (data) {
                     if (data.success) {
-                        var exportType = _(exp.exportType).capitalize();
+                        var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
                         window.analytics.usage(event, exportType, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
