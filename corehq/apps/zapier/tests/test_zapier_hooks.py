@@ -2,13 +2,10 @@ import json
 
 from django.urls import reverse
 from django.test.testcases import TestCase
-from tastypie.models import ApiKey
 
-from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.domain.models import Domain
+from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
-from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.apps.zapier.models import ZapierSubscription
@@ -80,18 +77,8 @@ class TestZapierIntegration(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierIntegration, cls).setUpClass()
-        cls.domain_object = Domain.get_or_create_with_name(TEST_DOMAIN, is_active=True)
-        cls.domain = cls.domain_object.name
-
-        account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
-        subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
-        subscription.is_active = True
-        subscription.save()
-
-        cls.web_user = WebUser.create(cls.domain, 'test', '******')
-        api_key_object, _ = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())
-        cls.api_key = api_key_object.key
+        cls.domain = TEST_DOMAIN
+        cls.domain_object, cls.web_user, cls.api_key = bootrap_domain_for_zapier(cls.domain)
         cls.application = Application.new_app(cls.domain, 'Test App')
         cls.application.save()
         module = cls.application.add_module(Module.new_module("Module 1", "en"))
