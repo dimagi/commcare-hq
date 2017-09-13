@@ -1074,7 +1074,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         if self.loc_level > 4:
             columns.extend([
                 DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('Gender', SimpleColumn('ccs_status'), slug='ccs_status'),
+                DatabaseColumn('CSS Status', SimpleColumn('ccs_status'), slug='ccs_status'),
                 DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
                 DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
                 DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
