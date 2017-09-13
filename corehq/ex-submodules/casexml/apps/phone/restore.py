@@ -161,22 +161,31 @@ class RestoreResponse(object):
         """
 
     def as_string(self):
-        raise NotImplemented()
+        with self.as_file() as f:
+            return f.read()
+
+    def as_file(self):
+        """Abstract method: get response as file-like object"""
+        raise NotImplementedError()
 
     @classmethod
-    def get_payload(cls, filename):
+    def get_payload(cls, name):
         '''
-        Given a filename (or identifier) returns the associated payload as
-        a filelike object. If it doesn't exist, return None.
+        Abstract method: given a name returns the associated payload as
+        a file-like object. If it doesn't exist, return None.
 
-        :filename: Identifier to lookup payload
+        :param name: Identifier to lookup payload
         :returns: Filelike object or None
         '''
-        raise NotImplemented()
+        raise NotImplementedError()
+
+    @classmethod
+    def get_content_length(cls, name):
+        """Abstract classmethod: get length of response content"""
+        raise NotImplementedError()
 
     def get_http_response(self):
-        filename = self.get_filename()
-        headers = {'Content-Length': self.get_content_length(filename)}
+        headers = {'Content-Length': self.get_content_length(self.name)}
         return stream_response(self.as_file(), headers)
 
     def __str__(self):
@@ -185,77 +194,54 @@ class RestoreResponse(object):
 
 class FileRestoreResponse(RestoreResponse):
 
-    EXTENSION = 'xml'
-
     def __init__(self, username=None, items=False):
         super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
-
-    def get_filename(self):
-        return "{filename}.{ext}".format(
-            filename=self.filename,
-            ext=self.EXTENSION,
-        )
+        restore_dir = settings.SHARED_DRIVE_CONF.restore_dir
+        self.name = os.path.join(restore_dir, uuid4().hex + ".xml")
 
     def _finalize(self):
-        with open(self.get_filename(), 'w') as response:
+        with open(self.name, 'w') as response:
             self._write_response_to_file(response)
 
     def as_file(self):
-        return open(self.get_filename(), 'r')
+        return open(self.name, 'r')
 
     @classmethod
-    def get_payload(cls, filename):
-        if os.path.exists(filename):
-            return open(filename, 'r')
+    def get_payload(cls, name):
+        if os.path.exists(name):
+            return open(name, 'r')
         return None
 
     @classmethod
-    def get_content_length(cls, filename):
-        return os.path.getsize(filename)
-
-    def as_string(self):
-        with open(self.get_filename(), 'r') as f:
-            return f.read()
+    def get_content_length(cls, name):
+        return os.path.getsize(name)
 
 
 class BlobRestoreResponse(RestoreResponse):
 
-    EXTENSION = 'xml'
-
     def __init__(self, username=None, items=False):
         super(BlobRestoreResponse, self).__init__(username, items)
-        self.identifier = 'restore-response-{}'.format(uuid4().hex)
-
-    def get_filename(self):
-        return "{identifier}.{ext}".format(
-            identifier=self.identifier,
-            ext=self.EXTENSION
-        )
+        self.name = 'restore-response-{}.xml'.format(uuid4().hex)
 
     def _finalize(self):
         with tempfile.TemporaryFile('w+b') as response:
             self._write_response_to_file(response)
             response.seek(0)
-            get_blob_db().put(response, self.get_filename(), timeout=60)
+            get_blob_db().put(response, self.name, timeout=60)
 
     def as_file(self):
-        return get_blob_db().get(self.get_filename())
+        return get_blob_db().get(self.name)
 
     @classmethod
-    def get_payload(cls, identifier):
+    def get_payload(cls, name):
         try:
-            return get_blob_db().get(identifier)
+            return get_blob_db().get(name)
         except NotFound:
             return None
 
     @classmethod
-    def get_content_length(cls, identifier):
-        return get_blob_db().size(identifier)
-
-    def as_string(self):
-        with get_blob_db().get(self.get_filename()) as blob:
-            return blob.read()
+    def get_content_length(cls, name):
+        return get_blob_db().size(name)
 
 
 class AsyncRestoreResponse(object):
@@ -294,10 +280,10 @@ class AsyncRestoreResponse(object):
 
 class CachedResponse(object):
 
-    def __init__(self, domain, payload_path):
-        self.payload_path = payload_path
+    def __init__(self, name):
+        self.name = name
         self.restore_class = BlobRestoreResponse
-        self.payload = self.restore_class.get_payload(self.payload_path) if payload_path else None
+        self.payload = self.restore_class.get_payload(name) if name else None
 
     def __nonzero__(self):
         return bool(self.payload)
@@ -313,7 +299,7 @@ class CachedResponse(object):
 
     def get_http_response(self):
         headers = {'Content-Length':
-            self.restore_class.get_content_length(self.payload_path)}
+            self.restore_class.get_content_length(self.name)}
         return stream_response(self.payload, headers)
 
 
@@ -657,7 +643,7 @@ class RestoreConfig(object):
 
         cache_payload_path = self.restore_payload_path_cache.get_value()
 
-        return CachedResponse(self.domain, cache_payload_path)
+        return CachedResponse(cache_payload_path)
 
     def _get_asynchronous_payload(self):
         new_task = False
