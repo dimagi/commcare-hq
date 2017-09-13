@@ -3,7 +3,7 @@ from tastypie.models import ApiKey
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, RepeatRecord
 
 
 ZapierDomainConfig = namedtuple('ZapierDomainConfig', 'domain web_user api_key')
@@ -28,3 +28,8 @@ def cleanup_repeaters_for_domain(domain):
             repeater.delete()
     for repeater in CaseRepeater.by_domain(domain):
         repeater.delete()
+
+
+def cleanup_repeat_records_for_domain(domain):
+    for repeat_record in RepeatRecord.all(domain=domain):
+        repeat_record.delete()
