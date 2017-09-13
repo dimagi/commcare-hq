@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
@@ -1322,6 +1323,9 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestNikshayHealthEstablishmentRepeater, self).setUp()
+        self.domain = 'domain'
+        self.project = Domain(name=self.domain)
+        self.project.save()
 
         self.repeater = NikshayHealthEstablishmentRepeater(
             domain=self.domain,
