@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
@@ -74,7 +74,7 @@
             self.groupDB = options.groupDB;
             self.appDB = options.appDB;
             self.applicationAccess = ApplicationAccess.wrap(options.access);
-            self.saveButton = hqImport("style/js/main").initSaveButton({
+            self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
                 save: function () {
                     self.saveButton.ajax({
                         url: '{% url "cloudcare_app_settings" domain %}',

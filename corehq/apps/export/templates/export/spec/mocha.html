@@ -2,11 +2,12 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}{{ block.super }}
-{% include "style/includes/angular.html" %}
+{% include "hqwebapp/includes/angular.html" %}
 <script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
 {% endblock %}
 
 {% block dependencies %}
+<script src="{% static 'export/js/utils.js' %}"></script>
 <script src="{% static 'export/js/list_exports.ng.js' %}"></script>
 <script src="{% static 'reports/js/reports.util.js' %}"></script>
 <script src="{% static 'export/js/download_export.ng.js' %}"></script>

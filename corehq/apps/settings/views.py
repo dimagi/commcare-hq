@@ -10,7 +10,7 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
 )
 from corehq.apps.settings.utils import get_temp_file
-from corehq.apps.style.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages

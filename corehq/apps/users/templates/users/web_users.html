@@ -1,4 +1,4 @@
-{% extends 'style/base_section.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -296,43 +296,43 @@
                         <th>
                           {% trans "Edit Web Users" %}
                           <span class="hq-help-template"
-                                data-title="Edit {% hq_web_user %}s"
+                                data-title="{% trans "Edit Web Users" %}"
                                 data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
                         </th>
                         <th>
                           {% trans "Edit Mobile Workers" %}
                           <span class="hq-help-template"
-                                data-title="Edit {% commcare_user %}s"
+                                data-title="{% trans "Edit Mobile Workers" %}"
                                 data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
                         </th>
                         <th>
                           {% trans "Edit Locations" %}
                           <span class="hq-help-template"
-                                data-title="Edit Locations"
+                                data-title="{% trans "Edit Locations"%}"
                                 data-content="{% trans "Create, update, and delete Locations in the Organization Hierarchy." %}"></span>
                         </th>
                         <th>
                           {% trans "Edit Data" %}
                           <span class="hq-help-template"
-                                data-title="Edit Data"
+                                data-title="{% trans "Edit Data" %}"
                                 data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
                         </th>
                         <th>
                           {% trans "Edit Apps" %}
                           <span class="hq-help-template"
-                                data-title="Edit Apps"
+                                data-title="{% trans "Edit Apps" %}"
                                 data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
                         </th>
                         <th>
                           {% trans "View Reports" %}
                           <span class="hq-help-template"
-                                data-title="View Reports"
+                                data-title="{% trans "View Reports" %}"
                                 data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
                         </th>
                         <th>
                           {% trans "Edit Subscription Info" %}
                           <span class="hq-help-template"
-                                data-title="Edit Subscription Info"
+                                data-title="{% trans "Edit Subscription Info" %}"
                                 data-content="{% trans "Edit the subscription information for this domain." %}"></span>
                         </th>
                         <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
@@ -352,7 +352,7 @@
                         <td>
                             <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
                             <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
-                                Only
+                                {% trans "Only" %}
                                 <ul data-bind="foreach: reportPermissions.specific">
                                     <li data-bind="html: name, visible: value"></li>
                                 </ul>

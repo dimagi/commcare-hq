@@ -1,5 +1,5 @@
 import re
-from corehq.apps.style.crispy import FormActions, FieldWithHelpBubble
+from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from django import forms

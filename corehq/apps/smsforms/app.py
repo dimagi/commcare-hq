@@ -15,7 +15,7 @@ from touchforms.formplayer.api import (
 )
 from touchforms.formplayer import sms as tfsms
 from django.conf import settings
-from xml.etree.ElementTree import XML, tostring
+from xml.etree.cElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 import re
 

@@ -23,7 +23,7 @@ from corehq.apps.userreports.reports.builder.columns import (
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
@@ -31,7 +31,6 @@ from corehq.apps.app_manager.models import (
     Form,
 )
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -640,7 +639,7 @@ class DataSourceForm(forms.Form):
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
-                report_source_crispy_fields.append(FieldWithHelpBubble(
+                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
                     k, help_bubble_text=report_source_help_texts[k]
                 ))
             else:
@@ -649,7 +648,7 @@ class DataSourceForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Report'),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'report_name',
                     help_bubble_text=_(
                         'Web users will see this name in the "Reports" section of CommCareHQ and can click to '
@@ -1228,7 +1227,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 id="columns-table",
                 data_bind='with: columnsList'
             ),
-            hqcrispy.HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
+            hqcrispy.B3HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

@@ -1061,7 +1061,12 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      {"column_ids": ["awc_id", "submitted_on"]}
+      {
+        "column_ids": [
+          "awc_id",
+          "submitted_on"
+        ]
+      }
     ]
   }
 }

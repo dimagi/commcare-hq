@@ -302,7 +302,7 @@ hqDefine('hqadmin/js/system_info', function () {
                 self.update(data);
     
                 if (!data.success) {
-                    hqImport("style/js/alert_user").alert_user("Operation failed: " + data.operation + " on "
+                    hqImport("hqwebapp/js/alert_user").alert_user("Operation failed: " + data.operation + " on "
                             + data.pillow_name + ', ' + data.message, 'danger');
                 }
             }, "json")

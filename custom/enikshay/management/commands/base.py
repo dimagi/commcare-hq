@@ -35,11 +35,11 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
             if update_json:
                 updates.append((episode.case_id, update_json, False))
             if len(updates) >= batch_size:
-                bulk_update_cases(domain, updates)
+                bulk_update_cases(domain, updates, self.__module__)
                 updates = []
 
         if len(updates) > 0:
-            bulk_update_cases(domain, updates)
+            bulk_update_cases(domain, updates, self.__module__)
 
         self.write_errors(errors)
 

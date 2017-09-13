@@ -4,12 +4,14 @@
 
 {# For APP BUILDER PROTOTYPE use only #}
 
-<a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+<a id="view_form_{{ module.unique_id }}_{{ form.unique_id }}_sidebar"
    {% if form.no_vellum %}
-   href="{% url "view_form" domain app.id module.id form.id %}"
+   href="{% url "view_form" domain app.id form.unique_id %}"
    {% else %}
-   href="{% url "form_source" domain app.id module.id form.id %}"
+   href="{% url "form_source" domain app.id form.unique_id %}"
    {% endif %}
+   data-moduleid="{{ module.id }}"
+   data-formid="{{ form.id }}"
    data-category="App Builder"
    data-action="Open Form"
    data-label="Edit Pen"

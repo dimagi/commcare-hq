@@ -1,6 +1,6 @@
 import traceback
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task
@@ -107,4 +107,8 @@ def set_schedule_case_properties(pact_case):
                 case_id=pact_case._id,
                 update=to_change,
             ).as_xml()
-            submit_case_blocks([ElementTree.tostring(case_block)], 'pact')
+            submit_case_blocks(
+                [ElementTree.tostring(case_block)],
+                'pact',
+                device_id=__name__ + ".set_schedule_case_properties",
+            )

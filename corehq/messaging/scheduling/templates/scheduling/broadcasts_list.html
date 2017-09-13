@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -8,6 +8,7 @@
 
 {% block page_content %}
     {% registerurl 'new_list_broadcasts' domain %}
+    {% registerurl 'edit_message' domain '---' %}
     {% initial_page_data 'loader_src' 'hqwebapp/images/ajax-loader.gif'|static %}
     <h4>{% trans 'Scheduled Messages' %}</h4>
     <div>

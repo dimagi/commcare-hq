@@ -1,4 +1,4 @@
-{% extends 'style/base_section.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 {% load crispy_forms_tags %}
 {% load i18n %}
 {% load hq_shared_tags %}
@@ -37,6 +37,7 @@
 
 {% block js %}
 <script src="{% static 'reports/js/reports.util.js' %}"></script>
+<script src="{% static 'export/js/utils.js' %}"></script>
 <script src="{% static 'export/js/download_export.ng.js' %}"></script>
 <script src="{% static 'export/js/download_export.js' %}"></script>
 {% endblock %}

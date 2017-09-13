@@ -1,0 +1,184 @@
+[
+{
+    "#export_tag": [
+        "domain",
+        "xmlns"
+    ],
+    "__retrieved_case_ids": [
+        "5539bd9d-d5d6-44c8-8f78-6915f16b6907",
+        "71626d9c-2d05-491f-81d9-becf8566618a",
+        "16954d55-a9be-40dd-98a8-dc7fae9c7ed6",
+        "fd5fdec7-dffb-42db-8162-b4444ce56c52",
+        "a9df9e13-38a3-4e60-883c-448374fc0312"
+    ],
+    "_id": "02a9e567-2a65-4565-9baa-ba545609d289",
+    "_rev": "1-3094486d67ebb9ade082f0cbdfaa3474",
+    "app_id": "411d126cf0f43fb06104cbc8e4cc2ee4",
+    "auth_context": {
+        "authenticated": true,
+        "doc_type": "AuthContext",
+        "domain": "app_with_subcases",
+        "user_id": "853a24735ba89a3019ced7e3153dc60d"
+    },
+    "backend_id": "couch",
+    "build_id": "5f97fd7cec424ea7800343c2e1cff85d",
+    "computed_": {},
+    "computed_modified_on_": null,
+    "date_header": null,
+    "doc_type": "XFormInstance",
+    "domain": "app_with_subcases",
+    "external_blobs": {
+        "form.xml": {
+            "content_length": 3582,
+            "content_type": "text/xml",
+            "digest": "md5-bHbcmQ0zWpfhkyWe8NolfQ==",
+            "doc_type": "BlobMeta",
+            "id": "mvT5SGvpOWo"
+        }
+    },
+    "form": {
+        "#type": "data",
+        "@name": "Followup Form",
+        "@uiVersion": "1",
+        "@version": "50",
+        "@xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7",
+        "add_a_prescription": "yes_then_close",
+        "babies": [
+            {
+                "case": {
+                    "@case_id": "5539bd9d-d5d6-44c8-8f78-6915f16b6907",
+                    "@date_modified": "2017-08-29T11:19:40.204000Z",
+                    "@user_id": "853a24735ba89a3019ced7e3153dc60d",
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "create": {
+                        "case_name": "Bob",
+                        "case_type": "baby",
+                        "owner_id": "853a24735ba89a3019ced7e3153dc60d"
+                    },
+                    "index": {
+                        "parent": {
+                            "#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+                            "@case_type": "mom"
+                        }
+                    },
+                    "update": {
+                        "eye_color": "brown"
+                    }
+                },
+                "eye_color": "brown",
+                "whats_the_babys_name": "Bob"
+            },
+            {
+                "case": {
+                    "@case_id": "fd5fdec7-dffb-42db-8162-b4444ce56c52",
+                    "@date_modified": "2017-08-29T11:19:40.204000Z",
+                    "@user_id": "853a24735ba89a3019ced7e3153dc60d",
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "create": {
+                        "case_name": "Joe",
+                        "case_type": "baby",
+                        "owner_id": "853a24735ba89a3019ced7e3153dc60d"
+                    },
+                    "index": {
+                        "parent": {
+                            "#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+                            "@case_type": "mom"
+                        }
+                    },
+                    "update": {
+                        "eye_color": "blue"
+                    }
+                },
+                "eye_color": "blue",
+                "whats_the_babys_name": "Joe"
+            }
+        ],
+        "case": {
+            "@case_id": "71626d9c-2d05-491f-81d9-becf8566618a",
+            "@date_modified": "2017-08-29T11:19:40.204000Z",
+            "@user_id": "853a24735ba89a3019ced7e3153dc60d",
+            "@xmlns": "http://commcarehq.org/case/transaction/v2",
+            "update": {
+                "last_status": "fine_thanks"
+            }
+        },
+        "how_are_you_today": "fine_thanks",
+        "how_many_babies": "2",
+        "is_this_a_delivery": "yes",
+        "meta": {
+            "@xmlns": "http://openrosa.org/jr/xforms",
+            "appVersion": "Formplayer Version: 2.36",
+            "app_build_version": 50,
+            "commcare_version": null,
+            "deviceID": "Formplayer",
+            "geo_point": null,
+            "instanceID": "02a9e567-2a65-4565-9baa-ba545609d289",
+            "timeEnd": "2017-08-29T11:19:40.204000Z",
+            "timeStart": "2017-08-29T11:18:55.886000Z",
+            "userID": "853a24735ba89a3019ced7e3153dc60d",
+            "username": "app_with_subcases@dimagi.com"
+        },
+        "prescription": {
+            "prescription": {
+                "case": {
+                    "@case_id": "a9df9e13-38a3-4e60-883c-448374fc0312",
+                    "@date_modified": "2017-08-29T11:19:40.204000Z",
+                    "@user_id": "853a24735ba89a3019ced7e3153dc60d",
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "close": "",
+                    "create": {
+                        "case_name": "Petunia-prescription-2017-08-29",
+                        "case_type": "prescription"
+                    },
+                    "index": {
+                        "parent": {
+                            "#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+                            "@case_type": "mom",
+                            "@relationship": "child"
+                        }
+                    },
+                    "update": {
+                        "number_of_babies": "2"
+                    }
+                }
+            },
+            "prescription_name": "Petunia-prescription-2017-08-29"
+        },
+        "subcase_0": {
+            "case": {
+                "@case_id": "16954d55-a9be-40dd-98a8-dc7fae9c7ed6",
+                "@date_modified": "2017-08-29T11:19:40.204000Z",
+                "@user_id": "853a24735ba89a3019ced7e3153dc60d",
+                "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                "create": {
+                    "case_name": "Petunia2017-08-29",
+                    "case_type": "voucher",
+                    "owner_id": "853a24735ba89a3019ced7e3153dc60d"
+                },
+                "index": {
+                    "parent": {
+                        "#text": "71626d9c-2d05-491f-81d9-becf8566618a",
+                        "@case_type": "mom"
+                    }
+                },
+                "update": {
+                    "how_many_babies": "2"
+                }
+            }
+        },
+        "voucher-name": "Petunia2017-08-29"
+    },
+    "history": [],
+    "initial_processing_complete": true,
+    "inserted_at": "2017-08-29T11:20:16.297773",
+    "last_sync_token": null,
+    "openrosa_headers": {},
+    "partial_submission": false,
+    "path": "/a/app_with_subcases/receiver/secure/5f97fd7cec424ea7800343c2e1cff85d/",
+    "received_on": "2017-08-29T11:19:40.371423Z",
+    "server_modified_on": "2017-08-29T11:19:40.371423Z",
+    "submit_ip": "127.0.0.1",
+    "user_type": "web",
+    "xmlns": "http://openrosa.org/formdesigner/EA845CA3-4B57-47C4-AFF4-5884E40228D7"
+}
+]

@@ -127,7 +127,9 @@ def claim(request, domain):
                                 status=409)
 
         claim_case(domain, restore_user.user_id, case_id,
-                   host_type=request.POST.get('case_type'), host_name=request.POST.get('case_name'))
+                   host_type=request.POST.get('case_type'),
+                   host_name=request.POST.get('case_name'),
+                   device_id=__name__ + ".claim")
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
@@ -350,7 +352,7 @@ def heartbeat(request, domain, hq_app_id):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app(domain, hq_app_id)
-        brief_app_id = app.copy_of or app.id
+        brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     return JsonResponse(info)

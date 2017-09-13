@@ -32,6 +32,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'widthHints',
             'useUniformUnits',
             'hasInlineTile',
+            'sortIndices',
         ],
 
         commandProperties: [

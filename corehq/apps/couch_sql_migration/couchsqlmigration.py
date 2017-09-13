@@ -235,7 +235,7 @@ class CouchSqlDomainMigrator(object):
         from corehq.apps.tzmigration.timezonemigration import json_diff
 
         rebuilt_case = FormProcessorCouch.hard_rebuild_case(
-            self.domain, couch_case['_id'], None, save=False
+            self.domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
         diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)

@@ -1,6 +1,6 @@
 /* globals hqDefine, django, $ */
 hqDefine("export/js/download_data_files", function() {
-    var alert_user = hqImport("style/js/alert_user").alert_user;
+    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
     /**
      * Copies the URL of a data file to the clipboard

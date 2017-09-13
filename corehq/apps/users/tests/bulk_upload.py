@@ -135,6 +135,40 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertListEqual(self.user.assigned_location_ids, [])
 
     @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    def test_primary_location_replace(self):
+        self.setup_locations()
+        updated_user_spec = deepcopy(self.user_specs[0])
+
+        # first assign to loc1
+        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
+        create_or_update_users_and_groups(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+        )
+
+        # user's primary location should be loc1
+        self.assertEqual(self.user.location_id, self.loc1._id)
+        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc1._id)
+        self.assertEqual(self.user.user_data.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
+        self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
+
+        # reassign to loc2
+        updated_user_spec["location_code"] = [self.loc2.site_code]
+        updated_user_spec["user_id"] = self.user._id
+        create_or_update_users_and_groups(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+        )
+
+        # user's location should now be loc2
+        self.assertEqual(self.user.location_id, self.loc2._id)
+        self.assertEqual(self.user.user_data.get('commcare_location_ids'), self.loc2._id)
+        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
+
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
     def test_location_replace(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])

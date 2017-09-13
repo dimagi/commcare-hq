@@ -1,5 +1,5 @@
 from __future__ import print_function
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseBlock
@@ -36,10 +36,11 @@ def get_cases(domain):
 
 
 def update_supply_points(domain):
+    device_id = __name__ + ".update_supply_points"
     case_blocks = (case_block(c) for c in get_cases(domain) if needs_update(c))
     if case_blocks:
         for chunk in chunked(case_blocks, 100):
-            submit_case_blocks(chunk, domain)
+            submit_case_blocks(chunk, domain, device_id=device_id)
             print("updated {} cases on domain {}".format(len(chunk), domain))
 
 

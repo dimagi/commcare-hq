@@ -1,7 +1,6 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 
 {% block title %}
@@ -12,14 +11,14 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'locations/js/location_drilldown.async.js' %}"></script>
     <script src="{% static 'locations/js/location.js' %}"></script>
-    {% include 'style/includes/ui_element_js.html' %}
+    {% include 'hqwebapp/includes/ui_element_js.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
         // Multiselect widget
         $(function () {
-            var multiselect_utils = hqImport('style/js/multiselect_utils');
+            var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
 
             multiselect_utils.createFullMultiselectWidget(
                 'id_products-selected_ids',

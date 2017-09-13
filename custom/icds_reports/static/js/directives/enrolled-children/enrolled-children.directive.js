@@ -13,8 +13,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.label = "Children (0-6 years) who are enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_children/map', label: 'Map'},
-        'chart': {route: '/enrolled_children/chart', label: 'Chart'},
+        'map': {route: '/enrolled_children/map', label: 'Map View'},
+        'chart': {route: '/enrolled_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Children',
@@ -31,6 +31,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 
     vm.message = storageService.getKey('message') || false;
+
+    vm.hideRanking = true;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -61,10 +63,10 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
@@ -121,7 +123,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
 
                 var content = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(data.all) + "</strong></p>";
-                content += "<p>% of children " + x + ": <strong>" + d3.format(".2%")(data.y / data.all) + "</strong></p>";
+                var average = (data.all !== 0) ? d3.format(".2%")(data.y / data.all) : 0;
+
+                content += "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
                 return content;
             },
             clipVoronoi: false,
@@ -136,7 +140,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

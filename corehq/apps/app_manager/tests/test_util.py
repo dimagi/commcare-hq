@@ -100,7 +100,27 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            self.assertEquals(
+                latest_info.get_latest_apk_version(),
+                response
+            )
+
+    def test_apk_prompt_preset(self):
+        preset_apk = '2.20.0/latest'  # some random version
+        test_cases = [
+            ('off', {}),
+            ('on', {'value': '2.20.0', 'force': False}),
+            ('forced', {'value': '2.20.0', 'force': True}),
+        ]
+        app_config = self.app.global_app_config
+        app_config.apk_version = preset_apk
+        app_config.save()
+        for config, response in test_cases:
+            app_config = self.app.global_app_config
+            app_config.apk_prompt = config
+            app_config.save()
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_apk_version(),
                 response
@@ -116,7 +136,27 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            self.assertEquals(
+                latest_info.get_latest_app_version(),
+                response
+            )
+
+    def test_app_prompt_preset(self):
+        preset_app = 21  # some random version
+        test_cases = [
+            ('off', {}),
+            ('on', {'value': preset_app, 'force': False}),
+            ('forced', {'value': preset_app, 'force': True}),
+        ]
+        app_config = self.app.global_app_config
+        app_config.app_version = preset_app
+        app_config.save()
+        for config, response in test_cases:
+            app_config = self.app.global_app_config
+            app_config.app_prompt = config
+            app_config.save()
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_app_version(),
                 response

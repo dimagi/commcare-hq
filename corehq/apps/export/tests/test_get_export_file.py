@@ -13,9 +13,9 @@ from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
 )
 from corehq.apps.export.export import (
-    _get_writer,
-    _Writer,
-    _write_export_instance,
+    get_export_writer,
+    _ExportWriter,
+    write_export_instance,
     ExportFile,
     get_export_file,
 )
@@ -115,9 +115,9 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -159,9 +159,9 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs + self.docs)
+            write_export_instance(writer, export_instance, self.docs + self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -204,9 +204,9 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -251,9 +251,9 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, [doc])
+            write_export_instance(writer, export_instance, [doc])
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -347,10 +347,10 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
 
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, docs)
+            write_export_instance(writer, export_instance, docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -390,9 +390,9 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -432,9 +432,9 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -482,9 +482,9 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
                 json.loads(export.read()),
@@ -523,7 +523,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.HTML,
             tables=tables
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         docs = [
             {
                 'domain': 'my-domain',
@@ -532,7 +532,7 @@ class WriterTest(SimpleTestCase):
             }
         ]
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, docs)
+            write_export_instance(writer, export_instance, docs)
         with ExportFile(writer.path, writer.format) as export:
             exported_tables = [table for table in re.findall('<table>', export.read())]
 
@@ -602,11 +602,11 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _Writer(get_writer(Format.JSON))
+        writer = _ExportWriter(get_writer(Format.JSON))
         with writer.open(export_instances):
-            _write_export_instance(writer, export_instances[0], self.docs)
-            _write_export_instance(writer, export_instances[1], self.docs)
-            _write_export_instance(writer, export_instances[2], self.docs)
+            write_export_instance(writer, export_instances[0], self.docs)
+            write_export_instance(writer, export_instances[1], self.docs)
+            write_export_instance(writer, export_instances[2], self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -660,9 +660,9 @@ class WriterTest(SimpleTestCase):
             }
         ]
 
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, docs)
+            write_export_instance(writer, export_instance, docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -697,9 +697,9 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, self.docs)
+            write_export_instance(writer, export_instance, self.docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(
@@ -829,9 +829,9 @@ class ExportTest(SimpleTestCase):
                 )
             ]
         )
-        writer = _get_writer([export_instance])
+        writer = get_export_writer([export_instance])
         with writer.open([export_instance]):
-            _write_export_instance(writer, export_instance, docs)
+            write_export_instance(writer, export_instance, docs)
 
         with ExportFile(writer.path, writer.format) as export:
             self.assertEqual(

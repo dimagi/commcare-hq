@@ -11,7 +11,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
 from corehq.apps.reports_core.filters import Choice, PreFilter
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,

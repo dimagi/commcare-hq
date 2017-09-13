@@ -87,7 +87,7 @@ def _validate_fixture_upload(workbook):
                             _(FAILURE_MESSAGES["sheet_has_extra_property"])
                             .format(tag=tag, property=missing_property, field=field.field_name))
                     # check that fields with properties are numbered
-                    if type(data_item['field'][field.field_name]) != list:
+                    if type(data_item.get('field', {}).get(field.field_name, None)) != list:
                         error_messages.append(
                             _(FAILURE_MESSAGES["invalid_field_with_property"])
                             .format(field=field.field_name))

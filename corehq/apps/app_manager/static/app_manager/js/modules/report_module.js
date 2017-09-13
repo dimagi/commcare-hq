@@ -302,7 +302,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
             return multimedia;
         };
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
                 // validate that all reports have valid data

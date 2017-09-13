@@ -140,7 +140,7 @@ def get_index_map(indices):
 
 class CaseToXMLMixin(object):
     def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import ElementTree
+        from xml.etree import cElementTree as ElementTree
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:
@@ -277,7 +277,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
         ])
 
     def to_xml(self, version, include_case_on_closed=False):
-        from xml.etree import ElementTree
+        from xml.etree import cElementTree as ElementTree
         from casexml.apps.phone.xml import get_case_element
         if self.closed:
             if include_case_on_closed:

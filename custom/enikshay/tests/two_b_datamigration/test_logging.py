@@ -58,7 +58,7 @@ class ImportDRTBTestMixin(object):
                 patch(match_phi_path, return_value=(None, None)),\
                 patch(get_users_path, return_value=[mock_user]), \
                 patch(open_any_workbook_path) as open_any_workbook_mock:
-            rows = [[]] + import_rows  # Add headers to the row list
+            rows = [[]] + [[]] + import_rows  # Add headers to the row list
             open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
             with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
                 try:
@@ -123,15 +123,15 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
             csv_file.seek(0)
             self.assertEqual(output, "case not found\n")
 
-            row_1_case_ids = csv_rows[0]['case_ids'].split(",")
-            for case_id in row_1_case_ids:
+            row_case_ids = csv_rows[0]['case_ids'].split(",")
+            for case_id in row_case_ids:
                 output = DRTBImportHistoryCommand.handle_get_row(case_id, csv_file)
                 csv_file.seek(0)
-                self.assertEqual(output, "row: 1\n")
+                self.assertEqual(output, "row: 2\n")
 
     def test_get_outcome(self):
         with self.drtb_import(IMPORT_ROWS, "mumbai") as (csv_file, csv_rows):
-            output = DRTBImportHistoryCommand.handle_get_outcome("1", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains all the expected case ids
@@ -141,7 +141,7 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
                 5 + len(ALL_DRUGS)
             )
 
-            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("3", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains the exception raised for the row

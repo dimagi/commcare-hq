@@ -28,7 +28,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         self.caseReferenceNotAllowed = ko.computed(function() {
             var moduleUsesCase = initial_page_data('all_other_forms_require_a_case') && initial_page_data('form_requires') === 'case';
-            if (!moduleUsesCase || initial_page_data('put_in_root')) {
+            if (!moduleUsesCase || (initial_page_data('put_in_root') && !initial_page_data('root_requires_same_case'))) {
                 // We want to determine here if the filter expression references
                 // any case but the user case.
                 var filter = self.formFilter();

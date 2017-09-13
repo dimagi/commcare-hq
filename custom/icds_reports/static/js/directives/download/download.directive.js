@@ -49,6 +49,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 3, name: 'Demographics'},
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
+        {id: 6, name: 'Child Beneficiary List'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -159,6 +160,10 @@ function DownloadController($location, locationHierarchy, locationsService, user
         }
     };
 
+    vm.showErrorMessage = function () {
+        return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
+    };
+
     vm.getLocationsForLevel = function(level) {
         if (vm.selectedLevel === 1) {
             return [NATIONAL_OPTION];
@@ -215,7 +220,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         vm.groupByLevels = levels;
         if (selectedLocationIndex() === -1) {
             vm.selectedLevel = 1;
-        } else {
+        } else if (selectedLocationIndex() > vm.selectedLevel) {
             vm.selectedLevel = selectedLocationIndex() + 1;
         }
 

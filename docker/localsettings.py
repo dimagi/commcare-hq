@@ -2,8 +2,22 @@
 
 import os
 
+ICDS_UCR_DATABASE_ALIAS = 'default'
+ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
+
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
+    'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',

@@ -48,7 +48,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
@@ -76,7 +76,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }
         });
 
-        self.saveUsercaseButton = hqImport("style/js/main").initSaveButton({
+        self.saveUsercaseButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
@@ -128,8 +128,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
         };
 
-        self.refreshQuestions = function(url, moduleId, formId, event){
-            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
+        self.refreshQuestions = function(url, formUniqueId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, formUniqueId, event);
         };
         self.getAnswers = function (condition) {
             return caseConfigUtils.getAnswers(self.questions(), condition);

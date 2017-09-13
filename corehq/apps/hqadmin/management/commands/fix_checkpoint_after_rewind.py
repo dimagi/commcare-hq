@@ -25,17 +25,17 @@ class Command(BaseCommand):
         if not pillow:
             raise CommandError("No pillow found with name: {}".format(pillow_name))
 
-        checkpoint = pillow.get_checkpoint()
+        checkpoint = pillow.checkpoint
         store = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id)
 
         if not store:
             print("No new sequence exists for that pillow. You'll have to do it manually.")
             exit()
 
-        old_seq = checkpoint.sequence
+        old_seq = pillow.get_last_checkpoint_sequence()
         new_seq = store.seq
         confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(
             pillow_name, old_seq, new_seq
         ))
-        pillow.checkpoint.update_to(new_seq)
+        checkpoint.update_to(new_seq)
         print("Checkpoint updated")

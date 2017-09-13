@@ -39,7 +39,7 @@ def make_supply_point(domain, location):
         },
         **kwargs
     )
-    _submit_commtrack_caseblock(domain, caseblock)
+    _submit_commtrack_caseblock(domain, caseblock, "make_supply_point")
     return SupplyInterface(domain).get_supply_point(case_id)
 
 
@@ -65,17 +65,18 @@ def update_supply_point_from_location(supply_point, location):
             },
             **kwargs
         )
-        _submit_commtrack_caseblock(domain, caseblock)
+        _submit_commtrack_caseblock(domain, caseblock, "update_supply_point_from_location")
         return SupplyInterface(domain).get_supply_point(supply_point.case_id)
     else:
         return supply_point
 
 
-def _submit_commtrack_caseblock(domain, caseblock):
+def _submit_commtrack_caseblock(domain, caseblock, source):
     submit_case_blocks(
         caseblock.as_string(),
         domain,
         const.COMMTRACK_USERNAME,
         const.get_commtrack_user_id(domain),
-        xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS
+        xmlns=const.COMMTRACK_SUPPLY_POINT_XMLNS,
+        device_id=__name__ + "." + source,
     )

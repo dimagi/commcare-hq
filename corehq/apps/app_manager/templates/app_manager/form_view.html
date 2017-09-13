@@ -24,7 +24,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
@@ -69,7 +69,7 @@
 {% block pre_form_content %}
     <div class="appmanager-page-actions">
         {% include 'app_manager/partials/app_summary_button.html' %}
-        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
+        <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
             <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
         </a>
     </div>
@@ -116,6 +116,7 @@
     {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
     {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
     {% initial_page_data 'no_vellum' form.no_vellum %}
+    {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
     {% initial_page_data 'put_in_root' module.put_in_root %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
@@ -294,7 +295,7 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+        <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>

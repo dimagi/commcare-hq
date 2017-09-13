@@ -3,7 +3,7 @@ from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.domain.decorators import cls_require_superuser_or_developer
-from corehq.apps.style.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from custom.ilsgateway.models import ReportRun
 
 

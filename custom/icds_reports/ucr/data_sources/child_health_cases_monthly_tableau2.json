@@ -3655,6 +3655,13 @@
       }
     },
     "asynchronous": true,
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "inserted_at"
+        ]
+      }
+    ]
   }
 }

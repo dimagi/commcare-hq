@@ -10,7 +10,7 @@ $(function () {
     });
 
     $('.btn-langcode-preprocessed').each( function () {
-        hqImport('style/js/ui-element').langcode_tag_btn($(this), $(this).text());
+        hqImport('hqwebapp/js/ui-element').langcode_tag_btn($(this), $(this).text());
         if ($(this).hasClass('langcode-input')) {
             var $langcodeInput = $(this).parent().find("input");
             var that = this;

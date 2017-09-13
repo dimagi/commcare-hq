@@ -1,4 +1,4 @@
-from corehq.apps.style.decorators import use_daterangepicker, use_datatables, use_select2, use_jquery_ui, \
+from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_datatables, use_select2, use_jquery_ui, \
     use_nvd3
 from custom.ilsgateway.filters import (
     ProgramFilter,

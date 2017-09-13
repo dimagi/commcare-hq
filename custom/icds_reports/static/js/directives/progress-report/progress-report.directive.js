@@ -60,20 +60,22 @@ function ProgressReportController($scope, $location, progressReportService,
         return sum / values.length;
     };
 
-    vm.checkColor = function(color, index, data, reverseColors) {
-        if (color === 'black') {
-            return index === 1 || (index > 0 && data[index]['html'] === data[index - 1]['html']);
-        }
-        if (reverseColors === 'true') {
-            color = color === 'green' ? 'red': 'green';
+    vm.getCSS = function(data, index, reverse) {
+        if (index === 0 || index === 1) {
+            return 'black';
         }
 
-        if (color ==='red') {
-            return index > 0 && data[index]['html'] < data[index - 1]['html'];
-        } else if (color === 'green') {
-            return  index > 0 && data[index]['html'] > data[index - 1]['html'];
-        } else {
-            return false;
+        var currentData = data[index].html;
+        var previousMonthData = data[index - 1].html;
+
+        var colors = (reverse ? ['red', 'green'] : ['green', 'red']);
+
+        if (currentData === previousMonthData) {
+            return 'black';
+        } else if (previousMonthData < currentData) {
+            return colors[0] + ' fa fa-arrow-up';
+        } else if (previousMonthData > currentData) {
+            return colors[1] + ' fa fa-arrow-down';
         }
     };
 

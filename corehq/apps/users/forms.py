@@ -6,7 +6,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 
-from corehq.apps.style.forms.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
@@ -36,7 +36,7 @@ from corehq.apps.hqwebapp.utils import decode_password
 from crispy_forms import layout as cb3_layout
 from crispy_forms import helper as cb3_helper
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
@@ -774,7 +774,7 @@ class MultipleSelectionForm(forms.Form):
         <script>
             // Multiselect widget
             $(function () {
-                var multiselect_utils = hqImport('style/js/multiselect_utils');
+                var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
                     django.gettext("Available Things"),

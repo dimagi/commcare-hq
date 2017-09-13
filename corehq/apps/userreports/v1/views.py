@@ -26,7 +26,7 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_datatables,

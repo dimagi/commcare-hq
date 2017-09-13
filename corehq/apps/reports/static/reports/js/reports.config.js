@@ -48,7 +48,7 @@ var HQReport = function (options) {
             }
             if (self.slug) {
                 if (self.isExportable) {
-                    var alert_user = hqImport("style/js/alert_user").alert_user;
+                    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
                     $(self.exportReportButton).click(function (e) {
                         e.preventDefault();
                         if (self.isExportAll) {

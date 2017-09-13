@@ -9,7 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.style.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.util.view_utils import json_error
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.couch.database import get_db

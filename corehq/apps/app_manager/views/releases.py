@@ -33,7 +33,7 @@ from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
@@ -112,7 +112,7 @@ def get_releases_context(request, domain, app_id):
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
-    prompt_settings_form = PromptUpdateSettingsForm.from_app(app)
+    prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
     context.update({
         'release_manager': True,

@@ -6,7 +6,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks, update_case
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 
 def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
@@ -26,6 +26,7 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
         tech_issue.domain,
         user_id=SYSTEM_USER_ID,
         xmlns=AUTO_UPDATE_XMLNS,
+        device_id=__name__ + "._create_tech_issue_delegate_for_escalation",
     )
 
 
@@ -41,6 +42,7 @@ def _update_existing_tech_issue_delegate(tech_issue_delegate):
         case_properties={'change_in_level': change_in_level},
         close=False,
         xmlns=AUTO_UPDATE_XMLNS,
+        device_id=__name__ + "._update_existing_tech_issue_delegate",
     )
 
 
@@ -57,6 +59,7 @@ def _update_tech_issue_for_escalation(case, escalated_ticket_level):
         },
         close=False,
         xmlns=AUTO_UPDATE_XMLNS,
+        device_id=__name__ + "._update_tech_issue_for_escalation",
     )
 
 

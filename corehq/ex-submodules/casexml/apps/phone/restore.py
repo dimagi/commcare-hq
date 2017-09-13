@@ -10,7 +10,7 @@ from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
@@ -766,13 +766,6 @@ class RestoreConfig(object):
             for provider in element_providers:
                 with self.timing_context(provider.__class__.__name__):
                     for element in provider.get_elements(self.restore_state):
-                        if element.tag == 'fixture' and len(element) == 0:
-                            # There is a bug on mobile versions prior to 2.27 where
-                            # a parsing error will cause mobile to ignore the element
-                            # after this one if this element is empty.
-                            # So we have to add a dummy empty_element child to prevent
-                            # this element from being empty.
-                            ElementTree.SubElement(element, 'empty_element')
                         response.append(element)
 
             full_response_providers = get_full_response_providers(self.timing_context, async_task)
@@ -832,16 +825,29 @@ class RestoreConfig(object):
     def _record_timing(self, status):
         timing = self.timing_context
         assert timing.is_finished()
-        username = self.restore_user.username
         duration = timing.duration if timing is not None else -1
+        device_id = self.params.device_id
         if duration > 20 or status == 412:
-            sync_log = self.restore_state.current_sync_log
-            sync_log_id = sync_log._id if sync_log else 'N/A'
+            if status == 412:
+                # use last sync log since there is no current sync log
+                sync_log_id = self.params.sync_log_id or 'N/A'
+            else:
+                sync_log = self.restore_state.current_sync_log
+                sync_log_id = sync_log._id if sync_log else 'N/A'
             log = logging.getLogger(__name__)
-            log.info("restore %s: user=%s domain=%s status=%s duration=%.3f",
-                     sync_log_id, username, self.domain, status, duration)
+            log.info(
+                "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
+                sync_log_id,
+                self.restore_user.username,
+                device_id,
+                self.domain,
+                status,
+                duration,
+            )
+        is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = [
             u'status_code:{}'.format(status),
+            u'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:

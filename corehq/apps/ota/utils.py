@@ -71,6 +71,7 @@ def reset_demo_user_restore(commcare_user, domain):
         # If CommCareUser.report_metadata gets updated by sync log pillow, after a restore is
         #   generated or for any other reason, there will be a DocumentUpdate conflict
         commcare_user = CommCareUser.get(commcare_user.get_id)
+        commcare_user.is_demo_user = True
         commcare_user.demo_restore_id = demo_restore.id
         commcare_user.save()
 
@@ -211,4 +212,4 @@ def update_device_id(user, device_id):
         if not user.is_demo_user:
             updated = user.update_device_id_last_used(device_id)
             if updated:
-                user.save()
+                user.save(fire_signals=False)

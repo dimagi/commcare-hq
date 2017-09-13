@@ -407,7 +407,12 @@ class StockExportColumn(ComplexExportColumn):
 def close_supply_point_case(location):
     supply_point_id = location.supply_point_id
     if supply_point_id:
-        close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
+        close_case(
+            supply_point_id,
+            location.domain,
+            const.COMMTRACK_USERNAME,
+            __name__ + ".close_supply_point_case",
+        )
 
 
 def _reopen_or_create_supply_point(location):

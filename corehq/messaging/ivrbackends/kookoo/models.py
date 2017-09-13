@@ -8,7 +8,7 @@ from django.conf import settings
 from django.urls import reverse
 from urllib import urlencode
 from urllib2 import urlopen
-from xml.etree.ElementTree import XML
+from xml.etree.cElementTree import XML
 from xml.sax.saxutils import escape
 
 

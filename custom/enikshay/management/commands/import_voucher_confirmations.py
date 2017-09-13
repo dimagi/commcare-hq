@@ -179,7 +179,7 @@ class Command(BaseCommand):
                 for update in chunk
             ]
             if self.commit:
-                bulk_update_cases(self.domain, updates)
+                bulk_update_cases(self.domain, updates, self.__module__)
 
     def reconcile_repeat_records(self, voucher_updates):
         """

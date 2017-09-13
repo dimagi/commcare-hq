@@ -1,5 +1,5 @@
 import re
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"
 

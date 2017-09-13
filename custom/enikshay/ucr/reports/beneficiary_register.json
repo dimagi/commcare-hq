@@ -20,10 +20,10 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Date of Notification",
-                "field": "date_of_notification",
+                "display": "Treatment Initiation Date",
+                "field": "treatment_initiation_date",
                 "type": "date",
-                "slug": "date_of_notification"
+                "slug": "treatment_initiation_date"
             },
             {
                 "compare_as_string": false,

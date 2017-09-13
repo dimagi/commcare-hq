@@ -90,7 +90,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """
             <partial>
                 <datum
-                    detail-confirm="m1_case_long"
+                    {detail_confirm_attr}
                     {detail_inline_attr}
                     {detail_persistent_attr}
                     detail-select="m1_case_short"
@@ -99,7 +99,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     value="./@case_id"
                 />
             </partial>
-            """.format(detail_inline_attr=detail_inline_attr,
+            """.format(detail_confirm_attr='detail-confirm="m1_case_long"' if not detail_inline_attr else '',
+                       detail_inline_attr=detail_inline_attr,
                        detail_persistent_attr=detail_persistent_attr),
             suite,
             'entry/command[@id="m1-f0"]/../session/datum',

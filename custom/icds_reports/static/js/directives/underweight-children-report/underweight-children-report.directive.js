@@ -13,8 +13,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/underweight_children/map', label: 'Map'},
-        'chart': {route: '/underweight_children/chart', label: 'Chart'},
+        'map': {route: '/underweight_children/map', label: 'Map View'},
+        'chart': {route: '/underweight_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -65,10 +65,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
@@ -159,7 +159,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -183,7 +183,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i>',
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

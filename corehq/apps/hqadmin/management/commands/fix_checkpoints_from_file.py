@@ -28,7 +28,7 @@ class Command(BaseCommand):
             if not pillow:
                 raise CommandError("No pillow found with name: {}".format(pillow_name))
 
-            old_seq = pillow.get_checkpoint().sequence
+            old_seq = pillow.get_checkpoint().wrapped_sequence
             msg = "\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(
                 pillow_name, old_seq, checkpoint_to_set,
             )

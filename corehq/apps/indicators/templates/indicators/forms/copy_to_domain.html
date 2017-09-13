@@ -1,5 +1,4 @@
-{% extends 'style/base_page.html' %}
-{% load hqstyle_tags %}
+{% extends 'hqwebapp/base_page.html' %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
@@ -9,7 +8,7 @@
 {% block js-inline %}
     <script>
     $(function () {
-        var multiselect_utils = hqImport('style/js/multiselect_utils');
+        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
         multiselect_utils.createFullMultiselectWidget(
             'id_indicator_ids',
             django.gettext("Available Indicators"),

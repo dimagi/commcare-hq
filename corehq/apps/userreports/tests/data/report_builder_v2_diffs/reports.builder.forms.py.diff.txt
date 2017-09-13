@@ -30,7 +30,7 @@
  from crispy_forms import layout as crispy
  from crispy_forms.bootstrap import StrictButton
  from crispy_forms.helper import FormHelper
-@@ -41,16 +45,16 @@
+@@ -40,16 +44,16 @@
      DEFAULT_CASE_PROPERTY_DATATYPES,
      FORM_METADATA_PROPERTIES,
      make_case_data_source_filter,
@@ -52,7 +52,7 @@
  from dimagi.utils.decorators.memoized import memoized
  
  # This dict maps filter types from the report builder frontend to UCR filter types
-@@ -60,6 +64,15 @@
+@@ -59,6 +63,15 @@
      'Numeric': 'numeric',
      'Value': 'pre',
  }
@@ -68,7 +68,7 @@
  
  
  class FilterField(JsonField):
-@@ -141,9 +154,7 @@
+@@ -140,9 +153,7 @@
          )
  
  
@@ -79,7 +79,7 @@
      """
      A container class for information about data source properties
  
-@@ -158,15 +169,115 @@
+@@ -157,15 +168,115 @@
      source -- For questions, this is a dict representing the question as returned
          by Xform.get_questions(), for case properties and form metadata it is just
          the name of the property.
@@ -203,7 +203,7 @@
  
  
  class DataSourceBuilder(object):
-@@ -231,8 +342,8 @@
+@@ -230,8 +341,8 @@
              assert multiselect_field, "multiselect_field is required if is_multiselect_chart_report is True"
  
              property = self.data_source_properties[multiselect_field]
@@ -214,7 +214,7 @@
  
              def sub_doc(path):
                  if not path:
-@@ -272,51 +383,52 @@
+@@ -271,51 +382,52 @@
                  "map_expression": sub_doc(path)
              }
  
@@ -312,7 +312,7 @@
  
      @property
      @memoized
-@@ -334,7 +446,6 @@
+@@ -333,7 +445,6 @@
                  type="question",
                  id="/data/question1",
                  text="Enter the child's name",
@@ -320,7 +320,7 @@
                  source={
                      'repeat': None,
                      'group': None,
-@@ -343,15 +454,14 @@
+@@ -342,15 +453,14 @@
                      'tag': 'input',
                      'type': 'Text'
                  },
@@ -338,7 +338,7 @@
              )
          }
          """
-@@ -370,27 +480,23 @@
+@@ -369,27 +479,23 @@
              'owner_name': _('Case Owner'),
              'mobile worker': _('Mobile Worker Last Updating Case'),
          }
@@ -375,7 +375,7 @@
          return properties
  
      @staticmethod
-@@ -399,12 +505,11 @@
+@@ -398,12 +504,11 @@
          # the report builder will create a related_doc indicator based
          # on the owner_id of the case.
          return DataSourceProperty(
@@ -392,7 +392,7 @@
          )
  
      @staticmethod
-@@ -413,12 +518,11 @@
+@@ -412,12 +517,11 @@
          # the report builder will create a related_doc indicator based on the
          # user_id of the case
          return DataSourceProperty(
@@ -409,7 +409,7 @@
          )
  
      @staticmethod
-@@ -432,33 +536,56 @@
+@@ -431,33 +535,56 @@
          properties = OrderedDict()
          questions = form_xml.get_questions([])
          for prop in FORM_METADATA_PROPERTIES:
@@ -475,7 +475,7 @@
  
      @property
      @memoized
-@@ -481,19 +608,13 @@
+@@ -480,19 +607,13 @@
  
  class DataSourceForm(forms.Form):
      report_name = forms.CharField()
@@ -498,7 +498,7 @@
          self.app_source_helper = ApplicationDataSourceUIHelper()
          self.app_source_helper.source_type_field.label = _('Forms or Cases')
          self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
-@@ -502,15 +623,13 @@
+@@ -501,15 +622,13 @@
          report_source_fields = self.app_source_helper.get_fields()
          report_source_help_texts = {
              "source_type": _(
@@ -517,13 +517,13 @@
  
          self.helper = FormHelper()
          self.helper.form_class = "form form-horizontal"
-@@ -518,15 +637,6 @@
+@@ -517,15 +636,6 @@
          self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
          self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
  
 -        chart_type_crispy_field = None
 -        if self.report_type == 'chart':
--            chart_type_crispy_field = FieldWithHelpBubble(
+-            chart_type_crispy_field = hqcrispy.FieldWithHelpBubble(
 -                'chart_type',
 -                help_bubble_text=_(
 -                    "<strong>Bar</strong> shows one vertical bar for each value in your case or form. "
@@ -533,12 +533,12 @@
          report_source_crispy_fields = []
          for k in report_source_fields.keys():
              if k in report_source_help_texts:
-@@ -536,22 +646,16 @@
+@@ -535,22 +645,16 @@
              else:
                  report_source_crispy_fields.append(k)
  
 -        top_fields = [
--            FieldWithHelpBubble(
+-            hqcrispy.FieldWithHelpBubble(
 -                'report_name',
 -                help_bubble_text=_(
 -                    'Web users will see this name in the "Reports" section of CommCareHQ and can click to view '
@@ -554,7 +554,7 @@
 -                _('{} Report'.format(self.report_type.capitalize())),
 -                *top_fields
 +                _('Report'),
-+                FieldWithHelpBubble(
++                hqcrispy.FieldWithHelpBubble(
 +                    'report_name',
 +                    help_bubble_text=_(
 +                        'Web users will see this name in the "Reports" section of CommCareHQ and can click to '
@@ -564,7 +564,7 @@
              ),
              crispy.Fieldset(
                  _('Data'), *report_source_crispy_fields
-@@ -581,11 +685,13 @@
+@@ -580,11 +684,13 @@
  
          existing_reports = ReportConfiguration.by_domain(self.domain)
          builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
@@ -580,7 +580,7 @@
                  "limit is {number}. "
                  "To continue, delete another report and try again. "
              ).format(number=self.max_allowed_reports))
-@@ -603,6 +709,8 @@
+@@ -602,6 +708,8 @@
  class ConfigureNewReportBase(forms.Form):
      user_filters = FilterField(required=False)
      default_filters = FilterField(required=False)
@@ -589,7 +589,7 @@
      button_text = ugettext_noop('Done')
  
      def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-@@ -627,10 +735,17 @@
+@@ -626,10 +734,17 @@
          self.ds_builder = DataSourceBuilder(
              self.domain, self.app, self.source_type, self.report_source_id
          )
@@ -610,7 +610,7 @@
  
          # NOTE: The corresponding knockout view model is defined in:
          #       templates/userreports/reportbuilder/configure_report.html
-@@ -649,35 +764,6 @@
+@@ -648,35 +763,6 @@
              )
          ]
          # Add a back button if we aren't editing an existing report
@@ -646,7 +646,7 @@
          self.helper.layout = crispy.Layout(
              self.container_fieldset,
              hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
-@@ -704,24 +790,8 @@
+@@ -703,24 +789,8 @@
              ))
  
      @property
@@ -672,7 +672,7 @@
  
      @property
      def container_fieldset(self):
-@@ -780,17 +850,49 @@
+@@ -779,17 +849,49 @@
              crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
          )
  
@@ -724,7 +724,7 @@
              ),
              base_item_expression=base_item_expression,
              meta=DataSourceMeta(build=DataSourceBuildInformation(
-@@ -822,7 +924,11 @@
+@@ -821,7 +923,11 @@
              data_source_config_id = self._build_data_source()
              self.existing_report.config_id = data_source_config_id
          else:
@@ -737,7 +737,7 @@
              if data_source.configured_indicators != indicators:
                  for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
                      setattr(data_source, property_name, value)
-@@ -833,6 +939,8 @@
+@@ -832,6 +938,8 @@
          self.existing_report.columns = self._report_columns
          self.existing_report.filters = self._report_filters
          self.existing_report.configured_charts = self._report_charts
@@ -746,7 +746,7 @@
          self.existing_report.validate()
          self.existing_report.save()
          return self.existing_report
-@@ -847,6 +955,32 @@
+@@ -846,6 +954,32 @@
          report = ReportConfiguration(
              domain=self.domain,
              config_id=data_source_config_id,
@@ -779,7 +779,7 @@
              title=self.report_name,
              aggregation_columns=self._report_aggregation_cols,
              columns=self._report_columns,
-@@ -854,6 +988,7 @@
+@@ -853,6 +987,7 @@
              configured_charts=self._report_charts,
              report_meta=ReportMeta(
                  created_by_builder=True,
@@ -787,7 +787,7 @@
                  builder_report_type=self.report_type
              )
          )
-@@ -890,7 +1025,7 @@
+@@ -889,7 +1024,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -796,7 +796,7 @@
                  data_source_field=None,
                  display_text=_('Case Owner'),
                  format='Choice',
-@@ -916,7 +1051,7 @@
+@@ -915,7 +1050,7 @@
          the knockout view model representing this filter in the report builder.
  
          """
@@ -805,7 +805,7 @@
          if filter['type'] == 'pre':
              return DefaultFilterViewModel(
                  exists_in_current_version=exists,
-@@ -953,9 +1088,7 @@
+@@ -952,9 +1087,7 @@
              indicator configuration.
          :return: The corresponding ColumnOption
          """
@@ -816,7 +816,7 @@
  
      def _get_property_id_by_indicator_id(self, indicator_column_id):
          """
-@@ -965,9 +1098,9 @@
+@@ -964,9 +1097,9 @@
              configuration dictionary
          :return: A DataSourceProperty property id, e.g. "/data/question1"
          """
@@ -829,7 +829,7 @@
  
      def _column_exists(self, column_id):
          """
-@@ -979,16 +1112,18 @@
+@@ -978,16 +1111,18 @@
  
          column_id is a string like "data_date_q_d1b3693e"
          """
@@ -858,7 +858,7 @@
  
      def _get_multiselect_indicator_id(self, column_field, indicators):
          """
-@@ -1012,11 +1147,6 @@
+@@ -1011,11 +1146,6 @@
          return []
  
      @property
@@ -870,7 +870,7 @@
      def _is_multiselect_chart_report(self):
          return False
  
-@@ -1028,37 +1158,7 @@
+@@ -1027,37 +1157,7 @@
          """
          def _make_report_filter(conf, index):
              property = self.data_source_properties[conf["property"]]
@@ -909,7 +909,7 @@
  
          user_filter_configs = self.cleaned_data['user_filters']
          default_filter_configs = self.cleaned_data['default_filters']
-@@ -1084,170 +1184,17 @@
+@@ -1083,170 +1183,17 @@
          return []
  
  
@@ -945,7 +945,7 @@
 -        return crispy.Div(
 -            crispy.Fieldset(
 -                _('Chart'),
--                FieldWithHelpBubble(
+-                hqcrispy.FieldWithHelpBubble(
 -                    'group_by',
 -                    help_bubble_text=_(
 -                        "The values of the selected property will be aggregated "
@@ -1030,7 +1030,7 @@
 -        return crispy.Div(
 -            crispy.Fieldset(
 -                _('Chart Properties'),
--                FieldWithHelpBubble(
+-                hqcrispy.FieldWithHelpBubble(
 -                    'group_by',
 -                    help_bubble_text=_(
 -                        "The values of the selected property will be aggregated "
@@ -1083,7 +1083,7 @@
      )
  
      @property
-@@ -1289,9 +1236,10 @@
+@@ -1288,9 +1235,10 @@
      def initial_columns(self):
          if self.existing_report:
              reverse_agg_map = {
@@ -1095,7 +1095,7 @@
              }
              added_multiselect_columns = set()
              cols = []
-@@ -1301,7 +1249,13 @@
+@@ -1300,7 +1248,13 @@
                  )
                  indicator_id = mselect_indicator_id or c['field']
                  display = c['display']
@@ -1109,7 +1109,7 @@
  
                  if mselect_indicator_id:
                      if mselect_indicator_id not in added_multiselect_columns:
-@@ -1309,6 +1263,7 @@
+@@ -1308,6 +1262,7 @@
                          display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
                              display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
                          )
@@ -1117,7 +1117,7 @@
                      else:
                          continue
  
-@@ -1316,26 +1271,97 @@
+@@ -1315,26 +1270,97 @@
                      ColumnViewModel(
                          display_text=display,
                          exists_in_current_version=exists,
@@ -1224,7 +1224,7 @@
              )
          return columns
  
-@@ -1344,14 +1370,25 @@
+@@ -1343,14 +1369,25 @@
          return ['doc_id']
  
  
@@ -1254,7 +1254,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1362,8 +1399,8 @@
+@@ -1361,8 +1398,8 @@
                      _("Rows"),
                      _(
                          'Choose which property this report will group its results by. Each value of this property'
@@ -1265,7 +1265,7 @@
                      ),
                  ),
                  crispy.Field(
-@@ -1385,76 +1422,90 @@
+@@ -1384,76 +1421,90 @@
  
      @property
      def _report_charts(self):
@@ -1400,7 +1400,7 @@
  
  
  class ConfigureWorkerReportForm(ConfigureTableReportForm):
-@@ -1462,8 +1513,8 @@
+@@ -1461,8 +1512,8 @@
      report_type = 'worker'
      column_legend_fine_print = ugettext_noop(
          u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
@@ -1411,7 +1411,7 @@
      )
  
      def __init__(self, *args, **kwargs):
-@@ -1475,7 +1526,7 @@
+@@ -1474,7 +1525,7 @@
          if self.source_type == "form":
              return "username"
          if self.source_type == "case":
@@ -1420,7 +1420,7 @@
  
      @property
      @memoized
-@@ -1490,7 +1541,7 @@
+@@ -1489,7 +1540,7 @@
              ),
              UserFilterViewModel(
                  exists_in_current_version=True,
@@ -1429,7 +1429,7 @@
                  data_source_field=None,
                  display_text='user name',
                  format='Choice',
-@@ -1540,7 +1591,7 @@
+@@ -1539,7 +1590,7 @@
  
      @property
      def _location_choices(self):
@@ -1438,7 +1438,7 @@
  
      @property
      def container_fieldset(self):
-@@ -1586,19 +1637,28 @@
+@@ -1585,19 +1636,28 @@
  
      @property
      def _report_columns(self):

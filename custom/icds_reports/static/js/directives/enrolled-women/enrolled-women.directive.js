@@ -12,7 +12,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.label = "Pregnant Women enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_women/map', label: 'Map'},
+        'map': {route: '/enrolled_women/map', label: 'Map View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
@@ -59,10 +59,10 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {

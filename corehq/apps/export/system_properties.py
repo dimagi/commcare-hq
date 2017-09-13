@@ -188,55 +188,21 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         is_advanced=True,
         help_text=_("The IP address from which the form was submitted")
     ),
-
-
-    ExportColumn(
-        tags=[PROPERTY_TAG_CASE],
-        label='caseid',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')
-        ]),
-        selected=True,
-        help_text=_('The ID of the case that this form operated on')
-    ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_CASE],
-        label='case_name',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')
-        ], transform=CASE_NAME_TRANSFORM),
-        selected=True,
-        help_text=_("The name of the case that this form operated on")
-    ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_CASE],
-        label='create.case_name',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='case'), PathNode(name='create'), PathNode(name='case_name')
-        ]),
-        is_advanced=True,
-        help_text=_('The name of the case that this form opened')
-    ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_CASE],
-        label='create.case_type',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='case'), PathNode(name='create'), PathNode(name='case_type')
-        ]),
-        is_advanced=True,
-        help_text=_('The type of the case that this form opened')
-    ),
-    ExportColumn(
-        tags=[PROPERTY_TAG_CASE],
-        label='create.owner_id',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='case'), PathNode(name='create'), PathNode(name='owner_id')]
-        ),
-        is_advanced=True,
-        help_text=_('The owner ID of the case that this form opened')
-    ),
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
+
+
+def get_case_name_column(case_id_export_item):
+    label_segments = case_id_export_item.readable_path.split('.')[:-1]
+    label_segments.append('case_name')
+    return ExportColumn(
+        tags=[PROPERTY_TAG_CASE],
+        label='.'.join(label_segments),
+        item=ExportItem(path=case_id_export_item.path, transform=CASE_NAME_TRANSFORM),
+        selected=False,
+        is_advanced=True,
+        help_text=_("The name of the case that this form operated on")
+    )
 
 ROW_NUMBER_COLUMN = RowNumberColumn(
     tags=[PROPERTY_TAG_ROW],

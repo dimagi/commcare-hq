@@ -54,7 +54,7 @@ from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
@@ -1367,7 +1367,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     bulk_save = save_docs
 
-    def save(self, **params):
+    def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
@@ -1382,9 +1382,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
             super(CouchUser, self).save(**params)
 
-        from .signals import couch_user_post_save
-        results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
-        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+        if fire_signals:
+            from .signals import couch_user_post_save
+            results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
@@ -1528,14 +1529,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
-    def save(self, **params):
+    def save(self, fire_signals=True, **params):
         is_new_user = self.new_document  # before saving, check if this is a new document
-        super(CommCareUser, self).save(**params)
+        super(CommCareUser, self).save(fire_signals=fire_signals, **params)
 
-        from .signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
-                                                      is_new_user=is_new_user)
-        log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+        if fire_signals:
+            from .signals import commcare_user_post_save
+            results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
+                                                          is_new_user=is_new_user)
+            log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -1967,7 +1969,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             from corehq.apps.commtrack.util import submit_mapping_case_block
             submit_mapping_case_block(self, self.supply_point_index_mapping(sp))
 
-    def submit_location_block(self, caseblock):
+    def submit_location_block(self, caseblock, source):
         from corehq.apps.hqcase.utils import submit_case_blocks
 
         submit_case_blocks(
@@ -1975,6 +1977,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 caseblock.as_xml()
             ),
             self.domain,
+            device_id=__name__ + ".CommCareUser." + source,
         )
 
     def remove_location_delegate(self, location):
@@ -1994,7 +1997,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     index=self.supply_point_index_mapping(sp, True)
                 )
 
-                self.submit_location_block(caseblock)
+                self.submit_location_block(caseblock, "remove_location_delegate")
 
     def clear_location_delegates(self):
         """
@@ -2030,7 +2033,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             index=index
         )
 
-        self.submit_location_block(caseblock)
+        self.submit_location_block(caseblock, "create_location_delegates")
 
     def get_location_map_case(self):
         """

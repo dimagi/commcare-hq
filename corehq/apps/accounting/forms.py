@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.decorators.memoized import memoized

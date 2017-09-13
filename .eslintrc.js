@@ -19,7 +19,10 @@ module.exports = {
         "ko": false,
         "_": false,
         "ga_track_event": false,
-        "L": true
+        "L": true,
+        "it": false,
+        "describe": false,
+        "beforeEach": false,
     },
 
     // http://eslint.org/docs/rules/

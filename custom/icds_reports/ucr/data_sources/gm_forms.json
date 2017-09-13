@@ -635,8 +635,18 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      {"column_ids": ["awc_id", "last_date_gmp"]},
-      {"column_ids": ["supervisor_id", "last_date_gmp"]}
+      {
+        "column_ids": [
+          "awc_id",
+          "last_date_gmp"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "last_date_gmp"
+        ]
+      }
     ]
   }
 }

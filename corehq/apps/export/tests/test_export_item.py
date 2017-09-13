@@ -15,7 +15,7 @@ MockRequest = namedtuple('MockRequest', 'domain')
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestExportItemGeneration(SimpleTestCase):

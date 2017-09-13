@@ -138,7 +138,7 @@
     </script>
 
     <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
-      <div data-module-id="<%= moduleid %>">
+      <div data-module-unique-id="<%= moduleUniqueId %>">
           <% if (showSurvey) { %>
               <div class="pull-left">
                   <button type="button" class="popover-additem-option js-new-form appnav-responsive"
@@ -177,7 +177,7 @@
                 </button>
               </div>
           <% } %>
-          <form method="post" class="hide">
+          <form method="post" class="hide" action="<%= newFormUrl %>">
               {% csrf_token %}
               <input type="hidden" name="case_action" />
               <input type="hidden" name="form_type" />

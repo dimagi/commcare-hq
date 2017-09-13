@@ -1457,20 +1457,19 @@ class XForm(WrappedNode):
 
         if 'subcases' in actions:
             subcases = actions['subcases']
-            repeat_contexts = defaultdict(int)
-            for subcase in subcases:
-                if subcase.repeat_context:
-                    repeat_contexts[subcase.repeat_context] += 1
 
-            for i, subcase in enumerate(subcases):
+            repeat_context_count = form.actions.count_subcases_per_repeat_context()
+            for subcase in subcases:
                 if not form.get_app().case_type_exists(subcase.case_type):
-                    raise CaseError("Case type (%s) for form (%s) does not exist" % (subcase.case_type, form.default_name()))
+                    raise CaseError("Case type (%s) for form (%s) does not exist" % (
+                        subcase.case_type, form.default_name()
+                    ))
                 if subcase.repeat_context:
                     base_path = '%s/' % subcase.repeat_context
                     parent_node = self.instance_node.find(
                         '/{x}'.join(subcase.repeat_context.split('/'))[1:]
                     )
-                    nest = repeat_contexts[subcase.repeat_context] > 1
+                    nest = repeat_context_count[subcase.repeat_context] > 1
                     case_id = 'uuid()'
                 else:
                     base_path = ''
@@ -1479,10 +1478,9 @@ class XForm(WrappedNode):
                     case_id = session_var(form.session_var_for_action(subcase))
 
                 if nest:
-                    name = 'subcase_%s' % i
-                    subcase_node = _make_elem('{x}%s' % name)
+                    subcase_node = _make_elem('{x}%s' % subcase.form_element_name)
                     parent_node.append(subcase_node)
-                    path = '%s%s/' % (base_path, name)
+                    path = '%s%s/' % (base_path, subcase.form_element_name)
                 else:
                     subcase_node = parent_node
                     path = base_path
@@ -1715,10 +1713,7 @@ class XForm(WrappedNode):
                     self.add_casedb()
                     configure_visit_schedule_updates(update_case_block.update_block, action, session_case_id)
 
-        repeat_contexts = defaultdict(int)
-        for action in form.actions.open_cases:
-            if action.repeat_context:
-                repeat_contexts[action.repeat_context] += 1
+        repeat_context_count = form.actions.count_subcases_per_repeat_context()
 
         def get_action_path(action, create_subcase_node=True):
             if action.repeat_context:
@@ -1726,7 +1721,7 @@ class XForm(WrappedNode):
                 parent_node = self.instance_node.find(
                     '/{x}'.join(action.repeat_context.split('/'))[1:]
                 )
-                nest = repeat_contexts[action.repeat_context] > 1
+                nest = repeat_context_count[action.repeat_context] > 1
             else:
                 base_path = ''
                 parent_node = self.data_node

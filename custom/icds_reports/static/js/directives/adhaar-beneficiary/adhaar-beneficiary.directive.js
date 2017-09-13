@@ -10,11 +10,11 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Adhaar seeded beneficaries";
+    vm.label = "Percent Adhaar Seeded Individuals";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/adhaar/map', label: 'Map'},
-        'chart': {route: '/adhaar/chart', label: 'Chart'},
+        'map': {route: '/adhaar/map', label: 'Map View'},
+        'chart': {route: '/adhaar/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage beneficiary',
@@ -61,10 +61,10 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getAdhaarData(vm.step, vm.filtersData).then(function(response) {
@@ -155,7 +155,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
             },

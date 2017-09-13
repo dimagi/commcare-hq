@@ -40,7 +40,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
                 Menus.Controller.showMenu(menuResponse);
             }).fail(function() {
-                FormplayerFrontend.trigger('navigateHome');
+                // if it didn't go through, then it displayed an error message.
+                // the right thing to do is then to just stay in the same place.
             });
         },
 
@@ -230,6 +231,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxWidth: menuResponse.maxWidth,
                 useUniformUnits: menuResponse.useUniformUnits,
                 isPersistentDetail: menuResponse.isPersistentDetail,
+                sortIndices: menuResponse.sortIndices,
             };
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);

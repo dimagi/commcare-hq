@@ -84,7 +84,7 @@ class ReportFixtureProvider(FixtureProvider):
             for report_key in sorted(data):
                 columns_added = False
                 report_data = data.get(report_key, {})
-                report_element = ElementTree.Element('report', attrib={
+                report_element = ElementTree.Element('report', {
                     "id": report_key,
                     "name": report_data.name
                 })
@@ -97,17 +97,17 @@ class ReportFixtureProvider(FixtureProvider):
                     row_data = row[1]
                     if not columns_added:
                         for column_key in sorted(row_data):
-                            column = ElementTree.Element('column', attrib={
+                            column = ElementTree.Element('column', {
                                 'name': column_key
                             })
                             columns_element.append(column)
                         columns_added = True
 
-                    row_element = ElementTree.Element('row', attrib={
+                    row_element = ElementTree.Element('row', {
                         'hmis_code': str(row_data.get('hmis_code', ''))
                     })
                     for field_key in sorted(row_data):
-                        field_element = ElementTree.Element('field', attrib={
+                        field_element = ElementTree.Element('field', {
                             'value': str(row_data.get(field_key, ''))
                         })
                         row_element.append(field_element)
@@ -120,7 +120,7 @@ class ReportFixtureProvider(FixtureProvider):
 
         def _facility_to_fixture(facility, startdate, enddate):
             facility_id = facility.location_id
-            facility_element = ElementTree.Element('facility', attrib={
+            facility_element = ElementTree.Element('facility', {
                 'id': facility_id,
                 'name': _(facility.name)
             })
@@ -143,7 +143,7 @@ class ReportFixtureProvider(FixtureProvider):
             return facility_element
 
         def _month_to_fixture(date_tuple, locations):
-            monthly_report_element = ElementTree.Element('monthly-report', attrib={
+            monthly_report_element = ElementTree.Element('monthly-report', {
                 'startdate': json_format_date(date_tuple[0]),
                 'enddate': json_format_date(date_tuple[1]),
                 'month_year_label': date_tuple[0].strftime('%b %Y')
@@ -157,7 +157,7 @@ class ReportFixtureProvider(FixtureProvider):
                     return None
             return monthly_report_element
 
-        root = ElementTree.Element('fixture', attrib={
+        root = ElementTree.Element('fixture', {
             'id': self.id,
             'user_id': restore_user.user_id
         })

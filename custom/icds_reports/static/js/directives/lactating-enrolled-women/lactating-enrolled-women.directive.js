@@ -12,7 +12,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.label = "Lactating Mothers enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/lactating_enrolled_women/map', label: 'Map'},
+        'map': {route: '/lactating_enrolled_women/map', label: 'Map View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
@@ -59,10 +59,10 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = 'Sector View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View';
         }
 
         vm.myPromise = demographicsService.getLactatingEnrolledWomenData(vm.step, vm.filtersData).then(function(response) {

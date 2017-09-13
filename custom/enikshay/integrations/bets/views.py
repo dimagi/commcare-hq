@@ -47,7 +47,7 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
-    amount = jsonobject.DecimalProperty(required=False)
+    amount = jsonobject.IntegerProperty(required=False)
     paymentDate = FlexibleDateTimeProperty(required=True)
     comments = jsonobject.StringProperty(required=False)
     failureDescription = jsonobject.StringProperty(required=False)
@@ -69,8 +69,9 @@ class VoucherUpdate(PaymentUpdate):
         if self.status == SUCCESS:
             return {
                 'state': 'paid',
-                'amount_fulfilled': self.amount,
-                'date_fulfilled': self.paymentDate.isoformat(),
+                'amount_paid': self.amount,
+                'date_paid': self.paymentDate.date().isoformat(),
+                'time_paid': self.paymentDate.time().isoformat(),
                 'comments': self.comments or "",
                 'payment_mode': self.paymentMode or "",
                 'check_number': self.checkNumber or "",
@@ -184,9 +185,8 @@ def payment_confirmation(request, domain):
         return json_response({"error": e.message}, status_code=e.status_code)
 
     bulk_update_cases(domain, [
-        (update.case_id, update.properties, False)
-        for update in updates
-    ])
+        (update.case_id, update.properties, False) for update in updates
+    ], __name__ + ".payment_confirmation")
     return json_response({'status': SUCCESS})
 
 

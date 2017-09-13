@@ -98,6 +98,7 @@ def direct_ccz(request, domain):
         errors = None
 
     if errors:
+        lang, langs = get_langs(request, app)
         error_html = render_to_string("app_manager/partials/build_errors.html", {
             'request': request,
             'app': app,

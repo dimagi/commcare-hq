@@ -5,7 +5,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from django.utils.translation import ugettext
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 
 class PrimeRestoreCacheForm(forms.Form):

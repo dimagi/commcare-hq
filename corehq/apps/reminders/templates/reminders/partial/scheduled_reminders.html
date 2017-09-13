@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -100,7 +100,7 @@
 {% block page_content %}
     {% initial_page_data 'reminder_data' reminder_data %}
     {% registerurl "case_details" domain "---" %}
-    {% include "style/partials/time_notice.html" %}
+    {% include "hqwebapp/partials/time_notice.html" %}
     <div id='scheduled-reminders-container'>
         <table class="calendar">
             <tr>

@@ -21,7 +21,7 @@
     id:'comment-id',
     value: '{{ module.comment|escapejs }}',
     placeholder: 'Enter {% if not module.is_surveys %}case list{% endif %} description here',
-    url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
+    url: '{% url "edit_module_attr" domain app.id module.unique_id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,
 "></inline-edit>

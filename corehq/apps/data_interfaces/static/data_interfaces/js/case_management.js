@@ -99,7 +99,9 @@ var CaseManagement = function (o) {
             $modal = $('#caseManagementStatusModal'),
             owner_type = getOwnerType(new_owner);
 
-        new_owner = new_owner.slice(3);
+        // groups and users have different number of characters before the id
+        // users are u__id and groups are sg__id
+        new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
 
         if (_.isEmpty(new_owner)) {
             $modal.find('.modal-body').text("Please select an owner");

@@ -234,9 +234,12 @@ class TestAdherenceUpdater(TestCase):
             case_id="person_3",
             attrs={'close': True}
         ))
-
+        case_ids = [
+            item for batch in self.case_updater._get_case_id_batches()
+            for item in batch
+        ]
         episode_ids = [episode.case_id
-                       for episode in self.case_updater._get_open_episode_cases(self.case_updater._get_case_ids())]
+                       for episode in self.case_updater._get_open_episode_cases(case_ids)]
         self.assertEqual(episode_ids, [self.episode_id])
 
     def test_adherence_schedule_date_start_late(self):

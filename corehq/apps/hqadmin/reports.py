@@ -5,7 +5,7 @@ import json
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from dimagi.utils.decorators.memoized import memoized

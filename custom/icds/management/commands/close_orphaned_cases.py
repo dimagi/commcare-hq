@@ -34,7 +34,8 @@ class Command(BaseCommand):
                 related_cases = self._get_related_cases(cases)
                 case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
-                    xform, cases = bulk_update_cases(domain, case_tupes)
+                    xform, cases = bulk_update_cases(
+                        domain, case_tupes, self.__module__)
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print('submission error')
