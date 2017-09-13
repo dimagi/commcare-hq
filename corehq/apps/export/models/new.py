@@ -632,6 +632,8 @@ class ExportInstance(BlobMixin, Document):
     legacy_saved_export_schema_id = StringProperty()
 
     is_daily_saved_export = BooleanProperty(default=False)
+    auto_rebuild_enabled = BooleanProperty(default=True)
+
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
