@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpBadRequest
 
-from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, CreateCaseRepeater
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.consts import EventTypes
 
@@ -26,7 +26,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
         )
 
     elif instance.event_name == EventTypes.NEW_CASE:
-        repeater = CaseRepeater(
+        repeater = CreateCaseRepeater(
             domain=instance.domain,
             url=instance.url,
             format='case_json',

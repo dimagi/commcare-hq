@@ -3,6 +3,7 @@ from django.dispatch import receiver
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+from corehq.motech.repeaters.models import CreateCaseRepeater
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -19,6 +20,9 @@ def create_form_repeat_records(sender, xform, **kwargs):
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
+    # assume if there's exactly 1 xform_id that modified the case it's being created
+    if len(case.xform_ids) == 1:
+        create_repeat_records(CreateCaseRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):

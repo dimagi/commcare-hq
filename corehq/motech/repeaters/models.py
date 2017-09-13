@@ -361,6 +361,16 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
+class CreateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being created.
+    """
+    # note: the logic for how this is managed is handled in signals.create_case_repeat_records
+    # so this class actually does nothing except exist to be able to differentiate the two
+    # at the repeater and repeat record level. otherwise it's exactly the same as CaseRepeater
+    pass
+
+
 class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
