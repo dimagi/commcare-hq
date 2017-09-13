@@ -1,9 +1,6 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-{% endblock %}
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
