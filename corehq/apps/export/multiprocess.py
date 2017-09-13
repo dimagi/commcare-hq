@@ -39,6 +39,8 @@ from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
 
+TEMP_FILE_PREFIX = 'cchq_export_dump_'
+
 UNPROCESSED_PAGES_DIR = 'unprocessed'
 
 logger = logging.getLogger(__name__)
@@ -86,7 +88,8 @@ class OutputPaginator(object):
     def _new_file(self):
         if self.file:
             self.file.close()
-        fileobj = tempfile.NamedTemporaryFile(prefix='cchq_export_dump_', mode='wb', delete=False)
+        prefix = '{}{}_'.format(TEMP_FILE_PREFIX, self.export_id)
+        fileobj = tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False)
         self.path = fileobj.name
         self.file = gzip.GzipFile(fileobj=fileobj)
 
@@ -230,6 +233,7 @@ class MultiprocessExporter(object):
         )
 
         self.is_zip = isinstance(get_writer(export_instance.export_format), ZippedExportWriter)
+        self.premature_exit = False
 
     def __enter__(self):
         self.start()
@@ -258,7 +262,10 @@ class MultiprocessExporter(object):
     def wait_till_completion(self):
         results = self.get_results()
         final_path = self.build_final_export(results)
-        self.upload(final_path)
+        if self.premature_exit:
+            logger.warning("\n------- PREMATURE EXIT --------\nResult written to %s\n", final_path)
+        else:
+            self.upload(final_path)
 
     def get_results(self, retries_per_page=3):
         export_results = []
@@ -269,7 +276,10 @@ class MultiprocessExporter(object):
                     export_results.append(queued_result.async_result.get(timeout=5))
                     self.results.pop(0)
                 except KeyboardInterrupt:
-                    raise
+                    logger.error('Exiting before all results received.')
+                    self.premature_exit = True
+                    export_results.extend(self.results)
+                    return export_results
                 except multiprocessing.TimeoutError:
                     pass
                 except Exception:
@@ -302,9 +312,13 @@ class MultiprocessExporter(object):
             pass
 
     def build_final_export(self, export_results):
-        final_path = tempfile.mktemp()
+        prefix = '{}{}_final_'.format(TEMP_FILE_PREFIX, self.export_instance.get_id)
+        final_file_obj = tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False)
         base_name = safe_filename(self.export_instance.name or 'Export')
-        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
+        with zipfile.ZipFile(
+                final_file_obj, mode='w',
+                compression=zipfile.ZIP_DEFLATED, allowZip64=True
+        ) as final_zip:
             pages = len(export_results)
             for result in export_results:
                 if not result.success:
@@ -323,7 +337,7 @@ class MultiprocessExporter(object):
                 else:
                     final_zip.write(result.path, '{}_{}'.format(base_name, result.page))
 
-        return final_path
+        return final_file_obj.name
 
     def upload(self, final_path, clean=True):
         logger.info('Uploading final export')
