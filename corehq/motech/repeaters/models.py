@@ -370,7 +370,6 @@ class CreateCaseRepeater(CaseRepeater):
     # so this class actually does nothing except exist to be able to differentiate the two
     # at the repeater and repeat record level. otherwise it's exactly the same as CaseRepeater
     friendly_name = _("Forward Cases on Creation Only")
-    pass
 
 
 class UpdateCaseRepeater(CaseRepeater):
@@ -380,7 +379,6 @@ class UpdateCaseRepeater(CaseRepeater):
     """
     # see note above
     friendly_name = _("Forward Cases on Update Only")
-    pass
 
 
 class SOAPRepeaterMixin(Repeater):
