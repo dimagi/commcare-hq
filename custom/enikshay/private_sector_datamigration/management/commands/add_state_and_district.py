@@ -12,11 +12,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('case_ids', nargs='*')
 
-    def handle(self, domain, **options):
+    def handle(self, domain, case_ids, **options):
         self.domain = domain
         case_accessor = CaseAccessors(domain)
-        for person_case_id in case_accessor.get_case_ids_in_domain(type=PERSON_CASE_TYPE):
+        if not case_ids:
+            case_ids = case_accessor.get_case_ids_in_domain(type=PERSON_CASE_TYPE)
+        for person_case_id in case_ids:
             person_case = case_accessor.get_case(person_case_id)
             case_properties = person_case.dynamic_case_properties()
             if self.should_add_state_and_district(case_properties):
