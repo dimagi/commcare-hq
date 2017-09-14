@@ -20,6 +20,7 @@ class Command(BaseCommand):
         if not case_ids:
             case_ids = case_accessor.get_case_ids_in_domain(type=PERSON_CASE_TYPE)
         for person_case_id in case_ids:
+            print person_case_id
             person_case = case_accessor.get_case(person_case_id)
             case_properties = person_case.dynamic_case_properties()
             if self.should_add_state_and_district(case_properties):
