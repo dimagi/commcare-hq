@@ -918,7 +918,7 @@ ASYNC_INDICATORS_TO_QUEUE = 10000
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
-SKIP_GOOGLE_ANALYTICS = False
+
 from env_settings import *
 
 try:
@@ -1007,7 +1007,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.skip_google_analytics',
+                'corehq.util.context_processors.skip_google_tag_manager',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',

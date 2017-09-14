@@ -99,6 +99,12 @@ def enterprise_mode(request):
     }
 
 
+def skip_google_tag_manager(request):
+    return {
+        'skip_google_tag_manager': settings.SERVER_ENVIRONMENT in ['icds', 'enikshay']
+    }
+
+
 def commcare_hq_names(request):
     return {
         'commcare_hq_names': {
