@@ -10,6 +10,7 @@ from datetime import datetime
 import bz2
 from celery.schedules import crontab
 from celery.task import task, periodic_task
+from requests import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -19,6 +20,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import Requests
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
@@ -30,8 +32,13 @@ OPENMRS_ID = 'Old Identification Number'  # or 'OpenMRS Identification Number' d
 
 def get_openmrs_patients(requests, report_uuid):
     endpoint = '/ws/rest/v1/reportingrest/reportdata/' + report_uuid
-    resp = requests.get(endpoint)
-    data = resp.json()
+    response = requests.get(endpoint)
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        logger.debug(response.json())
+        raise
+    data = response.json()
     return data['dataSets'][0]['rows']  # e.g. ...
     #     [{u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
     #      {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3}]
@@ -94,7 +101,7 @@ def import_patients_to_domain(domain_name, force=False):
         # TODO: ^^^ Make those configurable
 
         password = bz2.decompress(b64decode(importer.password))
-        requests = Requests(importer.url, importer.username, password)
+        requests = Requests(importer.server_url, importer.username, password)
         openmrs_patients = get_openmrs_patients(requests, importer.report_uuid)
         case_blocks = []
         for i, patient in enumerate(openmrs_patients):
