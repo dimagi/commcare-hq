@@ -1,3 +1,4 @@
+import json
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
@@ -13,6 +14,7 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
+from custom.enikshay.exceptions import ENikshayException
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
@@ -390,6 +392,14 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        try:
+            return unicode(self.get_payload(repeat_record))
+        except ENikshayException:
+            return None
+
     def allowed_to_forward(self, user):
         # if this user is already in the repeater queue don't add another one
         if queued_payload(user.domain, user.user_id):
@@ -401,10 +411,14 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
         if successful_records:
             latest_record_id = successful_records.split(" ")[-1]
             latest_record = RepeatRecord.get(latest_record_id)
-            previous_payload = latest_record.attempts[-1].payload if latest_record.attempts else {}
-            current_payload = unicode(get_bets_user_json(user.domain, user))
-            if current_payload == previous_payload:
-                return False
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_user_json(user.domain, user)
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
 
         return (user.user_data.get('user_level', None) == 'real'
                 and any(self._is_relevant_location(loc)
@@ -426,6 +440,11 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
                         'pac',
     )
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        return unicode(self.get_payload(repeat_record))
+
     def allowed_to_forward(self, location):
         # if this location is already in the repeater queue, don't forward again
         if queued_payload(location.domain, location.location_id):
@@ -437,10 +456,14 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
         if successful_records:
             latest_record_id = successful_records.split(" ")[-1]
             latest_record = RepeatRecord.get(latest_record_id)
-            previous_payload = latest_record.attempts[-1].payload if latest_record.attempts else {}
-            current_payload = unicode(get_bets_location_json(location))
-            if current_payload == previous_payload:
-                return False
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_location_json(location)
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
 
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)

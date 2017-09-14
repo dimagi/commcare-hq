@@ -753,7 +753,7 @@ class UserRepeaterTest(TestCase):
         user = self.make_user(self.private_location, username="daenerys@targaryens.net")
         self.assertEqual(2, len(self.repeat_records().all()))
         record = list(self.repeat_records())[-1]
-        user.user_data['privateSectorOrgId'] = "new data!"
+        user.first_name = "daenerys"
         user.save()
         self.assertEqual(2, len(self.repeat_records().all()))
 
@@ -767,7 +767,7 @@ class UserRepeaterTest(TestCase):
             record._id
         )
         # updating the user after a successful send, should add this user to the queue
-        user.user_data['privateSectorOrgId'] = 'Woop!'
+        user.first_name = 'dani'
         user.save()
         self.assertEqual(2, len(self.repeat_records().all()))
 
