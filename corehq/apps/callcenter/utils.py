@@ -77,6 +77,7 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def update_user_case(self, case, case_type, fields):
+        fields.pop('case_type', None)
         caseblock = CaseBlock(
             create=False,
             case_id=case.case_id,
