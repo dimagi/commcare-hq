@@ -1,11 +1,17 @@
 import pytz
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomActionDefinition
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    DomainCaseRuleRun,
+    CustomMatchDefinition,
+    CustomActionDefinition,
+)
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.timezones.conversions import ServerTime
+from custom.icds.tests.base import BaseICDSTest
 from datetime import datetime
 
 
@@ -122,3 +128,114 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '2')
+
+
+class BaseMigratedCriteriaTestCase(BaseICDSTest):
+    domain = 'icds-migrated-cases-test'
+
+    __test__ = False
+
+    @classmethod
+    def person_case_update(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def should_exclude(cls):
+        raise NotImplementedError()
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseMigratedCriteriaTestCase, cls).setUpClass()
+        cls.create_basic_related_cases()
+
+        if cls.person_case_update():
+            update_case(cls.domain, cls.mother_person_case.case_id, case_properties=cls.person_case_update())
+            update_case(cls.domain, cls.child_person_case.case_id, case_properties=cls.person_case_update())
+
+            cls.mother_person_case = CaseAccessors(cls.domain).get_case(cls.mother_person_case.case_id)
+            cls.child_person_case = CaseAccessors(cls.domain).get_case(cls.child_person_case.case_id)
+
+    def assertExcludedOrNot(self, result):
+        if self.should_exclude():
+            self.assertFalse(result)
+        else:
+            self.assertTrue(result)
+
+    def tearDown(self):
+        for rule in AutomaticUpdateRule.objects.filter(domain=self.domain):
+            rule.hard_delete()
+
+        DomainCaseRuleRun.objects.filter(domain=self.domain).delete()
+
+    def test_person_case(self):
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING, case_type='person')
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_PERSON_CASE_IS_NOT_MIGRATED',
+        )
+        self.assertExcludedOrNot(rule.criteria_match(self.mother_person_case, datetime.utcnow()))
+        self.assertExcludedOrNot(rule.criteria_match(self.child_person_case, datetime.utcnow()))
+
+    def test_child_health_case(self):
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING, case_type='child_health')
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CHILD_HEALTH_CASE_IS_NOT_MIGRATED',
+        )
+        self.assertExcludedOrNot(rule.criteria_match(self.child_health_case, datetime.utcnow()))
+
+    def test_ccs_record_case(self):
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING, case_type='ccs_record')
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED',
+        )
+        self.assertExcludedOrNot(rule.criteria_match(self.ccs_record_case, datetime.utcnow()))
+
+    def test_tasks_case(self):
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING, case_type='tasks')
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_TASKS_CASE_IS_NOT_MIGRATED',
+        )
+        self.assertExcludedOrNot(rule.criteria_match(self.child_tasks_case, datetime.utcnow()))
+        self.assertExcludedOrNot(rule.criteria_match(self.mother_tasks_case, datetime.utcnow()))
+
+
+class MigratedStatusTestCase(BaseMigratedCriteriaTestCase):
+
+    __test__ = True
+
+    @classmethod
+    def person_case_update(cls):
+        return {'migration_status': 'migrated'}
+
+    @classmethod
+    def should_exclude(cls):
+        return True
+
+
+class RegisteredStatusTestCase(BaseMigratedCriteriaTestCase):
+
+    __test__ = True
+
+    @classmethod
+    def person_case_update(cls):
+        return {'registered_status': 'not_registered'}
+
+    @classmethod
+    def should_exclude(cls):
+        return True
+
+
+class NormalStatusTestCase(BaseMigratedCriteriaTestCase):
+
+    __test__ = True
+
+    @classmethod
+    def person_case_update(cls):
+        return {}
+
+    @classmethod
+    def should_exclude(cls):
+        return False

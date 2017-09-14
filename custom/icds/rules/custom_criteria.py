@@ -1,3 +1,9 @@
+from custom.icds.case_relationships import (
+    child_person_case_from_child_health_case,
+    mother_person_case_from_ccs_record_case,
+    child_person_case_from_tasks_case,
+    mother_person_case_from_tasks_case,
+)
 from custom.icds.rules.immunization import (
     get_immunization_products,
     get_immunization_anchor_date,
@@ -64,3 +70,35 @@ def consider_case_for_dpt3_and_measles_reminder(case, now):
         return False
 
     return True
+
+
+def person_case_is_not_migrated(case, now):
+    if case.type != 'person':
+        raise ValueError("Expected case type of 'person' for %s" % case.case_id)
+
+    return not (
+        case.get_case_property('migration_status') == 'migrated' or
+        case.get_case_property('registered_status') == 'not_registered'
+    )
+
+
+def child_health_case_is_not_migrated(case, now):
+    child_person_case = child_person_case_from_child_health_case(case)
+    return person_case_is_not_migrated(child_person_case, now)
+
+
+def ccs_record_case_is_not_migrated(case, now):
+    mother_person_case = mother_person_case_from_ccs_record_case(case)
+    return person_case_is_not_migrated(mother_person_case, now)
+
+
+def tasks_case_is_not_migrated(case, now):
+    tasks_type = case.get_case_property('tasks_type')
+    if tasks_type == 'child':
+        child_person_case = child_person_case_from_tasks_case(case)
+        return person_case_is_not_migrated(child_person_case, now)
+    elif tasks_type == 'pregnancy':
+        mother_person_case = mother_person_case_from_tasks_case(case)
+        return person_case_is_not_migrated(mother_person_case, now)
+    else:
+        raise ValueError("Expected tasks_type of 'child' or 'pregnancy' for %s" % case.case_id)

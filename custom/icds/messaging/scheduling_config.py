@@ -115,6 +115,10 @@ def create_aww_indicator_3(domain):
             property_name='cf1_date',
             match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
         )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED',
+        )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
@@ -157,6 +161,10 @@ def create_ls_indicator_3(domain):
             property_name='cf1_date',
             match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
         )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED',
+        )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
@@ -198,6 +206,10 @@ def _create_ls_indicator_5(domain, visit_num):
             MatchPropertyDefinition,
             property_name='pnc%s_date' % visit_num,
             match_type=MatchPropertyDefinition.MATCH_HAS_NO_VALUE,
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED',
         )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -247,6 +259,10 @@ def create_aww_indicator_6(domain):
                 property_name='cf%s_date' % i,
                 match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
             )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED',
+        )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
@@ -280,6 +296,10 @@ def create_ls_indicator_4a(domain):
             MatchPropertyDefinition,
             property_name='last_reported_fever_date',
             match_type=MatchPropertyDefinition.MATCH_HAS_VALUE,
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_PERSON_CASE_IS_NOT_MIGRATED',
         )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -328,6 +348,10 @@ def create_ls_indicator_4b(domain):
             match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
             property_value='-2192',
         )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_PERSON_CASE_IS_NOT_MIGRATED',
+        )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             timed_schedule_id=schedule.schedule_id,
@@ -363,6 +387,10 @@ def create_aww_indicator_4(domain):
         rule.add_criteria(
             CustomMatchDefinition,
             name='ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER',
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_TASKS_CASE_IS_NOT_MIGRATED',
         )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -404,6 +432,10 @@ def create_aww_indicator_5(domain):
             property_name='immun_one_year_complete',
             property_value='yes',
             match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        rule.add_criteria(
+            CustomMatchDefinition,
+            name='ICDS_TASKS_CASE_IS_NOT_MIGRATED',
         )
         rule.add_action(
             CreateScheduleInstanceActionDefinition,

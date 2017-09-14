@@ -1582,7 +1582,7 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
-        ['custom.icds.messaging.custom_recipients.mother_person_case_from_child_health_case',
+        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
@@ -1592,6 +1592,14 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
     'ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER':
         'custom.icds.rules.custom_criteria.consider_case_for_dpt3_and_measles_reminder',
+    'ICDS_PERSON_CASE_IS_NOT_MIGRATED':
+        'custom.icds.rules.custom_criteria.person_case_is_not_migrated',
+    'ICDS_CHILD_HEALTH_CASE_IS_NOT_MIGRATED':
+        'custom.icds.rules.custom_criteria.child_health_case_is_not_migrated',
+    'ICDS_CCS_RECORD_CASE_IS_NOT_MIGRATED':
+        'custom.icds.rules.custom_criteria.ccs_record_case_is_not_migrated',
+    'ICDS_TASKS_CASE_IS_NOT_MIGRATED':
+        'custom.icds.rules.custom_criteria.tasks_case_is_not_migrated',
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
