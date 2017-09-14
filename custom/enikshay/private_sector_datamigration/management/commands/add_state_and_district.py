@@ -43,8 +43,8 @@ class Command(BaseCommand):
         update = {}
         if not case_properties.get('current_address_state_choice'):
             update['current_address_state_choice'] = STATE_ID_TO_LOCATION[beneficiary.stateId]
-        if not case_properties.get('current_address_district_choice'):
-            update['current_address_district_choice'] = DISTRICT_ID_TO_LOCATION[beneficiary.districtId]
+        # if not case_properties.get('current_address_district_choice'):
+        #     update['current_address_district_choice'] = DISTRICT_ID_TO_LOCATION[beneficiary.districtId]
 
         if update:
             CaseFactory(self.domain).update_case(
