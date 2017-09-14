@@ -116,6 +116,7 @@ from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+from corehq.util.soft_assert import soft_assert
 from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
 
@@ -1127,7 +1128,20 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
         reports += ReportConfiguration.by_domain(self.domain)
-        return [report for report in reports if report.table_id == self.config.table_id]
+        ret = []
+        for report in reports:
+            try:
+                if report.table_id == self.config.table_id:
+                    ret.append(report)
+            except DataSourceConfigurationNotFoundError:
+                _soft_assert = soft_assert(to=[
+                    '{}@{}'.format(name, 'dimagi.com')
+                    for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
+                ])
+                _soft_assert(False, "Report {} on domain {} attempted to reference deleted table {}".format(
+                    report._id, self.domain, report.table_id
+                ))
+        return ret
 
     def get(self, request, *args, **kwargs):
         if self.config.is_deactivated:
