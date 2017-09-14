@@ -858,12 +858,12 @@ class RestoreConfig(object):
             for timer in timing.to_list(exclude_root=True):
                 if timer.name in RESTORE_SEGMENTS:
                     segment = RESTORE_SEGMENTS[timer.name]
-                    bucket = bucket_value(timer.duration, timer_buckets)
+                    bucket = bucket_value(timer.duration, timer_buckets, 's')
                     datadog_counter(
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
-            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets))
+            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
         datadog_counter('commcare.restores.count', tags=tags)
 
 

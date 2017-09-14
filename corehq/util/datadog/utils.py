@@ -84,7 +84,7 @@ def update_datadog_metrics(metrics):
         statsd.gauge(metric, value)
 
 
-def bucket_value(value, buckets):
+def bucket_value(value, buckets, unit=None):
     """Get value bucket for the given value
 
     Bucket values because datadog's histogram is too limited
@@ -94,7 +94,8 @@ def bucket_value(value, buckets):
     with tags. More details:
     https://help.datadoghq.com/hc/en-us/articles/211545826
     """
+    unit = unit or ''
     for bucket in buckets:
         if value < bucket:
-            return "lt_{:03}".format(bucket)
-    return "over_{:03}".format(buckets[-1])
+            return "lt_{:03}{}".format(bucket, unit)
+    return "over_{:03}{}".format(buckets[-1], unit)
