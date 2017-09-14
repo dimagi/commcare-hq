@@ -26,6 +26,7 @@ from casexml.apps.phone.exceptions import (
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -853,15 +854,16 @@ class RestoreConfig(object):
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
             tags.append(u'domain:{}'.format(self.domain))
         if timing is not None:
+            timer_buckets = (5, 20, 60, 120)
             for timer in timing.to_list(exclude_root=True):
                 if timer.name in RESTORE_SEGMENTS:
                     segment = RESTORE_SEGMENTS[timer.name]
-                    bucket = _get_time_bucket(timer.duration)
+                    bucket = bucket_value(timer.duration, timer_buckets)
                     datadog_counter(
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
-            tags.append('duration:%s' % _get_time_bucket(timing.duration))
+            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets))
         datadog_counter('commcare.restores.count', tags=tags)
 
 
@@ -870,24 +872,3 @@ RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
-
-
-def _get_time_bucket(duration):
-    """Get time bucket for the given duration
-
-    Bucket restore times because datadog's histogram is too limited
-
-    Basically restore frequency is not high enough to have a meaningful
-    time distribution with datadog's 10s aggregation window, especially
-    with tags. More details:
-    https://help.datadoghq.com/hc/en-us/articles/211545826
-    """
-    if duration < 5:
-        return "lt_005s"
-    if duration < 20:
-        return "lt_020s"
-    if duration < 60:
-        return "lt_060s"
-    if duration < 120:
-        return "lt_120s"
-    return "over_120s"
