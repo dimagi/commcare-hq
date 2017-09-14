@@ -1154,12 +1154,12 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
-                  ' AND (dob <= ' || quote_literal(_month_end_6yr) ||
-                  ' OR (dob >= ' || quote_literal(_month_start_11yr) || ' AND dob <= ' || quote_literal(_month_end_49yr) || '))' ||
+                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
+                  '      OR (dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_start_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN (dob <= ' || quote_literal(_month_end_6yr) ||
-                  ' OR (dob >= ' || quote_literal(_month_start_11yr) || ' AND dob <= ' || quote_literal(_month_end_49yr) || '))' ||
+		'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
+                  '      OR (dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_start_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
