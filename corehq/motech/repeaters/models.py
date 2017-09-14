@@ -361,6 +361,26 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
+class CreateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being created.
+    Used by the Zapier integration.
+    """
+    # note: the logic for how this is managed is handled in signals.create_case_repeat_records
+    # so this class actually does nothing except exist to be able to differentiate the two
+    # at the repeater and repeat record level. otherwise it's exactly the same as CaseRepeater
+    friendly_name = _("Forward Cases on Creation Only")
+
+
+class UpdateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being updated.
+    Used by the Zapier integration.
+    """
+    # see note above
+    friendly_name = _("Forward Cases on Update Only")
+
+
 class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
