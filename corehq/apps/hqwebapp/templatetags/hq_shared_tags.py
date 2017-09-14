@@ -498,7 +498,17 @@ def prelogin_url(context, urlname):
     A prefix aware url tag replacement for prelogin URLs
     """
     if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
-        return reverse(urlname, args=[context['LANGUAGE_CODE']])
+        return _cached_reverse(urlname, args=[context['LANGUAGE_CODE']])
+    else:
+        return _cached_reverse(urlname)
+
+
+@quickcache(vary_on=['urlname', 'lang_code'], timeout=60*60)
+def _cached_reverse(urlname, lang_code=None):
+    # cache this call in redis to try and prevent slow load times from bootstrapping urls
+    # context in https://manage.dimagi.com/default.asp?261010
+    if lang_code is not None:
+        return reverse(urlname, args=[lang_code])
     else:
         return reverse(urlname)
 
