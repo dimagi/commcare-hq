@@ -16,7 +16,7 @@ class Requests(object):
         self.password = password
 
     def _url(self, uri):
-        return '{}{}'.format(self.base_url, uri)
+        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def get(self, uri, *args, **kwargs):
         return self.requests.get(self._url(uri), *args,
