@@ -700,10 +700,10 @@ class UserRepeaterTest(TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_user(self, location, user_data=None):
+    def make_user(self, location, user_data=None, username="davos.shipwright@stannis.gov"):
         user = CommCareUser.create(
             self.domain,
-            "davos.shipwright@stannis.gov",
+            username,
             "123",
             location=location,
             commit=False,
@@ -741,6 +741,35 @@ class UserRepeaterTest(TestCase):
     def test_test_user(self):
         self.make_user(self.test_location)
         self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_updates(self):
+        # saving a record multiple times shouldn't retrigger
+        user = self.make_user(self.private_location)
+        self.assertEqual(1, len(self.repeat_records().all()))
+        user.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # modifying the record and saving it shouldn't retrigger if the record hasn't sent
+        user = self.make_user(self.private_location, username="daenerys@targaryens.net")
+        self.assertEqual(2, len(self.repeat_records().all()))
+        record = list(self.repeat_records())[-1]
+        user.first_name = "daenerys"
+        user.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        _mock_fire_record(record)
+        # record gets taken out of queue
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        user = CommCareUser.get(user.user_id)
+        self.assertEqual(
+            user.user_data.get('BETS_user_repeat_record_ids'),
+            record._id
+        )
+        # updating the user after a successful send, should add this user to the queue
+        user.first_name = 'dani'
+        user.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -829,6 +858,33 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         location = self.make_location('flea_bottom', metadata={'is_test': 'yes'})
         self.assertEqual(0, len(self.repeat_records().all()))
 
+        # saving a record multiple times shouldn't retrigger
+        location = self.make_location('kings_landing')
+        self.assertEqual(1, len(self.repeat_records().all()))
+        location.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # modifying the record and saving it shouldn't retrigger if the record hasn't sent
+        location = self.make_location('dorn')
+        self.assertEqual(2, len(self.repeat_records().all()))
+        record = list(self.repeat_records())[-1]
+        location.metadata['private_sector_org_id'] = "new data!"
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        _mock_fire_record(record)
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        location = SQLLocation.objects.get(location_id=location.location_id)
+        self.assertEqual(
+            location.metadata.get('BETS_location_repeat_record_ids'),
+            record._id
+        )
+        # updating the location after a successful send, should add this location to the queue
+        location.metadata['private_sector_org_id'] = 'Woop!'
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
@@ -909,3 +965,26 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
             payload['properties']['phone_number'],
             '1234567890'  # "91" is removed
         )
+
+
+def _mock_fire_record(record):
+    mock_response_json = {
+        "code": 200,
+        "meta": {
+            "failCount": "0",
+            "successCount": "1",
+            "totalCount": "1",
+        },
+        "response": [
+            {
+                "status": "Success",
+                "failureDescription": ""
+            }
+        ]
+    }
+    with mock.patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+        mock_post.return_value = mock_response
+        record.fire()
