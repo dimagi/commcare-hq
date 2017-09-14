@@ -98,13 +98,6 @@ def enterprise_mode(request):
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
     }
 
-
-def skip_google_tag_manager(request):
-    return {
-        'skip_google_tag_manager': settings.SERVER_ENVIRONMENT in ['icds', 'enikshay']
-    }
-
-
 def commcare_hq_names(request):
     return {
         'commcare_hq_names': {
