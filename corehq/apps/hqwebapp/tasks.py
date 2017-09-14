@@ -2,7 +2,6 @@ from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
 from corehq.util.log import send_HTML_email
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 
 
@@ -16,6 +15,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
+    from corehq.util.soft_assert import soft_assert
     soft_assert('{}@.dimagi.com'.format('skelly'))(
         all(recipient for recipient in recipient_list),
         'Blank email addresses',
