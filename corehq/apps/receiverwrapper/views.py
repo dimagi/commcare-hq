@@ -24,8 +24,9 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -115,18 +116,20 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     return response
 
 
-def _record_metrics(base_tags, submission_type, response, result=None, timer=None):
-    base_tags += 'submission_type:{}'.format(submission_type),
-    datadog_counter('commcare.xform_submissions.count', tags=base_tags + [
+def _record_metrics(tags, submission_type, response, result=None, timer=None):
+    tags += [
+        'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
-    ])
+    ]
+
     if response.status_code == 201 and timer and result:
-        datadog_histogram('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
-        # normalize over number of items (form or case) saved
-        normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
+        tags += [
+            'duration:%s' % bucket_value(timer.duration, (5, 10, 20), 's'),
+            'case_count:%s' % bucket_value(len(result.cases), (2, 5, 10)),
+            'ledger_count:%s' % bucket_value(len(result.ledgers), (2, 5, 10)),
+        ]
+
+    datadog_counter('commcare.xform_submissions.count', tags=tags)
 
 
 @csrf_exempt
