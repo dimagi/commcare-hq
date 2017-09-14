@@ -31,9 +31,9 @@ def test_url_group(self, url, group):
 
 
 @generate_cases([
-    (0, (1, 2, 5), None, 'lt_001'),
-    (1, (1, 2, 5), None, 'lt_002'),
-    (6, (1, 2, 5), None, 'over_005'),
+    (0, (1, 2, 5), '', 'lt_001'),
+    (1, (1, 2, 5), '', 'lt_002'),
+    (6, (1, 2, 5), '', 'over_005'),
     (101, (1, 2, 100), 's', 'over_100s'),
     (4, (1, 2, 5), 's', 'lt_005s'),
 ], DatadogUtilsTest)
