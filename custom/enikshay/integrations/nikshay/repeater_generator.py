@@ -214,7 +214,7 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         base_properties = self._base_properties(repeat_record)
         base_properties.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
-            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status'), 'unknown'),
+            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
             "HIVTestDate": _format_date_or_null_date(person_case_properties, 'hiv_test_date'),
             "CPTDeliverDate": _format_date_or_null_date(person_case_properties, 'cpt_1_date'),
             "ARTCentreDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
