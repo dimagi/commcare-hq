@@ -1007,6 +1007,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.skip_google_tag_manager',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
