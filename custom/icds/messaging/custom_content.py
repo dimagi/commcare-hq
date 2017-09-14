@@ -123,6 +123,26 @@ def render_content_for_user(user, template, context):
     return render_message(language_code, template, context)
 
 
+def person_case_is_migrated(case):
+    """
+    Applies to both person cases representing mothers and person cases representing children.
+    Returns True if the person is marked as having migrated to another AWC, otherwise False.
+    """
+    return case.get_case_property('migration_status') == 'migrated'
+
+
+def person_case_opted_out(case):
+    """
+    Applies to both person cases representing mothers and person cases representing children.
+    Returns True if the person is marked as having opted out of services, otherwise False.
+    """
+    return case.get_case_property('registered_status') == 'not_registered'
+
+
+def person_case_is_migrated_or_opted_out(case):
+    return person_case_is_migrated(case) or person_case_opted_out(case)
+
+
 def render_missed_visit_message(recipient, case_schedule_instance, template):
     if not isinstance(recipient, CommCareUser):
         return []
@@ -130,6 +150,9 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
     except CaseRelationshipError:
+        return []
+
+    if person_case_is_migrated_or_opted_out(mother_case):
         return []
 
     if case_schedule_instance.case_owner is None:
@@ -208,6 +231,10 @@ def dpt3_and_measles_are_due(recipient, case_schedule_instance):
         immunization_is_due(case, anchor_date, measles_product, products, ledger_values)
     ):
         child_person_case = child_person_case_from_tasks_case(case)
+
+        if person_case_is_migrated_or_opted_out(child_person_case):
+            return []
+
         context = {
             'child_name': child_person_case.name,
         }
