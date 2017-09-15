@@ -192,7 +192,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
-            }
+            },
         },
     };
 

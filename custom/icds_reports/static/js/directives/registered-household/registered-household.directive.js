@@ -185,7 +185,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
-            }
+            },
         },
     };
 

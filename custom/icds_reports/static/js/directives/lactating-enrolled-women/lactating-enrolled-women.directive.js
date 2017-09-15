@@ -177,7 +177,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
-            }
+            },
         },
     };
 

@@ -177,7 +177,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
-            }
+            },
         },
     };
 
