@@ -155,6 +155,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         for app_map in all_forms.values():
             is_deleted = app_map['is_deleted']
+
             def _translate_name(item):
                 return self.get_translated_value(self.display_lang, app_map['app']['langs'], item)
 
@@ -165,7 +166,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
             for module_map in sorted(app_map['modules'],
                                      key=lambda item: _translate_name(item['module']['names']).lower()
-                                                      if item['module'] else ''):
+                                     if item['module'] else ''):
                 if module_map['module'] is not None:
                     module_name = _translate_name(module_map['module']['names'])
                     module = self._map_structure(module_map['module']['id'], module_name)
