@@ -117,12 +117,10 @@ class AggregationScriptTest(TransactionTestCase):
             if differences:
                 messages.append("""
                     Actual and expected row {} are not the same
-                    full: {}
                     Actual:   {}
                     Expected: {}
                 """.format(
                     idx + 1,
-                    dict1,
                     ', '.join(['{}: {}'.format(difference, dict1[difference]) for difference in differences]),
                     ', '.join(['{}: {}'.format(difference, dict2[difference]) for difference in differences])
                 ))
@@ -163,17 +161,17 @@ class AggregationScriptTest(TransactionTestCase):
             'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
         )
         _call_center_domain_mock.start()
-        # configs = StaticDataSourceConfiguration.by_domain('icds-cas')
-        # cls.adapters = [get_indicator_adapter(config) for config in configs]
-        #
-        # for adapter in cls.adapters:
-        #     if adapter.config.table_id == 'static-child_health_cases':
-        #         # hack because this is in a migration
-        #         continue
-        #     adapter.rebuild_table()
-        #
-        # cls.setUpTestData()
-        # move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+        configs = StaticDataSourceConfiguration.by_domain('icds-cas')
+        cls.adapters = [get_indicator_adapter(config) for config in configs]
+
+        for adapter in cls.adapters:
+            if adapter.config.table_id == 'static-child_health_cases':
+                # hack because this is in a migration
+                continue
+            adapter.rebuild_table()
+
+        cls.setUpTestData()
+        move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
         _call_center_domain_mock.stop()
 
     @classmethod
