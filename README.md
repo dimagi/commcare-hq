@@ -80,7 +80,7 @@ Before proceeding: If you are running Mac OS X, you will need to manually instal
 
     $ ./manage.py sync_couch_views
 
-If you are running Mac OS X, you may need to [set up a Postgres user and database] before you can run the migrations.(#PostgreSQL-Configuration):
+If you are running Mac OS X, you may need to set up a Postgres user and database before you can run the migrations. [See PostgresSQL Configuration](#PostgreSQL-Configuration) for more details.
 
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
