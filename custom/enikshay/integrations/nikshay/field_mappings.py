@@ -7,6 +7,7 @@ gender_mapping = {
 disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
+    'extrapulmonary': 'EP',
 }
 
 patient_type_choice = {
@@ -71,13 +72,11 @@ episode_site = {
 dcpulmonory = {
     'pulmonary': 'Y',
     'extra_pulmonary': 'N',
-    'extrapulmonary': 'N',
 }
 
 dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
-    'extrapulmonary': 'Y',
 }
 
 treatment_outcome = {
