@@ -20,11 +20,8 @@ def create_form_repeat_records(sender, xform, **kwargs):
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
-    # assume if there's exactly 1 xform_id that modified the case it's being created
-    if len(case.xform_ids) == 1:
-        create_repeat_records(CreateCaseRepeater, case)
-    else:
-        create_repeat_records(UpdateCaseRepeater, case)
+    create_repeat_records(CreateCaseRepeater, case)
+    create_repeat_records(UpdateCaseRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
