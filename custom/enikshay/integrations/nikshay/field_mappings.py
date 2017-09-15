@@ -71,13 +71,11 @@ episode_site = {
 dcpulmonory = {
     'pulmonary': 'Y',
     'extra_pulmonary': 'N',
-    'extrapulmonary': 'N',
 }
 
 dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
-    'extrapulmonary': 'Y',
 }
 
 treatment_outcome = {
