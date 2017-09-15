@@ -37,7 +37,8 @@ class Command(BaseCommand):
                 'july_7_unassigned',
                 'july_7-unassigned',
                 'incr_bene_jul19',
-            ]
+            ] and
+            case_properties.get('legacy_stateId')
         )
 
     def add_state_and_district(self, person_case, beneficiary, case_properties):
