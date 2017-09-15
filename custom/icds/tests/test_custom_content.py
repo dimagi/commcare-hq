@@ -22,6 +22,7 @@ from custom.icds.messaging.custom_content import (
     get_state_code,
     get_language_code_for_state,
     render_message,
+    person_case_is_migrated_or_opted_out,
 )
 from custom.icds.tests.base import BaseICDSTest
 from mock import patch
@@ -86,6 +87,9 @@ class CustomContentTest(BaseICDSTest):
             update={'zscore_grading_wfa': 'red'},
             owner_id=cls.awc1.location_id,
         )
+
+        cls.migrated_case = cls.create_case('person', update={'migration_status': 'migrated'})
+        cls.opted_out_case = cls.create_case('person', update={'registered_status': 'not_registered'})
 
     def test_static_negative_growth_indicator(self):
         c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
@@ -261,3 +265,8 @@ class CustomContentTest(BaseICDSTest):
             render_message(ENGLISH, 'missed_cf_visit_to_aww.txt', context),
             "AWC 0000 has not reported a visit during complementary feeding initiation period for Sam"
         )
+
+    def test_person_case_is_migrated_or_opted_out(self):
+        self.assertFalse(person_case_is_migrated_or_opted_out(self.mother_person_case))
+        self.assertTrue(person_case_is_migrated_or_opted_out(self.migrated_case))
+        self.assertTrue(person_case_is_migrated_or_opted_out(self.opted_out_case))
