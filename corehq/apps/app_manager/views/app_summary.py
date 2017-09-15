@@ -422,8 +422,10 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get_case_type_rows(self, case_type, language):
         rows = []
         relationships = ["[{}] {}".format(r, t) for r, t in case_type.relationships.iteritems()]
-        opened_by = [_get_translated_form_name(self.app, form_id, language) for form_id in case_type.opened_by.keys()]
-        closed_by = [_get_translated_form_name(self.app, form_id, language) for form_id in case_type.closed_by.keys()]
+        opened_by = [_get_translated_form_name(self.app, form_id, language)
+                     for form_id in case_type.opened_by.keys()]
+        closed_by = [_get_translated_form_name(self.app, form_id, language)
+                     for form_id in case_type.closed_by.keys()]
         for i in range(max(len(relationships), len(opened_by), len(closed_by))):
             row = [case_type.name]
             row.append(relationships[i] if i < len(relationships) else '')
