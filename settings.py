@@ -2106,6 +2106,7 @@ DOMAIN_MODULE_MAP = {
 
     'enikshay-test': 'custom.enikshay',
     'enikshay': 'custom.enikshay',
+    'enikshay-performance-test': 'custom.enikshay',
     'enikshay-test-2': 'custom.enikshay',
     'enikshay-test-3': 'custom.enikshay',
     'enikshay-nikshay-migration-test': 'custom.enikshay',
