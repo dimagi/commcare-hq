@@ -71,8 +71,8 @@ from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of
     get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
-from custom.icds_reports.reports.registered_household import get_registered_household_data_map,\
-    get_registered_household_sector_data
+from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
+    get_registered_household_sector_data, get_registered_household_data_chart
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
@@ -1019,6 +1019,7 @@ class AWCsCoveredView(View):
 class RegisteredHouseholdView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1031,10 +1032,13 @@ class RegisteredHouseholdView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_registered_household_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_registered_household_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_registered_household_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_registered_household_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_registered_household_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
