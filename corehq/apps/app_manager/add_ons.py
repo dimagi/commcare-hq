@@ -57,6 +57,9 @@ def _uses_detail_format(module, column_format):
 # Apps that were created before add-ons were released get the original set of add-ons enabled
 # automatically, so they wouldn't get functionality suddenly turned off during the release.
 def _grandfathered(slug, app):
+    if app.add_ons:
+        return False
+
     release_date = datetime(2017, 7, 31, 20)
     if slug not in [
         "conditional_form_actions", "subcases", "case_list_menu_item", "enum_image", "menu_mode",
