@@ -102,32 +102,38 @@ def get_person_case_from_episode(domain, episode_case_id):
     )
 
 
-def get_open_occurrence_case_from_person(domain, person_case_id):
+def get_open_occurrence_case_from_person(domain, person_case_id, last_closed=False):
     """
     Gets the first open 'occurrence' case for the person
 
     Assumes the following case structure:
     Person <--ext-- Occurrence
-
+    last_closed would give the latest closed occurrence case if no open occurrence case found
     """
     case_accessor = CaseAccessors(domain)
     occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_occurrence_cases = [case for case in occurrence_cases
                              if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
     if not open_occurrence_cases:
+        if last_closed:
+            all_occurrence_cases = [case for case in occurrence_cases if case.type == CASE_TYPE_OCCURRENCE]
+            if all_occurrence_cases:
+                all_occurrence_cases.sort(key=lambda x: x.closed_on, reverse=True)
+                return all_occurrence_cases[0]
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
         )
     return open_occurrence_cases[0]
 
 
-def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
+def get_open_episode_case_from_occurrence(domain, occurrence_case_id, last_closed=False):
     """
     Gets the first open 'episode' case for the occurrence
 
     Assumes the following case structure:
     Occurrence <--ext-- Episode
-
+    last_closed would give the latest closed episode case under the open occurrence or the latest closed
+    occurrence case if no open episode case found
     """
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
@@ -137,6 +143,13 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     if open_episode_cases:
         return open_episode_cases[0]
     else:
+        if last_closed:
+            all_episode_cases = [case for case in episode_cases
+                                 if case.type == CASE_TYPE_EPISODE and
+                                 case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+            if all_episode_cases:
+                all_episode_cases.sort(key=lambda x: x.closed_on, reverse=True)
+                return all_episode_cases[0]
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
         )
@@ -162,7 +175,7 @@ def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
         )
 
 
-def get_open_episode_case_from_person(domain, person_case_id):
+def get_open_episode_case_from_person(domain, person_case_id, last_closed=False):
     """
     Gets the first open 'episode' case for the person
 
@@ -171,7 +184,7 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
     """
     return get_open_episode_case_from_occurrence(
-        domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
+        domain, get_open_occurrence_case_from_person(domain, person_case_id, last_closed).case_id
     )
 
 

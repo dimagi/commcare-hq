@@ -208,7 +208,7 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         """
         https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.hxfnqahoeag
         """
-        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id, last_closed=True)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         base_properties = self._base_properties(repeat_record)
