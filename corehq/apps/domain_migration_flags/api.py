@@ -57,6 +57,9 @@ def migration_in_progress(domain, slug):
 
 @quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
 def any_migrations_in_progress(domain, strict=False):
+    """Returns True if there are any migrations in progress where modifications to
+    project forms and cases should be prevented
+    """
     return DATA_MIGRATION.enabled(domain) or DomainMigrationProgress.objects.filter(
         domain=domain, migration_status=MigrationStatus.IN_PROGRESS
     ).exists()
