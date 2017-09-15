@@ -31,6 +31,10 @@ Initial setup
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
     
+    You may encounter an authorization error, such as `restkit.errors.Unauthorized: {"error":"unauthorized","reason":"You are not a server admin."}`.  If so, you may need to alter your docker/localsettings.py COUCH_DATABASES setup by adding the following:
+	* 'COUCH_USERNAME': 'commcarehq',
+        * 'COUCH_PASSWORD': 'commcarehq',
+    
     You can create another user and domain with `$ ./manage.py bootstrap DOMAIN EMAIL PASSWORD`
     
     On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
