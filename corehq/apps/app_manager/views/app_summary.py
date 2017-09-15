@@ -384,7 +384,8 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description'))]
+        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description')),
+                   (_('Case Types'), ('type', 'relationships', 'opened_by', 'closed_by'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
@@ -393,6 +394,10 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         data = list((
             _('All Case Properties'),
             self.get_case_property_rows(case_type)
+        ) for case_type in case_metadata.case_types)
+        data += list((
+            _('Case Types'),
+            self.get_case_type_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
         data += list((
             case_type.name,
@@ -413,6 +418,21 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def get_case_property_rows(self, case_type):
         return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
+
+    def get_case_type_rows(self, case_type, language):
+        rows = []
+        relationships = ["[{}] {}".format(r, t) for r, t in case_type.relationships.iteritems()]
+        opened_by = [_get_translated_form_name(self.app, form_id, language) for form_id in case_type.opened_by.keys()]
+        closed_by = [_get_translated_form_name(self.app, form_id, language) for form_id in case_type.closed_by.keys()]
+        for i in range(max(len(relationships), len(opened_by), len(closed_by))):
+            row = [case_type.name]
+            row.append(relationships[i] if i < len(relationships) else '')
+            row.append(opened_by[i] if i < len(opened_by) else '')
+            row.append(closed_by[i] if i < len(closed_by) else '')
+            rows.append(tuple(row))
+
+        return rows
+        #return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
 
     def get_case_questions_rows(self, case_type, language):
         rows = []
