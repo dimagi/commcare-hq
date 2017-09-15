@@ -2131,6 +2131,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
     'sheel-enikshay': 'custom.enikshay',
     'enikshay-reports-qa': 'custom.enikshay',
+    'enikshay-performance-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
