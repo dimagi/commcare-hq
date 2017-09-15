@@ -17,7 +17,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
-from corehq.toggles import ASYNC_RESTORE
+from corehq.toggles import ASYNC_RESTORE, DATA_MIGRATION
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.exceptions import CouchSaveAborted
@@ -112,7 +112,7 @@ class SubmissionPost(object):
         self.interface.save_processed_models(xforms)
 
     def _handle_basic_failure_modes(self):
-        if any_migrations_in_progress(self.domain):
+        if any_migrations_in_progress(self.domain) or DATA_MIGRATION.enabled(self.domain):
             # keep submissions on the phone
             # until ready to start accepting again
             return HttpResponse(status=503)
