@@ -15,6 +15,20 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
+    from corehq.util.soft_assert import soft_assert
+    soft_assert('{}@.dimagi.com'.format('skelly'))(
+        all(recipient for recipient in recipient_list),
+        'Blank email addresses',
+        {
+            'subject': subject,
+            'message': message,
+            'recipients': recipient_list
+        }
+    )
+
+    recipient_list = filter(None, recipient_list)
+    if not recipient_list:
+        return
     try:
         send_mail(subject, message, from_email, recipient_list,
                   fail_silently=fail_silently, auth_user=auth_user,
