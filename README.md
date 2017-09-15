@@ -71,11 +71,17 @@ Once you have completed the above steps, you can use Docker to build and run all
 
 ### Set up your django environment
 
-Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
+Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch (in Docker).
+    * You can check your local containers by running `docker ps -a`.
 
 Populate your database:
 
+Before proceeding: If you are running Mac OS X, you will need to manually install the `libmagic` dependency for `python-magic` by running `brew install libmagic`.
+
     $ ./manage.py sync_couch_views
+
+If you are running Mac OS X, you may need to [set up a Postgres user and database] before you can run the migrations.(#PostgreSQL-Configuration):
+
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
 
