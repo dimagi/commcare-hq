@@ -7,6 +7,7 @@ gender_mapping = {
 disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
+    'extrapulmonary': 'EP',
 }
 
 patient_type_choice = {
