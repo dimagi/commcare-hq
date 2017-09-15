@@ -1569,7 +1569,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_bp_forms'
             ),
             DatabaseColumn(
-                'Number of birth preparedness forms',
+                'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
                 slug='num_delivery_forms'
             ),
