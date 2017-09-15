@@ -1138,8 +1138,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
                     '{}@{}'.format(name, 'dimagi.com')
                     for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
                 ])
-                _soft_assert(False, "Report {} on domain {} attempted to reference deleted table {}".format(
-                    report._id, self.domain, report.table_id
+                _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
+                    report._id, self.domain
                 ))
         return ret
 
