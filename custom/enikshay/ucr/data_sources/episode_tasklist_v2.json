@@ -4,7 +4,7 @@
     "sheel-enikshay",
     "enikshay-reports-qa",
     "enikshay-test",
-    "enikshay-performance-testing"
+    "enikshay-performance-test"
   ],
   "server_environment": [
     "enikshay",
