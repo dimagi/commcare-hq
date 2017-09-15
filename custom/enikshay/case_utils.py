@@ -28,7 +28,6 @@ CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
-CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
@@ -237,7 +236,7 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     Assumes the following case structure:
     Episode <--ext-- Adherence
     """
-    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
+    return get_first_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
 @hqnottest
@@ -245,7 +244,7 @@ def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
         """
-    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 @hqnottest
