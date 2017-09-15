@@ -38,7 +38,7 @@ Please note that these instructions are targeted toward UNIX-based systems.
 You'll need the following things installed to get started:
 - Python 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 - pip
-- virtualenvwrapper
+- [virtualenvwrapper](http://virtualenvwrapper.readthedocs.io/en/latest/install.html#basic-installation)
 
 Then set up a virtualenv
 
