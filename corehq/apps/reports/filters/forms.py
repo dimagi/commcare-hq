@@ -154,22 +154,24 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         all_forms = self._application_forms_info.copy()
 
         for app_map in all_forms.values():
-            app_langs = app_map['app']['langs']
             is_deleted = app_map['is_deleted']
+            def _translate_name(item):
+                return self.get_translated_value(self.display_lang, app_map['app']['langs'], item)
 
-            app_name = self.get_translated_value(self.display_lang, app_langs, app_map['app']['names'])
+            app_name = _translate_name(app_map['app']['names'])
             if is_deleted:
                 app_name = "%s [Deleted Application]" % app_name
             app = self._map_structure(app_map['app']['id'], app_name)
 
-            for module_map in app_map['modules']:
+            for module_map in sorted(app_map['modules'],
+                                     key=lambda item: _translate_name(item['module']['names']).lower()
+                                                      if item['module'] else ''):
                 if module_map['module'] is not None:
-                    module_name = self.get_translated_value(
-                        self.display_lang, app_langs, module_map['module']['names'])
+                    module_name = _translate_name(module_map['module']['names'])
                     module = self._map_structure(module_map['module']['id'], module_name)
-                    for form_map in module_map['forms']:
-                        form_name = self.get_translated_value(
-                            self.display_lang, app_langs, form_map['form']['names'])
+                    for form_map in sorted(module_map['forms'],
+                                           key=lambda item: _translate_name(item['form']['names']).lower()):
+                        form_name = _translate_name(form_map['form']['names'])
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
 
