@@ -40,7 +40,11 @@ You'll need the following things installed to get started:
 - pip
 - virtualenvwrapper
 
+Then set up a virtualenv
 
+```bash
+mkvirtualenv cchq
+```
 
 ### Downloading and configuring CommCare HQ
 
