@@ -4,6 +4,7 @@ import datetime
 import socket
 from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
+from custom.enikshay.integrations.bets.repeater_generators import LocationPayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
@@ -17,6 +18,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     DSTB_EPISODE_TYPE,
     PERSON_CASE_2B_VERSION,
+    HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -25,7 +27,9 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test, get_occurrence_case_from_episode)
+    get_lab_referral_from_test,
+    get_occurrence_case_from_episode,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -46,9 +50,13 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     purpose_of_testing,
     smear_result_grade,
     drug_susceptibility_test_status,
-    basis_of_diagnosis)
+    basis_of_diagnosis,
+    health_establishment_type,
+    health_establishment_sector,
+)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
 
 ENIKSHAY_ID = 8
@@ -459,6 +467,50 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                     "private_nikshay_error": unicode(exception)
                 }
             )
+
+
+class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, LocationPayloadGenerator):
+    format_name = 'location_xml'
+    format_label = 'XML'
+
+    def get_payload(self, repeat_record, location):
+        location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
+        return {
+            'ESTABLISHMENT_TYPE': health_establishment_type.get(
+                location.metadata.get('establishment_type', ''), ''),
+            'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
+            'ESTABLISHMENT_NAME': location.name,
+            'MCI_HR_NO': location.metadata.get('registration_number'),
+            'CONTACT_PNAME': location.metadata.get('contact_name'),
+            'CONTACT_PDESIGNATION': location.metadata.get('contact_designation'),
+            'TELEPHONE_NO': location.metadata.get('phone_number'),
+            'MOBILE_NO': location.metadata.get('mobile_number'),
+            'COMPLETE_ADDRESS': location.metadata.get('address'),
+            'PINCODE': location.metadata.get('address_pincode'),
+            'EMAILID': location.metadata.get('email_address'),
+            'STATE_CODE': location_hierarchy_codes.stcode,
+            'DISTRICT_CODE': location_hierarchy_codes.dtcode,
+            'TBU_CODE': location.metadata.get('tbu_code', ''),
+            'MUST_CREATE_NEW': 'N',
+            'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.stcode, ''),
+            'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,
+            'Source': ENIKSHAY_ID,
+        }
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response,
+        )
+        message_text = message.find("NewDataSet/HE_DETAILS/Message").text
+        health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
+        if payload_doc.metadata.get('nikshay_code'):
+            # The repeater checks for this to be absent but in case its added after the trigger
+            # and before its fetched from Nikshay, just keep a copy of the older value for ref
+            payload_doc.metadata['old_nikshay_code'] = payload_doc.metadata.get('nikshay_code')
+        payload_doc.metadata['nikshay_code'] = health_facility_id
+        payload_doc.save()
 
 
 def _get_nikshay_id_from_response(response):

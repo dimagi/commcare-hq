@@ -1773,6 +1773,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHealthEstablishmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
