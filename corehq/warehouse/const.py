@@ -21,6 +21,7 @@ APPLICATION_DIM_SLUG = 'application_dim'
 
 APP_STATUS_FACT_SLUG = 'app_status_fact'
 FORM_FACT_SLUG = 'form_fact'
+SYNCLOG_FACT_SLUG = 'synclog_fact'
 
 DIM_TABLES = [
     USER_DIM_SLUG,
