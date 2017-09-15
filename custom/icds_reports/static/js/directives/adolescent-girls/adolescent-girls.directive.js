@@ -1,3 +1,4 @@
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
@@ -12,7 +13,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_women/map', label: 'Map View'},
+        'map': {route: '/adolescent_girls/map', label: 'Map View'},
+        'chart': {route: '/adolescent_girls/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
@@ -67,7 +69,16 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         }
 
         vm.myPromise = demographicsService.getAdolescentGirlsData(vm.step, vm.filtersData).then(function(response) {
-            vm.data.mapData = response.data.report_data;
+            if (vm.step === "map") {
+                vm.data.mapData = response.data.report_data;
+            } else if (vm.step === "chart") {
+                vm.chartData = response.data.report_data.chart_data;
+                vm.all_locations = response.data.report_data.all_locations;
+                vm.top_three = response.data.report_data.top_three;
+                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.location_type = response.data.report_data.location_type;
+                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+            }
         });
     };
 
@@ -103,12 +114,80 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         }
     };
 
+    vm.chartOptions = {
+        chart: {
+            type: 'lineChart',
+            height: 450,
+            width: 1100,
+            margin: {
+                top: 20,
+                right: 60,
+                bottom: 60,
+                left: 80,
+            },
+            x: function (d) {
+                return d.x;
+            },
+            y: function (d) {
+                return d.y;
+            },
+            color: d3.scale.category10().range(),
+            useInteractiveGuideline: true,
+            clipVoronoi: false,
+            tooltips: true,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+                tickFormat: function (d) {
+                    return d3.time.format('%b %Y')(new Date(d));
+                },
+                tickValues: function () {
+                    return vm.chartTicks;
+                },
+                axisLabelDistance: -100,
+            },
+
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function (d) {
+                    return d3.format(",")(d);
+                },
+                axisLabelDistance: 20,
+            },
+            callback: function (chart) {
+                var tooltip = chart.interactiveLayer.tooltip;
+                tooltip.contentGenerator(function (d) {
+
+                    var findValue = function (values, date) {
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return d3.format(",")(day['y']);
+                    };
+
+                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    tooltip_content += "<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+
+                    return tooltip_content;
+                });
+                return chart;
+            },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for ICDS services',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            },
+        },
+    };
+
     vm.showNational = function () {
         return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 
-EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
 
 window.angular.module('icdsApp').directive('adolescentGirls', function() {
     return {
