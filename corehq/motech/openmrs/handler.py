@@ -36,7 +36,7 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime)
         visit_datetime=visit_datetime,
         values_for_concept={obs.concept: [obs.value.get_value(info)]
                             for obs in form_config.openmrs_observations
-                            if obs.value.get_value(info)},  # TODO: form_question_values
+                            if obs.value.get_value(info)},
         encounter_type=form_config.openmrs_encounter_type,
         openmrs_form=form_config.openmrs_form,
         visit_type=form_config.openmrs_visit_type,

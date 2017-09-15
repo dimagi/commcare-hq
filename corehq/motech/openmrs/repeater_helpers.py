@@ -198,7 +198,9 @@ def get_form_question_values(form_json):
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], ['/data'], result)
+    _recurse_form_questions(form_json['form'], ['/data'], result)  # "/data" is just convention, hopefully familiar
+    # from form builder. The form's data will usually be immediately under "form_json['form']" but not necessarily.
+    # If this causes problems we may need a more reliable way to get to it.
     return result
 
 
