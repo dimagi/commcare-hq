@@ -1,6 +1,8 @@
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
+from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
@@ -131,4 +133,76 @@ def get_enrolled_women_sector_data(domain, config, loc_level, show_test=False):
                 "color": BLUE
             }
         ]
+    }
+
+
+def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggCcsRecordMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        valid=Sum('pregnant'),
+    ).order_by('month')
+
+    if not show_test:
+        chart_data = apply_exclude(domain, chart_data)
+
+    data = {
+        'blue': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        valid = row['valid']
+        location = row['%s_name' % loc_level]
+
+        if location in best_worst:
+            best_worst[location].append(valid)
+        else:
+            best_worst[location] = [valid]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        data['blue'][date_in_miliseconds]['y'] += valid
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['blue'].iteritems()
+                ],
+                "key": "Total number of pregnant women who are enrolled for ICDS services",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }

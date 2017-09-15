@@ -171,7 +171,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of household registered: : <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of household registered: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
 
                     return tooltip_content;
                 });

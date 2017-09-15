@@ -47,7 +47,8 @@ from custom.icds_reports.reports.early_initiation_breastfeeding import get_early
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
     get_enrolled_children_data_map, get_enrolled_children_sector_data
-from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, get_enrolled_women_sector_data
+from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, get_enrolled_women_sector_data, \
+    get_enrolled_women_data_chart
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
@@ -1088,6 +1089,7 @@ class EnrolledChildrenView(View):
 class EnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1101,10 +1103,13 @@ class EnrolledWomenView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
