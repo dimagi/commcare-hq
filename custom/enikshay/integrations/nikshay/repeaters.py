@@ -29,10 +29,14 @@ from custom.enikshay.const import (
     DSTB_EPISODE_TYPE,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
 )
-from custom.enikshay.integrations.nikshay.repeater_generator import \
-    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
-    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator, \
-    NikshayHealthEstablishmentPayloadGenerator
+from custom.enikshay.integrations.nikshay.repeater_generator import (
+    NikshayRegisterPatientPayloadGenerator,
+    NikshayHIVTestPayloadGenerator,
+    NikshayTreatmentOutcomePayload,
+    NikshayFollowupPayloadGenerator,
+    NikshayRegisterPrivatePatientPayloadGenerator,
+    NikshayHealthEstablishmentPayloadGenerator,
+)
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,

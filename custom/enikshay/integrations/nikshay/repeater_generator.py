@@ -476,7 +476,8 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
         return {
-            'ESTABLISHMENT_TYPE': health_establishment_type.get(location.metadata.get('establishment_type', ''), ''),
+            'ESTABLISHMENT_TYPE': health_establishment_type.get(
+                location.metadata.get('establishment_type', ''), ''),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
             'MCI_HR_NO': location.metadata.get('registration_number'),

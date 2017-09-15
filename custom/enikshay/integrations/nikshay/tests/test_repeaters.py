@@ -87,34 +87,17 @@ SUCCESSFUL_SOAP_RESPONSE = (
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
 
-FAILURE_HEALTH_ESTABLISHMENT_RESPONSE = (
-    '<?xml version="1.0" encoding="utf-8"?>'
-    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
-    '<soap:Body>'
-            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
-                '<HE_RegistrationResult>'
-                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
-                        '<NewDataSet xmlns="">'
-                            '<HE_DETAILS diffgr:id="HE_DETAILS1" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
-                                '<Message>Character are not allowed........</Message>'
-                            '</HE_DETAILS>'
-                        '</NewDataSet>'
-                    '</diffgr:diffgram>'
-                '</HE_RegistrationResult>'
-            '</HE_RegistrationResponse>'
-        '</soap:Body>'
-    '</soap:Envelope>'
-)
-
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
 
 SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
-    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
-    '<soap:Body>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+        '<soap:Body>'
             '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
                 '<HE_RegistrationResult>'
-                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" '
+                            'xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
                         '<NewDataSet xmlns="">'
                             '<HE_DETAILS diffgr:id="HE_DETAILS1" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
                                 '<Message>HE_ID: {dummy_id}</Message>'
