@@ -187,7 +187,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 'width': '900px',
             }
         },
-    }
+    };
 
     vm.showNational = function () {
         return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;

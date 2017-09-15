@@ -179,7 +179,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
                 'width': '900px',
             }
         },
-    }
+    };
 
     vm.showNational = function () {
         return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;

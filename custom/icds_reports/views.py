@@ -59,8 +59,8 @@ from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_
     get_infants_weight_scale_data_map, get_infants_weight_scale_sector_data
 from custom.icds_reports.reports.institutional_deliveries_sector import get_institutional_deliveries_data_chart,\
     get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
-from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map,\
-    get_lactating_enrolled_women_sector_data
+from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
+    get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
@@ -1120,6 +1120,7 @@ class EnrolledWomenView(View):
 class LactatingEnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1132,10 +1133,13 @@ class LactatingEnrolledWomenView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
