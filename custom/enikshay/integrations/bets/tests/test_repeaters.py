@@ -925,6 +925,7 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
     def create_person_case(self, location_id, private=True):
         case = get_person_case_structure(None, self.episode_id)
         case.attrs['owner_id'] = location_id
+        case.attrs['update']['current_episode_type'] = 'confirmed_tb'
         case.attrs['update']['contact_phone_number'] = '911234567890'
         case.attrs['update'][ENROLLED_IN_PRIVATE] = "true" if private else "false"
         return self.factory.create_or_update_cases([case])[0]
