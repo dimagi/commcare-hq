@@ -1369,7 +1369,7 @@ BEGIN
 		'functional_toilet AS infra_functional_toilet, ' ||
 		'baby_scale_usable AS infra_baby_weighing_scale, ' ||
 		'flat_scale_usable AS infra_flat_weighing_scale, ' ||
-		'adult_scale_available AS infra_adult_weighing_scale, ' ||
+		'GREATEST(adult_scale_available, adult_scale_usable) AS infra_adult_weighing_scale, ' ||
 		'GREATEST(baby_scale_usable, flat_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
