@@ -167,7 +167,7 @@ def get_lactating_enrolled_data_chart(domain, config, loc_level, show_test=False
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        valid = row['valid']
+        valid = (row['valid'] or 0)
         location = row['%s_name' % loc_level]
 
         if location in best_worst:

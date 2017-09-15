@@ -152,7 +152,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        household = row['household']
+        household = (row['household'] or 0)
         location = row['%s_name' % loc_level]
 
         if location in best_worst:

@@ -13,7 +13,7 @@ from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
@@ -36,7 +36,8 @@ from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructur
 from custom.icds_reports.reports.awc_opened import get_awc_opened_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details
-from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data
+from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
+    get_awcs_covered_data_chart
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
     get_children_initiated_data_map, get_children_initiated_sector_data
@@ -994,6 +995,7 @@ class AWCDailyStatusView(View):
 class AWCsCoveredView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1006,10 +1008,13 @@ class AWCsCoveredView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

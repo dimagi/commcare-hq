@@ -1,3 +1,4 @@
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
@@ -13,6 +14,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
+        'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
@@ -124,6 +126,74 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.chartOptions = {
+        chart: {
+            type: 'lineChart',
+            height: 450,
+            width: 1100,
+            margin: {
+                top: 20,
+                right: 60,
+                bottom: 60,
+                left: 80,
+            },
+            x: function (d) {
+                return d.x;
+            },
+            y: function (d) {
+                return d.y;
+            },
+            color: d3.scale.category10().range(),
+            useInteractiveGuideline: true,
+            clipVoronoi: false,
+            tooltips: true,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+                tickFormat: function (d) {
+                    return d3.time.format('%b %Y')(new Date(d));
+                },
+                tickValues: function () {
+                    return vm.chartTicks;
+                },
+                axisLabelDistance: -100,
+            },
+
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function (d) {
+                    return d3.format(",")(d);
+                },
+                axisLabelDistance: 20,
+            },
+            callback: function (chart) {
+                var tooltip = chart.interactiveLayer.tooltip;
+                tooltip.contentGenerator(function (d) {
+
+                    var findValue = function (values, date) {
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return d3.format(",")(day['y']);
+                    };
+
+                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    tooltip_content += "<p>Number of AWCs Launched: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+
+                    return tooltip_content;
+                });
+                return chart;
+            },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            }
+        },
     };
 
     vm.showNational = function () {
