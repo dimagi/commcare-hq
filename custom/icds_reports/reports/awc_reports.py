@@ -640,7 +640,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
             person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person')
+            all_persons=Sum('cases_person_beneficiary')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
