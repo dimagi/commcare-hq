@@ -118,7 +118,10 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
             episode_case_properties = episode_case.dynamic_case_properties()
 
             return (
-                episode_case_properties.get('nikshay_id') and
+                (   # has a nikshay id already or is a valid submission probably waiting notification
+                    episode_case_properties.get('nikshay_id') or
+                    valid_public_patient_registration(episode_case_properties)
+                ) and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
@@ -149,7 +152,10 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            episode_case_properties.get('nikshay_id', False) and
+            (  # has a nikshay id already or is a valid submission probably waiting notification
+                episode_case_properties.get('nikshay_id') or
+                valid_public_patient_registration(episode_case_properties)
+            ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
             is_valid_archived_submission(episode_case)
@@ -188,7 +194,10 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
             return (
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
-                episode_case_properties.get('nikshay_id') and
+                (  # has a nikshay id already or is a valid submission probably waiting notification
+                    episode_case_properties.get('nikshay_id') or
+                    valid_public_patient_registration(episode_case_properties)
+                ) and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
