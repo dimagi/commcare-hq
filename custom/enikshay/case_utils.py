@@ -184,7 +184,7 @@ def get_open_episode_case_from_person(domain, person_case_id, last_closed=False)
 
     """
     return get_open_episode_case_from_occurrence(
-        domain, get_open_occurrence_case_from_person(domain, person_case_id, last_closed).case_id
+        domain, get_open_occurrence_case_from_person(domain, person_case_id, last_closed).case_id, last_closed
     )
 
 
