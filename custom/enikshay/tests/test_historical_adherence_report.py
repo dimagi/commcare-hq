@@ -161,7 +161,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         report = self._get_report()
         context = report.report_context
         self.assertEqual(context['patient_name'], self.person.attrs['update']['name'])
-        self.assertEqual(context['treatment_phase'], "")
+        self.assertEqual(context['treatment_phase'], "IP")
         self.assertEqual(context['doses'], 1)
         self.assertEqual(context['adherence_schedule'], 'Daily')
         self.assertEqual(context['patient_type'], 'Treatment after loss to follow up (LFU)')
