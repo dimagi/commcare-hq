@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD,
     DSTB_EPISODE_TYPE,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    TREATMENT_INITIATED_IN_PHI,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -81,9 +82,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
-                episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+                valid_public_patient_registration(episode_case_properties) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
-                episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
             )
         else:
@@ -311,6 +311,14 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
+
+
+def valid_public_patient_registration(episode_case_properties):
+    return (
+        episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+        episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
+        episode_case_properties.get('treatment_initiated') == TREATMENT_INITIATED_IN_PHI
+    )
 
 
 def person_hiv_status_changed(case):
