@@ -240,8 +240,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('private_nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
-            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
-            case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
+            valid_public_patient_registration(episode_case_properties, private_registration=True) and
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
@@ -322,12 +321,22 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return attempt
 
 
-def valid_public_patient_registration(episode_case_properties):
-    return (
+def valid_public_patient_registration(episode_case_properties, private_registration=False):
+    if private_registration:
+        registration_prop = PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION
+    else:
+        registration_prop = EPISODE_PENDING_REGISTRATION
+
+    # check for registration done and confirmed episode type
+    should_notify = (
         episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
-        episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
-        episode_case_properties.get('treatment_initiated') == TREATMENT_INITIATED_IN_PHI
+        episode_case_properties.get(registration_prop, 'yes') == 'no'
     )
+
+    if not private_registration:
+        # check for treatment initiated within the phi itself to have all required information on payload
+        return should_notify and episode_case_properties.get('treatment_initiated') == TREATMENT_INITIATED_IN_PHI
+    return should_notify
 
 
 def person_hiv_status_changed(case):
