@@ -1,3 +1,7 @@
+"""
+Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migration
+"""
+
 from __future__ import print_function
 
 from itertools import groupby
