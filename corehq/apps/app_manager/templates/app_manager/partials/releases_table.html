@@ -107,8 +107,7 @@
               <div class="build-is-released">
                   <!--ko if: is_released() == 'error' -->
 
-                  <span class="label label-danger"
-                        data-bind="visible: is_released() == 'error'">{% trans "Could not update" %}</span>
+                  <span class="label label-danger">{% trans "Could not update" %}</span>
 
                   <!--/ko-->
                   <!--ko if: is_released() != 'error' -->
