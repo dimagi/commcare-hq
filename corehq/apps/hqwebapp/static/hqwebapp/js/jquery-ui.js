@@ -1,4 +1,4 @@
-define("hqwebapp/js/jquery-ui", [
+define([
     "jquery",
     "jquery-ui/ui/core",
     "jquery-ui/ui/widget",
