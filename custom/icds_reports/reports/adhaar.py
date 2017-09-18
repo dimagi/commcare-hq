@@ -29,7 +29,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level
         ).annotate(
             in_month=Sum('cases_person_has_aadhaar'),
-            all=Sum('cases_person'),
+            all=Sum('cases_person_beneficiary'),
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -99,7 +99,7 @@ def get_adhaar_sector_data(domain, config, loc_level, show_test=False):
         *group_by
     ).annotate(
         in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person'),
+        all=Sum('cases_person_beneficiary'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -204,7 +204,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person'),
+        all=Sum('cases_person_beneficiary'),
     ).order_by('month')
 
     if not show_test:

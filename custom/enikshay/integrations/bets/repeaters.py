@@ -476,11 +476,13 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
         'phone_number',
         'current_address_district_choice',
         'current_address_state_choice',
+        'current_episode_type',
     )
 
     def allowed_to_forward(self, person_case):
         return (person_case.type == CASE_TYPE_PERSON
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and person_case.get_case_property('current_episode_type') == 'confirmed_tb'
                 and is_valid_person_submission(person_case)
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
