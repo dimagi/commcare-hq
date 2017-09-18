@@ -182,7 +182,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar Seeded Individuals'),
+                    'label': _('Percent Adhaar Seeded Beneficiaries'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
