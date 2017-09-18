@@ -32,9 +32,12 @@ class OpenmrsImporterForm(forms.Form):
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
     report_uuid = forms.CharField(label=_('Report UUID'), required=True,
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))
+    report_params = JsonField(label=_('Report Parameters'), required=False, expected_type=dict)
     case_type = forms.CharField(label=_('Case Type'), required=True)
-    owner_id = forms.CharField(label=_('Owner ID'), required=True,
+    owner_id = forms.CharField(label=_('Owner ID'), required=False,
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
+    location_type_name = forms.CharField(label=_('Organization Level'), required=False,
+                                         help_text=_('The Organization Level whose owners will own new cases'))
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
 
@@ -52,8 +55,10 @@ class OpenmrsImporterForm(forms.Form):
                 crispy.Field('password'),
                 crispy.Field('log_level'),
                 crispy.Field('report_uuid'),
+                crispy.Field('report_params'),
                 crispy.Field('case_type'),
                 crispy.Field('owner_id'),
+                crispy.Field('location_type_name'),
                 crispy.Field('import_frequency'),
             ),
             hqcrispy.FormActions(
@@ -80,8 +85,10 @@ class OpenmrsImporterForm(forms.Form):
                 importer.password = b64encode(bz2.compress(self.cleaned_data['password']))
             importer.log_level = self.cleaned_data['log_level']
             importer.report_uuid = self.cleaned_data['report_uuid']
+            importer.report_params = self.cleaned_data['report_params']
             importer.case_type = self.cleaned_data['case_type']
             importer.owner_id = self.cleaned_data['owner_id']
+            importer.location_type_name = self.cleaned_data['location_type_name']
             importer.import_frequency = self.cleaned_data['import_frequency']
             importer.save()
             return True

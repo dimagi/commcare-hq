@@ -3,6 +3,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     IntegerProperty,
     StringProperty,
+    DictProperty,
 )
 
 
@@ -19,13 +20,21 @@ class OpenmrsImporter(Document):
     # OpenMRS UUID of the report of patients to be imported
     report_uuid = StringProperty()
 
+    # Can include template params, e.g. {"endDate": "{{ today }}"}
+    # Available template params: "today", "location"
+    report_params = DictProperty()
+
     # The case type of imported cases
     case_type = StringProperty()
 
-    # The ID of the owner of imported cases
+    # The ID of the owner of imported cases, if all imported cases are to have the same owner. To assign imported
+    # cases to different owners, see `location_type` below.
     owner_id = StringProperty()
+
+    # If report_params includes "{{ location }}" then location_type_name is used to determine which locations to
+    # pull the report for. Those locations will need an "openmrs_uuid" param set. Imported cases will be owned by
+    # the first mobile worker assigned to that location.
+    location_type_name = StringProperty()
 
     # How often should cases be imported
     import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
-
-    # TODO: location_id
