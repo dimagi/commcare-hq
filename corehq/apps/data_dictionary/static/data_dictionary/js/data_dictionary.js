@@ -1,4 +1,4 @@
-define('data_dictionary/js/data_dictionary', [
+define([
     "jquery",
     "knockout",
     "hqwebapp/js/built",
