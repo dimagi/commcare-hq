@@ -4,7 +4,13 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     StringProperty,
     DictProperty,
+    ListProperty,
 )
+
+
+class ColumnMapping(Document):
+    column = StringProperty()
+    property = StringProperty()
 
 
 class OpenmrsImporter(Document):
@@ -15,6 +21,10 @@ class OpenmrsImporter(Document):
     server_url = StringProperty()  # e.g. "http://www.example.com/openmrs"
     username = StringProperty()
     password = StringProperty()
+
+    # How often should cases be imported
+    import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
+
     log_level = IntegerProperty()
 
     # OpenMRS UUID of the report of patients to be imported
@@ -36,5 +46,9 @@ class OpenmrsImporter(Document):
     # the first mobile worker assigned to that location.
     location_type_name = StringProperty()
 
-    # How often should cases be imported
-    import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
+    external_id_column = StringProperty()
+
+    # Space-separated column(s) to be concatenated to create the case name (e.g. "givenName familyName")
+    name_columns = StringProperty()
+
+    column_map = ListProperty(ColumnMapping)
