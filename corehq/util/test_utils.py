@@ -96,6 +96,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_path(cls, name, ext, override_path=None):
+        ext = '.%s' % ext if ext and not ext.startswith('.') else ext
         return os.path.join(cls.get_base(override_path), '%s%s' % (name, ext))
 
     @classmethod
