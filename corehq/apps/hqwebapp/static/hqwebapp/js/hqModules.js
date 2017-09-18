@@ -57,7 +57,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
         'underscore': typeof _ === 'undefined' ? undefined : _,
     };
     (function(factory) {
-        if (typeof define === 'function' && define.amd) {
+        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {
             var args = [];
