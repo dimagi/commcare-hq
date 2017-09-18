@@ -1,9 +1,6 @@
 /*
-    Workaround for integrating djangojs with requirejs.
-    djangojs.js creates a global django variable; the callback
-    option in requirejs config in style/base.html then sets that
-    global's gettext function to be a property of this module.
+    Allow usage of gettext, RequireJS-style, rather than accessing the global django.
 */
 define([], function() {
-    return {};
+    return { gettext: django.gettext };
 });
