@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from crispy_forms.bootstrap import AccordionGroup, InlineField, FormActions as OriginalFormActions
 from crispy_forms.layout import LayoutObject, MultiField, Field as OldField
 from crispy_forms.utils import render_field, get_template_pack, flatatt
+from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
@@ -243,7 +244,7 @@ class B3MultiField(LayoutObject):
             'help_bubble_text': self.help_bubble_text,
         })
 
-        if not isinstance(context, dict):
+        if isinstance(context, RequestContext):
             context_dict = context.flatten()
         else:
             # TODO - remove by Nov 1 2017 if soft assert is never sent
