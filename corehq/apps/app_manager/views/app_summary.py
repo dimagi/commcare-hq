@@ -434,7 +434,6 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             rows.append(tuple(row))
 
         return rows
-        #return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
 
     def get_case_questions_rows(self, case_type, language):
         rows = []
