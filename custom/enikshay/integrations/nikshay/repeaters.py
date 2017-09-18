@@ -82,7 +82,7 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
-                valid_public_patient_registration(episode_case_properties) and
+                valid_nikshay_patient_registration(episode_case_properties) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 is_valid_person_submission(person_case)
             )
@@ -120,7 +120,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
             return (
                 (   # has a nikshay id already or is a valid submission probably waiting notification
                     episode_case_properties.get('nikshay_id') or
-                    valid_public_patient_registration(episode_case_properties)
+                    valid_nikshay_patient_registration(episode_case_properties)
                 ) and
                 (
                     related_dates_changed(person_case) or
@@ -154,7 +154,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
         return (
             (  # has a nikshay id already or is a valid submission probably waiting notification
                 episode_case_properties.get('nikshay_id') or
-                valid_public_patient_registration(episode_case_properties)
+                valid_nikshay_patient_registration(episode_case_properties)
             ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
@@ -196,7 +196,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
                 (  # has a nikshay id already or is a valid submission probably waiting notification
                     episode_case_properties.get('nikshay_id') or
-                    valid_public_patient_registration(episode_case_properties)
+                    valid_nikshay_patient_registration(episode_case_properties)
                 ) and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
@@ -240,7 +240,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('private_nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
-            valid_public_patient_registration(episode_case_properties, private_registration=True) and
+            valid_nikshay_patient_registration(episode_case_properties, private_registration=True) and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
             is_valid_person_submission(person_case)
         )
@@ -321,7 +321,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return attempt
 
 
-def valid_public_patient_registration(episode_case_properties, private_registration=False):
+def valid_nikshay_patient_registration(episode_case_properties, private_registration=False):
     if private_registration:
         registration_prop = PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION
     else:
