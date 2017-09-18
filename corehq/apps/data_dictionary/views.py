@@ -160,7 +160,6 @@ class DataDictionaryView(BaseProjectDataView):
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
     def dispatch(self, request, *args, **kwargs):
-        request.use_requirejs = True
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
     @property
