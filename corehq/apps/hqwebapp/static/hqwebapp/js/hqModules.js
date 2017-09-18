@@ -63,13 +63,13 @@ function hqDefine(path, dependencies, moduleAccessor) {
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
-                if (dependency in thirdParty) {
+                if (thirdParty.hasOwnProperty(dependency)) {
                     args[i] = thirdParty[dependency];
-                } else if (dependency in COMMCAREHQ_MODULES) {
+                } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
                 }
             }
-            if (!(path in COMMCAREHQ_MODULES)) {
+            if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
                 if (path.match(/\.js$/)) {
                     throw new Error("Error in '" + path + "': module names should not end in .js.");
                 }
