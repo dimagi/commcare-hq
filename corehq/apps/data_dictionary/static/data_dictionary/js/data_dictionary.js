@@ -1,4 +1,3 @@
-/* globals define */
 define('data_dictionary/js/data_dictionary', [
     "jquery",
     "knockout",

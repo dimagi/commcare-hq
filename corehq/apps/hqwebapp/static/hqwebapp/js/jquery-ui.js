@@ -1,4 +1,3 @@
-/* globals define */
 define("hqwebapp/js/jquery-ui", [
     "jquery",
     "jquery-ui/ui/core",
