@@ -674,6 +674,14 @@ def initial_page_data(parser, token):
     return AddToBlockNode(nodelist, 'initial_page_data')
 
 
+@register.simple_tag()
+def set_requirejs_main(request, path):
+    """
+    """
+    request.requirejs_main = path
+    return ''
+
+
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}

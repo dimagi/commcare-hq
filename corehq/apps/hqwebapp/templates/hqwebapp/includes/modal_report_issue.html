@@ -146,7 +146,7 @@
     </div>
     {% addtoblock js-inline %}
     <script>
-    {% if request.use_requirejs %}
+    {% if request.requirejs_main %}
         requirejs(['jquery', 'bootstrap'], function($) {
     {% else %}
         $(window).on('load', function(){

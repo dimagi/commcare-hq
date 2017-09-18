@@ -56,7 +56,7 @@
     </div>
     <script>
     {# TODO: something similar with remote-modals.js? #}
-    {% if request.use_requirejs %}
+    {% if request.requirejs_main %}
         requirejs(['jquery', 'bootstrap'], function($) {
     {% else %}
        $(window).on('load', function(){
