@@ -618,8 +618,8 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
             episode_disease_classification,
             ''
         ),
-        "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
-        "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
+        "dcpulmunory": dcpulmonory.get(episode_disease_classification, "N"),
+        "dcexpulmunory": dcexpulmonory.get(episode_disease_classification, "N"),
         "dotname": (' '.join(
             [episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
              episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, '')])
