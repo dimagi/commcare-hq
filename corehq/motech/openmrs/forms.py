@@ -7,7 +7,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import OpenmrsImporter
+from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -29,7 +29,10 @@ class OpenmrsImporterForm(forms.Form):
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
+                                         help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
+
     report_uuid = forms.CharField(label=_('Report UUID'), required=True,
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))
     report_params = JsonField(label=_('Report Parameters'), required=False, expected_type=dict)
@@ -38,8 +41,13 @@ class OpenmrsImporterForm(forms.Form):
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
     location_type_name = forms.CharField(label=_('Organization Level'), required=False,
                                          help_text=_('The Organization Level whose owners will own new cases'))
-    import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
-                                         help_text=_('How often should cases be imported?'), required=False)
+    external_id_column = forms.CharField(label=_('External ID Column'), required=True,
+                                         help_text=_("The column that stores the case's external ID"))
+    name_columns = forms.CharField(label=_('Name Columns'), required=True,
+                                   help_text=_('Space-separated column(s) to be concatenated to create the case '
+                                               'name (e.g. "givenName familyName")'))
+    column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
+                           help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsImporterForm, self).__init__(*args, **kwargs)
@@ -53,13 +61,17 @@ class OpenmrsImporterForm(forms.Form):
                 crispy.Field('server_url'),
                 crispy.Field('username'),
                 crispy.Field('password'),
+                crispy.Field('import_frequency'),
                 crispy.Field('log_level'),
+
                 crispy.Field('report_uuid'),
                 crispy.Field('report_params'),
                 crispy.Field('case_type'),
                 crispy.Field('owner_id'),
                 crispy.Field('location_type_name'),
-                crispy.Field('import_frequency'),
+                crispy.Field('external_id_column'),
+                crispy.Field('name_columns'),
+                crispy.Field('column_map'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -83,13 +95,17 @@ class OpenmrsImporterForm(forms.Form):
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
                 importer.password = b64encode(bz2.compress(self.cleaned_data['password']))
+            importer.import_frequency = self.cleaned_data['import_frequency']
             importer.log_level = self.cleaned_data['log_level']
+
             importer.report_uuid = self.cleaned_data['report_uuid']
             importer.report_params = self.cleaned_data['report_params']
             importer.case_type = self.cleaned_data['case_type']
             importer.owner_id = self.cleaned_data['owner_id']
             importer.location_type_name = self.cleaned_data['location_type_name']
-            importer.import_frequency = self.cleaned_data['import_frequency']
+            importer.external_id_column = self.cleaned_data['external_id_column']
+            importer.name_columns = self.cleaned_data['name_columns']
+            importer.column_map = map(ColumnMapping.wrap, self.cleaned_data['column_map'])
             importer.save()
             return True
         except Exception as err:

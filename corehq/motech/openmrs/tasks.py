@@ -30,8 +30,6 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# TODO: Move to config once column names are mapped:
-OPENMRS_ID = 'Old Identification Number'  # or 'OpenMRS Identification Number' depending on project
 LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
 
 
@@ -63,21 +61,22 @@ def get_openmrs_patients(requests, importer, location=None):
     #      {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3}]
 
 
-def get_caseblock(patient, case_type, owner_id):
+def get_caseblock(patient, importer, owner_id):
     case_id = uuid.uuid4().hex
-    case_name = ' '.join((patient['givenName'], patient['familyName']))
+    name_columns = importer.name_columns.split(' ')
+    case_name = ' '.join([patient[column] for column in name_columns])
     fields_to_update = {
-        # TODO: Map column names to properties similar to openmrs_config.case_config
-        # 'dob': patient['birthdate'],  # API currently returning as a long int
+        mapping.property: patient[mapping.column]
+        for mapping in importer.column_map
     }
     return CaseBlock(
         create=True,
         case_id=case_id,
         owner_id=owner_id,
         user_id=owner_id,
-        case_type=case_type,
+        case_type=importer.case_type,
         case_name=case_name,
-        external_id=patient[OPENMRS_ID],
+        external_id=patient[importer.external_id_column],
         update=fields_to_update,
     )
 
@@ -106,12 +105,12 @@ def import_patients_to_location(requests, importer, domain_name, location):
     for i, patient in enumerate(openmrs_patients):
         case, error = importer_util.lookup_case(
             EXTERNAL_ID,
-            str(patient[OPENMRS_ID]),
+            str(patient[importer.external_id_column]),
             domain_name,
             importer.case_type
         )
         if error == LookupErrors.NotFound:
-            case_block = get_caseblock(patient, importer.case_type, importer.owner_id)
+            case_block = get_caseblock(patient, importer, owner.user_id)
             case_blocks.append(RowAndCase(i, case_block))
 
     submit_case_blocks(
