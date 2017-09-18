@@ -126,7 +126,7 @@ def get_occurrence_case_from_person(domain, person_case_id, last_closed=False):
     return open_occurrence_cases[0]
 
 
-def get_open_episode_case_from_occurrence(domain, occurrence_case_id, last_closed=False):
+def get_episode_case_from_occurrence(domain, occurrence_case_id, last_closed=False):
     """
     Gets the first open 'episode' case for the occurrence
 
@@ -183,7 +183,7 @@ def get_open_episode_case_from_person(domain, person_case_id, last_closed=False)
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_episode_case_from_occurrence(
+    return get_episode_case_from_occurrence(
         domain, get_occurrence_case_from_person(domain, person_case_id, last_closed).case_id, last_closed
     )
 

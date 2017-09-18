@@ -13,7 +13,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_episode_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
@@ -169,7 +169,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         if allowed_case_types_and_users:
             try:
                 occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+                episode_case = get_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
             except ENikshayCaseNotFound:
                 return False
             test_case_properties = test_case.dynamic_case_properties()
