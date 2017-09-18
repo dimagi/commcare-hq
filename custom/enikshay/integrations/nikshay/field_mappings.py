@@ -105,7 +105,7 @@ purpose_of_testing = {
 }
 
 smear_result_grade = {
-    '0': 99,  # Negative
+    'negative_not_seen': 99,  # Negative
     'SC-0': 98,  # Positive
     'SC-1': 1,
     'SC-2': 2,
@@ -116,9 +116,9 @@ smear_result_grade = {
     'SC-7': 7,
     'SC-8': 8,
     'SC-9': 9,
-    '1+': 11,
-    '2+': 12,
-    '3+': 13,
+    '1plus': 11,
+    '2plus': 12,
+    '3plus': 13,
 }
 
 drug_susceptibility_test_status = {

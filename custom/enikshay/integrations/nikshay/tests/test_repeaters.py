@@ -988,7 +988,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
     def test_result_grade(self):
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
-            "result_grade": "1+"
+            "result_grade": "1plus"
         })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
@@ -1076,17 +1076,17 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "5+"})
+        update_case(self.domain, self.test_id, {"result_grade": "5plus"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
                 "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5+")
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5plus")
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "1+"})
+        update_case(self.domain, self.test_id, {"result_grade": "1plus"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
