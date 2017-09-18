@@ -1,8 +1,13 @@
+import re
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.post import parse_SOAP_response
-from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin
+from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin, LocationRepeater
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
@@ -20,11 +25,18 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+    HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD,
     DSTB_EPISODE_TYPE,
+    HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
 )
-from custom.enikshay.integrations.nikshay.repeater_generator import \
-    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
-    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
+from custom.enikshay.integrations.nikshay.repeater_generator import (
+    NikshayRegisterPatientPayloadGenerator,
+    NikshayHIVTestPayloadGenerator,
+    NikshayTreatmentOutcomePayload,
+    NikshayFollowupPayloadGenerator,
+    NikshayRegisterPrivatePatientPayloadGenerator,
+    NikshayHealthEstablishmentPayloadGenerator,
+)
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -248,6 +260,59 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return attempt
 
 
+class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
+    payload_generator_classes = (NikshayHealthEstablishmentPayloadGenerator,)
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward Nikshay Health Establishments")
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NIKSHAY_INTEGRATION.enabled(domain)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayHealthEstablishmentRepeaterView
+        return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, location):
+        return (
+            not location.metadata.get('is_test', "yes") == "yes" and
+            location.location_type.name in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            not location.metadata.get('nikshay_code')
+        )
+
+    def handle_response(self, result, repeat_record):
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+            return attempt
+        # A successful response looks like HE_ID: 125344
+        # Failures also return with status code 200 and some message like
+        # Character are not allowed........
+        # (........ is a part of the actual message)
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            result,
+        )
+        # message does not give the final node message here so need to find the real message
+        # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example
+        message_node = message.find("NewDataSet/HE_DETAILS/Message")
+        if message_node:
+            message_text = message_node.text
+        if message_node and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text):
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        return attempt
+
+
 def person_hiv_status_changed(case):
     last_case_action = case.actions[-1]
     if last_case_action.is_case_create:
@@ -275,6 +340,13 @@ def related_dates_changed(case):
         )
     )
     return value_changed
+
+
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
+def create_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+    create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_nikshay_case_repeat_records(sender, case, **kwargs):

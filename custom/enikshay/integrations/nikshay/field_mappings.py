@@ -7,6 +7,7 @@ gender_mapping = {
 disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
+    'extrapulmonary': 'EP',
 }
 
 patient_type_choice = {
@@ -136,4 +137,15 @@ basis_of_diagnosis = {
     'microbiological_culture': 'C',
     'microbiological_pcr': 'M',
     'microbiological_other': 'M',
+}
+
+health_establishment_type = {
+    'hospital': 'H',
+    'lab': 'L',
+    'pharmacy': 'P',
+}
+
+health_establishment_sector = {
+    'public': 'P',
+    'private': 'V',
 }

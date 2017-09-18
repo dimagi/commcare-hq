@@ -27,7 +27,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
-    get_adolescent_girls_sector_data
+    get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
     get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
@@ -1155,6 +1155,7 @@ class LactatingEnrolledWomenView(View):
 class AdolescentGirlsView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1167,10 +1168,13 @@ class AdolescentGirlsView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

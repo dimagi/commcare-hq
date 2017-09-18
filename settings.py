@@ -1773,6 +1773,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHealthEstablishmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
@@ -1951,7 +1952,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
@@ -1960,6 +1963,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
@@ -2131,6 +2135,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
     'sheel-enikshay': 'custom.enikshay',
     'enikshay-reports-qa': 'custom.enikshay',
+    'enikshay-performance-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

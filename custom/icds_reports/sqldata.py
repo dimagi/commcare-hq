@@ -758,7 +758,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
             ),
             DatabaseColumn(
                 'Total Number of Members Enrolled for Services for services at AWC ',
-                SumColumn('cases_person', alias='cases_person')
+                SumColumn('cases_person_beneficiary', alias='cases_person_beneficiary')
             ),
             AggregateColumn(
                 'Percentage of Beneficiaries with Aadhar',
@@ -1320,7 +1320,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'num_people_enrolled_for_services',
-                SumColumn('cases_person'),
+                SumColumn('cases_person_beneficiary'),
                 slug='num_people_enrolled_for_services'
             ),
             DatabaseColumn(
@@ -1569,7 +1569,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_bp_forms'
             ),
             DatabaseColumn(
-                'Number of birth preparedness forms',
+                'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
                 slug='num_delivery_forms'
             ),
@@ -2102,7 +2102,7 @@ class ProgressReport(object):
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total number of members enrolled at AWC',
-                                'slug': 'cases_person',
+                                'slug': 'cases_person_beneficiary',
                                 'average': [],
 
                             },
