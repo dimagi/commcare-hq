@@ -8,6 +8,13 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 
+from corehq.util.soft_assert import soft_assert
+
+_soft_assert_dict = soft_assert(
+    to='{}@{}'.format('npellegrino', 'dimagi.com'),
+    exponential_backoff=False,
+)
+
 
 class BootstrapMultiField(MultiField):
     template = "hqwebapp/crispy/layout/multifield.html"
@@ -239,6 +246,8 @@ class B3MultiField(LayoutObject):
         if not isinstance(context, dict):
             context_dict = context.flatten()
         else:
+            # TODO - remove by Nov 1 2017 if soft assert is never sent
+            _soft_assert_dict(False, "context is type %s" % str(type(context)))
             context_dict = context
 
         if not (self.field_class or self.label_class):
