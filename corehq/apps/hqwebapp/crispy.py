@@ -236,11 +236,16 @@ class B3MultiField(LayoutObject):
             'help_bubble_text': self.help_bubble_text,
         })
 
+        if not isinstance(context, dict):
+            context_dict = context.flatten()
+        else:
+            context_dict = context
+
         if not (self.field_class or self.label_class):
-            return render_to_string(self.template, context.flatten())
+            return render_to_string(self.template, context_dict)
 
         with edited_classes(context, self.label_class, self.field_class):
-            rendered_view = render_to_string(self.template, context.flatten())
+            rendered_view = render_to_string(self.template, context_dict)
         return rendered_view
 
     def _get_errors(self, form, fields):
