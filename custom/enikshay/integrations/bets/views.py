@@ -55,6 +55,19 @@ class PaymentUpdate(jsonobject.JsonObject):
     checkNumber = jsonobject.StringProperty(required=False)
     bankName = jsonobject.StringProperty(required=False)
 
+    @classmethod
+    def wrap(cls, data):
+        amount = data.get('amount', None)
+        if amount:
+            try:
+                float_amount = float(amount)
+                if not float_amount.is_integer():
+                    raise ValueError()
+                data['amount'] = int(float_amount)
+            except (ValueError, TypeError):
+                raise BadValueError("amount '{}' is not an integer".format(amount))
+        return super(PaymentUpdate, cls).wrap(data)
+
     @property
     def case_id(self):
         return self.id

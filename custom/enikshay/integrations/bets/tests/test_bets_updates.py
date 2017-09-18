@@ -74,6 +74,32 @@ class TestBetsUpdates(TestCase):
             get_case(self.domain, voucher.case_id).case_json,
         )
 
+    def test_string_amount(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'eventType': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': '100.0',
+            'paymentDate': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 200)
+        self.assertDictContainsSubset(
+            {'state': 'paid', 'amount_paid': '100'},
+            get_case(self.domain, voucher.case_id).case_json,
+        )
+
+    def test_non_integer_amount(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'eventType': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': '100.2',
+            'paymentDate': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 400)
+
     def test_update_voucher_failure(self):
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
