@@ -1,4 +1,4 @@
-/* globals hqDefine, COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
+/* globals COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
