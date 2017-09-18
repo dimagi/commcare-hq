@@ -20,5 +20,4 @@ class FixtureInterfaceDispatcher(ProjectReportDispatcher):
 
     @method_decorator(require_can_edit_fixtures)
     def dispatch(self, request, *args, **kwargs):
-        request.use_requirejs = True
         return super(FixtureInterfaceDispatcher, self).dispatch(request, *args, **kwargs)

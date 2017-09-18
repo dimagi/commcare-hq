@@ -689,6 +689,14 @@ def analytics_ab_test(parser, token):
     return _create_page_data(parser, token, 'analytics_ab_test')
 
 
+@register.simple_tag()
+def set_requirejs_main(request, path):
+    """
+    """
+    request.requirejs_main = path
+    return ''
+
+
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}
