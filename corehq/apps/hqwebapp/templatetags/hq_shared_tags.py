@@ -677,6 +677,8 @@ def initial_page_data(parser, token):
 @register.simple_tag()
 def set_requirejs_main(request, path):
     """
+    Indicate that a page should be using RequireJS, by naming the
+    JavaScript module to be used as the page's main entry point.
     """
     request.requirejs_main = path
     return ''
