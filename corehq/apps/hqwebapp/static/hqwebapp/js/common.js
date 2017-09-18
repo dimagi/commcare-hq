@@ -1,4 +1,3 @@
-/* globals define */
 define("hqwebapp/js/common", [
     "jquery",
     "knockout",

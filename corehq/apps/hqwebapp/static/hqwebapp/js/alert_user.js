@@ -1,4 +1,3 @@
-/* globals hqDefine */
 /*
     This is the knockout-based, javascript analog of messages in Django.
 

@@ -1,4 +1,3 @@
-/* globals define */
 hqDefine("hqwebapp/js/built", [
     "hqwebapp/js/alert_user",
     "hqwebapp/js/initial_page_data",
