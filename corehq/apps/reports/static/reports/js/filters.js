@@ -1,4 +1,3 @@
-/* globals hqDefine */
 hqDefine("reports/js/filters", [
     'jquery',
     'knockout',

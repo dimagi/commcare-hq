@@ -1,4 +1,3 @@
-/* globals hqDefine */
 hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
