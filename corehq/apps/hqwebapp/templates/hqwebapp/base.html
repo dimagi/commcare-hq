@@ -447,10 +447,9 @@
             <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
-                    deps: ['hqwebapp/js/django', 'knockout', 'ko.mapping'],
-                    callback: function (djangoModule, ko, mapping) {
+                    deps: ['knockout', 'ko.mapping'],
+                    callback: function (ko, mapping) {
                         ko.mapping = mapping;
-                        djangoModule.gettext = django.gettext;
                     },
                     {% if not DEBUG %}
                     bundles: {
