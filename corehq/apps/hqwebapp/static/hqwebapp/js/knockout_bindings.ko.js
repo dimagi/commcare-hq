@@ -1,4 +1,4 @@
-/* global hqDefine, DOMPurify */
+/* global DOMPurify */
 hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {

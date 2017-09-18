@@ -1,4 +1,3 @@
-/* globals hqDefine */
 /*
  *  Manage data needed by JavaScript but supplied by server,
  *  with special handling for urls.

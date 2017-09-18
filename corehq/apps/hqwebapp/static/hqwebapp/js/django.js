@@ -1,4 +1,3 @@
-/* globals define */
 /*
     Workaround for integrating djangojs with requirejs.
     djangojs.js creates a global django variable; the callback

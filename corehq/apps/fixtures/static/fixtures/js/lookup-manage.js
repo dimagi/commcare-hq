@@ -1,4 +1,3 @@
-/* global define */
 /**
  *  Handles fixtures' "Manage Tables" page.
  */
