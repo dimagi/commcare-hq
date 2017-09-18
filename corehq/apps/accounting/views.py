@@ -533,17 +533,17 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def software_plan_version_form(self):
         plan_version = self.plan.get_version()
+        if self.request.method == 'POST' and 'update_version' in self.request.POST:
+            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST)
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
             'product_rates': json.dumps(
-                [fmt_product_rate_dict(plan_version.product_rate.product, plan_version.product_rate)]
+                [fmt_product_rate_dict(plan_version.product_rate.name, plan_version.product_rate)]
                 if plan_version else []
             ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
-        if self.request.method == 'POST' and 'update_version' in self.request.POST:
-            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST, initial=initial)
         return SoftwarePlanVersionForm(self.plan, plan_version, initial=initial)
 
     @property
