@@ -47,7 +47,7 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
-    amount = jsonobject.IntegerProperty(required=False)
+    amount = jsonobject.FloatProperty(required=False)
     paymentDate = FlexibleDateTimeProperty(required=True)
     comments = jsonobject.StringProperty(required=False)
     failureDescription = jsonobject.StringProperty(required=False)
@@ -61,11 +61,9 @@ class PaymentUpdate(jsonobject.JsonObject):
         if amount:
             try:
                 float_amount = float(amount)
-                if not float_amount.is_integer():
-                    raise ValueError()
-                data['amount'] = int(float_amount)
+                data['amount'] = float_amount
             except (ValueError, TypeError):
-                raise BadValueError("amount '{}' is not an integer".format(amount))
+                raise BadValueError("amount '{}' is not a number".format(amount))
         return super(PaymentUpdate, cls).wrap(data)
 
     @property
