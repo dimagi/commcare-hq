@@ -7,6 +7,8 @@ from casexml.apps.case.mock import CaseStructure, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.exceptions import ENikshayCaseNotFound
+
 
 class Command(BaseCommand):
 
@@ -61,7 +63,10 @@ class Command(BaseCommand):
                         and not episode.get_case_property('treatment_initiating_facility_id'):
 
                     #Filter and skip private cases
-                    person = get_person_case_from_episode(domain, episode.case_id)
+                    try:
+                        person = get_person_case_from_episode(domain, episode.case_id)
+                    except ENikshayCaseNotFound:
+                        continue
                     if person and person.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
                         current_treatment_initiated = episode.get_case_property('treatment_initiated')
                         current_treatment_status = episode.get_case_property('treatment_status')
