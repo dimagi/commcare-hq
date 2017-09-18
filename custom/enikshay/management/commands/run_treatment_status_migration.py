@@ -59,15 +59,15 @@ class Command(BaseCommand):
 
             for episode in CaseAccessors(domain=domain).iter_cases(case_ids):
                 if episode.get_case_property('datamigration_treatment_status_fix') != 'yes' \
-                        and not episode.get_case_property('diagnosing_facility_id') \
-                        and not episode.get_case_property('treatment_initiating_facility_id'):
+                        and episode.get_case_property('diagnosing_facility_id') \
+                        and episode.get_case_property('treatment_initiating_facility_id'):
 
                     #Filter and skip private cases
                     try:
                         person = get_person_case_from_episode(domain, episode.case_id)
                     except ENikshayCaseNotFound:
                         continue
-                    if person and person.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+                    if person.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
                         current_treatment_initiated = episode.get_case_property('treatment_initiated')
                         current_treatment_status = episode.get_case_property('treatment_status')
                         current_diagnosing_facility_id = episode.get_case_property('diagnosing_facility_id')
