@@ -102,7 +102,7 @@ def get_person_case_from_episode(domain, episode_case_id):
     )
 
 
-def get_open_occurrence_case_from_person(domain, person_case_id, last_closed=False):
+def get_occurrence_case_from_person(domain, person_case_id, last_closed=False):
     """
     Gets the first open 'occurrence' case for the person
 
@@ -184,7 +184,7 @@ def get_open_episode_case_from_person(domain, person_case_id, last_closed=False)
 
     """
     return get_open_episode_case_from_occurrence(
-        domain, get_open_occurrence_case_from_person(domain, person_case_id, last_closed).case_id, last_closed
+        domain, get_occurrence_case_from_person(domain, person_case_id, last_closed).case_id, last_closed
     )
 
 

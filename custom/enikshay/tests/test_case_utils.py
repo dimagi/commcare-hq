@@ -17,7 +17,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     get_person_case_from_episode,
     update_case,
-    get_open_occurrence_case_from_person,
+    get_occurrence_case_from_person,
     get_open_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
@@ -116,9 +116,9 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         person_case = case_accessors.get_case(self.person_id)
         self.assertEqual(person_case.dynamic_case_properties()['age'], '99')
 
-    def test_get_open_occurrence_case_from_person(self):
+    def test_get_occurrence_case_from_person(self):
         self.assertEqual(
-            get_open_occurrence_case_from_person(self.domain, self.person_id).case_id,
+            get_occurrence_case_from_person(self.domain, self.person_id).case_id,
             self.occurrence_id
         )
 
