@@ -10,6 +10,8 @@ from datetime import datetime
 import bz2
 from celery.schedules import crontab
 from celery.task import task, periodic_task
+from couchdbkit import ResourceNotFound
+from jinja2 import Template
 from requests import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
@@ -17,6 +19,8 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.locations.dbaccessors import get_all_users_by_location
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
@@ -28,11 +32,26 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 # TODO: Move to config once column names are mapped:
 OPENMRS_ID = 'Old Identification Number'  # or 'OpenMRS Identification Number' depending on project
+LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
 
 
-def get_openmrs_patients(requests, report_uuid):
-    endpoint = '/ws/rest/v1/reportingrest/reportdata/' + report_uuid
-    response = requests.get(endpoint)
+def parse_params(params, location=None):
+    today = datetime.today().strftime('%Y-%m-%d')
+    location_uuid = location.metadata[LOCATION_OPENMRS] if location else None
+
+    parsed = {}
+    for key, value in params.items():
+        if isinstance(value, basestring) and '{{' in value:
+            template = Template(value)
+            value = template.render(today=today, location=location_uuid)
+        parsed[key] = value
+    return parsed
+
+
+def get_openmrs_patients(requests, importer, location=None):
+    endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
+    params = parse_params(importer.params, location)
+    response = requests.get(endpoint, params=params)
     try:
         response.raise_for_status()
     except HTTPError:
@@ -85,6 +104,46 @@ def get_caseblock(patient, case_type, owner_id):
     )
 
 
+def get_commcare_users_by_location(domain_name, location_id):
+    for user in get_all_users_by_location(domain_name, location_id):
+        if user.is_commcare_user():
+            yield user
+
+
+def import_patients_to_location(requests, importer, domain_name, location):
+    try:
+        if location is None:
+            owner = CommCareUser.get(importer.owner_id)
+        else:
+            # Don't assign cases to the location itself (until we have a project that needs to)
+            owner = next(get_commcare_users_by_location(domain_name, location.location_id))
+    except (ResourceNotFound, StopIteration):
+        # Location has no users
+        logger.error('Project space "{domain}" location "{location}" has no user to own imported cases'.format(
+            domain=domain_name, location=location.name))
+        return
+
+    openmrs_patients = get_openmrs_patients(requests, importer, location)
+    case_blocks = []
+    for i, patient in enumerate(openmrs_patients):
+        case, error = importer_util.lookup_case(
+            EXTERNAL_ID,
+            str(patient[OPENMRS_ID]),
+            domain_name,
+            importer.case_type
+        )
+        if error == LookupErrors.NotFound:
+            case_block = get_caseblock(patient, importer.case_type, importer.owner_id)
+            case_blocks.append(RowAndCase(i, case_block))
+
+    submit_case_blocks(
+        [cb.case.as_string() for cb in case_blocks],
+        domain_name,
+        username=owner.username,
+        user_id=owner.user_id,
+    )
+
+
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
@@ -102,26 +161,20 @@ def import_patients_to_domain(domain_name, force=False):
 
         password = bz2.decompress(b64decode(importer.password))
         requests = Requests(importer.server_url, importer.username, password)
-        openmrs_patients = get_openmrs_patients(requests, importer.report_uuid)
-        case_blocks = []
-        for i, patient in enumerate(openmrs_patients):
-            case, error = importer_util.lookup_case(
-                EXTERNAL_ID,
-                str(patient[OPENMRS_ID]),
-                domain_name,
-                importer.case_type
-            )
-            if error == LookupErrors.NotFound:
-                case_block = get_caseblock(patient, importer.case_type, importer.owner_id)
-                case_blocks.append(RowAndCase(i, case_block))
-
-        owner = CommCareUser.get(importer.owner_id)
-        form, cases = submit_case_blocks(
-            [cb.case.as_string() for cb in case_blocks],
-            domain_name,
-            username=owner.username,
-            user_id=importer.owner_id,
-        )
+        if importer.location_type_name:
+            try:
+                location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
+            except LocationType.DoesNotExist:
+                logger.error(
+                    'No organization level named "{location_type}" found in project space "{domain}".'.format(
+                        location_type=importer.location_type_name, domain=domain_name)
+                )
+                continue
+            locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
+            for location in locations:
+                import_patients_to_location(requests, importer, domain_name, location)
+        else:
+            import_patients_to_location(requests, importer, domain_name, None)
 
 
 @periodic_task(
