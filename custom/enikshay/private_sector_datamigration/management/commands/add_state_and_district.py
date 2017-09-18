@@ -45,7 +45,7 @@ class Command(BaseCommand):
         update = {}
         # if not case_properties.get('current_address_state_choice'):
         #     update['current_address_state_choice'] = STATE_ID_TO_LOCATION[beneficiary.stateId]
-        if 'current_address_district_choice' not in case_properties:
+        if 'current_address_district_choice' not in case_properties and beneficiary.districtId in DISTRICT_ID_TO_LOCATION:
             update['current_address_district_choice'] = DISTRICT_ID_TO_LOCATION[beneficiary.districtId]
 
         if update:
