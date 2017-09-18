@@ -1,4 +1,4 @@
-define("hqwebapp/js/common", [
+define([
     "jquery",
     "knockout",
     "ko.mapping",
