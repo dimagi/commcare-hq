@@ -69,7 +69,7 @@ def _perfom_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
     cases = get_cases_from_form(form.domain, form)
     cache = interface.casedb_cache(
-        domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+        domain=form.domain, lock=False, deleted_ok=True, xforms=[form]
     )
     with cache as casedb:
         save and SubmissionPost.do_post_save_actions(casedb, [form], cases)
