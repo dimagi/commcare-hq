@@ -617,12 +617,9 @@ class FormAccessorSQL(AbstractFormAccessor):
                 operations = form.original_operations
                 with transaction.atomic(db_name):
                     form.save()
-                    for a in attachments:
-                        a.form = form
-                        a.save()
-                    for op in operations:
-                        op.form = form
-                        op.save()
+                    for model in itertools.chain(attachments, operations):
+                        model.form = form
+                        model.save()
             else:
                 form.save()
 
