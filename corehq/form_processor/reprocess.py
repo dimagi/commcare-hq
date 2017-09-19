@@ -136,11 +136,9 @@ def reprocess_form(form, save=True, lock_form=True):
 
             ledgers = []
             if should_use_sql_backend(form.domain):
-                cases = _filter_already_processed_cases(form, cases)
                 cases_needing_rebuild = _get_case_ids_needing_rebuild(form, cases)
 
-                ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
-                stock_result.models_to_save = ledgers
+                ledgers = stock_result.models_to_save
                 ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
 
                 if save:
@@ -204,29 +202,6 @@ def _get_case_ids_needing_rebuild(form, cases):
         case_id for case_id in case_ids
         if modified_dates.get(case_id, datetime.max) > form.received_on
     }
-
-
-def _filter_already_processed_cases(form, cases):
-    """Remove any cases that already have a case transaction for this form"""
-    cases_by_id = {
-        case.case_id: case
-        for case in cases
-    }
-    for trans in CaseAccessorSQL.get_case_transactions_for_form(form.form_id, cases_by_id.keys()):
-        del cases_by_id[trans.case_id]
-    return cases_by_id.values()
-
-
-def _filter_already_processed_ledgers(form, ledgers):
-    """Remove any ledgers that already have a ledger transaction for this form"""
-    ledgers_by_id = {
-        ledger.ledger_reference: ledger
-        for ledger in ledgers
-    }
-    case_ids = [ledger.case_id for ledger in ledgers]
-    for trans in LedgerAccessorSQL.get_ledger_transactions_for_form(form.form_id, case_ids):
-        del ledgers_by_id[trans.ledger_reference]
-    return ledgers_by_id.values()
 
 
 def _get_form(form_id):
