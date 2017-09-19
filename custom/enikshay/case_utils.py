@@ -310,7 +310,7 @@ def get_associated_episode_case_for_test(domain, test_case):
             return episode_case
         except ENikshayCaseNotFound:
             pass
-    return False
+    return None
 
 
 def update_case(domain, case_id, updated_properties, external_id=None,
