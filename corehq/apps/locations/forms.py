@@ -334,11 +334,17 @@ class LocationForm(forms.Form):
         return location
 
 
+class LocationUserForm(NewMobileWorkerForm):
+    def clean_location_id(self):
+        # This is handled separately
+        return None
+
+
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
-    _user_form_class = NewMobileWorkerForm
+    _user_form_class = LocationUserForm
     _user_data_editor = CustomDataEditor
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
@@ -454,6 +460,7 @@ class LocationFormSet(object):
             pw_field = 'password'
 
         form.fields['username'].help_text = None
+        form.fields['location_id'].required = False  # This field isn't displayed
         form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         form.helper.layout = crispy.Layout(
