@@ -428,9 +428,9 @@
         {# javascript below this line #}
 
         {% if request.requirejs_main %}
-            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
             <script src="{% static 'requirejs/require.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
             <script type="text/javascript">
                 requirejs.config({
