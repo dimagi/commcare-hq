@@ -48,7 +48,7 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import split_list_by_db_partition
+from corehq.sql_db.util import split_list_by_db_partition, get_objects_by_id_across_partitioned_databases
 from corehq.util.queries import fast_distinct_in_domain
 from dimagi.utils.chunked import chunked
 
@@ -328,7 +328,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         if not form_ids:
             return []
-        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        forms = list(get_objects_by_id_across_partitioned_databases(XFormInstanceSQL, form_ids))
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
 
