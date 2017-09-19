@@ -163,7 +163,7 @@ def reprocess_form(form, save=True, lock_form=True):
                     if ledger.ledger_reference in ledgers_updated:
                         logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
                         if save:
-                            # only rebuild upated ledgers
+                            # only rebuild updated ledgers
                             interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
 
             else:
