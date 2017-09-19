@@ -146,7 +146,12 @@ class FormProcessorInterface(object):
             raise
         except Exception as e:
             from corehq.form_processor.submission_post import handle_unexpected_error
-            handle_unexpected_error(self, forms.submitted, e)
+            instance = forms.submitted
+            if forms.deprecated:
+                # since this is a form edit there will already be a form with the ID so we need to give this one
+                # a new ID
+                instance = self.xformerror_from_xform_instance(instance, '', with_new_id=True)
+            handle_unexpected_error(self, instance, e)
             e.sentry_capture = False  # we've already notified
             raise
 
