@@ -46,7 +46,7 @@ def reprocess_unfinished_stub(stub, save=True):
         save and stub.delete()
         return
 
-    reprocess_unfinished_stub_with_form(stub, form, save)
+    return reprocess_unfinished_stub_with_form(stub, form, save)
 
 
 def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
