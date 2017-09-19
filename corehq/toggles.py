@@ -1070,6 +1070,7 @@ USER_TESTING_SIMPLIFY = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+# when enabled this should prevent any changes to a domains data
 DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',

@@ -7,6 +7,7 @@ gender_mapping = {
 disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
+    'extrapulmonary': 'EP',
 }
 
 patient_type_choice = {
@@ -71,13 +72,11 @@ episode_site = {
 dcpulmonory = {
     'pulmonary': 'Y',
     'extra_pulmonary': 'N',
-    'extrapulmonary': 'N',
 }
 
 dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
-    'extrapulmonary': 'Y',
 }
 
 treatment_outcome = {
@@ -106,7 +105,8 @@ purpose_of_testing = {
 }
 
 smear_result_grade = {
-    '0': 99,  # Negative
+    '0': 99,  # Old version value
+    'negative_not_seen': 99,  # New version value
     'SC-0': 98,  # Positive
     'SC-1': 1,
     'SC-2': 2,
@@ -117,9 +117,12 @@ smear_result_grade = {
     'SC-7': 7,
     'SC-8': 8,
     'SC-9': 9,
-    '1+': 11,
-    '2+': 12,
-    '3+': 13,
+    '1+': 11,  # Old version value
+    '1plus': 11,  # New version value
+    '2+': 12,  # Old version value
+    '2plus': 12,  # New version value
+    '3+': 13,  # Old version value
+    '3plus': 13,  # New version value
 }
 
 drug_susceptibility_test_status = {
@@ -138,4 +141,15 @@ basis_of_diagnosis = {
     'microbiological_culture': 'C',
     'microbiological_pcr': 'M',
     'microbiological_other': 'M',
+}
+
+health_establishment_type = {
+    'hospital': 'H',
+    'lab': 'L',
+    'pharmacy': 'P',
+}
+
+health_establishment_sector = {
+    'public': 'P',
+    'private': 'V',
 }

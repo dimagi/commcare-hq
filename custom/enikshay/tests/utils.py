@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     ENROLLED_IN_PRIVATE,
     OTHER_NUMBER,
+    TREATMENT_INITIATED_IN_PHI,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -99,6 +100,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         'person_name': u'Peregrine เՇร ค Շгคק',
         'site_choice': 'pleural_effusion',
         'treatment_supporter_designation': 'ngo_volunteer',
+        'treatment_initiated': TREATMENT_INITIATED_IN_PHI,
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
@@ -350,7 +352,7 @@ class ENikshayCaseStructureMixin(object):
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
-                    result_grade="1+",
+                    result_grade="1plus",
                     testing_facility_id=self.dmc.get_id,
                 )
             },

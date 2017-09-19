@@ -2,9 +2,9 @@
 from __future__ import absolute_import
 import importlib
 from collections import defaultdict
-
 import os
-from six.moves.urllib.parse import urlencode
+
+from celery.schedules import crontab
 from django.contrib import messages
 import settingshelper as helper
 
@@ -591,9 +591,6 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
-# tuple of (time_start, time_end) of off peak times for async processing queues to use
-OFF_PEAK_TIME = None
-
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -916,6 +913,7 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
+ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
@@ -1773,6 +1771,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayHealthEstablishmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
@@ -1962,6 +1961,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
@@ -2133,6 +2133,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
     'sheel-enikshay': 'custom.enikshay',
     'enikshay-reports-qa': 'custom.enikshay',
+    'enikshay-performance-test': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

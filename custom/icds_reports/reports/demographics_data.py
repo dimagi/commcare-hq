@@ -28,7 +28,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
             person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
             person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person')
+            all_persons=Sum('cases_person_beneficiary')
         )
 
         if not show_test:
@@ -182,7 +182,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar Seeded Individuals'),
+                    'label': _('Percent Adhaar Seeded Beneficiaries'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),

@@ -8,6 +8,7 @@ from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseVa
 from casexml.apps.case.exceptions import UsesReferrals
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.commtrack.exceptions import MissingProductId
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.change_publishers import publish_form_saved
@@ -30,6 +31,10 @@ class ReprocessingError(Exception):
 
 
 def reprocess_unfinished_stub(stub, save=True):
+    if any_migrations_in_progress(stub.domain):
+        logger.info("Ignoring stub during data migration: %s", stub.xform_id)
+        return
+
     if stub.saved:
         # ignore for now
         logger.info("Ignoring 'saved' stub: %s", stub.xform_id)
