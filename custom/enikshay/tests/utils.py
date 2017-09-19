@@ -352,7 +352,7 @@ class ENikshayCaseStructureMixin(object):
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
-                    result_grade="1+",
+                    result_grade="1plus",
                     testing_facility_id=self.dmc.get_id,
                 )
             },
