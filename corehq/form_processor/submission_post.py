@@ -325,7 +325,7 @@ class SubmissionPost(object):
 
         for case in cases:
             results = case_post_save.send_robust(case.__class__, case=case)
-            has_errors &= log_signal_errors(results, error_message, error_details)
+            has_errors |= log_signal_errors(results, error_message, error_details)
         if has_errors:
             raise PostSaveError
 
