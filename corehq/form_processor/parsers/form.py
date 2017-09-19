@@ -25,13 +25,6 @@ class FormProcessingResult(object):
     def __init__(self, submitted_form, existing_duplicate=None):
         self.submitted_form = submitted_form
         self.existing_duplicate = existing_duplicate
-
-        if submitted_form.is_duplicate:
-            assert existing_duplicate is None
-
-        if existing_duplicate:
-            assert existing_duplicate.is_deprecated
-
         self.interface = FormProcessorInterface(self.submitted_form.domain)
 
     def _get_form_lock(self, form_id):
