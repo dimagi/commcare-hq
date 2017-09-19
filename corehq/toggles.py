@@ -739,6 +739,13 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
+NON_COMMTRACK_LEDGERS = StaticToggle(
+    'non_commtrack_ledgers',
+    "Enable ledgers for projects which don't use Supply.",
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
