@@ -6,19 +6,18 @@ from uuid import uuid4
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test.utils import override_settings
-from nose.tools import nottest
 from nose.plugins.attrib import attr
+from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor
+    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.sql_db.models import PartitionedModel
@@ -205,22 +204,9 @@ def use_sql_backend(cls):
     return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
-@unit_testing_only
-def post_xform(instance_xml, attachments=None, domain='test-domain'):
-    """
-    create a new xform and releases the lock
-
-    this is a testing entry point only and is not to be used in real code
-
-    """
-    result = process_xform_xml(domain, instance_xml, attachments=attachments)
-    with result.get_locked_forms() as xforms:
-        FormProcessorInterface(domain).save_processed_models(xforms)
-        return xforms[0]
-
-
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
+def create_form_for_test(
+        domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
         received_on=None, user_id='user1', edited_on=None):
     """
     Create the models directly so that these tests aren't dependent on any
