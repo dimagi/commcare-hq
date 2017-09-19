@@ -74,8 +74,8 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
         return (
             enabled
             and not_registered
-            and is_valid_episode_submission(episode_case)
             and case_properties_changed(episode_case, ['dots_99_enabled'])
+            and is_valid_episode_submission(episode_case)
         )
 
 
