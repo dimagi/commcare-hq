@@ -1,8 +1,8 @@
 from django.conf.urls import url
 from corehq.apps.ota.views import (
     PrimeRestoreCacheView, AdvancedPrimeRestoreCacheView,
-    restore, search, claim, heartbeat,
-    heartbeat)
+    restore, search, claim, heartbeat
+)
 from corehq.apps.hqadmin.views import DomainAdminRestoreView
 
 
