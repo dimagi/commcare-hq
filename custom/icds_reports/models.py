@@ -465,3 +465,49 @@ class ChildHealthMonthlyView(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'child_health_monthly_view'
+
+
+class IndicatorSMS(models.Model):
+    """
+    Represents an outgoing SMS that was sent which pertains to an ICDS
+    SMS indicator.
+    """
+
+    class Meta:
+        index_together = (
+            ('domain', 'date'),
+        )
+
+    # The name of the domain this SMS pertains to
+    domain = models.CharField(max_length=126)
+
+    # The unique id for the SMS in CommCareHQ, populated from SMS.couch_id
+    sms_id = models.CharField(max_length=126, db_index=True)
+
+    # The UTC timestamp for the SMS in CommCareHQ, populated from SMS.date
+    date = models.DateTimeField(null=True)
+
+    # The recipient of the SMS, populated from SMS.couch_recipient_doc_type and SMS.couch_recipient
+    recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    recipient_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    # The recipient's phone number, populated from SMS.phone_number
+    phone_number = models.CharField(max_length=126)
+
+    # The text of the message, populated from SMS.text
+    text = models.TextField()
+
+    # The ICDS indicator to which this message pertains; populated from the "icds_indicator"
+    # item in the Schedule.custom_metadata for the Schedule that sent the message
+    indicator_slug = models.CharField(max_length=126)
+
+    # If the message was triggered by a case, the case id of that case
+    # This information only started being captured starting around September 2017
+    case_id = models.CharField(max_length=126, null=True)
+
+    # The SQLLocation.location_id values of the location hierarchy that this message pertains to
+    state_location_id = models.CharField(max_length=126, null=True, db_index=True)
+    district_location_id = models.CharField(max_length=126, null=True, db_index=True)
+    block_location_id = models.CharField(max_length=126, null=True, db_index=True)
+    supervisor_location_id = models.CharField(max_length=126, null=True, db_index=True)
+    awc_location_id = models.CharField(max_length=126, null=True, db_index=True)
