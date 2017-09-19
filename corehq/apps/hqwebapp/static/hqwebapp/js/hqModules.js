@@ -82,6 +82,10 @@ function hqDefine(path, dependencies, moduleAccessor) {
     }(moduleAccessor));
 }
 
+if (typeof define === 'undefined') {
+    define = function() {};
+}
+
 function hqImport(path) {
     if (typeof COMMCAREHQ_MODULES[path] === 'undefined') {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
