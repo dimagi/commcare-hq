@@ -745,7 +745,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
-        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        cases = list(get_objects_by_id_across_partitioned_databases(CommCareCaseSQL, case_ids))
 
         if ordered:
             _sort_with_id_list(cases, case_ids, 'case_id')
