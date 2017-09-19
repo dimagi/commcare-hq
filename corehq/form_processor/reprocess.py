@@ -164,7 +164,7 @@ def reprocess_form(form, save=True, lock_form=True):
                         logger.info('Rebuilding ledger: %s', ledger.ledger_reference)
                         if save:
                             # only rebuild updated ledgers
-                            interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
+                            interface.ledger_processor.rebuild_ledger_state(**ledger.ledger_reference._asdict())
 
             else:
                 if save:
@@ -175,6 +175,8 @@ def reprocess_form(form, save=True, lock_form=True):
                         for model in stock_result.models_to_save
                         if isinstance(model, StockTransaction)
                     ]
+                    for ledger in ledgers:
+                        interface.ledger_processor.rebuild_ledger_state(**ledger.ledger_reference._asdict())
 
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
 

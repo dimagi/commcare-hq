@@ -202,7 +202,6 @@ class ReprocessSubmissionStubTests(TestCase):
         case = self.casedb.get_case(case_id)
         self.assertEqual('b', case.get_case_property('prop'))  # should be property value from most recent form
         self.assertEqual(3, len(case.xform_ids))
-        print(case.actions)
         self.assertEqual(form_ids, case.xform_ids)
 
         with self.assertRaises(UnfinishedSubmissionStub.DoesNotExist):
@@ -234,7 +233,6 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(0, len(ledger_transactions))
 
         result = reprocess_unfinished_stub(stubs[0])
-        print(result.ledgers)
         self.assertEqual(1, len(result.cases))
         self.assertEqual(1, len(result.ledgers))
 
@@ -311,12 +309,11 @@ class ReprocessSubmissionStubTests(TestCase):
             self.assertEqual(-25, ledger_transactions[2].delta)
 
         else:
-            # includes extra consumption transactions
-            self.assertEqual(5, len(ledger_transactions))
-            self.assertEqual(form_ids, [
-                trans.report.form_id for trans in ledger_transactions
-                if trans.type == 'stockonhand'
-            ])
+            self.assertEqual(3, len(ledger_transactions))
+            self.assertEqual(form_ids, [trans.report.form_id for trans in ledger_transactions])
+            self.assertEqual(100, ledger_transactions[0].stock_on_hand)
+            self.assertEqual(50, ledger_transactions[1].stock_on_hand)
+            self.assertEqual(25, ledger_transactions[2].stock_on_hand)
 
 
 @use_sql_backend
