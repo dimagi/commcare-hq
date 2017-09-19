@@ -53,7 +53,6 @@ branches:
   - nh/concept-map # Norman 9/9
 #  - nh/openmrs-pull  # Norman 9/12
   - np/billing/kill-softwareproduct # NP 9/11
-  - np/111-render_to_string-cripsy # NP 9/12
 #  - jls/fixtures-require-js-2017 # Jenny 9/18
 submodules:
   submodules/touchforms-src:
