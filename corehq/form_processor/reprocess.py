@@ -54,15 +54,14 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
         save and stub.delete()
         return ReprocessingResult(form, None, None)
 
-    if stub.is_saved:
+    if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
         assert all(complete_), complete_
         return _perfom_post_save_actions(form, save)
 
-    if form.is_normal:
-        result = reprocess_form(form, save, lock_form=lock)
-        save and stub.delete()
-        return result
+    result = reprocess_form(form, save, lock_form=lock)
+    save and stub.delete()
+    return result
 
 
 def _perfom_post_save_actions(form, save=True):
@@ -149,7 +148,7 @@ def reprocess_form(form, save=True, lock_form=True):
                         CaseAccessorSQL.save_case(case)
                     LedgerAccessorSQL.save_ledger_values(ledgers)
                     FormAccessorSQL.update_form_problem_and_state(form)
-                    FormProcessorSQL._publish_changes(ProcessedForms(form), cases, stock_result)
+                    FormProcessorSQL._publish_changes(ProcessedForms(form, None), cases, stock_result)
 
                 _log_changes('filtered', cases, ledgers, [])
 

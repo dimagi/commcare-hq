@@ -7,15 +7,12 @@ from django.test import TestCase
 from django.test import override_settings
 from mock import patch
 
-from casexml.apps.case.exceptions import InvalidCaseIndex
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.mock import CaseStructure
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.models import UnfinishedSubmissionStub
@@ -102,6 +99,9 @@ class ReprocessSubmissionStubTests(TestCase):
         super(ReprocessSubmissionStubTests, self).setUp()
         self.domain = uuid.uuid4().hex
         self.factory = CaseFactory(domain=self.domain)
+        self.formdb = FormAccessors(self.domain)
+        self.casedb = CaseAccessors(self.domain)
+        self.ledgerdb = LedgerAccessors(self.domain)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
@@ -109,12 +109,11 @@ class ReprocessSubmissionStubTests(TestCase):
 
     def test_reprocess_unfinished_submission_case_create(self):
         case_id = uuid.uuid4().hex
-        transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
-        case_save_patch = patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
+        save_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        with transaction_patch, case_save_patch, self.assertRaises(InternalError):
+        with save_patch, self.assertRaises(InternalError):
             self.factory.create_or_update_cases([
                 CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
             ])
@@ -123,25 +122,24 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertEqual(1, len(stubs))
 
         # form that was saved before case error raised
-        normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state(self.domain, XFormInstanceSQL.NORMAL)
-        self.assertEqual(1, len(normal_form_ids))
-        self.assertEqual(stubs[0].xform_id, normal_form_ids[0])
+        normal_form_ids = self.formdb.get_all_form_ids_in_domain('XFormInstance')
+        self.assertEqual(0, len(normal_form_ids))
 
         # shows error form (duplicate of form that was saved before case error)
         # this is saved becuase the saving was assumed to be atomic so if there was any error it's assumed
         # the form didn't get saved
         # we don't really care about this form in this test
-        error_forms = FormAccessorSQL.get_forms_by_type(self.domain, 'XFormError', 10)
+        error_forms = self.formdb.get_forms_by_type('XFormError', 10)
         self.assertEqual(1, len(error_forms))
-        self.assertEqual(error_forms[0].orig_id, normal_form_ids[0])
+        self.assertIsNone(error_forms[0].orig_id)
+        self.assertEqual(error_forms[0].form_id, stubs[0].xform_id)
 
-        self.assertEqual(0, len(CaseAccessorSQL.get_case_ids_in_domain(self.domain)))
+        self.assertEqual(0, len(self.casedb.get_case_ids_in_domain(self.domain)))
 
         result = reprocess_unfinished_stub(stubs[0])
         self.assertEqual(1, len(result.cases))
-        self.assertEqual(0, len(result.ledgers))
 
-        case_ids = CaseAccessorSQL.get_case_ids_in_domain(self.domain)
+        case_ids = self.casedb.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
         self.assertEqual(case_id, case_ids[0])
 
@@ -156,12 +154,11 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
-        case_save_patch = patch(
-            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
+        save_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        with transaction_patch, case_save_patch, self.assertRaises(InternalError):
+        with save_patch, self.assertRaises(InternalError):
             submit_case_blocks(
                 CaseBlock(case_id=case_id, update={'prop': 'a'}).as_string(),
                 self.domain
@@ -178,18 +175,18 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        case = CaseAccessorSQL.get_case(case_id)
-        self.assertEqual(2, len(case.transactions))
+        case = self.casedb.get_case(case_id)
+        self.assertEqual(2, len(case.actions))
         self.assertEqual('b', case.get_case_property('prop'))
 
         result = reprocess_unfinished_stub(stubs[0])
         self.assertEqual(1, len(result.cases))
         self.assertEqual(0, len(result.ledgers))
 
-        case = CaseAccessorSQL.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual('b', case.get_case_property('prop'))  # should be property value from most recent form
-        self.assertEqual(4, len(case.transactions))
-        self.assertEqual(form_ids + [None], [trans.form_id for trans in case.transactions])
+        self.assertEqual(4, len(case.actions))
+        self.assertEqual(form_ids + [None], [action.form_id for action in case.actions])
 
         with self.assertRaises(UnfinishedSubmissionStub.DoesNotExist):
             UnfinishedSubmissionStub.objects.get(pk=stubs[0].pk)
@@ -201,12 +198,11 @@ class ReprocessSubmissionStubTests(TestCase):
             CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
         ])
 
-        transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
-        ledger_save_patch = patch(
-            'corehq.form_processor.backends.sql.dbaccessors.LedgerAccessorSQL.save_ledger_values',
+        save_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        with transaction_patch, ledger_save_patch, self.assertRaises(InternalError):
+        with save_patch, self.assertRaises(InternalError):
             submit_case_blocks(
                 get_single_balance_block(case_id, 'product1', 100),
                 self.domain
@@ -215,31 +211,30 @@ class ReprocessSubmissionStubTests(TestCase):
         stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
         self.assertEqual(1, len(stubs))
 
-        ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
+        ledgers = self.ledgerdb.get_ledger_values_for_case(case_id)
         self.assertEqual(0, len(ledgers))
 
-        # case transaction got saved
-        case = CaseAccessorSQL.get_case(case_id)
-        self.assertEqual(2, len(case.transactions))
+        case = self.casedb.get_case(case_id)
+        self.assertEqual(1, len(case.transactions))
         self.assertTrue(case.transactions[0].is_case_create)
-        self.assertTrue(case.transactions[1].is_ledger_transaction)
 
-        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+        ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
         self.assertEqual(0, len(ledger_transactions))
 
         result = reprocess_unfinished_stub(stubs[0])
-        self.assertEqual(0, len(result.cases))
+        self.assertEqual(1, len(result.cases))
         self.assertEqual(1, len(result.ledgers))
 
-        ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
+        ledgers = self.ledgerdb.get_ledger_values_for_case(case_id)
         self.assertEqual(1, len(ledgers))
 
-        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+        ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
         self.assertEqual(1, len(ledger_transactions))
 
         # case still only has 2 transactions
-        case = CaseAccessorSQL.get_case(case_id)
+        case = self.casedb.get_case(case_id)
         self.assertEqual(2, len(case.transactions))
+        self.assertTrue(case.transactions[1].is_ledger_transaction)
 
     def test_reprocess_unfinished_submission_ledger_rebuild(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -253,12 +248,11 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
-        ledger_save_patch = patch(
-            'corehq.form_processor.backends.sql.dbaccessors.LedgerAccessorSQL.save_ledger_values',
+        save_patch = patch(
+            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
             side_effect=InternalError
         )
-        with transaction_patch, ledger_save_patch, self.assertRaises(InternalError):
+        with save_patch, self.assertRaises(InternalError):
             submit_case_blocks(
                 get_single_balance_block(case_id, 'product1', 50),
                 self.domain
@@ -274,23 +268,23 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
+        ledgers = self.ledgerdb.get_ledger_values_for_case(case_id)
         self.assertEqual(1, len(ledgers))
         self.assertEqual(25, ledgers[0].balance)
 
-        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+        ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
         self.assertEqual(2, len(ledger_transactions))
 
         # should rebuild ledger transactions
         result = reprocess_unfinished_stub(stubs[0])
-        self.assertEqual(0, len(result.cases))
+        self.assertEqual(1, len(result.cases))
         self.assertEqual(1, len(result.ledgers))
 
-        ledgers = LedgerAccessorSQL.get_ledger_values_for_case(case_id)
+        ledgers = self.ledgerdb.get_ledger_values_for_case(case_id)
         self.assertEqual(1, len(ledgers))  # still only 1
         self.assertEqual(25, ledgers[0].balance)
 
-        ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
+        ledger_transactions = self.ledgerdb.get_ledger_transactions_for_case(case_id)
         self.assertEqual(3, len(ledger_transactions))
         # make sure transactions are in correct order
         self.assertEqual(form_ids, [trans.form_id for trans in ledger_transactions])
