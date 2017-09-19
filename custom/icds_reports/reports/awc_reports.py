@@ -121,7 +121,6 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
-
     last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
@@ -141,29 +140,53 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         days_open=Sum('awc_days_open')
     )
 
-    chart_data = DailyAttendanceView.objects.filter(
+    open_count_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_three_months, last_day_of_next_month), **config
-    ).values('awc_name', 'pse_date', 'attended_children_percent').annotate(
+    ).values('awc_name', 'pse_date').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
+
+    daily_attendance = DailyAttendanceView.objects.filter(
+        pse_date__range=(selected_month, last_day_of_next_month), **config
+    ).values('awc_name', 'pse_date').annotate(
+        avg_percent=Avg('attended_children_percent'),
+        attended=Sum('attended_children'),
+        eligible=Sum('eligible_children')
+    )
 
     if not show_test:
         map_image_data = apply_exclude(domain, map_image_data)
         kpi_data_tm = apply_exclude(domain, kpi_data_tm)
         kpi_data_lm = apply_exclude(domain, kpi_data_lm)
-        chart_data = apply_exclude(domain, chart_data)
+        open_count_data = apply_exclude(domain, open_count_data)
+        daily_attendance = apply_exclude(domain, daily_attendance)
+
+    attended_children_chart = {}
+    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_next_month)]
+    for date in dates:
+        attended_children_chart[int(date.strftime("%s")) * 1000] = {
+            'avg_percent': 0,
+            'attended': 0,
+            'eligible': 0
+        }
 
     open_count_chart = {}
-    attended_children_chart = {}
-    for chart_row in chart_data:
+    for chart_row in open_count_data:
         first_day_of_week = chart_row['pse_date'] - timedelta(days=chart_row['pse_date'].isoweekday() - 1)
         pse_week = int(first_day_of_week.strftime("%s")) * 1000
+
         if pse_week in open_count_chart:
             open_count_chart[pse_week] += (chart_row['open_count'] or 0)
-            attended_children_chart[pse_week].append((chart_row['attended_children_percent'] or 0))
         else:
             open_count_chart[pse_week] = (chart_row['open_count'] or 0)
-            attended_children_chart[pse_week] = [chart_row['attended_children_percent'] or 0]
+
+    for daily_attendance_row in daily_attendance:
+        pse_day = int(daily_attendance_row['pse_date'].strftime("%s")) * 1000
+        attended_children_chart[pse_day] = {
+            'avg_percent': daily_attendance_row['avg_percent'] or 0,
+            'attended': daily_attendance_row['attended'] or 0,
+            'eligible': daily_attendance_row['eligible'] or 0
+        }
 
     map_data = {}
 
@@ -265,11 +288,13 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
             ],
             [
                 {
-                    'key': 'PSE- Average Weekly Attendance',
+                    'key': 'PSE - Average Daily Attendance',
                     'values': sorted([
                         dict(
                             x=x_val,
-                            y=(sum(y_val) / len(y_val))
+                            y=y_val['avg_percent'],
+                            attended=y_val['attended'],
+                            eligible=y_val['eligible']
                         ) for x_val, y_val in attended_children_chart.iteritems()
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
