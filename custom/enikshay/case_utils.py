@@ -104,8 +104,7 @@ def get_person_case_from_episode(domain, episode_case_id):
 
 def get_occurrence_case_from_person(domain, person_case_id, last_closed=False):
     """
-    Gets the first open 'occurrence' case for the person
-
+    By default gets the first open 'occurrence' case for the person
     Assumes the following case structure:
     Person <--ext-- Occurrence
     last_closed would give the latest closed occurrence case if no open occurrence case found
@@ -128,12 +127,12 @@ def get_occurrence_case_from_person(domain, person_case_id, last_closed=False):
 
 def get_episode_case_from_occurrence(domain, occurrence_case_id, last_closed=False):
     """
-    Gets the first open 'episode' case for the occurrence
-
+    By default gets the first open 'episode' case for the occurrence
     Assumes the following case structure:
     Occurrence <--ext-- Episode
-    last_closed would give the latest closed episode case under the open occurrence or the latest closed
-    occurrence case if no open episode case found
+    last_closed: If no open episode case is found, this would give the latest closed episode case
+    under the open occurrence or in case of no open occurrence would give the latest closed episode case
+    under the latest closed occurrence case
     """
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
@@ -295,6 +294,13 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
 
 
 def get_associated_episode_case_for_test(domain, test_case):
+    """
+    We are now moving to a structure where episode_case_id on test case contains the episode case id
+    when the test result is added
+    :param domain:
+    :param test_case:
+    :return:
+    """
     test_case_properties = test_case.dynamic_case_properties()
     episode_case_id = test_case_properties.get('episode_case_id')
     if episode_case_id:

@@ -102,7 +102,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         if allowed_case_types_and_users:
             try:
                 episode_case = get_episode_case_from_person(person_case.domain, person_case.get_id,
-                                                                 last_closed=True)
+                                                            last_closed=True)
             except ENikshayCaseNotFound:
                 return False
             episode_case_properties = episode_case.dynamic_case_properties()
