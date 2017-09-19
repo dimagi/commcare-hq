@@ -20,11 +20,12 @@ class Command(BaseCommand):
     def handle(self, site_address, *args, **options):
         if not options['skip_checks']:
             if settings.SITE_ID != 1:
-                raise CommandError("SITE ID under settings expected to have value 1 since only one object is expected")
+                raise CommandError("SITE ID under settings expected to have value 1 since only one object is "
+                                   "expected")
             sites_count = Site.objects.count()
             if sites_count != 1:
-                raise CommandError("Expected to have only one object added by Site during setup but currently its %s "%
-                                   Site.objects.count())
+                raise CommandError("Expected to have only one object added by Site during setup but currently "
+                                   "its %s " % Site.objects.count())
             site_object = Site.objects.first()
             if site_object.name != "example.com" and site_object.domain != "example.com":
                 raise CommandError(
@@ -32,8 +33,8 @@ class Command(BaseCommand):
                        Expected the present site object to have dummy example values.
                        They were probably modified and needs to be rechecked.
                        Current Values, name -> {name}, domain -> {domain}
-                    """.format(name=site_object.name, domain=site_object.domain
-                    ))
+                    """.format(name=site_object.name, domain=site_object.domain)
+                )
 
         site_object = Site.objects.first()
         site_object.name = site_address
@@ -48,5 +49,3 @@ class Command(BaseCommand):
             name=site_object.name,
             domain=site_object.domain
         ))
-
-
