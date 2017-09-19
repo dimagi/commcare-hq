@@ -33,7 +33,7 @@ def queue_prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hour
     return group(tasks)()
 
 
-@task
+@task(queue='prime_restore_queue')
 def prime_restore(username_or_id, domain, version, cache_timeout_hours,
                   overwrite_cache, check_cache_only):
     couch_user = get_user(username_or_id, domain)
