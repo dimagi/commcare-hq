@@ -10,6 +10,7 @@ from mock import patch
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.mock import CaseStructure
+from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -19,7 +20,9 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.util.context_managers import catch_signal
 from couchforms.models import UnfinishedSubmissionStub
+from couchforms.signals import successful_form_received
 
 
 class ReprocessXFormErrorsTest(TestCase):
@@ -303,6 +306,39 @@ class ReprocessSubmissionStubTests(TestCase):
             self.assertEqual(100, ledger_transactions[0].stock_on_hand)
             self.assertEqual(50, ledger_transactions[1].stock_on_hand)
             self.assertEqual(25, ledger_transactions[2].stock_on_hand)
+
+    def test_fire_signals(self):
+        from corehq.apps.receiverwrapper.tests.test_submit_errors import failing_signal_handler
+        case_id = uuid.uuid4().hex
+        form_id = uuid.uuid4().hex
+        with failing_signal_handler('signal death'):
+            submit_case_blocks(
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+                self.domain,
+                form_id=form_id
+            )
+
+        form = self.formdb.get_form(form_id)
+
+        with catch_signal(successful_form_received) as form_handler, catch_signal(case_post_save) as case_handler:
+            result = submit_form_locally(
+                instance=form.get_xml(),
+                domain=self.domain,
+            )
+
+        case = self.casedb.get_case(case_id)
+
+        if should_use_sql_backend(self.domain):
+            self.assertEqual(form, form_handler.call_args[1]['xform'])
+            self.assertEqual(case, case_handler.call_args[1]['case'])
+        else:
+            signal_form = form_handler.call_args[1]['xform']
+            self.assertEqual(form.form_id, signal_form.form_id)
+            self.assertEqual(form.get_rev, signal_form.get_rev)
+
+            signal_case = case_handler.call_args[1]['case']
+            self.assertEqual(case.case_id, signal_case.case_id)
+            self.assertEqual(case.get_rev, signal_case.get_rev)
 
 
 @use_sql_backend

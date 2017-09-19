@@ -6,20 +6,16 @@ from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
-from casexml.apps.case.signals import case_post_save
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.change_publishers import publish_form_saved, get_cases_from_form, publish_ledger_v2_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
-from couchforms.models import XFormInstance
 from dimagi.utils.couch import LockManager
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
@@ -66,13 +62,13 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
 
 def _perfom_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
-    cases = get_cases_from_form(form.domain, form)
     cache = interface.casedb_cache(
         domain=form.domain, lock=False, deleted_ok=True, xforms=[form]
     )
     with cache as casedb:
-        save and SubmissionPost.do_post_save_actions(casedb, [form], cases)
-        return ReprocessingResult(form, cases, None)
+        case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
+        return ReprocessingResult(form, case_stock_result.case_models, None)
 
 
 def reprocess_xform_error(form):
