@@ -54,7 +54,7 @@ def _should_sync(restore_state):
 
 
 class ReportFixturesProvider(FixtureProvider):
-    id = 'commcare:reports'
+    v1_id = 'commcare:reports'
 
     def __call__(self, restore_state):
         """
@@ -96,11 +96,14 @@ class ReportFixturesProvider(FixtureProvider):
         if not report_configs:
             return []
 
-        root = E.fixture(id=self.id, user_id=restore_user.user_id)
+        return self._v1_fixture(restore_user, report_configs)
+
+    def _v1_fixture(self, restore_user, report_configs):
+        root = E.fixture(id=self.v1_id, user_id=restore_user.user_id)
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
         for report_config in report_configs:
             try:
-                reports_elem.append(self.report_config_to_fixture(report_config, restore_user))
+                reports_elem.append(self.report_config_to_v1_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -115,7 +118,7 @@ class ReportFixturesProvider(FixtureProvider):
         return [root]
 
     @staticmethod
-    def report_config_to_fixture(report_config, restore_user):
+    def report_config_to_v1_fixture(report_config, restore_user):
         domain = restore_user.domain
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain
@@ -145,12 +148,12 @@ class ReportFixturesProvider(FixtureProvider):
         data_source.defer_filters(defer_filters)
         filter_options_by_field = defaultdict(set)
 
-        rows_elem = ReportFixturesProvider._get_report_elem(
+        rows_elem = ReportFixturesProvider._get_v1_report_elem(
             data_source,
             {ui_filter.field for ui_filter in defer_filters.values()},
             filter_options_by_field
         )
-        filters_elem = ReportFixturesProvider._get_filters_elem(
+        filters_elem = ReportFixturesProvider._get_v1_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
@@ -172,7 +175,7 @@ class ReportFixturesProvider(FixtureProvider):
         return report, data_source
 
     @staticmethod
-    def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
+    def _get_v1_filters_elem(defer_filters, filter_options_by_field, couch_user):
         filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
@@ -188,7 +191,7 @@ class ReportFixturesProvider(FixtureProvider):
         return filters_elem
 
     @staticmethod
-    def _get_report_elem(data_source, deferred_fields, filter_options_by_field):
+    def _get_v1_report_elem(data_source, deferred_fields, filter_options_by_field):
         def _row_to_row_elem(row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
