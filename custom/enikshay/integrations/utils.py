@@ -21,6 +21,8 @@ def case_was_created(case):
 
 
 def _is_submission_from_test_location(case_id, owner_id):
+    if owner_id == '_archive_':
+        return False
     try:
         phi_location = SQLLocation.objects.get(location_id=owner_id)
     except SQLLocation.DoesNotExist:
