@@ -8,7 +8,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_occurrence_case_from_episode
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.exceptions import ENikshayCaseNotFound, NikshayLocationNotFound
 
 
 class Command(BaseCommand):
@@ -64,7 +64,10 @@ class Command(BaseCommand):
                             writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
 
                             if commit:
-                                factory.update_case(case_id=episode_case_id, update=update)
+                                try:
+                                    factory.update_case(case_id=episode_case_id, update=update)
+                                except NikshayLocationNotFound:
+                                    pass
                         else:
                             print('No relevant test found for episode {}'.format(episode_case_id))
                     else:
