@@ -9,6 +9,11 @@ from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
+from corehq.apps.app_manager.const import (
+    MOBILE_UCR_VERSION_1,
+    MOBILE_UCR_MIGRATING_TO_2,
+    MOBILE_UCR_VERSION_2,
+)
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
@@ -97,7 +102,14 @@ class ReportFixturesProvider(FixtureProvider):
         if not report_configs:
             return []
 
-        return self._v1_fixture(restore_user, report_configs)
+        fixtures = []
+
+        if app.mobile_ucr_restore_version in [MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2]:
+            fixtures.append(self._v1_fixture(restore_user, report_configs))
+        elif app.mobile_ucr_restore_version in [MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2]:
+            fixtures.extend(self._v2_fixtures(restore_user, report_configs))
+
+        return fixtures
 
     def _v1_fixture(self, restore_user, report_configs):
         root = E.fixture(id=self.v1_id, user_id=restore_user.user_id)
