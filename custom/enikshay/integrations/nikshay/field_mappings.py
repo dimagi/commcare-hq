@@ -107,6 +107,7 @@ purpose_of_testing = {
 smear_result_grade = {
     '0': 99,  # Old version value
     'negative_not_seen': 99,  # New version value
+    'n/a': 99,  # Assigned during a certain time period and removed later, similar to negative
     'SC-0': 98,  # Positive
     'SC-1': 1,
     'SC-2': 2,
