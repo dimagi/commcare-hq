@@ -261,8 +261,9 @@ class SubmissionPost(object):
                     case_stock_result.stock_result
                 )
 
-                unfinished_submission_stub.saved = True
-                unfinished_submission_stub.save()
+                if unfinished_submission_stub:
+                    unfinished_submission_stub.saved = True
+                    unfinished_submission_stub.save()
 
                 self.do_post_save_actions(case_db, xforms, case_stock_result)
         except PostSaveError:
@@ -409,12 +410,16 @@ def _notify_submission_error(instance, exception, message):
 
 @contextlib.contextmanager
 def unfinished_submission(instance):
-    unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
-        xform_id=instance.form_id,
-        timestamp=datetime.datetime.utcnow(),
-        saved=False,
-        domain=instance.domain,
-    )
+    unfinished_submission_stub = None
+    if not getattr(instance, 'deprecated_form_id', None):
+        # don't create stubs for form edits
+        unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
+            xform_id=instance.form_id,
+            timestamp=datetime.datetime.utcnow(),
+            saved=False,
+            domain=instance.domain,
+        )
     yield unfinished_submission_stub
 
-    unfinished_submission_stub.delete()
+    if unfinished_submission_stub:
+        unfinished_submission_stub.delete()
