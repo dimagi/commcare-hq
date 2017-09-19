@@ -294,6 +294,19 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     return open_pertinent_adherence_cases
 
 
+def get_associated_episode_case_for_test(domain, test_case):
+    test_case_properties = test_case.dynamic_case_properties()
+    episode_case_id = test_case_properties.get('episode_case_id')
+    if episode_case_id:
+        case_accessor = CaseAccessors(domain)
+        try:
+            episode_case = case_accessor.get_case(episode_case_id)
+            return episode_case
+        except ENikshayCaseNotFound:
+            pass
+    return False
+
+
 def update_case(domain, case_id, updated_properties, external_id=None,
                 device_id=__name__ + ".update_case"):
     kwargs = {

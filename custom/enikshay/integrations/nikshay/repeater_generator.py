@@ -25,7 +25,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test, get_occurrence_case_from_episode)
+    get_lab_referral_from_test, get_occurrence_case_from_episode, get_associated_episode_case_for_test)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -251,7 +251,9 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-        episode_case = get_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+        episode_case = get_associated_episode_case_for_test(test_case.domain, test_case)
+        if not episode_case:
+            episode_case = get_episode_case_from_occurrence(test_case.domain, occurence_case.get_id, last_closed=True)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
         test_case_properties = test_case.dynamic_case_properties()
