@@ -285,7 +285,8 @@
         "expression": {
           "context_variables": {
             "age_in_days": {
-              "type": "icds_child_age_in_days"
+              "type": "named",
+              "name": "child_age_in_days"
             }
           },
           "statement": "age_in_days / 365.25",
@@ -380,7 +381,8 @@
             "operator": "lte",
             "property_value": 28,
             "expression": {
-              "type": "icds_child_age_in_days"
+              "type": "named",
+              "name": "child_age_in_days"
             }
           },
           "expression_if_true": {
@@ -2432,6 +2434,24 @@
           }
         }
       },
+      "child_age_in_days": {
+        "type": "diff_days",
+        "from_date_expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "datatype": "date",
+            "property_name": "dob",
+            "type": "property_name"
+          }
+        },
+        "to_date_expression": {
+          "type": "month_end"
+        }
+      },
       "rations_distributed": {
         "type": "reduce_items",
         "aggregation_fn": "sum",
@@ -3331,7 +3351,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
@@ -3375,7 +3396,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
@@ -3419,7 +3441,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
@@ -3611,7 +3634,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
@@ -3655,7 +3679,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
@@ -3753,7 +3778,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_days"
+                "type": "named",
+                "name": "child_age_in_days"
               },
               "property_value": [
                 "",
