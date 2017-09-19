@@ -99,7 +99,8 @@
         "datatype": "date",
         "display_name": null,
         "expression": {
-          "type": "icds_month_start"
+          "type": "named",
+          "name": "month_start"
         },
         "is_nullable": false,
         "is_primary_key": false,
@@ -569,7 +570,8 @@
             },
             "case_property": "has_aadhar",
             "end_date": {
-              "type": "icds_month_end"
+              "type": "named",
+              "name": "month_end"
             },
             "xmlns": [
               "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
@@ -608,10 +610,12 @@
             "type": "icds_get_last_case_property_update",
             "case_property": "weight_child",
             "start_date": {
-              "type": "icds_month_start"
+              "type": "named",
+              "name": "month_start"
             },
             "end_date": {
-              "type": "icds_month_end"
+              "type": "named",
+              "name": "month_end"
             },
             "xmlns": [
               "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
@@ -2124,7 +2128,8 @@
                       "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
                     ],
                     "end_date": {
-                      "type": "icds_month_end"
+                      "type": "named",
+                      "name": "month_end"
                     }
                   }
                 }
@@ -2171,7 +2176,8 @@
                       "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
                     ],
                     "end_date": {
-                      "type": "icds_month_end"
+                      "type": "named",
+                      "name": "month_end"
                     }
                   }
                 }
@@ -2218,7 +2224,8 @@
                       "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
                     ],
                     "end_date": {
-                      "type": "icds_month_end"
+                      "type": "named",
+                      "name": "month_end"
                     }
                   }
                 }
@@ -2264,7 +2271,8 @@
                         "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
                       ],
                       "end_date": {
-                        "type": "icds_month_end"
+                        "type": "named",
+                        "name": "month_end"
                       }
                     },
                     "repeat_path": [
@@ -2380,6 +2388,50 @@
       }
     ],
     "named_expressions": {
+      "month_start": {
+        "type": "month_start_date",
+        "date_expression": {
+          "date_expression": {
+            "expression": {
+              "type": "property_name",
+              "property_name": "modified_on"
+            },
+            "type": "root_doc"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 1"
+          }
+        }
+      },
+      "month_end": {
+        "type": "month_end_date",
+        "date_expression": {
+          "date_expression": {
+            "expression": {
+              "type": "property_name",
+              "property_name": "modified_on"
+            },
+            "type": "root_doc"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 1"
+          }
+        }
+      },
       "rations_distributed": {
         "type": "reduce_items",
         "aggregation_fn": "sum",
@@ -2393,10 +2445,12 @@
                 "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
               ],
               "start_date": {
-                "type": "icds_month_start"
+                "type": "named",
+                "name": "month_start"
               },
               "end_date": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "form_filter": {
                 "operator": "eq",
@@ -2493,7 +2547,8 @@
           "type": "icds_get_last_case_property_update",
           "case_property": "zscore_grading_wfa",
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           },
           "xmlns": [
             "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
@@ -2530,10 +2585,12 @@
           "type": "icds_get_last_case_property_update",
           "case_property": "zscore_grading_wfa",
           "start_date": {
-            "type": "icds_month_start"
+            "type": "named",
+            "name": "month_start"
           },
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           },
           "xmlns": [
             "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
@@ -2574,10 +2631,12 @@
           "type": "root_doc"
         },
         "from_date_expression": {
-          "type": "icds_month_start"
+          "type": "named",
+          "name": "month_start"
         },
         "to_date_expression": {
-          "type": "icds_month_end"
+          "type": "named",
+          "name": "month_end"
         },
         "xmlns": [
           "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
@@ -2652,10 +2711,12 @@
             "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
           ],
           "start_date": {
-            "type": "icds_month_start"
+            "type": "named",
+            "name": "month_start"
           },
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           }
         },
         "repeat_path": [
@@ -2675,7 +2736,8 @@
             "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
           ],
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           }
         },
         "repeat_path": [
@@ -2695,7 +2757,8 @@
             "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
           ],
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           }
         },
         "repeat_path": [
@@ -2716,7 +2779,8 @@
             "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
           ],
           "end_date": {
-            "type": "icds_month_end"
+            "type": "named",
+            "name": "month_end"
           }
         },
         "repeat_path": [
@@ -2741,7 +2805,8 @@
                 "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
               ],
               "end_date": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "form_filter": {
                 "type": "not",
@@ -2803,10 +2868,12 @@
                 "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
               ],
               "start_date": {
-                "type": "icds_month_start"
+                "type": "named",
+                "name": "month_start"
               },
               "end_date": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "form_filter": {
                 "type": "not",
@@ -2868,7 +2935,8 @@
                 "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
               ],
               "end_date": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "form_filter": {
                 "type": "not",
@@ -2930,10 +2998,12 @@
                 "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
               ],
               "start_date": {
-                "type": "icds_month_start"
+                "type": "named",
+                "name": "month_start"
               },
               "end_date": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "form_filter": {
                 "type": "not",
@@ -2986,10 +3056,12 @@
         "type": "icds_get_last_case_property_update",
         "case_property": "height_child",
         "start_date": {
-          "type": "icds_month_start"
+          "type": "named",
+          "name": "month_start"
         },
         "end_date": {
-          "type": "icds_month_end"
+          "type": "named",
+          "name": "month_end"
         },
         "xmlns": [
           "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
@@ -3428,7 +3500,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               }
             }
           },
@@ -3451,7 +3524,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_start"
+                "type": "named",
+                "name": "month_start"
               }
             }
           }
@@ -3496,7 +3570,8 @@
                 }
               },
               "from_date_expression": {
-                "type": "icds_month_start"
+                "type": "named",
+                "name": "month_start"
               },
               "type": "diff_days"
             }
@@ -3519,7 +3594,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "type": "diff_days"
             }
@@ -3660,7 +3736,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "type": "diff_days"
             }
