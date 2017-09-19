@@ -13,6 +13,8 @@ from casexml.apps.case.mock import CaseStructure
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
 from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
@@ -118,22 +120,9 @@ class ReprocessSubmissionStubTests(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(ReprocessSubmissionStubTests, self).tearDown()
 
-    @contextlib.contextmanager
-    def _patch_save_to_raise_error(self):
-        sql_patch = patch(
-            'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
-            side_effect=InternalError
-        )
-        couch_patch = patch(
-            'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
-            side_effect=InternalError
-        )
-        with sql_patch, couch_patch, self.assertRaises(InternalError):
-            yield
-
     def test_reprocess_unfinished_submission_case_create(self):
         case_id = uuid.uuid4().hex
-        with self._patch_save_to_raise_error():
+        with _patch_save_to_raise_error(self):
             self.factory.create_or_update_cases([
                 CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
             ])
@@ -174,7 +163,7 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        with self._patch_save_to_raise_error():
+        with _patch_save_to_raise_error(self):
             submit_case_blocks(
                 CaseBlock(case_id=case_id, update={'prop': 'a'}).as_string(),
                 self.domain
@@ -214,7 +203,7 @@ class ReprocessSubmissionStubTests(TestCase):
             CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
         ])
 
-        with self._patch_save_to_raise_error():
+        with _patch_save_to_raise_error(self):
             submit_case_blocks(
                 get_single_balance_block(case_id, 'product1', 100),
                 self.domain
@@ -260,7 +249,7 @@ class ReprocessSubmissionStubTests(TestCase):
             self.domain
         )[0].form_id)
 
-        with self._patch_save_to_raise_error():
+        with _patch_save_to_raise_error(self):
             submit_case_blocks(
                 get_single_balance_block(case_id, 'product1', 50),
                 self.domain
@@ -319,3 +308,119 @@ class ReprocessSubmissionStubTests(TestCase):
 @use_sql_backend
 class ReprocessSubmissionStubTestsSQL(ReprocessSubmissionStubTests):
     pass
+
+
+class TestReprocessDuringSubmission(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestReprocessDuringSubmission, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+
+    def setUp(self):
+        super(TestReprocessDuringSubmission, self).setUp()
+        self.factory = CaseFactory(domain=self.domain)
+        self.formdb = FormAccessors(self.domain)
+        self.casedb = CaseAccessors(self.domain)
+        self.ledgerdb = LedgerAccessors(self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(TestReprocessDuringSubmission, self).tearDown()
+
+    def test_error_saving(self):
+        case_id = uuid.uuid4().hex
+        form_id = uuid.uuid4().hex
+        with _patch_save_to_raise_error(self):
+            submit_case_blocks(
+                CaseBlock(case_id=case_id, create=True, case_type='box').as_string(),
+                self.domain,
+                form_id=form_id
+            )
+
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        self.assertEqual(1, len(stubs))
+
+        form = self.formdb.get_form(form_id)
+        self.assertTrue(form.is_error)
+
+        with self.assertRaises(CaseNotFound):
+            self.casedb.get_case(case_id)
+
+        result = submit_form_locally(
+            instance=form.get_xml(),
+            domain=self.domain,
+        )
+        duplicate_form = result.xform
+        self.assertTrue(duplicate_form.is_duplicate)
+
+        case = self.casedb.get_case(case_id)
+        self.assertIsNotNone(case)
+
+        form = self.formdb.get_form(form_id)
+        self.assertTrue(form.is_normal)
+        self.assertIsNone(getattr(form, 'problem', None))
+        self.assertEqual(duplicate_form.orig_id, form.form_id)
+
+    def test_processing_error(self):
+        case_id = uuid.uuid4().hex
+        parent_case_id = uuid.uuid4().hex
+        form_id = uuid.uuid4().hex
+        form, _ = submit_case_blocks(
+            CaseBlock(
+                case_id=case_id, create=True, case_type='box',
+                index={'cupboard': ('cupboard', parent_case_id)},
+            ).as_string(),
+            self.domain,
+            form_id=form_id
+        )
+
+        self.assertTrue(form.is_error)
+        self.assertTrue('InvalidCaseIndex' in form.problem)
+        self.assertEqual(form.form_id, form_id)
+
+        with self.assertRaises(CaseNotFound):
+            self.casedb.get_case(case_id)
+
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        self.assertEqual(0, len(stubs))
+
+        # create parent case
+        submit_case_blocks(
+            CaseBlock(case_id=parent_case_id, create=True, case_type='cupboard').as_string(),
+            self.domain,
+        )
+
+        # re-submit form
+        result = submit_form_locally(
+            instance=form.get_xml(),
+            domain=self.domain,
+        )
+        duplicate_form = result.xform
+        self.assertTrue(duplicate_form.is_duplicate)
+
+        case = self.casedb.get_case(case_id)
+        self.assertIsNotNone(case)
+
+        form = self.formdb.get_form(form_id)
+        self.assertTrue(form.is_normal)
+        self.assertIsNone(getattr(form, 'problem', None))
+        self.assertEqual(duplicate_form.orig_id, form.form_id)
+
+
+@use_sql_backend
+class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
+    pass
+
+
+@contextlib.contextmanager
+def _patch_save_to_raise_error(test_class):
+    sql_patch = patch(
+        'corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models',
+        side_effect=InternalError
+    )
+    couch_patch = patch(
+        'corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models',
+        side_effect=InternalError
+    )
+    with sql_patch, couch_patch, test_class.assertRaises(InternalError):
+        yield
