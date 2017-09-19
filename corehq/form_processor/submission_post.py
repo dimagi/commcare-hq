@@ -382,7 +382,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = '{}: {}'.format(type(exception).__name__, unicode(exception))
+    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 
