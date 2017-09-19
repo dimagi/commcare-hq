@@ -33,8 +33,9 @@ class FormProcessingResult(object):
     def get_locked_forms(self):
         if self.existing_duplicate:
             # Lock docs with their original ID's (before they got switched during deprecation)
-            new_id = self.existing_duplicate.form_id
-            old_id = self.existing_duplicate.orig_id
+            old_id = self.existing_duplicate.form_id
+            new_id = self.submitted_form.form_id
+            assert old_id != new_id, 'Expecting form IDs to be different'
             return MultiLockManager([
                 LockManager(self.submitted_form, self._get_form_lock(new_id)),
                 LockManager(self.existing_duplicate, self._get_form_lock(old_id)),
