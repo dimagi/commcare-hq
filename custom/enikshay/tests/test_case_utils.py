@@ -11,7 +11,7 @@ from custom.enikshay.exceptions import NikshayLocationNotFound
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from custom.enikshay.case_utils import (
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     get_adherence_cases_between_dates,
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
@@ -86,7 +86,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         )
 
     def test_get_episode(self):
-        self.assertEqual(get_open_episode_case_from_person(self.domain, 'person').case_id, 'episode')
+        self.assertEqual(get_episode_case_from_person(self.domain, 'person').case_id, 'episode')
 
     def test_get_occurrence_case_from_episode(self):
         self.assertEqual(

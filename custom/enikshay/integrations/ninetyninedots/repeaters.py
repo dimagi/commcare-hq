@@ -18,7 +18,7 @@ from custom.enikshay.integrations.utils import (
     case_properties_changed
 )
 from custom.enikshay.case_utils import (
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     get_episode_case_from_adherence,
     CASE_TYPE_EPISODE,
     CASE_TYPE_PERSON,
@@ -105,7 +105,7 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
         try:
             if case.type == CASE_TYPE_PERSON:
                 person_case = case
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+                episode_case = get_episode_case_from_person(person_case.domain, person_case.case_id)
                 props_changed = case_properties_changed(person_case, NINETYNINEDOTS_PERSON_PROPERTIES)
                 registered_episode = episode_registered_with_99dots(episode_case)
             elif case.type == CASE_TYPE_EPISODE:

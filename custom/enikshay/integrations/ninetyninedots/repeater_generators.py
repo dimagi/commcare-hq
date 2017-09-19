@@ -9,7 +9,7 @@ from corehq.motech.repeaters.exceptions import RequestConnectionError
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     update_case,
     get_person_locations,
     get_episode_case_from_adherence,
@@ -211,7 +211,7 @@ class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
     def _get_cases(self, episode_or_person):
         if episode_or_person.type == CASE_TYPE_PERSON:
             person_case = episode_or_person
-            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+            episode_case = get_episode_case_from_person(person_case.domain, person_case.case_id)
         elif episode_or_person.type == CASE_TYPE_EPISODE:
             episode_case = episode_or_person
             occurrence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)

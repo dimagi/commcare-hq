@@ -11,7 +11,7 @@ from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     get_occurrence_case_from_test,
     get_episode_case_from_occurrence,
 )
@@ -100,7 +100,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         if allowed_case_types_and_users:
             try:
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id,
+                episode_case = get_episode_case_from_person(person_case.domain, person_case.get_id,
                                                                  last_closed=True)
             except ENikshayCaseNotFound:
                 return False

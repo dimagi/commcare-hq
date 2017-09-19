@@ -10,7 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
-from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
+from custom.enikshay.case_utils import get_episode_case_from_person, get_adherence_cases_between_dates
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.tasks import EpisodeUpdater
 
@@ -51,7 +51,7 @@ class AdherenceCaseFactory(object):
     @memoized
     def _episode_case(self):
         try:
-            return get_open_episode_case_from_person(self.domain, self._person_case.case_id)
+            return get_episode_case_from_person(self.domain, self._person_case.case_id)
         except ENikshayCaseNotFound as e:
             raise AdherenceException(e.message)
 
@@ -152,7 +152,7 @@ def update_default_confidence_level(domain, person_id, new_confidence):
 
 def update_episode_adherence_properties(domain, person_id):
     try:
-        episode_case = get_open_episode_case_from_person(domain, person_id)
+        episode_case = get_episode_case_from_person(domain, person_id)
     except ENikshayCaseNotFound as e:
         raise AdherenceException(e.message)
     try:
