@@ -85,8 +85,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def default_sort(self):
         if self.selected_app_id:
-            return {'reporting_metadata.last_submissions.submission_date': 'desc'}
+            self.primary_sort_prop = 'reporting_metadata.last_submissions.submission_date'
+            return {
+                self.primary_sort_prop: {
+                    'order': 'desc',
+                    'nested_filter': {
+                        'term': {
+                            self.sort_filter: self.selected_app_id
+                        }
+                    }
+                }
+            }
         else:
+            self.primary_sort_prop = 'reporting_metadata.last_submission_for_user.submission_date'
             return {'reporting_metadata.last_submission_for_user.submission_date': 'desc'}
 
     @property
