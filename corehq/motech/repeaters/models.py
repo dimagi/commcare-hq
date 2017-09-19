@@ -374,7 +374,7 @@ class CreateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
-        return len(payload.xform_ids) == 1
+        return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
 
 
 class UpdateCaseRepeater(CaseRepeater):
@@ -385,7 +385,7 @@ class UpdateCaseRepeater(CaseRepeater):
     friendly_name = _("Forward Cases on Update Only")
 
     def allowed_to_forward(self, payload):
-        return len(payload.xform_ids) > 1
+        return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
 class SOAPRepeaterMixin(Repeater):
