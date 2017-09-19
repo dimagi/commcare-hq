@@ -38,7 +38,7 @@ def reprocess_unfinished_stub(stub, save=True):
 
     form_id = stub.xform_id
     try:
-        form = FormAccessorSQL.get_form(form_id)
+        form = FormAccessors(stub.domain).get_form(form_id)
     except XFormNotFound:
         # form doesn't exist which means the failure probably happend during saving so
         # let mobile handle re-submitting it
@@ -171,10 +171,13 @@ def reprocess_form(form, save=True, lock_form=True):
 
             else:
                 if save:
-                    with bulk_atomic_blobs([form] + cases):
-                        XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
-                        XFormInstance.get_db().bulk_save(cases)
-                    stock_result.commit()
+                    interface.processor.save_processed_models([form], cases, stock_result)
+                    from casexml.apps.stock.models import StockTransaction
+                    ledgers = [
+                        model
+                        for model in stock_result.models_to_save
+                        if isinstance(model, StockTransaction)
+                    ]
 
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
 
