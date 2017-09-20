@@ -412,7 +412,7 @@ def _notify_submission_error(instance, exception, message):
 def unfinished_submission(instance):
     unfinished_submission_stub = None
     if not getattr(instance, 'deprecated_form_id', None):
-        # don't create stubs for form edits
+        # don't create stubs for form edits since we don't want to auto-reprocess them
         unfinished_submission_stub = UnfinishedSubmissionStub.objects.create(
             xform_id=instance.form_id,
             timestamp=datetime.datetime.utcnow(),
