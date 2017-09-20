@@ -2277,6 +2277,95 @@
           "type": "constant",
           "constant": "no"
         }
+      },
+      "ccs_lactating": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "open_in_month"
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "alive_in_month"
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "add"
+                  }
+                },
+                "property_value": [
+                  "",
+                  "None"
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 0,
+              "expression": {
+                "type": "diff_days",
+                "to_date_expression": {
+                  "type": "month_end"
+                },
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "add"
+                  }
+                }
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 183,
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "add"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "month_start"
+                }
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
       }
     },
     "named_filters": {
@@ -2305,7 +2394,8 @@
             "type": "boolean_expression",
             "operator": "eq",
             "expression": {
-              "type": "icds_ccs_lactating"
+              "type": "named",
+              "name": "ccs_lactating"
             },
             "property_value": "yes"
           },
@@ -2333,7 +2423,8 @@
         "type": "boolean_expression",
         "operator": "eq",
         "expression": {
-          "type": "icds_ccs_lactating"
+          "type": "named",
+          "name": "ccs_lactating"
         },
         "property_value": "yes"
       },
