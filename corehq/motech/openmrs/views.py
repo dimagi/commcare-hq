@@ -142,7 +142,12 @@ class OpenmrsImporterView(BaseAdminProjectSettingsView):
     @memoized
     def openmrs_importer_form(self):
         importers = get_openmrs_importers_by_domain(self.request.domain)
-        initial = dict(importers[0]) if importers else {}  # TODO: Support multiple
+        if importers:
+            initial = dict(importers[0])  # TODO: Support multiple
+            initial['column_map'] = [{k: v for k, v in dict(m).items() if k != 'doc_type'}  # Just for the pretty
+                                     for m in initial['column_map']]
+        else:
+            initial = {}
         if self.request.method == 'POST':
             return OpenmrsImporterForm(self.request.POST, initial=initial)
         return OpenmrsImporterForm(initial=initial)
