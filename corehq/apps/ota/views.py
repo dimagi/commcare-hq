@@ -1,10 +1,6 @@
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse, Http404
-from django.urls import reverse
-from django.shortcuts import redirect
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
@@ -12,7 +8,6 @@ from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml import V2
 
 from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP
@@ -21,24 +16,17 @@ from corehq.apps.app_manager.util import get_app, LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
-    domain_admin_required,
     login_or_digest_or_basic_or_apikey,
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import flatten_result
-from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
-from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
-from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
-from soil import MultipleTaskDownload
 
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
@@ -230,105 +218,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         case_sync=case_sync,
     )
     return restore_config.get_response(), restore_config.timing_context
-
-
-class PrimeRestoreCacheView(BaseSectionPageView, DomainViewMixin):
-    page_title = ugettext_noop("Speed up 'Sync with Server'")
-    section_name = ugettext_noop("Project Settings")
-    urlname = 'prime_restore_cache'
-    template_name = "ota/prime_restore_cache.html"
-
-    @method_decorator(domain_admin_required)
-    @method_decorator(toggles.PRIME_RESTORE.required_decorator())
-    def dispatch(self, *args, **kwargs):
-        return super(PrimeRestoreCacheView, self).dispatch(*args, **kwargs)
-
-    @property
-    def main_context(self):
-        main_context = super(PrimeRestoreCacheView, self).main_context
-        main_context.update({
-            'domain': self.domain,
-        })
-        main_context.update({
-            'is_project_settings': True,
-        })
-        return main_context
-
-    @property
-    @memoized
-    def page_url(self):
-        if self.urlname:
-            return reverse(self.urlname, args=[self.domain])
-
-    @property
-    @memoized
-    def section_url(self):
-        return reverse(EditMyProjectSettingsView.urlname, args=[self.domain])
-
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return PrimeRestoreCacheForm(self.request.POST)
-        return PrimeRestoreCacheForm()
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.form,
-        }
-
-    def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            return self.form_valid()
-        return self.get(request, *args, **kwargs)
-
-    def form_valid(self):
-        res = queue_prime_restore(
-            self.domain,
-            CommCareUser.ids_by_domain(self.domain),
-            version=V2,
-            cache_timeout_hours=24,
-            overwrite_cache=True,
-            check_cache_only=False
-        )
-        download = MultipleTaskDownload()
-        download.set_task(res)
-        download.save()
-
-        return redirect('hq_soil_download', self.domain, download.download_id)
-
-
-class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
-    template_name = "ota/advanced_prime_restore_cache.html"
-    urlname = 'advanced_prime_restore_cache'
-
-    @property
-    @memoized
-    def form(self):
-        if self.request.method == 'POST':
-            return AdvancedPrimeRestoreCacheForm(self.request.POST)
-        return AdvancedPrimeRestoreCacheForm()
-
-    def form_valid(self):
-        if self.form.cleaned_data['all_users']:
-            user_ids = CommCareUser.ids_by_domain(self.domain)
-        else:
-            user_ids = self.form.user_ids
-
-        res = queue_prime_restore(
-            self.domain,
-            user_ids,
-            version=V2,
-            cache_timeout_hours=24,
-            overwrite_cache=self.form.cleaned_data['overwrite_cache'],
-            check_cache_only=self.form.cleaned_data['check_cache_only']
-        )
-        download = MultipleTaskDownload()
-        download.set_task(res)
-        download.save()
-
-        return redirect('hq_soil_download', self.domain, download.download_id)
 
 
 @login_or_digest_or_basic_or_apikey()

@@ -610,12 +610,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PRIME_RESTORE = StaticToggle(
-    'prime_restore',
-    'Prime restore cache',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
 
 FORM_LINK_WORKFLOW = StaticToggle(
     'form_link_workflow',

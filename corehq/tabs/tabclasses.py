@@ -1448,17 +1448,6 @@ class ProjectSettingsTab(UITab):
                     })
                 items.append((_('Subscription'), subscription))
 
-        if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
-            from corehq.apps.ota.views import PrimeRestoreCacheView
-            project_tools = [
-                {
-                    'title': _(PrimeRestoreCacheView.page_title),
-                    'url': reverse(PrimeRestoreCacheView.urlname,
-                                   args=[self.domain])
-                },
-            ]
-            items.append((_('Project Tools'), project_tools))
-
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import (
                 EditInternalDomainInfoView,
