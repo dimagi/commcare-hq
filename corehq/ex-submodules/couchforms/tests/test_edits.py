@@ -14,7 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
@@ -41,14 +41,14 @@ class EditFormTest(TestCase, TestFileMixin):
         original_xml = self.get_xml('original')
         edit_xml = self.get_xml('edit')
 
-        xform = post_xform(original_xml, domain=self.domain)
+        xform = submit_form_locally(original_xml, self.domain).xform
 
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual("", xform.form_data['vitals']['height'])
         self.assertEqual("other", xform.form_data['assessment']['categories'])
 
-        xform = post_xform(edit_xml, domain=self.domain)
+        xform = submit_form_locally(edit_xml, self.domain).xform
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual("100", xform.form_data['vitals']['height'])
