@@ -2176,7 +2176,8 @@
               "operator": "gte",
               "expression": {
                 "from_date_expression": {
-                  "type": "month_start"
+                  "type": "named",
+                  "name": "month_start"
                 },
                 "type": "diff_days",
                 "to_date_expression": {
@@ -2215,7 +2216,8 @@
               "type": "boolean_expression",
               "operator": "eq",
               "expression": {
-                "type": "open_in_month"
+                "type": "named",
+                "name": "open_in_month"
               },
               "property_value": "yes"
             },
@@ -2261,7 +2263,8 @@
                       }
                     },
                     "from_date_expression": {
-                      "type": "month_end"
+                      "type": "named",
+                      "name": "month_end"
                     }
                   }
                 }
@@ -2287,7 +2290,8 @@
               "type": "boolean_expression",
               "operator": "eq",
               "expression": {
-                "type": "open_in_month"
+                "type": "named",
+                "name": "open_in_month"
               },
               "property_value": "yes"
             },
@@ -2295,7 +2299,8 @@
               "type": "boolean_expression",
               "operator": "eq",
               "expression": {
-                "type": "alive_in_month"
+                "type": "named",
+                "name": "alive_in_month"
               },
               "property_value": "yes"
             },
@@ -2325,7 +2330,8 @@
               "expression": {
                 "type": "diff_days",
                 "to_date_expression": {
-                  "type": "month_end"
+                  "type": "named",
+                  "name": "month_end"
                 },
                 "from_date_expression": {
                   "type": "root_doc",
@@ -2352,7 +2358,8 @@
                   }
                 },
                 "to_date_expression": {
-                  "type": "month_start"
+                  "type": "named",
+                  "name": "month_start"
                 }
               }
             }
