@@ -7,13 +7,12 @@
 
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
-
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
+    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+    {# import error: http://manage.dimagi.com/default.asp?223100 #}
+    {% include 'cloudcare/includes/formplayer-inline.html' %}
     <script src="{% static "reports/js/case_details.js" %}"></script>
 {% endblock %}
 
