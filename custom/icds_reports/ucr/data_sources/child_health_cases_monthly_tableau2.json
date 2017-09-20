@@ -221,7 +221,8 @@
         "datatype": "integer",
         "display_name": null,
         "expression": {
-          "type": "icds_child_age_in_months_month_end"
+          "type": "named",
+          "name": "age_in_months_month_end"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -236,7 +237,7 @@
           "context_variables": {
             "age_in_days": {
               "type": "named",
-              "name": "child_age_in_days"
+              "name": "age_in_days"
             }
           },
           "statement": "age_in_days / 365.25",
@@ -332,7 +333,7 @@
             "property_value": 28,
             "expression": {
               "type": "named",
-              "name": "child_age_in_days"
+              "name": "age_in_days"
             }
           },
           "expression_if_true": {
@@ -2380,11 +2381,11 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 3"
+            "statement": "iteration - 3 "
           }
         }
       },
-      "child_age_in_days": {
+      "age_in_days": {
         "type": "diff_days",
         "from_date_expression": {
           "type": "related_doc",
@@ -2400,6 +2401,16 @@
         },
         "to_date_expression": {
           "type": "month_end"
+        }
+      },
+      "age_in_months_month_end": {
+        "type": "evaluator",
+        "statement": "age_in_days / 30.4",
+        "context_variables": {
+          "age_in_days": {
+            "type": "named",
+            "name": "age_in_days"
+          }
         }
       },
       "rations_distributed": {
@@ -3270,7 +3281,8 @@
             "operator": "gt",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
@@ -3302,7 +3314,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3323,7 +3335,8 @@
             "operator": "gt",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
@@ -3347,7 +3360,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3360,7 +3373,8 @@
             "operator": "gt",
             "property_value": 36,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
@@ -3392,7 +3406,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3585,7 +3599,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3598,7 +3612,8 @@
             "operator": "gt",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
@@ -3630,7 +3645,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3643,7 +3658,8 @@
             "operator": "gt",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
@@ -3729,7 +3745,7 @@
               "type": "boolean_expression",
               "expression": {
                 "type": "named",
-                "name": "child_age_in_days"
+                "name": "age_in_days"
               },
               "property_value": [
                 "",
@@ -3742,7 +3758,8 @@
             "operator": "gt",
             "property_value": 12,
             "expression": {
-              "type": "icds_child_age_in_months_month_end"
+              "type": "named",
+              "name": "age_in_months_month_end"
             }
           },
           {
