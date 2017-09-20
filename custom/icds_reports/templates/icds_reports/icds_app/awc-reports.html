@@ -96,13 +96,13 @@
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].stunning || 'Data not Entered' $}
+                                 <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].wasting || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].wasting || 'Data not Entered' $}
+                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row[month].stunning || 'Data not Entered' $}
                                 </span>
                             </td>
                             <td ng-repeat-end="">{$ row[month].pse_days_attended || 'Data not Entered' $}</td>
