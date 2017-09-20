@@ -83,6 +83,16 @@ class ShardingTests(TestCase):
         for form_id, db_alias in dbs_for_docs.items():
             XFormInstanceSQL.objects.using(db_alias).get(form_id=form_id)
 
+    def test_same_dbalias_util(self):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
+        for i in range(10):
+            # test multiple times to test a wider probability
+            f1_id = unicode(uuid4())
+            old_db_alias = get_db_alias_for_partitioned_doc(f1_id)
+            f2_id = new_id_in_same_dbalias(f1_id)
+            new_db_alias = get_db_alias_for_partitioned_doc(f2_id)
+            self.assertEqual(new_db_alias, old_db_alias)
+
 
 DATABASES = {
     key: {

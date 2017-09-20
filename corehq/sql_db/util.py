@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 
 from corehq.sql_db.config import partition_config
@@ -84,6 +85,20 @@ def get_default_db_aliases():
 
 def get_default_and_partitioned_db_aliases():
     return list(set(get_db_aliases_for_partitioned_query() + get_default_db_aliases()))
+
+
+def new_id_in_same_dbalias(partition_value):
+    """
+    Returns a new partition value that belongs to the same db alias as
+        the given partition value does
+    """
+    old_db_name = get_db_alias_for_partitioned_doc(partition_value)
+    new_db_name = None
+    while old_db_name != new_db_name:
+        # todo; guard against infinite recursion
+        new_partition_value = unicode(uuid.uuid4())
+        new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
+    return new_partition_value
 
 
 def handle_connection_failure(get_db_aliases=get_default_db_aliases):
