@@ -4,8 +4,6 @@ from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 
