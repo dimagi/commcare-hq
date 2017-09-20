@@ -13,6 +13,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceNotFound
 from jinja2 import Template
 from requests import HTTPError
+import time
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
@@ -25,6 +26,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeater_helpers import Requests
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
@@ -62,11 +64,18 @@ def get_openmrs_patients(requests, importer, location=None):
 
 
 def get_caseblock(patient, importer, owner_id):
+    cast = {
+        POSIX_MILLISECONDS: lambda x: datetime(*time.gmtime(x / 1000.0)[:6]).isoformat() + 'Z',
+    }
     case_id = uuid.uuid4().hex
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
     fields_to_update = {
-        mapping['property']: patient[mapping['column']]
+        mapping['property']: (
+            cast[mapping['data_type']](patient[mapping['column']])
+            if mapping.get('data_type') else
+            patient[mapping['column']]
+        )
         for mapping in importer.column_map
     }
     return CaseBlock(

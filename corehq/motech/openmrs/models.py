@@ -9,9 +9,18 @@ from dimagi.ext.couchdbkit import (
 )
 
 
+# Supported values for ColumnMapping.data_type
+# ColumnMapping.data_type is only required if json.loads returns the wrong value
+POSIX_MILLISECONDS = 'posix_milliseconds'
+DATA_TYPES = (
+    POSIX_MILLISECONDS,
+)
+
+
 class ColumnMapping(DocumentSchema):
     column = StringProperty()
     property = StringProperty()
+    data_type = StringProperty(choices=DATA_TYPES, required=False)
 
 
 class OpenmrsImporter(Document):
