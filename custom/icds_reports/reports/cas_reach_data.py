@@ -54,6 +54,29 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
     daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
     daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
 
+    all_locations_none = True
+
+    if awc_this_month_data:
+        state = awc_this_month_data[0]['states']
+        district = awc_this_month_data[0]['districts']
+        block = awc_this_month_data[0]['blocks']
+        supervisor = awc_this_month_data[0]['supervisors']
+        awc = awc_this_month_data[0]['awcs']
+
+        all_locations_none = all(item is None for item in [state, district, block, supervisor, awc])
+
+    default_values = {
+        'awc': 0,
+        'supervisor': 0,
+        'block': 0,
+        'district': 0,
+        'state': 0
+    }
+    if not all_locations_none:
+        for type in ['state', 'district', 'block', 'supervisor', 'awc']:
+            if type + '_id' in config:
+                default_values[type] = 1
+
     return {
         'records': [
             [
@@ -65,7 +88,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                         'awcs',
                         awc_this_month_data,
                         awc_prev_month_data) > 0 else 'red',
-                    'value': get_value(awc_this_month_data, 'awcs'),
+                    'value': get_value(awc_this_month_data, 'awcs', default_values['awc']),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
@@ -88,7 +111,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'label': _('Sectors covered'),
                     'help_text': _('Total Sectors that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(awc_this_month_data, 'supervisors'),
+                    'value': get_value(awc_this_month_data, 'supervisors', default_values['supervisor']),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
@@ -98,7 +121,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'label': _('Blocks covered'),
                     'help_text': _('Total Blocks that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(awc_this_month_data, 'blocks'),
+                    'value': get_value(awc_this_month_data, 'blocks', default_values['block']),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
@@ -111,7 +134,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'label': _('Districts covered'),
                     'help_text': _('Total Districts that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(awc_this_month_data, 'districts'),
+                    'value': get_value(awc_this_month_data, 'districts', default_values['district']),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
@@ -121,7 +144,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'label': _('States/UTs covered'),
                     'help_text': _('Total States that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(awc_this_month_data, 'states'),
+                    'value': get_value(awc_this_month_data, 'states', default_values['state']),
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
