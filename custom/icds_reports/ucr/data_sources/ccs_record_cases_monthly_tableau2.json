@@ -1815,7 +1815,8 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "icds_ccs_pregnant"
+            "type": "named",
+            "name": "ccs_pregnant"
           },
           "property_value": "yes"
         },
@@ -2204,6 +2205,78 @@
           "type": "constant",
           "constant": "no"
         }
+      },
+      "ccs_pregnant": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "open_in_month"
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "alive_in_month"
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "in",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "root_doc",
+                    "expression": {
+                      "datatype": "date",
+                      "type": "property_name",
+                      "property_name": "add"
+                    }
+                  },
+                  "property_value": [
+                    "",
+                    "None"
+                  ]
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gt",
+                  "property_value": 0,
+                  "expression": {
+                    "type": "diff_days",
+                    "to_date_expression": {
+                      "type": "root_doc",
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "add"
+                      }
+                    },
+                    "from_date_expression": {
+                      "type": "month_end"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
       }
     },
     "named_filters": {
@@ -2271,7 +2344,8 @@
             "type": "boolean_expression",
             "operator": "eq",
             "expression": {
-              "type": "icds_ccs_pregnant"
+              "type": "named",
+              "name": "ccs_pregnant"
             },
             "property_value": "yes"
           },
@@ -2299,7 +2373,8 @@
         "type": "boolean_expression",
         "operator": "eq",
         "expression": {
-          "type": "icds_ccs_pregnant"
+          "type": "named",
+          "name": "ccs_pregnant"
         },
         "property_value": "yes"
       },
