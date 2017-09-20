@@ -128,7 +128,7 @@ def reprocess_form(form, save=True, lock_form=True):
             assert stock_result.populated
 
             cases = case_stock_result.case_models
-            _log_changes('unfiltered', cases, stock_result.models_to_save, stock_result.models_to_delete)
+            _log_changes(cases, stock_result.models_to_save, stock_result.models_to_delete)
 
             ledgers = []
             if should_use_sql_backend(form.domain):
@@ -143,8 +143,6 @@ def reprocess_form(form, save=True, lock_form=True):
                     LedgerAccessorSQL.save_ledger_values(ledgers)
                     FormAccessorSQL.update_form_problem_and_state(form)
                     FormProcessorSQL._publish_changes(ProcessedForms(form, None), cases, stock_result)
-
-                _log_changes('filtered', cases, ledgers, [])
 
                 # rebuild cases and ledgers that were affected
                 for case in cases:
@@ -179,12 +177,12 @@ def reprocess_form(form, save=True, lock_form=True):
         return ReprocessingResult(form, cases, ledgers)
 
 
-def _log_changes(slug, cases, stock_updates, stock_deletes):
+def _log_changes(cases, stock_updates, stock_deletes):
     if logger.isEnabledFor(logging.INFO):
         case_ids = [case.case_id for case in cases]
         logger.info(
-            "%s changes:\n\tcases: %s\n\tstock changes%s\n\tstock deletes%s",
-            slug, case_ids, stock_updates, stock_deletes
+            "changes:\n\tcases: %s\n\tstock changes%s\n\tstock deletes%s",
+            case_ids, stock_updates, stock_deletes
         )
 
 
