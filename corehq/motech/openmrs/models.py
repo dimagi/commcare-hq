@@ -5,10 +5,11 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     DictProperty,
     ListProperty,
+    DocumentSchema,
 )
 
 
-class ColumnMapping(Document):
+class ColumnMapping(DocumentSchema):
     column = StringProperty()
     property = StringProperty()
 
