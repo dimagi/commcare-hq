@@ -79,7 +79,7 @@ class TagTest(SimpleTestCase):
                 {% requirejs_main "requirejs/main" %}
                 {% block content %}{{requirejs_main}}{% endblock %}
             """).strip(),
-            "expected requirejs/main after block\n\n\nrequirejs/main",
+            "expected requirejs/main after tag\n\n\nrequirejs/main",
         )
 
     def test_requirejs_main_no_arg(self):
