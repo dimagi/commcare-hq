@@ -71,11 +71,9 @@ def get_caseblock(patient, importer, owner_id):
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
     fields_to_update = {
-        mapping['property']: (
-            cast[mapping['data_type']](patient[mapping['column']])
-            if mapping.get('data_type') else
-            patient[mapping['column']]
-        )
+        mapping.property: (cast[mapping.data_type](patient[mapping.column])
+                           if mapping.data_type else
+                           patient[mapping.column])
         for mapping in importer.column_map
     }
     return CaseBlock(
