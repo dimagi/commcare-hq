@@ -2,6 +2,7 @@
 
 import json
 import os
+
 from mock import patch
 from collections import namedtuple
 from datetime import datetime
@@ -10,7 +11,7 @@ from django.test import TestCase, override_settings
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.models import Domain
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, capture_log_output
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
@@ -215,12 +216,16 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(0, len(self.repeat_records().all()))
 
         person = self.create_case(self.person)[0]
-        with self.assertRaisesMessage(
-                NikshayLocationNotFound,
-                "Location with id {location_id} not found. This is the owner for person with "
-                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
-        ):
+        with capture_log_output('notify') as logoutput:
             self._create_nikshay_enabled_case()
+        self.assertIn(NikshayLocationNotFound.__name__, logoutput.get_output())
+        expected_message = (
+            "Location with id {location_id} not found. "
+            "This is the owner for person with id: {person_id}".format(
+                location_id=person.owner_id, person_id=self.person_id)
+        )
+        self.assertIn(expected_message, logoutput.get_output())
+
         # nikshay enabled, should register a repeat record
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
@@ -1164,12 +1169,16 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.assertEqual(0, len(self.repeat_records().all()))
         person = self.create_case(self.person)[0]
         update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
-        with self.assertRaisesMessage(
-                NikshayLocationNotFound,
-                "Location with id {location_id} not found. This is the owner for person with "
-                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
-        ):
+        with capture_log_output('notify') as logoutput:
             self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        self.assertIn(NikshayLocationNotFound.__name__, logoutput.get_output())
+        expected_message = (
+            "Location with id {location_id} not found. "
+            "This is the owner for person with id: {person_id}".format(
+                location_id=person.owner_id, person_id=self.person_id)
+        )
+        self.assertIn(expected_message, logoutput.get_output())
+
         # nikshay enabled, should register a repeat record
         self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
