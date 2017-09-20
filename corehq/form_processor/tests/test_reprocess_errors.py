@@ -321,7 +321,7 @@ class ReprocessSubmissionStubTests(TestCase):
         form = self.formdb.get_form(form_id)
 
         with catch_signal(successful_form_received) as form_handler, catch_signal(case_post_save) as case_handler:
-            result = submit_form_locally(
+            submit_form_locally(
                 instance=form.get_xml(),
                 domain=self.domain,
             )
