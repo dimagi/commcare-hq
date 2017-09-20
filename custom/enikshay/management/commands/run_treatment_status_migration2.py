@@ -53,10 +53,8 @@ class Command(BaseCommand):
         with open(log_path, "w") as log_file:
             writer = csv.writer(log_file)
             writer.writerow(headers)
-
             for episode in CaseAccessors(domain=domain).iter_cases(case_ids):
                 if episode.get_case_property('datamigration_treatment_status_fix2') != 'yes':
-
                     # Filter and skip private cases
                     try:
                         person = get_person_case_from_episode(domain, episode.case_id)
