@@ -1,10 +1,9 @@
 {% extends "hqwebapp/two_column.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% requirejs_main "data_dictionary/js/data_dictionary" %}
 
 {% block title %}{% trans "Data Dictionary" %}{% endblock %}\
-
-{% block requirejs_main %}data_dictionary/js/data_dictionary{% endblock requirejs_main %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">

@@ -2,12 +2,11 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
+{% requirejs_main "fixtures/js/lookup-manage" %}
 
 {% block page_title %}
     {% trans 'Manage Lookup Tables' %}
 {% endblock %}
-
-{% block requirejs_main %}fixtures/js/lookup-manage{% endblock requirejs_main %}
 
 {% block page_content %}
 {% registerurl 'download_fixtures' domain %}
