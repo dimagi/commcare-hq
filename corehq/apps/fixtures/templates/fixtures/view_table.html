@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
+{% requirejs_main "fixtures/js/view-table" %}
 
 {% block page_title %}
     {% if not table_not_selected %}
@@ -15,8 +16,6 @@
     {% endblocktrans %}
     {% endif%}
 {% endblock %}
-
-{% block requirejs_main %}fixtures/js/view-table{% endblock requirejs_main %}
 
 {% block page_content %}
     {% initial_page_data 'renderReportTables' 1 %}

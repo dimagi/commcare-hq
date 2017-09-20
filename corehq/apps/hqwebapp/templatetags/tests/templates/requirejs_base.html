@@ -1,0 +1,13 @@
+{% load hq_shared_tags %}
+{% if requirejs_main %}
+unexpected {{ requirejs_main }} before block
+{% endif %}
+
+{% requirejs_main "requirejs/base" %}
+{% block requirejs_main %}{% endblock %}
+
+{% if requirejs_main %}
+expected {{ requirejs_main }} after block
+{% endif %}
+
+{% block content %}{% endblock %}
