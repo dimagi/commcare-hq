@@ -107,10 +107,6 @@ def reprocess_form(form, save=True, lock_form=True):
         else:
             form.doc_type = 'XFormInstance'
 
-        form.initial_processing_complete = True
-        form.problem = None
-
-        accessors = FormAccessors(form.domain)
         cache = interface.casedb_cache(
             domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
         )
@@ -121,8 +117,10 @@ def reprocess_form(form, save=True, lock_form=True):
                     PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                 error_message = '{}: {}'.format(type(e).__name__, unicode(e))
                 form = interface.xformerror_from_xform_instance(form, error_message)
-                accessors.update_form_problem_and_state(form)
                 return ReprocessingResult(form, [], [])
+
+            form.initial_processing_complete = True
+            form.problem = None
 
             stock_result = case_stock_result.stock_result
             assert stock_result.populated
