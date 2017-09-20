@@ -82,11 +82,16 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
 
-    def _test_submission_error_post_save(self, open_rosa_version, expected_response_code):
+    def _test_submission_error_post_save(self, openrosa_version):
         evil_laugh = "mwa ha ha!"
         with failing_signal_handler(evil_laugh):
-            file, res = self._submit("simple_form.xml", open_rosa_version)
-            self.assertEqual(expected_response_code, res.status_code)
+            file, res = self._submit("simple_form.xml", openrosa_version)
+            if openrosa_version == OPENROSA_VERSION_3:
+                self.assertEqual(422, res.status_code)
+                self.assertIn(ResponseNature.POST_PROCESSING_FAILIRE, res.content)
+            else:
+                self.assertEqual(201, res.status_code)
+                self.assertIn(ResponseNature.SUBMIT_SUCCESS, res.content)
 
             form_id = 'ad38211be256653bceac8e2156475664'
             form = FormAccessors(self.domain.name).get_form(form_id)
@@ -98,10 +103,12 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             self.assertEqual(True, stubs[0].saved)
 
     def test_submission_error_post_save_2_0(self):
-        self._test_submission_error_post_save(OPENROSA_VERSION_2, 201)
+        self._test_submission_error_post_save(OPENROSA_VERSION_2)
 
     def test_submission_error_post_save_3_0(self):
-        self._test_submission_error_post_save(OPENROSA_VERSION_3, 422)
+        self._test_submission_error_post_save(OPENROSA_VERSION_3)
+        # make sure that a re-submission has the same response
+        self._test_submission_error_post_save(OPENROSA_VERSION_3)
 
     def testSubmitBadXML(self):
         f, path = tmpfile()
@@ -182,6 +189,8 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self._test_case_processing_error(OPENROSA_VERSION_2)
 
     def test_case_processing_error_3_0(self):
+        self._test_case_processing_error(OPENROSA_VERSION_3)
+        # make sure that a re-submission has the same response
         self._test_case_processing_error(OPENROSA_VERSION_3)
 
 

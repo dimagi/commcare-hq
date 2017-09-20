@@ -185,13 +185,22 @@ class SubmissionPost(object):
                         xform_id=existing_form.form_id
                     ).first()
 
+                    result = None
                     if stub:
                         from corehq.form_processor.reprocess import reprocess_unfinished_stub_with_form
-                        reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
+                        result = reprocess_unfinished_stub_with_form(stub, existing_form, lock=False)
                     elif existing_form.is_error:
                         from corehq.form_processor.reprocess import reprocess_form
-                        reprocess_form(existing_form, lock_form=False)
-                    self.interface.save_processed_models([instance])
+                        result = reprocess_form(existing_form, lock_form=False)
+                    if result and result.error:
+                        submission_type = 'error'
+                        error_message = result.error
+                        if existing_form.is_error:
+                            response_nature = ResponseNature.PROCESSING_FAILURE
+                        else:
+                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                    else:
+                        self.interface.save_processed_models([instance])
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:

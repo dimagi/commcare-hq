@@ -10,7 +10,7 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.exceptions import XFormNotFound, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
@@ -18,7 +18,7 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch import LockManager
 
-ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers')
+ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
 
 logger = logging.getLogger('reprocess')
 
@@ -48,7 +48,7 @@ def reprocess_unfinished_stub(stub, save=True):
 def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if form.is_deleted:
         save and stub.delete()
-        return ReprocessingResult(form, None, None)
+        return ReprocessingResult(form, None, None, None)
 
     if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
@@ -67,8 +67,12 @@ def _perfom_post_save_actions(form, save=True):
     )
     with cache as casedb:
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
-        save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
-        return ReprocessingResult(form, case_stock_result.case_models, None)
+        try:
+            save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
+        except PostSaveError:
+            error_message = "Error performing post save operations"
+            return ReprocessingResult(form, None, None, error_message)
+        return ReprocessingResult(form, case_stock_result.case_models, None, None)
 
 
 def reprocess_xform_error(form):
@@ -117,7 +121,7 @@ def reprocess_form(form, save=True, lock_form=True):
                     PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                 error_message = '{}: {}'.format(type(e).__name__, unicode(e))
                 form = interface.xformerror_from_xform_instance(form, error_message)
-                return ReprocessingResult(form, [], [])
+                return ReprocessingResult(form, [], [], error_message)
 
             form.initial_processing_complete = True
             form.problem = None
@@ -172,7 +176,7 @@ def reprocess_form(form, save=True, lock_form=True):
 
             save and SubmissionPost.do_post_save_actions(casedb, [form], case_stock_result)
 
-        return ReprocessingResult(form, cases, ledgers)
+        return ReprocessingResult(form, cases, ledgers, None)
 
 
 def _log_changes(cases, stock_updates, stock_deletes):
