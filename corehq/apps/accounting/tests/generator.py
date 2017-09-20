@@ -25,7 +25,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
-    SoftwareProduct,
     SoftwareProductRate,
     Subscriber,
     Subscription,
@@ -45,7 +44,6 @@ def bootstrap_test_plans():
     SoftwarePlanVersion.objects.all().delete()
     SoftwarePlan.objects.all().delete()
     SoftwareProductRate.objects.all().delete()
-    SoftwareProduct.objects.all().delete()
     FeatureRate.objects.all().delete()
     Feature.objects.all().delete()
     ensure_plans(BOOTSTRAP_CONFIG_TESTING, verbose=False, apps=apps)
