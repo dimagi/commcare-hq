@@ -470,7 +470,8 @@
           "operator": "eq",
           "property_value": "yes",
           "expression": {
-            "type": "icds_open_in_month"
+            "type": "named",
+            "name": "open_in_month"
           }
         },
         "type": "boolean"
@@ -3139,6 +3140,80 @@
           "constant": "no"
         }
       },
+      "open_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                  },
+                  "type": "root_doc"
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              },
+              "property_value": 0
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "type": "root_doc"
+                  },
+                  "property_value": "False"
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gte",
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "named",
+                      "name": "month_start"
+                    },
+                    "to_date_expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "closed_on"
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "property_value": 0
+                }
+              ]
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
       "valid_in_month": {
         "type": "conditional",
         "test": {
@@ -3149,7 +3224,8 @@
               "operator": "eq",
               "property_value": "yes",
               "expression": {
-                "type": "icds_open_in_month"
+                "type": "named",
+                "name": "open_in_month"
               }
             },
             {
@@ -3224,7 +3300,8 @@
               "operator": "eq",
               "property_value": "yes",
               "expression": {
-                "type": "icds_open_in_month"
+                "type": "named",
+                "name": "open_in_month"
               }
             },
             {
