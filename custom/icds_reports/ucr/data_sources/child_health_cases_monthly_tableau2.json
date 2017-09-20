@@ -2409,7 +2409,8 @@
           }
         },
         "to_date_expression": {
-          "type": "month_end"
+          "type": "named",
+          "name": "month_start"
         }
       },
       "age_in_months_month_start": {
@@ -2431,7 +2432,8 @@
               }
             },
             "to_date_expression": {
-              "type": "month_start"
+              "type": "named",
+              "name": "month_start"
             }
           }
         }
@@ -3244,7 +3246,8 @@
               "operator": "gte",
               "expression": {
                 "from_date_expression": {
-                  "type": "month_start"
+                  "type": "named",
+                  "name": "month_start"
                 },
                 "type": "diff_days",
                 "to_date_expression": {
