@@ -1,5 +1,6 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
+{% requirejs_main %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
         {% if ANALYTICS_IDS.GTM_ID %}
@@ -19,8 +20,6 @@
             {% if title_block %}{% if title_context_block.strip or not title_context_block %}- {{ title_context_block }}{% endif %}{% endif %}
             {% if not title_context_block %}CommCare HQ{% endif %}
         </title>
-
-        {% requirejs_main %}
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
