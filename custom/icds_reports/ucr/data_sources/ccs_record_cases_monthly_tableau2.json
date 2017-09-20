@@ -2225,7 +2225,8 @@
               "type": "boolean_expression",
               "operator": "eq",
               "expression": {
-                "type": "alive_in_month"
+                "type": "named",
+                "name": "alive_in_month"
               },
               "property_value": "yes"
             },
