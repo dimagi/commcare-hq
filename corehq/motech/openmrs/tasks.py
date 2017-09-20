@@ -48,7 +48,7 @@ def parse_params(params, location=None):
 
 def get_openmrs_patients(requests, importer, location=None):
     endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
-    params = parse_params(importer.params, location)
+    params = parse_params(importer.report_params, location)
     response = requests.get(endpoint, params=params)
     try:
         response.raise_for_status()
