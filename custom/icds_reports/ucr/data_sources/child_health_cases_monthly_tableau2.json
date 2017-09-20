@@ -484,7 +484,8 @@
           "operator": "eq",
           "property_value": "yes",
           "expression": {
-            "type": "icds_alive_in_month"
+            "type": "named",
+            "name": "alive_in_month"
           }
         },
         "type": "boolean"
@@ -3214,6 +3215,65 @@
           "constant": "no"
         }
       },
+      "alive_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "in",
+              "expression": {
+                "value_expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "date_death"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                }
+              },
+              "type": "boolean_expression",
+              "property_value": [
+                "",
+                null
+              ]
+            },
+            {
+              "operator": "gte",
+              "expression": {
+                "from_date_expression": {
+                  "type": "month_start"
+                },
+                "type": "diff_days",
+                "to_date_expression": {
+                  "value_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "date_death"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  }
+                }
+              },
+              "type": "boolean_expression",
+              "property_value": 0
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
       "valid_in_month": {
         "type": "conditional",
         "test": {
@@ -3233,7 +3293,8 @@
               "operator": "eq",
               "property_value": "yes",
               "expression": {
-                "type": "icds_alive_in_month"
+                "type": "named",
+                "name": "alive_in_month"
               }
             },
             {
@@ -3309,7 +3370,8 @@
               "operator": "eq",
               "property_value": "yes",
               "expression": {
-                "type": "icds_alive_in_month"
+                "type": "named",
+                "name": "alive_in_month"
               }
             },
             {
