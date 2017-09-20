@@ -347,7 +347,8 @@
               "operator": "lte",
               "property_value": 6,
               "expression": {
-                "type": "icds_child_age_in_months_month_start"
+                "type": "named",
+                "name": "age_in_months_month_start"
               }
             },
             "expression_if_true": {
@@ -361,7 +362,8 @@
                 "operator": "lte",
                 "property_value": 12,
                 "expression": {
-                  "type": "icds_child_age_in_months_month_start"
+                  "type": "named",
+                  "name": "age_in_months_month_start"
                 }
               },
               "expression_if_true": {
@@ -375,7 +377,8 @@
                   "operator": "lte",
                   "property_value": 24,
                   "expression": {
-                    "type": "icds_child_age_in_months_month_start"
+                    "type": "named",
+                    "name": "age_in_months_month_start"
                   }
                 },
                 "expression_if_true": {
@@ -389,7 +392,8 @@
                     "operator": "lte",
                     "property_value": 36,
                     "expression": {
-                      "type": "icds_child_age_in_months_month_start"
+                      "type": "named",
+                      "name": "age_in_months_month_start"
                     }
                   },
                   "expression_if_true": {
@@ -403,7 +407,8 @@
                       "operator": "lte",
                       "property_value": 48,
                       "expression": {
-                        "type": "icds_child_age_in_months_month_start"
+                        "type": "named",
+                        "name": "age_in_months_month_start"
                       }
                     },
                     "expression_if_true": {
@@ -417,7 +422,8 @@
                         "operator": "lte",
                         "property_value": 60,
                         "expression": {
-                          "type": "icds_child_age_in_months_month_start"
+                          "type": "named",
+                          "name": "age_in_months_month_start"
                         }
                       },
                       "expression_if_true": {
@@ -431,7 +437,8 @@
                           "operator": "lte",
                           "property_value": 72,
                           "expression": {
-                            "type": "icds_child_age_in_months_month_start"
+                            "type": "named",
+                            "name": "age_in_months_month_start"
                           }
                         },
                         "expression_if_true": {
@@ -2403,6 +2410,30 @@
           "type": "month_end"
         }
       },
+      "age_in_months_month_start": {
+        "type": "evaluator",
+        "statement": "age_in_days / 30.4",
+        "context_variables": {
+          "age_in_days": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "value_expression": {
+                "datatype": "date",
+                "property_name": "dob",
+                "type": "property_name"
+              }
+            },
+            "to_date_expression": {
+              "type": "month_start"
+            }
+          }
+        }
+      },
       "age_in_months_month_end": {
         "type": "evaluator",
         "statement": "age_in_days / 30.4",
@@ -3153,7 +3184,8 @@
                 "operator": "in",
                 "type": "boolean_expression",
                 "expression": {
-                  "type": "icds_child_age_in_months_month_start"
+                  "type": "named",
+                  "name": "age_in_months_month_start"
                 },
                 "property_value": [
                   "",
@@ -3166,7 +3198,8 @@
               "operator": "lte",
               "property_value": 72,
               "expression": {
-                "type": "icds_child_age_in_months_month_start"
+                "type": "named",
+                "name": "age_in_months_month_start"
               }
             }
           ]
@@ -3208,7 +3241,8 @@
                 "operator": "in",
                 "type": "boolean_expression",
                 "expression": {
-                  "type": "icds_child_age_in_months_month_start"
+                  "type": "named",
+                  "name": "age_in_months_month_start"
                 },
                 "property_value": [
                   "",
@@ -3221,7 +3255,8 @@
               "operator": "lte",
               "property_value": 72,
               "expression": {
-                "type": "icds_child_age_in_months_month_start"
+                "type": "named",
+                "name": "age_in_months_month_start"
               }
             }
           ]
@@ -3246,7 +3281,8 @@
               "operator": "in",
               "type": "boolean_expression",
               "expression": {
-                "type": "icds_child_age_in_months_month_start"
+                "type": "named",
+                "name": "age_in_months_month_start"
               },
               "property_value": [
                 "",
@@ -3259,7 +3295,8 @@
             "operator": "lte",
             "property_value": 60,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3290,7 +3327,8 @@
             "operator": "lte",
             "property_value": 60,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3327,7 +3365,8 @@
             "operator": "lte",
             "property_value": 36,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3382,7 +3421,8 @@
             "operator": "lte",
             "property_value": 72,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3419,7 +3459,8 @@
             "operator": "lte",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3621,7 +3662,8 @@
             "operator": "lte",
             "property_value": 24,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
@@ -3667,7 +3709,8 @@
             "operator": "lte",
             "property_value": 8,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "named",
+              "name": "age_in_months_month_start"
             }
           },
           {
