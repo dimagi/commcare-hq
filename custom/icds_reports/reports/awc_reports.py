@@ -884,7 +884,7 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
         return dict(
             nutrition_status=row_data.current_month_nutrition_status,
             recorded_weight=row_data.recorded_weight or 0,
-            recorder_height=row_data.recorded_height or 0,
+            recorded_height=row_data.recorded_height or 0,
             stunning=row_data.current_month_stunting,
             wasting=row_data.current_month_wasting,
             pse_days_attended=row_data.pse_days_attended

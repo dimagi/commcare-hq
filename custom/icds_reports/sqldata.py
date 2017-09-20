@@ -1697,6 +1697,15 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return group_by
 
     @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if key == 'domain':
+                continue
+            filters.append(EQ(key, key))
+        return filters
+
+    @property
     def order_by(self):
         return [OrderBy('person_name')]
 
@@ -1755,13 +1764,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Weight-for-Height Status',
-                SimpleColumn('current_month_stunting'),
-                slug="current_month_stunting"
+                SimpleColumn('current_month_wasting'),
+                slug="current_month_wasting"
             ),
             DatabaseColumn(
                 'Height-for-Age status',
-                SimpleColumn('current_month_wasting'),
-                slug="current_month_wasting"
+                SimpleColumn('current_month_stunting'),
+                slug="current_month_stunting"
             ),
             DatabaseColumn(
                 'PSE Attendance',

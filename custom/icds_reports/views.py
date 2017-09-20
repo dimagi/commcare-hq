@@ -575,6 +575,10 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
+                    if location_key == 'awc_id':
+                        beneficiary_config.update({
+                            location_key: loc.location_id
+                        })
             except SQLLocation.DoesNotExist:
                 pass
 
