@@ -299,13 +299,21 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         lab_serial_number = test_case_properties.get('lab_serial_number')
         test_result_grade = test_case_properties.get('result_grade')
         bacilli_count = test_case_properties.get('max_bacilli_count')
+        try:
+            # Since 9 is the max value supported by Nikshay, notify 9 in case 9+
+            if bacilli_count and int(bacilli_count) > 9:
+                bacilli_count = '9'
+        except ValueError:
+            pass
         result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
         if not (lab_serial_number and result_grade):
             raise NikshayRequiredValueMissing("Mandatory value missing in one of the following "
-                                              "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
+                                              "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}, "
+                                              "Max Bacilli Count: {max_bacilli_count}"
                                               .format(lab_serial_number=lab_serial_number,
-                                                      result_grade=test_result_grade))
+                                                      result_grade=test_result_grade,
+                                                      max_bacilli_count=bacilli_count))
 
         return interval_id, lab_serial_number, result_grade, dmc_code
 

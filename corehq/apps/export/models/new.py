@@ -856,14 +856,17 @@ class ExportInstance(BlobMixin, Document):
         """
         insert_fn = cls._get_insert_fn(table, top)
 
+        def consider(column):
+            return not isinstance(column, UserDefinedExportColumn)
+
         from corehq.apps.export.system_properties import get_case_name_column
         case_id_columns = {
             _path_nodes_to_string(column.item.path[:-1]): column
-            for column in table.columns if column.item.path[-1].name == '@case_id'
+            for column in table.columns if consider(column) and column.item.path[-1].name == '@case_id'
         }
         case_name_columns = {
             _path_nodes_to_string(column.item.path[:-2]): column
-            for column in table.columns if column.item.path[-1].name == 'case_name'
+            for column in table.columns if consider(column) and column.item.path[-1].name == 'case_name'
         }
         for path, column in case_id_columns.items():
             if path not in case_name_columns:

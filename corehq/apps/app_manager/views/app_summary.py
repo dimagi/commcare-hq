@@ -384,7 +384,8 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description'))]
+        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description')),
+                   (_('Case Types'), ('type', 'relationships', 'opened_by', 'closed_by'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
@@ -393,6 +394,10 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         data = list((
             _('All Case Properties'),
             self.get_case_property_rows(case_type)
+        ) for case_type in case_metadata.case_types)
+        data += list((
+            _('Case Types'),
+            self.get_case_type_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
         data += list((
             case_type.name,
@@ -413,6 +418,36 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def get_case_property_rows(self, case_type):
         return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
+
+    def get_case_type_rows(self, case_type, language):
+        form_names = {}
+        form_case_types = {}
+        for m in self.app.modules:
+            for f in m.forms:
+                form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
+                form_case_types[f.unique_id] = m.case_type
+
+        case_types = [case_type.name] + case_type.relationships.values()
+        opened_by = {}
+        closed_by = {}
+        for t in case_types:
+            opened_by[t] = [fid for fid in case_type.opened_by.keys() if t == form_case_types[fid]]
+            closed_by[t] = [fid for fid in case_type.closed_by.keys() if t == form_case_types[fid]]
+
+        rows = []
+        relationships = case_type.relationships
+        relationships.update({'': case_type.name})
+        for relationship, type in relationships.iteritems():
+            if relationship and not opened_by[type] and not closed_by[type]:
+                rows.append((case_type.name, "[{}] {}".format(relationship, type)))
+            for i in range(max(len(opened_by[type]), len(closed_by[type]))):
+                row = [case_type.name]
+                row.append("[{}] {}".format(relationship, type) if relationship else '')
+                row.append(form_names[opened_by[type][i]] if i < len(opened_by[type]) else '')
+                row.append(form_names[closed_by[type][i]] if i < len(closed_by[type]) else '')
+                rows.append(tuple(row))
+
+        return rows
 
     def get_case_questions_rows(self, case_type, language):
         rows = []
