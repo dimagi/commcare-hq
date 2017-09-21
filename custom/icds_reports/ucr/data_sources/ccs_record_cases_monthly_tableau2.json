@@ -2246,7 +2246,7 @@
                   },
                   "property_value": [
                     "",
-                    "None"
+                    null
                   ]
                 },
                 {
@@ -2320,7 +2320,7 @@
                 },
                 "property_value": [
                   "",
-                  "None"
+                  null
                 ]
               }
             },
