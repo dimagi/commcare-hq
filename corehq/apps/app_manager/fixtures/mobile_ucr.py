@@ -248,7 +248,8 @@ class ReportFixturesProvider(FixtureProvider):
 
         report_elem = E.fixture(
             id=report_fixture_id, user_id=restore_user.user_id,
-            report_id=report_config.report_id, last_sync=_utcnow().isoformat()
+            report_id=report_config.report_id, last_sync=_utcnow().isoformat(),
+            indexed='true'
         )
         report_elem.append(rows_elem)
         return [filters_elem, report_elem]
