@@ -12,6 +12,12 @@ CTD_LOCATION_ID = "fa7472fe0c9751e5d14595c1a092cd84"
 
 
 class Command(BaseCommand):
+    help = """
+    expects a csv file path with has nikshay code under column id
+    and the corresponding tu id under column tu_id
+    It then looks for locations using nikshay code and then
+    compares the tu_id in the passed sheet with enikshay locations nikshay_tu_id
+    """
     def add_arguments(self, parser):
         parser.add_argument('file_path')
 
