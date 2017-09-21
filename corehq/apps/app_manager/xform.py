@@ -951,7 +951,6 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
-        import re
         for cnode in control_nodes:
             node = cnode.node
             path = cnode.path
@@ -1004,8 +1003,6 @@ class XForm(WrappedNode):
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
         for path, data_node in leaf_data_nodes.iteritems():
-            if re.search(r'fp_reporting.reports', path):
-               import pdb; pdb.set_trace()
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:
