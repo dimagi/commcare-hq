@@ -63,7 +63,6 @@ class _UserCaseHelper(object):
 
     def create_user_case(self, case_type, commcare_user, fields):
         fields['hq_user_id'] = commcare_user._id
-        fields.pop('case_type', None)
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
@@ -77,7 +76,6 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        fields.pop('case_type', None)
         caseblock = CaseBlock(
             create=False,
             case_id=case.case_id,
@@ -174,6 +172,7 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or '',
         'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
     })
+    fields.pop('case_type', None)
 
     return fields
 
