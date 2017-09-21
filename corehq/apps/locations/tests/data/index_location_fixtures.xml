@@ -6,6 +6,7 @@
       <index>@id</index>
       <index>@state_id</index>
       <index>@type</index>
+      <index>data_is_test</index>
       <index>name</index>
     </indices>
   </schema>
@@ -19,6 +20,7 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -32,6 +34,7 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -45,6 +48,7 @@
         <longitude/>
         <location_type>state</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -58,6 +62,7 @@
         <longitude/>
         <location_type>county</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -71,6 +76,7 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -84,6 +90,7 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>
@@ -97,6 +104,7 @@
         <longitude/>
         <location_type>county</location_type>
         <supply_point_id/>
+        <data_is_test>no</data_is_test>
         <location_data>
           <is_test>no</is_test>
           <favorite_color>blue</favorite_color>

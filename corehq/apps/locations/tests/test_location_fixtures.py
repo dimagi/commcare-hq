@@ -285,7 +285,7 @@ class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocations
         cls.user = create_restore_user(cls.domain, 'user', '123')
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
         cls.loc_fields.fields = [
-            CustomDataField(slug='is_test'),
+            CustomDataField(slug='is_test', index_in_fixture=True),
             CustomDataField(slug='favorite_color'),
         ]
         cls.loc_fields.save()
