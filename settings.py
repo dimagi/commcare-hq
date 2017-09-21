@@ -721,7 +721,8 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
-    'GTM_ID': ''
+    'GTM_ID': '',
+    'FACEBOOK_PIXEL_ID': ''
 }
 
 ANALYTICS_CONFIG = {
