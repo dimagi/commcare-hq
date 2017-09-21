@@ -50,7 +50,10 @@ class Command(BaseEnikshayCaseMigration):
             elif 'user' in form_data:
                 user_location_type = form_data['user']['user_location_type']
             else:
-                print('user %s doesnt have user_location_type: form %s' % (user_id, form_data['meta']['instanceID']))
+                print(
+                    'user %s doesnt have user_location_type: form %s'
+                    % (user_id, form_data['meta']['instanceID'])
+                )
                 return {}
 
         if user_location_type in ['cdst', 'dmc']:
