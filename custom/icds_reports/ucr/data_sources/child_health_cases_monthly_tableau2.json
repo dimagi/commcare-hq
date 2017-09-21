@@ -2422,7 +2422,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 3"
+            "statement": "iteration - 1"
           }
         }
       },
@@ -2444,7 +2444,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 3"
+            "statement": "iteration - 1"
           }
         }
       },
