@@ -732,11 +732,9 @@ class RequireJSMainNode(template.Node):
         return "<RequireJSMain Node: %r>" % (self.value,)
 
     def render(self, context):
-        if self.name in context:
-            raise TemplateSyntaxError(
-                "multiple '%s' tags not allowed (%s)" % (self.name, self.value))
-        # set name in block parent context
-        context.dicts[-2][self.name] = self.value
+        if self.name not in context:
+            # set name in block parent context
+            context.dicts[-2][self.name] = self.value
         return ''
 
 
