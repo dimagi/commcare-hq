@@ -67,7 +67,8 @@ def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
         for person_property, value_source in openmrs_config.case_config.person_properties.items()
         if value_source.get_value(info)
     }
-    set_person_properties(requests, person_uuid, properties)
+    if properties:
+        set_person_properties(requests, person_uuid, properties)
 
     # update attributes
 
