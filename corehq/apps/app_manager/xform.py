@@ -951,19 +951,21 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
+        import re
         for cnode in control_nodes:
             node = cnode.node
             path = cnode.path
             excluded_paths.add(path)
+
+            repeat = cnode.repeat
+            if repeat is not None:
+                repeat_contexts.add(repeat)
+
             if not cnode.is_leaf and not include_groups:
                 continue
 
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
-
-            repeat = cnode.repeat
-            if repeat is not None:
-                repeat_contexts.add(repeat)
 
             question = {
                 "label": self.get_label_text(node, langs),
@@ -1002,6 +1004,8 @@ class XForm(WrappedNode):
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
         for path, data_node in leaf_data_nodes.iteritems():
+            if re.search(r'fp_reporting.reports', path):
+               import pdb; pdb.set_trace()
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:
