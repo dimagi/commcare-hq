@@ -1198,6 +1198,7 @@
         }
       },
       {
+        "comment": "NOTE: This is not correct. To fix we must get the task cases",
         "display_name": null,
         "transform": {},
         "datatype": "date",
