@@ -1897,7 +1897,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1913,7 +1913,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1929,7 +1929,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1945,7 +1945,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1961,7 +1961,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
@@ -1977,7 +1977,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": null,
-                "datatype": null,
+                "datatype": "string",
                 "expression": {
                     "datatype": null,
                     "type": "property_name",
