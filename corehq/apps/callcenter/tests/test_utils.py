@@ -236,6 +236,20 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
         self._check_update_matches(case, {'completed_training': 'yes'})
 
+    def test_sync_usercase_overwrite_hq_props(self):
+        """
+        Test that setting custom user data for owner_id and case_type don't change the case
+        """
+        self.user.user_data = {
+            'owner_id': 'someone else',
+            'case_type': 'bob',
+        }
+        self.user.save()
+        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertEqual(case.owner_id, self.user.get_id)
+        self.assertEqual(case.type, USERCASE_TYPE)
+        self.assertEqual(1, len(case.xform_ids))
+
     def _check_update_matches(self, case, expected_update):
         last_form = FormAccessors(TEST_DOMAIN).get_form(case.xform_ids[-1])
         case_update = get_case_updates(last_form)[0]

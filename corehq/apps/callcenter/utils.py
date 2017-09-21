@@ -61,14 +61,14 @@ class _UserCaseHelper(object):
         for transaction in transactions:
             transaction.form.archive()
 
-    def create_user_case(self, case_type, commcare_user, fields):
+    def create_user_case(self, commcare_user, fields):
         fields['hq_user_id'] = commcare_user._id
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
-            owner_id=self.owner_id,
+            owner_id=fields.pop('owner_id'),
             user_id=CALLCENTER_USER,
-            case_type=case_type,
+            case_type=fields.pop('case_type'),
             case_name=fields.pop('name', None),
             update=fields
         )
@@ -131,7 +131,7 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
         domain = commcare_user.project
-        fields = _get_user_case_fields(commcare_user)
+        fields = _get_user_case_fields(commcare_user, case_type, owner_id)
         case = case or CaseAccessors(domain.name).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         user_case_helper = _UserCaseHelper(domain, owner_id)
@@ -140,17 +140,17 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
             return case and case.closed and not user_case_should_be_closed
 
         if not case:
-            user_case_helper.create_user_case(case_type, commcare_user, fields)
+            user_case_helper.create_user_case(commcare_user, fields)
         else:
             if case_should_be_reopened(case, close):
                 user_case_helper.re_open_case(case)
-            changed_fields = _get_changed_fields(case, case_type, owner_id, fields)
+            changed_fields = _get_changed_fields(case, fields)
             close_case = close and not case.closed
             if changed_fields or close_case:
                 user_case_helper.update_user_case(case, changed_fields, close_case)
 
 
-def _get_user_case_fields(commcare_user):
+def _get_user_case_fields(commcare_user, case_type, owner_id):
 
     def valid_element_name(name):
         try:
@@ -171,27 +171,28 @@ def _get_user_case_fields(commcare_user):
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or '',
         'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
+        'owner_id': owner_id,
+        'case_type': case_type,
     })
-    fields.pop('case_type', None)
 
     return fields
 
 
-def _get_changed_fields(case, case_type, owner_id, fields):
+def _get_changed_fields(case, fields):
+    hq_fields = {
+        'name': 'name',
+        'case_type': 'type',
+        'owner_id': 'owner_id'
+    }
     changed_fields = {}
-    if case.name != fields['name']:
-        changed_fields['name'] = fields['name']
-
-    if case.type != case_type:
-        changed_fields['case_type'] = case_type
-
-    if case.owner_id != owner_id:
-        changed_fields['owner_id'] = owner_id
-
     props = case.dynamic_case_properties()
     for field, value in fields.items():
-        if field != 'name' and props.get(field) != value:
+        if field not in hq_fields and props.get(field) != value:
             changed_fields[field] = value
+
+    for field, attrib in hq_fields.items():
+        if getattr(case, attrib) != fields[field]:
+            changed_fields[field] = fields[field]
 
     return changed_fields
 
