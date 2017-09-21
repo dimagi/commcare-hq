@@ -62,7 +62,6 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        fields['hq_user_id'] = commcare_user._id
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
@@ -173,6 +172,7 @@ def _get_user_case_fields(commcare_user, case_type, owner_id):
         'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
         'owner_id': owner_id,
         'case_type': case_type,
+        'hq_user_id': commcare_user.get_id
     })
 
     return fields
