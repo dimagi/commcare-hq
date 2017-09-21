@@ -303,9 +303,9 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         if not (lab_serial_number and result_grade):
             raise NikshayRequiredValueMissing("Mandatory value missing in one of the following "
-                                       "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
-                                       .format(lab_serial_number=lab_serial_number,
-                                               result_grade=test_result_grade))
+                                              "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
+                                              .format(lab_serial_number=lab_serial_number,
+                                                      result_grade=test_result_grade))
 
         return interval_id, lab_serial_number, result_grade, dmc_code
 
