@@ -30,7 +30,7 @@ class TagTest(SimpleTestCase):
         return re.sub(r'\s*\n+\s*', '\n', string).strip()
 
     @staticmethod
-    def _render_template(template_string, context=None):
+    def _render_template(template_string, context):
         return Template(template_string).render(Context(context or {}))
 
     @classmethod
@@ -89,7 +89,7 @@ class TagTest(SimpleTestCase):
             self.render("""
                 {% load hq_shared_tags %}
                 {% requirejs_main %}
-                {% if requirejs_main %}unexpected truthy{% endif %}
+                {% if requirejs_main %}unexpected truth{% endif %}
                 {{requirejs_main}}
             """).strip(),
             "None",
