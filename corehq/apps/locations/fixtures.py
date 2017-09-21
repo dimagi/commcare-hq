@@ -120,7 +120,7 @@ class FlatLocationSerializer(object):
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
         attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
-        attrs_to_index.extend(['@id', '@type'])
+        attrs_to_index.extend(['@id', '@type', 'name'])
 
         return [get_index_schema_node(fixture_id, attrs_to_index),
                 self._get_fixture_node(fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields)]

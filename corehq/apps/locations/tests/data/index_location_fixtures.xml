@@ -6,6 +6,7 @@
       <index>@id</index>
       <index>@state_id</index>
       <index>@type</index>
+      <index>name</index>
     </indices>
   </schema>
   <fixture id="locations" user_id="{user_id}" indexed="true">
