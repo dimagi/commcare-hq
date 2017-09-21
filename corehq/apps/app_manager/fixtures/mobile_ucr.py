@@ -104,9 +104,15 @@ class ReportFixturesProvider(FixtureProvider):
 
         fixtures = []
 
-        if app.mobile_ucr_restore_version in [MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2]:
-            fixtures.append(self._v1_fixture(restore_user, report_configs))
-        elif app.mobile_ucr_restore_version in [MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2]:
+        needed_versions = {
+            app.mobile_ucr_restore_version
+            for app in apps
+        }
+
+        if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
+            fixtures.extend(self._v1_fixture(restore_user, report_configs))
+
+        if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
             fixtures.extend(self._v2_fixtures(restore_user, report_configs))
 
         return fixtures
