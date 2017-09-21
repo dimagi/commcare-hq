@@ -1,4 +1,4 @@
-from collections import defaultdict, Counter
+from collections import Counter
 
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
@@ -55,23 +55,22 @@ def duplicate_ids_report(request, domain, case_type):
 
     accessor = CaseAccessors(domain)
     case_ids = accessor.get_case_ids_in_domain(case_type)
-    all_cases = list(accessor.iter_cases(case_ids))
-    counts = Counter(case.get_case_property(id_property) for case in all_cases)
-    bad_cases = sorted([
+    all_cases = [
         {
             'case_id': case.case_id,
             'readable_id': case.get_case_property(id_property),
             'opened_on': case.opened_on,
         }
-        for case in all_cases
-        if counts[case.get_case_property(id_property)] > 1
-    ], key=lambda case: case['opened_on'], reverse=True)
+        for case in accessor.iter_cases(case_ids)
+    ]
+    counts = Counter(case['readable_id'] for case in all_cases)
+    bad_cases = [case for case in all_cases if counts[case['readable_id']] > 1]
 
     context = {
         'case_type': case_type,
         'num_bad_cases': len(bad_cases),
         'num_total_cases': len(all_cases),
         'num_good_cases': len(all_cases) - len(bad_cases),
-        'bad_cases': bad_cases,
+        'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
     }
     return render(request, 'enikshay/duplicate_ids_report.html', context)
