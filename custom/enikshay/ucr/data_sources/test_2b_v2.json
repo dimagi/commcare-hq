@@ -16,8 +16,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "test_2b",
-        "display_name": "Test (2b)",
+        "table_id": "test_2b_v2",
+        "display_name": "Test (2b) v2",
         "configured_filter": {
             "operator": "eq",
             "expression": {
@@ -1869,6 +1869,126 @@
                 "is_nullable": true,
                 "type": "expression",
                 "column_id": "treatment_initiation_details"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "case_version"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_case_version"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "rft_dstb_followup"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "rft_dstb_followup"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "rft_general"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "rft_general"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "result_grade"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "result_grade"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "max_bacilli_count"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "max_bacilli_count"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "followup_nikshay_registered"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "followup_nikshay_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": null,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "followup_nikshay_error"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "followup_nikshay_error"
             }
         ],
         "named_expressions": {
