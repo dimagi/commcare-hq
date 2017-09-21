@@ -29,7 +29,9 @@
                     <td>{{ case.readable_id }}</td>
                     <td>{{ case.case_id }}</td>
                     <td>{{ case.opened_on }}</td>
-                    <td>{% url 'case_details' request.domain case.case_id %}</td>
+                    <td>
+                        <a href="{% url 'case_details' request.domain case.case_id %}">Case Details</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
