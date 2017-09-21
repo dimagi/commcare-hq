@@ -1545,6 +1545,8 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     class Meta:
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
+        # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)
+        # since a single form can make multiple updates to a ledger
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
