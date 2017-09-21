@@ -1,10 +1,17 @@
+from collections import defaultdict, Counter
+
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
+from django.shortcuts import render
 from django.views.generic.base import View
 
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.case_utils import CASE_TYPE_VOUCHER
+from custom.enikshay.const import VOUCHER_ID
 from custom.enikshay.reports.utils import StubReport
 
 
@@ -39,3 +46,27 @@ class LocationsView(View):
                 'total': location_choice_provider.query_count(query_context.query, user)
             }
         )
+
+
+@domain_admin_required
+def duplicate_ids_report(request, domain):
+    accessor = CaseAccessors(domain)
+    voucher_ids = accessor.get_case_ids_in_domain(CASE_TYPE_VOUCHER)
+    all_vouchers = list(accessor.iter_cases(voucher_ids))
+    counts = Counter(voucher.get_case_property(VOUCHER_ID) for voucher in all_vouchers)
+    bad_vouchers = [
+        {
+            'case_id': voucher.case_id,
+            'readable_id': voucher.get_case_property(VOUCHER_ID)
+        }
+        for voucher in all_vouchers
+        if counts[voucher.get_case_property(VOUCHER_ID)] > 1
+    ]
+
+    context = {
+        'num_bad_vouchers': len(bad_vouchers),
+        'num_total_vouchers': len(all_vouchers),
+        'num_good_vouchers': len(all_vouchers) - len(bad_vouchers),
+        'bad_vouchers': bad_vouchers,
+    }
+    return render(request, 'enikshay/duplicate_ids_report.html', context)

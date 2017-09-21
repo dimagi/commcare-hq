@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 
 from custom.enikshay.views import EpisodeTaskDebugView, EpisodeTaskStatusView
-from custom.enikshay.reports.views import LocationsView
+from custom.enikshay.reports.views import LocationsView, duplicate_ids_report
 
 urlpatterns = [
     url(r'^99dots/', include("custom.enikshay.integrations.ninetyninedots.urls")),
@@ -11,5 +11,6 @@ urlpatterns = [
     url(r'^episode_task_debug/(?P<episode_id>[\w-]+)/$', EpisodeTaskDebugView.as_view(),
         name=EpisodeTaskDebugView.urlname),
     url(r'^episode_task_status/$', EpisodeTaskStatusView.as_view(),
-        name=EpisodeTaskStatusView.urlname)
+        name=EpisodeTaskStatusView.urlname),
+    url(r'^duplicate_ids_report/$', duplicate_ids_report, name='duplicate_ids_report'),
 ]

@@ -1,0 +1,37 @@
+{% load hq_shared_tags %}
+
+<html>
+    <head>
+        <link type="text/css" rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+        <title>eNikshay Duplicate IDs report</title>
+    </head>
+    <body>
+
+        <h1>eNikshay Duplicate IDs report</h1>
+
+        <p>{{ num_total_vouchers }} total vouchers</p>
+        <p>{{ num_bad_vouchers }} vouchers with duplicate ids</p>
+        <p>{{ num_good_vouchers }} vouchers with unique ids</p>
+
+        <table class="table">
+            <thead>
+                <caption>Vouchers with duplicate ids</caption>
+                <tr>
+                    <th>Readable Voucher ID</th>
+                    <th>UUID</th>
+                    <th>Link to case</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for voucher in bad_vouchers %}
+                <tr>
+                    <td>{{ voucher.readable_id }}</td>
+                    <td>{{ voucher.case_id }}</td>
+                    <td>{% url 'case_details' request.domain voucher.case_id %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </body>
+</html>
