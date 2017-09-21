@@ -283,6 +283,19 @@ class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocations
     def setUpClass(cls):
         super(TestIndexedLocationsFixture, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
+        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
+        cls.loc_fields.fields = [
+            CustomDataField(slug='is_test'),
+            CustomDataField(slug='favorite_color'),
+        ]
+        cls.loc_fields.save()
+        cls.field_slugs = {f.slug for f in cls.loc_fields.fields}
+        for location in cls.locations.values():
+            location.metadata = {
+                'is_test': 'no',
+                'favorite_color': 'blue',
+            }
+            location.save()
 
     @classmethod
     def tearDownClass(cls):
