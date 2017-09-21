@@ -4639,7 +4639,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     linked_whitelist = StringListProperty()
 
     mobile_ucr_restore_version = StringProperty(
-        default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSION_1, required=False
+        default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
     )
 
     @classmethod

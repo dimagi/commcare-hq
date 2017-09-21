@@ -1,9 +1,10 @@
+from django.utils.functional import cached_property
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager import models
+from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
-    SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
-    ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
+    SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
@@ -30,8 +31,20 @@ class ReportModuleSuiteHelper(object):
     def __init__(self, report_module):
         assert isinstance(report_module, ReportModule)
         self.report_module = report_module
-        self.domain = self.report_module.get_app().domain
+        self.domain = self.app.domain
         self._loaded = None
+
+    @cached_property
+    def app(self):
+        return self.report_module.get_app()
+
+    @cached_property
+    def mobile_ucr_restore_version(self):
+        return self.app.mobile_ucr_restore_version
+
+    @property
+    def new_mobile_ucr_restore(self):
+        return self.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2)
 
     def get_details(self):
         _load_reports(self.report_module)
@@ -46,10 +59,15 @@ class ReportModuleSuiteHelper(object):
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config, self.domain)
+            yield _get_config_entry(config, self.domain, self.new_mobile_ucr_restore)
 
 
-def _get_config_entry(config, domain):
+def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
+    if new_mobile_ucr_restore:
+        datum_string = "instance('commcare-reports:{}')"
+    else:
+        datum_string = "instance('reports')/reports/report[@id='{}']"
+
     return Entry(
         command=Command(
             id='reports.{}'.format(config.uuid),
@@ -61,7 +79,7 @@ def _get_config_entry(config, domain):
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, new_mobile_ucr_restore),
                 value='./@value',
             )
             for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
@@ -70,7 +88,7 @@ def _get_config_entry(config, domain):
                 detail_confirm=_get_summary_detail_id(config),
                 detail_select=_get_select_detail_id(config),
                 id='report_id_{}'.format(config.uuid),
-                nodeset="instance('reports')/reports/report[@id='{}']".format(config.uuid),
+                nodeset=datum_string.format(config.uuid),
                 value='./@id',
                 autoselect="true"
             ),
@@ -110,6 +128,7 @@ def _get_select_details(config):
 
 
 def get_data_path(config, domain):
+    # TODO used in graphs. need to fix this
     return (
         "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
         .format(
@@ -119,7 +138,7 @@ def get_data_path(config, domain):
     )
 
 
-def _get_summary_details(config, domain, module):
+def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.models import GraphConfiguration, GraphSeries
@@ -180,6 +199,19 @@ def _get_summary_details(config, domain, module):
                                                  locale_annotation=_locale_annotation)
                 )
 
+    def _get_last_sync(report_config):
+        if new_mobile_ucr_restore:
+            last_sync_string = "format-date(date(instance('commcare-reports:{}')/@last_sync), '%Y-%m-%d %H:%M')"
+            last_sync_string = last_sync_string.format(report_config.uuid)
+        else:
+            last_sync_string = "format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+
+        return Text(
+            xpath=Xpath(
+                function=last_sync_string
+            )
+        )
+
     def _get_description_text(report_config):
         if report_config.use_xpath_description:
             return Text(
@@ -225,13 +257,7 @@ def _get_summary_details(config, domain, module):
                         locale=Locale(id=id_strings.report_last_sync())
                     )
                 ),
-                template=Template(
-                    text=Text(
-                        xpath=Xpath(
-                            function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                        )
-                    )
-                )
+                template=Template(text=_get_last_sync(config))
             ),
         ] + list(_get_graph_fields()),
     )
@@ -333,10 +359,12 @@ def _get_data_detail(config, domain):
 class MobileSelectFilterHelpers(object):
 
     @staticmethod
-    def get_options_nodeset(config, filter_slug):
-        return (
-            "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
-            .format(report_id=config.uuid, filter_slug=filter_slug))
+    def get_options_nodeset(config, filter_slug, new_mobile_ucr_restore=False):
+        if new_mobile_ucr_restore:
+            nodeset = "instance('filters:{report_id}')/filter[@field='{filter_slug}']/option"
+        else:
+            nodeset = "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
+        return nodeset.format(report_id=config.uuid, filter_slug=filter_slug)
 
     @staticmethod
     def get_filters(config, domain):
