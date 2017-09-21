@@ -4,10 +4,8 @@ Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
 import uuid
-from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime
-import bz2
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from couchdbkit import ResourceNotFound
@@ -28,6 +26,7 @@ from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeater_helpers import Requests
+from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
@@ -143,7 +142,7 @@ def import_patients_to_domain(domain_name, force=False):
             continue  # Import on the first of the month
         # TODO: ^^^ Make those configurable
 
-        password = bz2.decompress(b64decode(importer.password))
+        password = b64_aes_decrypt(importer.password)
         requests = Requests(importer.server_url, importer.username, password)
         if importer.location_type_name:
             try:

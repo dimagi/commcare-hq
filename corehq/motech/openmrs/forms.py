@@ -1,5 +1,3 @@
-from base64 import b64encode
-import bz2
 import logging
 from django import forms
 from django.utils.translation import ugettext as _
@@ -8,6 +6,7 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
+from corehq.motech.utils import b64_aes_encrypt
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -91,10 +90,8 @@ class OpenmrsImporterForm(forms.Form):
             importer.server_url = self.cleaned_data['server_url']
             importer.username = self.cleaned_data['username']
             if self.cleaned_data['password']:
-                # Don't save it if it hasn't been changed. Use simple symmetric encryption. We don't need it to be
-                # strong, considering we'd have to store the algorithm and the key together anyway; it just
-                # shouldn't be plaintext.
-                importer.password = b64encode(bz2.compress(self.cleaned_data['password']))
+                # Don't save it if it hasn't been changed.
+                importer.password = b64_aes_encrypt(self.cleaned_data['password'])
             importer.import_frequency = self.cleaned_data['import_frequency']
             importer.log_level = self.cleaned_data['log_level']
 
