@@ -183,10 +183,10 @@ def _get_changed_fields(case, case_type, owner_id, fields):
         changed_fields['name'] = fields['name']
 
     if case.type != case_type:
-        fields['case_type'] = case_type
+        changed_fields['case_type'] = case_type
 
     if case.owner_id != owner_id:
-        fields['owner_id'] = owner_id
+        changed_fields['owner_id'] = owner_id
 
     props = case.dynamic_case_properties()
     for field, value in fields.items():
