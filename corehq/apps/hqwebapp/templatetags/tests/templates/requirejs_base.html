@@ -1,12 +1,5 @@
 {% load hq_shared_tags %}
-{% if requirejs_main %}
-unexpected {{ requirejs_main }} before tag
-{% endif %}
-
+{% if requirejs_main %}{{ requirejs_main }} before tag{% endif %}
 {% requirejs_main "requirejs/base" %}
-
-{% if requirejs_main %}
-expected {{ requirejs_main }} after tag
-{% endif %}
-
+{% if requirejs_main %}{{ requirejs_main }} after tag{% endif %}
 {% block content %}{% endblock %}
