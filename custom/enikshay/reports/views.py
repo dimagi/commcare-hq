@@ -10,8 +10,8 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import CASE_TYPE_VOUCHER
-from custom.enikshay.const import VOUCHER_ID
+from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
+from custom.enikshay.const import VOUCHER_ID, ENIKSHAY_ID
 from custom.enikshay.reports.utils import StubReport
 
 
@@ -49,24 +49,28 @@ class LocationsView(View):
 
 
 @domain_admin_required
-def duplicate_ids_report(request, domain):
+def duplicate_ids_report(request, domain, case_type):
+    case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
+    id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
+
     accessor = CaseAccessors(domain)
-    voucher_ids = accessor.get_case_ids_in_domain(CASE_TYPE_VOUCHER)
-    all_vouchers = list(accessor.iter_cases(voucher_ids))
-    counts = Counter(voucher.get_case_property(VOUCHER_ID) for voucher in all_vouchers)
-    bad_vouchers = [
+    case_ids = accessor.get_case_ids_in_domain(case_type)
+    all_cases = list(accessor.iter_cases(case_ids))
+    counts = Counter(case.get_case_property(id_property) for case in all_cases)
+    bad_cases = [
         {
-            'case_id': voucher.case_id,
-            'readable_id': voucher.get_case_property(VOUCHER_ID)
+            'case_id': case.case_id,
+            'readable_id': case.get_case_property(id_property)
         }
-        for voucher in all_vouchers
-        if counts[voucher.get_case_property(VOUCHER_ID)] > 1
+        for case in all_cases
+        if counts[case.get_case_property(id_property)] > 1
     ]
 
     context = {
-        'num_bad_vouchers': len(bad_vouchers),
-        'num_total_vouchers': len(all_vouchers),
-        'num_good_vouchers': len(all_vouchers) - len(bad_vouchers),
-        'bad_vouchers': bad_vouchers,
+        'case_type': case_type,
+        'num_bad_cases': len(bad_cases),
+        'num_total_cases': len(all_cases),
+        'num_good_cases': len(all_cases) - len(bad_cases),
+        'bad_cases': bad_cases,
     }
     return render(request, 'enikshay/duplicate_ids_report.html', context)
