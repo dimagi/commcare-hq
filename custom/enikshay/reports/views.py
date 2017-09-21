@@ -57,14 +57,15 @@ def duplicate_ids_report(request, domain, case_type):
     case_ids = accessor.get_case_ids_in_domain(case_type)
     all_cases = list(accessor.iter_cases(case_ids))
     counts = Counter(case.get_case_property(id_property) for case in all_cases)
-    bad_cases = [
+    bad_cases = sorted([
         {
             'case_id': case.case_id,
-            'readable_id': case.get_case_property(id_property)
+            'readable_id': case.get_case_property(id_property),
+            'opened_on': case.opened_on,
         }
         for case in all_cases
         if counts[case.get_case_property(id_property)] > 1
-    ]
+    ], key=lambda case: case['opened_on'], reverse=True)
 
     context = {
         'case_type': case_type,

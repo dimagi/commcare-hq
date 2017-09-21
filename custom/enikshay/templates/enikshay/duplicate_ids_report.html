@@ -19,6 +19,7 @@
                 <tr>
                     <th>Readable Case ID</th>
                     <th>UUID</th>
+                    <th>Case Created</th>
                     <th>Link to {{ case_type }} case</th>
                 </tr>
             </thead>
@@ -27,6 +28,7 @@
                 <tr>
                     <td>{{ case.readable_id }}</td>
                     <td>{{ case.case_id }}</td>
+                    <td>{{ case.opened_on }}</td>
                     <td>{% url 'case_details' request.domain case.case_id %}</td>
                 </tr>
                 {% endfor %}
