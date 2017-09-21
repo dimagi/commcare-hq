@@ -80,7 +80,7 @@ class TagTest(SimpleTestCase):
                 {% requirejs_main "requirejs/main" %}
                 {% block content %}{{requirejs_main}}{% endblock %}
             """).strip(),
-            "expected requirejs/main after tag\n\n\nrequirejs/main",
+            "requirejs/main after tag\nrequirejs/main",
         )
 
     def test_requirejs_main_no_arg(self):
@@ -93,6 +93,22 @@ class TagTest(SimpleTestCase):
                 {{requirejs_main}}
             """).strip(),
             "None",
+        )
+
+    def test_requirejs_main_in_context(self):
+        self.assertEqual(
+            self.render(
+                """
+                {% extends "requirejs_base.html" %}
+                {% load hq_shared_tags %}
+                {% requirejs_main "requirejs/main" %}
+                {% block content %}{{requirejs_main}}{% endblock %}
+                """,
+                {"requirejs_main": "rjs/context"}
+            ).strip(),
+            "rjs/context before tag\n\n"
+            "rjs/context after tag\n"
+            "rjs/context",
         )
 
     def test_requirejs_main_multiple_tags(self):
