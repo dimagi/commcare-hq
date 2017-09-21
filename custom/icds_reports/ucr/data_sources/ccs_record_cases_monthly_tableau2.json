@@ -53,11 +53,7 @@
                     "type": "month_start_date",
                     "date_expression": {
                       "date_expression": {
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "modified_on"
-                        },
-                        "type": "root_doc"
+                        "type": "icds_datetime_now"
                       },
                       "type": "add_months",
                       "months_expression": {
@@ -121,11 +117,7 @@
                     "type": "month_start_date",
                     "date_expression": {
                       "date_expression": {
-                        "expression": {
-                          "type": "property_name",
-                          "property_name": "modified_on"
-                        },
-                        "type": "root_doc"
+                        "type": "icds_datetime_now"
                       },
                       "type": "add_months",
                       "months_expression": {
@@ -1790,11 +1782,7 @@
         "type": "month_start_date",
         "date_expression": {
           "date_expression": {
-            "expression": {
-              "type": "property_name",
-              "property_name": "modified_on"
-            },
-            "type": "root_doc"
+            "type": "icds_datetime_now"
           },
           "type": "add_months",
           "months_expression": {
@@ -1812,11 +1800,7 @@
         "type": "month_end_date",
         "date_expression": {
           "date_expression": {
-            "expression": {
-              "type": "property_name",
-              "property_name": "modified_on"
-            },
-            "type": "root_doc"
+            "type": "icds_datetime_now"
           },
           "type": "add_months",
           "months_expression": {
