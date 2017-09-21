@@ -38,6 +38,26 @@ EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 </fixture>
 """
 
+TEST_LOCATION_STRUCTURE = [
+    ('Massachusetts', [
+        ('Middlesex', [
+            ('Cambridge', []),
+            ('Somerville', []),
+        ]),
+        ('Suffolk', [
+            ('Boston', []),
+            ('Revere', []),
+        ])
+    ]),
+    ('New York', [
+        ('New York City', [
+            ('Manhattan', []),
+            ('Brooklyn', []),
+            ('Queens', []),
+        ]),
+    ]),
+]
+
 
 class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
@@ -69,25 +89,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
-    location_structure = [
-        ('Massachusetts', [
-            ('Middlesex', [
-                ('Cambridge', []),
-                ('Somerville', []),
-            ]),
-            ('Suffolk', [
-                ('Boston', []),
-                ('Revere', []),
-            ])
-        ]),
-        ('New York', [
-            ('New York City', [
-                ('Manhattan', []),
-                ('Brooklyn', []),
-                ('Queens', []),
-            ]),
-        ]),
-    ]
+    location_structure = TEST_LOCATION_STRUCTURE
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
@@ -269,6 +271,23 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    domain = "indexed_location_fixtures"
+    location_type_names = ['state', 'county', 'city']
+    location_structure = TEST_LOCATION_STRUCTURE
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestIndexedLocationsFixture, cls).setUpClass()
+        cls.user = create_restore_user(cls.domain, 'user', '123')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user._couch_user.delete()
+        super(TestIndexedLocationsFixture, cls).tearDownClass()
 
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
@@ -467,25 +486,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
-    location_structure = [
-        ('Massachusetts', [
-            ('Middlesex', [
-                ('Cambridge', []),
-                ('Somerville', []),
-            ]),
-            ('Suffolk', [
-                ('Boston', []),
-                ('Revere', []),
-            ])
-        ]),
-        ('New York', [
-            ('New York City', [
-                ('Manhattan', []),
-                ('Brooklyn', []),
-                ('Queens', []),
-            ]),
-        ]),
-    ]
+    location_structure = TEST_LOCATION_STRUCTURE
 
     def setUp(self):
         super(WebUserLocationFixturesTest, self).setUp()
