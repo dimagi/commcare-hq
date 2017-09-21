@@ -631,6 +631,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None, c
     props = {k: v for k, v in properties.iteritems() if v is not None}
     props['created_by_migration'] = migration_identifier
     props['migration_data_source'] = "excel_document"
+    props['migration_type'] = "pmdt_excel"
     kwargs = {
         "case_id": case_id,
         "walk_related": False,
