@@ -57,7 +57,7 @@
                                 popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="bottom in $ctrl.bottom_three">
-                            <span class="circle-red" ng-bind="5 - $index"></span>
+                            <span class="circle-red" ng-bind="$ctrl.bottom_three.length - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
                             <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>

@@ -109,7 +109,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
                 initHierarchy();
 
                 var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type);
+                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);

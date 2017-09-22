@@ -171,7 +171,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         ],
         "all_locations": top_locations,
         "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
+        "bottom_three": top_locations[-6:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
