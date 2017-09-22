@@ -392,7 +392,6 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
 
 
 class FormActions(DocumentSchema):
-
     open_case = SchemaProperty(OpenCaseAction)
     update_case = SchemaProperty(UpdateCaseAction)
     close_case = SchemaProperty(FormAction)

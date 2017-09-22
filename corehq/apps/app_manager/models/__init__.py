@@ -1,7 +1,7 @@
 from corehq.apps.app_manager.exceptions import *
 from corehq.apps.app_manager.const import *
 
-from .misc import (
+from .common import (
     # classes
     AdvancedAction,
     AdvancedForm,
