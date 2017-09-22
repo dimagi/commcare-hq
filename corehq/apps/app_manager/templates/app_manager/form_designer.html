@@ -53,14 +53,6 @@
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
     <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 
-    <script type="text/html" id="js-fd-manage-case">
-      <div class="btn-group pull-right">
-        <a class="btn btn-manage" href="{% url "view_form" domain app.id form.unique_id %}">
-          <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
-        </a>
-      </div>
-    </script>
-
     <script type="text/html" id="fd-hq-helptext-registration">
         <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>
         <p>

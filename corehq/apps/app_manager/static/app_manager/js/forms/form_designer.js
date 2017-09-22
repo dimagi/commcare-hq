@@ -115,30 +115,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
-        if (initial_page_data('form_uses_cases')) {
-            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                attempts = attempts || 0;
-                if ($(selector).length) {
-                    var $toggleParent = $(selector);
-                    $toggleParent.prepend(layout);
-                    callback();
-                } else if (attempts <= 30) {
-                    // give up appending element after waiting 30 seconds to load
-                    setTimeout(function () {
-                        _prependTemplateToSelector(selector, layout, attempts++, callback);
-                    }, 1000);
-                }
-            };
-            _prependTemplateToSelector(
-                '.fd-form-actions',
-                $('#js-fd-manage-case').html(),
-                0,
-                function () {
-                }
-            );
-        }
-
         var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
             editDetails = hqImport('app_manager/js/forms/edit_form_details');
         editDetails.initName(
