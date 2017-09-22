@@ -105,7 +105,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                     // initialize redis
                     WS4Redis({
                         uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
-                        receive_message: notifications.alertUserFormBuilder(notification_options.user_id),
+                        receive_message: notifications.alertUser(alertUser($("#formdesigner").vellum("get").alertUser));
                         heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
                     });
                 }

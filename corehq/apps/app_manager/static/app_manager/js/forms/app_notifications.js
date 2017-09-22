@@ -9,7 +9,10 @@ hqDefine('app_manager/js/forms/app_notifications', function () {
         return "";
     };
 
-    var alertUser = function(alertCallback) {
+    var alertUser = function(callback) {
+        if (!callback) {
+            callback = hqImport("hqwebapp/js/alert_user").alert_user;
+        }
         return function(userId) {
             return function(redisMessage) {
                 var message = getMessage(redisMessage, userId);
@@ -20,11 +23,7 @@ hqDefine('app_manager/js/forms/app_notifications', function () {
         };
     };
 
-    var alertUserHQ = alertUser(hqImport("hqwebapp/js/alert_user").alert_user);
-    var alertUserFormBuilder = alertUser($("#formdesigner").vellum("get").alertUser);
-
     return {
-        alertUser: alertUserHQ,
-        alertUserFormBuilder: alertUserFormBuilder,
+        alertUser: alertUser,
     };
 });
