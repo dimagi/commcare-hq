@@ -21,6 +21,7 @@ class Command(BaseEnikshayCaseMigration):
         if (
             test.get_case_property('datamigration_testing_facility_name2') == 'yes'
             or test.get_case_property('migration_created_case') == 'true'
+            or test.get_case_property('result_recorded') != 'yes'
             or test.get_case_property('testing_facility_id')
             or not is_person_public(domain, test)
         ):
