@@ -163,6 +163,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 },
                 axisLabelDistance: 20,
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {

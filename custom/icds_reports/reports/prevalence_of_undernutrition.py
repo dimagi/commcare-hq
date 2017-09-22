@@ -130,9 +130,9 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
-        data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['green'][miliseconds] = {'y': 1, 'all': 1}
+        data['orange'][miliseconds] = {'y': 1, 'all': 1}
+        data['red'][miliseconds] = {'y': 1, 'all': 1}
 
     best_worst = {}
     for row in chart_data:

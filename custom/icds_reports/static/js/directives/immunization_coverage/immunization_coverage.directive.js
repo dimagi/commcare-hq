@@ -161,6 +161,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                     return d3.format(",.2f")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;

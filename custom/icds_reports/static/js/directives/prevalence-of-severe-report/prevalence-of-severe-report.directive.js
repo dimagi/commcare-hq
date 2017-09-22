@@ -147,6 +147,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
