@@ -81,18 +81,52 @@
                 "datatype": "string",
                 "expression": {
                     "test": {
-                        "operator": "in",
-                        "type": "boolean_expression",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "treatment_initiation_date"
-                        },
-                        "comment": null,
-                        "property_value": [
-                            "",
-                            null
+                        "type": "and",
+                        "filters": [
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            },
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "archive_reason"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            },
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "treatment_outcome"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            }
                         ]
+
                     },
                     "expression_if_true": {
                         "constant": null,
@@ -574,36 +608,99 @@
                 "datatype": "string",
                 "expression": {
                     "test": {
-                        "operator": "in",
-                        "type": "boolean_expression",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "treatment_initiation_date"
-                        },
-                        "comment": null,
-                        "property_value": [
-                            "",
-                            null
+                        "type": "and",
+                        "filters": [
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            },
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "archive_reason"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            },
+                            {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "treatment_outcome"
+                                },
+                                "comment": null,
+                                "property_value": [
+                                    "",
+                                    null
+                                ]
+                            }
                         ]
+
                     },
                     "expression_if_true": {
                         "constant": null,
                         "type": "constant"
                     },
                     "type": "conditional",
-                    "expression_if_false": {
-                        "value_expression": {
-                            "datatype": "string",
-                            "type": "property_name",
-                            "property_name": "tu_name"
+                    "expression_if_false":
+                    {
+                        "type": "coalesce",
+                        "expression": {
+                            "value_expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "tu_name"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "datatype": null,
+                                "type": "named",
+                                "name": "person_id"
+                            }
                         },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "datatype": null,
-                            "type": "named",
-                            "name": "person_id"
+                        "default_expression": {
+                            "value_expression": {
+                                "type":"property_name",
+                                "property_name":"name"
+                            },
+                            "type":"related_doc",
+                            "related_doc_type":"Location",
+                            "doc_id_expression": {
+                                "type": "location_parent_id",
+                                "location_id_expression": {
+                                    "value_expression": {
+                                        "datatype": "string",
+                                        "type": "property_name",
+                                        "property_name": "owner_id"
+                                    },
+                                    "type": "related_doc",
+                                    "related_doc_type": "CommCareCase",
+                                    "doc_id_expression": {
+                                        "datatype": null,
+                                        "type": "named",
+                                        "name": "person_id"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -675,9 +772,21 @@
                 "display_name": "microbiological_test_lab_serial_number",
                 "datatype": "string",
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "diagnosis_test_lab_serial_number"
+                    "test": {
+                        "comment": null,
+                        "type": "named",
+                        "name": "microbiological_test"
+                    },
+                    "expression_if_true": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "diagnosis_test_lab_serial_number"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
                 },
                 "transform": {},
                 "is_primary_key": false,
@@ -692,15 +801,9 @@
                 "datatype": "string",
                 "expression": {
                     "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "case_definition"
-                        },
-                        "type": "boolean_expression",
                         "comment": null,
-                        "property_value": "microbiological"
+                        "type": "named",
+                        "name": "microbiological_test"
                     },
                     "expression_if_true": {
                         "datatype": null,
@@ -725,9 +828,21 @@
                 "display_name": "microbiological_result",
                 "datatype": "string",
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "diagnosis_test_summary"
+                    "test": {
+                        "comment": null,
+                        "type": "named",
+                        "name": "microbiological_test"
+                    },
+                    "expression_if_true": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "diagnosis_test_summary"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
                 },
                 "transform": {},
                 "is_primary_key": false,
@@ -1789,9 +1904,8 @@
                 "datatype": "date",
                 "expression": {
                     "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "test_requested_date"
+                        "type": "named",
+                        "name": "test_requested_date"
                     },
                     "type": "nested",
                     "argument_expression": {
@@ -1857,9 +1971,8 @@
                 "datatype": "date",
                 "expression": {
                     "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "date_tested"
+                        "type": "named",
+                        "name": "test_requested_date"
                     },
                     "type": "nested",
                     "argument_expression": {
@@ -2255,35 +2368,19 @@
         ],
         "named_filters": {
             "microbiological_test": {
-                "type": "and",
-                "filters": [
-                    {
-                        "operator": "eq",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "case_definition"
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": "microbiological"
-                    },
-                    {
-                        "operator": "in",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "diagnosis_test_type"
-                        },
-                        "type": "boolean_expression",
-                        "comment": null,
-                        "property_value": [
-                            "microscopy-zn",
-                            "microscopy-fluorescent",
-                            "cbnaat",
-                            "culture"
-                        ]
-                    }
+                "operator": "in",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "diagnosis_test_type"
+                },
+                "type": "boolean_expression",
+                "comment": null,
+                "property_value": [
+                    "microscopy-zn",
+                    "microscopy-fluorescent",
+                    "cbnaat",
+                    "culture"
                 ]
             }
         },
@@ -3803,6 +3900,28 @@
                             }
                         }
                     }
+                }
+            },
+            "test_requested_date": {
+                "test": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "is_direct_test_entry"
+                    },
+                    "property_value": "yes"
+                },
+                "expression_if_true": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "date_tested"
+                },
+                "type": "conditional",
+                "expression_if_false": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "test_requested_date"
                 }
             },
             "latest_endofip_test_case": {
