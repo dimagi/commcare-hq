@@ -376,27 +376,19 @@ class EpisodeAdherenceUpdate(object):
         latest_adherence_date = self.get_latest_adherence_date()
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
-        if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
-            return self.check_and_return({
-                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
-                'expected_doses_taken': 0,
-                'aggregated_score_count_taken': 0,
-                'adherence_total_doses_taken': 0,
-                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
-                'one_week_score_count_taken': 0,
-                'two_week_score_count_taken': 0,
-                'month_score_count_taken': 0,
-                'one_week_adherence_score': 0,
-                'two_week_adherence_score': 0,
-                'month_adherence_score': 0,
-                'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
-            })
-
         adherence_cases = self.get_valid_adherence_cases()
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
-        update = self.get_aggregated_scores(
-            latest_adherence_date, adherence_schedule_date_start, dose_status_by_date)
+
+        update = {
+            'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
+            'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+        }
         update.update(self.get_adherence_scores(dose_status_by_date))
+        update.update(self.get_aggregated_scores(
+            latest_adherence_date,
+            adherence_schedule_date_start,
+            dose_status_by_date
+        ))
 
         return self.check_and_return(update)
 
@@ -454,19 +446,22 @@ class EpisodeAdherenceUpdate(object):
         return round(score / float(num_days) * 100, 2)
 
     def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_status_by_date):
+        """Evaluates adherence calculations for purged cases
+
+        These are used for updating phone properties and are based on a "purge"
+        date, prior to which adherence cases are closed. The "purged" cases are
+        not sent down to the phone.
+
         """
-        Evaluates adherence calculations on the 'episode' case and returns dict of values
 
-        Returns:
-            If no update is necessary, empty dict is returned, if not, dict with following
-            keys is returned
-
-            {
-                'aggregated_score_date_calculated': value,
-                'expected_doses_taken': value,
-                'aggregated_score_count_taken': value
+        if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
+            return {
+                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
             }
-        """
+
         update = {}
 
         update["adherence_latest_date_recorded"] = latest_adherence_date
