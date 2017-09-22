@@ -125,7 +125,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import (
+from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -4033,11 +4033,11 @@ class ReportModule(ModuleBase):
         return module
 
     def get_details(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):
