@@ -389,6 +389,7 @@ class EpisodeAdherenceUpdate(object):
                 'one_week_adherence_score': 0,
                 'two_week_adherence_score': 0,
                 'month_adherence_score': 0,
+                'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
             })
 
         adherence_cases = self.get_valid_adherence_cases()
@@ -483,25 +484,34 @@ class EpisodeAdherenceUpdate(object):
             end_date=update["aggregated_score_date_calculated"]
         )
 
+        doses_per_week = self.get_doses_per_week()
+        update['expected_doses_taken'] = int(((
+            (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
+        ) * doses_per_week)
+
+        update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
+        return update
+
+    @memoized
+    def get_doses_per_week(self):
         # calculate 'expected_doses_taken' score
         dose_data = self.get_doses_data()
         adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
-        if doses_per_week:
-            update['expected_doses_taken'] = int(((
-                (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-            ) * doses_per_week)
-        else:
-            update['expected_doses_taken'] = 0
+        if not doses_per_week:
             soft_assert(notify_admins=True)(
                 True,
                 "No fixture item found with schedule_id {}".format(adherence_schedule_id)
             )
-        total_expected_doses_taken = ((datetime.date.today() - adherence_schedule_date_start).days / 7.0)\
-                                     * doses_per_week
-        update['total_expected_doses_taken'] = total_expected_doses_taken
+            return 0
+        return doses_per_week
 
-        return update
+    def get_total_expected_doses_taken(self, adherence_schedule_date_start):
+        doses_per_week = self.get_doses_per_week()
+        today = self.date_today_in_india
+        total_expected_doses_taken = int(
+            round(((today - adherence_schedule_date_start).days / 7.0) * doses_per_week))
+        return total_expected_doses_taken
 
     def check_and_return(self, update_dict):
         """
