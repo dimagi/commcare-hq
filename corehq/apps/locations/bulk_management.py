@@ -8,6 +8,7 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 import copy
 from collections import Counter, defaultdict
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
@@ -410,6 +411,9 @@ class NewLocationImporter(object):
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
         type_rows, location_rows = LocationExcelValidator(excel_importer).validate_and_parse_stubs_from_excel()
+        if settings.SERVER_ENVIRONMENT == 'enikshay' and len(location_rows) > 50:
+            raise LocationExcelSheetError("Please limit enikshay location uploads to 50 at a time "
+                "for the time being")
         return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):
