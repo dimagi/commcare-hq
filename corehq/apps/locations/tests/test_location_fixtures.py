@@ -127,7 +127,11 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             },
         )
         location_db = LocationSet([location])
-        data_fields = ['best_swordsman', 'in_westeros', 'appeared_in_num_episodes']
+        data_fields = [
+            CustomDataField(slug='best_swordsman'),
+            CustomDataField(slug='in_westeros'),
+            CustomDataField(slug='appeared_in_num_episodes'),
+        ]
         fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
@@ -289,7 +293,7 @@ class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocations
             CustomDataField(slug='favorite_color'),
         ]
         cls.loc_fields.save()
-        cls.field_slugs = {f.slug for f in cls.loc_fields.fields}
+        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
         for location in cls.locations.values():
             location.metadata = {
                 'is_test': 'no',
@@ -427,7 +431,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             CustomDataField(slug='favorite_passtime'),
         ]
         cls.loc_fields.save()
-        cls.field_slugs = {f.slug for f in cls.loc_fields.fields}
+        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
@@ -440,10 +444,10 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
-        self.assertEqual(self.field_slugs, _get_location_data_fields(self.domain))
+        self.assertItemsEqual(self.field_slugs, [f.slug for f in _get_location_data_fields(self.domain)])
 
     def test_utility_method_empty(self):
-        self.assertEqual(set(), _get_location_data_fields('no-fields-defined'))
+        self.assertEqual([], [f.slug for f in _get_location_data_fields('no-fields-defined')])
 
     def test_metadata_added_to_all_nodes(self):
         mass = self.locations['Massachusetts']
@@ -455,7 +459,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             location_data_nodes = [child for child in location_node.find('location_data')]
             self.assertEqual(2, len(location_data_nodes))
             tags = {n.tag for n in location_data_nodes}
-            self.assertEqual(tags, self.field_slugs)
+            self.assertItemsEqual(tags, self.field_slugs)
 
     def test_additional_metadata_not_included(self):
         mass = self.locations['Massachusetts']
@@ -473,7 +477,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
         ]
         self.assertEqual(2, len(mass_data))
-        self.assertEqual(self.field_slugs, set([f.tag for f in mass_data]))
+        self.assertItemsEqual(self.field_slugs, [f.tag for f in mass_data])
 
     def test_existing_metadata_works(self):
         mass = self.locations['Massachusetts']
