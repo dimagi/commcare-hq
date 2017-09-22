@@ -4228,6 +4228,9 @@ class LazyBlobDoc(BlobMixin):
       save save has succeeded, save the attachment in the cache
     """
 
+    class Meta:
+        app_label = 'app_manager'
+
     def __init__(self, *args, **kwargs):
         super(LazyBlobDoc, self).__init__(*args, **kwargs)
         self._LAZY_ATTACHMENTS = {}
