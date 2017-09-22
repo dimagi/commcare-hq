@@ -99,6 +99,7 @@ class CustomDataModelMixin(object):
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
     show_purge_existing = False
+    show_index_in_fixture = False
     entity_string = None  # User, Group, Location, Product...
 
     @use_jquery_ui
@@ -153,6 +154,7 @@ class CustomDataModelMixin(object):
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
             "show_purge_existing": self.show_purge_existing,
+            "show_index_in_fixture": self.show_index_in_fixture,
         }
 
     @property

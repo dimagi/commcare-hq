@@ -122,7 +122,7 @@
                                               {% endblocktrans %}">
                                         </span>
                                     </th>
-                                    {% if view.field_type == "LocationFields" %}
+                                    {% if show_index_in_fixture %}
                                     <th class="col-sm-1">
                                         {% trans "Index in Restore" %}
                                         <span class="hq-help-template"
@@ -181,7 +181,7 @@
                                             </span>
                                         {% endif %}
                                     </td>
-                                    {% if view.field_type == "LocationFields" %}
+                                    {% if show_index_in_fixture %}
                                     <td>
                                         <input type="checkbox" data-bind="checked: index_in_fixture"/>
                                     </td>
