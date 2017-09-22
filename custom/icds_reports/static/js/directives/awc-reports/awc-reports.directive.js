@@ -1961,6 +1961,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     tickFormat: function(d) {
                         return d3.format('d')(d);
                     },
+                    forceY: [0],
                 },
                 callback: function(chart) {
                     var tooltip = chart.interactiveLayer.tooltip;
