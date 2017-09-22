@@ -494,8 +494,8 @@ class EpisodeAdherenceUpdate(object):
         adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
         if not doses_per_week:
-            soft_assert(notify_admins=True)(
-                True,
+            soft_assert('{}@{}'.format('frener', 'dimagi.com'))(
+                False,
                 "No fixture item found with schedule_id {}".format(adherence_schedule_id)
             )
             return 0
