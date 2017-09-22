@@ -32,9 +32,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         landingPageApp: function(appId) {
             FormplayerFrontend.Apps.Controller.landingPageApp(appId);
         },
-        selectApp: function (appId) {
+        selectApp: function (appId, isInitial) {
             FormplayerFrontend.Menus.Controller.selectMenu({
                 'appId': appId,
+                'isInitial': isInitial,
             });
         },
         listMenus: function (sessionObject) {
@@ -127,7 +128,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     FormplayerFrontend.on("app:select", function (appId) {
         var urlObject = new Util.CloudcareUrl({'appId': appId});
         Util.setUrlToObject(urlObject);
-        API.selectApp(appId);
+        API.selectApp(appId, true);
     });
 
     FormplayerFrontend.on('app:singleApp', function(appId) {

@@ -85,7 +85,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return Menus.API.queryFormplayer(options, 'navigate_menu');
+        var isInitial = options.isInitial;
+        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
