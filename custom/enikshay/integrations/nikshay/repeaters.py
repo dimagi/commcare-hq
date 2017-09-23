@@ -111,17 +111,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         if allowed_case_types_and_users:
-            try:
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
-            episode_case_properties = episode_case.dynamic_case_properties()
-
             return (
-                (   # has a nikshay id already or is a valid submission probably waiting notification
-                    episode_case_properties.get('nikshay_id') or
-                    valid_nikshay_patient_registration(episode_case_properties)
-                ) and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
