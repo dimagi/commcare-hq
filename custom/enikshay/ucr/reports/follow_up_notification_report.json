@@ -284,6 +284,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Max Bacilli Count"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "followup_nikshay_error",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Follow Up Notification Error"
             }
         ]
     }
