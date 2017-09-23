@@ -57,6 +57,10 @@ $("#id_awcid").select2();
             <h3 class="panel-title">{% trans 'RCH Beneficiaries' %}</h3>
         </div>
         <div class="panel-body">
+            <div class="alert alert-info" ng-show="!!notLoaded">
+                <i class="fa fa-circle-o-notch fa-spin"></i>
+                {% trans "Loading Beneficiaries..." %}
+            </div>
             <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
                 {% blocktrans %}
                     <strong>No rch records. Try changing the filter.</strong>
