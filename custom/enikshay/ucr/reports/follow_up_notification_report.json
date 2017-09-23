@@ -61,6 +61,25 @@
                 "display": "Filter migrated data"
             },
             {
+                "slug": "is_notified",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show Notified",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show Not Notified",
+                        "value": 0
+                    }
+                ],
+                "field": "followup_nikshay_registered",
+                "type": "choice_list",
+                "display": "Filter notified data"
+            },
+            {
                 "pre_value": 1,
                 "datatype": "integer",
                 "display": null,
