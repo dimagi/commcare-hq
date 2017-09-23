@@ -61,7 +61,8 @@
                       "operator": "in",
                       "property_value": [
                           null,
-                          ""
+                          "",
+                          "-"
                       ],
                       "type": "boolean_expression"
                   },
