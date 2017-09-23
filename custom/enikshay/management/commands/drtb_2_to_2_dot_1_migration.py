@@ -76,17 +76,20 @@ class Command(BaseCommand):
                         occurrence_cases = [case for case in accessor.get_reverse_indexed_cases([person_case_id])
                                             if case.type == CASE_TYPE_OCCURRENCE]
                         for occurrence_case in occurrence_cases:
-                            episode_cases = [case for case in accessor.get_reverse_indexed_cases([occurrence_case.get_id])
+                            episode_cases = [case for case in
+                                             accessor.get_reverse_indexed_cases([occurrence_case.get_id])
                                              if case.type == CASE_TYPE_EPISODE]
                             for episode_case in episode_cases:
                                 writer.writerow(self.get_case_status(episode_case, episode_cases=episode_cases))
 
                     if "test" in case_types:
                         if not occurrence_cases:
-                            occurrence_cases = [case for case in accessor.get_reverse_indexed_cases([person_case_id])
+                            occurrence_cases = [case for case in
+                                                accessor.get_reverse_indexed_cases([person_case_id])
                                                 if case.type == CASE_TYPE_OCCURRENCE]
                         for occurrence_case in occurrence_cases:
-                            test_cases = [case for case in accessor.get_reverse_indexed_cases([occurrence_case.get_id])
+                            test_cases = [case for case in
+                                          accessor.get_reverse_indexed_cases([occurrence_case.get_id])
                                           if case.type == CASE_TYPE_TEST]
                             recently_opened_episode_case = None
                             for test_case in test_cases:
@@ -101,9 +104,9 @@ class Command(BaseCommand):
         headers = ['case_type', 'case_id']
         if 'person' in case_types:
             headers += (self.person_case_relevant_props + ['owner_id', 'updates'])
-        elif 'episode' in case_types:
+        if 'episode' in case_types:
             headers += (self.episode_case_relevant_props + ['updates'])
-        elif 'test' in case_types:
+        if 'test' in case_types:
             headers += (self.test_case_relevant_props + ['updates'])
         return headers
 
@@ -113,7 +116,8 @@ class Command(BaseCommand):
         elif case.type == "episode":
             return self.get_episode_case_status(case, episode_cases)
         elif case.type == "test":
-            return recently_opened_episode_case, self.get_test_case_status(case, recently_opened_episode_case, occurrence_case)
+            return recently_opened_episode_case, self.get_test_case_status(
+                case, recently_opened_episode_case, occurrence_case)
 
     def get_person_case_status(self, person_case):
         person_case_props = person_case.dynamic_case_properties()
@@ -137,7 +141,8 @@ class Command(BaseCommand):
         props_status = {'case_type': 'test', 'case_id': test_case.get_id}
         for prop in self.test_case_relevant_props:
             props_status[prop] = test_case_props.get(prop)
-        recently_opened_episode_case, props_status['updates'] = self.test_case_updates(test_case, recently_opened_episode_case, occurrence_case)
+        recently_opened_episode_case, props_status['updates'] = self.test_case_updates(
+            test_case, recently_opened_episode_case, occurrence_case)
         return props_status
 
     @staticmethod
@@ -153,9 +158,10 @@ class Command(BaseCommand):
         # person.aadhaar number masked with *s except the last 4 digits
         aadhar_num = person_case_props.get('aadhaar_number')
         if aadhar_num:
-           props_to_update['aadhaar_number_obfuscated'] = '*' * 8 + aadhar_num[-4:]
+            props_to_update['aadhaar_number_obfuscated'] = '*' * 8 + aadhar_num[-4:]
 
-        # if person.age is blank/null and person.age_entered != blank/null then set person.age = person.age_entered.
+        # if person.age is blank/null and person.age_entered != blank/null
+        # then set person.age = person.age_entered.
         # else if person.age = '' and person.dob != '', person.age = int((today() - person.dob) / 365.25)
         if not person_case_props.get('age') and not person_case_props.get('age_entered'):
             props_to_update['age'] = person_case_props.get('age_entered')
