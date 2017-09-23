@@ -245,7 +245,7 @@ def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
         """
-    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 @hqnottest
