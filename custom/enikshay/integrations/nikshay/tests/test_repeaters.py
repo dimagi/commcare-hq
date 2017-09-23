@@ -799,18 +799,6 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
 
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
 
-        # skip if episode case not nikshay registered
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_registered": 'true'})
-
-        # skip if episode case has no nikshay_id
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
-
         update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 

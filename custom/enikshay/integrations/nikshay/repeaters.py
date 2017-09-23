@@ -184,20 +184,10 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
-            try:
-                occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
             test_case_properties = test_case.dynamic_case_properties()
-            episode_case_properties = episode_case.dynamic_case_properties()
             return (
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
-                (  # has a nikshay id already or is a valid submission probably waiting notification
-                    episode_case_properties.get('nikshay_id') or
-                    valid_nikshay_patient_registration(episode_case_properties)
-                ) and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
