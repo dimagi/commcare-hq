@@ -221,11 +221,19 @@ def send_status_email(domain, async_result):
     duration = datetime.timedelta()
     updates = 0
     noupdates = 0
-    for batch_info in async_result:
+    batch_info_template = "Batch {index}: Completed in {duration}. Errors: {errors}. Updates: {updates}\n"
+    batch_info_message = ""
+    for i, batch_info in enumerate(async_result):
         errors += batch_info.errors
         duration += batch_info.duration
         updates += batch_info.update_count
         noupdates += batch_info.noupdate_count
+        batch_info_message += batch_info_template.format(
+            index=i+1,
+            duration=batch_info.duration,
+            updates=batch_info.update_count,
+            errors=len(batch_info.errors),
+        )
 
     subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
     recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
@@ -237,12 +245,15 @@ def send_status_email(domain, async_result):
     writer.writerows(errors)
 
     message = (
-        "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
-        "Cases Updated {updates}, cases errored {errors} and {noupdates} "
-        "cases didn't need update. ".format(
+        "domain: {domain},\n Summary: \n "
+        "total duration: {duration} \n"
+        "total updates: {updates} \n total errors: {errors} \n total non-updates: {noupdates} \n"
+        "".format(
             domain=domain, duration=duration, updates=updates, errors=len(errors),
             noupdates=noupdates)
     )
+    message += batch_info_message
+
     attachment = {
         'title': "failed_episodes_{}.csv".format(datetime.date.today()),
         'mimetype': 'text/csv',
