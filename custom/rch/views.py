@@ -44,7 +44,7 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
 
     # ToDo: Check how to set page title. Looks like this is not working
     page_title = ugettext_noop("RCH-CAS Beneficiary list")
-    template_name = 'common/beneficiaries_list.html'
+    template_name = 'rch/beneficiaries_list.html'
 
     @method_decorator(require_superuser)
     @use_select2
@@ -212,10 +212,6 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
     def get_template_names(self):
         if self.request.GET.get('present_in') == 'cas':
             return "cas/beneficiaries_list.html"
-        elif self.request.GET.get('present_in') == 'rch':
-            return "rch/beneficiaries_list.html"
-        elif self.request.GET.get('present_in') == 'both':
-            return "common/beneficiaries_list.html"
         return self.template_name
 
     @staticmethod
