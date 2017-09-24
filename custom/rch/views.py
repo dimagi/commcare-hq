@@ -9,6 +9,7 @@ from django.core import serializers
 from django.utils.decorators import method_decorator
 from django.conf import settings
 
+from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.views import CaseDetailsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from djangular.views.mixins import (
@@ -38,13 +39,16 @@ from custom.rch.const import (
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
                    login_and_domain_required], name='dispatch')
-class BeneficariesList(JSONResponseMixin, TemplateView):
+class BeneficariesList(JSONResponseMixin, BaseDomainView):
     urlname = 'rch_cas_dashboard'
     http_method_names = ['get', 'post']
 
     # ToDo: Check how to set page title. Looks like this is not working
     page_title = ugettext_noop("RCH-CAS Beneficiary list")
     template_name = 'rch/beneficiaries_list.html'
+
+    def section_url(self):
+        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN])
 
     @method_decorator(require_superuser)
     @use_select2
@@ -253,15 +257,22 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
                    login_and_domain_required], name='dispatch')
-class BeneficiaryView(TemplateView):
+class BeneficiaryView(BaseDomainView):
     http_method_names = ['get']
     urlname = 'beneficiary_view'
 
     page_title = ugettext_noop("RCH-CAS Beneficiary Details")
     template_name = 'rch/beneficiary.html'
 
+    def section_url(self):
+        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_id])
+
+    def page_url(self):
+        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_id])
+
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        self.beneficiary_id = kwargs.get('beneficiary_id')
         return super(BeneficiaryView, self).dispatch(request, *args, **kwargs)
 
     def _get_cas_values(self, details, beneficiary_type, person_case_id):
