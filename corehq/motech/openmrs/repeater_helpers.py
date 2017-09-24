@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import timedelta
 from requests import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -75,64 +76,68 @@ def server_datetime_to_openmrs_timestamp(dt):
 
 
 def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, patient_uuid=None):
-    timestamp = server_datetime_to_openmrs_timestamp(visit_datetime)
+                 openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
     patient_uuid = patient_uuid or person_uuid
-    observations = [
-        {
-            "concept": concept_uuid,
-            "value": value,
-            "person": person_uuid,
-            "obsDatetime": timestamp,
-        }
-        for concept_uuid, values in values_for_concept.items()
-        for value in values
-    ]
-    observation_uuids = []
-    for observation in observations:
-        response = requests.post('/ws/rest/v1/obs', json=observation)
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        observation_uuids.append(response.json()['uuid'])
-
-    logger.debug('observations', observation_uuids)
-    encounters = [
-        {
-            "encounterType": encounter_type,
-            "form": openmrs_form,
-            "obs": observation_uuids,
-            "patient": patient_uuid,
-        }
-    ]
-    encounter_uuids = []
-    for encounter in encounters:
-        response = requests.post('/ws/rest/v1/encounter', json=encounter)
-
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        encounter_uuids.append(response.json()['uuid'])
-
-    logger.debug('encounters', encounter_uuids)
+    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+    stop_datetime = server_datetime_to_openmrs_timestamp(
+        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+    )
 
     visit = {
-        "encounters": encounter_uuids,
-        "patient": patient_uuid,
-        "visitType": visit_type,
+        'patient': patient_uuid,
+        'visitType': visit_type,
+        'startDatetime': start_datetime,
+        'stopDatetime': stop_datetime,
     }
-
+    if location_uuid:
+        visit['location'] = location_uuid
     response = requests.post('/ws/rest/v1/visit', json=visit)
     try:
         response.raise_for_status()
     except HTTPError:
         logger.debug(response.json())
         raise
-    logger.debug(response.json()['uuid'])
+    visit_uuid = response.json()['uuid']
+
+    encounter = {
+        'encounterDatetime': start_datetime,
+        'patient': patient_uuid,
+        'form': openmrs_form,
+        'encounterType': encounter_type,
+        'visit': visit_uuid,
+        # 'encounterProviders': []
+    }
+    if location_uuid:
+        encounter['location'] = location_uuid
+    response = requests.post('/ws/rest/v1/encounter', json=encounter)
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        logger.debug(response.json())
+        raise
+    encounter_uuid = response.json()['uuid']
+
+    observation_uuids = []
+    for concept_uuid, values in values_for_concept.items():
+        for value in values:
+            observation = {
+                'concept': concept_uuid,
+                'person': person_uuid,
+                'obsDatetime': start_datetime,
+                'encounter': encounter_uuid,
+                'value': value,
+            }
+            if location_uuid:
+                observation['location'] = location_uuid
+            response = requests.post('/ws/rest/v1/obs', json=observation)
+            try:
+                response.raise_for_status()
+            except HTTPError:
+                logger.debug(response.json())
+                raise
+            observation_uuids.append(response.json()['uuid'])
+
+    logger.debug('observations', observation_uuids)
 
 
 def search_patients(requests, search_string):
