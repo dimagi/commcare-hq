@@ -91,7 +91,7 @@ class RCHRecord(models.Model):
         date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal() - days_before))
         for state_id in STATE_DISTRICT_MAPPING:
             for district_id in STATE_DISTRICT_MAPPING[state_id]:
-                records = fetch_beneficiaries_records(date_str, date_str, state_id, beneficiary_type, district_id)
+                records = fetch_beneficiaries_records(date_str, state_id, beneficiary_type, district_id)
                 for record in records:
                     # convert list of dicts of properties to a single dict
                     dict_of_props = {}
