@@ -55,9 +55,18 @@ $("#id_awcid").select2();
                 <h3 class="panel-title">{% trans 'Beneficiaries' %}</h3>
             </div>
             <div class="panel-body">
-                <div class="alert alert-info" ng-show="!!notLoaded">
+                <div class="alert alert-info" ng-show="!!notLoaded && !hasError">
                     <i class="fa fa-circle-o-notch fa-spin"></i>
                     {% trans "Loading Beneficiaries..." %}
+                </div>
+                <div class="alert alert-danger" ng-show="!!hasError">
+                    {% blocktrans %}
+                        <strong>There was an issue contacting the server.</strong>
+                        Please check your internet connection.
+                        If this issue continues, please
+                        <a href="#modalReportIssue"
+                           data-toggle="modal">file a bug report</a>.
+                    {% endblocktrans %}
                 </div>
                 <div class="alert alert-info" ng-hide="paginatedItems.length > 0 || notLoaded || hasError">
                     {% blocktrans %}
