@@ -21,15 +21,22 @@ def get_choices_for(value_field, display_field):
     :return: tuple of tuples
     """
     options = set()
-    possible_display_values = AreaMapping.objects.values_list(display_field, flat=True).distinct()
-    for display_value in possible_display_values:
-        option_values = (
-            AreaMapping.objects.filter(**{display_field: display_value})
-            .values_list(value_field, flat=True).distinct()
-        )
-        for option_value in option_values:
-            options.add((option_value, display_value))
-    return tuple(options)
+    try:
+        possible_display_values = AreaMapping.objects.values_list(display_field, flat=True).distinct()
+        for display_value in possible_display_values:
+            option_values = (
+                AreaMapping.objects.filter(**{display_field: display_value})
+                .values_list(value_field, flat=True).distinct()
+            )
+            for option_value in option_values:
+                options.add((option_value, display_value))
+        return tuple(options)
+    # when migrations are run for the first time to add AreaMapping table this would
+    # fail with Programming Error when loading environment for migration so just pass
+    # then. When the web server/worker would be started migrations would have run already
+    # and the proper values would be set
+    except ProgrammingError:
+        pass
 
 
 class BeneficiariesFilterForm(forms.Form):
