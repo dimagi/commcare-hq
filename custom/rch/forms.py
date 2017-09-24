@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django.db.utils import ProgrammingError
+from django.conf import settings
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 from crispy_forms.helper import FormHelper
@@ -20,6 +21,8 @@ def get_choices_for(value_field, display_field):
     :param display_field: column for display text
     :return: tuple of tuples
     """
+    if settings.UNIT_TESTING:
+        return tuple()
     options = set()
     try:
         possible_display_values = AreaMapping.objects.values_list(display_field, flat=True).distinct()
