@@ -10,19 +10,25 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from custom.rch.models import AreaMapping
 
 
-def get_choices_for(value_field, field_name):
+def get_choices_for(value_field, display_field):
+    """
+    return a tuple of tuples with value and display text for each unique available option for
+    display field
+    for ex: return all combinations for state code and state name for all unique state names
+    available
+    :param value_field: column for value
+    :param display_field: column for display text
+    :return: tuple of tuples
+    """
     options = set()
-    try:
-        field_values = AreaMapping.objects.values_list(field_name, flat=True).distinct()
-        for field_value in field_values:
-            option_values = (
-                AreaMapping.objects.filter(**{field_name: field_value})
-                .values_list(value_field, flat=True).distinct()
-            )
-            for option_value in option_values:
-                options.add((option_value, field_value))
-    except ProgrammingError:
-        pass
+    possible_display_values = AreaMapping.objects.values_list(display_field, flat=True).distinct()
+    for display_value in possible_display_values:
+        option_values = (
+            AreaMapping.objects.filter(**{display_field: display_value})
+            .values_list(value_field, flat=True).distinct()
+        )
+        for option_value in option_values:
+            options.add((option_value, display_value))
     return tuple(options)
 
 
@@ -77,33 +83,19 @@ class BeneficiariesFilterForm(forms.Form):
         self.helper.layout = Layout(
             crispy.Fieldset(
                 _('Filter'),
-                crispy.Field(
-                    'stcode',
-                ),
-                crispy.Field(
-                    'dtcode'
-                ),
-                crispy.Field(
-                    'village_code'
-                ),
-                crispy.Field(
-                    'awcid'
-                ),
-                crispy.Field(
-                    'present_in'
-                ),
-                crispy.Field(
-                    'matched'
-                ),
+                crispy.Field('stcode'),
+                crispy.Field('dtcode'),
+                crispy.Field('village_code'),
+                crispy.Field('awcid'),
+                crispy.Field('present_in'),
+                crispy.Field('matched'),
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(_("Clear"),
-                                    reverse(BeneficariesList.urlname,
-                                            args=[domain]),
+                                    reverse(BeneficariesList.urlname, args=[domain]),
                                     css_class="btn btn-default"),
                 StrictButton(_("Submit"),
                              type="submit",
-                             css_class='btn btn-success disable-on-submit-no-spinner '
-                                       'add-spinner-on-click'),
+                             css_class='btn btn-success disable-on-submit-no-spinner add-spinner-on-click'),
             ),
         )

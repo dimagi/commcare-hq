@@ -17,8 +17,7 @@ STATE_DISTRICT_MAPPING = {
     ]
 }
 
-# For every record type in RCH there is a corresponding value here which is then used
-# like for display options or maintaining permitted fields
+# meaningful mapping for integer record types in RCH
 RCH_RECORD_TYPE_MAPPING = {
     MOTHER_RECORD_TYPE: 'mother',
     CHILD_RECORD_TYPE: 'child',

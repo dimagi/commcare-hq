@@ -1,4 +1,7 @@
 {"fields": {
+    "_case_type": {
+        "RCH_field_name": "CAS_field_name"
+    },
     "person": {
         "ID_No": "mcts_id",
         "Registration_no": "rch_id",

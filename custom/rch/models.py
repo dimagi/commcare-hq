@@ -12,8 +12,8 @@ from custom.rch.const import (
 
 
 class RCHRecord(models.Model):
-    cas_case_id = models.CharField(null=True, max_length=255)
-    details = JSONField(default=dict)
+    cas_case_id = models.CharField(null=True, max_length=255)  # ICDS-CAS case that was found as a match
+    details = JSONField(default=dict)  # all details received from RCH for this beneficiary
     district_id = models.PositiveSmallIntegerField(null=True)
     state_id = models.PositiveSmallIntegerField(null=True)
     village_id = models.IntegerField(null=True)
@@ -31,11 +31,13 @@ class RCHRecord(models.Model):
     @classmethod
     def accepted_fields(cls, beneficiary_type):
         """
-        :param beneficiary_type: can be any of the keys in RCH_RECORD_TYPE_MAPPING
+        :param beneficiary_type: can be any of the keys in RCH_RECORD_TYPE_MAPPING like 1 for mother
         :return: fields that are expected to be received from RCH
         """
         if beneficiary_type in RCH_RECORD_TYPE_MAPPING:
-            return settings.RCH_PERMITTED_FIELDS[RCH_RECORD_TYPE_MAPPING[beneficiary_type]]
+            # get meaningful record type like mother
+            record_type = RCH_RECORD_TYPE_MAPPING[beneficiary_type]
+            return settings.RCH_PERMITTED_FIELDS[record_type]
         else:
             return set()
 
@@ -74,7 +76,9 @@ class RCHRecord(models.Model):
         elif self.child_record():
             self._set_child_fields(dict_of_props)
 
-    def set_beneficiary_fields(self, dict_of_props):
+    def assign_search_fields(self, dict_of_props):
+        # set fields from details received from RCH that are specifically used for quick lookup for
+        # filtering or matching
         self.district_id = dict_of_props['MDDS_DistrictID']
         self.state_id = dict_of_props['MDDS_StateID']
         self.village_id = dict_of_props['MDDS_VillageID']
@@ -98,15 +102,13 @@ class RCHRecord(models.Model):
                     rch_id_key_field = cls._get_rch_id_key(beneficiary_type)
                     record_pk = dict_of_props[rch_id_key_field]
                     assert record_pk
-                    results = cls.objects.filter(rch_id=record_pk)
-
-                    if results:
-                        rch_beneficiary = results[0]
-                        rch_beneficiary.details = dict_of_props
-                    else:
+                    # Find corresponding record if already present using RCH ID
+                    rch_beneficiary = cls.objects.filter(rch_id=record_pk).first()
+                    # else initialize if new record to be added
+                    if not rch_beneficiary:
                         rch_beneficiary = cls(doc_type=beneficiary_type)
 
-                    rch_beneficiary.set_beneficiary_fields(dict_of_props)
+                    rch_beneficiary.assign_search_fields(dict_of_props)
                     rch_beneficiary.details = dict_of_props
                     rch_beneficiary.save()
 
@@ -125,24 +127,24 @@ class AreaMapping(models.Model):
 
     @classmethod
     def fetch_awc_ids_for_state(cls, state_id):
-        return list(cls.objects.filter(stcode=state_id).values_list('awcid', flat=True).distinct().all())
+        return list(cls.objects.filter(stcode=state_id).values_list('awcid', flat=True).distinct())
 
     @classmethod
     def fetch_village_ids_for_state(cls, state_id):
-        return list(cls.objects.filter(stcode=state_id).values_list('village_code', flat=True).distinct().all())
+        return list(cls.objects.filter(stcode=state_id).values_list('village_code', flat=True).distinct())
 
     @classmethod
     def fetch_awc_ids_for_district(cls, district_id):
-        return list(cls.objects.filter(dtcode=district_id).values_list('awcid', flat=True).distinct().all())
+        return list(cls.objects.filter(dtcode=district_id).values_list('awcid', flat=True).distinct())
 
     @classmethod
     def fetch_village_ids_for_district(cls, district_id):
-        return list(cls.objects.filter(dtcode=district_id).values_list('village_code', flat=True).distinct().all())
+        return list(cls.objects.filter(dtcode=district_id).values_list('village_code', flat=True).distinct())
 
     @classmethod
     def fetch_awc_ids_for_village_id(cls, village_id):
-        return list(cls.objects.filter(village_code=village_id).values_list('awcid', flat=True).distinct().all())
+        return list(cls.objects.filter(village_code=village_id).values_list('awcid', flat=True).distinct())
 
     @classmethod
     def fetch_village_ids_for_awcid(cls, awcid):
-        return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct().all())
+        return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct())
