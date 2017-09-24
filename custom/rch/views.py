@@ -188,7 +188,7 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
         offset = (in_data.get('page') - 1) * in_data.get('limit')
         if self._set_rch_beneficiaries(True, only_matched=True, in_data=in_data):
             context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries[offset:offset+size]
+            context['beneficiaries'] = self.beneficiaries[offset:offset + size]
 
     def _set_beneficiaries(self, context, in_data):
         context['beneficiaries'] = []
@@ -203,7 +203,8 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
         context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
-        context['pagination_limit_cookie_name'] = 'hq.pagination.limit.rch_cas_beneficiaries.%s' % self.request.domain
+        context['pagination_limit_cookie_name'] = ('hq.pagination.limit.rch_cas_beneficiaries.%s'
+                                                   % self.request.domain)
         return context
 
     def get_template_names(self):
