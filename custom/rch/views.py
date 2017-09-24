@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
-from django.views.generic import TemplateView
 from django.core import serializers
 from django.utils.decorators import method_decorator
 from django.conf import settings
@@ -186,7 +185,7 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
         offset = (in_data.get('page') - 1) * in_data.get('limit')
         if self._set_rch_beneficiaries(include_matched_beneficiaries, in_data=in_data):
             context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries.order_by('-last_modified')[offset:offset+size]
+            context['beneficiaries'] = self.beneficiaries.order_by('-last_modified')[offset:offset + size]
 
     def _set_context_for_matched_records(self, context, in_data=None):
         self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
