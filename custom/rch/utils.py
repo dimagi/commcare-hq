@@ -13,7 +13,11 @@ from custom.rch.const import (
     PASSWORD,
     RCH_WSDL_URL,
     VALID_AADHAR_NUM_LENGTH,
+    ICDS_CAS_DOMAIN,
 )
+from custom.rch.exceptions import MultipleMatchException
+
+from corehq.apps.es.case_search import CaseSearchES
 
 
 def etree_to_dict(t):
@@ -63,3 +67,17 @@ def fetch_beneficiaries_records(for_date, state_id, beneficiary_type, district_i
 def valid_aadhar_num_length(aadhar_num):
     aadhar_num = str(aadhar_num)
     return len(aadhar_num) == VALID_AADHAR_NUM_LENGTH
+
+
+def find_matching_cas_record_id(aadhar_num):
+    query = (CaseSearchES().domain(ICDS_CAS_DOMAIN)
+             .case_property_query("aadhar_number", aadhar_num, "must", fuzzy=False))
+    hits = query.run().hits
+    if len(hits) == 1:
+        return hits[0].get('_id')
+    elif len(hits) > 1:
+        matching_case_ids = [hit.get('_id') for hit in hits]
+        raise MultipleMatchException(
+            """Multiple matches found for aadhar num: {aadhar_num}. Matched case_ids
+            are {case_ids}""".format(aadhar_num=aadhar_num, case_ids=','.join(matching_case_ids))
+        )

@@ -1,7 +1,10 @@
 import datetime
 from django.db import models
 from django.conf import settings
-from custom.rch.utils import fetch_beneficiaries_records
+from custom.rch.utils import (
+    fetch_beneficiaries_records,
+    find_matching_cas_record_id,
+)
 from jsonfield.fields import JSONField
 from custom.rch.const import (
     MOTHER_RECORD_TYPE,
@@ -111,6 +114,12 @@ class RCHRecord(models.Model):
                     rch_beneficiary.assign_search_fields(dict_of_props)
                     rch_beneficiary.details = dict_of_props
                     rch_beneficiary.save()
+
+    def associate_matching_cas_record(self):
+        matching_icds_cas_case_id = find_matching_cas_record_id(self.aadhar_num)
+        if matching_icds_cas_case_id:
+            self.cas_case_id = matching_icds_cas_case_id
+            self.save()
 
 
 class AreaMapping(models.Model):

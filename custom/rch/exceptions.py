@@ -1,0 +1,2 @@
+class MultipleMatchException(Exception):
+    pass
