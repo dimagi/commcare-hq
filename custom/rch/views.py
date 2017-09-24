@@ -8,6 +8,8 @@ from django.views.generic import TemplateView
 from django.core import serializers
 from django.utils.decorators import method_decorator
 from django.conf import settings
+
+from corehq.apps.reports.views import CaseDetailsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from djangular.views.mixins import (
     JSONResponseMixin,
@@ -236,6 +238,10 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
 
         if in_data.get('present_in') == 'cas':
             itemList = context.get('beneficiaries')
+            for item in itemList:
+                item['editUrl'] = reverse(CaseDetailsView.urlname, args=(ICDS_CAS_DOMAIN, item.get('_id')))
+                if item.get('aadhar_number'):
+                    item['aadhar_number'] = mask_aadhar_number(item['aadhar_number'])
         else:
             itemList = map(lambda beneficiary: self._format_beneficiary(beneficiary),
                            context.get('beneficiaries'))
