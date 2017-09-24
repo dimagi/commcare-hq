@@ -36,7 +36,7 @@ def get_choices_for(value_field, display_field):
     # then. When the web server/worker would be started migrations would have run already
     # and the proper values would be set
     except ProgrammingError:
-        pass
+        return tuple()
 
 
 class BeneficiariesFilterForm(forms.Form):
