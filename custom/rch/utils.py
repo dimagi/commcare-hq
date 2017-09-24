@@ -1,25 +1,23 @@
 from zeep.client import Client
 from requests.exceptions import HTTPError
 
-from django.conf import settings
 from .emails import (
     notify_error_in_service,
     notify_insecure_access_response,
     notify_parsing_error,
 )
 
+from custom.rch.const import (
+    PROJECTID,
+    ID,
+    PASSWORD,
+    RCH_WSDL_URL,
+    VALID_AADHAR_NUM_LENGTH,
+)
+
 
 def etree_to_dict(t):
     return {t.tag: map(etree_to_dict, t.iterchildren()) or t.text}
-
-
-PROJECTID = settings.RCH_CREDENTIALS.get('project_id')
-ID = settings.RCH_CREDENTIALS.get('id')
-PASSWORD = settings.RCH_CREDENTIALS.get('password')
-MOTHER_RECORD_TYPE = '1'
-CHILD_RECORD_TYPE = '2'
-
-RCH_WSDL_URL = 'http://rchrpt.nhm.gov.in/RCH_WS/rchwebservices.svc?wsdl'
 
 
 def send_request_for_beneficiaries(from_date, to_date, state_id, beneficiary_type, district_id):
@@ -59,3 +57,8 @@ def fetch_beneficiaries_records(from_date, to_date, state_id, beneficiary_type, 
     except ValueError:
         notify_parsing_error(from_date, state_id, beneficiary_type, district_id)
         return []
+
+
+def valid_aadhar_num_length(aadhar_num):
+    aadhar_num = str(aadhar_num)
+    return len(aadhar_num) == VALID_AADHAR_NUM_LENGTH

@@ -94,7 +94,11 @@ $("#id_awcid").select2();
                 <tbody>
                     <tr ng-repeat="beneficiary in paginatedItems">
                         {% angularjs %}
-                        <td>{{ beneficiary.name }}</td>
+                        <td>
+                            <a href="{{ beneficiary.editUrl }}">
+                                {{ beneficiary.name }}
+                            </a>
+                        </td>
                         <td>{{ beneficiary.husband_name }}</td>
                         <td>{{ beneficiary.mother_name }}</td>
                         <td>{{ beneficiary.aadhar_number }}</td>

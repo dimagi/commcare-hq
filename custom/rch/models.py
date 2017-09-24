@@ -1,22 +1,14 @@
 import datetime
 from django.db import models
 from django.conf import settings
-from custom.rch.utils import fetch_beneficiaries_records, MOTHER_RECORD_TYPE, CHILD_RECORD_TYPE
+from custom.rch.utils import fetch_beneficiaries_records
 from jsonfield.fields import JSONField
-
-
-STATE_DISTRICT_MAPPING = {
-    '28': [  # Andhra Pradesh
-        '523'  # West Godavari
-    ]
-}
-
-# For every record type in RCH there is a corresponding value here which is then used
-# like for display options or maintaining permitted fields
-RCH_RECORD_TYPE_MAPPING = {
-    MOTHER_RECORD_TYPE: 'mother',
-    CHILD_RECORD_TYPE: 'child',
-}
+from custom.rch.const import (
+    MOTHER_RECORD_TYPE,
+    CHILD_RECORD_TYPE,
+    STATE_DISTRICT_MAPPING,
+    RCH_RECORD_TYPE_MAPPING,
+)
 
 
 class RCHRecord(models.Model):

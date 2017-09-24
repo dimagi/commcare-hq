@@ -2,6 +2,7 @@
 import json
 from collections import OrderedDict
 
+from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from django.views.generic import TemplateView
 from django.core import serializers
@@ -22,9 +23,15 @@ from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.decorators import use_select2, use_angular_js
 from custom.rch.forms import BeneficiariesFilterForm
 from custom.rch.models import RCHRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
-
-ICDS_CAS_DOMAIN = "icds-cas"
-RECORDS_PER_PAGE = 200
+from custom.rch.templatetags.view_tags import mask_aadhar_number
+from custom.rch.utils import (
+    valid_aadhar_num_length,
+)
+from custom.rch.const import (
+    ICDS_CAS_DOMAIN,
+    RECORDS_PER_PAGE,
+    AADHAR_NUM_FIELDS,
+)
 
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
@@ -173,7 +180,7 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
         offset = (in_data.get('page') - 1) * in_data.get('limit')
         if self._set_rch_beneficiaries(include_matched_beneficiaries, in_data=in_data):
             context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries[offset:offset+size]
+            context['beneficiaries'] = self.beneficiaries.order_by('-last_modified')[offset:offset+size]
 
     def _set_context_for_matched_records(self, context, in_data=None):
         self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
@@ -208,6 +215,18 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
             return "common/beneficiaries_list.html"
         return self.template_name
 
+    @staticmethod
+    def _mask_aadhar_number(beneficiary_json):
+        for aadhar_num_field in AADHAR_NUM_FIELDS:
+            if beneficiary_json.get(aadhar_num_field):
+                beneficiary_json[aadhar_num_field] = mask_aadhar_number(beneficiary_json[aadhar_num_field])
+
+    def _format_beneficiary(self, beneficiary):
+        beneficiary_json = json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields')
+        beneficiary_json['editUrl'] = reverse(BeneficiaryView.urlname, args=[ICDS_CAS_DOMAIN, beneficiary.id])
+        self._mask_aadhar_number(beneficiary_json)
+        return beneficiary_json
+
     @allow_remote_invocation
     def get_pagination_data(self, in_data):
         context = {}
@@ -217,8 +236,8 @@ class BeneficariesList(JSONResponseMixin, TemplateView):
         if in_data.get('present_in') == 'cas':
             itemList = context.get('beneficiaries')
         else:
-            itemList = map(lambda beneficiary: json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields'),
-                                context.get('beneficiaries'))
+            itemList = map(lambda beneficiary: self._format_beneficiary(beneficiary),
+                           context.get('beneficiaries'))
         return {
             'response': {
                 'itemList': itemList,
@@ -272,6 +291,14 @@ class BeneficiaryView(TemplateView):
             if not isinstance(detail_value, list):
                 detail_value = [(detail_value, 'N/A')]
             ordered_beneficiary_details[detail] = detail_value
+        for aadhar_num_field in AADHAR_NUM_FIELDS:
+            if ordered_beneficiary_details.get(aadhar_num_field):
+                for rch_aadhar_num, cas_aadhar_num in ordered_beneficiary_details[aadhar_num_field]:
+                    if rch_aadhar_num and valid_aadhar_num_length(rch_aadhar_num):
+                        rch_aadhar_num = mask_aadhar_number(rch_aadhar_num)
+                    if cas_aadhar_num and valid_aadhar_num_length(cas_aadhar_num):
+                        cas_aadhar_num = mask_aadhar_number(cas_aadhar_num)
+                    ordered_beneficiary_details[aadhar_num_field] = [(rch_aadhar_num, cas_aadhar_num)]
         context['beneficiary_details'] = ordered_beneficiary_details
 
         return context
