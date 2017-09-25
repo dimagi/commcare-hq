@@ -225,18 +225,7 @@
                 "calculate_total": false,
                 "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "person_owner_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Treating Provider ID"
+                "display": "Treating Provider Name - ID"
             },
             {
                 "sortable": false,
