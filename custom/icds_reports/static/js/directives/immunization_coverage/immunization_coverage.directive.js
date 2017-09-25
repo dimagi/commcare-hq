@@ -158,7 +158,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -167,18 +167,12 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
-                    };
-
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
-                    tooltip_content += "<p>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
+                    tooltip_content += "<p>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });

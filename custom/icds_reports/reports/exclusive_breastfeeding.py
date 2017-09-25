@@ -110,29 +110,29 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
     best_worst = {}
     for row in chart_data:
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
-        valid = row['eligible']
+        eligible = row['eligible']
 
-        best_worst[location] = in_month * 100 / float(valid or 1)
+        best_worst[location] = in_month * 100 / float(eligible or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data_for_month = data['blue'][date_in_miliseconds]
+        data_for_month['in_month'] += in_month
+        data_for_month['all'] += eligible
+        data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
@@ -146,24 +146,12 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Total children exclusively breastfed",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'],
+                        'all': value['all'],
+                        'in_month': value['in_month']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total children 0-6 months",
+                "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

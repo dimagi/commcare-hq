@@ -108,16 +108,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'blue': OrderedDict(),
-        'red': OrderedDict()
+        'blue': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'low_birth': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -126,14 +124,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         location = row['%s_name' % loc_level]
         low_birth = row['low_birth']
 
-        value = (low_birth or 0) * 100 / float(in_month or 1)
-
-        best_worst[location] = value
+        best_worst[location] = (low_birth or 0) * 100 / float(in_month or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['blue'][date_in_miliseconds]['y'] += in_month
-        data['red'][date_in_miliseconds]['y'] += low_birth
+        data_for_month = data['blue'][date_in_miliseconds]
+        data_for_month['low_birth'] += low_birth
+        data_for_month['all'] += in_month
+        data_for_month['y'] = data_for_month['low_birth'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
@@ -147,26 +145,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                     {
                         'x': key,
                         'y': val['y'],
-                        'all': val['all']
+                        'all': val['all'],
+                        'low_birth': val['low_birth']
                     } for key, val in data['blue'].iteritems()
                 ],
-                "key": "Total newborns",
+                "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': val['y'],
-                        'all': val['all']
-                    } for key, val in data['red'].iteritems()
-                ],
-                "key": "Low birth weight newborns",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
             }
         ],
         "all_locations": top_locations,

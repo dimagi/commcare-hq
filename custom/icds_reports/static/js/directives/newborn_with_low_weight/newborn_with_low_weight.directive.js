@@ -139,7 +139,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -148,18 +148,12 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return day['y'];
-                    };
-
-                    var total = findValue(vm.chartData[0].values, d.value);
-                    var value = findValue(vm.chartData[1].values, d.value);
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
-                    tooltip_content += "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
+                    tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(day.low_birth) + "</strong></p>";
+                    tooltip_content += "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });

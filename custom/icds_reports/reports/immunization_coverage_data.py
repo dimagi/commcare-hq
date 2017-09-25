@@ -215,15 +215,13 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -238,9 +236,11 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
             best_worst[location] = [in_month / (valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
+        data_for_month = data['blue'][date_in_miliseconds]
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data_for_month['all'] += valid
+        data_for_month['in_month'] += in_month
+        data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -254,24 +254,12 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Children received complete immunizations by 1 year",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'],
+                        'all': value['all'],
+                        'in_month': value['in_month']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total ICDS child beneficiaries >1 year",
+                "key": "% Children received complete immunizations by 1 year",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

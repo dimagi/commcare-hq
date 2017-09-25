@@ -106,7 +106,6 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'green': OrderedDict(),
         'blue': OrderedDict()
     }
 
@@ -114,25 +113,23 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'birth': 0}
 
     best_worst = {}
     for row in chart_data:
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
-
         birth = row['birth']
 
-        value = (birth or 0) * 100 / float(in_month or 1)
-
-        best_worst[location] = value
+        best_worst[location] = (birth or 0) * 100 / float(in_month or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
+        data_for_month = data['blue'][date_in_miliseconds]
 
-        data['green'][date_in_miliseconds]['y'] += birth
-        data['blue'][date_in_miliseconds]['y'] += in_month
+        data_for_month['all'] += in_month
+        data_for_month['birth'] += birth
+        data_for_month['y'] = data_for_month['birth'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
@@ -147,23 +144,11 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                     {
                         'x': key,
                         'y': val['y'],
-                        'all': val['all']
-                    } for key, val in data['green'].iteritems()
-                ],
-                "key": "Children breastfed within one hour of birth",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': val['y'],
-                        'all': val['all']
+                        'all': val['all'],
+                        'birth': val['birth']
                     } for key, val in data['blue'].iteritems()
                 ],
-                "key": "Total births",
+                "key": "% Early Initiation of Breastfeeding",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

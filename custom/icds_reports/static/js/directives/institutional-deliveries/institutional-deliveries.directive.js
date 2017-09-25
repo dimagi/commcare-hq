@@ -158,7 +158,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -167,18 +167,12 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
-                    };
-
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
+                    tooltip_content += "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
+                    tooltip_content += "<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });
