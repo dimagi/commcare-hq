@@ -156,10 +156,9 @@ class LocationRestrictedEmwfOptionsMixin(object):
 
     def custom_locations_search(self):
         """
-        When the query is specifically for just locations and not any other entity like user, group
-        For ex: enter "/Bihar/patn" would match locations Under locations names Bihar with name like
+        When the query is specifically searching for just locations and not any other entity like user, group.
+        For ex: enter "/Bihar/patn" would match child locations under locations named Bihar, having name like
         patn.
-        :return:
         """
         return self.q.startswith('/')
 
