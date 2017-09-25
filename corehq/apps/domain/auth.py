@@ -6,6 +6,7 @@ from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
 
@@ -84,12 +85,18 @@ def basicauth(realm=''):
     # stolen and modified from: https://djangosnippets.org/snippets/243/
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
+            from corehq.apps.locations.middleware import LocationAccessMiddleware
+
             uname, passwd = get_username_and_password_from_request(request)
             if uname and passwd:
                 user = authenticate(username=uname, password=passwd)
                 if user is not None and user.is_active:
                     request.user = user
-                    return view(request, *args, **kwargs)
+                    request.couch_user = CouchUser.from_django_user(user)
+                    # Check LocationAccessMiddleware again, now that the user is authenticated (FB 262139)
+                    location_middleware = LocationAccessMiddleware()
+                    response = location_middleware.process_view(request, view, args, kwargs)
+                    return view(request, *args, **kwargs) if response is None else response
 
             # Either they did not provide an authorization header or
             # something in the authorization attempt failed. Send a 401
