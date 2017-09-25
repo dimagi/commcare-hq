@@ -411,13 +411,17 @@ class NewLocationImporter(object):
 
     @classmethod
     def check_enikshay(cls, location_rows):
+        client = get_redis_client()
+
+        if client.get('bypass-enikshay-location-restriction'):
+            return
+
         if len(location_rows) > 100:
             raise LocationExcelSheetError(
                 "Please limit enikshay location uploads to 100 at a time for the time being."
             )
 
         key = 'enikshay-location-upload-flag'
-        client = get_redis_client()
         if client.get(key) is not None:
             minutes_remaining = client.ttl(key) / 60.0
             raise LocationExcelSheetError(
