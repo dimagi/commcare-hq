@@ -17,7 +17,7 @@ class Command(BaseEnikshayCaseMigration):
         if (
             test.get_case_property('datamigration_sputum_visual_appearance') == 'yes'
             or test.get_case_property('migration_created_case') == 'true'
-            or test.get_case_property('test_type') not in ['microscopy-zn', 'microscopy-fluorescent']
+            or test.get_case_property('test_type_value') not in ['microscopy-zn', 'microscopy-fluorescent']
             or test.get_case_property('result_recorded') != 'yes'
             or test.get_case_property('sputum_visual_appearance')
         ):
