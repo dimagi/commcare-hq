@@ -69,6 +69,7 @@ jsonpath-rw==1.4.0
 pip>=6.1.1
 django-transfer==0.4
 Pygments==2.0.2
+Jinja2==2.8
 tinys3==0.1.12
 django-formtools==2.0
 django-otp==0.3.13
