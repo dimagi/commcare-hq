@@ -11,15 +11,15 @@ debugger;
         return "";
     };
 
-    var alertUser = function(callback) {
+    var alertUser = function(userId, callback) {
 console.log("calling alertUser, callback=" + callback);
 debugger;
         if (!callback) {
             callback = hqImport("hqwebapp/js/alert_user").alert_user;
         }
-        return function(userId) {
-console.log("calling inner function, userId=" + userId);
-debugger;
+//        return function(userId) {
+//console.log("calling inner function, userId=" + userId);
+//debugger;
             return function(redisMessage) {
 console.log("calling innermost function, redisMessage=" + redisMessage);
 debugger;
@@ -30,7 +30,7 @@ debugger;
                     callback(message, 'info', true);
                 }
             };
-        };
+//        };
     };
 
     return {
