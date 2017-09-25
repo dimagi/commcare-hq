@@ -7,6 +7,7 @@ from django.forms.fields import (
     ChoiceField,
 )
 from django.forms.forms import Form
+from django.forms.widgets import Textarea
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -41,7 +42,7 @@ class MessageForm(Form):
     )
     content = ChoiceField(
         required=True,
-        label=_("Content"),  # seems like a weird label?
+        label=_("What to send"),
         choices=(
             ('sms', _('SMS')),
             # ('email', _('Email')),
@@ -82,18 +83,20 @@ class MessageForm(Form):
             crispy.Field('send_frequency'),
             crispy.Field(
                 'recipients',
-                # type='hidden',
                 data_bind='value: message_recipients.value',
                 placeholder=_("Select some recipients")
             ),
             crispy.Field('content'),
             crispy.Field('translate', data_bind='checked: translate'),
-            # todo this doesn't hide the label
-            crispy.Field('non_translated_message', data_bind='visible: !translate()'),
-        ] + [
-            crispy.Field('message_%s' % lang, data_bind='visible: translate')
-            for lang in self.project_languages
+            crispy.Div(
+                crispy.Field('non_translated_message'),
+                data_bind='visible: !translate()',
+            ),
         ]
+        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
+        layout_fields.append(
+            crispy.Div(*translated_fields, data_bind='visible: translate()')
+        )
 
         if not readonly:
             layout_fields += [
@@ -113,12 +116,12 @@ class MessageForm(Form):
         return getattr(doc, 'langs', ['en'])
 
     def add_content_fields(self):
-        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False)
+        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False, widget=Textarea)
 
         for lang in self.project_languages:
             # TODO support RTL languages
             self.fields['message_%s' % lang] = CharField(
-                label="{} ({})".format(_("Message"), lang), required=False
+                label="{} ({})".format(_("Message"), lang), required=False, widget=Textarea
             )
 
     @property
