@@ -41,6 +41,14 @@ def is_person_public(domain, test):
     return person_case.get_case_property('enrolled_in_private') != 'true'
 
 
+def get_form_path(path, form_data):
+    block = form_data
+    while path:
+        block = block.get(path[0], {})
+        path = path[1:]
+    return block
+
+
 class BaseEnikshayCaseMigration(BaseCommand):
 
     def add_arguments(self, parser):
