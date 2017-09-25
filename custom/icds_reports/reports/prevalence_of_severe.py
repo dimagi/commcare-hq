@@ -116,6 +116,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     ).annotate(
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
+        normal=Sum('wasting_normal'),
         valid=Sum('height_eligible'),
     ).order_by('month')
 
@@ -123,7 +124,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'red': OrderedDict()
+        'red': OrderedDict(),
+        'orange': OrderedDict(),
+        'peach': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -131,6 +134,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['peach'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -139,6 +144,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         location = row['%s_name' % loc_level]
         severe = row['severe']
         moderate = row['moderate']
+        normal = row['normal']
 
         underweight = (moderate or 0) + (severe or 0)
 
@@ -162,9 +168,35 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
+                    } for key, value in data['peach'].iteritems()
+                ],
+                "key": "% normal",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": PINK
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
+                "key": "% moderately wasted (moderate acute malnutrition)",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Severe and Moderate Acute Malnutrition (SAM and MAM)",
+                "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED

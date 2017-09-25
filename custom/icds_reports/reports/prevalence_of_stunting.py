@@ -113,6 +113,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
     ).annotate(
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
+        normal=Sum('stunting_normal'),
         valid=Sum('height_eligible'),
     ).order_by('month')
 
@@ -120,7 +121,9 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'red': OrderedDict()
+        'red': OrderedDict(),
+        'orange': OrderedDict(),
+        'peach': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -128,6 +131,8 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['peach'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -136,6 +141,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
         location = row['%s_name' % loc_level]
         severe = row['severe']
         moderate = row['moderate']
+        normal = row['normal']
 
         underweight = (moderate or 0) + (severe or 0)
 
@@ -143,7 +149,11 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['red'][date_in_miliseconds]['y'] += underweight
+        data['peach'][date_in_miliseconds]['y'] += normal
+        data['peach'][date_in_miliseconds]['all'] += valid
+        data['orange'][date_in_miliseconds]['y'] += moderate
+        data['orange'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['y'] += severe
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
@@ -159,9 +169,35 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
+                    } for key, value in data['peach'].iteritems()
+                ],
+                "key": "% normal",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": PINK
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
+                "key": "% moderately stunted",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Moderate or severely stunted growth",
+                "key": "% severely stunted",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED

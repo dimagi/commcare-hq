@@ -113,6 +113,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         'month', '%s_name' % loc_level
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
+        normal=Sum('nutrition_status_normal'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
         valid=Sum('valid_in_month'),
     ).order_by('month')
@@ -121,7 +122,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'green': OrderedDict(),
+        'peach': OrderedDict(),
         'orange': OrderedDict(),
         'red': OrderedDict()
     }
@@ -130,7 +131,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['peach'][miliseconds] = {'y': 0, 'all': 0}
         data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
@@ -141,6 +142,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         location = row['%s_name' % loc_level]
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
+        normal = row['normal']
 
         underweight = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
 
@@ -148,6 +150,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
+        data['peach'][date_in_miliseconds]['y'] += normal
+        data['peach'][date_in_miliseconds]['all'] += valid
         data['orange'][date_in_miliseconds]['y'] += moderately_underweight
         data['orange'][date_in_miliseconds]['all'] += valid
         data['red'][date_in_miliseconds]['y'] += severely_underweight
@@ -160,6 +164,19 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     return {
         "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['peach'].iteritems()
+                ],
+                "key": "% Normal",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": PINK
+            },
             {
                 "values": [
                     {
