@@ -295,15 +295,18 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
-    def filter_by_user_input(self, domain, user_input):
+    def filter_by_user_input(self, domain, user_input, from_location_ids=None):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        return (self.filter(domain=domain)
-                    .filter(models.Q(name__icontains=user_input) |
-                            models.Q(site_code__icontains=user_input)))
+        locations = (self.filter(domain=domain)
+                     .filter(models.Q(name__icontains=user_input) |
+                             models.Q(site_code__icontains=user_input)))
+        if from_location_ids is not None:
+            locations = locations.filter(location_id__in=from_location_ids)
+        return locations
 
-    def filter_path_by_user_input(self, domain, user_input):
+    def filter_path_by_user_input(self, domain, user_input, from_location_ids=None):
         """
         Returns a queryset including all locations matching the user input
         and their children. This means "Middlesex" will match:
@@ -312,7 +315,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             Massachusetts/Middlesex/Cambridge
         It matches by name or site-code
         """
-        direct_matches = self.filter_by_user_input(domain, user_input)
+        direct_matches = self.filter_by_user_input(domain, user_input, from_location_ids)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
     def get_locations(self, location_ids):
@@ -327,6 +330,24 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             self.filter(location_id__in=location_ids),
             include_self=True
         )
+
+    def get_children(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of their children.
+        """
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
+            include_self=False
+        )
+
+    def get_children_ids(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of their children.
+        """
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
+            include_self=False
+        ).location_ids()
 
     def get_locations_and_children_ids(self, location_ids):
         return list(self.get_locations_and_children(location_ids).location_ids())
