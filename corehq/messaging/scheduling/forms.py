@@ -82,18 +82,20 @@ class MessageForm(Form):
             crispy.Field('send_frequency'),
             crispy.Field(
                 'recipients',
-                # type='hidden',
                 data_bind='value: message_recipients.value',
                 placeholder=_("Select some recipients")
             ),
             crispy.Field('content'),
             crispy.Field('translate', data_bind='checked: translate'),
-            # todo this doesn't hide the label
-            crispy.Field('non_translated_message', data_bind='visible: !translate()'),
-        ] + [
-            crispy.Field('message_%s' % lang, data_bind='visible: translate')
-            for lang in self.project_languages
+            crispy.Div(
+                crispy.Field('non_translated_message'),
+                data_bind='visible: !translate()',
+            ),
         ]
+        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
+        layout_fields.append(
+            crispy.Div(*translated_fields, data_bind='visible: translate()')
+        )
 
         if not readonly:
             layout_fields += [
