@@ -1,4 +1,8 @@
-from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration, get_result_recorded_form
+from custom.enikshay.management.commands.utils import (
+    BaseEnikshayCaseMigration,
+    get_form_path,
+    get_result_recorded_form,
+)
 
 
 class Command(BaseEnikshayCaseMigration):
@@ -22,15 +26,18 @@ class Command(BaseEnikshayCaseMigration):
             form_data = get_result_recorded_form(test)
             if form_data is None:
                 return {}
-            sputum_visual_appearance = (
-                form_data.get('update_test_result', {}).get('microscopy', {}).get(
-                    'ql_result', {}).get('sample_a_visual_appearance')
-                or form_data.get('update_test_result', {}).get('microscopy', {}).get(
-                    'ql_result', {}).get('sample_b_visual_appearance')
-                or form_data.get('microscopy', {}).get(
-                    'ql_result', {}).get('sample_a_visual_appearance')
-                or form_data.get('microscopy', {}).get(
-                    'ql_result', {}).get('sample_b_visual_appearance')
+            sputum_visual_appearance = get_form_path(
+                ['update_test_result', 'microscopy', 'ql_result', 'sample_a_visual_appearance'],
+                form_data
+            ) or get_form_path(
+                ['update_test_result', 'microscopy', 'ql_result', 'sample_b_visual_appearance'],
+                form_data
+            ) or get_form_path(
+                ['microscopy', 'ql_result', 'sample_a_visual_appearance'],
+                form_data
+            ) or get_form_path(
+                ['microscopy', 'ql_result', 'sample_b_visual_appearance'],
+                form_data
             )
             if sputum_visual_appearance:
                 return {

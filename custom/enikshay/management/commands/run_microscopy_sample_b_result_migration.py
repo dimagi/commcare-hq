@@ -1,4 +1,8 @@
-from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration, get_result_recorded_form
+from custom.enikshay.management.commands.utils import (
+    BaseEnikshayCaseMigration,
+    get_form_path,
+    get_result_recorded_form,
+)
 
 
 class Command(BaseEnikshayCaseMigration):
@@ -22,11 +26,12 @@ class Command(BaseEnikshayCaseMigration):
             form_data = get_result_recorded_form(test)
             if form_data is None:
                 return {}
-            microscopy_sample_b_result = (
-                form_data.get('microscopy', {}).get(
-                    'ql_sample_b', {}).get('sample_b_result')
-                or form_data.get('update_test_result', {}).get('microscopy', {}).get(
-                    'ql_result', {}).get('sample_b_result')
+            microscopy_sample_b_result = get_form_path(
+                ['microscopy', 'ql_sample_b', 'sample_b_result'],
+                form_data
+            ) or get_form_path(
+                ['update_test_result', 'microscopy', 'ql_result', 'sample_b_result'],
+                form_data
             )
             if microscopy_sample_b_result:
                 return {
