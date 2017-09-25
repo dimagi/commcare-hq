@@ -82,8 +82,6 @@ class Command(BaseCommand):
             case_properties.get('datamigration_diagnosis_test_information') != 'yes'
             and case_properties.get('episode_type') == 'confirmed_tb'
             and case_properties.get('diagnosis_test_result_date', '') == ''
-            and (case_properties.get('treatment_initiated') == 'yes_phi' or
-                 case_properties.get('treatment_initiated') == 'yes_private')
         ):
             # Filter and skip private cases
             try:
