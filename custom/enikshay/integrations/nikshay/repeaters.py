@@ -16,9 +16,10 @@ from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_episode_case_from_occurrence,
+    get_associated_episode_case_for_test,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
@@ -112,7 +113,8 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
         if allowed_case_types_and_users:
             try:
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+                episode_case = get_episode_case_from_person(person_case.domain, person_case.get_id,
+                                                            last_closed=True)
             except ENikshayCaseNotFound:
                 return False
             episode_case_properties = episode_case.dynamic_case_properties()
@@ -186,7 +188,10 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         if allowed_case_types_and_users:
             try:
                 occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+                episode_case = get_associated_episode_case_for_test(test_case.domain, test_case)
+                if not episode_case:
+                    episode_case = get_episode_case_from_occurrence(test_case.domain, occurence_case.get_id,
+                                                                    last_closed=True)
             except ENikshayCaseNotFound:
                 return False
             test_case_properties = test_case.dynamic_case_properties()

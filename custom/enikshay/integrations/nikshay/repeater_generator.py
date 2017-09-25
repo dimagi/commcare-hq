@@ -23,12 +23,13 @@ from custom.enikshay.const import (
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_person_locations,
-    get_open_episode_case_from_person,
+    get_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_episode_case_from_occurrence,
     get_person_case_from_occurrence,
     get_lab_referral_from_test,
     get_occurrence_case_from_episode,
+    get_associated_episode_case_for_test,
 )
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
@@ -216,7 +217,7 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         """
         https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.hxfnqahoeag
         """
-        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
+        episode_case = get_episode_case_from_person(person_case.domain, person_case.get_id, last_closed=True)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         base_properties = self._base_properties(repeat_record)
@@ -259,7 +260,10 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-        episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+        episode_case = get_associated_episode_case_for_test(test_case.domain, test_case)
+        if not episode_case:
+            episode_case = get_episode_case_from_occurrence(test_case.domain, occurence_case.get_id,
+                                                            last_closed=True)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
         test_case_properties = test_case.dynamic_case_properties()

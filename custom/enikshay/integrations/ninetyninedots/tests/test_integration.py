@@ -10,7 +10,7 @@ from custom.enikshay.integrations.ninetyninedots.views import (
     validate_adherence_values,
     validate_beneficiary_id
 )
-from custom.enikshay.case_utils import get_open_episode_case_from_person
+from custom.enikshay.case_utils import get_episode_case_from_person
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     update_adherence_confidence_level,
@@ -119,5 +119,5 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
         self.create_case_structure()
         confidence_level = "new_confidence_level"
         update_default_confidence_level(self.domain, self.person_id, confidence_level)
-        episode = get_open_episode_case_from_person(self.domain, self.person_id)
+        episode = get_episode_case_from_person(self.domain, self.person_id)
         self.assertEqual(episode.dynamic_case_properties().get('default_adherence_confidence'), confidence_level)

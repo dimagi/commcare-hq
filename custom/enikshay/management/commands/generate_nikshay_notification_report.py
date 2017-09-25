@@ -12,7 +12,7 @@ from corehq.util.log import with_progress_bar
 
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
-from custom.enikshay.case_utils import get_person_case_from_episode, get_open_episode_case_from_person
+from custom.enikshay.case_utils import get_person_case_from_episode, get_episode_case_from_person
 from custom.enikshay.const import DSTB_EPISODE_TYPE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.integrations.utils import is_valid_person_submission
@@ -81,7 +81,7 @@ class Command(BaseCommand):
 
         for person_id in self.person_ids:
             try:
-                episode_case = get_open_episode_case_from_person(DOMAIN, person_id)
+                episode_case = get_episode_case_from_person(DOMAIN, person_id)
                 self.episode_ids.append(episode_case.get_id)
             except ENikshayCaseNotFound:
                 print("Could not find episode for person with enikshay ID:", person_id)

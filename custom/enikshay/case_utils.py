@@ -28,7 +28,6 @@ CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
-CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
@@ -103,32 +102,37 @@ def get_person_case_from_episode(domain, episode_case_id):
     )
 
 
-def get_open_occurrence_case_from_person(domain, person_case_id):
+def get_occurrence_case_from_person(domain, person_case_id, last_closed=False):
     """
-    Gets the first open 'occurrence' case for the person
-
+    By default gets the first open 'occurrence' case for the person
     Assumes the following case structure:
     Person <--ext-- Occurrence
-
+    last_closed would give the latest closed occurrence case if no open occurrence case found
     """
     case_accessor = CaseAccessors(domain)
     occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_occurrence_cases = [case for case in occurrence_cases
                              if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
     if not open_occurrence_cases:
+        if last_closed:
+            all_occurrence_cases = [case for case in occurrence_cases if case.type == CASE_TYPE_OCCURRENCE]
+            if all_occurrence_cases:
+                all_occurrence_cases.sort(key=lambda x: x.closed_on, reverse=True)
+                return all_occurrence_cases[0]
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
         )
     return open_occurrence_cases[0]
 
 
-def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
+def get_episode_case_from_occurrence(domain, occurrence_case_id, last_closed=False):
     """
-    Gets the first open 'episode' case for the occurrence
-
+    By default gets the first open 'episode' case for the occurrence
     Assumes the following case structure:
     Occurrence <--ext-- Episode
-
+    last_closed: If no open episode case is found, this would give the latest closed episode case
+    under the open occurrence or in case of no open occurrence would give the latest closed episode case
+    under the latest closed occurrence case
     """
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
@@ -138,6 +142,13 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     if open_episode_cases:
         return open_episode_cases[0]
     else:
+        if last_closed:
+            all_episode_cases = [case for case in episode_cases
+                                 if case.type == CASE_TYPE_EPISODE and
+                                 case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+            if all_episode_cases:
+                all_episode_cases.sort(key=lambda x: x.closed_on, reverse=True)
+                return all_episode_cases[0]
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
         )
@@ -163,7 +174,7 @@ def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
         )
 
 
-def get_open_episode_case_from_person(domain, person_case_id):
+def get_episode_case_from_person(domain, person_case_id, last_closed=False):
     """
     Gets the first open 'episode' case for the person
 
@@ -171,8 +182,8 @@ def get_open_episode_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_episode_case_from_occurrence(
-        domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
+    return get_episode_case_from_occurrence(
+        domain, get_occurrence_case_from_person(domain, person_case_id, last_closed).case_id, last_closed
     )
 
 
@@ -237,7 +248,7 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     Assumes the following case structure:
     Episode <--ext-- Adherence
     """
-    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
+    return get_first_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
 @hqnottest
@@ -245,7 +256,7 @@ def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
         """
-    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 @hqnottest
@@ -268,7 +279,7 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
 
 
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
-    episode = get_open_episode_case_from_person(domain, person_case_id)
+    episode = get_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_pertinent_adherence_cases = [
@@ -280,6 +291,26 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     ]
 
     return open_pertinent_adherence_cases
+
+
+def get_associated_episode_case_for_test(domain, test_case):
+    """
+    We are now moving to a structure where episode_case_id on test case contains the episode case id
+    when the test result is added
+    :param domain:
+    :param test_case:
+    :return:
+    """
+    test_case_properties = test_case.dynamic_case_properties()
+    episode_case_id = test_case_properties.get('episode_case_id')
+    if episode_case_id:
+        case_accessor = CaseAccessors(domain)
+        try:
+            episode_case = case_accessor.get_case(episode_case_id)
+            return episode_case
+        except ENikshayCaseNotFound:
+            pass
+    return None
 
 
 def update_case(domain, case_id, updated_properties, external_id=None,
