@@ -486,7 +486,8 @@ class ENikshayLocationFormSet(LocationFormSet):
         return all(form.is_valid() for form in self.forms)
 
     def save(self):
-        if self.location_form.cleaned_data['location_type_object'].code in AGENCY_LOCATION_TYPES:
+        if (self.location_form.cleaned_data['location_type_object'].code in AGENCY_LOCATION_TYPES
+                and self.include_user_forms):
             self._set_user_role(self.user, PRIVATE_SECTOR_WORKER_ROLE)
         super(ENikshayLocationFormSet, self).save()
 
