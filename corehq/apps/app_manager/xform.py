@@ -558,7 +558,6 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    return True
     if isinstance(source, unicode):
         source = source.encode("utf-8")
     # normalize and strip comments
