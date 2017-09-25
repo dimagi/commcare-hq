@@ -152,7 +152,11 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['red'][date_in_miliseconds]['y'] += underweight
+        data['peach'][date_in_miliseconds]['y'] += normal
+        data['peach'][date_in_miliseconds]['all'] += valid
+        data['orange'][date_in_miliseconds]['y'] += moderate
+        data['orange'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['y'] += severe
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
