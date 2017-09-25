@@ -300,7 +300,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
 
         # From Episode
         self.assertEqual(payload['sitedetail'], 2)
-        self.assertEqual(payload['Ptype'], '6')
+        self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
         self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
