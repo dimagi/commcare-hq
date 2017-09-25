@@ -42,7 +42,7 @@ class MessageForm(Form):
     )
     content = ChoiceField(
         required=True,
-        label=_("Content"),  # seems like a weird label?
+        label=_("What to send"),
         choices=(
             ('sms', _('SMS')),
             # ('email', _('Email')),
