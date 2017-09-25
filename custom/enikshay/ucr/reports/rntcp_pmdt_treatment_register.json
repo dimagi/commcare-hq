@@ -265,7 +265,7 @@
                         "follow_up_sm_ve_ip": "Follow Up Sm+ve at end IP",
                         "extended_dst": "Extended DST",
                         "discordance_resolution": "Discordance Resolution",
-                        " private_referral": "Private Referral",
+                        "private_referral": "Private Referral",
                         "mdr_at_diagnosis": "MDR TB at Diagnosis",
                         "contact_of_mdr_rr": "Contact of MDR/RR TB"
                     },
