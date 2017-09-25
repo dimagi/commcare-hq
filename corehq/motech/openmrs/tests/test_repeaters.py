@@ -1,9 +1,11 @@
+import doctest
 import os
 from django.test import SimpleTestCase
 import mock
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import TestFileMixin
+import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import \
     get_relevant_case_updates_from_form_json, CaseTriggerInfo
 
@@ -33,6 +35,7 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     created=True,
                     closed=False,
                     extra_fields={},
+                    form_question_values={},
                 )
             ]
         )
@@ -51,6 +54,14 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                     created=False,
                     closed=False,
                     extra_fields={},
+                    form_question_values={},
                 )
             ]
         )
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
+        self.assertEqual(results.failed, 0)
