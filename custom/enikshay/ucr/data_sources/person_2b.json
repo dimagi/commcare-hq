@@ -1,8 +1,6 @@
 {
     "domains": [
-        "enikshay",
-        "enikshay-performance-test",
-        "enikshay-reports-qa"
+        "enikshay"
     ],
     "server_environment": [
         "enikshay"
@@ -190,18 +188,19 @@
             },
             {
                 "comment": null,
-                "create_index": false,
                 "display_name": null,
-                "datatype": "string",
-                "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "hiv_test_nikshay_registered"
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hiv_test_nikshay_registered"
+                    },
+                    "comment": null,
+                    "property_value": "true"
                 },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
+                "type": "boolean",
                 "column_id": "hiv_test_nikshay_registered"
             },
             {

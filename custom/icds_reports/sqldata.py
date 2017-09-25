@@ -1575,7 +1575,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
             DatabaseColumn(
-                'Number of early initiation of breastfeeding forms',
+                'Number of exclusive breastfeeding forms',
                 SumColumn('usage_num_ebf'),
                 slug='num_ebf_forms'
             ),

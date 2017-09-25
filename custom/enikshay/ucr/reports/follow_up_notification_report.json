@@ -3,14 +3,13 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "voucher",
-    "report_id": "drug_voucher",
+    "data_source_table": "test_2b_v2",
+    "report_id": "follow_up_notification_report_2b",
     "config": {
         "description": "",
-        "title": "Drug Voucher Register",
+        "title": "Follow Up Notification Report (2b)",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -20,34 +19,70 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "slug": "date_fulfilled",
-                "field": "date_fulfilled",
+                "display": "Date of Test Result Reported",
+                "field": "date_reported",
                 "type": "date",
-                "display": "Voucher Validation Date"
+                "slug": "date_reported"
             },
             {
                 "compare_as_string": false,
                 "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "testing_facility_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
                     "order_by_hierarchy": true,
                     "show_full_path": true
                 },
-                "show_all": true,
-                "display": "Location",
-                "field": "person_owner_id",
-                "type": "dynamic_choice_list",
-                "slug": "village"
+                "display": "Location"
             },
             {
-                "pre_value": "prescription",
-                "datatype": "string",
-                "pre_operator": null,
-                "slug": "voucher_type",
-                "field": "voucher_type",
+                "slug": "is_migrated",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show only migrated from Nikshay",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show only eNikshay",
+                        "value": 0
+                    }
+                ],
+                "field": "case_created_by_migration",
+                "type": "choice_list",
+                "display": "Filter migrated data"
+            },
+            {
+                "slug": "is_notified",
+                "required": false,
+                "datatype": "integer",
+                "show_all": true,
+                "choices": [
+                    {
+                        "display": "Show Notified",
+                        "value": 1
+                    },
+                    {
+                        "display": "Show Not Notified",
+                        "value": 0
+                    }
+                ],
+                "field": "followup_nikshay_registered",
+                "type": "choice_list",
+                "display": "Filter notified data"
+            },
+            {
+                "pre_value": 1,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_microscopy",
                 "type": "pre",
-                "display": null
+                "slug": "is_microscopy"
             }
         ],
         "columns": [
@@ -55,13 +90,25 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_fulfilled_by_login_name",
+                "column_id": "doc_id",
+                "field": "doc_id",
+                "transform": {},
                 "calculate_total": false,
-                "column_id": "voucher_fulfilled_by_login_name",
                 "type": "field",
-                "display": "Pharmacy Id"
+                "display": "Follow Up Test ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "aggregation": "simple",
+                "column_id": "lab_serial_number",
+                "field": "lab_serial_number",
+                "transform": {},
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lab serial Number"
             },
             {
                 "sortable": false,
@@ -69,11 +116,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_fulfilled_by_name",
+                "field": "person_id_property",
                 "calculate_total": false,
-                "column_id": "voucher_fulfilled_by_name",
                 "type": "field",
-                "display": "Pharmacy Name"
+                "display": "Person eNikshay ID"
             },
             {
                 "sortable": false,
@@ -81,79 +127,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "contact_phone_number",
+                "field": "follow_up_nikshay_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Pharmacy Mobile Number"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "owner_display"
-                },
-                "aggregation": "simple",
-                "field": "fo",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Assigned FO"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "person_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary Id"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "phone_number",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary Mobile Number"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "treatment_initiation_date",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Rx Initiation Date"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "date_of_notification",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Notification"
+                "display": "Follow up Nikshay ID"
             },
             {
                 "sortable": false,
@@ -162,15 +139,38 @@
                 "transform": {
                     "type": "translation",
                     "translations": {
-                        "F": "Initiated on Treatment",
-                        "N": "Not Initiated on Treatment"
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "negative_not_seen": "Negative / Not seen",
+                        "2plus": "2+",
+                        "3plus": "3+"
                     }
                 },
                 "aggregation": "simple",
-                "field": "treatment_initiation_status",
+                "field": "sample_a_result",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Rx Initiation Status"
+                "display": "Results - Sample A"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "negative_not_seen": "Negative / Not seen",
+                        "2plus": "2+",
+                        "3plus": "3+"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "sample_b_result",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Results - Sample B"
             },
             {
                 "sortable": false,
@@ -178,10 +178,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_issued_by_login_name",
+                "field": "date_reported",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Voucher Generated By Provider ID"
+                "display": "Date of result"
             },
             {
                 "sortable": false,
@@ -189,10 +189,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_id",
+                "field": "nikshay_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Voucher Id"
+                "display": "Nikshay ID (notification no.)"
             },
             {
                 "sortable": false,
@@ -200,10 +200,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "date_issued",
+                "field": "post_treatment",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Voucher Issue Date"
+                "display": "Follow up test reason"
             },
             {
                 "sortable": false,
@@ -211,10 +211,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "date_fulfilled",
+                "field": "rft_general",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Voucher Validation Date"
+                "display": "RFT General"
             },
             {
                 "sortable": false,
@@ -222,10 +222,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "state",
+                "field": "rft_dstb_followup",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Voucher Status"
+                "display": "RFT DSTB Follow Up"
             },
             {
                 "sortable": false,
@@ -233,10 +233,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "validation_mode",
+                "field": "purpose_of_testing",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Validation Mode"
+                "display": "Purpose of Testing"
             },
             {
                 "sortable": false,
@@ -244,10 +244,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "issued_amount",
+                "field": "follow_up_test_reason",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Issued Amount"
+                "display": "Follow Up Test Reason"
             },
             {
                 "sortable": false,
@@ -255,10 +255,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "validated_amount_as_per_chemist",
+                "field": "weight",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Validated Amount (as per chemist)"
+                "display": "Weight"
             },
             {
                 "sortable": false,
@@ -266,10 +266,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "drugs_ordered_static",
+                "field": "result_grade",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Issued Product"
+                "display": "Result Grade"
             },
             {
                 "sortable": false,
@@ -277,10 +277,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "units_prescribed_static",
+                "field": "max_bacilli_count",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Issued No Of Units"
+                "display": "Max Bacilli Count"
             },
             {
                 "sortable": false,
@@ -288,43 +288,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "days_prescribed_static",
+                "field": "followup_nikshay_error",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Issued Number Of Days"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "validated_product_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Validated Product Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "validated_unit_price",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Validated Unit Price"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "validated_number_of_units",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Validated No Of Units"
+                "display": "Follow Up Notification Error"
             }
         ]
     }
