@@ -2,6 +2,7 @@ from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_form_path,
     get_result_recorded_form,
+    is_person_public,
 )
 
 
@@ -20,6 +21,7 @@ class Command(BaseEnikshayCaseMigration):
             or test.get_case_property('test_type_value') not in ['microscopy-zn', 'microscopy-fluorescent']
             or test.get_case_property('result_recorded') != 'yes'
             or test.get_case_property('microscopy_sample_b_result')
+            or not is_person_public(domain, test)
         ):
             return {}
         else:
