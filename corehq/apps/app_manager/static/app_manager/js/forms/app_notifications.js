@@ -11,7 +11,7 @@ debugger;
         return "";
     };
 
-    var alertUser = function(userId, callback) {
+    var alertUser = function(userId, callback, context) {
 console.log("calling alertUser, callback=" + callback);
 debugger;
         if (!callback) {
@@ -27,7 +27,7 @@ debugger;
 console.log("message=" + message);
 debugger;
                 if (message) {
-                    callback(message, 'info', true);
+                    callback.apply(context, [message, 'info', true]);
                 }
             };
 //        };
