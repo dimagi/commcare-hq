@@ -33,7 +33,7 @@
 </div>
 {% if needs_agreement %}
     <script>
-    {% if request.requirejs_main %}
+    {% if requirejs_main %}
         requirejs(['jquery', 'bootstrap'], function($) {
     {% else %}
         $(function(){
