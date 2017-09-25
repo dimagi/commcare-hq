@@ -16,7 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
-from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
+from corehq.apps.users.forms import clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
 from .const import (
@@ -266,12 +266,6 @@ def connect_signals():
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 
-class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
-    """Mobile worker list view create modal"""
-    def __init__(self, *args, **kwargs):
-        super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
-
-
 # pcp -> MBBS
 # pac -> AYUSH/other
 # plc -> Private Lab
@@ -435,7 +429,6 @@ class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = ENikshayLocationForm
     _location_data_editor = ENikshayUserLocationDataEditor
-    _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayLocationUserDataEditor
 
     @property
