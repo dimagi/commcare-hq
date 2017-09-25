@@ -3,7 +3,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-from django.db.models.aggregates import Sum
+from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from custom.icds_reports.const import LocationTypes
@@ -22,15 +22,16 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
+        level = filters['aggregation_level']
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
             '%s_name' % loc_level
         ).annotate(
-            districts=Sum('num_launched_districts'),
-            blocks=Sum('num_launched_blocks'),
-            supervisors=Sum('num_launched_supervisors'),
-            awcs=Sum('num_launched_awcs'),
+            districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
+            blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
+            supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+            awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
         )
 
         if not show_test:
@@ -85,15 +86,16 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     config['month'] = datetime(*config['month'])
 
+    level = config['aggregation_level']
     data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         *group_by
     ).annotate(
-        districts=Sum('num_launched_districts'),
-        blocks=Sum('num_launched_blocks'),
-        supervisors=Sum('num_launched_supervisors'),
-        awcs=Sum('num_launched_awcs'),
+        districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
+        blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
+        supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+        awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -237,6 +239,6 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         ],
         "all_locations": top_locations,
         "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
+        "bottom_three": top_locations[-6:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }

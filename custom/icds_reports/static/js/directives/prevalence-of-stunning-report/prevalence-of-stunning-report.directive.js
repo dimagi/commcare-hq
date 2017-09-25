@@ -159,7 +159,9 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children with moderate or severely stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with normal stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with moderate stunted growth: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with severely stunted growth: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
 
                     return tooltip_content;
                 });

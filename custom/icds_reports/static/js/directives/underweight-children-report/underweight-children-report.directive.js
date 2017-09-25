@@ -174,8 +174,9 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children normal: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
 
                     return tooltip_content;
                 });
