@@ -11,11 +11,10 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import (
-    CASE_TYPE_OCCURRENCE,
-    CASE_TYPE_PERSON,
-    get_first_parent_of_case,
+    get_person_case
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
 
 def get_result_recorded_form(test):
@@ -35,16 +34,6 @@ def get_test_created_form(test):
     return test.actions[0].form.form_data
 
 
-def is_person_public(domain, test):
-    try:
-        occurrence_case = get_first_parent_of_case(domain, test.case_id, CASE_TYPE_OCCURRENCE)
-        person_case = get_first_parent_of_case(domain, occurrence_case.case_id, CASE_TYPE_PERSON)
-    except ENikshayCaseNotFound:
-        return False
-
-    return person_case.get_case_property('enrolled_in_private') != 'true'
-
-
 def get_form_path(path, form_data):
     block = form_data
     while path:
@@ -54,7 +43,6 @@ def get_form_path(path, form_data):
 
 
 class BaseEnikshayCaseMigration(BaseCommand):
-
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('log_file_name')
@@ -77,17 +65,35 @@ class BaseEnikshayCaseMigration(BaseCommand):
                 + [self.datamigration_case_property]
             )
             for case in self.get_cases(domain, self.case_type, case_ids):
-                updated_case_properties = self.get_case_property_updates(case, domain)
-                needs_update = bool(updated_case_properties)
-                updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
-                writer.writerow(
-                    [case.case_id]
-                    + [case.get_case_property(case_prop) or '' for case_prop in self.case_properties_to_update]
-                    + [updated_case_properties.get(case_prop, '') for case_prop in (
-                        self.case_properties_to_update + [self.datamigration_case_property])]
-                )
-                if needs_update and commit:
-                    self.commit_updates(domain, case.case_id, updated_case_properties)
+                if self.is_valid_case(domain, case):
+                    updated_case_properties = self.get_case_property_updates(case, domain)
+                    needs_update = bool(updated_case_properties)
+                    updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
+                    writer.writerow(
+                        [case.case_id]
+                        + [case.get_case_property(case_prop) or '' for case_prop in self.case_properties_to_update]
+                        + [updated_case_properties.get(case_prop, '') for case_prop in (
+                            self.case_properties_to_update + [self.datamigration_case_property])]
+                    )
+                    if needs_update and commit:
+                        self.commit_updates(domain, case.case_id, updated_case_properties)
+
+    def is_valid_case(self, domain, case):
+        try:
+            return (self.include_public_cases == self._is_person_public(domain, case.case_id)
+                    and self.include_private_cases == self._is_person_private(domain, case.case_id))
+        except ENikshayCaseNotFound:
+            return False
+
+    @staticmethod
+    def _is_person_public(domain, case):
+        person_case = get_person_case(domain, case.case_id)
+        return person_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
+
+    @staticmethod
+    def _is_person_private(domain, case):
+        person_case = get_person_case(domain, case.case_id)
+        return person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
 
         print("Finished at {}".format(datetime.datetime.utcnow()))
 
@@ -103,6 +109,14 @@ class BaseEnikshayCaseMigration(BaseCommand):
 
     @property
     def case_type(self):
+        raise NotImplementedError
+
+    @property
+    def include_private_cases(self):
+        raise NotImplementedError
+
+    @property
+    def include_public_cases(self):
         raise NotImplementedError
 
     @property

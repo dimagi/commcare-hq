@@ -2,7 +2,6 @@ from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_form_path,
     get_test_created_form,
-    is_person_public,
 )
 
 
@@ -12,6 +11,8 @@ class Command(BaseEnikshayCaseMigration):
         'tu_name_at_request',
     ]
     datamigration_case_property = 'datamigration_tu_name_at_request'
+    include_public_cases = True
+    include_private_cases = False
 
     @staticmethod
     def get_case_property_updates(test, domain):
@@ -19,7 +20,6 @@ class Command(BaseEnikshayCaseMigration):
             test.get_case_property('datamigration_tu_name_at_request') == 'yes'
             or test.get_case_property('migration_created_case') == 'true'
             or test.get_case_property('tu_name_at_request')
-            or not is_person_public(domain, test)
         ):
             return {}
         else:

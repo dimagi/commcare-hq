@@ -4,7 +4,6 @@ from corehq.apps.users.models import CommCareUser
 from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_result_recorded_form,
-    is_person_public,
 )
 
 
@@ -15,6 +14,8 @@ class Command(BaseEnikshayCaseMigration):
         'testing_facility_name',
     ]
     datamigration_case_property = 'datamigration_testing_facility_name2'
+    include_public_cases = True
+    include_private_cases = False
 
     @staticmethod
     def get_case_property_updates(test, domain):
@@ -23,7 +24,6 @@ class Command(BaseEnikshayCaseMigration):
             or test.get_case_property('migration_created_case') == 'true'
             or test.get_case_property('result_recorded') != 'yes'
             or test.get_case_property('testing_facility_id')
-            or not is_person_public(domain, test)
         ):
             return {}
 
