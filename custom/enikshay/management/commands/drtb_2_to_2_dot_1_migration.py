@@ -53,7 +53,7 @@ class Command(BaseCommand):
         # dry_run = options.get('dry_run')
         # dry_run = True
         accessor = CaseAccessors(DOMAIN)
-        result_file_path = "{case_type}_cases_update_report_{timestamp}".format(
+        result_file_path = "{case_type}_cases_update_report_{timestamp}.csv".format(
             case_type=case_type, timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         )
         if case_type == "all":
