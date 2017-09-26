@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
+from couchforms import openrosa_response
 
 
 class FakeFile(object):
@@ -136,8 +137,8 @@ class _AuthTestsCouchOnly(object):
     def test_submit_mode(self):
         # test 'submit_mode=demo' request param
 
-        accepted_response = SubmissionPost.get_success_response().content
-        ignored_response = SubmissionPost.submission_ignored_response().content
+        accepted_response = openrosa_response.SUCCESS_RESPONSE.content
+        ignored_response = openrosa_response.SUBMISSION_IGNORED_RESPONSE.content
 
         client = django_digest.test.Client()
         client.set_authorization(self.user.username, '1234',
@@ -210,7 +211,7 @@ class _AuthTestsBothBackends(object):
             authtype='noauth',
             expected_status=201,
             submit_mode=DEMO_SUBMIT_MODE,
-            expected_response=SubmissionPost.submission_ignored_response().content,
+            expected_response=openrosa_response.SUBMISSION_IGNORED_RESPONSE.content,
         )
 
     def test_noauth_devicelog(self):

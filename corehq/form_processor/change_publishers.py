@@ -14,7 +14,7 @@ def republish_all_changes_for_form(domain, form_id):
     """
     form = FormAccessors(domain=domain).get_form(form_id)
     publish_form_saved(form)
-    for case in _get_cases_from_form(domain, form):
+    for case in get_cases_from_form(domain, form):
         publish_case_saved(case, send_post_save_signal=False)
     _publish_ledgers_from_form(domain, form)
 
@@ -106,7 +106,7 @@ def change_meta_from_ledger_v1(stock_state):
     )
 
 
-def _get_cases_from_form(domain, form):
+def get_cases_from_form(domain, form):
     from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
     case_ids = get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form)
     return CaseAccessors(domain).get_cases(list(case_ids))
