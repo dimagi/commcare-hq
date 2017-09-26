@@ -295,16 +295,13 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
-    def filter_by_user_input(self, domain, user_input, from_location_ids=None):
+    def filter_by_user_input(self, domain, user_input):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        locations = (self.filter(domain=domain)
-                     .filter(models.Q(name__icontains=user_input) |
-                             models.Q(site_code__icontains=user_input)))
-        if from_location_ids is not None:
-            locations = locations.filter(location_id__in=from_location_ids)
-        return locations
+        return (self.filter(domain=domain)
+                    .filter(models.Q(name__icontains=user_input) |
+                            models.Q(site_code__icontains=user_input)))
 
     def filter_path_by_user_input(self, domain, user_input, from_location_ids=None):
         """
@@ -315,7 +312,9 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             Massachusetts/Middlesex/Cambridge
         It matches by name or site-code
         """
-        direct_matches = self.filter_by_user_input(domain, user_input, from_location_ids)
+        direct_matches = self.filter_by_user_input(domain, user_input)
+        if from_location_ids is not None:
+            direct_matches = direct_matches.filter(location_id__in=from_location_ids)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
     def get_locations(self, location_ids):
