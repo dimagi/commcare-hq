@@ -1270,3 +1270,11 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
+
+ICDS_LIVEQUERY = PredictablyRandomToggle(
+    'icds_livequery',
+    'Enable livequery case sync for a random subset of ICDS users',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
+    randomness=0.1,
+)
