@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import timedelta
 from requests import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -16,7 +17,7 @@ class Requests(object):
         self.password = password
 
     def _url(self, uri):
-        return '{}{}'.format(self.base_url, uri)
+        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def get(self, uri, *args, **kwargs):
         return self.requests.get(self._url(uri), *args,
@@ -75,64 +76,68 @@ def server_datetime_to_openmrs_timestamp(dt):
 
 
 def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, patient_uuid=None):
-    timestamp = server_datetime_to_openmrs_timestamp(visit_datetime)
+                 openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
     patient_uuid = patient_uuid or person_uuid
-    observations = [
-        {
-            "concept": concept_uuid,
-            "value": value,
-            "person": person_uuid,
-            "obsDatetime": timestamp,
-        }
-        for concept_uuid, values in values_for_concept.items()
-        for value in values
-    ]
-    observation_uuids = []
-    for observation in observations:
-        response = requests.post('/ws/rest/v1/obs', json=observation)
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        observation_uuids.append(response.json()['uuid'])
-
-    logger.debug('observations', observation_uuids)
-    encounters = [
-        {
-            "encounterType": encounter_type,
-            "form": openmrs_form,
-            "obs": observation_uuids,
-            "patient": patient_uuid,
-        }
-    ]
-    encounter_uuids = []
-    for encounter in encounters:
-        response = requests.post('/ws/rest/v1/encounter', json=encounter)
-
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        encounter_uuids.append(response.json()['uuid'])
-
-    logger.debug('encounters', encounter_uuids)
+    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+    stop_datetime = server_datetime_to_openmrs_timestamp(
+        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+    )
 
     visit = {
-        "encounters": encounter_uuids,
-        "patient": patient_uuid,
-        "visitType": visit_type,
+        'patient': patient_uuid,
+        'visitType': visit_type,
+        'startDatetime': start_datetime,
+        'stopDatetime': stop_datetime,
     }
-
+    if location_uuid:
+        visit['location'] = location_uuid
     response = requests.post('/ws/rest/v1/visit', json=visit)
     try:
         response.raise_for_status()
     except HTTPError:
         logger.debug(response.json())
         raise
-    logger.debug(response.json()['uuid'])
+    visit_uuid = response.json()['uuid']
+
+    encounter = {
+        'encounterDatetime': start_datetime,
+        'patient': patient_uuid,
+        'form': openmrs_form,
+        'encounterType': encounter_type,
+        'visit': visit_uuid,
+        # 'encounterProviders': []
+    }
+    if location_uuid:
+        encounter['location'] = location_uuid
+    response = requests.post('/ws/rest/v1/encounter', json=encounter)
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        logger.debug(response.json())
+        raise
+    encounter_uuid = response.json()['uuid']
+
+    observation_uuids = []
+    for concept_uuid, values in values_for_concept.items():
+        for value in values:
+            observation = {
+                'concept': concept_uuid,
+                'person': person_uuid,
+                'obsDatetime': start_datetime,
+                'encounter': encounter_uuid,
+                'value': value,
+            }
+            if location_uuid:
+                observation['location'] = location_uuid
+            response = requests.post('/ws/rest/v1/obs', json=observation)
+            try:
+                response.raise_for_status()
+            except HTTPError:
+                logger.debug(response.json())
+                raise
+            observation_uuids.append(response.json()['uuid'])
+
+    logger.debug('observations', observation_uuids)
 
 
 def search_patients(requests, search_string):
@@ -166,7 +171,42 @@ class PatientSearchParser(object):
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields'])
+                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+
+def get_form_question_values(form_json):
+    """
+    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
+
+    """
+    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+
+    def _recurse_form_questions(form_dict, path, result_):
+        for key, value in form_dict.items():
+            if key in _reserved_keys:
+                continue
+            new_path = path + [key]
+            if isinstance(value, list):
+                # Repeat group
+                for v in value:
+                    assert isinstance(v, dict)
+                    _recurse_form_questions(v, new_path, result_)
+            elif isinstance(value, dict):
+                # Group
+                _recurse_form_questions(value, new_path, result_)
+            else:
+                # key is a question and value is its answer
+                question = '/'.join(new_path)
+                result_[question] = value
+
+    result = {}
+    _recurse_form_questions(form_json['form'], ['/data'], result)  # "/data" is just convention, hopefully familiar
+    # from form builder. The form's data will usually be immediately under "form_json['form']" but not necessarily.
+    # If this causes problems we may need a more reliable way to get to it.
+    return result
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
@@ -176,7 +216,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         [case_block['@case_id'] for case_block in case_blocks], ordered=True)
     for case, case_block in zip(cases, case_blocks):
         assert case_block['@case_id'] == case.case_id
-        if case.type in case_types:
+        if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
@@ -185,7 +225,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,
-                extra_fields={field: case.get_case_property(field) for field in extra_fields}
+                extra_fields={field: case.get_case_property(field) for field in extra_fields},
+                form_question_values={}
             ))
     return result
 
