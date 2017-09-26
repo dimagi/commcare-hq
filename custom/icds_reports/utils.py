@@ -224,8 +224,14 @@ def percent_diff(property, current_data, prev_data, all):
     return current_percent - prev_percent
 
 
-def get_value(data, prop):
-    return (data[0][prop] or 0) if data else 0
+def get_value(data, prop, default=0):
+    if data:
+        if data[0][prop] is not None:
+            return data[0][prop]
+        else:
+            return default
+    else:
+        return 0
 
 
 def apply_exclude(domain, queryset):

@@ -45,11 +45,26 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         blocks = row['blocks']
         supervisors = row['supervisors']
         awcs = row['awcs']
+
+        default_values = {
+            'awc': 0,
+            'supervisor': 0,
+            'block': 0,
+            'district': 0,
+            'state': 0
+        }
+        all_locations_none = all(item is None for item in [districts, blocks, supervisors, awcs])
+
+        if not all_locations_none:
+            for type in ['state', 'district', 'block', 'supervisor', 'awc']:
+                if type + '_id' in config:
+                    default_values[type] = 1
+
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
-            'awcs': awcs,
+            'districts': districts if districts is not None else default_values['district'],
+            'blocks': blocks if blocks is not None else default_values['block'],
+            'supervisors': supervisors if supervisors is not None else default_values['supervisor'],
+            'awcs': awcs if awcs is not None else default_values['awc'],
             'fillKey': 'Launched',
         }
         map_data.update({name: row_values})
@@ -122,11 +137,25 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
         supervisors = row['supervisors']
         awcs = row['awcs']
 
+        default_values = {
+            'awc': 0,
+            'supervisor': 0,
+            'block': 0,
+            'district': 0,
+            'state': 0
+        }
+        all_locations_none = all(item is None for item in [districts, blocks, supervisors, awcs])
+
+        if not all_locations_none:
+            for type in ['state', 'district', 'block', 'supervisor', 'awc']:
+                if type + '_id' in config:
+                    default_values[type] = 1
+
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
-            'awcs': awcs
+            'districts': districts if districts is not None else default_values['district'],
+            'blocks': blocks if blocks is not None else default_values['block'],
+            'supervisors': supervisors if supervisors is not None else default_values['supervisor'],
+            'awcs': awcs if awcs is not None else default_values['awc']
         }
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += (value or 0)
