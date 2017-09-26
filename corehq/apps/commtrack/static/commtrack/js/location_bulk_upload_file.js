@@ -16,7 +16,6 @@ $(function () {
             return (
                 self.base_url + "?"
                 + (self.include_consumption() ? "include_consumption=true" : "")
-                + ((self.include_consumption() && self.include_ids()) ? "&" : "")
             );
         });
     }
