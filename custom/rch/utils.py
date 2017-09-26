@@ -41,6 +41,10 @@ def _get_service():
 
 
 def _fetch_beneficiaries(for_date, state_id, beneficiary_type, district_id):
+    """
+    Fetch beneficiaries of a specific type from RCH API for a certain date and district under a state.
+    :param beneficiary_type: This can be any value from RCH_RECORD_TYPE_MAPPING keys
+    """
     try:
         response = send_request_for_beneficiaries(for_date, state_id, beneficiary_type, district_id)
         data = response['_value_1'].find('NewDataSet')
