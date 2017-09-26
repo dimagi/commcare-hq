@@ -26,7 +26,7 @@ class Command(BaseEnikshayCaseMigration):
         ):
             test = Command.get_relevant_test_case(domain, episode)
             if test:
-                diagnosis_lab_facility_name = test.get_case_property('diagnosis_lab_facility_name')
+                diagnosis_lab_facility_name = test.get_case_property('testing_facility_name')
                 if diagnosis_lab_facility_name:
                     return {'diagnosis_lab_facility_name': diagnosis_lab_facility_name}
         return {}
