@@ -80,8 +80,8 @@ class BaseEnikshayCaseMigration(BaseCommand):
 
     def is_valid_case(self, domain, case):
         try:
-            return (self.include_public_cases == self._is_person_public(domain, case.case_id)
-                    and self.include_private_cases == self._is_person_private(domain, case.case_id))
+            return (self.include_public_cases == self._is_person_public(domain, case)
+                    and self.include_private_cases == self._is_person_private(domain, case))
         except ENikshayCaseNotFound:
             return False
 
