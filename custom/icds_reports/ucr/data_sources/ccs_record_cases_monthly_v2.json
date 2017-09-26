@@ -19,9 +19,7 @@
         1,
         2,
         3,
-        4,
-        5,
-        6
+        4
       ],
       "type": "iterator"
     },
@@ -974,7 +972,40 @@
     ],
     "named_expressions": {
       "month_start": {
-        "type": "icds_month_start"
+        "type": "month_start_date",
+        "date_expression": {
+          "date_expression": {
+            "type": "icds_datetime_now"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 3"
+          }
+        }
+      },
+      "month_end": {
+        "type": "month_end_date",
+        "date_expression": {
+          "date_expression": {
+            "type": "icds_datetime_now"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 3"
+          }
+        }
       },
       "thr_rations": {
         "aggregation_fn": "sum",
@@ -1077,9 +1108,6 @@
             "type": "constant"
           }
         }
-      },
-      "month_end": {
-        "type": "icds_month_end"
       }
     },
     "named_filters": {
