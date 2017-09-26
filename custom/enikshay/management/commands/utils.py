@@ -78,6 +78,8 @@ class BaseEnikshayCaseMigration(BaseCommand):
                     if needs_update and commit:
                         self.commit_updates(domain, case.case_id, updated_case_properties)
 
+            print("Finished at {}".format(datetime.datetime.utcnow()))
+
     def is_valid_case(self, domain, case):
         try:
             return (self.include_public_cases == self._is_person_public(domain, case)
@@ -94,8 +96,6 @@ class BaseEnikshayCaseMigration(BaseCommand):
     def _is_person_private(domain, case):
         person_case = get_person_case(domain, case.case_id)
         return person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
-
-        print("Finished at {}".format(datetime.datetime.utcnow()))
 
     @staticmethod
     def get_cases(domain, case_type, case_ids):
