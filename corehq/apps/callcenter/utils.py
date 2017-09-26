@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
+import six
+
 from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import cElementTree as ElementTree
@@ -179,6 +181,16 @@ def _get_user_case_fields(commcare_user, case_type, owner_id):
 
 
 def _get_changed_fields(case, fields):
+    def _to_unicode(val):
+        if isinstance(val, bytes):
+            return val.decode('utf8')
+        elif not isinstance(val, six.text_type):
+            return six.text_type(val)
+        return val
+
+    def _not_same(val1, val2):
+        return _to_unicode(val1) != _to_unicode(val2)
+
     hq_fields = {
         'name': 'name',
         'case_type': 'type',
@@ -187,11 +199,11 @@ def _get_changed_fields(case, fields):
     changed_fields = {}
     props = case.dynamic_case_properties()
     for field, value in fields.items():
-        if field not in hq_fields and props.get(field) != value:
+        if field not in hq_fields and _not_same(props.get(field), value):
             changed_fields[field] = value
 
     for field, attrib in hq_fields.items():
-        if getattr(case, attrib) != fields[field]:
+        if _not_same(getattr(case, attrib), fields[field]):
             changed_fields[field] = fields[field]
 
     return changed_fields

@@ -314,6 +314,9 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
     def test_update_no_change(self):
+        self.user.user_data = {
+            'numeric': 123,
+        }
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
