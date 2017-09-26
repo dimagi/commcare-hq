@@ -11,9 +11,6 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import (
-    CASE_TYPE_OCCURRENCE,
-    CASE_TYPE_PERSON,
-    get_first_parent_of_case,
     get_person_case
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -34,24 +31,6 @@ def get_result_recorded_form(test):
 
 def get_test_created_form(test):
     return test.actions[0].form.form_data
-
-
-def is_person_public(domain, case):
-    try:
-        person_case = get_person_case(domain, case.case_id)
-    except ENikshayCaseNotFound:
-        return False
-
-    return person_case.get_case_property('enrolled_in_private') != 'true'
-
-
-def is_person_private(domain, case):
-    try:
-        person_case = get_person_case(domain, case.case_id)
-    except ENikshayCaseNotFound:
-        return False
-
-    return person_case.get_case_property('enrolled_in_private') == 'true'
 
 
 def get_form_path(path, form_data):
@@ -85,10 +64,7 @@ class BaseEnikshayCaseMigration(BaseCommand):
                 + [self.datamigration_case_property]
             )
             for case in self.get_cases(domain, self.case_type, case_ids):
-                if (
-                    self.include_public_cases == is_person_public(domain, case.case_id)
-                    and self.include_private_cases == is_person_private(domain, case.case_id)
-                ):
+                if self.is_valid_case(domain, case):
                     updated_case_properties = self.get_case_property_updates(case, domain)
                     needs_update = bool(updated_case_properties)
                     updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
@@ -100,6 +76,23 @@ class BaseEnikshayCaseMigration(BaseCommand):
                     )
                     if needs_update and commit:
                         self.commit_updates(domain, case.case_id, updated_case_properties)
+
+    def is_valid_case(self, domain, case):
+        try:
+            return (self.include_public_cases == self._is_person_public(domain, case.case_id)
+                    and self.include_private_cases == self._is_person_private(domain, case.case_id))
+        except ENikshayCaseNotFound:
+            return False
+
+    @staticmethod
+    def _is_person_public(domain, case):
+        person_case = get_person_case(domain, case.case_id)
+        return person_case.get_case_property('enrolled_in_private') != 'true'
+
+    @staticmethod
+    def _is_person_private(domain, case):
+        person_case = get_person_case(domain, case.case_id)
+        return person_case.get_case_property('enrolled_in_private') == 'true'
 
     @staticmethod
     def get_cases(domain, case_type, case_ids):
