@@ -897,7 +897,7 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized_date else 'No',
+            fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
         )
