@@ -3,7 +3,9 @@ from lxml import etree
 from lxml.builder import E
 from django.test import SimpleTestCase
 from mock import Mock, patch
-from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
+from corehq.apps.app_manager.fixtures.mobile_ucr import (
+    ReportFixturesProvider, ReportFixturesProviderV2
+)
 from corehq.apps.app_manager.models import ReportAppConfig, StaticChoiceListFilter
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.tests.test_report_config import MAKE_REPORT_CONFIG, \
@@ -46,7 +48,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     def test_v2_report_fixtures_provider(self):
         report_id = 'deadbeef'
-        provider = ReportFixturesProvider()
+        provider = ReportFixturesProviderV2()
         report_app_config = ReportAppConfig(
             uuid='c0ffee',
             report_id=report_id,
