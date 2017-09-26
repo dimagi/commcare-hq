@@ -24,7 +24,7 @@ class RCHRecord(models.Model):
     name = models.CharField(null=True, max_length=255)
     aadhar_num = models.BigIntegerField(null=True)
     dob = models.DateTimeField(null=True)
-    rch_id = models.BigIntegerField(null=True)
+    rch_id = models.BigIntegerField(unique=True, db_index=True)
     doc_type = models.CharField(max_length=1, null=False,
                                 choices=[(k, v) for k, v in RCH_RECORD_TYPE_MAPPING.items()])
 
