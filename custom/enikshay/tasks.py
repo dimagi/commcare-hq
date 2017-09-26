@@ -671,13 +671,18 @@ class EpisodeTestUpdate(object):
         if self.diagnostic_tests:
             return {
                 u'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
-                                               for diagnostic_test in self.diagnostic_tests]),
-                u'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
-                                                      for diagnostic_test in self.diagnostic_tests])
+                                                for diagnostic_test in self.diagnostic_tests
+                                                if self._get_diagnostic_test_name(diagnostic_test) is not None]),
+                u'diagnostic_test_results': ", ".join(
+                    [diagnostic_test.get_case_property('result_grade')
+                     for diagnostic_test in self.diagnostic_tests
+                     if diagnostic_test.get_case_property('result_grade') is not None]
+                )
             }
         else:
             return {}
 
+    @memoized
     def _get_diagnostic_test_name(self, diagnostic_test):
         site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
         if site_specimen_name:
