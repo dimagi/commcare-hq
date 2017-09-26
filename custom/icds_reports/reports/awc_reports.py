@@ -116,15 +116,14 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
 
 
 def get_awc_reports_pse(config, month, domain, show_test=False):
-    now = datetime.utcnow()
-    last_30_days = (now - relativedelta(days=30))
     selected_month = datetime(*month)
+    last_30_days = (selected_month - relativedelta(days=30))
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
     last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_30_days, now), **config
+        pse_date__range=(last_30_days, selected_month), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -216,7 +215,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     images = []
     tmp_image = []
 
-    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=now)):
+    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=selected_month)):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 
