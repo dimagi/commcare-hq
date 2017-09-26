@@ -1730,8 +1730,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
-                format_fn=lambda x: 'Yes' if x != '' else 'No'
+                SimpleColumn('fully_immunized'),
+                format_fn=lambda x: 'Yes' if x else 'No'
             ),
             DatabaseColumn(
                 'Month for data shown',
