@@ -376,7 +376,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('1', "PATH"),
                     ('2', "MJK"),
                     ('3', "Alert-India"),
-                    ('4', "WHP"),
+                    ('4', "WHP-Patna"),
                     ('5', "DTO-Mehsana"),
                     ('6', "Vertex"),
                     ('7', "Accenture"),
@@ -390,6 +390,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('15', "SMC"),
                     ('16', "Surat_Rural"),
                     ('17', "Rajkot"),
+                    ('18', "WHP-AMC"),
                 ],
             )
         return super(ENikshayUserLocationDataEditor, self)._make_field(field)
