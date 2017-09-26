@@ -127,6 +127,7 @@ def import_patients_to_location(requests, importer, domain_name, location):
     )
 
 
+@task(queue='background_queue')
 def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients

@@ -77,7 +77,13 @@ class OpenmrsImporterForm(forms.Form):
                     _("Update OpenMRS Importer"),
                     type="submit",
                     css_class='btn-primary',
-                )
+                ),
+                StrictButton(
+                    _('Import Now'),
+                    type='button',
+                    id='btn-import-now',
+                    css_class='btn-default',
+                ),
             ),
         )
 

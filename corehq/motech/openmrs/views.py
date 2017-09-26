@@ -8,6 +8,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
@@ -120,6 +121,13 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
 
     attempt = repeater.fire_for_record(record)
     return JsonResponse(attempt.to_json())
+
+
+@login_and_domain_required
+@require_http_methods(['POST'])
+def openmrs_import_now(request, domain):
+    import_patients_to_domain.delay(request.domain, True)
+    return JsonResponse({'status': 'Accepted'}, status=202)
 
 
 @method_decorator(domain_admin_required, name='dispatch')
