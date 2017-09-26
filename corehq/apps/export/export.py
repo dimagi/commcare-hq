@@ -475,7 +475,7 @@ def rebuild_export(export_instance, filters=None):
         save_export_payload(export_instance, payload)
 
 
-def should_rebuild_export(export, last_access_cutoff=None):
+def should_rebuild_export(export, last_access_cutoff):
     """
     :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
     :return: True if export should be rebuilt
