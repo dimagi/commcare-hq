@@ -460,6 +460,7 @@ class ChildHealthMonthlyView(models.Model):
     current_month_stunting = models.TextField(blank=True, null=True)
     wasting_last_recorded = models.TextField(blank=True, null=True)
     current_month_wasting = models.TextField(blank=True, null=True)
+    fully_immunized = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
