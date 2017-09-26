@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
     episode_case_relevant_props = [
         'treatment_outcome',
-        'reason_for_closure',
+        'close_reason',
         'episode_type',
         'case_definition',
         'dstb_to_drtb_transition_no_initiation',
@@ -194,22 +194,23 @@ class Command(BaseCommand):
         props_to_update = {}
         episode_case_props = episode_case.dynamic_case_properties()
         # if treatment_outcome = duplicate or treatment_outcome = invalid_registration we should blank the
-        # treatment_outcome and instead set episode.reason_for_closure = the value of treatment_outcome
+        # treatment_outcome and instead set episode.close_reason = the value of treatment_outcome
         # (Reverse the treatment_status / outcome change from Remove Person)
         if episode_case_props.get('treatment_outcome') in ['duplicate', 'invalid_registration']:
-            props_to_update['reason_for_closure'] = episode_case_props.get('treatment_outcome')
+            props_to_update['close_reason'] = episode_case_props.get('treatment_outcome')
             props_to_update['treatment_outcome'] = ""
 
         # Set episode.case_definition = microbiological if episode_type = confirmed_drtb
         if episode_case_props.get('episode_type') == "confirmed_drtb":
             props_to_update['case_definition'] = 'microbiological'
 
-            # episode.dstb_to_drtb_transition_no_initiation = yes
-            # IF episode_type = confirmed_tb AND (treatment_initiated = 'no' or treatment_initiated = '')
-            # AND there exists another episode with episode_type=confirmed_drtb for the same occurrence
-            if (episode_case_props.get('treatment_initiated', "") in ["no", ""] and
-                    any_other_confirmed_drtb_episode(episode_case, episode_cases)):
-                props_to_update['dstb_to_drtb_transition_no_initiation'] = 'yes'
+        # episode.dstb_to_drtb_transition_no_initiation = yes
+        # IF episode_type = confirmed_tb AND (treatment_initiated = 'no' or treatment_initiated = '')
+        # AND there exists another episode with episode_type=confirmed_drtb for the same occurrence
+        if (episode_case_props.get('episode_type') == "confirmed_tb" and
+                episode_case_props.get('treatment_initiated', "") in ["no", ""] and
+                any_other_confirmed_drtb_episode(episode_case, episode_cases)):
+            props_to_update['dstb_to_drtb_transition_no_initiation'] = 'yes'
         return props_to_update
 
     @staticmethod
