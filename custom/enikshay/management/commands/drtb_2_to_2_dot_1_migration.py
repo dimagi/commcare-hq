@@ -164,7 +164,7 @@ class Command(BaseCommand):
         # if person.age is blank/null and person.age_entered != blank/null
         # then set person.age = person.age_entered.
         # else if person.age = '' and person.dob != '', person.age = int((today() - person.dob) / 365.25)
-        if not person_case_props.get('age') and not person_case_props.get('age_entered'):
+        if not person_case_props.get('age') and person_case_props.get('age_entered'):
             props_to_update['age'] = person_case_props.get('age_entered')
         elif not person_case_props.get('age') and person_case_props.get('dob'):
             props_to_update['age'] = int(
