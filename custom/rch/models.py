@@ -123,16 +123,16 @@ class RCHRecord(models.Model):
 
 
 class AreaMapping(models.Model):
-    stcode = models.IntegerField(null=False)
-    stname = models.CharField(max_length=255, null=False)
-    dtcode = models.IntegerField(null=False)
-    dtname = models.CharField(max_length=255, null=False)
-    pjcode = models.IntegerField(null=False)
-    pjname = models.CharField(max_length=255, null=False)
-    awcid = models.BigIntegerField(null=False)
-    awcname = models.CharField(max_length=255, null=False)
-    village_code = models.IntegerField(null=False)
-    village_name = models.CharField(max_length=255, null=False)
+    stcode = models.IntegerField(db_index=True)
+    stname = models.CharField(max_length=255)
+    dtcode = models.IntegerField(db_index=True)
+    dtname = models.CharField(max_length=255)
+    pjcode = models.IntegerField()
+    pjname = models.CharField(max_length=255)
+    awcid = models.BigIntegerField(db_index=True)
+    awcname = models.CharField(max_length=255)
+    village_code = models.IntegerField(db_index=True)
+    village_name = models.CharField(max_length=255)
 
     @classmethod
     def fetch_awc_ids_for_state(cls, state_id):
