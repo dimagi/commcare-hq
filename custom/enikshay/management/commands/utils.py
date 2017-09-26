@@ -89,6 +89,8 @@ class BaseEnikshayCaseMigration(BaseCommand):
                 if needs_update and commit:
                     self.commit_updates(domain, case.case_id, updated_case_properties)
 
+        print("Finished at {}".format(datetime.datetime.utcnow()))
+
     @staticmethod
     def get_cases(domain, case_type, case_ids):
         accessor = CaseAccessors(domain)
