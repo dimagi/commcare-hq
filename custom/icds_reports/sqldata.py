@@ -1739,7 +1739,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
+                SimpleColumn('fully_immunized'),
                 format_fn=lambda x: 'Yes' if x != '' else 'No'
             ),
             DatabaseColumn(
