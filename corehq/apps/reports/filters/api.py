@@ -174,7 +174,7 @@ class LocationRestrictedEmwfOptionsMixin(object):
         if parent_name:
             parent_ids = SQLLocation.active_objects.filter(name=parent_name).location_ids()
             if search_query:
-                from_location_ids = SQLLocation.active_objects.get_children_ids(parent_ids)
+                from_location_ids = SQLLocation.active_objects.get_descendants_ids(parent_ids)
             else:
                 from_location_ids = SQLLocation.active_objects.get_locations_and_children_ids(parent_ids)
         return from_location_ids, parent_name, search_query

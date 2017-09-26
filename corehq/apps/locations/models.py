@@ -330,7 +330,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             include_self=True
         )
 
-    def get_children(self, location_ids):
+    def get_descendants(self, location_ids):
         """
         Takes a set of location ids and returns a django queryset of their children.
         """
@@ -339,11 +339,11 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             include_self=False
         )
 
-    def get_children_ids(self, location_ids):
+    def get_descendants_ids(self, location_ids):
         """
         Takes a set of location ids and returns a django queryset of their children.
         """
-        return self.get_children(location_ids).location_ids()
+        return self.get_descendants(location_ids).location_ids()
 
     def get_locations_and_children_ids(self, location_ids):
         return list(self.get_locations_and_children(location_ids).location_ids())
