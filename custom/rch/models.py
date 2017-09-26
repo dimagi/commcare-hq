@@ -7,8 +7,6 @@ from custom.rch.utils import (
 )
 from jsonfield.fields import JSONField
 from custom.rch.const import (
-    MOTHER_RECORD_TYPE,
-    CHILD_RECORD_TYPE,
     STATE_DISTRICT_MAPPING,
     RCH_RECORD_TYPE_MAPPING,
 )

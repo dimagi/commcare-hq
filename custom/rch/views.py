@@ -24,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.decorators import use_select2, use_angular_js
 from custom.rch.forms import BeneficiariesFilterForm
-from custom.rch.models import RCHChildRecord, RCHMotherRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
+from custom.rch.models import RCHChildRecord, RCHMotherRecord, AreaMapping
 from custom.rch.templatetags.view_tags import mask_aadhar_number
 from custom.rch.utils import (
     valid_aadhar_num_length,
