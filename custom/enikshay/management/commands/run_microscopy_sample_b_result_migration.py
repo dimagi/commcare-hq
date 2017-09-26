@@ -34,6 +34,9 @@ class Command(BaseEnikshayCaseMigration):
             ) or get_form_path(
                 ['update_test_result', 'microscopy', 'ql_result', 'sample_b_result'],
                 form_data
+            ) or get_form_path(
+                ['microscopy', 'ql_result', 'sample_b_result'],
+                form_data
             )
             if microscopy_sample_b_result:
                 return {

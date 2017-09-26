@@ -40,6 +40,12 @@ class Command(BaseEnikshayCaseMigration):
             ) or get_form_path(
                 ['microscopy', 'ql_result', 'sample_b_visual_appearance'],
                 form_data
+            ) or get_form_path(
+                ['microscopy', 'ql_sample_a', 'sample_a_visual_appearance'],
+                form_data
+            ) or get_form_path(
+                ['microscopy', 'ql_sample_b', 'sample_b_visual_appearance'],
+                form_data
             )
             if sputum_visual_appearance:
                 return {
