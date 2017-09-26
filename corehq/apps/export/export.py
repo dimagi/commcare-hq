@@ -477,13 +477,19 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
         save_export_payload(export_instance, payload)
 
 
-def _should_not_rebuild_export(export, last_access_cutoff):
+def _should_not_rebuild_export(export, last_access_cutoff=None):
+    """
+    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
+    :return: False if export should be rebuilt
+    """
     # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
-    return (
-        last_access_cutoff
-        and export.auto_rebuild_enabled
-        and export.last_accessed
-        and export.last_accessed < last_access_cutoff
+    is_auto_rebuild = last_access_cutoff is not None
+    return is_auto_rebuild and (
+        not export.auto_rebuild_enabled
+        or (
+            export.last_accessed
+            and export.last_accessed < last_access_cutoff
+        )
     )
 
 
