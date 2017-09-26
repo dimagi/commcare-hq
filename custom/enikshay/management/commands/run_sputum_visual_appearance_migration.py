@@ -2,7 +2,6 @@ from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_form_path,
     get_result_recorded_form,
-    is_person_public,
 )
 
 
@@ -12,6 +11,8 @@ class Command(BaseEnikshayCaseMigration):
         'sputum_visual_appearance',
     ]
     datamigration_case_property = 'datamigration_sputum_visual_appearance'
+    include_public_cases = True
+    include_private_cases = False
 
     @staticmethod
     def get_case_property_updates(test, domain):
@@ -21,7 +22,6 @@ class Command(BaseEnikshayCaseMigration):
             or test.get_case_property('test_type_value') not in ['microscopy-zn', 'microscopy-fluorescent']
             or test.get_case_property('result_recorded') != 'yes'
             or test.get_case_property('sputum_visual_appearance')
-            or not is_person_public(domain, test)
         ):
             return {}
         else:

@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
     get_first_parent_of_case,
+    get_person_case
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -35,14 +36,22 @@ def get_test_created_form(test):
     return test.actions[0].form.form_data
 
 
-def is_person_public(domain, test):
+def is_person_public(domain, case):
     try:
-        occurrence_case = get_first_parent_of_case(domain, test.case_id, CASE_TYPE_OCCURRENCE)
-        person_case = get_first_parent_of_case(domain, occurrence_case.case_id, CASE_TYPE_PERSON)
+        person_case = get_person_case(domain, case.case_id)
     except ENikshayCaseNotFound:
         return False
 
     return person_case.get_case_property('enrolled_in_private') != 'true'
+
+
+def is_person_private(domain, case):
+    try:
+        person_case = get_person_case(domain, case.case_id)
+    except ENikshayCaseNotFound:
+        return False
+
+    return person_case.get_case_property('enrolled_in_private') == 'true'
 
 
 def get_form_path(path, form_data):
@@ -54,7 +63,6 @@ def get_form_path(path, form_data):
 
 
 class BaseEnikshayCaseMigration(BaseCommand):
-
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('log_file_name')
@@ -77,17 +85,21 @@ class BaseEnikshayCaseMigration(BaseCommand):
                 + [self.datamigration_case_property]
             )
             for case in self.get_cases(domain, self.case_type, case_ids):
-                updated_case_properties = self.get_case_property_updates(case, domain)
-                needs_update = bool(updated_case_properties)
-                updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
-                writer.writerow(
-                    [case.case_id]
-                    + [case.get_case_property(case_prop) or '' for case_prop in self.case_properties_to_update]
-                    + [updated_case_properties.get(case_prop, '') for case_prop in (
-                        self.case_properties_to_update + [self.datamigration_case_property])]
-                )
-                if needs_update and commit:
-                    self.commit_updates(domain, case.case_id, updated_case_properties)
+                if (
+                    self.include_public_cases == is_person_public(domain, case.case_id)
+                    and self.include_private_cases == is_person_private(domain, case.case_id)
+                ):
+                    updated_case_properties = self.get_case_property_updates(case, domain)
+                    needs_update = bool(updated_case_properties)
+                    updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
+                    writer.writerow(
+                        [case.case_id]
+                        + [case.get_case_property(case_prop) or '' for case_prop in self.case_properties_to_update]
+                        + [updated_case_properties.get(case_prop, '') for case_prop in (
+                            self.case_properties_to_update + [self.datamigration_case_property])]
+                    )
+                    if needs_update and commit:
+                        self.commit_updates(domain, case.case_id, updated_case_properties)
 
     @staticmethod
     def get_cases(domain, case_type, case_ids):
@@ -101,6 +113,14 @@ class BaseEnikshayCaseMigration(BaseCommand):
 
     @property
     def case_type(self):
+        raise NotImplementedError
+
+    @property
+    def include_private_cases(self):
+        raise NotImplementedError
+
+    @property
+    def include_public_cases(self):
         raise NotImplementedError
 
     @property

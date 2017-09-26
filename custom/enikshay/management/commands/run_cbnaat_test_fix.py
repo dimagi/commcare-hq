@@ -14,6 +14,8 @@ class Command(BaseEnikshayCaseMigration):
         'drug_sensitive_list'
     ]
     datamigration_case_property = 'datamigration_cbnaat_test_fix'
+    include_public_cases = True
+    include_private_cases = False
 
     @staticmethod
     def get_case_property_updates(test, domain):

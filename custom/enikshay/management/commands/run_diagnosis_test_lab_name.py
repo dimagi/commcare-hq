@@ -3,7 +3,6 @@ from __future__ import print_function
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
-    is_person_public,
 )
 from custom.enikshay.case_utils import get_occurrence_case_from_episode, ENikshayCaseNotFound
 
@@ -14,6 +13,8 @@ class Command(BaseEnikshayCaseMigration):
         'diagnosis_lab_facility_name',
     ]
     datamigration_case_property = 'datamigration_diagnosis_test_lab_name'
+    include_public_cases = True
+    include_private_cases = False
 
     @staticmethod
     def get_case_property_updates(episode, domain):
@@ -22,7 +23,6 @@ class Command(BaseEnikshayCaseMigration):
             and episode.get_case_property('episode_type') == 'confirmed_tb'
             and episode.get_case_property('diagnosis_test_result_date')
             and not episode.get_case_property('diagnosis_lab_facility_name')
-            and is_person_public(domain, episode)
         ):
             test = Command.get_relevant_test_case(domain, episode)
             if test:
