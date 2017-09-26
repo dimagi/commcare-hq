@@ -1354,7 +1354,7 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             current_rate = self.current_features_to_rates[feature.id]
         # note: custom implementation of FeatureRate.__eq__ here...
-        if not current_rate == new_rate:
+        if not (current_rate == new_rate):
             self.is_update = True
             return new_rate
         return current_rate
@@ -1368,7 +1368,7 @@ class SoftwarePlanVersionForm(forms.Form):
         try:
             current_rate = SoftwareProductRate.objects.get(id=rate_form['rate_id'].value())
             # note: custom implementation of SoftwareProductRate.__eq__ here...
-            if not current_rate == new_rate:
+            if not (current_rate == new_rate):
                 self.is_update = True
                 return new_rate
             else:
