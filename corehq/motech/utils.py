@@ -4,6 +4,7 @@ from django.conf import settings
 
 
 AES_BLOCK_SIZE = 16
+AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
 PAD_CHAR = ' '
 
 
@@ -31,7 +32,7 @@ def b64_aes_encrypt(message):
     'Vh2Tmlnr5+out2PQDefkuS9+9GtIsiEX8YBA0T/V87I='
 
     """
-    secret = pad(settings.SECRET_KEY, AES_BLOCK_SIZE)
+    secret = pad(settings.SECRET_KEY, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
     aes = AES.new(secret)
 
     plaintext = pad(message, AES_BLOCK_SIZE)
@@ -50,7 +51,7 @@ def b64_aes_decrypt(message):
     'Around you is a forest.'
 
     """
-    secret = pad(settings.SECRET_KEY, AES_BLOCK_SIZE)
+    secret = pad(settings.SECRET_KEY, AES_BLOCK_SIZE)[:AES_KEY_MAX_LEN]
     aes = AES.new(secret)
 
     ciphertext = b64decode(message)
