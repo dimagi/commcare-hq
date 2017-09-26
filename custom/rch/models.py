@@ -15,6 +15,9 @@ from custom.rch.const import (
 
 
 class RCHRecord(models.Model):
+    _rch_id_key = None
+    _beneficiary_type = None
+
     cas_case_id = models.CharField(null=True, max_length=255)  # ICDS-CAS case that was found as a match
     details = JSONField(default=dict)  # all details received from RCH for this beneficiary
     district_id = models.PositiveSmallIntegerField(null=True)
@@ -25,59 +28,34 @@ class RCHRecord(models.Model):
     aadhar_num = models.BigIntegerField(null=True)
     dob = models.DateTimeField(null=True)
     rch_id = models.BigIntegerField(unique=True, db_index=True)
-    doc_type = models.CharField(max_length=1, null=False,
-                                choices=[(k, v) for k, v in RCH_RECORD_TYPE_MAPPING.items()])
-
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        abstract = True
+
+    @property
+    def beneficiary_type(self):
+        return self._beneficiary_type
+
     @classmethod
-    def accepted_fields(cls, beneficiary_type):
+    def accepted_fields(cls):
         """
         :param beneficiary_type: can be any of the keys in RCH_RECORD_TYPE_MAPPING like 1 for mother
         :return: fields that are expected to be received from RCH
         """
-        if beneficiary_type in RCH_RECORD_TYPE_MAPPING:
-            # get meaningful record type like mother
-            record_type = RCH_RECORD_TYPE_MAPPING[beneficiary_type]
-            return settings.RCH_PERMITTED_FIELDS[record_type]
+        beneficiary_type = cls._beneficiary_type  # mother, child etc
+        if beneficiary_type in RCH_RECORD_TYPE_MAPPING.values():
+            return settings.RCH_PERMITTED_FIELDS[beneficiary_type]
         else:
             return set()
 
-    def mother_record(self):
-        return self.doc_type == MOTHER_RECORD_TYPE
-
-    def child_record(self):
-        return self.doc_type == CHILD_RECORD_TYPE
-
-    @classmethod
-    def _get_rch_id_key(cls, beneficiary_type):
-        # This gives the corresponding field that contains the RCH_ID when records are received from RCH
-        # which then gets saved as the rch_id field and later used for filtering by RCH_ID when needed
-        if beneficiary_type == MOTHER_RECORD_TYPE:
-            return 'Registration_no'
-        elif beneficiary_type == CHILD_RECORD_TYPE:
-            return 'Child_RCH_ID_No'
-
     @property
     def rch_id_key(self):
-        return self._get_rch_id_key(self.doc_type)
-
-    def _set_mother_fields(self, dict_of_props):
-        self.aadhar_num = dict_of_props['PW_Aadhar_No']
-        self.name = dict_of_props['Name_wife']
-        self.dob = dict_of_props['Mother_BirthDate']
-
-    def _set_child_fields(self, dict_of_props):
-        self.aadhar_num = dict_of_props['Child_Aadhaar_No']
-        self.name = dict_of_props['Name_Child']
-        self.dob = dict_of_props['Birth_Date']
+        return self._rch_id_key
 
     def _set_custom_fields(self, dict_of_props):
-        if self.mother_record():
-            self._set_mother_fields(dict_of_props)
-        elif self.child_record():
-            self._set_child_fields(dict_of_props)
+        raise NotImplementedError
 
     def assign_search_fields(self, dict_of_props):
         # set fields from details received from RCH that are specifically used for quick lookup for
@@ -90,26 +68,27 @@ class RCHRecord(models.Model):
         self._set_custom_fields(dict_of_props)
 
     @classmethod
-    def update_beneficiaries(cls, beneficiary_type, days_before=1):
+    def update_beneficiaries(cls, days_before=1):
+        rch_beneficiary_type = RCH_RECORD_TYPE_MAPPING.get(cls._beneficiary_type)
         date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal() - days_before))
         for state_id in STATE_DISTRICT_MAPPING:
             for district_id in STATE_DISTRICT_MAPPING[state_id]:
-                records = fetch_beneficiaries_records(date_str, state_id, beneficiary_type, district_id)
+                records = fetch_beneficiaries_records(date_str, state_id, rch_beneficiary_type, district_id)
                 for record in records:
                     # convert list of dicts of properties to a single dict
                     dict_of_props = {}
                     for prop in record:
-                        if prop.keys()[0] in cls.accepted_fields(beneficiary_type):
+                        if prop.keys()[0] in cls.accepted_fields():
                             dict_of_props[prop.keys()[0]] = prop.values()[0]
 
-                    rch_id_key_field = cls._get_rch_id_key(beneficiary_type)
+                    rch_id_key_field = cls._rch_id_key
                     record_pk = dict_of_props[rch_id_key_field]
                     assert record_pk
                     # Find corresponding record if already present using RCH ID
                     rch_beneficiary = cls.objects.filter(rch_id=record_pk).first()
                     # else initialize if new record to be added
                     if not rch_beneficiary:
-                        rch_beneficiary = cls(doc_type=beneficiary_type)
+                        rch_beneficiary = cls()
 
                     rch_beneficiary.assign_search_fields(dict_of_props)
                     rch_beneficiary.details = dict_of_props
@@ -120,6 +99,26 @@ class RCHRecord(models.Model):
         if matching_icds_cas_case_id:
             self.cas_case_id = matching_icds_cas_case_id
             self.save()
+
+
+class RCHMotherRecord(RCHRecord):
+    _rch_id_key = 'Registration_no'
+    _beneficiary_type = 'mother'
+
+    def _set_custom_fields(self, dict_of_props):
+        self.aadhar_num = dict_of_props['PW_Aadhar_No']
+        self.name = dict_of_props['Name_wife']
+        self.dob = dict_of_props['Mother_BirthDate']
+
+
+class RCHChildRecord(RCHRecord):
+    _rch_id_key = 'Child_RCH_ID_No'
+    _beneficiary_type = 'child'
+
+    def _set_custom_fields(self, dict_of_props):
+        self.aadhar_num = dict_of_props['Child_Aadhaar_No']
+        self.name = dict_of_props['Name_Child']
+        self.dob = dict_of_props['Birth_Date']
 
 
 class AreaMapping(models.Model):

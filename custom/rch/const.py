@@ -19,6 +19,6 @@ STATE_DISTRICT_MAPPING = {
 
 # meaningful mapping for integer record types in RCH
 RCH_RECORD_TYPE_MAPPING = {
-    MOTHER_RECORD_TYPE: 'mother',
-    CHILD_RECORD_TYPE: 'child',
+    'mother': MOTHER_RECORD_TYPE,
+    'child': CHILD_RECORD_TYPE
 }

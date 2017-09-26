@@ -73,6 +73,12 @@ class BeneficiariesFilterForm(forms.Form):
         choices=(('both', 'Both'), ('cas', 'ICDS-CAS'), ('rch', 'RCH'))
     )
 
+    beneficiary_type = forms.ChoiceField(
+        label=_("Beneficiary Type"),
+        required=False,
+        choices=(('mother', 'Mother'), ('child', 'Child'))
+    )
+
     matched = forms.BooleanField(
         label=_("Include matched beneficiaries"),
         required=False,
@@ -98,6 +104,7 @@ class BeneficiariesFilterForm(forms.Form):
                 crispy.Field('village_code'),
                 crispy.Field('awcid'),
                 crispy.Field('present_in'),
+                crispy.Field('beneficiary_type'),
                 crispy.Field('matched'),
             ),
             hqcrispy.FormActions(

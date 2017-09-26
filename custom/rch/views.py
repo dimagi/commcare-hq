@@ -24,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.decorators import use_select2, use_angular_js
 from custom.rch.forms import BeneficiariesFilterForm
-from custom.rch.models import RCHRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
+from custom.rch.models import RCHChildRecord, RCHMotherRecord, AreaMapping, RCH_RECORD_TYPE_MAPPING
 from custom.rch.templatetags.view_tags import mask_aadhar_number
 from custom.rch.utils import (
     valid_aadhar_num_length,
@@ -72,7 +72,11 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
         :param only_matched: filter only matched beneficiaries
         :return: True if it could find records else False
         """
-        self.beneficiaries = RCHRecord.objects
+        beneficiary_type = in_data.get('beneficiary_type')
+        if beneficiary_type == 'child':
+            self.beneficiaries = RCHChildRecord.objects
+        else:
+            self.beneficiaries = RCHMotherRecord.objects
         if only_matched:
             # exclude beneficiaries where cas_case_id is null
             self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=True)
@@ -188,7 +192,13 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
             context['beneficiaries'] = self.beneficiaries.order_by('-last_modified')[offset:offset + size]
 
     def _set_context_for_matched_records(self, context, in_data=None):
-        self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
+        beneficiary_type = in_data.get('beneficiary_type')
+        if beneficiary_type == 'child':
+            self.beneficiaries = RCHChildRecord.objects
+        else:
+            self.beneficiaries = RCHMotherRecord.objects
+
+        self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=True)
         size = in_data.get('limit')
         offset = (in_data.get('page') - 1) * in_data.get('limit')
         if self._set_rch_beneficiaries(True, only_matched=True, in_data=in_data):
@@ -225,7 +235,11 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
 
     def _format_beneficiary(self, beneficiary):
         beneficiary_json = json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields')
-        beneficiary_json['editUrl'] = reverse(BeneficiaryView.urlname, args=[ICDS_CAS_DOMAIN, beneficiary.id])
+        beneficiary_json['editUrl'] = reverse(
+            BeneficiaryView.urlname,
+            args=[ICDS_CAS_DOMAIN,
+                  beneficiary.beneficiary_type,
+                  beneficiary.id])
         self._mask_aadhar_number(beneficiary_json)
         return beneficiary_json
 
@@ -264,21 +278,22 @@ class BeneficiaryView(BaseDomainView):
     template_name = 'rch/beneficiary.html'
 
     def section_url(self):
-        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_id])
+        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_type, self.beneficiary_id])
 
     def page_url(self):
-        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_id])
+        return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_type, self.beneficiary_id])
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         self.beneficiary_id = kwargs.get('beneficiary_id')
+        self.beneficiary_type = kwargs.get('beneficiary_type')
         return super(BeneficiaryView, self).dispatch(request, *args, **kwargs)
 
     def _get_cas_values(self, details, beneficiary_type, person_case_id):
         person_case = CaseAccessors('icds-cas').get_case(person_case_id)
         if person_case:
             person_case_properties = person_case.dynamic_case_properties()
-            field_mappings = settings.RCH_PERMITTED_FIELD_MAPPINGS[RCH_RECORD_TYPE_MAPPING[beneficiary_type]]
+            field_mappings = settings.RCH_PERMITTED_FIELD_MAPPINGS[beneficiary_type]
             for case_type in field_mappings:
                 if case_type == 'person':
                     for rch_field, cas_field in field_mappings[case_type].items():
@@ -287,13 +302,16 @@ class BeneficiaryView(BaseDomainView):
 
     def get_context_data(self, **kwargs):
         context = super(BeneficiaryView, self).get_context_data(**kwargs)
-        beneficiary = RCHRecord.objects.get(pk=kwargs.get('beneficiary_id'))
+        if self.beneficiary_type == 'child':
+            beneficiary = RCHChildRecord.objects.get(pk=kwargs.get('beneficiary_id'))
+        else:
+            beneficiary = RCHMotherRecord.objects.get(pk=kwargs.get('beneficiary_id'))
         beneficiary_details = json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields')
         # delete the details dict and include it as details in context
         del beneficiary_details['details']
         beneficiary_details.update(beneficiary.details)
         if beneficiary.cas_case_id:
-            beneficiary_details = self._get_cas_values(beneficiary_details, beneficiary.doc_type,
+            beneficiary_details = self._get_cas_values(beneficiary_details, beneficiary.beneficiary_type,
                                                        beneficiary.cas_case_id)
         ordered_beneficiary_details = OrderedDict()
         # 1. order the details according to detail name
