@@ -55,6 +55,7 @@ branches:
   - np/billing/kill-softwareproduct # NP 9/11
 #  - jls/fixtures-require-js-2017 # Jenny 9/18
   - jls/alert-user-vellum # Jenny 9/22
+  - sk/form-errors2  # sk 9/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
