@@ -82,19 +82,19 @@ class BaseEnikshayCaseMigration(BaseCommand):
 
     def is_valid_case(self, domain, case):
         try:
-            return (self.include_public_cases == self._is_person_public(domain, case)
-                    and self.include_private_cases == self._is_person_private(domain, case))
+            person_case_id = get_person_case(domain, case.case_id)
+            person_case = CaseAccessors(domain).get_case(person_case_id)
+            return (self.include_public_cases == self._is_person_public(domain, person_case)
+                    and self.include_private_cases == self._is_person_private(domain, person_case))
         except ENikshayCaseNotFound:
             return False
 
     @staticmethod
-    def _is_person_public(domain, case):
-        person_case = get_person_case(domain, case.case_id)
+    def _is_person_public(domain, person_case):
         return person_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
 
     @staticmethod
-    def _is_person_private(domain, case):
-        person_case = get_person_case(domain, case.case_id)
+    def _is_person_private(domain, person_case):
         return person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
 
     @staticmethod
