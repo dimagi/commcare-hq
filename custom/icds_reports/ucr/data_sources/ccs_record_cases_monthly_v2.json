@@ -1100,7 +1100,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               }
             },
             "property_value": 0
@@ -1127,7 +1128,8 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "type": "icds_month_start"
+                    "type": "named",
+                    "name": "month_start"
                   },
                   "to_date_expression": {
                     "datatype": "date",
@@ -1164,7 +1166,8 @@
                         }
                       },
                       "to_date_expression": {
-                        "type": "icds_month_end"
+                        "type": "named",
+                        "name": "month_end"
                       }
                     },
                     "property_value": 0
@@ -1191,7 +1194,8 @@
                         "expression": {
                           "type": "diff_days",
                           "from_date_expression": {
-                            "type": "icds_month_start"
+                            "type": "named",
+                            "name": "month_start"
                           },
                           "to_date_expression": {
                             "datatype": "date",
@@ -1267,7 +1271,8 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "type": "icds_month_end"
+                        "type": "named",
+                        "name": "month_end"
                       },
                       "to_date_expression": {
                         "value_expression": {
@@ -1354,7 +1359,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               }
             },
             "property_value": 0
@@ -1373,7 +1379,8 @@
                 }
               },
               "to_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               }
             },
             "property_value": 183
@@ -1574,7 +1581,8 @@
                     }
                   },
                   "to_date_expression": {
-                    "type": "icds_month_end"
+                    "type": "named",
+                    "name": "month_end"
                   }
                 },
                 "property_value": 0
@@ -1601,7 +1609,8 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "type": "icds_month_start"
+                        "type": "named",
+                        "name": "month_start"
                       },
                       "to_date_expression": {
                         "datatype": "date",
@@ -1677,7 +1686,8 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "type": "icds_month_end"
+                    "type": "named",
+                    "name": "month_end"
                   },
                   "to_date_expression": {
                     "value_expression": {
@@ -1793,7 +1803,8 @@
             "expression": {
               "type": "diff_days",
               "from_date_expression": {
-                "type": "icds_month_end"
+                "type": "named",
+                "name": "month_end"
               },
               "to_date_expression": {
                 "value_expression": {
@@ -1868,7 +1879,8 @@
                         }
                       },
                       "to_date_expression": {
-                        "type": "icds_month_end"
+                        "type": "named",
+                        "name": "month_end"
                       }
                     },
                     "property_value": 0
@@ -1895,7 +1907,8 @@
                         "expression": {
                           "type": "diff_days",
                           "from_date_expression": {
-                            "type": "icds_month_start"
+                            "type": "named",
+                            "name": "month_start"
                           },
                           "to_date_expression": {
                             "datatype": "date",
@@ -1971,7 +1984,8 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "type": "icds_month_end"
+                        "type": "named",
+                        "name": "month_end"
                       },
                       "to_date_expression": {
                         "value_expression": {
@@ -2069,7 +2083,8 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "type": "icds_month_end"
+                    "type": "named",
+                    "name": "month_end"
                   },
                   "to_date_expression": {
                     "type": "root_doc",
@@ -2602,9 +2617,9 @@
         ]
       },
       {
-          "column_ids": [
-            "inserted_at"
-          ]
+        "column_ids": [
+          "inserted_at"
+        ]
       }
     ]
   }
