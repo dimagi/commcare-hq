@@ -159,7 +159,9 @@ class Command(BaseCommand):
         # person.aadhaar number masked with *s except the last 4 digits
         aadhar_num = person_case_props.get('aadhaar_number')
         if aadhar_num:
-            props_to_update['aadhaar_number_obfuscated'] = '*' * 8 + aadhar_num[-4:]
+            # mask everything except last 4 digits
+            aadhar_num_length = len(aadhar_num)
+            props_to_update['aadhaar_number_obfuscated'] = '*' * (aadhar_num_length - 4) + aadhar_num[-4:]
 
         # if person.age is blank/null and person.age_entered != blank/null
         # then set person.age = person.age_entered.
