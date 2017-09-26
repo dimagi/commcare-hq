@@ -103,7 +103,7 @@ class Command(BaseCommand):
     def _get_headers(self, case_types):
         headers = ['case_type', 'case_id']
         if 'person' in case_types:
-            headers += self.person_case_relevant_props.append('owner_id')
+            headers += (self.person_case_relevant_props + ['owner_id'])
         if 'episode' in case_types:
             headers += self.episode_case_relevant_props
         if 'test' in case_types:
