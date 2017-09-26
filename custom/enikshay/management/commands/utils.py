@@ -31,6 +31,10 @@ def get_result_recorded_form(test):
                     return action.form.form_data
 
 
+def get_test_created_form(test):
+    return test.actions[0].form.form_data
+
+
 def is_person_public(domain, test):
     try:
         occurrence_case = get_first_parent_of_case(domain, test.case_id, CASE_TYPE_OCCURRENCE)
