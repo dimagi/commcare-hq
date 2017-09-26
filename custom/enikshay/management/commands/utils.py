@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
     get_person_case
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
 
 def get_result_recorded_form(test):
@@ -87,12 +88,12 @@ class BaseEnikshayCaseMigration(BaseCommand):
     @staticmethod
     def _is_person_public(domain, case):
         person_case = get_person_case(domain, case.case_id)
-        return person_case.get_case_property('enrolled_in_private') != 'true'
+        return person_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
 
     @staticmethod
     def _is_person_private(domain, case):
         person_case = get_person_case(domain, case.case_id)
-        return person_case.get_case_property('enrolled_in_private') == 'true'
+        return person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
 
     @staticmethod
     def get_cases(domain, case_type, case_ids):
