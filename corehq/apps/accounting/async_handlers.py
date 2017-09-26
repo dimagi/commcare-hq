@@ -1,8 +1,18 @@
 from __future__ import absolute_import
 import json
 from django.db.models import Q
-from corehq.apps.accounting.models import Feature, SoftwareProduct, BillingAccount, SoftwarePlanVersion, \
-    Subscription, Subscriber, BillingContactInfo, SoftwarePlan, SoftwareProductType
+
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    BillingContactInfo,
+    Feature,
+    SoftwarePlan,
+    SoftwarePlanVersion,
+    SoftwareProductRate,
+    SoftwareProductType,
+    Subscriber,
+    Subscription,
+)
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
@@ -67,21 +77,18 @@ class SoftwareProductRateAsyncHandler(BaseRateAsyncHandler):
 
     @property
     def create_response(self):
-        if SoftwareProduct.objects.filter(name=self.name).count() > 0:
-            raise AsyncHandlerError("Product '%s' already exists, and likely already "
+        if SoftwareProductRate.objects.filter(name=self.name).exists():
+            raise AsyncHandlerError("Product rate '%s' already exists, and likely already "
                                     "in this Software Plan Version." % self.name)
-        new_product, _ = SoftwareProduct.objects.get_or_create(
-            name=self.name,
-        )
-        return fmt_product_rate_dict(new_product)
+        return fmt_product_rate_dict(self.name)
 
     @property
     def apply_response(self):
         try:
-            product = SoftwareProduct.objects.get(id=self.rate_id)
-            return fmt_product_rate_dict(product)
-        except SoftwareProduct.DoesNotExist:
-            raise AsyncHandlerError("could not find an existing product")
+            product_rate = SoftwareProductRate.objects.get(id=self.rate_id)
+            return fmt_product_rate_dict(product_rate.name)
+        except SoftwareProductRate.DoesNotExist:
+            raise AsyncHandlerError("could not find an existing product rate")
 
 
 class BaseSelect2AsyncHandler(BaseAsyncHandler):
@@ -112,7 +119,7 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
     slug = 'select2_rate'
     allowed_actions = [
         'feature_id',
-        'product_id',
+        'product_rate_id',
     ]
 
     @property
@@ -125,13 +132,13 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
         return [(f.id, f.name, f.feature_type) for f in features.all()]
 
     @property
-    def product_id_response(self):
-        products = SoftwareProduct.objects
+    def product_rate_id_response(self):
+        product_rates = SoftwareProductRate.objects
         if self.existing:
-            products = products.exclude(name__in=self.existing)
+            product_rates = product_rates.exclude(name__in=self.existing)
         if self.search_string:
-            products = products.filter(name__istartswith=self.search_string)
-        return [(p.id, p.name, SoftwareProductType.COMMCARE) for p in products.all()]
+            product_rates = product_rates.filter(name__istartswith=self.search_string)
+        return [(p.id, p.name, SoftwareProductType.COMMCARE) for p in product_rates.all()]
 
     def _fmt_success(self, response):
         return json.dumps({
