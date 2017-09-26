@@ -465,12 +465,10 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+def rebuild_export(export_instance, filters=None):
     """
     Rebuild the given daily saved ExportInstance
     """
-    if not _should_rebuild_export(export_instance, last_access_cutoff):
-        return
     filters = filters or export_instance.get_filters()
     export_file = get_export_file([export_instance], filters or [])
     with export_file as payload:
