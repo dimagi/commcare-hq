@@ -104,6 +104,10 @@ def basicauth(realm=''):
             response = HttpResponse(status=401)
             response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
             return response
+
+        if hasattr(view, 'is_location_safe'):
+            wrapper.is_location_safe = view.is_location_safe
+            # TODO: ^^^ Nice try. Not good enough. See corehq.apps.domain.decorators
         return wrapper
     return real_decorator
 

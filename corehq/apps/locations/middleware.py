@@ -42,6 +42,11 @@ class LocationAccessMiddleware(MiddlewareMixin):
         else:
             request.can_access_all_locations = False
             if not is_location_safe(view_fn, view_args, view_kwargs):
+                # is_location_safe() is returning False because the wrapped (wrapped, wrapped (wrapped?)) view_fn
+                # no longer has is_location_safe attribute set on it.
+                # TODO: Find where it's being dropped, and set it on the wrapper function from the wrapped function
+                #       ^^^ For *every* code path? See corehq.apps.domain.decorators. This doesn't seem like such
+                #       a good idea any more.
                 return location_restricted_response(request)
             elif not user.get_sql_location(domain):
                 return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)
