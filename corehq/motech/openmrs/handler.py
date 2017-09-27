@@ -1,11 +1,29 @@
+from datetime import datetime, timedelta
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
-from corehq.motech.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
-    update_person_attribute, create_person_attribute, create_visit, set_person_properties
+from corehq.motech.openmrs.repeater_helpers import (
+    CaseTriggerInfo,
+    get_patient_by_id,
+    update_person_attribute,
+    create_person_attribute,
+    create_visit,
+    set_person_properties,
+)
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
-def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
+def not_too_recent(whenever, timedelta_back=None):
+    """
+    If `whenever` is too recent, bump it back `timedelta_back`. `timedelta_back` defaults to five minutes.
+    """
+    if timedelta_back is None:
+        timedelta_back = timedelta(minutes=5)
+    if datetime.now() - whenever < timedelta_back:
+        return whenever - timedelta_back
+    return whenever
+
+
+def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
     problem_log = []
     person_uuids = []
     logger.debug(case_trigger_infos)
@@ -20,12 +38,15 @@ def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
     if len(person_uuids) == 1 and all(person_uuid for person_uuid in person_uuids):
         person_uuid, = person_uuids
         info, = case_trigger_infos
+        info.form_question_values.update(form_question_values)
         for form_config in openmrs_config.form_configs:
             logger.debug('send_openmrs_visit?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
                 logger.debug('yes')
+                visit_datetime = string_to_utc_datetime(form_json['form']['meta']['timeEnd'])
                 send_openmrs_visit(requests, info, form_config, person_uuid,
-                                   visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
+                                   # OpenMRS rejects encounters if they are too recent
+                                   visit_datetime=not_too_recent(visit_datetime))
 
 
 def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime):
@@ -66,7 +87,8 @@ def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
         for person_property, value_source in openmrs_config.case_config.person_properties.items()
         if value_source.get_value(info)
     }
-    set_person_properties(requests, person_uuid, properties)
+    if properties:
+        set_person_properties(requests, person_uuid, properties)
 
     # update attributes
 
