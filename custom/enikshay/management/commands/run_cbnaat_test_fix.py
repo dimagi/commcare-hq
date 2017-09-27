@@ -26,7 +26,7 @@ class Command(BaseEnikshayCaseMigration):
             form_data = get_result_recorded_form(test)
             if form_data:
                 test_success = get_form_path(
-                    ['update_test_result', 'cbnaat', 'test_success'],
+                    ['update_test_result', 'cbnaat', 'ql_cbnaat', 'test_success'],
                     form_data)
                 if test_success == 'success':
                     tb_detected_a = get_form_path(
