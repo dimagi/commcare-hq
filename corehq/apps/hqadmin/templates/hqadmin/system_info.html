@@ -16,11 +16,10 @@
     <div class="row" style="margin-top: 15px;">
         <div class="col-sm-12">
             {% with deploy_history|first as last_deploy %}
-            <div class="alert alert-info">
+            <div class="alert alert-info clearfix">
+                <a href="{% url 'check_services' %}" target="_blank" class="btn btn-default pull-right">Check services</a>
                 Last deployed on {{ last_deploy.date|date:"d M Y" }}
                 at {{ last_deploy.date|date:"H:i:s"}} UTC ({{ last_deploy.date|naturaltime}} ago) by {{ last_deploy.user }}
-                <br />
-                <a href="http://hqcaptain0.internal.commcarehq.org:9999/">Deploy with Captain</a>
             </div>
             {% endwith %}
         </div>
