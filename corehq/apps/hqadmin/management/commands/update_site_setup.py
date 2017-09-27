@@ -39,6 +39,7 @@ class Command(BaseCommand):
             if site_object.name == site_object.domain == site_address:
                 print('Site object with the expect name and domain already set.')
                 print('No update made.')
+                return
 
         site_object = Site.objects.first()
         site_object.name = site_address
