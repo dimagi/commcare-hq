@@ -1,6 +1,7 @@
 # Sharding postgresql
 
-We use [PL/Proxy](https://plproxy.github.io/) for sharding.
+We use [PL/Proxy](https://plproxy.github.io/) for sharding, although as of September 2017
+are in the process of phasing it out in favor of sharding in the application layer.
 
 ## Dev setup
 The following PostgreSQL extensions are required:

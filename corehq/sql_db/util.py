@@ -7,6 +7,7 @@ from django import db
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
+from corehq.sql_db.models import PartitionedModel
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -48,6 +49,34 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
         for result in qs:
             yield result
+
+
+def get_objects_by_id_across_partitioned_databases(model_class, model_ids, additional_query_params=None):
+    """
+    Runs a query across all partitioned databases and produces a generator
+    with the results.
+
+    :param model_class: A Django model class
+
+    :param model_ids: The list of IDs to retreive
+
+    :param q_expression: An instance of django.db.models.Q representing any additional
+    filters to apply (optional)
+
+    :return: A generator with the results
+    """
+    assert issubclass(model_class, PartitionedModel)
+    assert model_class.partition_attr
+    query_param = '{}__in'.format(model_class.partition_attr)
+    for db_name, split_model_ids in split_list_by_db_partition(model_ids):
+        query_args = {
+            query_param: split_model_ids,
+        }
+        if additional_query_params:
+            query_args.update(additional_query_params)
+
+        for model_instance in model_class.objects.using(db_name).filter(**query_args):
+            yield model_instance
 
 
 def split_list_by_db_partition(partition_values):

@@ -92,7 +92,7 @@ irrespective of the type. Some examples are shown below:
 | case.get_index_map             | Get dictionary of case indices        |
 +--------------------------------+---------------------------------------+
 
-Model acessors
+Model accessors
 --------------
 To access models from the database there are classes that abstract the actual DB operations.
 These classes are generally names :code:`<type>Accessors` and must be instantiated with a domain
