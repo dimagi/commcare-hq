@@ -8,6 +8,7 @@ from corehq.motech.openmrs.views import (
     OpenmrsRepeaterView,
     openmrs_edit_config,
     OpenmrsImporterView,
+    openmrs_import_now,
 )
 
 urlpatterns = [
@@ -46,5 +47,10 @@ urlpatterns = [
         r'^importers/$',
         OpenmrsImporterView.as_view(),
         name=OpenmrsImporterView.urlname
+    ),
+    url(
+        r'^importers/now/$',
+        openmrs_import_now,
+        name='openmrs_import_now',
     ),
 ]

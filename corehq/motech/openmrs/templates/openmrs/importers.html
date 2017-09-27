@@ -3,6 +3,20 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block js-inline %}{{ block.super }}
+    <script>
+        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
+
+        $("#btn-import-now").click(function() {
+            $.post("{% url 'openmrs_import_now' domain %}", {}, function (data) {
+                alert_user(gettext("Importing from OpenMRS will begin shortly."), "success");
+            }).fail(function () {
+                alert_user(gettext("Failed to schedule task to import from OpenMRS."), "danger");
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block page_content %}
     {% crispy openmrs_importer_form %}
 {% endblock %}
