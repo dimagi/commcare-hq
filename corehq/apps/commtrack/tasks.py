@@ -11,7 +11,7 @@ LOCK_LOCATIONS_TIMEOUT = 60 * 60 * 10  # seconds
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id):
-    importer = MultiExcelImporter(import_locations_async, file_ref_id)
+    importer = MultiExcelImporter(import_locations_async, file_ref_id, allow_complex_fields=False)
     results = new_locations_import(domain, importer)
     importer.mark_complete()
 
