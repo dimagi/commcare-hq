@@ -12,7 +12,7 @@ class ExcelImporter(object):
     This is not meant to be used directly.
     """
 
-    def __init__(self, task, file_ref_id):
+    def __init__(self, task, file_ref_id, allow_complex_fields=True):
         self.task = task
         self.progress = 0
         self.total_rows = 100
@@ -23,7 +23,7 @@ class ExcelImporter(object):
         download_ref = DownloadBase.get(file_ref_id)
         if download_ref is None:
             raise UnknownFileRefException("Could not find file wih ref %s. It may have expired" % file_ref_id)
-        self.workbook = WorkbookJSONReader(download_ref.get_filename())
+        self.workbook = WorkbookJSONReader(download_ref.get_filename(), allow_complex_fields=allow_complex_fields)
 
     def mark_complete(self):
         if self.task:
@@ -41,8 +41,8 @@ class SingleExcelImporter(ExcelImporter):
     worksheet.
     """
 
-    def __init__(self, task, file_ref_id):
-        super(SingleExcelImporter, self).__init__(task, file_ref_id)
+    def __init__(self, task, file_ref_id, allow_complex_fields=True):
+        super(SingleExcelImporter, self).__init__(task, file_ref_id, allow_complex_fields=allow_complex_fields)
         self.worksheet = self.workbook.worksheets[0]
         self.total_rows = self.worksheet.worksheet.get_highest_row()
 
@@ -53,8 +53,8 @@ class MultiExcelImporter(ExcelImporter):
     relevant worksheets.
     """
 
-    def __init__(self, task, file_ref_id):
-        super(MultiExcelImporter, self).__init__(task, file_ref_id)
+    def __init__(self, task, file_ref_id, allow_complex_fields=True):
+        super(MultiExcelImporter, self).__init__(task, file_ref_id, allow_complex_fields=allow_complex_fields)
         self.worksheets = self.workbook.worksheets
         self.add_progress(2)  # Show the user we're on it
         total_rows = sum(ws.worksheet.get_highest_row() for ws in self.worksheets)

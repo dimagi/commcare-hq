@@ -36,7 +36,8 @@ class IteratorJSONReader(object):
     [[('A', '1'), ('data', {'key': '2'}), ('is-ok', True), ('user', ['3', '4'])]]
     """
 
-    def __init__(self, rows):
+    def __init__(self, rows, allow_complex_fields=True):
+        self.allow_complex_fields = allow_complex_fields
         # you can only call __iter__ once
         self._rows = iter(rows)
         try:
@@ -66,10 +67,16 @@ class IteratorJSONReader(object):
             self.set_field_value(obj, field, value)
         return obj.keys()
 
-    @classmethod
-    def set_field_value(cls, obj, field, value):
+    def set_field_value(self, obj, field, value):
         if isinstance(value, basestring):
             value = value.strip()
+
+        if self.allow_complex_fields:
+            self.set_complex_field_value(obj, field, value)
+        else:
+            self.set_simple_field_value(obj, field, value)
+
+    def set_complex_field_value(self, obj, field, value):
         # try dict
         try:
             field, subfield = field.split(':')
@@ -81,7 +88,7 @@ class IteratorJSONReader(object):
             if field not in obj:
                 obj[field] = {}
 
-            cls.set_field_value(obj[field], subfield, value)
+            self.set_complex_field_value(obj[field], subfield, value)
             return
 
         # try list
@@ -91,7 +98,7 @@ class IteratorJSONReader(object):
             pass
         else:
             dud = {}
-            cls.set_field_value(dud, field, value)
+            self.set_complex_field_value(dud, field, value)
             (field, value), = dud.items()
 
             if field not in obj:
@@ -126,6 +133,9 @@ class IteratorJSONReader(object):
                         field, value)
                 )
 
+        self.set_simple_field_value(obj, field, value)
+
+    def set_simple_field_value(self, obj, field, value):
         # set for any flat type
         field = field.strip()
         if field in obj:
@@ -145,7 +155,7 @@ class WorksheetNotFound(Exception):
 
 class WorksheetJSONReader(IteratorJSONReader):
 
-    def __init__(self, worksheet, title=None):
+    def __init__(self, worksheet, title=None, allow_complex_fields=True):
         width = 0
         self.title = title
         self.worksheet = worksheet
@@ -179,12 +189,12 @@ class WorksheetJSONReader(IteratorJSONReader):
                 if not any(cell_values):
                     break
                 yield cell_values
-        super(WorksheetJSONReader, self).__init__(iterator())
+        super(WorksheetJSONReader, self).__init__(iterator(), allow_complex_fields=allow_complex_fields)
 
 
 class WorkbookJSONReader(object):
 
-    def __init__(self, f):
+    def __init__(self, f, allow_complex_fields=True):
         if isinstance(f, basestring):
             filename = f
         elif not isinstance(f, file):
@@ -203,7 +213,7 @@ class WorkbookJSONReader(object):
         self.worksheets = []
 
         for worksheet in self.wb.worksheets:
-            ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            ws = WorksheetJSONReader(worksheet, title=worksheet.title, allow_complex_fields=allow_complex_fields)
             self.worksheets_by_title[worksheet.title] = ws
             self.worksheets.append(ws)
 
