@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.openmrs.repeater_helpers import (
@@ -9,6 +10,17 @@ from corehq.motech.openmrs.repeater_helpers import (
     set_person_properties,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
+
+
+def not_too_recent(whenever, timedelta_back=None):
+    """
+    If `whenever` is too recent, bump it back `timedelta_back`. `timedelta_back` defaults to two hours.
+    """
+    if timedelta_back is None:
+        timedelta_back = timedelta(hours=2)
+    if datetime.now() - whenever < timedelta_back:
+        return whenever - timedelta_back
+    return whenever
 
 
 def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
@@ -31,8 +43,10 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
             logger.debug('send_openmrs_visit?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
                 logger.debug('yes')
+                visit_datetime = string_to_utc_datetime(form_json['form']['meta']['timeEnd'])
                 send_openmrs_visit(requests, info, form_config, person_uuid,
-                                   visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
+                                   # OpenMRS rejects encounters if they are too recent
+                                   visit_datetime=not_too_recent(visit_datetime))
 
 
 def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime):
