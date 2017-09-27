@@ -1086,6 +1086,7 @@ def test_bp_complete(self):
     ]
     self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+
 def test_pnc_complete(self):
     case_id = uuid.uuid4().hex
     self._create_ccs_case(
