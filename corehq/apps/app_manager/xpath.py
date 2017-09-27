@@ -104,11 +104,10 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
 
 
 def session_var(var, path=u'data'):
-    session = XPath(u"instance('commcaresession')/session")
+    session = XPath(u'commcaresession').instance() / 'session'
     if path:
-        session = session.slash(path)
-
-    return session.slash(var)
+        session /= path
+    return session / var
 
 
 class XPath(unicode):
@@ -124,31 +123,45 @@ class XPath(unicode):
 
     def slash(self, xpath):
         if self:
-            return XPath(u'%s/%s' % (self, xpath))
+            return self.__class__(u'%s/%s' % (self, xpath))
         else:
             return XPath(xpath)
 
+    def __div__(self, other):
+        return self.slash(other)
+
     def select_raw(self, expression):
-        return XPath(u"{self}[{expression}]".format(self=self, expression=expression))
+        return self.__class__(u"{self}[{expression}]".format(self=self, expression=expression))
 
     def select(self, ref, value, quote=None):
         if quote is None:
             quote = not isinstance(value, XPath)
         if quote:
-            value = XPath.string(value)
-        return XPath(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
+            value = XPath(value).quote()
+        return self.__class__(u"{self}[{ref}={value}]".format(self=self, ref=ref, value=value))
+
+    def quote(self):
+        escaped = self.replace("'", r"\'")
+        return self.__class__(u"'{}'".format(escaped))
+
+    def passto(self, func):
+        return self.__class__(u'{func}({quoted})'.format(func=func, quoted=self.quote()))
 
     def count(self):
-        return XPath(u'count({self})'.format(self=self))
+        # Don't `self.passto('count')` because we don't want to quote self
+        return self.__class__(u'count({self})'.format(self=self))
+
+    def instance(self):
+        return self.passto(u'instance')
 
     def eq(self, b):
-        return XPath(u'{} = {}'.format(self, b))
+        return self.__class__(u'{} = {}'.format(self, b))
 
     def neq(self, b):
-        return XPath(u'{} != {}'.format(self, b))
+        return self.__class__(u'{} != {}'.format(self, b))
 
     def gt(self, b):
-        return XPath(u'{} > {}'.format(self, b))
+        return self.__class__(u'{} > {}'.format(self, b))
 
     @staticmethod
     def expr(template, args, chainable=False):
@@ -168,8 +181,7 @@ class XPath(unicode):
 
     @staticmethod
     def string(a):
-        # todo: escape text
-        return XPath(u"'{}'".format(a))
+        return XPath(a).quote()
 
     @staticmethod
     def and_(*args):
@@ -199,10 +211,9 @@ class XPath(unicode):
 class CaseSelectionXPath(XPath):
     selector = ''
 
-    def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath(u"instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
-            inst=instance_name, case=case_name, sel=self.selector, self=self
-        ))
+    def case(self, instance_name=u'casedb', case_name=u'case'):
+        # Return CaseXPath because we want to be able to call index_id method on result.
+        return CaseXPath(instance_name).instance() / instance_name / XPath(case_name).select(self.selector, self)
 
 
 class CaseIDXPath(CaseSelectionXPath):
@@ -212,8 +223,8 @@ class CaseIDXPath(CaseSelectionXPath):
 class CaseTypeXpath(CaseSelectionXPath):
     selector = '@case_type'
 
-    def case(self, instance_name='casedb', case_name='case'):
-        quoted = CaseTypeXpath(u"'{}'".format(self))
+    def case(self, instance_name=u'casedb', case_name=u'case'):
+        quoted = CaseTypeXpath(self.quote())
         return super(CaseTypeXpath, quoted).case(instance_name, case_name)
 
 
@@ -227,13 +238,13 @@ class UserCaseXPath(XPath):
 class CaseXPath(XPath):
 
     def index_id(self, name):
-        return CaseIDXPath(self.slash(u'index').slash(name))
+        return CaseIDXPath(self / u'index' / name)
 
     def parent_id(self):
         return self.index_id('parent')
 
     def property(self, property):
-        return self.slash(property)
+        return self / property
 
 
 class LocationXpath(XPath):
@@ -268,7 +279,7 @@ class LocationXpath(XPath):
             return '{prefix}{expr}/{property}'.format(prefix=prefix, expr=my_expr, property=property)
 
         self.validate(ref, hierarchy)
-        return XPath(u"instance('{instance}')/{ref}").format(instance=self, ref=ref_to_xpath(ref, hierarchy))
+        return self.instance() / ref_to_xpath(ref, hierarchy)
 
     def validate(self, ref, hierarchy):
         my_type, ref_type, property = self._parse_input(ref)
@@ -329,13 +340,13 @@ class LedgerdbXpath(XPath):
 class LedgerXpath(XPath):
 
     def section(self, section):
-        return LedgerSectionXpath(self.slash(u'section').select(u'@section-id', section))
+        return LedgerSectionXpath((self / u'section').select(u'@section-id', section))
 
 
 class LedgerSectionXpath(XPath):
 
     def entry(self, id):
-        return XPath(self.slash(u'entry').select(u'@id', id, quote=False))
+        return XPath((self / u'entry').select(u'@id', id, quote=False))
 
 
 class InstanceXpath(XPath):
@@ -343,10 +354,7 @@ class InstanceXpath(XPath):
     path = ''
 
     def instance(self):
-        return XPath(u"instance('{id}')/{path}".format(
-            id=self.id,
-            path=self.path)
-        )
+        return XPath(u"instance('{id}')".format(id=self.id)) / self.path
 
 
 class SessionInstanceXpath(InstanceXpath):
@@ -379,23 +387,23 @@ class IndicatorXpath(InstanceXpath):
 
 
 class CommCareSession(object):
-    username = SessionInstanceXpath().instance().slash(u"username")
-    userid = SessionInstanceXpath().instance().slash(u"userid")
+    username = SessionInstanceXpath().instance() / u"username"
+    userid = SessionInstanceXpath().instance() / u"userid"
 
 
 class ScheduleFixtureInstance(XPath):
 
     def visit(self):
-        return XPath(u"instance('{0}')/schedule/visit".format(self))
+        return XPath(self).instance() / u'schedule' / u'visit'
 
     def expires(self):
-        return XPath(u"instance('{0}')/schedule/@expires".format(self))
+        return XPath(self).instance() / u'schedule' / u'@expires'
 
     def starts(self):
-        return XPath(u"instance('{0}')/schedule/@starts".format(self))
+        return XPath(self).instance() / u'schedule' / u'@starts'
 
     def unscheduled_visits(self):
-        return XPath(u"instance('{0}')/schedule/@allow_unscheduled".format(self))
+        return XPath(self).instance() / u'schedule' / u'@allow_unscheduled'
 
 
 class ScheduleFormXPath(object):
@@ -675,7 +683,7 @@ class ScheduleFormXPath(object):
     def due_first(self):
         """instance(...)/schedule/visit[before_window][1]/@due"""
         # Only uses @due since we can't have a repeat visit on the first visit
-        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1").slash("@due")
+        due = self.fixture.visit().select_raw(self.before_window()).select_raw("1") / "@due"
         return u"coalesce({}, {} - {})".format(due, SCHEDULE_MAX_DATE, XPath.date(self.anchor))
 
     def due_later(self):
@@ -686,8 +694,8 @@ class ScheduleFormXPath(object):
                      select_raw(self.next_visits()).
                      select_raw(self.before_window()).
                      select_raw("1"))
-        due_repeat = due_visit.slash("@increment")
-        due_regular = due_visit.slash("@due")
+        due_repeat = due_visit / "@increment"
+        due_regular = due_visit / "@due"
         due = (
             u"if({repeat} != '', {repeat} + date({last_visit}),"
             " if({regular} != '', {regular} + date({anchor}),"
@@ -702,9 +710,7 @@ class ScheduleFormXPath(object):
 
     def next_visit_id(self):
         """{visit}/[next_visits][within_window][1]/@id"""
-        return (self.upcoming_scheduled_visits().
-                select_raw("1").
-                slash("@id"))
+        return self.upcoming_scheduled_visits().select_raw("1") / "@id"
 
     def first_due_date(self):
         return u"{} + {}".format(XPath.date(self.anchor), XPath.int(self.due_first()))
@@ -723,10 +729,10 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
     def __init__(self, form, phase, module, case_xpath):
         super(QualifiedScheduleFormXPath, self).__init__(form, phase, module)
         self.case_xpath = case_xpath
-        self.last_visit = self.case_xpath.slash(SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id))
-        self.last_visit_date = self.case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(self.form.schedule_form_id)
-        self.anchor = self.case_xpath.slash(self.phase.anchor)
-        self.current_schedule_phase = self.case_xpath.slash(SCHEDULE_PHASE)
+        self.last_visit = self.case_xpath / SCHEDULE_LAST_VISIT.format(self.form.schedule_form_id)
+        self.last_visit_date = self.case_xpath / SCHEDULE_LAST_VISIT_DATE.format(self.form.schedule_form_id)
+        self.anchor = self.case_xpath / self.phase.anchor
+        self.current_schedule_phase = self.case_xpath / SCHEDULE_PHASE
 
     @staticmethod
     def next_visit_date(forms, case_xpath):
@@ -736,7 +742,7 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
             $date_case_opened,
             $next_due_visit)
         """
-        last_visit_dates = [case_xpath.slash(SCHEDULE_LAST_VISIT_DATE).format(form.schedule_form_id)
+        last_visit_dates = [case_xpath / SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
                             for form in forms]
         # (last_visit_f1 = '' and last_visit_f2 = '' and ...)
         no_visits = XPath.and_(*[u"{} = ''".format(last_visit)
@@ -745,12 +751,12 @@ class QualifiedScheduleFormXPath(ScheduleFormXPath):
         use_date_opened = XPath.and_(
             XPath(u"/data/{} < today()".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE)),
             XPath.or_(
-                XPath(case_xpath.slash(SCHEDULE_PHASE)).eq(XPath.string('')),
+                (case_xpath / SCHEDULE_PHASE).eq(XPath.string('')),
                 no_visits
             )
         )
         return XPath.if_(
             use_date_opened,
-            case_xpath.slash(SCHEDULE_DATE_CASE_OPENED),
+            case_xpath / SCHEDULE_DATE_CASE_OPENED,
             u"/data/{}".format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
         )
