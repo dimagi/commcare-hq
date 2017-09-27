@@ -15,6 +15,7 @@ patient_type_choice = {
     'recurrent': '2',
     'treatment_after_failure': '3',
     'treatment_after_lfu': '4',
+    'treatment_after_ltfu': '4',  # duplicate of treatment_after_lfu added in app at places
     'other_previously_treated': '6',
     'transfer_in': '7',
 }
