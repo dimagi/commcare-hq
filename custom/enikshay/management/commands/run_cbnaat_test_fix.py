@@ -40,7 +40,7 @@ class Command(BaseEnikshayCaseMigration):
                         form_data,
                     )
                     rif_b = get_form_path(
-                        ['update_test_result', 'cbnaat', 'ql_sample_a', 'sample_a_rif_resistance_result'],
+                        ['update_test_result', 'cbnaat', 'ql_sample_b', 'sample_b_rif_resistance_result'],
                         form_data,
                     )
 
