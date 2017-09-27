@@ -233,7 +233,11 @@ class DateTimeNow(JsonObject):
     type = TypeProperty('icds_datetime_now')
 
     def __call__(self, item, context=None):
-        return datetime.utcnow()
+        return _datetime_now()
+
+
+def _datetime_now():
+    return datetime.utcnow()
 
 
 def month_start(spec, context):

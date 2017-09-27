@@ -1,6 +1,6 @@
 import os
 import mock
-from datetime import date
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
@@ -82,10 +82,12 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
         return self.adapter.get_query_object()
 
     def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
-        _iteratively_build_table(self.datasource)
+        with mock.patch('custom.icds_reports.ucr.expressions._datetime_now') as now:
+            now.return_value = datetime.combine(start_date, datetime.min.time()) + relativedelta(months=1)
+            _iteratively_build_table(self.datasource)
         # TODO(Sheel/J$) filter_by does not work on ES
         query = self._get_query_object().filter_by(doc_id=case_id)
-        self.assertEqual(query.count(), 7)
+        self.assertEqual(query.count(), 3)
 
         for index, test_values in cases:
             row = query.all()[index]._asdict()

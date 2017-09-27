@@ -241,7 +241,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             (0, [('alive_in_month', 1)]),
             (1, [('alive_in_month', 1)]),
             (2, [('alive_in_month', 0)]),
-            (3, [('alive_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -518,7 +517,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -546,7 +545,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -574,7 +573,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 1),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -602,7 +601,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 1),
                  ('anc4_received_at_delivery', 1)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -890,10 +889,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_normal', 1),
                  ('anemic_moderate', 0),
                  ('anemic_severe', 0)]),
-            (3, [('anemic_unknown', 0),
-                 ('anemic_normal', 1),
-                 ('anemic_moderate', 0),
-                 ('anemic_severe', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -932,10 +927,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_moderate', 1),
                  ('anemic_severe', 0)]),
             (2, [('anemic_unknown', 0),
-                 ('anemic_normal', 0),
-                 ('anemic_moderate', 1),
-                 ('anemic_severe', 0)]),
-            (3, [('anemic_unknown', 0),
                  ('anemic_normal', 0),
                  ('anemic_moderate', 1),
                  ('anemic_severe', 0)]),
