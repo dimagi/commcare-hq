@@ -2,9 +2,9 @@ import re
 
 from crispy_forms.layout import Submit
 from django import forms
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template.loader import get_template
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 

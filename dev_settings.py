@@ -47,6 +47,16 @@ SHELL_PLUS_POST_IMPORTS = (
 
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
+LOCAL_LOGGING_LOGGERS = {
+    'auditcare': {
+        'handlers': ['null'],
+        'level': 'WARNING',
+    },
+    'raven': {
+        'handlers': ['null'],
+        'level': 'WARNING',
+    }
+}
 
 DATABASES = {
     'default': {
