@@ -118,7 +118,7 @@ class Command(BaseCommand):
                                                               + test_interim_outcome_text \
                                                               + '\n' \
                                                               + interim_outcome_history
-                                    
+
                                     writer.writerow([current_test.case_id,
                                                      "test",
                                                      current_test.get_case_property('date_tested'),
@@ -183,6 +183,6 @@ class Command(BaseCommand):
                                              None,
                                              None,
                                              None,
-                                             "yes"])
+                                             "no"])
 
         print("Migration finished at {}".format(datetime.datetime.utcnow()))
