@@ -1,0 +1,20 @@
+{% extends "domain/admin/info_base.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+        $("#btn-import-now").click(function() {
+            $.post("{% url 'openmrs_import_now' domain %}", {}, function (data) {
+                $("#btn-import-now").removeClass("btn-default btn-danger").addClass("btn-success");
+            }).fail(function () {
+                $("#btn-import-now").removeClass("btn-default btn-success").addClass("btn-danger");
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block page_content %}
+    {% crispy openmrs_importer_form %}
+{% endblock %}
