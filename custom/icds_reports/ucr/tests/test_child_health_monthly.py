@@ -456,6 +456,20 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                 ('resident', 'yes'),
                 ('sex', 'M'),
             ]),
+            (1, [
+                ('caste', 'sc'),
+                ('disabled', 'yes'),
+                ('minority', 'yes'),
+                ('resident', 'yes'),
+                ('sex', 'M'),
+            ]),
+            (2, [
+                ('caste', 'sc'),
+                ('disabled', 'yes'),
+                ('minority', 'yes'),
+                ('resident', 'yes'),
+                ('sex', 'M'),
+            ]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -464,7 +478,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         self._create_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            date_opened=datetime(2016, 1, 10),
+            date_opened=datetime(2016, 3, 10),
             date_modified=datetime(2016, 3, 12),
             closed=True,
         )
@@ -472,10 +486,20 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         cases = [
             (0, [('open_in_month', 0)]),
             (1, [('open_in_month', 1)]),
-            (2, [('open_in_month', 1)]),
-            (3, [('open_in_month', 1)]),
-            (4, [('open_in_month', 0)]),
         ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_closed(self):
+        case_id = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 1, 12),
+            closed=True,
+        )
+
+        cases = []
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
     def test_alive_in_month(self):
@@ -485,14 +509,13 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             dob=date(1990, 1, 1),
             date_opened=datetime(2016, 1, 10),
             date_modified=datetime(2016, 3, 12),
-            date_death=date(2016, 1, 10),
+            date_death=date(2016, 3, 10),
         )
 
         cases = [
             (0, [('alive_in_month', 1)]),
             (1, [('alive_in_month', 1)]),
             (2, [('alive_in_month', 0)]),
-            (3, [('alive_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -503,14 +526,13 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             dob=date(2010, 1, 15),
             date_opened=datetime(2010, 1, 15),
             date_modified=datetime(2016, 3, 12),
-            date_death=date(2016, 1, 10),
+            date_death=date(2016, 3, 10),
         )
 
         cases = [
             (0, [('valid_in_month', 1)]),
             (1, [('valid_in_month', 1)]),
             (2, [('valid_in_month', 0)]),
-            (3, [('valid_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -524,10 +546,9 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (0, [('age_in_months', 47)]),
-            (1, [('age_in_months', 48)]),
-            (2, [('age_in_months', 49)]),
-            (3, [('age_in_months', 50)]),
+            (0, [('age_in_months', 49)]),
+            (1, [('age_in_months', 50)]),
+            (2, [('age_in_months', 50)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -535,8 +556,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2015, 12, 15),
-            date_opened=datetime(2015, 12, 15),
+            dob=date(2015, 1, 15),
+            date_opened=datetime(2015, 1, 15),
             date_modified=datetime(2016, 3, 12),
         )
 
@@ -551,14 +572,14 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2015, 7, 12),
-            date_opened=datetime(2015, 7, 12),
+            dob=date(2015, 8, 12),
+            date_opened=datetime(2015, 8, 12),
             date_modified=datetime(2016, 3, 12),
-            date_death=date(2016, 1, 10),
         )
 
         cases = [
-            (1, [('age_tranche', 6)]),
+            (0, [('age_tranche', 6)]),
+            (1, [('age_tranche', 12)]),
             (2, [('age_tranche', 12)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
@@ -567,14 +588,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2014, 12, 12),
-            date_opened=datetime(2014, 12, 12),
+            dob=date(2015, 2, 12),
+            date_opened=datetime(2015, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 12)]),
             (1, [('age_tranche', 24)]),
+            (2, [('age_tranche', 24)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -582,14 +604,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2013, 12, 12),
-            date_opened=datetime(2013, 12, 12),
+            dob=date(2014, 2, 12),
+            date_opened=datetime(2014, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 24)]),
             (1, [('age_tranche', 36)]),
+            (2, [('age_tranche', 36)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -597,14 +620,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2012, 12, 12),
-            date_opened=datetime(2012, 12, 12),
+            dob=date(2013, 2, 12),
+            date_opened=datetime(2013, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 36)]),
             (1, [('age_tranche', 48)]),
+            (2, [('age_tranche', 48)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -612,14 +636,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2011, 12, 12),
-            date_opened=datetime(2011, 12, 12),
+            dob=date(2012, 2, 12),
+            date_opened=datetime(2012, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 48)]),
             (1, [('age_tranche', 60)]),
+            (2, [('age_tranche', 60)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -627,14 +652,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2010, 12, 12),
-            date_opened=datetime(2010, 12, 12),
+            dob=date(2011, 2, 12),
+            date_opened=datetime(2011, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 60)]),
             (1, [('age_tranche', 72)]),
+            (2, [('age_tranche', 72)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -642,14 +668,15 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2009, 12, 12),
-            date_opened=datetime(2009, 12, 12),
+            dob=date(2010, 2, 12),
+            date_opened=datetime(2010, 2, 12),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [('age_tranche', 72)]),
             (1, [('age_tranche', None)]),
+            (2, [('age_tranche', None)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
