@@ -40,7 +40,8 @@ class Command(BaseCommand):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if row['Nikshay Code'] in nikshay_locations:
-                    print("Found two rows for nikshay code {code}. Taking latest.".format(code=row['Nikshay Code']))
+                    print("Found two rows for nikshay code {code}. Taking latest."
+                          .format(code=row['Nikshay Code']))
                 nikshay_locations[row['Nikshay Code'].strip()] = LocationDetail(
                     name=row['Name'],
                     nikshay_code=row['Nikshay Code'].strip(),
