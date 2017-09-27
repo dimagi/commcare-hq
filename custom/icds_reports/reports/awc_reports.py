@@ -287,7 +287,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
             ],
             [
                 {
-                    'key': 'PSE - Average Daily Attendance',
+                    'key': 'PSE - Daily Attendance',
                     'values': sorted([
                         dict(
                             x=x_val,

@@ -197,8 +197,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

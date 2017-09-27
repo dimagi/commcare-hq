@@ -31,7 +31,7 @@
             <div class="row" style="width: 100% !important;">
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
-            <div ng-if="!$ctrl.hideRanking && $ctrl.showNational()" class="row">
+            <div ng-if="!$ctrl.hideRanking && !$ctrl.showAllLocations()" class="row">
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
@@ -41,7 +41,7 @@
                                 popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="top in $ctrl.top_three">
-                            <span class="circle-green" ng-bind="$index + 1"></span>
+                            <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
                             <span style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
@@ -57,7 +57,7 @@
                                 popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="bottom in $ctrl.bottom_three">
-                            <span class="circle-red" ng-bind="$ctrl.bottom_three.length - $index"></span>
+                            <span class="circle-blue" ng-bind="$ctrl.bottom_three.length - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
                             <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
@@ -65,7 +65,7 @@
                     </div>
                 </div>
             </div>
-            <div ng-if="!$ctrl.hideRanking && !$ctrl.showNational()" class="row">
+            <div ng-if="!$ctrl.hideRanking && $ctrl.showAllLocations()" class="row">
                 <div class="col-md-12">
                     <div class="small-table">
                         <div class="small-table-title">
@@ -75,7 +75,7 @@
                                 popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="loc in $ctrl.all_locations">
-                            <span class="circle-green" ng-bind="$index + 1"></span>
+                            <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="loc.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
                             <span style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>

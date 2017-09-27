@@ -2,6 +2,7 @@
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 
@@ -205,8 +206,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
+        "top_three": top_locations[:5],
+        "bottom_three": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 

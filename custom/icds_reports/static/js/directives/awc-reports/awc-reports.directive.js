@@ -1919,13 +1919,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     },
                 },
                 yAxis: {
-                    axisLabel: 'Number of Day',
+                    axisLabel: 'Number of Days',
                     tickFormat: function(d) {
                         return d3.format('d')(d);
                     },
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
 
@@ -1937,7 +1938,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 margin: {
                     top: 20,
                     right: 50,
-                    bottom: 50,
+                    bottom: 100,
                     left: 80,
                 },
                 x: function (d) {
@@ -1982,6 +1983,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
         $scope.$apply();
