@@ -1,8 +1,6 @@
-# @quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
-import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 

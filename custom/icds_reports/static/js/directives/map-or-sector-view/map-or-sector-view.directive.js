@@ -24,9 +24,9 @@ function MapOrSectorController() {
             showValues: true,
             valueFormat: function(d) {
                 if (vm.data.mapData.format === "number") {
-                    return d
+                    return d;
                 }
-                return d3.format(".2%")(d)
+                return d3.format(".2%")(d);
             },
             xAxis: {
                 showMaxMin: false,
@@ -34,7 +34,7 @@ function MapOrSectorController() {
             yAxis: {
                 tickFormat: function (d) {
                     if (vm.data.mapData.format === "number") {
-                        return d
+                        return d;
                     }
                     return d3.format("%")(d);
                 },
@@ -53,7 +53,7 @@ function MapOrSectorController() {
                     },
                     row: vm.data.mapData.tooltips_data[y],
                 });
-            }
+            },
         },
         caption: {
             enable: true,

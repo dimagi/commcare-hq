@@ -64,7 +64,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         var loc_type = 'National';
         if (vm.location) {
             if (vm.location.location_type === 'supervisor') {
-                loc_type = "Sector"
+                loc_type = "Sector";
             } else {
                 loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
             }
