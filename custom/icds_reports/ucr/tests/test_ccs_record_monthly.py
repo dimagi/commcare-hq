@@ -1112,6 +1112,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             (2, [('bp1_complete', 0),
                  ('bp2_complete', 0),
                  ('bp3_complete', 0),
-                 ('pnc_complete', 1)]),
+                 ('pnc_complete', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
