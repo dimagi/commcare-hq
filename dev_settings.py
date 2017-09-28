@@ -45,6 +45,7 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.es', '*'),
 )
 
+INTERNAL_IPS = ['127.0.0.1']
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
 
