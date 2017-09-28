@@ -447,7 +447,7 @@ h4 {
 }
 
 .kpi-percents {
-    bottom: 0;
+    bottom: -10px;
     width: 100%;
     position: absolute;
 }

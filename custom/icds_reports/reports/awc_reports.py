@@ -513,7 +513,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         Percentage of children who were put to the breast within one hour of birth.
 
                         Early initiation of breastfeeding ensure the newborn recieves the ""first milk""
-                        rich in nutrients and encourages exclusive breastfeeding practic
+                        rich in nutrients and encourages exclusive breastfeeding practice
                         """
                     ),
                     'percent': percent_diff(

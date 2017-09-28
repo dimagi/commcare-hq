@@ -172,7 +172,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             enable: true,
             html: '<i class="fa fa-info-circle"></i> Percentage of children who were put to the breast within one hour of birth. \n' +
             '\n' +
-            'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practic',
+            'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practice',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

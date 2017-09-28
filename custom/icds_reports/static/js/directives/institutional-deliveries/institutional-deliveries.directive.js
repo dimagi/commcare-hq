@@ -26,7 +26,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of pregant women who delivered in a public or private medical facility in the last month.',
+        info: 'Percentage of pregnant women who delivered in a public or private medical facility in the last month. Delivery in medical instituitions is associated with a decrease in maternal mortality rate.',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -189,9 +189,9 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of pregant women who delivered in a public or private medical facility in the last month. \n' +
+            html: '<i class="fa fa-info-circle"></i> Percentage of pregnant women who delivered in a public or private medical facility in the last month. \n' +
             '\n' +
-            'Delivery in medical instituitions is associated with a decrease maternal mortality rate',
+            'Delivery in medical instituitions is associated with a decrease in maternal mortality rate',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

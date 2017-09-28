@@ -77,7 +77,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "Percentage of children who were put to the breast within one hour of birth."
                     "<br/><br/>"
                     "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
-                    "nutrients and encourages exclusive breastfeeding practic"
+                    "nutrients and encourages exclusive breastfeeding practice"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -207,7 +207,7 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
             "Percentage of children who were put to the breast within one hour of birth."
             "<br/><br/>"
             "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
-            "nutrients and encourages exclusive breastfeeding practic"
+            "nutrients and encourages exclusive breastfeeding practice"
         )),
         "chart_data": [
             {
