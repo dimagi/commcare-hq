@@ -1,8 +1,8 @@
 define([
     "jquery",
     "hqwebapp/js/django",
-    "hqwebapp/js/built",
-    "fixtures/js/built",
+    "hqwebapp/js/bundle",
+    "fixtures/js/bundle",
 ], function(
     $,
     django,

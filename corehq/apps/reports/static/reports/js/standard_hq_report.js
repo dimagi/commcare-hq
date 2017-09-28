@@ -10,7 +10,7 @@
 hqDefine("reports/js/standard_hq_report", [
     'jquery',
     'underscore',
-    'hqwebapp/js/built',
+    'hqwebapp/js/bundle',
     'bootstrap',
 ], function(
     $,
