@@ -69,9 +69,6 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
 
 def get_registered_household_sector_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
 
@@ -109,10 +106,12 @@ def get_registered_household_sector_data(domain, config, loc_level, show_test=Fa
 
     return {
         "tooltips_data": tooltips_data,
+        "format": "number",
+        "info": _("Total number of households registered"),
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Registered household",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
@@ -187,7 +186,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }

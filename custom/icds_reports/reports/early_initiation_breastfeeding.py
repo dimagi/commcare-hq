@@ -77,7 +77,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "Percentage of children who were put to the breast within one hour of birth."
                     "<br/><br/>"
                     "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
-                    "nutrients and encourages exclusive breastfeeding practic"
+                    "nutrients and encourages exclusive breastfeeding practice"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -155,17 +155,14 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
 
 def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -180,18 +177,8 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -203,62 +190,32 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
-
         birth = row['birth']
 
-        value = (birth or 0) * 100 / float(in_month or 1)
+        value = (birth or 0) / float(in_month or 1)
 
         tooltips_data[name]['birth'] += birth
         tooltips_data[name]['in_month'] += (in_month or 0)
 
-        if value >= 60.0:
-            loc_data['green'] += 1
-        elif 20.0 <= value < 60.0:
-            loc_data['orange'] += 1
-        elif value < 20.0:
-            loc_data['red'] += 1
-
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+        chart_data['blue'].append([
+            name, value
+        ])
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of children who were put to the breast within one hour of birth."
+            "<br/><br/>"
+            "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
+            "nutrients and encourages exclusive breastfeeding practice"
+        )),
         "chart_data": [
-
             {
-                "values": chart_data['red'],
-                "key": "0%-20%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
-            },
-            {
-                "values": chart_data['orange'],
-                "key": "20%-60%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['green'],
-                "key": "60%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
+                "color": BLUE
             }
         ]
     }

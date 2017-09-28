@@ -93,7 +93,6 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('Blocks covered'),
@@ -103,7 +102,6 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
                 },
             ],
             [
@@ -116,7 +114,6 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
                 },
                 {
                     'label': _('States/UTs covered'),
@@ -126,7 +123,6 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'month',
-                    'redirect': 'awcs_covered'
                 }
             ]
         ]

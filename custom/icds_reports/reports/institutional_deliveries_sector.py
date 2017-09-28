@@ -22,9 +22,6 @@ GREY = '#9D9D9D'
 
 def get_institutional_deliveries_sector_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggCcsRecordMonthly.objects.filter(
@@ -39,18 +36,8 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, show_tes
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -62,16 +49,6 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, show_tes
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
         in_month = row['in_month']
 
         row_values = {
@@ -81,46 +58,27 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, show_tes
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += value
 
-        value = (in_month or 0) * 100 / float(valid or 1)
-
-        if value < 20.0:
-            loc_data['red'] += 1
-        elif 20.0 <= value < 60.0:
-            loc_data['orange'] += 1
-        elif value >= 60.0:
-            loc_data['green'] += 1
-
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+        value = (in_month or 0) / float(valid or 1)
+        chart_data['blue'].append([
+            name, value
+        ])
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of pregnant women who delivered in a public or private medical facility "
+            "in the last month. "
+            "<br/><br/>"
+            "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
+        )),
         "chart_data": [
             {
-                "values": chart_data['green'],
-                "key": "0%-20%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": BLUE
             },
-            {
-                "values": chart_data['orange'],
-                "key": "20%-60%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "60%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            }
         ]
     }
 
@@ -181,10 +139,10 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
-                    "Percentage of pregant women who delivered in a public or private medical facility "
+                    "Percentage of pregnant women who delivered in a public or private medical facility "
                     "in the last month. "
                     "<br/><br/>"
-                    "Delivery in medical instituitions is associated with a decrease maternal mortality rate"
+                    "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -265,7 +223,7 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }

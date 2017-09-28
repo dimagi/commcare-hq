@@ -20,8 +20,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         legendTitle: 'Percentage',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['gender', 'age', 'month'];
@@ -59,12 +59,21 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = infrastructureService.getMedicineKitData(vm.step, vm.filtersData).then(function(response) {
@@ -73,8 +82,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
@@ -187,8 +196,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

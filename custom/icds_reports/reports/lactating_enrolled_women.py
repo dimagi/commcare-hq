@@ -70,9 +70,6 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
 
 def get_lactating_enrolled_women_sector_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggCcsRecordMonthly.objects.filter(
@@ -85,12 +82,6 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, show_tes
 
     if not show_test:
         data = apply_exclude(domain, data)
-
-    loc_data = {
-        'blue': 0,
-    }
-    tmp_name = ''
-    rows_for_location = 0
 
     chart_data = {
         'blue': []
@@ -110,24 +101,20 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, show_tes
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += value
 
-        if tmp_name and name != tmp_name:
-            chart_data['blue'].append([tmp_name, loc_data['blue']])
-            loc_data = {
-                'blue': 0
-            }
-
-        loc_data['blue'] += valid
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['blue'].append([tmp_name, loc_data['blue']])
+        chart_data['blue'].append([
+            name, valid
+        ])
 
     return {
         "tooltips_data": tooltips_data,
+        "format": "number",
+        "info": _((
+            "Lactating Mothers enrolled for ICDS services."
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Number Of Women",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
@@ -202,7 +189,7 @@ def get_lactating_enrolled_data_chart(domain, config, loc_level, show_test=False
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
