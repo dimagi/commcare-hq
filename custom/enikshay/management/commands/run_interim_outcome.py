@@ -75,8 +75,7 @@ class Command(BaseCommand):
                     tests = [case for case in accessor.get_reverse_indexed_cases([occurrence.get_id])
                              if case.type == CASE_TYPE_TEST
                              and case.get_case_property('rft_general') == 'follow_up_drtb'
-                             and case.get_case_property('result_recorded') == 'yes'
-                            ]
+                             and case.get_case_property('result_recorded') == 'yes']
                     tests = sorted(tests, key=lambda test: test.get_case_property('date_tested'))
 
                     interim_outcome = ''
