@@ -68,13 +68,14 @@ class Command(BaseCommand):
                 case_properties = episode.dynamic_case_properties()
 
                 if self.should_migrate_case(episode_case_id, case_properties, domain):
-                    test_confirming_diagnosis =  case_properties.get('test_confirmed_diagnosis')
+                    test_confirming_diagnosis = case_properties.get('test_confirmed_diagnosis')
                     date_of_diagnosis = case_properties.get('date_of_diagnosis')
                     treatment_initiation_date = case_properties.get('treatment_initiation_date')
                     current_diagnosis_test_result_date = case_properties.get('diagnosis_test_result_date')
                     current_diagnosis_lab_facility_name = case_properties.get('diagnosis_lab_facility_name')
                     current_diagnosis_lab_facility_id = case_properties.get('diagnosis_lab_facility_id')
-                    current_diagnosis_test_lab_serial_number = case_properties.get('diagnosis_test_lab_serial_number')
+                    current_diagnosis_test_lab_serial_number = \
+                        case_properties.get('diagnosis_test_lab_serial_number')
                     current_diagnosis_test_summary = case_properties.get('diagnosis_test_summary')
                     current_diagnosis_test_type = case_properties.get('diagnosis_test_type')
                     current_diagnosis_test_type_label = case_properties.get('diagnosis_test_type_label')
@@ -94,9 +95,9 @@ class Command(BaseCommand):
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
 
-                            diagnosis_test_result_date =  test_case_properties.get('date_tested', '')
+                            diagnosis_test_result_date = test_case_properties.get('date_tested', '')
                             diagnosis_lab_facility_name = test_case_properties.get('testing_facility_name', '')
-                            diagnosis_lab_facility_id =  test_case_properties.get('testing_facility_id', '')
+                            diagnosis_lab_facility_id = test_case_properties.get('testing_facility_id', '')
                             diagnosis_test_lab_serial_number = test_case_properties.get('lab_serial_number', '')
                             diagnosis_test_summary = test_case_properties.get('result_summary_display', '')
                             diagnosis_test_type = test_case_properties.get('test_type_value', '')
