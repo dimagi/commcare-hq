@@ -468,6 +468,26 @@ class PreFilterTestCase(SimpleTestCase):
         self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
 
+    def test_pre_filter_distinct_from_operator(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.is_distinct_from.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        value = {'operator': 'distinct from', 'operand': 'test'}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'test'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
     def test_pre_filter_dyn_operator(self):
         from corehq.apps.reports.daterange import get_daterange_start_end_dates
 
