@@ -11,6 +11,6 @@ hqDefine("hqwebapp/js/bundle", [
     return {
         alertUser: alertUser,
         initialPageData: initialPageData,
-        main: main
+        main: main,
     };
 });
