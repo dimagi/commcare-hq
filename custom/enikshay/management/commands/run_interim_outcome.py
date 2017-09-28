@@ -54,11 +54,14 @@ class Command(BaseCommand):
         ))
 
         case_ids = [
-            hit['_id'] for hit in (CaseSearchES()
-                                   .domain(domain)
-                                   .case_type("episode")
-                                   .case_property_query("episode_type", "confirmed_drtb", "must")
-                                   .run().hits)
+            hit['_id'] for hit in
+            (
+                CaseSearchES()
+                .domain(domain)
+                .case_type("episode")
+                .case_property_query("episode_type", "confirmed_drtb", "must")
+                .run().hits
+            )
         ]
 
         with open(log_path, "w") as log_file:
@@ -107,11 +110,8 @@ class Command(BaseCommand):
 
                             if test_interim_outcome:
                                 interim_outcome = test_interim_outcome
-                                interim_outcome_history = prev_test_date.strftime("%d/%m/%y") \
-                                                          + ": " \
-                                                          + test_interim_outcome_text \
-                                                          + '\n' \
-                                                          + interim_outcome_history
+                                interim_outcome_history = prev_test_date.strftime("%d/%m/%y") + ": " + \
+                                    test_interim_outcome_text + '\n' + interim_outcome_history
 
                                 writer.writerow([current_test.case_id,
                                                  "test",
