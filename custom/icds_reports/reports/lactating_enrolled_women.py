@@ -108,6 +108,9 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, show_tes
     return {
         "tooltips_data": tooltips_data,
         "format": "number",
+        "info": _((
+            "Lactating Mothers enrolled for ICDS services."
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

@@ -55,6 +55,17 @@ function MapOrSectorController() {
                 });
             }
         },
+        caption: {
+            enable: true,
+            html: function () {
+                return '<i class="fa fa-info-circle"></i> ' + (vm.data.mapData !== void(0) ? vm.data.mapData.info : "");
+            },
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            },
+        },
     };
 }
 

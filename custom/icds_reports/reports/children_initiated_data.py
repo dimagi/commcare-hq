@@ -210,6 +210,10 @@ def get_children_initiated_sector_data(domain, config, loc_level, show_test=Fals
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of children between 6 - 8 months given timely introduction to solid, "
+            "semi-solid or soft food."
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

@@ -220,6 +220,9 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, show_test=Fa
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of AWCs with weighing scale for infants"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

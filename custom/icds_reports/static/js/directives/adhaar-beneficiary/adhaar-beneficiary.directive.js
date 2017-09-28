@@ -26,7 +26,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.loaded = false;
     vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
-        info: 'Percentage number of ICDS beneficiaries whose Adhaar identification has been captured',
+        info: 'Percentage of individuals registered using CAS whose Adhaar identification has been captured',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -55,7 +55,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Adhaar has been captured: <strong>' + percent + '</strong></div>';
+            '<div>% of individuals registered using CAS whose Adhaar identification has been captured: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {

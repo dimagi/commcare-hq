@@ -203,6 +203,12 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of children who were put to the breast within one hour of birth."
+            "<br/><br/>"
+            "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
+            "nutrients and encourages exclusive breastfeeding practic"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

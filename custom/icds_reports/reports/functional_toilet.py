@@ -221,6 +221,9 @@ def get_functional_toilet_sector_data(domain, config, loc_level, show_test=False
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of AWCs with a functional toilet"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

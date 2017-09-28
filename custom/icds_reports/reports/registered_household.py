@@ -107,6 +107,7 @@ def get_registered_household_sector_data(domain, config, loc_level, show_test=Fa
     return {
         "tooltips_data": tooltips_data,
         "format": "number",
+        "info": _("Total number of households registered"),
         "chart_data": [
             {
                 "values": chart_data['blue'],

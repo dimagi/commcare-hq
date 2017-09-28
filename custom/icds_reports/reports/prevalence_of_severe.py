@@ -266,6 +266,14 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+            "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+            "<br/><br/>"
+            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+            "undernutrition usually as a consequence of insufficient food intake or a high "
+            "incidence of infectious diseases."
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

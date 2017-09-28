@@ -212,6 +212,12 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+            "<br/><br/>"
+            "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
+            "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

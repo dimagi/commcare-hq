@@ -113,6 +113,9 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
     return {
         "tooltips_data": tooltips_data,
         "format": "number",
+        "info": _((
+            "Number of AWCs launched"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

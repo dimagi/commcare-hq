@@ -204,6 +204,13 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of newborns with born with birth weight less than 2500 grams."
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
+            "mortality and morbidity, inhibited growth and cognitive development, and chronic "
+            "diseases later in life"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

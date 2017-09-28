@@ -65,6 +65,12 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, show_tes
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of pregant women who delivered in a public or private medical facility "
+            "in the last month. "
+            "<br/><br/>"
+            "Delivery in medical instituitions is associated with a decrease maternal mortality rate"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],

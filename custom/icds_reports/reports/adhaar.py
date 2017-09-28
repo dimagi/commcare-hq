@@ -77,7 +77,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
-                    "Percentage number of ICDS beneficiaries whose Adhaar identification has been captured"
+                    "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
@@ -133,6 +133,9 @@ def get_adhaar_sector_data(domain, config, loc_level, show_test=False):
 
     return {
         "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],
