@@ -336,7 +336,7 @@
                                 </div>
                             {% endfor %}
                         {% endif %}
-                        <div id="message-alerts" class="ko-template hide" data-bind="foreach: alerts"><!-- TODO: support requirejs -->
+                        <div id="message-alerts" class="ko-template" data-bind="foreach: alerts">
                             <div data-bind="attr: {'class': alert_class}">
                                 <a class="close" data-dismiss="alert" href="#">&times;</a>
                                 <span data-bind="html: message"></span>
@@ -470,7 +470,7 @@
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/built.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/bundle.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
