@@ -16,15 +16,15 @@ class Requests(object):
         self.username = username
         self.password = password
 
-    def _url(self, uri):
+    def get_url(self, uri):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def get(self, uri, *args, **kwargs):
-        return self.requests.get(self._url(uri), *args,
+        return self.requests.get(self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.requests.post(self._url(uri), *args,
+        return self.requests.post(self.get_url(uri), *args,
                                   auth=(self.username, self.password), **kwargs)
 
 
