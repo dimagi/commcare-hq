@@ -378,7 +378,8 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
     modules = fields.ListField()
     versions = fields.ListField(use_in='detail')
 
-    def dehydrate_versions(self, bundle):
+    @staticmethod
+    def dehydrate_versions(bundle):
         app = bundle.obj
         if app.copy_of:
             return None
@@ -394,7 +395,8 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
             for result in results
         ]
 
-    def dehydrate_module(self, app, module, langs):
+    @staticmethod
+    def dehydrate_module(app, module, langs):
         """
         Convert a Module object to a JValue representation
         with just the good parts.
