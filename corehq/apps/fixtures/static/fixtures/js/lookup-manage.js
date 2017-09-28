@@ -4,7 +4,7 @@
 define([
     "jquery",
     "knockout",
-    "hqwebapp/js/built",
+    "hqwebapp/js/bundle",
 ], function(
     $,
     ko,

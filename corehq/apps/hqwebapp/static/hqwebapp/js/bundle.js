@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/built", [
+hqDefine("hqwebapp/js/bundle", [
     "hqwebapp/js/alert_user",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",

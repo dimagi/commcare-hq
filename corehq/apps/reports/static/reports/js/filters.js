@@ -1,7 +1,7 @@
 hqDefine("reports/js/filters", [
     'jquery',
     'knockout',
-    'hqwebapp/js/built',
+    'hqwebapp/js/bundle',
     'reports/js/standard_hq_report',
     'select2-3.5.2-legacy/select2',
 ], function(
