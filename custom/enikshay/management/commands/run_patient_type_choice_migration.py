@@ -41,8 +41,8 @@ class Command(BaseEnikshayCaseMigration):
         ):
             updates[PATIENT_TYPE_CHOICE] = patient_detail.patient_type_choice
 
-        deprecated_transfer_in = 'yes' if patient_detail.deprecated_patient_type_choice == 'transfer_in' else ''
-        correct_transfer_in = 'yes' if patient_detail.patient_type_choice == 'transfer_in' else ''
+        deprecated_transfer_in = 'yes' if patient_detail.deprecated_patient_type_choice == 'transfer_in' else 'no'
+        correct_transfer_in = 'yes' if patient_detail.patient_type_choice == 'transfer_in' else 'no'
         if (
             deprecated_transfer_in == episode.get_case_property(TRANSFER_IN)
             and deprecated_transfer_in != correct_transfer_in
