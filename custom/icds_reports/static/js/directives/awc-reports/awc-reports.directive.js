@@ -1840,10 +1840,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data !== void(0) ? data.recorded_weight : "Data not Entered") + '</div>';
+            html += '<div>Weight: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_weight) : "Data not Entered") + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data !== void(0) ? data.recorded_height : "Data not Entered") + '</div>';
+            html += '<div>Height: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_height) : "Data not Entered") + '</div>';
         }
         return html;
     };
@@ -1867,6 +1867,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d[1];
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
@@ -1909,6 +1910,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d.y;
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
@@ -2003,6 +2005,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             y: function(d){ return d.y; },
             useVoronoi: false,
             clipEdge: true,
+            showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
