@@ -127,14 +127,15 @@ def _get_select_details(config):
     ).serialize().decode('utf-8'))
 
 
-def get_data_path(config, domain):
-    # TODO used in graphs. need to fix this
-    return (
-        "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-        .format(
-            config.uuid,
-            MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
-        )
+def get_data_path(config, domain, new_mobile_ucr_restore=False):
+    if new_mobile_ucr_restore:
+        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+    else:
+        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+
+    return data_path_string.format(
+        config.uuid,
+        MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
     )
 
 
@@ -181,7 +182,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
                 for index, column in enumerate(chart_config.y_axis_columns):
                     graph_config.series[index].data_path = (
                         graph_config.series[index].data_path or
-                        get_data_path(config, domain)
+                        get_data_path(config, domain, new_mobile_ucr_restore)
                     )
                     graph_config.series[index].x_function = (
                         graph_config.series[index].x_function
