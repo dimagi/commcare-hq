@@ -376,7 +376,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
     build_comment = fields.CharField(attribute='build_comment', null=True)
     built_from_app_id = fields.CharField(attribute='copy_of', null=True)
     modules = fields.ListField()
-    versions = fields.ListField()
+    versions = fields.ListField(use_in='detail')
 
     def dehydrate_versions(self, bundle):
         app = bundle.obj
