@@ -1910,7 +1910,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
                 showValues: true,
                 showControls: false,
-                useInteractiveGuideline: true,
+                showLegend: false,
+                useInteractiveGuideline: false,
                 clipVoronoi: false,
                 duration: 500,
                 xAxis: {
@@ -1926,8 +1927,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     },
                 },
                 reduceXTicks: false,
-                staggerLabels: true,
-                showLegend: false,
+                staggerLabels: false,
             },
         };
 
@@ -1949,7 +1949,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d.y;
                 },
                 showValues: true,
-                useInteractiveGuideline: true,
+                showControls: false,
+                useInteractiveGuideline: false,
                 clipVoronoi: false,
                 duration: 1000,
                 xAxis: {
@@ -1983,7 +1984,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return chart;
                 },
                 reduceXTicks: false,
-                staggerLabels: true,
+                staggerLabels: false,
                 showLegend: false,
             },
         };
