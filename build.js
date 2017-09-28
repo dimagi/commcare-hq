@@ -18,14 +18,14 @@
 
         // Modules common to HQ
         {
-            name: "hqwebapp/js/built",
+            name: "hqwebapp/js/bundle",
             exclude: ["hqwebapp/js/common"],
         },
 
         // App-specific modules
         {
-            name: "fixtures/js/built",
-            exclude: ["hqwebapp/js/common", "hqwebapp/js/built"],
+            name: "fixtures/js/bundle",
+            exclude: ["hqwebapp/js/common", "hqwebapp/js/bundle"],
         },
     ],
 });
