@@ -47,6 +47,21 @@ def get_latest_released_app(domain, app_id):
     return None
 
 
+def get_latest_released_build_id(domain, app_id):
+    """Get the latest starred build id for an application"""
+    from .models import Application
+    key = ['^ReleasedApplications', domain, app_id]
+    app = Application.get_db().view(
+        'app_manager/applications',
+        startkey=key + [{}],
+        endkey=key,
+        descending=True,
+        include_docs=False,
+        limit=1,
+    ).first()
+    return app['id'] if app else None
+
+
 def _get_latest_build_view(domain, app_id, include_docs):
     from .models import Application
     return Application.get_db().view(
