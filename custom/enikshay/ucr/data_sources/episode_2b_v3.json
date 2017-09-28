@@ -84,18 +84,22 @@
                         "type": "and",
                         "filters": [
                             {
-                                "operator": "in",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "treatment_initiation_date"
-                                },
-                                "comment": null,
-                                "property_value": [
-                                    "",
-                                    null
-                                ]
+                                "type": "not",
+                                "filter": {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "treatment_initiation_date"
+                                    },
+                                    "comment": null,
+                                    "property_value": [
+                                        "",
+                                        null
+                                    ]
+                                }
+
                             },
                             {
                                 "operator": "in",
@@ -128,12 +132,8 @@
                         ]
 
                     },
-                    "expression_if_true": {
-                        "constant": null,
-                        "type": "constant"
-                    },
                     "type": "conditional",
-                    "expression_if_false": {
+                    "expression_if_true": {
                         "value_expression": {
                             "datatype": null,
                             "type": "property_name",
@@ -146,6 +146,10 @@
                             "type": "named",
                             "name": "person_id"
                         }
+                    },
+                    "expression_if_false": {
+                        "constant": null,
+                        "type": "constant"
                     }
                 },
                 "is_primary_key": false,
@@ -601,6 +605,7 @@
                 "type": "expression",
                 "column_id": "diagnosing_facility_id"
             },
+
             {
                 "comment": null,
                 "create_index": false,
@@ -611,18 +616,22 @@
                         "type": "and",
                         "filters": [
                             {
-                                "operator": "in",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "datatype": null,
-                                    "type": "property_name",
-                                    "property_name": "treatment_initiation_date"
-                                },
-                                "comment": null,
-                                "property_value": [
-                                    "",
-                                    null
-                                ]
+                                "type": "not",
+                                "filter": {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "treatment_initiation_date"
+                                    },
+                                    "comment": null,
+                                    "property_value": [
+                                        "",
+                                        null
+                                    ]
+                                }
+
                             },
                             {
                                 "operator": "in",
@@ -655,12 +664,8 @@
                         ]
 
                     },
-                    "expression_if_true": {
-                        "constant": null,
-                        "type": "constant"
-                    },
                     "type": "conditional",
-                    "expression_if_false":
+                    "expression_if_true":
                     {
                         "type": "coalesce",
                         "expression": {
@@ -702,6 +707,10 @@
                                 }
                             }
                         }
+                    },
+                    "expression_if_false": {
+                        "constant": null,
+                        "type": "constant"
                     }
                 },
                 "transform": {},
@@ -3192,6 +3201,29 @@
                                     },
                                     "type": "boolean_expression",
                                     "property_value": "end_of_cp"
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": [
+                                        "microscopy-zn",
+                                        "microscopy-fluorescent",
+                                        "cbnaat",
+                                        "culture"
+                                    ]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
                                 }
                             ]
                         },
@@ -3954,6 +3986,29 @@
                                         "property_name": "rft_dstb_followup"
                                     },
                                     "property_value": "end_of_ip"
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": [
+                                        "microscopy-zn",
+                                        "microscopy-fluorescent",
+                                        "cbnaat",
+                                        "culture"
+                                    ]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
                                 }
                             ]
                         },
