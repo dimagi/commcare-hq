@@ -3980,6 +3980,7 @@ class ReportAppConfig(DocumentSchema):
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
+    sync_delay = DecimalProperty(default=0.0)
 
     _report = None
 
