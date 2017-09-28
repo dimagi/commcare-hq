@@ -1055,7 +1055,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-
     def test_bp_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1085,7 +1084,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('pnc_complete', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
 
     def test_pnc_complete(self):
         case_id = uuid.uuid4().hex
