@@ -65,24 +65,24 @@ class Command(BaseCommand):
             print "Aborting"
             return
 
-        log = [('record_id', 'payload_id', 'state', 'failure_reason')]
-        for i, record in enumerate(records):
-            try:
-                if record.next_check is None:
-                    record.next_check = datetime.datetime.utcnow()
-                record.fire(force_send=True)
-            except Exception as e:
-                print "{}/{}: {} {}".format(i, total_records, 'EXCEPTION', repr(e))
-                log.append((record._id, record.payload_id, record.state, repr(e)))
-            else:
-                print "{}/{}: {}".format(i, total_records, record.state)
-                log.append((record._id, record.payload_id, record.state, record.failure_reason))
-            if sleep_time:
-                time.sleep(float(sleep_time))
-
         filename = "sent_repeat_records-{}.csv".format(
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
-        print "Writing log of changes to {}".format(filename)
         with open(filename, 'w') as f:
             writer = csv.writer(f)
-            writer.writerows(log)
+            writer.writerow(('record_id', 'payload_id', 'state', 'failure_reason'))
+
+            for i, record in enumerate(records):
+                try:
+                    if record.next_check is None:
+                        record.next_check = datetime.datetime.utcnow()
+                    record.fire(force_send=True)
+                except Exception as e:
+                    print "{}/{}: {} {}".format(i, total_records, 'EXCEPTION', repr(e))
+                    writer.writerow((record._id, record.payload_id, record.state, repr(e)))
+                else:
+                    print "{}/{}: {}".format(i, total_records, record.state)
+                    writer.writerow((record._id, record.payload_id, record.state, record.failure_reason))
+                if sleep_time:
+                    time.sleep(float(sleep_time))
+
+        print "Wrote log of changes to {}".format(filename)
