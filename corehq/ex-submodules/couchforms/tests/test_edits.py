@@ -168,15 +168,7 @@ class EditFormTest(TestCase, TestFileMixin):
 
         xform = self.formdb.get_form(self.ID)
         self.assertIsNotNone(xform)
-        self.assertEqual(
-            UnfinishedSubmissionStub.objects.filter(xform_id=self.ID,
-                                                    saved=False).count(),
-            1
-        )
-        self.assertEqual(
-            UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(),
-            1
-        )
+        self.assertEqual(UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(), 0)
 
     def test_case_management(self):
         form_id = uuid.uuid4().hex
