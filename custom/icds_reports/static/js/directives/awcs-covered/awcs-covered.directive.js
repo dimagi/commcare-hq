@@ -50,16 +50,10 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var districts = row ? $filter('indiaNumbers')(row.districts) : 'N/A';
-        var blocks = row ? $filter('indiaNumbers')(row.blocks) : 'N/A';
-        var supervisors = row ? $filter('indiaNumbers')(row.supervisors) : 'N/A';
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of Districts Launched: <strong>' + districts + '</strong></div>' +
-            '<div>Number of Blocks Launched: <strong>' + blocks + '</strong></div>' +
-            '<div>Number of Sectors Launched: <strong>' + supervisors + '</strong></div>' +
             '<div>Number of AWSs Launched: <strong>' + awcs + '</strong></div>';
     };
 

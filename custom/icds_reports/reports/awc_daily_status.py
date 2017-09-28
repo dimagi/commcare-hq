@@ -228,7 +228,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "0%-50%",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

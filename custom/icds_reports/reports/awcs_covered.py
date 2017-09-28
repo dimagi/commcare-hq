@@ -28,9 +28,6 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         ).values(
             '%s_name' % loc_level
         ).annotate(
-            districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
-            blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
-            supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
         )
 
@@ -41,14 +38,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     map_data = {}
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
-        districts = row['districts']
-        blocks = row['blocks']
-        supervisors = row['supervisors']
         awcs = row['awcs']
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
             'awcs': awcs,
             'fillKey': 'Launched',
         }
@@ -89,9 +80,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
     ).values(
         *group_by
     ).annotate(
-        districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
-        blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
-        supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
         awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('%s_name' % loc_level)
 
@@ -111,15 +99,9 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     for row in data:
         name = row['%s_name' % loc_level]
-        districts = row['districts']
-        blocks = row['blocks']
-        supervisors = row['supervisors']
         awcs = row['awcs']
 
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
             'awcs': awcs
         }
         for prop, value in row_values.iteritems():
@@ -130,6 +112,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     return {
         "tooltips_data": tooltips_data,
+        "format": "number",
         "chart_data": [
             {
                 "values": chart_data['blue'],
