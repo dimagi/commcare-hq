@@ -4,15 +4,25 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
+from dimagi.utils.decorators.memoized import memoized
 
-from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
+from corehq.apps.es.case_search import flatten_result
+from casexml.apps.case.models import CommCareCase
+from corehq.motech.repeaters.dbaccessors import (
+    iter_repeat_records_by_domain,
+    get_repeat_record_count,
+    get_repeat_records_by_payload_id
+)
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from corehq.apps.es import CaseSearchES
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.exceptions import ENikshayException
+from custom.enikshay.reports.filters import VoucherStateFilter, DistrictLocationFilter
+from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, LabBETSVoucherRepeater
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
 from dimagi.utils.modules import to_function
@@ -112,3 +122,89 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             url=reverse('case_details', args=[self.domain, case_id]),
             case_id=case_id
         )
+
+
+class ENikshayVoucherReport(ENikshayForwarderReport):
+    slug = 'enikshay_voucher_repeater_report'
+    name = 'BETS Voucher Report'
+    ajax_pagination = False
+    fields = (VoucherStateFilter, DistrictLocationFilter)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Voucher Case ID'),
+            DataTablesColumn('Voucher Readable ID'),
+            DataTablesColumn('Voucher Status'),
+            DataTablesColumn('Voucher District ID'),
+            DataTablesColumn('Voucher Approved Amount'),
+            DataTablesColumn('Voucher Beneficiary ID'),
+
+            DataTablesColumn('BETS Sent Date'),
+            DataTablesColumn('Forwading Status'),
+            DataTablesColumn('BETS Response Message'),
+        )
+
+    @property
+    def rows(self):
+        district_id = self.request.GET.get('district_id', None)
+        voucher_state = self.request.GET.get('voucher_state', None)
+        vouchers = self._get_voucher_cases(district_id, voucher_state)
+        rows = []
+        for voucher in vouchers:
+            for row in self._make_rows(voucher):
+                rows.append(row)
+        return rows
+
+    def _make_rows(self, voucher):
+        repeat_records = self._get_voucher_repeat_records(voucher.case_id)
+        default_row = [
+            voucher.case_id,
+            voucher.get_case_property('voucher_id'),
+            voucher.get_case_property('voucher_district_id'),
+            voucher.get_case_property('state'),
+            voucher.get_case_property('amount_approved'),
+            voucher.get_case_property('voucher_fulfilled_by_id'),
+        ]
+        if not repeat_records:
+            return [default_row + ["-", "-", "-"]]
+
+        rows = []
+        for repeat_record in repeat_records:
+            attempt_messages = [
+                escape("{date}: {message}".format(
+                    date=self._format_date(attempt.datetime),
+                    message=attempt.message))
+                for attempt in repeat_record.attempts
+            ]
+            rows.append(
+                default_row + [
+                    self._format_date(repeat_record.last_checked) if repeat_record.last_checked else '---',
+                    self._get_state(repeat_record)[1],
+                    ",<br />".join(attempt_messages),
+                ]
+            )
+        return rows
+
+    def _get_voucher_cases(self, district_id, voucher_state):
+        cs = CaseSearchES()
+        cs = cs.domain('enikshay')
+        cs = cs.case_type('voucher')
+        if district_id:
+            cs = cs.case_property_query('voucher_district_id', district_id)
+        if voucher_state:
+            cs = cs.case_property_query('state', voucher_state)
+        hits = cs.run().raw_hits
+        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+        return cases
+
+    def _get_voucher_repeat_records(self, voucher_id):
+        repeat_records = get_repeat_records_by_payload_id(self.domain, voucher_id)
+        return [r for r in repeat_records if r.repeater_id in self._get_voucher_repeater_ids()]
+
+    @memoized
+    def _get_voucher_repeater_ids(self):
+        return [
+            repeater._id for repeater in get_repeaters_by_domain(self.domain)
+            if isinstance(repeater, (LabBETSVoucherRepeater, ChemistBETSVoucherRepeater))
+        ]
