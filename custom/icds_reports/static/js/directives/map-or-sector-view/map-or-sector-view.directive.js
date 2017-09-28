@@ -66,6 +66,14 @@ function MapOrSectorController() {
                 'width': '900px',
             },
         },
+        title: {
+            enable: true,
+            text: vm.label,
+            css: {
+                'text-align': 'right',
+                'color': 'black',
+            },
+        },
     };
 }
 
@@ -81,6 +89,7 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
             data: '=',
             templatePopup: '&',
             location: '=',
+            label: '=',
         },
         templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
         bindToController: true,
