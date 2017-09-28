@@ -2010,7 +2010,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             xAxis: {
                 axisLabel: '',
                 showMaxMin: true,
-                tickValues: [0, 12, 24, 36, 48, 60]
+                tickValues: [0, 12, 24, 36, 48, 60],
             },
             yAxis: {
                 axisLabel: '',
@@ -2025,7 +2025,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             stack1: {
-                interactive: false
+                interactive: false,
             },
         },
     };
