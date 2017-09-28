@@ -2065,7 +2065,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             stack1: {
-                interactive: false
+                interactive: false,
             }
         },
     };
