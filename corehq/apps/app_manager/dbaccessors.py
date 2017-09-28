@@ -358,24 +358,27 @@ def get_all_built_app_ids_and_versions(domain, app_id=None):
     [[AppBuildVersion(app_id, build_id, version, comment)], ...]
     If app_id is provided, limit to bulds for that app.
     """
+    return map(lambda result: AppBuildVersion(
+        app_id=result['key'][1],
+        build_id=result['id'],
+        version=result['key'][2],
+        comment=result['value']['build_comment'],
+    ), get_all_built_app_results(domain, app_id))
+
+
+def get_all_built_app_results(domain, app_id=None):
     from .models import Application
     startkey = [domain]
     endkey = [domain, {}]
     if app_id:
         startkey = [domain, app_id]
         endkey = [domain, app_id, {}]
-    results = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
         include_docs=True,
     ).all()
-    return map(lambda result: AppBuildVersion(
-        app_id=result['key'][1],
-        build_id=result['id'],
-        version=result['key'][2],
-        comment=result['value']['build_comment'],
-    ), results)
 
 
 def get_case_types_from_apps(domain):
