@@ -124,10 +124,7 @@ class Command(BaseCommand):
                             'datamigration_diagnosis_test_information2': datamigration_diagnosis_test_information2,
                         }
                         if commit:
-                            try:
-                                factory.update_case(case_id=episode_case_id, update=update)
-                            except NikshayLocationNotFound:
-                                pass
+                            factory.update_case(case_id=episode_case_id, update=update)
 
                     writer.writerow([
                         episode_case_id,
