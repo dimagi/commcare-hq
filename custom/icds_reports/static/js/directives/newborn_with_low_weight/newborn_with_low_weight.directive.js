@@ -20,8 +20,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         legendTitle: '% Newborns',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -86,8 +86,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }

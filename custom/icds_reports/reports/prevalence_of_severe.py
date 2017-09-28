@@ -207,8 +207,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[:5],
-        "bottom_three": top_locations[-5:],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 

@@ -860,8 +860,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
 
 def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
-        month__range=(datetime(*two_before), datetime(*month)),
-        awc_id=awc_id,
+        month=datetime(*month),
+        awc_id="45d6c69d076443ae94ff4d94f3f5cbf3",
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -879,16 +879,6 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
         'last_month': datetime(*month).strftime("%b %Y"),
     }
 
-    def row_format(row_data):
-        return dict(
-            nutrition_status=row_data.current_month_nutrition_status,
-            recorded_weight=row_data.recorded_weight or 0,
-            recorded_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
-            pse_days_attended=row_data.pse_days_attended
-        )
-
     def base_data(row_data):
         return dict(
             case_id=row_data.case_id,
@@ -899,12 +889,16 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorded_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            pse_days_attended=row_data.pse_days_attended
         )
 
     for row in data:
-        if row.case_id not in config['rows']:
-            config['rows'][row.case_id] = base_data(row)
-        config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
+        config['rows'][row.case_id] = base_data(row)
 
     return config
 
