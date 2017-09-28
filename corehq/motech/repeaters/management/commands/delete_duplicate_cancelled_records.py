@@ -51,11 +51,11 @@ class Command(BaseCommand):
 
 def resolve_duplicates(records_by_payload_id):
     log = [('RepeatRecord ID', 'Payload ID', 'Deleted?')]
-    with IterDB(RepeatRecord.get_db()) as db:
+    with IterDB(RepeatRecord.get_db()) as iter_db:
         for payload_id, records in records_by_payload_id.items():
             log.append((records[0]._id, payload_id, records[0].failure_reason, 'No'))
             if len(records) > 1:
                 for record in records[1:]:
-                    db.delete(record)
+                    iter_db.delete(record)
                     log.append((record._id, payload_id, record.failure_reason, 'Yes'))
     return log

@@ -60,7 +60,7 @@ class Command(BaseCommand):
         )
 
         total_records = len(records)
-        print "Found {} matching records.  Requeue them?".format(total_records)
+        print "Found {} matching records.  Send them?".format(total_records)
         if not raw_input("(y/n)") == 'y':
             print "Aborting"
             return
@@ -68,6 +68,8 @@ class Command(BaseCommand):
         log = [('record_id', 'payload_id', 'state', 'failure_reason')]
         for i, record in enumerate(records):
             try:
+                if record.next_check is None:
+                    record.next_check = datetime.datetime.utcnow()
                 record.fire(force_send=True)
             except Exception as e:
                 print "{}/{}: {} {}".format(i, total_records, 'EXCEPTION', repr(e))
@@ -78,7 +80,8 @@ class Command(BaseCommand):
             if sleep_time:
                 time.sleep(float(sleep_time))
 
-        filename = "sent_repeat_records-{}.csv".format(datetime.datetime.utcnow().isoformat())
+        filename = "sent_repeat_records-{}.csv".format(
+            datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         print "Writing log of changes to {}".format(filename)
         with open(filename, 'w') as f:
             writer = csv.writer(f)
