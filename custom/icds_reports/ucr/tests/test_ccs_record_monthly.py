@@ -1056,64 +1056,64 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
 
-def test_bp_complete(self):
-    case_id = uuid.uuid4().hex
-    self._create_ccs_case(
-        case_id=case_id,
-        dob=date(1990, 1, 1),
-        edd=date(2016, 2, 5),
-        add=date(2016, 5, 2),
-        date_opened=datetime(2015, 12, 10),
-        date_modified=datetime(2016, 3, 12),
-        bp1_date=date(2015, 2, 13),
-        bp2_date=date(2016, 3, 9),
-        bp3_date=date(2016, 4, 10),
-    )
+    def test_bp_complete(self):
+        case_id = uuid.uuid4().hex
+        self._create_ccs_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            edd=date(2016, 2, 5),
+            add=date(2016, 5, 2),
+            date_opened=datetime(2015, 12, 10),
+            date_modified=datetime(2016, 3, 12),
+            bp1_date=date(2015, 2, 13),
+            bp2_date=date(2016, 3, 9),
+            bp3_date=date(2016, 4, 10),
+        )
 
-    cases = [
-        (0, [('bp1_complete', 1),
-             ('bp2_complete', 0),
-             ('bp3_complete', 0),
-             ('pnc_complete', 0)]),
-        (1, [('bp1_complete', 1),
-             ('bp2_complete', 1),
-             ('bp3_complete', 0),
-             ('pnc_complete', 0)]),
-        (2, [('bp1_complete', 1),
-             ('bp2_complete', 1),
-             ('bp3_complete', 1),
-             ('pnc_complete', 0)]),
-    ]
-    self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+        cases = [
+            (0, [('bp1_complete', 1),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (1, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (2, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 1),
+                 ('pnc_complete', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
 
-def test_pnc_complete(self):
-    case_id = uuid.uuid4().hex
-    self._create_ccs_case(
-        case_id=case_id,
-        dob=date(1990, 1, 1),
-        edd=date(2016, 2, 5),
-        add=date(2016, 3, 2),
-        date_opened=datetime(2015, 12, 10),
-        date_modified=datetime(2016, 3, 12),
-        bp1_date=date(2015, 12, 13),
-        bp2_date=date(2016, 1, 9),
-        bp3_date=date(2016, 2, 10),
-        pnc1_date=date(2016, 3, 18),
-    )
+    def test_pnc_complete(self):
+        case_id = uuid.uuid4().hex
+        self._create_ccs_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            edd=date(2016, 2, 5),
+            add=date(2016, 3, 2),
+            date_opened=datetime(2015, 12, 10),
+            date_modified=datetime(2016, 3, 12),
+            bp1_date=date(2015, 12, 13),
+            bp2_date=date(2016, 1, 9),
+            bp3_date=date(2016, 2, 10),
+            pnc1_date=date(2016, 3, 18),
+        )
 
-    cases = [
-        (0, [('bp1_complete', 1),
-             ('bp2_complete', 1),
-             ('bp3_complete', 1),
-             ('pnc_complete', 0)]),
-        (1, [('bp1_complete', 0),
-             ('bp2_complete', 0),
-             ('bp3_complete', 0),
-             ('pnc_complete', 1)]),
-        (2, [('bp1_complete', 0),
-             ('bp2_complete', 0),
-             ('bp3_complete', 0),
-             ('pnc_complete', 1)]),
-    ]
-    self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+        cases = [
+            (0, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 1),
+                 ('pnc_complete', 0)]),
+            (1, [('bp1_complete', 0),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 1)]),
+            (2, [('bp1_complete', 0),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
