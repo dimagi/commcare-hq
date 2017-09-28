@@ -120,6 +120,9 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
     observation_uuids = []
     for concept_uuid, values in values_for_concept.items():
         for value in values:
+            if value in (None, ''):
+                # OpenMRS rejects observations with empty values
+                continue
             observation = {
                 'concept': concept_uuid,
                 'person': person_uuid,
