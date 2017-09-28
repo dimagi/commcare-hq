@@ -1884,10 +1884,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 yAxis: {
                     axisLabel: '',
                 },
-                tooltip:
-                    function(x, y, value) {
-                        return '<strong>Total number of children between ' + y +':</strong> ' + value;
-                    },
+                tooltip: function(x, y, value) {
+                    return '<strong>Total number of children between ' + y +':</strong> ' + value;
+                },
 
             },
         };
@@ -2011,6 +2010,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             xAxis: {
                 axisLabel: '',
                 showMaxMin: true,
+                tickValues: [0, 12, 24, 36, 48, 60]
             },
             yAxis: {
                 axisLabel: '',
@@ -2024,8 +2024,51 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d3.format("d")(d);
                 },
             },
+            stack1: {
+                interactive: false
+            },
         },
     };
+
+    vm.beneficiaryChartOptionsWFH = {
+        chart: {
+            type: 'multiChart',
+            height: 450,
+            margin: {
+                top: 20,
+                right: 20,
+                bottom: 50,
+                left: 80,
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            useVoronoi: false,
+            clipEdge: true,
+            showControls: false,
+            duration: 100,
+            useInteractiveGuideline: true,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+            },
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+            },
+            yAxis1: {
+                axisLabel: '',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+            },
+            stack1: {
+                interactive: false
+            }
+        },
+    };
+
     vm.beneficiaryChartOneData = [];
     vm.beneficiaryChartTwoData = [];
     vm.beneficiaryChartThreeData = [];
@@ -2038,6 +2081,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         var params = $location.search();
         params['case_id'] = case_id;
         var highest_age = 0;
+
+        vm.filters.push('month');
 
         vm.myPromise = $http({
             method: "GET",
@@ -2058,23 +2103,31 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 setTimeout(function() {
                     vm.beneficiaryChartOneData = [
                         {
+                            key: 'line',
+                            type: 'line',
+                            values: vm.lineChartOneData,
+                            color: 'black',
+                            strokeWidth: 4,
+                            yAxis: 1,
+                        },
+                        {
                             key: 'red',
                             type: 'area',
-                            values: weight_for_age[vm.beneficiary.sex]['red'].slice(0, highest_age + 1),
+                            values: weight_for_age[vm.beneficiary.sex]['red'],
                             color: 'red',
                             yAxis: 1,
                         },
                         {
                             key: 'orange',
                             type: 'area',
-                            values: weight_for_age[vm.beneficiary.sex]['orange'].slice(0, highest_age + 1),
+                            values: weight_for_age[vm.beneficiary.sex]['orange'],
                             color: 'orange',
                             yAxis: 1,
                         },
                         {
                             key: 'green',
                             type: 'area',
-                            values: weight_for_age[vm.beneficiary.sex]['green'].slice(0, highest_age + 1),
+                            values: weight_for_age[vm.beneficiary.sex]['green'],
                             color: 'green',
                             yAxis: 1,
                         },
@@ -2090,21 +2143,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                         {
                             key: 'red',
                             type: 'area',
-                            values: height_for_age[vm.beneficiary.sex]['red'].slice(0, highest_age + 1),
+                            values: height_for_age[vm.beneficiary.sex]['red'],
                             color: 'red',
                             yAxis: 1,
                         },
                         {
                             key: 'orange',
                             type: 'area',
-                            values: height_for_age[vm.beneficiary.sex]['orange'].slice(0, highest_age + 1),
+                            values: height_for_age[vm.beneficiary.sex]['orange'],
                             color: 'orange',
                             yAxis: 1,
                         },
                         {
                             key: 'green',
                             type: 'area',
-                            values: height_for_age[vm.beneficiary.sex]['green'].slice(0, highest_age + 1),
+                            values: height_for_age[vm.beneficiary.sex]['green'],
                             color: 'green',
                             yAxis: 1,
                         },
@@ -2157,6 +2210,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     };
 
     vm.showBeneficiaryTable = function(){
+        vm.filters.pop();
         vm.beneficiary = null;
         vm.steps[vm.step].label = "Beneficiary List";
         vm.showBeneficiary = false;

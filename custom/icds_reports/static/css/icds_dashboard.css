@@ -588,3 +588,7 @@ circle {
 table.no-footer {
     margin: 0 !important;
 }
+
+path.nv-area {
+    fill-opacity: .5;
+}

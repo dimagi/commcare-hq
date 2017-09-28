@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
+import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY
 
@@ -908,10 +909,16 @@ def get_beneficiary_details(case_id, month):
         case_id=case_id, month__lte=datetime(*month)
     ).order_by('month')
 
+    i = 45
+    wfl = []
+    while i <= 120.0:
+        wfl.append({'x': i, 'y': 0})
+        i += 0.5
+
     beneficiary = {
-        'weight': [],
-        'height': [],
-        'wfl': []
+        'weight': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'height': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'wfl': wfl
     }
     for row in data:
         beneficiary.update({
@@ -922,7 +929,16 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': float(row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': int(row.age_in_months), 'y': float(row.recorded_height or 0)})
-        beneficiary['wfl'].append({'x': float(row.recorded_height or 0), 'y': float(row.recorded_weight or 0)})
+        beneficiary['weight'][row.age_in_months] = {
+            'x': int(row.age_in_months),
+            'y': float(row.recorded_weight or 0)
+        }
+        beneficiary['height'][row.age_in_months] = {
+            'x': int(row.age_in_months),
+            'y': float(row.recorded_height or 0)
+        }
+        beneficiary['wfl'][math.ceil((row.recorded_height or 45) - 45)] = {
+            'x': float(row.recorded_height or 0),
+            'y': float(row.recorded_weight or 0)
+        }
     return beneficiary
