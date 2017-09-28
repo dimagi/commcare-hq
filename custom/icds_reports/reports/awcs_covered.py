@@ -80,9 +80,6 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
 def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
 
@@ -103,9 +100,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     chart_data = {
         'blue': [],
-        'green': [],
-        'orange': [],
-        'red': []
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -132,41 +126,17 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
             tooltips_data[name][prop] += (value or 0)
 
     for name, value_dict in tooltips_data.iteritems():
-        chart_data['blue'].append([name, value_dict['districts']])
-        chart_data['green'].append([name, value_dict['blocks']])
-        chart_data['orange'].append([name, value_dict['supervisors']])
-        chart_data['red'].append([name, value_dict['awcs']])
+        chart_data['blue'].append([name, value_dict['awcs']])
 
     return {
         "tooltips_data": tooltips_data,
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Districts",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
-            },
-            {
-                "values": chart_data['green'],
-                "key": "Blocks",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": chart_data['orange'],
-                "key": "Supervisors",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "AWCs",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
             }
         ]
     }

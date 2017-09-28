@@ -11,7 +11,7 @@ function MapOrSectorController() {
             width: 1000,
             margin: {
                 bottom: 120,
-                left: 200,
+                left: 100,
             },
             x: function (d) {
                 return d[0];
@@ -20,15 +20,25 @@ function MapOrSectorController() {
                 return d[1];
             },
             showControls: false,
-            showValues: false,
-            duration: 500,
+            showLegend: false,
+            showValues: true,
+            valueFormat: function(d) {
+                if (vm.data.mapData.format === "number") {
+                    return d
+                }
+                return d3.format(".2%")(d)
+            },
             xAxis: {
                 showMaxMin: false,
             },
             yAxis: {
                 tickFormat: function (d) {
-                    return d3.format(".4r")(d);
+                    if (vm.data.mapData.format === "number") {
+                        return d
+                    }
+                    return d3.format("%")(d);
                 },
+                axisLabelDistance: 20,
             },
             tooltip: function(x, y) {
                 if(!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
@@ -43,7 +53,7 @@ function MapOrSectorController() {
                     },
                     row: vm.data.mapData.tooltips_data[y],
                 });
-            },
+            }
         },
     };
 }
