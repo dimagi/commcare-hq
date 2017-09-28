@@ -120,6 +120,28 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                                     "match": {
                                                         "case_properties.value": {
                                                             "query": "polly",
+                                                            "fuzziness": "0"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "term": {
+                                                        "case_properties.key": "parrot_name"
+                                                    }
+                                                },
+                                                "query": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
                                                             "fuzziness": "AUTO"
                                                         }
                                                     }
