@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
+import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY
 
@@ -120,10 +121,10 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     last_30_days = (selected_month - relativedelta(days=30))
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
-    last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
+    last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_30_days, selected_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -140,13 +141,13 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     )
 
     open_count_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_three_months, last_day_of_next_month), **config
+        pse_date__range=(last_three_months, last_day_of_selected_month), **config
     ).values('awc_name', 'pse_date').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
 
     daily_attendance = DailyAttendanceView.objects.filter(
-        pse_date__range=(selected_month, last_day_of_next_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month), **config
     ).values('awc_name', 'pse_date').annotate(
         avg_percent=Avg('attended_children_percent'),
         attended=Sum('attended_children'),
@@ -161,7 +162,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         daily_attendance = apply_exclude(domain, daily_attendance)
 
     attended_children_chart = {}
-    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_next_month)]
+    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_selected_month)]
     for date in dates:
         attended_children_chart[int(date.strftime("%s")) * 1000] = {
             'avg_percent': 0,
@@ -908,10 +909,16 @@ def get_beneficiary_details(case_id, month):
         case_id=case_id, month__lte=datetime(*month)
     ).order_by('month')
 
+    i = 45
+    wfl = []
+    while i <= 120.0:
+        wfl.append({'x': i, 'y': 0})
+        i += 0.5
+
     beneficiary = {
-        'weight': [],
-        'height': [],
-        'wfl': []
+        'weight': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'height': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'wfl': wfl
     }
     for row in data:
         beneficiary.update({
@@ -922,7 +929,16 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'].append({'x': int(row.age_in_months), 'y': float(row.recorded_weight or 0)})
-        beneficiary['height'].append({'x': int(row.age_in_months), 'y': float(row.recorded_height or 0)})
-        beneficiary['wfl'].append({'x': float(row.recorded_height or 0), 'y': float(row.recorded_weight or 0)})
+        beneficiary['weight'][row.age_in_months] = {
+            'x': int(row.age_in_months),
+            'y': float(row.recorded_weight or 0)
+        }
+        beneficiary['height'][row.age_in_months] = {
+            'x': int(row.age_in_months),
+            'y': float(row.recorded_height or 0)
+        }
+        beneficiary['wfl'][math.ceil((row.recorded_height or 45) - 45)] = {
+            'x': float(row.recorded_height or 0),
+            'y': float(row.recorded_weight or 0)
+        }
     return beneficiary
