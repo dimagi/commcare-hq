@@ -1,4 +1,4 @@
-/* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django */
+/* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django, hqLayout */
 hqDefine("app_manager/js/forms/form_designer", function() {
     var scrollMenu = function(jumpTo) {
         var $scrollContainer = $(".appnav-menu-scroll"),
