@@ -90,9 +90,9 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
                     0,
                     Math.ceil(d3.max(vm.chartData, function(line) {
                         return d3.max(line.values, function(d) {
-                            return d.y
-                        })
-                    })) + 10
+                            return d.y;
+                        });
+                    })) + 10,
                 ];
             }
         });

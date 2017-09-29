@@ -92,9 +92,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                     0,
                     Math.ceil(d3.max(vm.chartData, function(line) {
                         return d3.max(line.values, function(d) {
-                            return d.y
-                        })
-                    }) * 100) / 100 + 0.01
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
                 ];
             }
         });
