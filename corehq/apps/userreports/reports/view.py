@@ -575,9 +575,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         with os.fdopen(fd, 'wb') as temp:
             export_from_tables(self.export_table, temp, Format.HTML)
         with open(path) as f:
-            return HttpResponse(json.dumps({
-                'report': f.read(),
-            }))
+            html = f.read()
+        os.unlink(path)
+        return HttpResponse(json.dumps({
+            'report': html,
+        }))
 
     @property
     @memoized
