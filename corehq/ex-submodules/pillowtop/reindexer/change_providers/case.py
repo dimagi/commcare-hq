@@ -35,9 +35,9 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
                 for case in cases:
                     yield _sql_case_to_change(case)
 
-                start_from = case.server_modified_on
+                start_from_for_db = case.server_modified_on
                 last_id = case.id
-                cases = accessor.get_docs(db_alias, start_from, last_doc_pk=last_id)
+                cases = accessor.get_docs(db_alias, start_from_for_db, last_doc_pk=last_id)
 
 
 def get_domain_case_change_provider(domains, limit_db_aliases=None):

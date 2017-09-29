@@ -124,6 +124,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher Case ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "date_fulfilled",
                 "calculate_total": false,
                 "type": "field",

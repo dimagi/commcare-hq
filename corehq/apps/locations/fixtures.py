@@ -120,13 +120,19 @@ class FlatLocationSerializer(object):
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
         attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
-        attrs_to_index.extend(['@id', '@type'])
+        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
+                              if field.index_in_fixture)
+        attrs_to_index.extend(['@id', '@type', 'name'])
 
         return [get_index_schema_node(fixture_id, attrs_to_index),
-                self._get_fixture_node(fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields)]
+                self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                                       location_type_attrs, data_fields)]
 
-    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields):
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
+    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset,
+                          location_type_attrs, data_fields):
+        root_node = Element('fixture', {'id': fixture_id,
+                                        'user_id': restore_user.user_id,
+                                        'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         all_locations = list(locations_queryset.order_by('site_code'))
@@ -289,9 +295,9 @@ def _types_to_fixture(location_db, type, locs, data_fields):
 def _get_metadata_node(location, data_fields):
     node = Element('location_data')
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
-    for key in data_fields:
-        element = Element(key)
-        element.text = unicode(location.metadata.get(key, ''))
+    for field in data_fields:
+        element = Element(field.slug)
+        element.text = unicode(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -319,6 +325,15 @@ def _fill_in_location_element(xml_root, location, data_fields):
         field_node.text = unicode(val if val is not None else '')
         xml_root.append(field_node)
 
+    # in order to be indexed, custom data fields need to be top-level
+    # so we stick them in there with the prefix data_
+    for field in data_fields:
+        if field.index_in_fixture:
+            field_node = Element(_get_indexed_field_name(field.slug))
+            val = location.metadata.get(field.slug)
+            field_node.text = unicode(val if val is not None else '')
+            xml_root.append(field_node)
+
     xml_root.append(_get_metadata_node(location, data_fields))
 
 
@@ -326,8 +341,10 @@ def _get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
     fields_definition = get_by_domain_and_type(domain, LocationFieldsView.field_type)
     if fields_definition:
-        return {
-            f.slug for f in fields_definition.fields
-        }
+        return fields_definition.fields
     else:
-        return set()
+        return []
+
+
+def _get_indexed_field_name(slug):
+    return "data_{}".format(slug)

@@ -122,6 +122,24 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
     return open_occurrence_cases[0]
 
 
+def get_associated_episode_case_for_test(test_case, occurrence_case_id):
+    """
+    get associated episode case set on the test case for new structure
+    fallback to finding the open episode case for old submissions
+    """
+    test_case_properties = test_case.dynamic_case_properties()
+    test_case_episode_id = test_case_properties.get('episode_case_id')
+    if test_case_episode_id:
+        accessor = CaseAccessors(test_case.domain)
+        try:
+            return accessor.get_case(test_case_episode_id)
+        except CaseNotFound:
+            raise ENikshayCaseNotFound("Could not find episode case %s associated with test %s" %
+                                       (test_case_episode_id, test_case.get_id))
+
+    return get_open_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
+
+
 def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     """
     Gets the first open 'episode' case for the occurrence
@@ -245,7 +263,7 @@ def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
         """
-    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
 @hqnottest

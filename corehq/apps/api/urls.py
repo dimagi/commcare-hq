@@ -94,7 +94,6 @@ ADMIN_API_LIST = (
     FeatureRateResource,
     RoleResource,
     AccountingCurrencyResource,
-    SoftwareProductResource,
     SoftwarePlanResource,
     DefaultProductPlanResource,
     SoftwareProductRateResource,

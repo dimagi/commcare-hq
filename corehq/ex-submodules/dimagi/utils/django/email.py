@@ -29,12 +29,6 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
-        # this is a temporary spam-catcher, to be removed after fb#178059 is resolved
-        if 'commcarehq-support+project@dimagi.com' in recipient:
-            notify_error("Found an email causing spammy emails to "
-                         "commcare-support+project@dimagi.com. Here's the HTML content of email"
-                         "\n {}".format(html_content)
-            )
 
     if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         ga_data = {

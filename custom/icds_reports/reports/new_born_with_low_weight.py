@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -108,16 +108,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'blue': OrderedDict(),
-        'red': OrderedDict()
+        'blue': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'low_birth': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -126,14 +124,14 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         location = row['%s_name' % loc_level]
         low_birth = row['low_birth']
 
-        value = (low_birth or 0) * 100 / float(in_month or 1)
-
-        best_worst[location] = value
+        best_worst[location] = (low_birth or 0) * 100 / float(in_month or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['blue'][date_in_miliseconds]['y'] += in_month
-        data['red'][date_in_miliseconds]['y'] += low_birth
+        data_for_month = data['blue'][date_in_miliseconds]
+        data_for_month['low_birth'] += low_birth
+        data_for_month['all'] += in_month
+        data_for_month['y'] = data_for_month['low_birth'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
@@ -147,40 +145,25 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                     {
                         'x': key,
                         'y': val['y'],
-                        'all': val['all']
+                        'all': val['all'],
+                        'low_birth': val['low_birth']
                     } for key, val in data['blue'].iteritems()
                 ],
-                "key": "Total newborns",
+                "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': val['y'],
-                        'all': val['all']
-                    } for key, val in data['red'].iteritems()
-                ],
-                "key": "Low birth weight newborns",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
 
 def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -195,75 +178,46 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
+
+    tooltips_data = defaultdict(lambda: {
+        'in_month': 0,
+        'low_birth': 0,
+    })
 
     for row in data:
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
+        low_birth = row['low_birth'] or 0
 
-        low_birth = row['low_birth']
+        value = low_birth / float(in_month or 1)
 
-        value = (low_birth or 0) * 100 / float(in_month or 1)
+        tooltips_data[name]['low_birth'] += low_birth
+        tooltips_data[name]['in_month'] += (in_month or 0)
 
-        if value <= 20.0:
-            loc_data['green'] += 1
-        elif 20.0 <= value <= 60.0:
-            loc_data['orange'] += 1
-        elif value > 60.0:
-            loc_data['red'] += 1
-
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+        chart_data['blue'].append([
+            name, value
+        ])
 
     return {
+        "tooltips_data": tooltips_data,
+        "info": _((
+            "Percentage of newborns with born with birth weight less than 2500 grams."
+            "<br/><br/>"
+            "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
+            "mortality and morbidity, inhibited growth and cognitive development, and chronic "
+            "diseases later in life"
+        )),
         "chart_data": [
             {
-                "values": chart_data['green'],
-                "key": "0%-20%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": BLUE
             },
-            {
-                "values": chart_data['orange'],
-                "key": "20%-60%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "60%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
-            }
         ]
     }

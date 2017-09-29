@@ -758,7 +758,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
             ),
             DatabaseColumn(
                 'Total Number of Members Enrolled for Services for services at AWC ',
-                SumColumn('cases_person', alias='cases_person')
+                SumColumn('cases_person_beneficiary', alias='cases_person_beneficiary')
             ),
             AggregateColumn(
                 'Percentage of Beneficiaries with Aadhar',
@@ -1320,7 +1320,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'num_people_enrolled_for_services',
-                SumColumn('cases_person'),
+                SumColumn('cases_person_beneficiary'),
                 slug='num_people_enrolled_for_services'
             ),
             DatabaseColumn(
@@ -1569,13 +1569,13 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_bp_forms'
             ),
             DatabaseColumn(
-                'Number of birth preparedness forms',
+                'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
                 slug='num_delivery_forms'
             ),
             DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
             DatabaseColumn(
-                'Number of early initiation of breastfeeding forms',
+                'Number of exclusive breastfeeding forms',
                 SumColumn('usage_num_ebf'),
                 slug='num_ebf_forms'
             ),
@@ -1697,6 +1697,15 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return group_by
 
     @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if key == 'domain':
+                continue
+            filters.append(EQ(key, key))
+        return filters
+
+    @property
     def order_by(self):
         return [OrderBy('person_name')]
 
@@ -1730,8 +1739,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
-                format_fn=lambda x: 'Yes' if x != '' else 'No'
+                SimpleColumn('fully_immunized'),
+                format_fn=lambda x: 'Yes' if x else 'No'
             ),
             DatabaseColumn(
                 'Month for data shown',
@@ -1755,13 +1764,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Weight-for-Height Status',
-                SimpleColumn('current_month_stunting'),
-                slug="current_month_stunting"
+                SimpleColumn('current_month_wasting'),
+                slug="current_month_wasting"
             ),
             DatabaseColumn(
                 'Height-for-Age status',
-                SimpleColumn('current_month_wasting'),
-                slug="current_month_wasting"
+                SimpleColumn('current_month_stunting'),
+                slug="current_month_stunting"
             ),
             DatabaseColumn(
                 'PSE Attendance',
@@ -2102,7 +2111,7 @@ class ProgressReport(object):
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total number of members enrolled at AWC',
-                                'slug': 'cases_person',
+                                'slug': 'cases_person_beneficiary',
                                 'average': [],
 
                             },

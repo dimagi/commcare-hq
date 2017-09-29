@@ -861,6 +861,7 @@
         "column_id": "baby_scale_usable"
       },
       {
+        "comment": "This variable doesn't actually exist in the app.",
         "filter": {
           "operator": "eq",
           "expression": {

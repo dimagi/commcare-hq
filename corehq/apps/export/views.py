@@ -285,11 +285,18 @@ class BaseExportView(BaseProjectDataView):
             else:
                 raise
         else:
+            try:
+                post_data = json.loads(self.request.body)
+                url = self.export_home_url
+                if post_data['is_daily_saved_export']:
+                    url = reverse(DailySavedExportListView.urlname, args=[self.domain])
+            except ValueError:
+                url = self.export_home_url
             if self.is_async:
                 return json_response({
-                    'redirect': self.export_home_url,
+                    'redirect': url,
                 })
-            return HttpResponseRedirect(self.export_home_url)
+            return HttpResponseRedirect(url)
 
 
 class BaseCreateCustomExportView(BaseExportView):

@@ -7,8 +7,9 @@ from django.core.management import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_occurrence_case_from_episode
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_person_case_from_episode
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.exceptions import ENikshayCaseNotFound, NikshayLocationNotFound
 
 
 class Command(BaseCommand):
@@ -55,7 +56,7 @@ class Command(BaseCommand):
                     episode_case = accessor.get_case(episode_case_id)
                     case_properties = episode_case.dynamic_case_properties()
 
-                    if self.should_migrate_case(case_properties):
+                    if self.should_migrate_case(episode_case_id, case_properties, domain):
                         test = self.get_relevant_test_case(domain, episode_case, error_logger)
 
                         if test is not None:
@@ -64,7 +65,10 @@ class Command(BaseCommand):
                             writer.writerow([episode_case_id] + [update[key] for key in headers[1:]])
 
                             if commit:
-                                factory.update_case(case_id=episode_case_id, update=update)
+                                try:
+                                    factory.update_case(case_id=episode_case_id, update=update)
+                                except NikshayLocationNotFound:
+                                    pass
                         else:
                             print('No relevant test found for episode {}'.format(episode_case_id))
                     else:
@@ -73,13 +77,20 @@ class Command(BaseCommand):
         print('Migration complete at {}'.format(datetime.datetime.utcnow()))
 
     @staticmethod
-    def should_migrate_case(case_properties):
-        return (
+    def should_migrate_case(case_id, case_properties, domain):
+        if (
             case_properties.get('datamigration_diagnosis_test_information') != 'yes'
             and case_properties.get('episode_type') == 'confirmed_tb'
-            and case_properties.get('treatment_initiated') == 'yes_phi'
             and case_properties.get('diagnosis_test_result_date', '') == ''
-        )
+        ):
+            # Filter and skip private cases
+            try:
+                person = get_person_case_from_episode(domain, case_id)
+            except ENikshayCaseNotFound:
+                return False
+            if person.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+                return True
+        return False
 
     @staticmethod
     def get_relevant_test_case(domain, episode_case, error_logger):

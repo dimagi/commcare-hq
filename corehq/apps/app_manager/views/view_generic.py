@@ -181,7 +181,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     menu_host = form or module
     if menu_host:
         default_file_name = 'module%s' % module_id
-        if form_id:
+        if form:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
         specific_media = [{

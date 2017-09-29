@@ -268,6 +268,7 @@ hqDefine('hqwebapp/js/main', [
         'use strict';
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
+        $('#modalTrial30Day').modal('show');
     });
 
     return {

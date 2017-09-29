@@ -13,21 +13,21 @@ from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
-from custom.icds_reports.const import LocationTypes, APP_ID, BHD_ROLE
+from custom.icds_reports.const import LocationTypes, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
-    get_adolescent_girls_sector_data
+    get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
     get_adult_weight_scale_data_map, get_adult_weight_scale_sector_data
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
@@ -36,7 +36,8 @@ from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructur
 from custom.icds_reports.reports.awc_opened import get_awc_opened_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details
-from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data
+from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
+    get_awcs_covered_data_chart
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_chart, \
     get_children_initiated_data_map, get_children_initiated_sector_data
@@ -47,7 +48,8 @@ from custom.icds_reports.reports.early_initiation_breastfeeding import get_early
     get_early_initiation_breastfeeding_data, get_early_initiation_breastfeeding_map
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_chart,\
     get_enrolled_children_data_map, get_enrolled_children_sector_data
-from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, get_enrolled_women_sector_data
+from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
+    get_enrolled_women_sector_data, get_enrolled_women_data_chart
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
@@ -58,8 +60,8 @@ from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_
     get_infants_weight_scale_data_map, get_infants_weight_scale_sector_data
 from custom.icds_reports.reports.institutional_deliveries_sector import get_institutional_deliveries_data_chart,\
     get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
-from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map,\
-    get_lactating_enrolled_women_sector_data
+from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
+    get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
@@ -71,13 +73,14 @@ from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of
     get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
-from custom.icds_reports.reports.registered_household import get_registered_household_data_map,\
-    get_registered_household_sector_data
+from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
+    get_registered_household_sector_data, get_registered_household_data_chart
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
-from custom.icds_reports.utils import get_age_filter, get_location_filter
+from custom.icds_reports.utils import get_age_filter, get_location_filter, \
+    get_latest_issue_tracker_build_id
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -233,7 +236,10 @@ class DashboardView(TemplateView):
         )
 
         if is_commcare_user or is_web_user_with_edit_data_permissions:
-            kwargs['report_an_issue_url'] = webapps_url(domain=self.domain, app_id=APP_ID, module_id=0, form_id=0)
+            build_id = get_latest_issue_tracker_build_id()
+            kwargs['report_an_issue_url'] = webapps_url(
+                domain=self.domain, app_id=build_id, module_id=0, form_id=0
+            )
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
@@ -573,6 +579,10 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
+                    if location_key == 'awc_id':
+                        beneficiary_config.update({
+                            location_key: loc.location_id
+                        })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -993,6 +1003,7 @@ class AWCDailyStatusView(View):
 class AWCsCoveredView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1005,10 +1016,13 @@ class AWCsCoveredView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1019,6 +1033,7 @@ class AWCsCoveredView(View):
 class RegisteredHouseholdView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1031,10 +1046,13 @@ class RegisteredHouseholdView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_registered_household_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_registered_household_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_registered_household_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_registered_household_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_registered_household_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1084,6 +1102,7 @@ class EnrolledChildrenView(View):
 class EnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1097,10 +1116,13 @@ class EnrolledWomenView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1111,6 +1133,7 @@ class EnrolledWomenView(View):
 class LactatingEnrolledWomenView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1123,10 +1146,13 @@ class LactatingEnrolledWomenView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1137,6 +1163,7 @@ class LactatingEnrolledWomenView(View):
 class AdolescentGirlsView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
         now = datetime.utcnow()
         test_date = datetime(now.year, now.month, 1)
 
@@ -1149,10 +1176,13 @@ class AdolescentGirlsView(View):
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
-        if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
-        else:
-            data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
+            else:
+                data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
+        elif step == "chart":
+            data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

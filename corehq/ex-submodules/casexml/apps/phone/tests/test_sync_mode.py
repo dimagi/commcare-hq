@@ -1291,7 +1291,7 @@ class SyncTokenCachingTest(BaseSyncTest):
             **self.restore_options
         ).get_payload()
         self.assertNotIsInstance(next_file, CachedResponse)
-        self.assertNotEqual(original_payload.get_filename(), next_file.get_filename())
+        self.assertNotEqual(original_payload.name, next_file.name)
 
 
 @use_sql_backend

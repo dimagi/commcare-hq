@@ -571,12 +571,18 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     close_occurrence = ("treatment_outcome" in episode_case_properties and
                         episode_case_properties["treatment_outcome"])
 
+    # calculate episode_case_id so we can also set it on all tests
+    episode_case_id = uuid.uuid4().hex
+
+    for test in test_case_properties:
+        test['episode_case_id'] = episode_case_id
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
         CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure,
         close=close_occurrence)
     episode_case_structure = get_case_structure(
-        CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure)
+        CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure,
+        case_id=episode_case_id)
     drug_resistance_case_structures = [
         get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure)
         for props in drug_resistance_case_properties
@@ -615,16 +621,19 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
         secondary_owner['name'] = occurrence_id + secondary_owner['secondary_owner_type']
 
 
-def get_case_structure(case_type, properties, migration_identifier, host=None, close=False):
+def get_case_structure(case_type, properties, migration_identifier, host=None, close=False, case_id=None):
     """
     Converts a properties dictionary to a CaseStructure object
     """
+    if not case_id:
+        case_id = uuid.uuid4().hex
     owner_id = properties.pop("owner_id")
     props = {k: v for k, v in properties.iteritems() if v is not None}
     props['created_by_migration'] = migration_identifier
     props['migration_data_source'] = "excel_document"
+    props['migration_type'] = "pmdt_excel"
     kwargs = {
-        "case_id": uuid.uuid4().hex,
+        "case_id": case_id,
         "walk_related": False,
         "attrs": {
             "case_type": case_type,

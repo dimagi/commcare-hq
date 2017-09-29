@@ -17,7 +17,6 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
-from casexml.apps.phone.utils import get_restore_response_class
 import logging
 
 
@@ -290,10 +289,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
-
-    @property
-    def response_class(self):
-        return get_restore_response_class()
 
     def case_count(self):
         """

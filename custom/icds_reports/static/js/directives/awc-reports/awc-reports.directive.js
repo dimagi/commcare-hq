@@ -1769,7 +1769,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, $filter, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1840,10 +1840,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data !== void(0) ? data.recorded_weight : "Data not Entered") + '</div>';
+            html += '<div>Weight: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_weight) : "Data not Entered") + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data !== void(0) ? data.recorded_height : "Data not Entered") + '</div>';
+            html += '<div>Height: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_height) : "Data not Entered") + '</div>';
         }
         return html;
     };
@@ -1867,6 +1867,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     return d[1];
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
@@ -1909,35 +1910,37 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     return d.y;
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
                 xAxis: {
-                    axisLabel: '',
+                    axisLabel: 'Week',
                     tickFormat: function(d) {
                         return d3.time.format('Week of %d/%m')(new Date(d));
                     },
                 },
                 yAxis: {
-                    axisLabel: '',
+                    axisLabel: 'Number of Days',
                     tickFormat: function(d) {
                         return d3.format('d')(d);
                     },
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
 
         vm.lineChartOptions = {
             chart: {
-                type: 'multiBarChart',
+                type: 'lineChart',
                 height: 450,
                 width: 1100,
                 margin: {
                     top: 20,
-                    right: 20,
-                    bottom: 50,
+                    right: 50,
+                    bottom: 100,
                     left: 80,
                 },
                 x: function (d) {
@@ -1951,19 +1954,38 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 clipVoronoi: false,
                 duration: 1000,
                 xAxis: {
-                    axisLabel: 'Weeks',
+                    axisLabel: 'Day',
                     tickFormat: function(d) {
-                        return d3.time.format('Week of %d/%m')(new Date(d));
+                        return d3.time.format('%d/%m/%Y')(new Date(d));
                     },
                 },
                 yAxis: {
-                    axisLabel: '',
+                    axisLabel: 'Number of Children',
                     tickFormat: function(d) {
-                        return d3.format('.3f')(d);
+                        return d3.format('d')(d);
                     },
+                    forceY: [0],
+                },
+                callback: function(chart) {
+                    var tooltip = chart.interactiveLayer.tooltip;
+                    tooltip.contentGenerator(function (d) {
+
+                        var day = _.find(vm.data.charts[1][0].values, function(num) { return d3.time.format('%d/%m/%Y')(new Date(num['x'])) === d.value;});
+
+                        var attended = day ? day.attended : '0';
+                        var eligible = day ? day.eligible : '0';
+
+                        var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                        tooltip_content += "<p>Number of children who attended PSE: <strong>" + attended + "</strong></p>";
+                        tooltip_content += "<p>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></p>";
+
+                        return tooltip_content;
+                    });
+                    return chart;
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
         $scope.$apply();
@@ -1983,6 +2005,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             y: function(d){ return d.y; },
             useVoronoi: false,
             clipEdge: true,
+            showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
@@ -2191,7 +2214,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', '$filter', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

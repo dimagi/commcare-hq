@@ -2,6 +2,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {# todo: this was just copied from userreports/userreports_base.html #}
+{% block title %}Edit Config : OpenMRS :: {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
     <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>

@@ -1,3 +1,4 @@
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
@@ -13,13 +14,14 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
+        'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['month', 'age', 'gender'];
@@ -48,26 +50,29 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var districts = row ? $filter('indiaNumbers')(row.districts) : 'N/A';
-        var blocks = row ? $filter('indiaNumbers')(row.blocks) : 'N/A';
-        var supervisors = row ? $filter('indiaNumbers')(row.supervisors) : 'N/A';
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of Districts Launched: <strong>' + districts + '</strong></div>' +
-            '<div>Number of Blocks Launched: <strong>' + blocks + '</strong></div>' +
-            '<div>Number of Sectors Launched: <strong>' + supervisors + '</strong></div>' +
             '<div>Number of AWSs Launched: <strong>' + awcs + '</strong></div>';
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(function(response) {
@@ -76,8 +81,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
@@ -126,8 +131,77 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         }
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.chartOptions = {
+        chart: {
+            type: 'lineChart',
+            height: 450,
+            width: 1100,
+            margin: {
+                top: 20,
+                right: 60,
+                bottom: 60,
+                left: 80,
+            },
+            x: function (d) {
+                return d.x;
+            },
+            y: function (d) {
+                return d.y;
+            },
+            color: d3.scale.category10().range(),
+            useInteractiveGuideline: true,
+            clipVoronoi: false,
+            tooltips: true,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+                tickFormat: function (d) {
+                    return d3.time.format('%b %Y')(new Date(d));
+                },
+                tickValues: function () {
+                    return vm.chartTicks;
+                },
+                axisLabelDistance: -100,
+            },
+
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function (d) {
+                    return d3.format(",")(d);
+                },
+                axisLabelDistance: 20,
+                forceY: [0],
+            },
+            callback: function (chart) {
+                var tooltip = chart.interactiveLayer.tooltip;
+                tooltip.contentGenerator(function (d) {
+
+                    var findValue = function (values, date) {
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return d3.format(",")(day['y']);
+                    };
+
+                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    tooltip_content += "<p>Number of AWCs Launched: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+
+                    return tooltip_content;
+                });
+                return chart;
+            },
+        },
+        caption: {
+            enable: true,
+            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            },
+        },
+    };
+
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

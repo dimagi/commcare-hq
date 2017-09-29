@@ -84,6 +84,7 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
         COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
         COALESCE("agg_awc"."cases_person_has_aadhaar", 0) AS "cases_person_has_aadhaar",
+        COALESCE("agg_awc"."cases_person_beneficiary", 0) AS "cases_person_beneficiary",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) AS "cases_person_adolescent_girls_11_14",
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
@@ -423,6 +424,7 @@ CREATE VIEW agg_awc_daily_view AS
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
         COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
         COALESCE("agg_awc"."cases_person_has_aadhaar", 0) AS "cases_person_has_aadhaar",
+        COALESCE("agg_awc"."cases_person_beneficiary", 0) AS "cases_person_beneficiary",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) AS "cases_person_adolescent_girls_11_14",
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
@@ -538,7 +540,8 @@ CREATE VIEW child_health_monthly_view AS
         child_health_monthly.stunting_last_recorded,
         child_health_monthly.current_month_stunting,
         child_health_monthly.wasting_last_recorded,
-        child_health_monthly.current_month_wasting
+        child_health_monthly.current_month_wasting,
+        GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized
    FROM "config_report_icds-cas_static-child_health_cases_a46c129f" "child_list"
      LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id
      LEFT JOIN awc_location awc_location ON "child_list".awc_id = awc_location.doc_id;

@@ -6,7 +6,7 @@
         <img src="{% static "img/logo.png" %}" alt="Logo" style="width: 60%;">
     </div>
     <div>
-        <ul class="nav nav-list">
+        <ul class="nav nav-list" style="overflow-y: auto; height: 500px;">
             <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
                 <a class="row pointer" href="{$ goToStep('', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true">
                     <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
@@ -95,7 +95,7 @@
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/adhaar') !== -1}">
-                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Adhaar Seeded Individuals" %}
+                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Adhaar Seeded Beneficiaries" %}
                         </a>
                     </li>
                 </ul>

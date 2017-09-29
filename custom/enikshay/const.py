@@ -54,6 +54,9 @@ BETS_DATE_PRESCRIPTION_THRESHOLD_MET = 'bets_date_prescription_threshold_met'
 CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
+TEST_RESULT_TB_DETECTED = 'tb_detected'
+TEST_RESULT_TB_NOT_DETECTED = 'tb_not_detected'
+
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     ENIKSHAY_ID,
     PRIMARY_PHONE_NUMBER,
@@ -107,6 +110,8 @@ AMOUNT_APPROVED = "amount_approved"
 INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
+HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD = ['pcp', 'pac', 'pcc', 'plc']
+HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX = r'^HE_ID: (\d*)$'
 
 DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
 PRIVATE_SECTOR_WORKER_ROLE = "Private Sector Worker"
@@ -190,6 +195,7 @@ AGENCY_LOCATION_FIELDS = [
 DSTB_EPISODE_TYPE = "confirmed_tb"
 PERSON_CASE_2B_VERSION = '20'
 REAL_DATASET_PROPERTY_VALUE = 'real'
+TREATMENT_INITIATED_IN_PHI = 'yes_phi'
 
 USERTYPE_DISPLAYS = {
     'pac': 'AYUSH / Other Provider',

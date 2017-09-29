@@ -3,7 +3,8 @@
     "enikshay",
     "sheel-enikshay",
     "enikshay-reports-qa",
-    "enikshay-test"
+    "enikshay-test",
+    "enikshay-performance-test"
   ],
   "server_environment": [
     "enikshay",

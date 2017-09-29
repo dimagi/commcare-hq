@@ -1,7 +1,3 @@
-def get_restore_response_class():
-    from casexml.apps.phone.restore import BlobRestoreResponse
-    return BlobRestoreResponse
-
 
 def delete_sync_logs(before_date, limit=1000):
     from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date

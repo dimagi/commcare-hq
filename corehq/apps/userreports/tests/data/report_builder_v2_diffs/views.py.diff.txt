@@ -88,7 +88,7 @@
  from corehq.apps.userreports.models import (
      ReportConfiguration,
      DataSourceConfiguration,
-@@ -45,28 +74,55 @@
+@@ -45,28 +74,56 @@
      get_datasource_config,
      get_report_config,
      report_config_id_is_static,
@@ -142,6 +142,7 @@
  from corehq.apps.users.decorators import require_permission
  from corehq.apps.users.models import Permissions
 +from corehq.util.couch import get_document_or_404
++from corehq.util.soft_assert import soft_assert
 +from pillowtop.dao.exceptions import DocumentNotFoundError
  import six
 +
@@ -152,7 +153,7 @@
  
  
  def get_datasource_config_or_404(config_id, domain):
-@@ -81,6 +137,25 @@
+@@ -81,6 +138,25 @@
          return get_report_config(config_id, domain)
      except ReportConfigurationNotFoundError:
          raise Http404
@@ -178,7 +179,7 @@
  
  
  class BaseUserConfigReportsView(BaseDomainView):
-@@ -172,6 +247,11 @@
+@@ -172,6 +248,11 @@
      page_title = ugettext_lazy("Edit Report")
  
  
@@ -190,7 +191,7 @@
  class ReportBuilderView(BaseDomainView):
  
      @method_decorator(require_permission(Permissions.edit_data))
-@@ -180,10 +260,19 @@
+@@ -180,10 +261,19 @@
      @use_daterangepicker
      @use_datatables
      def dispatch(self, request, *args, **kwargs):
@@ -214,7 +215,7 @@
  
      @property
      def section_name(self):
-@@ -191,140 +280,151 @@
+@@ -191,140 +281,151 @@
  
      @property
      def section_url(self):
@@ -492,7 +493,7 @@
  
      @property
      def page_context(self):
-@@ -341,27 +441,14 @@
+@@ -341,27 +442,14 @@
      def form(self):
          max_allowed_reports = allowed_report_builder_reports(self.request)
          if self.request.method == 'POST':
@@ -524,7 +525,7 @@
              track_workflow(
                  request.user.email,
                  "Successfully submitted the first part of the Report Builder "
-@@ -374,71 +461,198 @@
+@@ -374,71 +462,198 @@
                  app_source.source_type,
              ])
  
@@ -767,7 +768,7 @@
          }
  
      def _handle_exception(self, response, exception):
-@@ -468,107 +682,58 @@
+@@ -468,107 +683,58 @@
          else:
              raise
  
@@ -919,7 +920,7 @@
  
      def _confirm_report_limit(self):
          """
-@@ -583,41 +748,751 @@
+@@ -583,41 +749,762 @@
              raise Http404()
  
  
@@ -1258,9 +1259,7 @@
 +        # Don't allow rebuilds if there have been more than 1 million forms or cases
 +        domain = DomainES().in_domains(self.domain).run().hits[0]
 +        doc_type = self.config.referenced_doc_type
-+        if doc_type == 'CommCareCase':
-+            return domain.get('cp_n_cases', 0) < 1000000
-+        elif doc_type == 'XFormInstance':
++        if doc_type == 'XFormInstance':
 +            return domain.get('cp_n_forms', 0) < 1000000
 +        return True
 +
@@ -1333,7 +1332,20 @@
 +    def get_reports(self):
 +        reports = StaticReportConfiguration.by_domain(self.domain)
 +        reports += ReportConfiguration.by_domain(self.domain)
-+        return [report for report in reports if report.table_id == self.config.table_id]
++        ret = []
++        for report in reports:
++            try:
++                if report.table_id == self.config.table_id:
++                    ret.append(report)
++            except DataSourceConfigurationNotFoundError:
++                _soft_assert = soft_assert(to=[
++                    '{}@{}'.format(name, 'dimagi.com')
++                    for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
++                ])
++                _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
++                    report._id, self.domain
++                ))
++        return ret
 +
 +    def get(self, request, *args, **kwargs):
 +        if self.config.is_deactivated:

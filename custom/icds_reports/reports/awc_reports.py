@@ -116,16 +116,14 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
 
 
 def get_awc_reports_pse(config, month, domain, show_test=False):
-    now = datetime.utcnow()
-    last_30_days = (now - relativedelta(days=30))
     selected_month = datetime(*month)
+    last_30_days = (selected_month - relativedelta(days=30))
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
-
     last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_30_days, now), **config
+        pse_date__range=(last_30_days, selected_month), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -141,29 +139,53 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         days_open=Sum('awc_days_open')
     )
 
-    chart_data = DailyAttendanceView.objects.filter(
+    open_count_data = DailyAttendanceView.objects.filter(
         pse_date__range=(last_three_months, last_day_of_next_month), **config
-    ).values('awc_name', 'pse_date', 'attended_children_percent').annotate(
+    ).values('awc_name', 'pse_date').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
+
+    daily_attendance = DailyAttendanceView.objects.filter(
+        pse_date__range=(selected_month, last_day_of_next_month), **config
+    ).values('awc_name', 'pse_date').annotate(
+        avg_percent=Avg('attended_children_percent'),
+        attended=Sum('attended_children'),
+        eligible=Sum('eligible_children')
+    )
 
     if not show_test:
         map_image_data = apply_exclude(domain, map_image_data)
         kpi_data_tm = apply_exclude(domain, kpi_data_tm)
         kpi_data_lm = apply_exclude(domain, kpi_data_lm)
-        chart_data = apply_exclude(domain, chart_data)
+        open_count_data = apply_exclude(domain, open_count_data)
+        daily_attendance = apply_exclude(domain, daily_attendance)
+
+    attended_children_chart = {}
+    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_next_month)]
+    for date in dates:
+        attended_children_chart[int(date.strftime("%s")) * 1000] = {
+            'avg_percent': 0,
+            'attended': 0,
+            'eligible': 0
+        }
 
     open_count_chart = {}
-    attended_children_chart = {}
-    for chart_row in chart_data:
+    for chart_row in open_count_data:
         first_day_of_week = chart_row['pse_date'] - timedelta(days=chart_row['pse_date'].isoweekday() - 1)
         pse_week = int(first_day_of_week.strftime("%s")) * 1000
+
         if pse_week in open_count_chart:
             open_count_chart[pse_week] += (chart_row['open_count'] or 0)
-            attended_children_chart[pse_week].append((chart_row['attended_children_percent'] or 0))
         else:
             open_count_chart[pse_week] = (chart_row['open_count'] or 0)
-            attended_children_chart[pse_week] = [chart_row['attended_children_percent'] or 0]
+
+    for daily_attendance_row in daily_attendance:
+        pse_day = int(daily_attendance_row['pse_date'].strftime("%s")) * 1000
+        attended_children_chart[pse_day] = {
+            'avg_percent': daily_attendance_row['avg_percent'] or 0,
+            'attended': daily_attendance_row['attended'] or 0,
+            'eligible': daily_attendance_row['eligible'] or 0
+        }
 
     map_data = {}
 
@@ -193,7 +215,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     images = []
     tmp_image = []
 
-    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=now)):
+    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=selected_month)):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 
@@ -265,11 +287,13 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
             ],
             [
                 {
-                    'key': 'PSE- Average Weekly Attendance',
+                    'key': 'PSE - Daily Attendance',
                     'values': sorted([
                         dict(
                             x=x_val,
-                            y=(sum(y_val) / len(y_val))
+                            y=y_val['avg_percent'],
+                            attended=y_val['attended'],
+                            eligible=y_val['eligible']
                         ) for x_val, y_val in attended_children_chart.iteritems()
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
@@ -489,7 +513,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         Percentage of children who were put to the breast within one hour of birth.
 
                         Early initiation of breastfeeding ensure the newborn recieves the ""first milk""
-                        rich in nutrients and encourages exclusive breastfeeding practic
+                        rich in nutrients and encourages exclusive breastfeeding practice
                         """
                     ),
                     'percent': percent_diff(
@@ -640,7 +664,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
             person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person')
+            all_persons=Sum('cases_person_beneficiary')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -814,7 +838,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': 'day'
                 },
                 {
-                    'label': _('Percent Adhaar Seeded Individuals'),
+                    'label': _('Percent Adhaar Seeded Beneficiaries'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
@@ -836,7 +860,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
 
 def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
-        month__range=(datetime(*two_before), datetime(*month)),
+        month=datetime(*month),
         awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
@@ -855,16 +879,6 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
         'last_month': datetime(*month).strftime("%b %Y"),
     }
 
-    def row_format(row_data):
-        return dict(
-            nutrition_status=row_data.current_month_nutrition_status,
-            recorded_weight=row_data.recorded_weight or 0,
-            recorder_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
-            pse_days_attended=row_data.pse_days_attended
-        )
-
     def base_data(row_data):
         return dict(
             case_id=row_data.case_id,
@@ -872,15 +886,19 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized_date else 'No',
+            fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorded_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            pse_days_attended=row_data.pse_days_attended
         )
 
     for row in data:
-        if row.case_id not in config['rows']:
-            config['rows'][row.case_id] = base_data(row)
-        config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
+        config['rows'][row.case_id] = base_data(row)
 
     return config
 

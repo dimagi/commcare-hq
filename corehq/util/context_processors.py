@@ -99,7 +99,6 @@ def enterprise_mode(request):
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
     }
 
-
 def commcare_hq_names(request):
     return {
         'commcare_hq_names': {

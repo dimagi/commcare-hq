@@ -47,13 +47,24 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
-    amount = jsonobject.IntegerProperty(required=False)
+    amount = jsonobject.FloatProperty(required=False)
     paymentDate = FlexibleDateTimeProperty(required=True)
     comments = jsonobject.StringProperty(required=False)
     failureDescription = jsonobject.StringProperty(required=False)
     paymentMode = jsonobject.StringProperty(required=False)
     checkNumber = jsonobject.StringProperty(required=False)
     bankName = jsonobject.StringProperty(required=False)
+
+    @classmethod
+    def wrap(cls, data):
+        amount = data.get('amount', None)
+        if amount:
+            try:
+                float_amount = float(amount)
+                data['amount'] = float_amount
+            except (ValueError, TypeError):
+                raise BadValueError("amount '{}' is not a number".format(amount))
+        return super(PaymentUpdate, cls).wrap(data)
 
     @property
     def case_id(self):
