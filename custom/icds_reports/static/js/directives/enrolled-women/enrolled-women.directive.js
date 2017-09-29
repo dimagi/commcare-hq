@@ -86,6 +86,14 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y
+                        })
+                    })) + 10
+                ];
             }
         });
     };

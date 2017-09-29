@@ -873,15 +873,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('Gender', SimpleColumn('gender'), slug='gender'),
-                DatabaseColumn('Age', SimpleColumn('age_tranche'), slug='age_tranche'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -894,6 +886,15 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('nutrition_status_weighed'),
                     SumColumn('wer_eligible')
+                ],
+                slug='percent_weight_efficiency'
+            ),
+            AggregateColumn(
+                'Height Measurement Efficiency',
+                percent,
+                [
+                    SumColumn('height_measured_in_month'),
+                    SumColumn('height_eligible')
                 ],
                 slug='percent_weight_efficiency'
             ),
@@ -934,7 +935,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('wasting_severe'),
-                    SumColumn('height_eligible')
+                    AliasColumn('height_eligible')
                 ],
                 slug='percent_severe_wasting'
             ),
@@ -1077,15 +1078,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('CCS Status', SimpleColumn('ccs_status'), slug='ccs_status'),
-                DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -1323,9 +1316,13 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 SumColumn('cases_person_beneficiary'),
                 slug='num_people_enrolled_for_services'
             ),
-            DatabaseColumn(
+            AggregateColumn(
                 'num_people_with_aadhar',
-                SumColumn('cases_person_has_aadhaar'),
+                percent,
+                [
+                    SumColumn('cases_person_has_aadhaar'),
+                    SumColumn('cases_person')
+                ],
                 slug='num_people_with_aadhar'
             ),
             DatabaseColumn(
@@ -1461,7 +1458,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_people_enrolled_for_services'
             },
             {
-                'header': 'Number of people with aadhar',
+                'header': 'Percent adhaar seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -1547,6 +1544,12 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 SumColumn('awc_num_open'),
                 format_fn=lambda x: (x or 0),
                 slug='num_awc_open'
+            ),
+            DatabaseColumn(
+                'Number of launched AWCs (ever submitted at least one HH reg form)',
+                SumColumn('awc_num_open'),
+                format_fn=lambda x: (x or 0),
+                slug='num_launched_awcs'
             ),
             DatabaseColumn(
                 'Number of household registration forms',

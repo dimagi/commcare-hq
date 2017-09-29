@@ -1962,7 +1962,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 yAxis: {
                     axisLabel: 'Number of Children',
                     tickFormat: function(d) {
-                        return d3.format('d')(d);
+                        return d3.format('.2%')(d);
                     },
                     forceY: [0],
                 },
@@ -2066,7 +2066,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             },
             stack1: {
                 interactive: false,
-            }
+            },
         },
     };
 

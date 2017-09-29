@@ -121,10 +121,10 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     last_30_days = (selected_month - relativedelta(days=30))
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
-    last_day_of_next_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
+    last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_30_days, selected_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month), **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -141,13 +141,13 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     )
 
     open_count_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_three_months, last_day_of_next_month), **config
+        pse_date__range=(last_three_months, last_day_of_selected_month), **config
     ).values('awc_name', 'pse_date').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
 
     daily_attendance = DailyAttendanceView.objects.filter(
-        pse_date__range=(selected_month, last_day_of_next_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month), **config
     ).values('awc_name', 'pse_date').annotate(
         avg_percent=Avg('attended_children_percent'),
         attended=Sum('attended_children'),
@@ -162,7 +162,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         daily_attendance = apply_exclude(domain, daily_attendance)
 
     attended_children_chart = {}
-    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_next_month)]
+    dates = [dt for dt in rrule(DAILY, dtstart=selected_month, until=last_day_of_selected_month)]
     for date in dates:
         attended_children_chart[int(date.strftime("%s")) * 1000] = {
             'avg_percent': 0,
