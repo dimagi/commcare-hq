@@ -1810,6 +1810,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1910,6 +1911,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1924,6 +1926,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         'rows_config': [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -1978,6 +1981,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Child Feeding Indicators',
                         'slug': 'child_feeding_indicators',
+                        'order': 2,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -2038,6 +2042,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         "rows_config": [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -2075,6 +2080,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'AWC Infrastructure',
                         'slug': 'awc_infrastructure',
+                        'order': 5,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2101,6 +2107,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Demographics',
                         'slug': 'demographics',
+                        'order': 4,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2274,11 +2281,12 @@ class ProgressReport(object):
                     sections_by_slug[slug] = {
                         'slug': slug,
                         'section_title': section['section_title'],
+                        'order': section['order'],
                         'rows_config': section['rows_config']
                     }
                 else:
                     sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
-        return sections_by_slug.values()
+        return sorted(sections_by_slug.values(), key=lambda x: x['order'])
 
     def _get_needed_data_sources(self, config):
         needed_data_sources = set()
