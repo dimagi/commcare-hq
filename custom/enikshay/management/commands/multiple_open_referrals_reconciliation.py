@@ -95,7 +95,8 @@ class Command(BaseCommand):
                 "closed_case_ids": closing_case_ids
             })
         else:
-            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True) for case in cases_to_close]
+            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True)
+                       for case in cases_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
 

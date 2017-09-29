@@ -100,7 +100,8 @@ class Command(BaseCommand):
         if (len(drug_resistance_cases) < 2 and
             any(drug_resistance_case.dynamic_case_properties().get('drug_id') != drug_id for
                 drug_resistance_case in drug_resistance_cases)):
-            raise CommandError("Asked to reconcile cases when not needed for occurrence case %s" % occurrence_case_id)
+            raise CommandError("Asked to reconcile cases when not needed for occurrence case %s"
+                               % occurrence_case_id)
 
         drug_resistance_case_ids = set([case.get_id for case in drug_resistance_cases])
         resistant_drug_resistance_cases = []
@@ -184,7 +185,8 @@ class Command(BaseCommand):
                 "closed_case_ids": closing_case_ids
             })
         else:
-            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True) for case in cases_to_close]
+            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True)
+                       for case in cases_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
 
@@ -193,4 +195,3 @@ def get_open_drug_resistance_cases_from_occurrence(occurrence_case_id):
     all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
     return [case for case in all_cases
             if not case.closed and case.type == CASE_TYPE_DRUG_RESISTANCE]
-
