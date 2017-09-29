@@ -105,7 +105,9 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
                     caseTypeObj.init(groupDict, changeSaveButton);
                     self.caseTypes.push(caseTypeObj);
                 });
-                self.goToCaseType(self.caseTypes()[0]);
+                if (self.caseTypes().length) {
+                    self.goToCaseType(self.caseTypes()[0]);
+                }
                 self.casePropertyList.subscribe(changeSaveButton);
             });
         };

@@ -7,12 +7,14 @@ import operator
 
 from django.template.loader import render_to_string
 
+from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from custom.icds_reports.const import LocationTypes
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, APP_ID
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 
@@ -283,3 +285,8 @@ def get_location_filter(location, domain, config):
         except SQLLocation.DoesNotExist:
             pass
     return loc_level
+
+
+@quickcache([])
+def get_latest_issue_tracker_build_id():
+    return get_latest_released_build_id('icds-cas', APP_ID)

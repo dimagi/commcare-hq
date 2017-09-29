@@ -1575,7 +1575,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
             DatabaseColumn(
-                'Number of early initiation of breastfeeding forms',
+                'Number of exclusive breastfeeding forms',
                 SumColumn('usage_num_ebf'),
                 slug='num_ebf_forms'
             ),
@@ -1739,8 +1739,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
-                format_fn=lambda x: 'Yes' if x != '' else 'No'
+                SimpleColumn('fully_immunized'),
+                format_fn=lambda x: 'Yes' if x else 'No'
             ),
             DatabaseColumn(
                 'Month for data shown',

@@ -238,6 +238,10 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def show_index_in_fixture(self):
+        return toggles.INDEX_LOCATION_DATA.enabled(self.domain)
+
 
 class LocationTypesView(BaseDomainView):
     urlname = 'location_types'

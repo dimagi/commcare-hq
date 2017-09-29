@@ -11,6 +11,7 @@ function CustomDataField () {
     self.is_required = ko.observable();
     self.choices = ko.observableArray();
     self.multipleChoice = ko.observable();
+    self.index_in_fixture = ko.observable();
 
     self.addChoice = function () {
         self.choices.unshift(new Choice());
@@ -28,6 +29,7 @@ function CustomDataField () {
             return new Choice(choice);
         }));
         self.multipleChoice(field.is_multiple_choice);
+        self.index_in_fixture(field.index_in_fixture);
     };
 
     self.serialize = function () {
@@ -49,7 +51,8 @@ function CustomDataField () {
             'label': self.label(),
             'is_required': self.is_required(),
             'choices': choices,
-            'is_multiple_choice': self.multipleChoice()
+            'is_multiple_choice': self.multipleChoice(),
+            'index_in_fixture': self.index_in_fixture(),
         };
     };
 }

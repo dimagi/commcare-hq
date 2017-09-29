@@ -6,6 +6,8 @@
       <index>@id</index>
       <index>@state_id</index>
       <index>@type</index>
+      <index>data_is_test</index>
+      <index>name</index>
     </indices>
   </schema>
   <fixture id="locations" user_id="{user_id}" indexed="true">
@@ -18,7 +20,11 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="{cambridge_id}" county_id="{middlesex_id}" id="{cambridge_id}" state_id="{massachusetts_id}" type="city">
         <name>Cambridge</name>
@@ -28,7 +34,11 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="" id="{massachusetts_id}" type="state" county_id="" state_id="{massachusetts_id}">
         <name>Massachusetts</name>
@@ -38,7 +48,11 @@
         <longitude/>
         <location_type>state</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="" county_id="{middlesex_id}" id="{middlesex_id}" state_id="{massachusetts_id}" type="county">
         <name>Middlesex</name>
@@ -48,7 +62,11 @@
         <longitude/>
         <location_type>county</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="{revere_id}" county_id="{suffolk_id}" id="{revere_id}" state_id="{massachusetts_id}" type="city">
         <name>Revere</name>
@@ -58,7 +76,11 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="{somerville_id}" county_id="{middlesex_id}" id="{somerville_id}" state_id="{massachusetts_id}" type="city">
         <name>Somerville</name>
@@ -68,7 +90,11 @@
         <longitude/>
         <location_type>city</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
       <location city_id="" county_id="{suffolk_id}" id="{suffolk_id}" state_id="{massachusetts_id}" type="county">
         <name>Suffolk</name>
@@ -78,7 +104,11 @@
         <longitude/>
         <location_type>county</location_type>
         <supply_point_id/>
-        <location_data/>
+        <data_is_test>no</data_is_test>
+        <location_data>
+          <is_test>no</is_test>
+          <favorite_color>blue</favorite_color>
+        </location_data>
       </location>
     </locations>
   </fixture>

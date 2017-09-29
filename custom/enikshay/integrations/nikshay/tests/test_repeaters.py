@@ -300,7 +300,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
 
         # From Episode
         self.assertEqual(payload['sitedetail'], 2)
-        self.assertEqual(payload['Ptype'], '6')
+        self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
         self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
@@ -799,18 +799,6 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
 
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
 
-        # skip if episode case not nikshay registered
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_registered": 'true'})
-
-        # skip if episode case has no nikshay_id
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
-
         update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 
@@ -1007,6 +995,15 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         )
         self.assertEqual(payload['SmearResult'], 1)
 
+        update_case(self.domain, self.test_id, {
+            "max_bacilli_count": '10'
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['SmearResult'], 9)
+
     def test_mandatory_field_interval_id(self):
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "testing",
@@ -1061,18 +1058,24 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty",
+                    max_bacilli_count=None
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
+        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "a"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty",
+                    max_bacilli_count="a"
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
@@ -1081,8 +1084,11 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5plus")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5plus",
+                    max_bacilli_count=""
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
@@ -1091,6 +1097,10 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "1"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 

@@ -465,25 +465,29 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+def rebuild_export(export_instance, filters=None):
     """
     Rebuild the given daily saved ExportInstance
     """
-    if _should_not_rebuild_export(export_instance, last_access_cutoff):
-        return
     filters = filters or export_instance.get_filters()
     export_file = get_export_file([export_instance], filters or [])
     with export_file as payload:
         save_export_payload(export_instance, payload)
 
 
-def _should_not_rebuild_export(export, last_access_cutoff):
+def should_rebuild_export(export, last_access_cutoff):
+    """
+    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
+    :return: True if export should be rebuilt
+    """
     # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
-    return (
-        last_access_cutoff
-        and export.auto_rebuild_enabled
-        and export.last_accessed
-        and export.last_accessed < last_access_cutoff
+    is_auto_rebuild = last_access_cutoff is not None
+    return not is_auto_rebuild or (
+        export.auto_rebuild_enabled
+        and (
+            export.last_accessed is None
+            or export.last_accessed > last_access_cutoff
+        )
     )
 
 

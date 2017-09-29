@@ -98,13 +98,19 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }
         });
 
-        var questionMap = {};
-        _(self.questions()).each(function (question) {
-            questionMap[question.value] = question;
-        });
+        self.questionMap = {};
+        var _buildQuestionMap = function() {
+            self.questionMap = {};
+            _(self.questions()).each(function (question) {
+                self.questionMap[question.value] = question;
+            });
+        };
+        _buildQuestionMap();
+        self.questions.subscribe(_buildQuestionMap);
+
         self.get_repeat_context = function(path) {
-            if (path && questionMap[path]) {
-                return questionMap[path].repeat;
+            if (path && self.questionMap[path]) {
+                return self.questionMap[path].repeat;
             } else {
                 return undefined;
             }

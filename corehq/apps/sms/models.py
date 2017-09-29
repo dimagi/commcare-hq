@@ -885,6 +885,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_UNSUPPORTED_COUNTRY = 'UNSUPPORTED_COUNTRY'
     ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
     ERROR_NO_TWO_WAY_PHONE_NUMBER = 'NO_TWO_WAY_PHONE_NUMBER'
+    ERROR_PHONE_OPTED_OUT = 'PHONE_OPTED_OUT'
     ERROR_INVALID_CUSTOM_CONTENT_HANDLER = 'INVALID_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER = 'CANNOT_LOAD_CUSTOM_CONTENT_HANDLER'
     ERROR_CANNOT_FIND_FORM = 'CANNOT_FIND_FORM'
@@ -914,6 +915,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('Contact has no phone number.'),
         ERROR_NO_TWO_WAY_PHONE_NUMBER:
             ugettext_noop('Contact has no two-way phone number.'),
+        ERROR_PHONE_OPTED_OUT:
+            ugettext_noop('Phone number has opted out of receiving SMS.'),
         ERROR_INVALID_CUSTOM_CONTENT_HANDLER:
             ugettext_noop('Invalid custom content handler.'),
         ERROR_CANNOT_LOAD_CUSTOM_CONTENT_HANDLER:

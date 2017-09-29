@@ -771,6 +771,16 @@ class UserRepeaterTest(TestCase):
         user.save()
         self.assertEqual(2, len(self.repeat_records().all()))
 
+        record = list(self.repeat_records())[-1]
+        _mock_fire_record(record)
+
+        # updating the id_device_number or id_device_body shouldn't trigger
+        user = CommCareUser.get(user.user_id)
+        user.user_data['id_device_body'] = "AA"
+        user.user_data['id_device_number'] = 1
+        user.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
