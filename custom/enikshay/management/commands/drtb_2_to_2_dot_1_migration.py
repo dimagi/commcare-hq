@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_TEST,
 )
+from custom.enikshay.case_utils import update_case
 
 DOMAIN = "enikshay"
 
@@ -50,8 +51,7 @@ class Command(BaseCommand):
         parser.add_argument('case_type')
 
     def handle(self, case_type, *args, **options):
-        # dry_run = options.get('dry_run')
-        # dry_run = True
+        self.dry_run = options.get('dry_run')
         accessor = CaseAccessors(DOMAIN)
         result_file_path = "{case_type}_cases_update_report_{timestamp}.csv".format(
             case_type=case_type, timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -70,7 +70,9 @@ class Command(BaseCommand):
                     occurrence_cases = []
 
                     if "person" in case_types:
-                        writer.writerow(self.get_case_status(person_case))
+                        case_status = self.get_case_status(person_case)
+                        case_status = self.update_case(person_case.get_id, case_status)
+                        writer.writerow(case_status)
 
                     if "episode" in case_types:
                         occurrence_cases = [case for case in accessor.get_reverse_indexed_cases([person_case_id])
@@ -80,7 +82,9 @@ class Command(BaseCommand):
                                              accessor.get_reverse_indexed_cases([occurrence_case.get_id])
                                              if case.type == CASE_TYPE_EPISODE]
                             for episode_case in episode_cases:
-                                writer.writerow(self.get_case_status(episode_case, episode_cases=episode_cases))
+                                case_status = self.get_case_status(episode_case, episode_cases=episode_cases)
+                                case_status = self.update_case(episode_case.get_id, case_status)
+                                writer.writerow(case_status)
 
                     if "test" in case_types:
                         if not occurrence_cases:
@@ -95,10 +99,25 @@ class Command(BaseCommand):
                             for test_case in test_cases:
                                 # For tests that are DSTB follow up tests, rft_general = follow_up_dstb
                                 # and result_recorded = yes
-                                recently_opened_episode_case, props_to_update = self.get_case_status(
+                                recently_opened_episode_case, case_status = self.get_case_status(
                                     test_case, recently_opened_episode_case=recently_opened_episode_case,
                                     occurrence_case=occurrence_case)
-                                writer.writerow(props_to_update)
+                                case_status = self.update_case(test_case.get_id, case_status)
+                                writer.writerow(case_status)
+
+    def update_case(self, case_id, update_props):
+        case_updates = update_props
+        if 'debug' in case_updates:
+            del case_updates['debug']
+        if case_updates:
+            case_updates['datamigration_20_to_21'] = 'yes'
+            update_props['datamigration_20_to_21'] = 'yes'
+            if not self.dry_run:
+                update_case(DOMAIN, case_id, case_updates)
+            update_props['updated'] = 'yes'
+        else:
+            update_props['updated'] = 'no'
+        return update_props
 
     def _get_headers(self, case_types):
         headers = ['case_type', 'case_id']
@@ -108,7 +127,7 @@ class Command(BaseCommand):
             headers += self.episode_case_relevant_props
         if 'test' in case_types:
             headers += self.test_case_relevant_props
-        headers.append('updates')
+        headers += ['updates', 'updated']
         return headers
 
     def get_case_status(self, case, episode_cases=None, recently_opened_episode_case=None, occurrence_case=None):
