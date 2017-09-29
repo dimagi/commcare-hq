@@ -528,12 +528,13 @@ class AwcReportsView(View):
                 include_test
             )
         elif step == 'beneficiary':
-            data = get_awc_report_beneficiary(
-                domain,
-                config['awc_id'],
-                tuple(month.timetuple())[:3],
-                tuple(two_before.timetuple())[:3]
-            )
+            if 'awc_id' in config:
+                data = get_awc_report_beneficiary(
+                    domain,
+                    config['awc_id'],
+                    tuple(month.timetuple())[:3],
+                    tuple(two_before.timetuple())[:3]
+                )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
                 self.request.GET.get('case_id'),

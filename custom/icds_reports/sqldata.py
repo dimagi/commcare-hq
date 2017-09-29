@@ -1547,7 +1547,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Number of launched AWCs (ever submitted at least one HH reg form)',
-                SumColumn('awc_num_open'),
+                SumColumn('num_launched_awcs'),
                 format_fn=lambda x: (x or 0),
                 slug='num_launched_awcs'
             ),
@@ -1689,6 +1689,11 @@ class ICDSDatabaseColumn(DatabaseColumn):
 class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
+
+    def __init__(self, config=None, loc_level=1, show_test=False):
+        self.config = config
+        self.loc_level = loc_level
+        self.show_test = show_test
 
     @property
     def group_by(self):
