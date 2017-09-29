@@ -6,6 +6,7 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.util import random_url_id
 from corehq.blobs.exceptions import NotFound
+from corehq.util.quickcache import quickcache
 
 
 class DemoUserRestore(models.Model):
@@ -105,7 +106,19 @@ class SerialIdBucket(models.Model):
         unique_together = ('domain', 'bucket_id',)
 
     @classmethod
-    def get_next(cls, domain, bucket_id):
+    def get_next(cls, domain, bucket_id, session_id=None):
+        if session_id is not None:
+            return cls._get_next_cached(domain, bucket_id, session_id)
+        else:
+            return cls._get_next(domain, bucket_id)
+
+    @classmethod
+    @quickcache(['domain', 'bucket_id', 'session_id'])
+    def _get_next_cached(cls, domain, bucket_id, session_id):
+        return cls._get_next(domain, bucket_id)
+
+    @classmethod
+    def _get_next(cls, domain, bucket_id):
         bucket, _ = cls.objects.get_or_create(domain=domain, bucket_id=bucket_id)
         bucket.current_value += 1
         bucket.save()
