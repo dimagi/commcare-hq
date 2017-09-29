@@ -382,7 +382,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
     def dehydrate_versions(bundle):
         app = bundle.obj
         if app.copy_of:
-            return None
+            return []
         results = get_all_built_app_results(app.domain, app.get_id)
         return [
             {
