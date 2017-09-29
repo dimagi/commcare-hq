@@ -598,13 +598,6 @@ class RestoreConfig(object):
             device_id=self.params.device_id,
         )
 
-    def validate(self):
-        try:
-            self.restore_state.validate_state()
-        except InvalidSyncLogException as e:
-            # This exception will get caught by the view and a 412 will be returned to the phone for resync
-            raise RestoreException(e)
-
     def get_payload(self):
         self.validate()
         self.delete_initial_cached_payload_if_necessary()
@@ -628,6 +621,21 @@ class RestoreConfig(object):
 
         return response
 
+    def validate(self):
+        try:
+            self.restore_state.validate_state()
+        except InvalidSyncLogException as e:
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
+
+    def get_cached_response(self):
+        if self.overwrite_cache:
+            return None
+
+        cache_payload_path = self.restore_payload_path_cache.get_value()
+
+        return CachedResponse(cache_payload_path)
+
     def generate_payload(self, async_task=None):
         if async_task:
             self.timing_context.stop("wait_for_task_to_start")
@@ -639,14 +647,6 @@ class RestoreConfig(object):
             self.timing_context.stop()  # root timer
             self._record_timing('async')
         return response
-
-    def get_cached_response(self):
-        if self.overwrite_cache:
-            return None
-
-        cache_payload_path = self.restore_payload_path_cache.get_value()
-
-        return CachedResponse(cache_payload_path)
 
     def _get_asynchronous_payload(self):
         new_task = False
