@@ -6,11 +6,10 @@ class DistrictChoiceProvider(LocationChoiceProvider):
     def _locations_query(self, query_text, user):
         active_locations = SQLLocation.active_objects
         if query_text:
-            return active_locations.filter_path_by_user_input(
+            return active_locations.filter_by_user_input(
                 domain=self.domain,
-                location_type__code__exact='dto',
                 user_input=query_text
-            ).accessible_to_user(self.domain, user)
+            ).accessible_to_user(self.domain, user).filter(location_type__code__exact='dto')
         return active_locations.accessible_to_user(self.domain, user).filter(
             domain=self.domain, location_type__code__exact='dto',)
 
