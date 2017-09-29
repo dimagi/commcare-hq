@@ -53,6 +53,7 @@ branches:
   - jls/fixtures-require-js-2017 # Jenny 9/18
   - sk/form-error2  # sk 9/26
   - je/mobile-ucr-v2 # j$ 9/29
+  - jls/kill-old-app-manager-less # Jenny 9/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
