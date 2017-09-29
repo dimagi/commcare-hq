@@ -598,6 +598,26 @@ class RestoreConfig(object):
             device_id=self.params.device_id,
         )
 
+    def get_response(self):
+        async = self.async
+        try:
+            with self.timing_context:
+                payload = self.get_payload()
+            response = payload.get_http_response()
+        except RestoreException as e:
+            logging.exception("%s error during restore submitted by %s: %s" %
+                              (type(e).__name__, self.restore_user.username, str(e)))
+            async = False
+            response = get_simple_response_xml(
+                e.message,
+                ResponseNature.OTA_RESTORE_ERROR
+            )
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
+                                    status=412)  # precondition failed
+        if not async:
+            self._record_timing(response.status_code)
+        return response
+
     def get_payload(self):
         self.validate()
         self.delete_initial_cached_payload_if_necessary()
@@ -699,26 +719,6 @@ class RestoreConfig(object):
                 with self.timing_context(provider.__class__.__name__):
                     provider.extend_response(self.restore_state, response)
 
-        return response
-
-    def get_response(self):
-        async = self.async
-        try:
-            with self.timing_context:
-                payload = self.get_payload()
-            response = payload.get_http_response()
-        except RestoreException as e:
-            logging.exception("%s error during restore submitted by %s: %s" %
-                              (type(e).__name__, self.restore_user.username, str(e)))
-            async = False
-            response = get_simple_response_xml(
-                e.message,
-                ResponseNature.OTA_RESTORE_ERROR
-            )
-            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
-                                    status=412)  # precondition failed
-        if not async:
-            self._record_timing(response.status_code)
         return response
 
     def set_cached_payload_if_necessary(self, resp, duration):
