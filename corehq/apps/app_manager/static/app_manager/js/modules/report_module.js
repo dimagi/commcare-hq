@@ -211,7 +211,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.xpathDescription = ko.observable(xpathDescription);
         this.useXpathDescription = ko.observable(useXpathDescription);
         this.showDataTable = ko.observable(showDataTable);
-        this.syncDelay = ko.observable(syncDelay)
+        this.syncDelay = ko.observable(syncDelay);
 
         this.reportId.subscribe(changeSaveButton);
         this.display.subscribe(changeSaveButton);
