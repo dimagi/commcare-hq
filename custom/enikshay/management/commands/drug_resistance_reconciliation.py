@@ -5,10 +5,9 @@ from itertools import groupby
 from collections import defaultdict
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
-from casexml.apps.case.cleanup import close_cases
 from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     CASE_TYPE_DRUG_RESISTANCE,
@@ -186,7 +185,8 @@ class Command(BaseCommand):
                 "closed_case_ids": closing_case_ids
             })
         else:
-            close_cases(cases_to_close, DOMAIN, user=SYSTEM_USER_ID, device_id=self.__module__)
+            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True) for case in cases_to_close]
+            bulk_update_cases(DOMAIN, updates, self.__module__)
 
 
 def get_open_drug_resistance_cases_from_occurrence(occurrence_case_id):
