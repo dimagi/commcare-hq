@@ -9,14 +9,13 @@ from cStringIO import StringIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
-from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from couchdbkit import ResourceNotFound
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, FileResponse
 from django.conf import settings
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
@@ -68,8 +67,8 @@ DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(
-            FileWrapper(payload),
+        response = FileResponse(
+            payload,
             content_type="text/xml; charset=utf-8",
             status=status
         )
