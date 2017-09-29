@@ -1,0 +1,106 @@
+import csv
+
+from datetime import datetime
+from django.core.management.base import BaseCommand
+
+from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCaseSQL
+from custom.enikshay.case_utils import (
+    get_person_case_from_occurrence,
+    CASE_TYPE_REFERRAL,
+)
+from custom.enikshay.const import (
+    ENROLLED_IN_PRIVATE,
+)
+
+DOMAIN = "enikshay"
+
+
+class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--dry_run', action='store_true')
+
+    def handle(self, *args, **options):
+        self.dry_run = options.get('dry_run')
+        self.result_file = self.setup_result_file()
+        accessor = CaseAccessors(DOMAIN)
+        # iterate all occurrence cases
+        for occurrence_case_id in self._get_occurrence_case_ids_to_process():
+            occurrence_case = accessor.get_case(occurrence_case_id)
+            if self.public_app_case(occurrence_case):
+                referral_cases = get_open_referral_cases_from_occurrence(occurrence_case.get_id)
+                if len(referral_cases) > 1:
+                    self.reconcile_cases(referral_cases, occurrence_case_id)
+
+    @staticmethod
+    def get_result_file_headers():
+        return [
+            "occurrence_case_id",
+            "retain_case_id",
+            "closed_case_ids"
+        ]
+
+    def setup_result_file(self):
+        file_name = "drug_resistance_reconciliation_report_{timestamp}.xlsx".format(
+            timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
+        )
+        with open(file_name, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
+            writer.writeheader()
+        return file_name
+
+    def writerow(self, row):
+        with open(self.result_file, 'a') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
+            writer.writerow(row)
+
+    def reconcile_cases(self, referral_cases, occurrence_case_id):
+        retain_case_id = sorted(referral_cases, key=lambda x: x.opened_on)[0]
+        cases_to_close = referral_cases.remove(retain_case_id)
+        self.close_cases(cases_to_close, occurrence_case_id, retain_case_id)
+
+    @staticmethod
+    def public_app_case(occurrence_case):
+        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case.get_id)
+        person_case_properties = person_case.dynamic_case_properties()
+        if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
+            return False
+        return True
+
+    @staticmethod
+    def _get_occurrence_case_ids_to_process():
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            case_ids = (
+                CommCareCaseSQL.objects
+                .using(db)
+                .filter(domain=DOMAIN, type="occurrence")
+                .values_list('case_id', flat=True)
+            )
+            num_case_ids = len(case_ids)
+            print("processing %d docs from db %s" % (num_case_ids, db))
+            for i, case_id in enumerate(case_ids):
+                yield case_id
+                if i % 1000 == 0:
+                    print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
+
+    def close_cases(self, cases_to_close, occurrence_case_id, retain_case_id):
+        if self.dry_run:
+            closing_case_ids = [case.get_id for case in cases_to_close]
+            self.writerow({
+                "occurrence_case_id": occurrence_case_id,
+                "retain_case_id": retain_case_id,
+                "closed_case_ids": closing_case_ids
+            })
+        else:
+            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True) for case in cases_to_close]
+            bulk_update_cases(DOMAIN, updates, self.__module__)
+
+
+def get_open_referral_cases_from_occurrence(occurrence_case_id):
+    case_accessor = CaseAccessors(DOMAIN)
+    all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
+    return [case for case in all_cases
+            if not case.closed and case.type == CASE_TYPE_REFERRAL]
