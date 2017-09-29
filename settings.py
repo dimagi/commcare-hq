@@ -1972,6 +1972,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode_for_adherence_report.json'),
