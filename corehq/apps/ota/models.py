@@ -89,3 +89,24 @@ class DemoUserRestore(models.Model):
         self.restore_blob_id = None
 
         return deleted
+
+
+class SerialIdBucket(models.Model):
+    """
+    Model used to keep track of an incrementing, unique integer
+    to be used in serial ID generation
+    """
+    domain = models.CharField(max_length=255)
+    bucket_id = models.CharField(max_length=255)
+    current_value = models.IntegerField(default=-1)
+
+    class Meta:
+        index_together = ('domain', 'bucket_id',)
+        unique_together = ('domain', 'bucket_id',)
+
+    @classmethod
+    def get_next(cls, domain, bucket_id):
+        bucket, _ = cls.objects.get_or_create(domain=domain, bucket_id=bucket_id)
+        bucket.current_value += 1
+        bucket.save()
+        return bucket.current_value
