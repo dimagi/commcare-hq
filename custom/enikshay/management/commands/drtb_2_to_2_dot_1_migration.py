@@ -49,6 +49,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('case_type')
+        parser.add_argument('--dry_run', action='store_true')
 
     def handle(self, case_type, *args, **options):
         self.dry_run = options.get('dry_run')
@@ -127,7 +128,7 @@ class Command(BaseCommand):
             headers += self.episode_case_relevant_props
         if 'test' in case_types:
             headers += self.test_case_relevant_props
-        headers += ['updates', 'updated']
+        headers += ['updates', 'updated', 'datamigration_20_to_21']
         return headers
 
     def get_case_status(self, case, episode_cases=None, recently_opened_episode_case=None, occurrence_case=None):
