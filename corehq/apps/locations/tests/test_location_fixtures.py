@@ -38,6 +38,26 @@ EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 </fixture>
 """
 
+TEST_LOCATION_STRUCTURE = [
+    ('Massachusetts', [
+        ('Middlesex', [
+            ('Cambridge', []),
+            ('Somerville', []),
+        ]),
+        ('Suffolk', [
+            ('Boston', []),
+            ('Revere', []),
+        ])
+    ]),
+    ('New York', [
+        ('New York City', [
+            ('Manhattan', []),
+            ('Brooklyn', []),
+            ('Queens', []),
+        ]),
+    ]),
+]
+
 
 class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
@@ -69,25 +89,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
-    location_structure = [
-        ('Massachusetts', [
-            ('Middlesex', [
-                ('Cambridge', []),
-                ('Somerville', []),
-            ]),
-            ('Suffolk', [
-                ('Boston', []),
-                ('Revere', []),
-            ])
-        ]),
-        ('New York', [
-            ('New York City', [
-                ('Manhattan', []),
-                ('Brooklyn', []),
-                ('Queens', []),
-            ]),
-        ]),
-    ]
+    location_structure = TEST_LOCATION_STRUCTURE
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
@@ -125,7 +127,11 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
             },
         )
         location_db = LocationSet([location])
-        data_fields = ['best_swordsman', 'in_westeros', 'appeared_in_num_episodes']
+        data_fields = [
+            CustomDataField(slug='best_swordsman'),
+            CustomDataField(slug='in_westeros'),
+            CustomDataField(slug='appeared_in_num_episodes'),
+        ]
         fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
@@ -270,6 +276,36 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class TestIndexedLocationsFixture(LocationHierarchyTestCase, FixtureHasLocationsMixin):
+    domain = "indexed_location_fixtures"
+    location_type_names = ['state', 'county', 'city']
+    location_structure = TEST_LOCATION_STRUCTURE
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestIndexedLocationsFixture, cls).setUpClass()
+        cls.user = create_restore_user(cls.domain, 'user', '123')
+        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
+        cls.loc_fields.fields = [
+            CustomDataField(slug='is_test', index_in_fixture=True),
+            CustomDataField(slug='favorite_color'),
+        ]
+        cls.loc_fields.save()
+        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
+        for location in cls.locations.values():
+            location.metadata = {
+                'is_test': 'no',
+                'favorite_color': 'blue',
+            }
+            location.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user._couch_user.delete()
+        super(TestIndexedLocationsFixture, cls).tearDownClass()
+
     def test_index_location_fixtures(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         expected_result = self._assemble_expected_fixture(
@@ -395,7 +431,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             CustomDataField(slug='favorite_passtime'),
         ]
         cls.loc_fields.save()
-        cls.field_slugs = {f.slug for f in cls.loc_fields.fields}
+        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
@@ -408,10 +444,10 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
-        self.assertEqual(self.field_slugs, _get_location_data_fields(self.domain))
+        self.assertItemsEqual(self.field_slugs, [f.slug for f in _get_location_data_fields(self.domain)])
 
     def test_utility_method_empty(self):
-        self.assertEqual(set(), _get_location_data_fields('no-fields-defined'))
+        self.assertEqual([], [f.slug for f in _get_location_data_fields('no-fields-defined')])
 
     def test_metadata_added_to_all_nodes(self):
         mass = self.locations['Massachusetts']
@@ -423,7 +459,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             location_data_nodes = [child for child in location_node.find('location_data')]
             self.assertEqual(2, len(location_data_nodes))
             tags = {n.tag for n in location_data_nodes}
-            self.assertEqual(tags, self.field_slugs)
+            self.assertItemsEqual(tags, self.field_slugs)
 
     def test_additional_metadata_not_included(self):
         mass = self.locations['Massachusetts']
@@ -441,7 +477,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             field for field in fixture.find('locations/location[@id="{}"]/location_data'.format(mass.location_id))
         ]
         self.assertEqual(2, len(mass_data))
-        self.assertEqual(self.field_slugs, set([f.tag for f in mass_data]))
+        self.assertItemsEqual(self.field_slugs, [f.tag for f in mass_data])
 
     def test_existing_metadata_works(self):
         mass = self.locations['Massachusetts']
@@ -467,25 +503,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
 class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
-    location_structure = [
-        ('Massachusetts', [
-            ('Middlesex', [
-                ('Cambridge', []),
-                ('Somerville', []),
-            ]),
-            ('Suffolk', [
-                ('Boston', []),
-                ('Revere', []),
-            ])
-        ]),
-        ('New York', [
-            ('New York City', [
-                ('Manhattan', []),
-                ('Brooklyn', []),
-                ('Queens', []),
-            ]),
-        ]),
-    ]
+    location_structure = TEST_LOCATION_STRUCTURE
 
     def setUp(self):
         super(WebUserLocationFixturesTest, self).setUp()

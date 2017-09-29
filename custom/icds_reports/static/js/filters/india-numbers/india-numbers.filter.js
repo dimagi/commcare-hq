@@ -3,7 +3,7 @@ window.angular.module('icdsApp').filter('indiaNumbers', function() {
         if (!number) {
             return '0';
         }
-        number = Number(number).toFixed(2).toString();
+        number = Number(number).toFixed(0).toString();
         var numbers  = number.split('.');
         var lastThree = '';
         var otherNumbers = '';

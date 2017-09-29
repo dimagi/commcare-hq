@@ -73,8 +73,8 @@ class SQLSMSGHBackend(SQLSMSBackend):
             # by the framework.
             pass
         raise SMSGHException("Error with the SMSGH backend. "
-            "Response Code: %s, Subcode: %s. See "
-            "http://developers.smsgh.com/documentations/sendmessage#handlingerrors "
+            "Response Code: %s, Subcode: %s. See 'Handling Errors' on "
+            "https://developers.hubtel.com/documentations/sendmessage "
             "for details. " % (response.status_code, subcode))
 
     def handle_success(self, response, msg):

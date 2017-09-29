@@ -173,7 +173,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'help_text': _((
                         "Percentage of children breastfed within an hour of birth. Early initiation of "
                         "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
-                        "and encourages exclusive breastfeeding practic")
+                        "and encourages exclusive breastfeeding practice")
                     ),
                     'percent': percent_diff(
                         'bf_birth',
@@ -248,9 +248,9 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        "Percentage of pregant women who delivered in a public or private medical facility "
+                        "Percentage of pregnant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
-                        "decrease maternal mortality rate")
+                        "decrease in maternal mortality rate")
                     ),
                     'percent': percent_diff(
                         'institutional_delivery',

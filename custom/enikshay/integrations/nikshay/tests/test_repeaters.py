@@ -300,7 +300,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
 
         # From Episode
         self.assertEqual(payload['sitedetail'], 2)
-        self.assertEqual(payload['Ptype'], '6')
+        self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
         self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
@@ -798,18 +798,6 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
-
-        # skip if episode case not nikshay registered
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_registered": 'true'})
-
-        # skip if episode case has no nikshay_id
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
 
         update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())

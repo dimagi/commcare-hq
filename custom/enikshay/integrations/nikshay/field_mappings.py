@@ -13,10 +13,9 @@ disease_classification = {
 patient_type_choice = {
     'new': '1',
     'recurrent': '2',
-    'other_previously_treated': '3',
-    'treatment_after_failure': '4',
-    'other_previously_treated': '5',
-    'treatment_after_lfu': '6',
+    'treatment_after_failure': '3',
+    'treatment_after_lfu': '4',
+    'other_previously_treated': '6',
     'transfer_in': '7',
 }
 

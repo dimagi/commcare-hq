@@ -1,15 +1,15 @@
-from datetime import datetime
 from collections import namedtuple
 from functools import wraps
 import hashlib
-from django.http import Http404
 import math
 
 from django.contrib import messages
 from django.conf import settings
-from couchdbkit import ResourceNotFound
+from django.http import Http404
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+
+from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -831,6 +831,24 @@ OPENMRS_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+INDEX_LOCATION_DATA_DESCRIPTION = """
+Add an option to the location fields page allowing you to specify fields which
+should be indexed by the phone. This can provide a performance boost in
+applications dealing with large location fixtures when using those fields for
+filtering. The indexed fields will be made available as top level children of
+the <location/> node with the prefix 'data_', and you must reference that to
+take advantage of the optimization. For example, reference a field called
+'is_test' like:
+    instance('locations')/locations/location[data_is_test='1']
+"""
+INDEX_LOCATION_DATA = StaticToggle(
+    'index_location_data',
+    'Add option to index custom location fields',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=INDEX_LOCATION_DATA_DESCRIPTION,
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -1251,4 +1269,12 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     'Enable all app manager add-ons',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
+)
+
+ICDS_LIVEQUERY = PredictablyRandomToggle(
+    'icds_livequery',
+    'Enable livequery case sync for a random subset of ICDS users',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER],
+    randomness=0.1,
 )

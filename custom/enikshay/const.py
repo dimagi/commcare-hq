@@ -54,6 +54,9 @@ BETS_DATE_PRESCRIPTION_THRESHOLD_MET = 'bets_date_prescription_threshold_met'
 CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
+TEST_RESULT_TB_DETECTED = 'tb_detected'
+TEST_RESULT_TB_NOT_DETECTED = 'tb_not_detected'
+
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     ENIKSHAY_ID,
     PRIMARY_PHONE_NUMBER,

@@ -1840,10 +1840,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data !== void(0) ? data.recorded_weight : "Data not Entered") + '</div>';
+            html += '<div>Weight: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_weight) : "Data not Entered") + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data !== void(0) ? data.recorded_height : "Data not Entered") + '</div>';
+            html += '<div>Height: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_height) : "Data not Entered") + '</div>';
         }
         return html;
     };
@@ -1867,6 +1867,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d[1];
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
@@ -1909,6 +1910,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d.y;
                 },
                 showValues: true,
+                showControls: false,
                 useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 500,
@@ -1919,13 +1921,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     },
                 },
                 yAxis: {
-                    axisLabel: 'Number of Day',
+                    axisLabel: 'Number of Days',
                     tickFormat: function(d) {
                         return d3.format('d')(d);
                     },
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
 
@@ -1937,7 +1940,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 margin: {
                     top: 20,
                     right: 50,
-                    bottom: 50,
+                    bottom: 100,
                     left: 80,
                 },
                 x: function (d) {
@@ -1961,6 +1964,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     tickFormat: function(d) {
                         return d3.format('d')(d);
                     },
+                    forceY: [0],
                 },
                 callback: function(chart) {
                     var tooltip = chart.interactiveLayer.tooltip;
@@ -1981,6 +1985,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
                 reduceXTicks: false,
                 staggerLabels: true,
+                showLegend: false,
             },
         };
         $scope.$apply();
@@ -2000,6 +2005,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             y: function(d){ return d.y; },
             useVoronoi: false,
             clipEdge: true,
+            showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {

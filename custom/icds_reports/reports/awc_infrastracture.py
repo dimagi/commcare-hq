@@ -81,15 +81,15 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 }
             ],
             [
-                {
-                    'label': _('AWCs with Electricity'),
-                    'help_text': _('Percentage of AWCs with access to electricity'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
+                # {
+                #     'label': _('AWCs with Electricity'),
+                #     'help_text': _('Percentage of AWCs with access to electricity'),
+                #     'percent': 0,
+                #     'value': 0,
+                #     'all': 0,
+                #     'format': 'percent_and_div',
+                #     'frequency': 'month'
+                # },
                 {
                     'label': _('AWCs with Medicine Kit'),
                     'help_text': _('Percentage of AWCs with a Medicine Kit'),
@@ -110,9 +110,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'medicine_kit'
-                }
-            ],
-            [
+                },
                 {
                     'label': _('AWCs with Weighing Scale: Infants'),
                     'help_text': _('Percentage of AWCs with weighing scale for infants'),
@@ -133,7 +131,9 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'infants_weight_scale'
-                },
+                }
+            ],
+            [
                 {
                     'label': _('AWCs with Weighing Scale: Mother and Child'),
                     'help_text': _('Percentage of AWCs with weighing scale for mother and child'),
