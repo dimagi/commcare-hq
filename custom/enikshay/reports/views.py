@@ -13,10 +13,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
 from custom.enikshay.const import VOUCHER_ID, ENIKSHAY_ID
 from custom.enikshay.reports.utils import StubReport
+from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 
 
 @location_safe
 class LocationsView(View):
+    choice_provider = LocationChoiceProvider
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
@@ -31,7 +33,7 @@ class LocationsView(View):
             page=int(request.GET.get('page', 1)) - 1,
             user=user
         )
-        location_choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
+        location_choice_provider = self.choice_provider(StubReport(domain=domain), None)
         location_choice_provider.configure({
             'include_descendants': True,
             'order_by_hierarchy': True,
@@ -46,6 +48,11 @@ class LocationsView(View):
                 'total': location_choice_provider.query_count(query_context.query, user)
             }
         )
+
+
+@location_safe
+class DistrictLocationsView(LocationsView):
+    choice_provider = DistrictChoiceProvider
 
 
 @domain_admin_required
