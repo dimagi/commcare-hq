@@ -1774,6 +1774,7 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views import (
                 AuthenticateAs, ReprocessMessagingCaseUpdatesView
             )
+            from corehq.apps.notifications.views import ManageNotificationView
             admin_operations = [
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1789,6 +1790,8 @@ class AdminTab(UITab):
                  'url': reverse('superuser_management')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
+                {'title': _('Manage Notifications'),
+                 'url': reverse(ManageNotificationView.urlname)},
             ]
         return [
             (_('Administrative Reports'), [
