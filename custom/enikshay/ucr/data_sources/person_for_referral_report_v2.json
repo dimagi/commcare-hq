@@ -5,8 +5,7 @@
         "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
@@ -1323,6 +1322,254 @@
                 },
                 "column_id": "referred_to_name",
                 "type": "expression"
+            },
+            {
+                 "display_name": "regimen",
+                 "create_index": false,
+                 "column_id": "regimen",
+                 "type": "expression",
+                 "datatype": "string",
+                 "expression": {
+                     "type": "conditional",
+                     "test": {
+                         "type": "boolean_expression",
+                         "operator": "eq",
+                         "expression": {
+                             "type": "nested",
+                             "argument_expression": {
+                                "type": "enikshay_episode_from_person",
+                                "person_id_expression": {
+                                  "type": "property_name",
+                                  "property_name": "_id"
+                                }
+                              },
+                             "value_expression": {
+                                 "type": "property_name",
+                                 "property_name": "episode_type"
+                             }
+                         },
+                         "property_value": "confirmed_drtb"
+                     },
+                     "expression_if_true": {
+                         "type": "nested",
+                         "argument_expression": {
+                            "type": "enikshay_episode_from_person",
+                            "person_id_expression": {
+                              "type": "property_name",
+                              "property_name": "_id"
+                            }
+                          },
+                         "value_expression": {
+                             "type": "property_name",
+                             "property_name": "treatment_regimen"
+                         }
+                     },
+                     "expression_if_false": {
+                         "type": "conditional",
+                         "test": {
+                             "type": "boolean_expression",
+                             "operator": "eq",
+                             "expression": {
+                                 "type": "nested",
+                                 "argument_expression": {
+                                    "type": "enikshay_episode_from_person",
+                                    "person_id_expression": {
+                                      "type": "property_name",
+                                      "property_name": "_id"
+                                    }
+                                  },
+                                 "value_expression": {
+                                     "type": "property_name",
+                                     "property_name": "episode_type"
+                                 }
+                             },
+                             "property_value": "confirmed_tb"
+                         },
+                         "expression_if_true": {
+                             "type": "conditional",
+                             "test": {
+                                 "type": "boolean_expression",
+                                 "operator": "eq",
+                                 "expression": {
+                                     "type": "nested",
+                                     "argument_expression": {
+                                        "type": "enikshay_episode_from_person",
+                                        "person_id_expression": {
+                                          "type": "property_name",
+                                          "property_name": "_id"
+                                        }
+                                      },
+                                     "value_expression": {
+                                         "type": "property_name",
+                                         "property_name": "patient_type_choice"
+                                     }
+                                 },
+                                 "property_value": "new"
+                             },
+                             "expression_if_true": {
+                                 "type": "constant",
+                                 "constant": "New"
+                             },
+                             "expression_if_false": {
+                                 "type": "conditional",
+                                 "test": {
+                                    "type": "boolean_expression",
+                                     "operator": "eq",
+                                     "expression": {
+                                         "type": "nested",
+                                         "argument_expression": {
+                                            "type": "enikshay_episode_from_person",
+                                            "person_id_expression": {
+                                              "type": "property_name",
+                                              "property_name": "_id"
+                                            }
+                                          },
+                                         "value_expression": {
+                                             "type": "property_name",
+                                             "property_name": "treatment_status"
+                                         }
+                                     },
+                                     "property_value": "yes_private"
+                                 },
+                                 "expression_if_true": {
+                                     "type": "constant",
+                                     "constant": "Outisde RNTCP"
+                                 },
+                                 "expression_if_false": {
+                                     "type": "conditional",
+                                     "test": {
+                                        "type": "boolean_expression",
+                                         "operator": "in",
+                                         "expression": {
+                                             "type": "nested",
+                                             "argument_expression": {
+                                                "type": "enikshay_episode_from_person",
+                                                "person_id_expression": {
+                                                  "type": "property_name",
+                                                  "property_name": "_id"
+                                                }
+                                              },
+                                             "value_expression": {
+                                                 "type": "property_name",
+                                                 "property_name": "patient_type_choice"
+                                             }
+                                         },
+                                         "property_value": [
+                                             "recurrent",
+                                             "treatment_after_failure",
+                                             "treatment_after_lfu",
+                                             "other_previously_treated"
+                                         ]
+                                     },
+                                     "expression_if_true": {
+                                         "type": "constant",
+                                         "constant": "Previously Treated"
+                                     },
+                                     "expression_if_false": {
+                                         "type": "constant",
+                                         "constant": ""
+                                     }
+                                 }
+                             }
+                         },
+                         "expression_if_false": {
+                             "type": "constant",
+                             "constant": ""
+                         }
+                     }
+                 }
+            },
+            {
+                "display_name": "date_of_diagnosis",
+                "transform": {},
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "date_of_diagnosis",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_episode_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "date_of_diagnosis"
+                    }
+                }
+            },
+            {
+                "display_name": "episode_type",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "episode_type",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_episode_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type"
+                    }
+                }
+            },
+            {
+                "display_name": "adherence_schedule_id",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "adherence_schedule_id",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_episode_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "adherence_schedule_id"
+                    }
+                }
+            },
+            {
+                "display_name": "enikshay_enabled",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "enikshay_enabled",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_episode_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "enikshay_enabled"
+                    }
+                }
             }
         ]
     }
