@@ -1,5 +1,5 @@
 from cStringIO import StringIO
-from django.db import models
+from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
 from corehq.blobs import get_blob_db
@@ -118,8 +118,12 @@ class SerialIdBucket(models.Model):
         return cls._get_next(domain, bucket_id)
 
     @classmethod
+    @transaction.atomic
     def _get_next(cls, domain, bucket_id):
-        bucket, _ = cls.objects.get_or_create(domain=domain, bucket_id=bucket_id)
+        # select_for_update locks matching rows until the end of the transaction
+        bucket, _ = (cls.objects
+                     .select_for_update()
+                     .get_or_create(domain=domain, bucket_id=bucket_id))
         bucket.current_value += 1
         bucket.save()
         return bucket.current_value

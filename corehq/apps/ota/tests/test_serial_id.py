@@ -1,9 +1,11 @@
-from django.test import TestCase
+from django.test import TransactionTestCase
 
 from ..models import SerialIdBucket
 
 
-class SerialIDTest(TestCase):
+# The standard TestCase wraps everything in a transaction, which can obscure
+# issues related to atomicity.  Enter TransactionTestCase.
+class SerialIDTest(TransactionTestCase):
     domain = 'serial_id_tests'
 
     def tearDown(self):
