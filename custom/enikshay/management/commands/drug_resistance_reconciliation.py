@@ -1,7 +1,6 @@
 import csv
 
 from datetime import datetime
-from itertools import groupby
 from collections import defaultdict
 from django.core.management.base import BaseCommand, CommandError
 
