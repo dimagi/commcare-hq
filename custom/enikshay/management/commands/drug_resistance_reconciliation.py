@@ -27,13 +27,13 @@ class Command(BaseCommand):
         self.result_file = self.setup_result_file()
         self.drug_id_values = []
         self.sensitivity_values = []
-        accessor = CaseAccessors(DOMAIN)
+        self.case_accessor = CaseAccessors(DOMAIN)
         # iterate all occurrence cases
-        for occurrence_case_id in self._get_occurrence_case_ids_to_process():
-            occurrence_case = accessor.get_case(occurrence_case_id)
+        for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
+            occurrence_case = self.case_accessor.get_case(occurrence_case_id)
             # Need to consider only public app cases so skip updates if enrolled in private
-            if self.public_app_case(occurrence_case):
-                self.reconcile_case(occurrence_case)
+            if self.public_app_case(occurrence_case_id):
+                self.reconcile_case(occurrence_case_id)
 
         print("All drug id values found %s" % self.drug_id_values)
         print("All sensitivity values found %s" % self.sensitivity_values)
@@ -63,18 +63,18 @@ class Command(BaseCommand):
             writer.writerow(row)
 
     @staticmethod
-    def public_app_case(occurrence_case):
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case.get_id)
+    def public_app_case(occurrence_case_id):
+        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         person_case_properties = person_case.dynamic_case_properties()
         if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
 
-    def reconcile_case(self, occurrence_case):
+    def reconcile_case(self, occurrence_case_id):
         # get all open drug resistance cases
         # group by drug_id
         # if any drug_id has more than one corresponding drug resistance case, fix them
-        drug_resistance_cases = get_open_drug_resistance_cases_from_occurrence(occurrence_case.get_id)
+        drug_resistance_cases = get_open_drug_resistance_cases_from_occurrence(occurrence_case_id)
         drug_resistance_cases_by_drug_id = defaultdict(list)
         for drug_resistance_case in drug_resistance_cases:
             drug_id = drug_resistance_case.dynamic_case_properties().get('drug_id')
@@ -83,8 +83,9 @@ class Command(BaseCommand):
                 self.drug_id_values.append(drug_id)
             drug_resistance_cases_by_drug_id[drug_id].append(drug_resistance_case)
         for drug_id in drug_resistance_cases_by_drug_id:
-            if len(drug_resistance_cases_by_drug_id[drug_id]) > 1:
-                self.reconcile_drug_resistance_cases(drug_resistance_cases, drug_id, occurrence_case.get_id)
+            drug_resistance_cases_for_drug = drug_resistance_cases_by_drug_id[drug_id]
+            if len(drug_resistance_cases_for_drug) > 1:
+                self.reconcile_drug_resistance_cases(drug_resistance_cases_for_drug, drug_id, occurrence_case_id)
 
     def reconcile_drug_resistance_cases(self, drug_resistance_cases, drug_id, occurrence_case_id):
         """
@@ -118,53 +119,49 @@ class Command(BaseCommand):
                 sensitive_drug_resistance_cases.append(drug_resistance_case)
             else:
                 if sensitivity not in self.sensitivity_values:
+                    self.sensitivity_values.append(sensitivity)
                     print("New sensitivity value found, %s" % sensitivity)
         resistant_drug_resistance_cases_count = len(resistant_drug_resistance_cases)
         sensitive_drug_resistance_cases_count = len(resistant_drug_resistance_cases)
 
-        # if there are more than one cases with sensitivity resistant, keep the one
+        # if there is more than one case with sensitivity resistant, keep the one
         # opened first.
         if resistant_drug_resistance_cases_count > 1:
             retain_case_id = sorted(resistant_drug_resistance_cases, key=lambda x: x.opened_on)[0]
-            cases_to_close = drug_resistance_case_ids.remove(retain_case_id)
-            self.close_cases(cases_to_close, occurrence_case_id, drug_id, retain_case_id,
+            self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "More than one resistance drug cases, picked first opened.")
         # if there is only one case with sensitivity resistant, keep that, close rest.
         elif resistant_drug_resistance_cases_count == 1:
             retain_case_id = resistant_drug_resistance_cases[0].get_id
-            cases_to_close = drug_resistance_case_ids.remove(retain_case_id)
-            self.close_cases(cases_to_close, occurrence_case_id, drug_id, retain_case_id,
+            self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "Only one resistance drug case found.")
         # if there are more than one cases with sensitivity sensitive, keep the one
         # opened first.
         elif sensitive_drug_resistance_cases_count > 1:
             retain_case_id = sorted(sensitive_drug_resistance_cases, key=lambda x: x.opened_on)[0]
-            cases_to_close = drug_resistance_case_ids.remove(retain_case_id)
-            self.close_cases(cases_to_close, occurrence_case_id, drug_id, retain_case_id,
+            self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "More than one sensitive drug cases, picked first opened.")
         # if there is only one case with sensitivity sensitive, keep that, close rest.
         elif sensitive_drug_resistance_cases_count == 1:
             retain_case_id = sensitive_drug_resistance_cases[0].get_id
-            cases_to_close = drug_resistance_case_ids.remove(retain_case_id)
-            self.close_cases(cases_to_close, occurrence_case_id, drug_id, retain_case_id,
-                             "Only one resistance drug case found.")
+            self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
+                             "Only one sensitive drug case found.")
         # No case has sensitivity resistant and sensitive. Probably multiple cases with unknown status
         # keep the one opened first, close rest.
         else:
             retain_case_id = sorted(drug_resistance_cases, key=lambda x: x.opened_on)[0]
-            cases_to_close = drug_resistance_case_ids.remove(retain_case_id)
-            self.close_cases(cases_to_close, occurrence_case_id, drug_id, retain_case_id,
+            self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "Picked first opened.")
 
     @staticmethod
-    def _get_occurrence_case_ids_to_process():
+    def _get_open_occurrence_case_ids_to_process():
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
             case_ids = (
                 CommCareCaseSQL.objects
                 .using(db)
-                .filter(domain=DOMAIN, type="occurrence")
+                .filter(domain=DOMAIN, type="occurrence", closed=False)
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
@@ -174,19 +171,23 @@ class Command(BaseCommand):
                 if i % 1000 == 0:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
-    def close_cases(self, cases_to_close, occurrence_case_id, drug_id, retain_case_id, retain_reason):
+    def close_cases(self, all_case_ids, occurrence_case_id, drug_id, retain_case_id, retain_reason):
+        # remove duplicates in case ids to remove so that we dont retain and close
+        # the same case by mistake
+        all_case_ids = set(all_case_ids)
+        case_ids_to_close = all_case_ids.copy()
+        case_ids_to_close.remove(retain_case_id)
         if self.dry_run:
-            closing_case_ids = [case.get_id for case in cases_to_close]
             self.writerow({
                 "occurrence_case_id": occurrence_case_id,
                 "drug_id": drug_id,
                 "retain_case_id": retain_case_id,
                 "retain_reason": retain_reason,
-                "closed_case_ids": closing_case_ids
+                "closed_case_ids": case_ids_to_close
             })
         else:
-            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True)
-                       for case in cases_to_close]
+            updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
+                       for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
 
