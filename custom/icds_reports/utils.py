@@ -14,7 +14,7 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, APP_ID
+from custom.icds_reports.const import LocationTypes, ISSUE_TRACKER_APP_ID
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 
@@ -289,4 +289,4 @@ def get_location_filter(location, domain, config):
 
 @quickcache([])
 def get_latest_issue_tracker_build_id():
-    return get_latest_released_build_id('icds-cas', APP_ID)
+    return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
