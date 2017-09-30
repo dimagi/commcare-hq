@@ -78,7 +78,8 @@ class Command(BaseCommand):
                 retain_case_id = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
                 self.close_cases(open_occurrence_case_ids, retain_case_id, person_case_id, "occurrence")
             else:
-                active_episode_confirmed_drtb_cases_ids = [case.get_id for case in active_episode_confirmed_drtb_cases]
+                active_episode_confirmed_drtb_cases_ids = [
+                    case.get_id for case in active_episode_confirmed_drtb_cases]
                 relevant_occurrence_cases = [
                     get_occurrence_case_from_episode(DOMAIN, active_episode_confirmed_drtb_case_id)
                     for active_episode_confirmed_drtb_case_id in active_episode_confirmed_drtb_cases_ids
@@ -91,7 +92,8 @@ class Command(BaseCommand):
                 retain_case_id = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
                 self.close_cases(open_occurrence_case_ids, retain_case_id, person_case_id, "occurrence")
             else:
-                active_episode_confirmed_tb_cases_ids = [case.get_id for case in active_episode_confirmed_tb_cases]
+                active_episode_confirmed_tb_cases_ids = [
+                    case.get_id for case in active_episode_confirmed_tb_cases]
                 relevant_occurrence_cases = [
                     get_occurrence_case_from_episode(DOMAIN, active_episode_confirmed_tb_cases_id)
                     for active_episode_confirmed_tb_cases_id in active_episode_confirmed_tb_cases_ids
