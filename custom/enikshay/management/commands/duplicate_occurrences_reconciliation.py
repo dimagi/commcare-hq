@@ -36,7 +36,12 @@ class Command(BaseCommand):
             if self.public_app_case(person_case):
                 open_occurrence_cases = get_open_occurrence_cases_from_person(person_case_id)
                 if len(open_occurrence_cases) > 1:
+                    # reconcile occurrence cases
+                    # also reconcile episode cases under these if needed
                     self.reconcile_cases(open_occurrence_cases, person_case_id)
+                else:
+                    # also reconcile episode cases under the open occurrence case
+                    self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_cases[0].get_id)
 
     def reconcile_cases(self, open_occurrence_cases, person_case_id):
         """
@@ -50,7 +55,7 @@ class Command(BaseCommand):
         open_occurrence_case_ids = [case.id for case in open_occurrence_cases]
         # get all episode cases for all open occurrences
         all_episode_cases = [
-            self.get_open_episode_cases_for_occurrence(open_occurrence_case_id)
+            self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_case_id)
             for open_occurrence_case_id in open_occurrence_case_ids
         ]
 
@@ -199,7 +204,7 @@ class Command(BaseCommand):
             retain_case_id = sorted(episode_cases, key=lambda x: x.opened_on)[0]
             self.close_cases(open_active_episode_ids, retain_case_id, occurrence_case_id, 'episode')
 
-    def get_open_episode_cases_for_occurrence(self, occurrence_case_id):
+    def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
         def _get_open_episode_cases_for_occurrence(occurrence_case_id):
             case_accessor = CaseAccessors(DOMAIN)
             all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
