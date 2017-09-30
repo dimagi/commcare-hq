@@ -95,9 +95,9 @@ class Command(BaseCommand):
         - the first ever opened case
         :param drug_resistance_cases: under an occurrence with the same drug_id
         """
-        # sanity check that we got more that one cases so we should considering closing cases
+        # sanity check that we got more than one case so we should be considering closing cases
         # and confirm that all have the same drug id
-        if (len(drug_resistance_cases) < 2 and
+        if (len(drug_resistance_cases) < 2 or
             any(drug_resistance_case.dynamic_case_properties().get('drug_id') != drug_id for
                 drug_resistance_case in drug_resistance_cases)):
             raise CommandError("Asked to reconcile cases when not needed for occurrence case %s"
