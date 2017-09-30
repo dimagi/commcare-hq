@@ -30,7 +30,6 @@ class Command(BaseCommand):
         self.case_accessor = CaseAccessors(DOMAIN)
         # iterate all occurrence cases
         for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
-            occurrence_case = self.case_accessor.get_case(occurrence_case_id)
             # Need to consider only public app cases so skip updates if enrolled in private
             if self.public_app_case(occurrence_case_id):
                 self.reconcile_case(occurrence_case_id)
