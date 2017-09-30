@@ -24,12 +24,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.dry_run = options.get('dry_run')
         self.result_file = self.setup_result_file()
-        accessor = CaseAccessors(DOMAIN)
         # iterate all occurrence cases
-        for occurrence_case_id in self._get_occurrence_case_ids_to_process():
-            occurrence_case = accessor.get_case(occurrence_case_id)
-            if self.public_app_case(occurrence_case):
-                referral_cases = get_open_referral_cases_from_occurrence(occurrence_case.get_id)
+        for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
+            if self.public_app_case(occurrence_case_id):
+                referral_cases = get_open_referral_cases_from_occurrence(occurrence_case_id)
                 if len(referral_cases) > 1:
                     self.reconcile_cases(referral_cases, occurrence_case_id)
 
@@ -56,27 +54,27 @@ class Command(BaseCommand):
             writer.writerow(row)
 
     def reconcile_cases(self, referral_cases, occurrence_case_id):
-        retain_case_id = sorted(referral_cases, key=lambda x: x.opened_on)[0]
-        cases_to_close = referral_cases.remove(retain_case_id)
-        self.close_cases(cases_to_close, occurrence_case_id, retain_case_id)
+        all_case_ids = [case.get_id for case in referral_cases]
+        retain_case_id = sorted(referral_cases, key=lambda x: x.opened_on)[0].get_id
+        self.close_cases(all_case_ids, occurrence_case_id, retain_case_id)
 
     @staticmethod
-    def public_app_case(occurrence_case):
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case.get_id)
+    def public_app_case(occurrence_case_id):
+        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         person_case_properties = person_case.dynamic_case_properties()
         if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
 
     @staticmethod
-    def _get_occurrence_case_ids_to_process():
+    def _get_open_occurrence_case_ids_to_process():
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
             case_ids = (
                 CommCareCaseSQL.objects
                 .using(db)
-                .filter(domain=DOMAIN, type="occurrence")
+                .filter(domain=DOMAIN, type="occurrence", closed=False)
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
@@ -86,17 +84,21 @@ class Command(BaseCommand):
                 if i % 1000 == 0:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
-    def close_cases(self, cases_to_close, occurrence_case_id, retain_case_id):
+    def close_cases(self, all_case_ids, occurrence_case_id, retain_case_id):
+        # remove duplicates in case ids to remove so that we dont retain and close
+        # the same case by mistake
+        all_case_ids = set(all_case_ids)
+        case_ids_to_close = all_case_ids.copy()
+        case_ids_to_close.remove(retain_case_id)
         if self.dry_run:
-            closing_case_ids = [case.get_id for case in cases_to_close]
             self.writerow({
                 "occurrence_case_id": occurrence_case_id,
                 "retain_case_id": retain_case_id,
-                "closed_case_ids": closing_case_ids
+                "closed_case_ids": case_ids_to_close
             })
         else:
-            updates = [(case.get_id, {'close_reason': "duplicate_reconciliation"}, True)
-                       for case in cases_to_close]
+            updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
+                       for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
 
