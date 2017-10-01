@@ -469,7 +469,7 @@ class ProductLineItemFactory(LineItemFactory):
         CreditLine.add_credit(
             line_item.subtotal,
             subscription=self.subscription,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
             permit_inactive=True,
         )
 

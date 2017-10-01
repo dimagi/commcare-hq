@@ -227,7 +227,7 @@ class CreditLineResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = CreditLine.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
+        fields = ['id', 'is_product', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
         resource_name = 'credit_line'
 
 
