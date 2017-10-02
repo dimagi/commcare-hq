@@ -1,7 +1,4 @@
-import os
-import tempfile
 import uuid
-from StringIO import StringIO
 import logging
 from wsgiref.util import FileWrapper
 
@@ -37,7 +34,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
 )
 from corehq.apps.users.models import UserRole
-from soil.util import expose_file_download, expose_cached_download
+from soil.util import expose_file_download, expose_cached_download, get_download_file_path, expose_download
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -760,7 +757,8 @@ def dump_users_and_groups(domain, download_id):
     ]
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    file_path = _get_download_file_path(domain, use_transfer)
+    filename = "user_export_{}_{}.xlsx".format(domain, uuid.uuid4().hex)
+    file_path = get_download_file_path(filename, use_transfer)
     writer.open(
         header_table=headers,
         file=file_path,
@@ -768,32 +766,4 @@ def dump_users_and_groups(domain, download_id):
     writer.write(rows)
     writer.close()
 
-    common_kwargs = dict(
-        mimetype=Format.from_format('xlsx').mimetype,
-        content_disposition='attachment; filename="{fname}"'.format(fname='{}_users.xlsx'.format(domain)),
-        download_id=download_id,
-    )
-    if use_transfer:
-        expose_file_download(
-            file_path,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        expose_cached_download(
-            FileWrapper(open(file_path, 'r')),
-            expiry=(1 * 60 * 60),
-            file_extension='xlsx',
-            **common_kwargs
-        )
-
-
-def _get_download_file_path(domain, use_transfer):
-    if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "user_export_{}_{}.xlsx".format(
-            domain, uuid.uuid4().hex
-        ))
-    else:
-        _, fpath = tempfile.mkstemp()
-
-    return fpath
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
