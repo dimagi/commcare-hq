@@ -156,10 +156,6 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNotNone(restore_config.restore_state.current_sync_log)
 
-    def test_force_cache_on_async(self):
-        restore_config = self._restore_config(async=True)
-        self.assertTrue(restore_config.force_cache)
-
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):
         form = """
