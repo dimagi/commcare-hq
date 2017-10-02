@@ -125,10 +125,19 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
 def get_associated_episode_case_for_test(test_case, occurrence_case_id):
     """
     get associated episode case set on the test case for new structure
-    fallback to finding the open episode case for old submissions
+    if has a new_episode_id (for diagnostic -> confirmed_tb or dstb -> drtb episode transition)
+        return that episode which should be a confirmed_tb/confirmed_drtb case
+    elif has a episode_case_id (for follow up test cases)
+        return the associated episode case only
+        which should be a confirmed_tb/confirmed_drtb case
+    else
+        fallback to finding the open confirmed tb episode case
     """
     test_case_properties = test_case.dynamic_case_properties()
-    test_case_episode_id = test_case_properties.get('episode_case_id')
+    test_case_episode_id = (
+        test_case_properties.get('new_episode_case_id')
+        or test_case_properties.get('episode_case_id')
+    )
     if test_case_episode_id:
         accessor = CaseAccessors(test_case.domain)
         try:
