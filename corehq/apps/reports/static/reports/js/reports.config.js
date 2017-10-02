@@ -60,7 +60,7 @@ var HQReport = function (options) {
                                                "address defined in your account settings."), "success");
                                 },
                             });
-                        } else if (self.exportAsync) {
+                        } else if (self.asyncExport) {
                                 $.ajax({
                                     url: self.getReportRenderUrl("export"),
                                     success: function() {
