@@ -498,7 +498,7 @@ class AwcReportsView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        data = []
+        data = {}
         if step == 'system_usage':
             data = get_awc_reports_system_usage(
                 domain,

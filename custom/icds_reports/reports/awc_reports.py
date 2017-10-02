@@ -937,7 +937,7 @@ def get_beneficiary_details(case_id, month):
             'x': int(row.age_in_months),
             'y': float(row.recorded_height or 0)
         }
-        beneficiary['wfl'][math.ceil((row.recorded_height or 45) - 45)] = {
+        beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
             'x': float(row.recorded_height or 0),
             'y': float(row.recorded_weight or 0)
         }
