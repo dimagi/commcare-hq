@@ -106,15 +106,13 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'in_month': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -130,8 +128,8 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['y'] += in_month / (valid or 1)
+        data['blue'][date_in_miliseconds]['in_month'] += in_month
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -145,24 +143,11 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Number of AWCs with a functional toilet.",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'],
+                        'in_month': value['in_month']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total number of AWCs with a functional toilet.",
+                "key": "% of AWCs with a functional toilet.",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
