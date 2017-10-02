@@ -1781,7 +1781,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug="current_month_stunting"
             ),
             DatabaseColumn(
-                'PSE Attendance',
+                'PSE Attendance (Days)',
                 SimpleColumn('pse_days_attended'),
                 slug="pse_days_attended"
             ),
