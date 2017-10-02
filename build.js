@@ -6,6 +6,7 @@
     allowSourceOverwrites: true,
     keepBuildDir: true,
     skipDirOptimize: true,  // could turn this off to minify everything (including bower_components), which takes a while
+    generateSourceMaps: true,
     modules: [
         // Third-party modules
         {
