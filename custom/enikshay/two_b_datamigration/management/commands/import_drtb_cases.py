@@ -1090,7 +1090,7 @@ def get_episode_regimen_change_history(column_mapping, row, episode_treatment_in
     #return value
     current_treatment_regimen = column_mapping.get_value("treatment_regimen", row)
     if current_treatment_regimen:
-        return ("{}: " + current_treatment_regimen).format(episode_treatment_initiation_date)
+        return "{}: {}".format(episode_treatment_initiation_date, current_treatment_regimen)
 
 
 def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
@@ -1737,14 +1737,9 @@ def clean_marital_status(value):
     if not value:
         return None
     clean_value = value.lower().strip()
-    try:
-        return {
-            "unmarried": "unmarried",
-            "married": "married",
-            "widowed": "widowed",
-            "separated": "separated",
-        }[clean_value]
-    except KeyError:
+    if clean_value in ["unmarried", "married", "widowed", "separated"]:
+        return clean_value
+    else:
         raise FieldValidationFailure(value, "Marital Status")
 
 
