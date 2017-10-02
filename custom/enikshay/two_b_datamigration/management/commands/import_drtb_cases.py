@@ -1701,8 +1701,10 @@ def clean_occupation(value):
             "sales and service elementary occupation": "sales_and_services_elementary",
             "extraction and building trade worker": "extraction_and_building_trade",
             "model, sales person or demonstrator": "model_sales_persons_demonstrator",
-            "laborer in mining, construction, manufacturing and transport": "mining_construction_manufacturing_transport",
-            "labourer in mining, constuction, manufacturing and transport": "mining_construction_manufacturing_transport",
+            "laborer in mining, construction, manufacturing and transport":
+                "mining_construction_manufacturing_transport",
+            "labourer in mining, constuction, manufacturing and transport":
+                "mining_construction_manufacturing_transport",
             "agriculture, fishery and related labor": "agriculture_fishery_and_related",
             "unidentifiable occupation or inadequate reporting": "occupation_unidentifiable",
             "workers reporting occupation unidentifiable or inadequately": "occupation_unidentifiable",
@@ -1722,7 +1724,8 @@ def clean_occupation(value):
             "new worker seeking employment": "new_worker_seeking_employment",
             "precision, handicraft, printing or related trade worker": "precision_handicraft_printing_and_related",
             "market-oriented, skilled agriculture or fishery worker": "market_oriented_agriculture_fishery",
-            "physical and engineering science associate professional": "physical_and_engineering_science_associate",
+            "physical and engineering science associate professional":
+                "physical_and_engineering_science_associate",
         }[clean_value]
     except KeyError:
         raise FieldValidationFailure(value, "Occupation")
