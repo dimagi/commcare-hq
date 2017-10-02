@@ -23,9 +23,12 @@ class Command(BaseCommand):
         commit = options['commit']
         deletion_id = options['deletion_id']
 
+        if not case_ids:
+            case_ids = self.get_case_ids(domain, case_type)
+
         with open(log_file_name, 'w') as log_file:
             logger = self.get_logger(log_file)
-            for case_id in with_progress_bar(self.get_case_ids(domain, case_type, case_ids)):
+            for case_id in with_progress_bar(case_ids):
                 if self.should_delete(domain, case_id):
                     self.delete_case(case_id, commit, deletion_id, domain, logger, case_type)
 
@@ -36,11 +39,8 @@ class Command(BaseCommand):
         return logger
 
     @staticmethod
-    def get_case_ids(domain, case_type, case_ids):
-        if case_ids:
-            return case_ids
-        else:
-            return CaseAccessors(domain).get_case_ids_in_domain(type=case_type)
+    def get_case_ids(domain, case_type):
+        return CaseAccessors(domain).get_case_ids_in_domain(type=case_type)
 
     @staticmethod
     def should_delete(domain, case_id):
