@@ -1971,7 +1971,35 @@ class ProgressReport(object):
                                 'format': 'percent'
                             }
                         ]
-                    }
+                    },
+                    {
+                        'section_title': 'AWC Infrastructure',
+                        'slug': 'awc_infrastructure',
+                        'order': 5,
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': '% AWCs with Medicine Kit',
+                                'slug': 'medicine_kits',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': '% AWCs with Weighing Scale: infants',
+                                'slug': 'baby_weighing_scale',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': '% AWCs with Weighing Scale: Mother and Child',
+                                'slug': 'adult_weighing_scale',
+                                'average': [],
+                                'format': 'percent'
+                            }
+                        ]
+                    },
                 ]
             },
             {
