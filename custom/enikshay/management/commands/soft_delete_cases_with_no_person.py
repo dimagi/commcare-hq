@@ -15,16 +15,17 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('case_type')
         parser.add_argument('log_file_name')
+        parser.add_argument('case_ids', nargs='*')
         parser.add_argument('--commit', action='store_true')
         parser.add_argument('--deletion_id', dest='deletion_id', default='case_without_person')
 
-    def handle(self, domain, case_type, log_file_name, **options):
+    def handle(self, domain, case_type, log_file_name, case_ids, **options):
         commit = options['commit']
         deletion_id = options['deletion_id']
 
         with open(log_file_name, 'w') as log_file:
             logger = self.get_logger(log_file)
-            for case_id in with_progress_bar(self.get_case_ids(domain, case_type)):
+            for case_id in with_progress_bar(self.get_case_ids(domain, case_type, case_ids)):
                 if self.should_delete(domain, case_id):
                     self.delete_case(case_id, commit, deletion_id, domain, logger, case_type)
 
@@ -35,8 +36,11 @@ class Command(BaseCommand):
         return logger
 
     @staticmethod
-    def get_case_ids(domain, case_type):
-        return CaseAccessors(domain).get_case_ids_in_domain(type=case_type)
+    def get_case_ids(domain, case_type, case_ids):
+        if case_ids:
+            return case_ids
+        else:
+            return CaseAccessors(domain).get_case_ids_in_domain(type=case_type)
 
     @staticmethod
     def should_delete(domain, case_id):
