@@ -216,7 +216,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     images = []
     tmp_image = []
 
-    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=selected_month)):
+    for idx, date in enumerate(rrule(DAILY, dtstart=selected_month, until=last_day_of_selected_month)):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 

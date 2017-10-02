@@ -1946,7 +1946,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return d.x;
                 },
                 y: function (d) {
-                    return d.y;
+                    return d.attended;
                 },
                 showValues: true,
                 showControls: false,
@@ -1958,11 +1958,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     tickFormat: function(d) {
                         return d3.time.format('%d/%m/%Y')(new Date(d));
                     },
+                    staggerLabels: true,
+                    showMaxMin: false,
                 },
                 yAxis: {
                     axisLabel: 'Number of Children',
                     tickFormat: function(d) {
-                        return d3.format('.2%')(d);
+                        return d3.format(',')(d);
                     },
                     forceY: [0],
                 },
@@ -1984,7 +1986,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     return chart;
                 },
                 reduceXTicks: false,
-                staggerLabels: false,
                 showLegend: false,
             },
         };
