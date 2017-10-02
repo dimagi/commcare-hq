@@ -47,3 +47,7 @@ class InvalidAttachment(Exception):
 
 class UnknownActionType(Exception):
     """Thrown when an unknown action type is set on a CaseTransaction"""
+
+
+class PostSaveError(Exception):
+    pass
