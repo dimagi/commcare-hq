@@ -139,7 +139,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
                 loc_name=key,
                 percent=(value['in_month'] * 100) / float(value['all'] or 1)
             ) for key, value in best_worst.iteritems()
-            ],
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
