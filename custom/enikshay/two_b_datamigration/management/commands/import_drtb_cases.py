@@ -558,7 +558,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     episode_case_properties = get_episode_case_properties(domain, column_mapping, city_constants, row)
     test_case_properties = get_test_case_properties(
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
-    drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
+    drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row, test_case_properties)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
         domain, city_constants, column_mapping, row, person_case_properties['dto_id'])
 
@@ -1091,7 +1091,7 @@ def get_episode_regimen_change_history(column_mapping, row, episode_treatment_in
     #        put_on_treatment,
     #        column_mapping.get_value("type_of_treatment_initiated", row)
     #    )
-    #return value
+    # return value
     current_treatment_regimen = column_mapping.get_value("treatment_regimen", row)
     if current_treatment_regimen:
         return "{}: {}".format(episode_treatment_initiation_date, current_treatment_regimen)
@@ -1302,50 +1302,50 @@ def get_dst_test_resistance_properties(column_mapping, row):
     }
 
 
-def get_drug_resistance_case_properties(column_mapping, row):
-    resistant_drugs = {
-        d['drug_id']: d
-        for d in
-        get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row) +
-        get_drug_resistances_from_mumbai_cbnaat(column_mapping, row) +
-        get_drug_resistances_from_lpa(column_mapping, row) +
-        get_drug_resistances_from_sl_lpa(column_mapping, row)
-    }
-    additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
-    for drug in additional_drug_case_properties:
-        resistant_drugs[drug['drug_id']] = drug
-    unknown_cases = generate_unknown_cases(resistant_drugs.keys())
-    return resistant_drugs.values() + unknown_cases
-
-
-def generate_unknown_cases(known_drugs):
-    unknown_drugs = set(ALL_DRUGS.keys()) - set(known_drugs)
-    return [
-        {
+def get_drug_resistance_case_properties(column_mapping, row, test_cases):
+    # generate empty / unknown drug_resistance cases
+    dr_cases = {}
+    for drug_id in ALL_DRUGS.keys():
+        dr_cases[drug_id] = {
             "name": drug_id,
             "owner_id": "-",
             "drug_id": drug_id,
             "sort_order": ALL_DRUGS[drug_id],
             "sensitivity": "unknown",
         }
-        for drug_id in unknown_drugs
-    ]
 
+    # Update data based on Mehsana drug resistance list
+    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
+    if drugs:
+        drugs = drugs.split(" ")
+    for drug_id in drugs:
+        dr_cases[drug_id]['sensitivity'] = 'resistant'
 
-def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
-    case_properties = []
+    test_cases = sorted(test_cases, key=lambda test: test['date_reported'])
+    for t in test_cases:
+        drug_resistance_list = t['drug_resistance_list'] or []
+        if drug_resistance_list:
+            drug_resistance_list = drug_resistance_list.split(' ')
+        drug_sensitive_list = t['drug_sensitive_list'] or []
+        if drug_sensitive_list:
+            drug_sensitive_list = drug_sensitive_list.split(' ')
+
+        test_drugs = [(drug_id, "resistant") for drug_id in drug_resistance_list] + \
+                     [(drug_id, "sensitive") for drug_id in drug_sensitive_list]
+        for drug_id, sensitivity in test_drugs:
+            dr_cases[drug_id]['test_type'] = t['test_type_value']
+            dr_cases[drug_id]['test_type_label'] = t['test_type_label']
+            dr_cases[drug_id]['result_date'] = t['date_reported']
+            dr_cases[drug_id]['specimen_date'] = t['date_tested']
+            dr_cases[drug_id]['sensitivity'] = sensitivity
+
+    # add any resistance info not tied to a test
     for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
-        value = column_mapping.get_value(drug_column_key, row)
-        if value:
-            properties = {
-                "name": drug_id,
-                "owner_id": "-",
-                "sensitivity": convert_sensitivity(value),
-                "drug_id": drug_id,
-                "sort_order": ALL_DRUGS[drug_id],
-            }
-            case_properties.append(properties)
-    return case_properties
+        if dr_cases[drug_id]['sensitivity'] == 'unknown':
+            sensitivity = convert_sensitivity(column_mapping.get_value(drug_column_key, row))
+            dr_cases[drug_id]['sensitivity'] = sensitivity
+
+    return dr_cases.values()
 
 
 def convert_sensitivity(sensitivity_value):
@@ -1398,87 +1398,6 @@ def clean_patient_type(value):
     return clean_value
 
 
-def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
-
-    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
-    if drugs:
-        drugs = drugs.split(" ")
-    case_properties = []
-    for drug in drugs:
-        properties = {
-            "name": drug,
-            "owner_id": "-",
-            "sensitivity": "resistant",
-            "drug_id": drug,
-            "sort_order": ALL_DRUGS[drug],
-        }
-        case_properties.append(properties)
-    return case_properties
-
-
-def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
-    # Get the case properties for the drug_resistance cases that should be created as a result of the cbnaat
-    # columns in the mumbai mapping
-    resistant = get_cbnaat_resistance(column_mapping, row)
-    if resistant is not None:
-        return [
-            {
-                "name": "r",
-                "owner_id": "-",
-                "drug_id": "r",
-                "sort_order": ALL_DRUGS["r"],
-                "specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
-                "result_date": column_mapping.get_value("cbnaat_result_date", row),
-                "test_type": "cbnaat",
-                "test_type_label": "CBNAAT",
-                "sensitivity": "resistant" if resistant else "sensitive",
-            }
-        ]
-    else:
-        return []
-
-
-def get_drug_resistances_from_lpa(column_mapping, row):
-    drugs = [
-        ("r", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
-        ("h_inha", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
-    ]
-    case_props = []
-    for drug, resistant in drugs:
-        if resistant is not None:
-            case_props.append({
-                "name": drug,
-                "owner_id": "-",
-                "drug_id": drug,
-                "sort_order": ALL_DRUGS[drug],
-                "specimen_date": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-                "result_date": column_mapping.get_value("lpa_result_date", row),
-                "test_type": "fl_line_probe_assay",
-                "test_type_label": "FL LPA",
-                "sensitivity": "resistant" if resistant else "sensitive",
-            })
-    return case_props
-
-
-def get_drug_resistances_from_sl_lpa(column_mapping, row):
-    case_props = []
-    drug_list_string = get_sl_lpa_test_resistance_properties(column_mapping, row).get("drug_resistant_list", "")
-    drugs = drug_list_string.split(" ")
-    for drug in [x for x in drugs if x != ""]:
-        case_props.append({
-            "name": drug,
-            "owner_id": "-",
-            "drug_id": drug,
-            "sort_order": ALL_DRUGS[drug],
-            "specimen_date": clean_date(column_mapping.get_value("sl_lpa_sample_date", row)),
-            "result_date": column_mapping.get_value("sl_lpa_result_date", row),
-            "test_type": "sl_line_probe_assay",
-            "test_type_label": "SL LPA",
-            "sensitivity": "resistant",
-        })
-    return case_props
-
-
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
 
@@ -1496,6 +1415,8 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 "test_type_value": "culture",
                 "test_type_label": "Culture",
                 "rft_general": "follow_up_drtb",
+                "drug_resistance_list": '',
+                "drug_sensitive_list": '',
             }
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
                 follow_up, properties['date_tested'], treatment_initiation_date
@@ -1524,6 +1445,8 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                         "rft_drtb_follow_up_treatment_month": month,
                         "date_tested": date_tested,
                         "result": clean_result(result),
+                        "drug_resistance_list": '',
+                        "drug_sensitive_list": '',
                     }
                     properties["result_summary_label"] = result_label(properties['result'])
                     properties_list.append(properties)
