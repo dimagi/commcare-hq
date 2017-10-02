@@ -235,7 +235,12 @@ class DashboardView(TemplateView):
         )
 
         if is_commcare_user or is_web_user_with_edit_data_permissions:
-            kwargs['report_an_issue_url'] = webapps_url(domain=self.domain, app_id=ISSUE_TRACKER_APP_ID, module_id=0, form_id=0)
+            kwargs['report_an_issue_url'] = webapps_url(
+                domain=self.domain,
+                app_id=ISSUE_TRACKER_APP_ID,
+                module_id=0,
+                form_id=0
+            )
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
