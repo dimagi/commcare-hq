@@ -83,7 +83,7 @@ from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages, \
     _get_editable_role_choices
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE
+from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE, FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
@@ -602,6 +602,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def page_context(self):
+        if FILTERED_BULK_USER_DOWNLOAD.enabled(self.domain):
+            bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
+        else:
+            bulk_download_url = reverse("download_commcare_users", args=[self.domain])
         return {
             'has_anonymous_user': CouchUser.get_anonymous_mobile_worker(self.domain) is not None,
             'new_mobile_worker_form': self.new_mobile_worker_form,
@@ -618,6 +622,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'location_url': reverse('child_locations_for_select2', args=[self.domain]),
+            'bulk_download_url': bulk_download_url
         }
 
     @property

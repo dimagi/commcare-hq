@@ -1246,3 +1246,11 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
+
+FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
+    'filtered_bulk_user_download',
+    "Ability to filter mobile workers based on Role and username "
+    "when doing bulk download",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
