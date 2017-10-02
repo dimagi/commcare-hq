@@ -88,7 +88,7 @@ from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SubscriptionType,
+    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
