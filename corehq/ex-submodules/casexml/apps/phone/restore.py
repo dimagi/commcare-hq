@@ -167,6 +167,7 @@ class RestoreResponse(object):
     def as_string(self):
         """Get content as utf8-encoded bytes
 
+        NOTE: This method is only used in tests.
         Cannot be called more than once, and `self.as_file()` will
         return a closed file after this is called.
         """
