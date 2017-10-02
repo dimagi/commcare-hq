@@ -107,7 +107,7 @@ class SerialIdBucket(models.Model):
 
     @classmethod
     def get_next(cls, domain, bucket_id, session_id=None):
-        if session_id is not None:
+        if session_id:
             return cls._get_next_cached(domain, bucket_id, session_id)
         else:
             return cls._get_next(domain, bucket_id)

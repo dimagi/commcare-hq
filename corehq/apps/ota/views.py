@@ -20,7 +20,6 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.users.models import CouchUser
@@ -254,7 +253,7 @@ def heartbeat(request, domain, hq_app_id):
 @require_GET
 def get_next_id(request, domain):
     bucket_id = request.GET.get('pool_id')
-    session_id = request.GET.get('request_id')
+    session_id = request.GET.get('session_id')
     if bucket_id is None:
         return HttpResponseBadRequest("You must provide a pool_id parameter")
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
