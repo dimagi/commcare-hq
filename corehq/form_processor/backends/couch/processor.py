@@ -105,6 +105,7 @@ class FormProcessorCouch(object):
         if xform._deferred_blobs:
             dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
+        dupe.orig_id = xform._id
         return cls.assign_new_id(dupe)
 
     @classmethod
