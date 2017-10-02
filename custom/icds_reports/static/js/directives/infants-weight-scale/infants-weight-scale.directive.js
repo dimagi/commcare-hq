@@ -50,11 +50,11 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a weighing scale for infants: <strong>' + total + '</strong></div>' +
+            '<div>Total number of AWCs with a weighing scale for infants: <strong>' + in_month + '</strong></div>' +
             '<div>% of AWCs with a weighing scale for infants: <strong>' + percent + '</strong></div>';
     };
 
