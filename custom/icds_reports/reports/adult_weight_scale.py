@@ -48,11 +48,11 @@ def get_adult_weight_scale_data_map(domain, config, loc_level, show_test=False):
         in_month_total += (in_month or 0)
         valid_total += (valid or 0)
 
-        value = (in_month or 0) * 100 / (valid or 1)
+        value = (in_month or 0) * 100 / float(valid or 1)
 
         row_values = {
             'in_month': in_month or 0,
-            'all': valid or 0
+            'all': float(valid or 0)
         }
         if value < 25:
             row_values.update({'fillKey': '0%-25%'})
@@ -113,27 +113,33 @@ def get_adult_weight_scale_data_chart(domain, config, loc_level, show_test=False
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'in_month': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
-    best_worst = {}
+    best_worst = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
     for row in chart_data:
         date = row['month']
         in_month = (row['in_month'] or 0)
         location = row['%s_name' % loc_level]
         valid = row['all']
 
-        if location in best_worst:
-            best_worst[location].append((in_month or 0) / (valid or 1))
-        else:
-            best_worst[location] = [(in_month or 0) / (valid or 1)]
+        best_worst[location]['in_month'] = in_month
+        best_worst[location]['all'] = (valid or 0)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['blue'][date_in_miliseconds]['y'] += in_month / (valid or 1)
+        data['blue'][date_in_miliseconds]['all'] += (valid or 0)
         data['blue'][date_in_miliseconds]['in_month'] += in_month
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [
+            dict(
+                loc_name=key,
+                percent=(value['in_month'] * 100) / float(value['all'] or 1)
+            ) for key, value in best_worst.iteritems()
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -144,7 +150,7 @@ def get_adult_weight_scale_data_chart(domain, config, loc_level, show_test=False
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'],
+                        'y': value['in_month'] / float(value['all'] or 1),
                         'in_month': value['in_month']
                     } for key, value in data['blue'].iteritems()
                 ],
