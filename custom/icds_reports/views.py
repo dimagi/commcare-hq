@@ -20,7 +20,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
-from custom.icds_reports.const import LocationTypes, ISSUE_TRACKER_APP_ID, BHD_ROLE
+from custom.icds_reports.const import LocationTypes, BHD_ROLE
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -79,7 +79,8 @@ from custom.icds_reports.reports.registered_household import get_registered_hous
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
-from custom.icds_reports.utils import get_age_filter, get_location_filter
+from custom.icds_reports.utils import get_age_filter, get_location_filter, \
+    get_latest_issue_tracker_build_id
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -235,9 +236,10 @@ class DashboardView(TemplateView):
         )
 
         if is_commcare_user or is_web_user_with_edit_data_permissions:
+            build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_url(
                 domain=self.domain,
-                app_id=ISSUE_TRACKER_APP_ID,
+                app_id=build_id,
                 module_id=0,
                 form_id=0
             )
