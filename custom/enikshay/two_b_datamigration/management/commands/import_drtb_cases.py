@@ -757,8 +757,6 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "diagnosing_facility_name": phi_name,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "regimen_change_history": get_episode_regimen_change_history(
-            column_mapping, row, treatment_initiation_date),
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
         "treatment_outcome": get_treatment_outcome(column_mapping, row),
@@ -768,6 +766,8 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "height": clean_height(column_mapping.get_value("height", row)),
         "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
+        "regimen_change_history": get_episode_regimen_change_history(
+            column_mapping, row, treatment_initiation_date),
         "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row))
     }
 
@@ -1079,15 +1079,19 @@ def get_mehsana_resistance_properties(column_mapping, row):
 
 
 def get_episode_regimen_change_history(column_mapping, row, episode_treatment_initiation_date):
-    put_on_treatment = column_mapping.get_value("date_put_on_mdr_treatment", row)
-    put_on_treatment = clean_date(put_on_treatment)
-    value = "{}: MDR/RR".format(episode_treatment_initiation_date)
-    if put_on_treatment:
-        value += "\n{}: {}".format(
-            put_on_treatment,
-            column_mapping.get_value("type_of_treatment_initiated", row)
-        )
-    return value
+    # TODO: This is odd Mehsana code
+    # put_on_treatment = column_mapping.get_value("date_put_on_mdr_treatment", row)
+    # put_on_treatment = clean_date(put_on_treatment)
+    # value = "{}: MDR/RR".format(episode_treatment_initiation_date)
+    # if put_on_treatment:
+    #    value += "\n{}: {}".format(
+    #        put_on_treatment,
+    #        column_mapping.get_value("type_of_treatment_initiated", row)
+    #    )
+    #return value
+    current_treatment_regimen = column_mapping.get_value("treatment_regimen", row)
+    if current_treatment_regimen:
+        return ("{}: " + current_treatment_regimen).format(episode_treatment_initiation_date)
 
 
 def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
