@@ -24,7 +24,7 @@
         </div>
         <div class="row black" ng-if="$ctrl.step === 'map'">
             <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
-                <map-or-sector-view template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location"></map-or-sector-view>
+                <map-or-sector-view label="$ctrl.label" template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location"></map-or-sector-view>
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">

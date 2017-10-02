@@ -410,33 +410,8 @@ class NewLocationImporter(object):
         self.chunk_size = chunk_size
 
     @classmethod
-    def check_enikshay(cls, location_rows):
-        client = get_redis_client()
-
-        if client.get('bypass-enikshay-location-restriction'):
-            return
-
-        if len(location_rows) > 100:
-            raise LocationExcelSheetError(
-                "Please limit enikshay location uploads to 100 at a time for the time being."
-            )
-
-        key = 'enikshay-location-upload-flag'
-        if client.get(key) is not None:
-            minutes_remaining = client.ttl(key) / 60.0
-            raise LocationExcelSheetError(
-                "Please wait four hours between enikshay location uploads for the time being. "
-                "%s minutes remain" % minutes_remaining
-            )
-
-        client.set(key, 1)
-        client.expire(key, 4 * 60 * 60)
-
-    @classmethod
     def from_excel_importer(cls, domain, excel_importer):
         type_rows, location_rows = LocationExcelValidator(excel_importer).validate_and_parse_stubs_from_excel()
-        if settings.SERVER_ENVIRONMENT == 'enikshay':
-            cls.check_enikshay(location_rows)
         return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):

@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "voucher",
+    "data_source_table": "voucher_v2",
     "report_id": "payment_register",
     "config": {
         "description": "",

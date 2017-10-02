@@ -144,15 +144,4 @@
             </form>
         </div>
     </div>
-    {% addtoblock js-inline %}
-    <script>
-    {% if requirejs_main %}
-        requirejs(['jquery', 'bootstrap'], function($) {
-    {% else %}
-        $(window).on('load', function(){
-    {% endif %}
-            $('#modalTrial30Day').modal('show');
-        });
-    </script>
-    {% endaddtoblock %}
 {% endif %}

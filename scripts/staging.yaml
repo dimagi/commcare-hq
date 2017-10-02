@@ -50,8 +50,10 @@ branches:
   - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
   - np/11.1 # NP 8/24
-  - jls/fixtures-require-js-2017 # Jenny 9/18
+#  - jls/fixtures-require-js-2017 # Jenny 9/18
   - sk/form-error2  # sk 9/26
+  - je/mobile-ucr-v2 # j$ 9/29
+  - np/billing/is_product # NP
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

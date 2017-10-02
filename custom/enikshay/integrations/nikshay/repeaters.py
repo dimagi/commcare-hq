@@ -29,6 +29,7 @@ from custom.enikshay.const import (
     DSTB_EPISODE_TYPE,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     TREATMENT_INITIATED_IN_PHI,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -110,8 +111,11 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         # CPTDeliverDate changes OR
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
+        person_case_properties = person_case.dynamic_case_properties()
         if allowed_case_types_and_users:
             return (
+                # Do not attempt notification for patients registered in private app
+                not (person_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
@@ -142,6 +146,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
+            not (episode_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
             (  # has a nikshay id already or is a valid submission probably waiting notification
                 episode_case_properties.get('nikshay_id') or
                 valid_nikshay_patient_registration(episode_case_properties)
@@ -176,6 +181,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         if allowed_case_types_and_users:
             test_case_properties = test_case.dynamic_case_properties()
             return (
+                not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
                 (

@@ -1,12 +1,16 @@
 # coding: utf-8
-import os
 from codecs import BOM_UTF8
-
+from contextlib import closing
 import StringIO
+import os
 
-from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
 from django.test import SimpleTestCase
+from lxml import html, etree
 from mock import patch, Mock
+
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -59,6 +63,29 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.finish()
         file_start = writer.get_file().read(6)
         self.assertEqual(file_start, BOM_UTF8 + 'ham')
+
+
+class HtmlExportWriterTests(SimpleTestCase):
+
+    def test_nones_transformed(self):
+        headers = ('Breakfast', 'Breakfast', 'Amuse-Bouche', 'Breakfast')
+        row = ('spam', 'spam', None, 'spam')
+        table = (headers, row, row, row)
+        export_tables = (('Spam', table),)
+
+        with closing(StringIO.StringIO()) as file_:
+            export_from_tables(export_tables, file_, Format.HTML)
+            html_string = file_.getvalue()
+
+        root = html.fromstring(html_string)
+        html_rows = [
+            [etree.tostring(td).strip() for td in tr.xpath('./td')]
+            for tr in root.xpath('./body/table/tbody/tr')
+        ]
+        self.assertEqual(html_rows,
+                         [['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>']])
 
 
 class HeaderNameTest(SimpleTestCase):
