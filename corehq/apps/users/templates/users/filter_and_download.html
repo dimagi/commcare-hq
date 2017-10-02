@@ -1,0 +1,42 @@
+{% extends 'users/base_template.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block js-inline %}{{ block.super }}
+<script>
+    $(function () {
+        var prevFilters = {
+            'role_id': $("#id_role_id").val(),
+            'search_string': $("#id_search_string").val()
+        };
+        setInterval(function(){
+            var currentFilters = {
+                'role_id': $("#id_role_id").val(),
+                'search_string': $("#id_search_string").val()
+            };
+            if (prevFilters.role_id != currentFilters.role_id || prevFilters.search_string != currentFilters.search_string) {
+                $.get({
+                    url: "{{ count_users_url }}",
+                    data: currentFilters,
+                    success: function(data) {
+                        var count = data['count'];
+                        console.log(count);
+                        var text = django.ngettext("Download %s User", "Download %s Users", count);
+                        text = interpolate(text, [count]);
+                        $('.submit_button').text(text);
+                    },
+                    error: function(e) {
+                        alert("There was error");
+                    },
+                });
+            }
+            prevFilters = currentFilters;
+        }, 1000);
+    });
+</script>
+{% endblock %}
+
+{% block page_content %}
+	{% crispy form %}
+{% endblock %}

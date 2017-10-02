@@ -24,6 +24,7 @@ from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
@@ -70,7 +71,8 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm
+    SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm,
+    CommCareUserFilterForm
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
@@ -78,12 +80,14 @@ from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, r
     bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
-from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
+from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages, \
+    _get_editable_role_choices
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
+from corehq.util.view_utils import reverse as reverse_util
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
@@ -1155,10 +1159,48 @@ class DownloadUsersStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+class FilteredUserDownload(BaseManageCommCareUserView):
+    urlname = 'filter_and_download_commcare_users'
+    page_title = ugettext_noop('Filter and Download')
+
+    @method_decorator(require_can_edit_commcare_users)
+    def get(self, request, domain, *args, **kwargs):
+        form = CommCareUserFilterForm(request.GET, domain=domain)
+        context = super(FilteredUserDownload, self).main_context
+        context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
+        return render(
+            request,
+            "users/filter_and_download.html",
+            context
+        )
+
+
+@require_can_edit_commcare_users
+def count_users(request, domain):
+    from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
+    form = CommCareUserFilterForm(request.GET, domain=domain)
+    user_filters = {}
+    if form.is_valid():
+        user_filters = form.cleaned_data
+    else:
+        return HttpResponseBadRequest("Invalid Request")
+
+    return json_response({
+        'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    })
+
+
 @require_can_edit_commcare_users
 def download_commcare_users(request, domain):
+    form = CommCareUserFilterForm(request.GET, domain=domain)
+    user_filters = {}
+    if form.is_valid():
+        user_filters = form.cleaned_data
+    else:
+        return HttpResponseRedirect(
+            reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
-    res = bulk_download_users_async.delay(domain, download.download_id)
+    res = bulk_download_users_async.delay(domain, download.download_id, user_filters)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
