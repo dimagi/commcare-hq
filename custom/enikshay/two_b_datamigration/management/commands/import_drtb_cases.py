@@ -764,7 +764,6 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
         "height": clean_height(column_mapping.get_value("height", row)),
-        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
         "regimen_change_history": get_episode_regimen_change_history(
             column_mapping, row, treatment_initiation_date),
@@ -1261,20 +1260,23 @@ def get_culture_type_label(culture_type):
 
 
 def get_dst_test_case_properties(column_mapping, row):
-    resistance_props = get_dst_test_resistance_properties(column_mapping, row)
-    if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
-        properties = {
-            "owner_id": "-",
-            "test_type_value": "dst",
-            "test_type_label": "DST",
-            "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
-            "date_reported": column_mapping.get_value("dst_result_date", row),
-            "dst_test_type": column_mapping.get_value("dst_type", row),
-            "result_recorded": "yes",
-        }
-        properties.update(resistance_props)
-        properties['result_summary_display'] = get_test_summary(properties)
-        return properties
+    date_reported = clean_date(column_mapping.get_value("dst_result_date", row))
+    if date_reported:
+        resistance_props = get_dst_test_resistance_properties(column_mapping, row)
+        if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
+            properties = {
+                "owner_id": "-",
+                "test_type_value": "dst",
+                "test_type_label": "DST",
+                "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
+                "date_reported": date_reported,
+                "dst_test_type": column_mapping.get_value("dst_type", row),
+                "result": "tb_detected",
+                "result_recorded": "yes",
+            }
+            properties.update(resistance_props)
+            properties['result_summary_display'] = get_test_summary(properties)
+            return properties
     return None
 
 
