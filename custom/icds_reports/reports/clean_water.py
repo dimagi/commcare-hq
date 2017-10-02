@@ -129,8 +129,8 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['green'][date_in_miliseconds]['y'] += in_month or 0
+        data['blue'][date_in_miliseconds]['y'] += valid or 0
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -170,7 +170,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
