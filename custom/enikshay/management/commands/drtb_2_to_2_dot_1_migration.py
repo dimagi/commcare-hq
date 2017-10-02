@@ -108,13 +108,16 @@ class Command(BaseCommand):
 
     def update_case(self, case_id, update_props):
         case_updates = update_props
-        if 'debug' in case_updates:
-            del case_updates['debug']
         if case_updates:
             case_updates['datamigration_20_to_21'] = 'yes'
             update_props['datamigration_20_to_21'] = 'yes'
             if not self.dry_run:
-                update_case(DOMAIN, case_id, case_updates)
+                real_case_updates = case_updates.copy()
+                # remove any debug information stored for confirming changes and retain them for
+                # logging in the csv file
+                if 'debug' in real_case_updates:
+                    del real_case_updates['debug']
+                update_case(DOMAIN, case_id, real_case_updates)
             update_props['updated'] = 'yes'
         else:
             update_props['updated'] = 'no'
