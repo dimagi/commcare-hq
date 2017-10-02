@@ -846,6 +846,8 @@ def get_diagnosis_properties(column_mapping, domain, row):
         diagnosing_test = get_lpa_test_case_properties(domain, column_mapping, row)
     elif column_mapping.get_value("sl_lpa_result", row):
         diagnosing_test = get_sl_lpa_test_case_properties(domain, column_mapping, row)
+    elif column_mapping.get_value("culture_result", row):
+        diagnosing_test = get_culture_test_case_properties(domain, column_mapping, row)
 
     if diagnosing_test:
         properties["diagnosis_test_type_label"] = diagnosing_test['test_type_label']
@@ -858,6 +860,8 @@ def get_diagnosis_properties(column_mapping, domain, row):
         properties["diagnosis_test_specimen_date"] = diagnosing_test['date_tested']
         properties["diagnosis_test_summary"] = diagnosing_test['result_summary_display']
         properties["date_of_diagnosis"] = diagnosing_test['date_reported']
+
+    # There are some cases that no diagnosis test (~109). They don't have a date of diagnosis
 
     return properties
     # TODO: (WAITING) figure out how to set these properties based on other info
