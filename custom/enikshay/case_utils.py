@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
+    ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
     ENikshayException)
@@ -462,7 +463,7 @@ def get_person_case(domain, case_id):
     elif case_type == CASE_TYPE_VOUCHER:
         return get_person_case_from_voucher(domain, case.case_id).case_id
     else:
-        raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))
+        raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
 
 
 def _get_voucher_parent(domain, voucher_case_id):
