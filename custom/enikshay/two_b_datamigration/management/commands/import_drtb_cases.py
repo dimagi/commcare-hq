@@ -1139,6 +1139,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
@@ -1166,6 +1167,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
@@ -1192,6 +1194,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
@@ -1221,6 +1224,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "result": clean_result(column_mapping.get_value("culture_result", row)),
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
     properties['result_summary_display'] = get_test_summary(properties)
     return properties
@@ -1253,11 +1257,15 @@ def get_dst_test_case_properties(column_mapping, row):
     if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
         properties = {
             "owner_id": "-",
+            "test_type_value": "dst",
+            "test_type_label": "DST",
             "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
             "date_reported": column_mapping.get_value("dst_result_date", row),
             "dst_test_type": column_mapping.get_value("dst_type", row),
+            "result_recorded": "yes",
         }
         properties.update(resistance_props)
+        properties['result_summary_display'] = get_test_summary(properties)
         return properties
     return None
 
