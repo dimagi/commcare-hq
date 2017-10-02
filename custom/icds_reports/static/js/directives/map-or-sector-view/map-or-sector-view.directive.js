@@ -2,16 +2,15 @@
 
 function MapOrSectorController() {
     var vm = this;
-    vm.height = vm.location && vm.location.location_type === 'block' ? 700 : 2000;
 
     vm.chartOptions = {
         chart: {
             type: 'multiBarHorizontalChart',
-            height: vm.height,
+            height: 450,
             width: 1000,
             margin: {
-                bottom: 120,
-                left: 100,
+                bottom: 40,
+                left: 120,
             },
             x: function (d) {
                 return d[0];

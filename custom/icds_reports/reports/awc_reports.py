@@ -18,7 +18,7 @@ ORANGE = '#fc9272'
 BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
-
+DATA_NOT_ENTERED = "Data Not Entered"
 
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
 
@@ -216,7 +216,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     images = []
     tmp_image = []
 
-    for idx, date in enumerate(rrule(DAILY, dtstart=last_30_days, until=selected_month)):
+    for idx, date in enumerate(rrule(DAILY, dtstart=selected_month, until=last_day_of_selected_month)):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 
@@ -881,6 +881,12 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     }
 
     def base_data(row_data):
+        def get_status(value):
+            if not value or value in ['unweighed', 'unmeasured']:
+                return DATA_NOT_ENTERED
+            return value
+
+
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
@@ -890,11 +896,11 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
-            nutrition_status=row_data.current_month_nutrition_status,
+            nutrition_status=get_status(row_data.current_month_nutrition_status),
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
-            stunning=row_data.current_month_stunting,
-            wasting=row_data.current_month_wasting,
+            stunning=get_status(row_data.current_month_stunting),
+            wasting=get_status(row_data.current_month_wasting),
             pse_days_attended=row_data.pse_days_attended
         )
 
@@ -937,7 +943,7 @@ def get_beneficiary_details(case_id, month):
             'x': int(row.age_in_months),
             'y': float(row.recorded_height or 0)
         }
-        beneficiary['wfl'][math.ceil((row.recorded_height or 45) - 45)] = {
+        beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
             'x': float(row.recorded_height or 0),
             'y': float(row.recorded_weight or 0)
         }
