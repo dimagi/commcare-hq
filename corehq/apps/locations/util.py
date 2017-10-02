@@ -292,7 +292,7 @@ def write_to_file(locations, filename, use_transfer):
         })
     ]
     """
-    outfile = get_download_file_path(filename, use_transfer)
+    outfile = get_download_file_path(use_transfer, filename)
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
     writer.open(header_table=header_table, file=outfile)

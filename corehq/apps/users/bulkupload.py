@@ -758,7 +758,7 @@ def dump_users_and_groups(domain, download_id):
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = "user_export_{}_{}.xlsx".format(domain, uuid.uuid4().hex)
-    file_path = get_download_file_path(filename, use_transfer)
+    file_path = get_download_file_path(use_transfer, filename)
     writer.open(
         header_table=headers,
         file=file_path,
