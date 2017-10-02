@@ -238,7 +238,10 @@ class DashboardView(TemplateView):
         if is_commcare_user or is_web_user_with_edit_data_permissions:
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_url(
-                domain=self.domain, app_id=build_id, module_id=0, form_id=0
+                domain=self.domain,
+                app_id=build_id,
+                module_id=0,
+                form_id=0
             )
         return super(DashboardView, self).get_context_data(**kwargs)
 
@@ -498,7 +501,7 @@ class AwcReportsView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        data = []
+        data = {}
         if step == 'system_usage':
             data = get_awc_reports_system_usage(
                 domain,

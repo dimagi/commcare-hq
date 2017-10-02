@@ -120,17 +120,18 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         data['open_in_day'][miliseconds] = {'y': 0, 'all': 0}
         data['launched'][miliseconds] = {'y': 0, 'all': 0}
 
-    best_worst = {}
+    best_worst = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
     for row in chart_data:
         date = row['date']
         in_day = row['in_day'] or 0
         location = row['%s_name' % loc_level]
         valid = row['all'] or 0
 
-        if location in best_worst:
-            best_worst[location].append(in_day / (valid or 1))
-        else:
-            best_worst[location] = [in_day / (valid or 1)]
+        best_worst[location]['in_day'] = in_day
+        best_worst[location]['all'] = valid
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -138,7 +139,12 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         data['launched'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [
+            dict(
+                loc_name=key,
+                percent=(value['in_day'] * 100) / float(value['all'] or 1)
+            ) for key, value in best_worst.iteritems()
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -175,7 +181,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 

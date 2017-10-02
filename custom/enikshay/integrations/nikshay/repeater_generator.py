@@ -96,11 +96,9 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "IP_FROM": server_ip,
         }
 
-    def use_2b_app_structure(self, person_case, episode_case):
-        return (
-            episode_case.dynamic_case_properties().get('episode_type') == DSTB_EPISODE_TYPE and
-            person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION
-        )
+    @staticmethod
+    def use_2b_app_structure(person_case):
+        return person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION
 
 
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
@@ -114,7 +112,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         occurence_case = None
-        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
         if use_2b_app_structure:
             occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
@@ -264,7 +262,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
-        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
 
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties, occurence_case,

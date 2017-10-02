@@ -107,35 +107,39 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
-    best_worst = {}
+    best_worst = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
     for row in chart_data:
         date = row['month']
         in_month = (row['in_month'] or 0)
         location = row['%s_name' % loc_level]
         valid = row['all']
 
-        if location in best_worst:
-            best_worst[location].append((in_month or 0) / (valid or 1))
-        else:
-            best_worst[location] = [(in_month or 0) / (valid or 1)]
+        best_worst[location]['in_month'] = in_month
+        best_worst[location]['all'] = (valid or 0)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['all'] += (valid or 0)
+        data['blue'][date_in_miliseconds]['in_month'] += in_month
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [
+            dict(
+                loc_name=key,
+                percent=(value['in_month'] * 100) / float(value['all'] or 1)
+            ) for key, value in best_worst.iteritems()
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -146,24 +150,11 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Number of AWCs with a Medicine Kit.",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['in_month'] / float(value['all'] or 1),
+                        'in_month': value['in_month']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total number of AWCs with a Medicine Kit.",
+                "key": "% of AWCs with a Medicine Kit.",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
@@ -172,7 +163,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 

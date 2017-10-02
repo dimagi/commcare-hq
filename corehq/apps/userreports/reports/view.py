@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 from datetime import datetime
 
 import pytz
@@ -571,13 +571,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def email_response(self):
-        fd, path = tempfile.mkstemp()
-        with os.fdopen(fd, 'wb') as temp:
+        with closing(StringIO()) as temp:
             export_from_tables(self.export_table, temp, Format.HTML)
-        with open(path) as f:
-            return HttpResponse(json.dumps({
-                'report': f.read(),
-            }))
+            return self.render_json_response({
+                'report': temp.getvalue(),
+            })
 
     @property
     @memoized
