@@ -12,6 +12,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 
 
 def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
+    provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
     problem_log = []
     person_uuids = []
     logger.debug('Fetching OpenMRS patient UUIDs with ', case_trigger_infos)
@@ -31,14 +32,15 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
             logger.debug('Send visit for form?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
                 logger.debug('Yes')
-                send_openmrs_visit(requests, info, form_config, person_uuid,
+                send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid,
                                    visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
 
 
-def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime):
+def send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid, visit_datetime):
     create_visit(
         requests,
         person_uuid=person_uuid,
+        provider_uuid=provider_uuid,
         visit_datetime=visit_datetime,
         values_for_concept={obs.concept: [obs.value.get_value(info)]
                             for obs in form_config.openmrs_observations
@@ -46,6 +48,7 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime)
         encounter_type=form_config.openmrs_encounter_type,
         openmrs_form=form_config.openmrs_form,
         visit_type=form_config.openmrs_visit_type,
+        # location_uuid=,  # location of case owner (CHW) > location[meta][openmrs_uuid]
     )
 
 

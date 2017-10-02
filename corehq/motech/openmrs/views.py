@@ -40,12 +40,14 @@ def openmrs_edit_config(request, domain, repeater_id):
         form = OpenmrsConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
+            repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
             repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
             repeater.save()
 
     form = OpenmrsConfigForm(
         data={
+            'openmrs_provider': repeater.openmrs_config.openmrs_provider,
             'form_configs': json.dumps([
                 form_config.to_json()
                 for form_config in repeater.openmrs_config.form_configs]),
