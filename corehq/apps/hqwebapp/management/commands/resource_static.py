@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import hashlib
 import json
 import os
+import re
 from django.core.management.base import BaseCommand
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -25,9 +26,15 @@ class Command(BaseCommand):
             default=False,
         )
 
-    def output_resources(self, resource_str):
+    def output_resources(self, resources):
         with open(os.path.join(self.root_dir, 'resource_versions.py'), 'w') as fout:
-            fout.write("resource_versions = %s" % resource_str)
+            fout.write("resource_versions = %s" % json.dumps(resources, indent=2))
+        if settings.STATIC_CDN:
+            with open(os.path.join(self.root_dir, 'corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
+                from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
+                fout.write("requirejs.config({ paths: %s });" % json.dumps({
+                    file[:-3]: static(version) for file, version in resources.iteritems() if file.endswith(".js")
+                }, indent=2))
 
     def handle(self, **options):
         prefix = os.getcwd()
@@ -39,10 +46,10 @@ class Command(BaseCommand):
             print("clearing resource cache")
             rcache.delete_pattern(RESOURCE_PREFIX % '*')
 
-        existing_resource_str = rcache.get(RESOURCE_PREFIX % current_sha, None)
-        if existing_resource_str:
+        existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
+        if existing_resources and not isinstance(existing_resources, basestring):
             print("getting resource dict from cache")
-            self.output_resources(existing_resource_str)
+            self.output_resources(existing_resources)
             return
 
         resources = {}
@@ -56,9 +63,8 @@ class Command(BaseCommand):
                     url = os.path.join(storage.prefix, path)
                 filename = os.path.join(storage.location, path)
                 resources[url] = self.get_hash(filename)
-        resource_str = json.dumps(resources, indent=2)
-        rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 86400)
-        self.output_resources(resource_str)
+        rcache.set(RESOURCE_PREFIX % current_sha, resources, 86400)
+        self.output_resources(resources)
 
     def get_hash(self, filename):
         with open(filename) as f:
