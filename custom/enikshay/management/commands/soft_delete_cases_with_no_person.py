@@ -3,6 +3,7 @@ import csv
 from django.core.management import BaseCommand
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 
 from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -23,7 +24,7 @@ class Command(BaseCommand):
 
         with open(log_file_name, 'w') as log_file:
             logger = self.get_logger(log_file)
-            for case_id in self.get_case_ids(domain, case_type):
+            for case_id in with_progress_bar(self.get_case_ids(domain, case_type)):
                 if self.should_delete(domain, case_id):
                     self.delete_case(case_id, commit, deletion_id, domain, logger, case_type)
 
