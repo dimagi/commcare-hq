@@ -757,12 +757,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=SoftwareProductType.ANY
+                    subscription, is_product=True
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=SoftwareProductType.ANY
+                    account, is_product=True
                 ) if account else None
             )),
         }
