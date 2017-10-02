@@ -21,8 +21,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         legendTitle: 'Percentage Children',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
@@ -68,12 +68,21 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(function(response) {
@@ -81,11 +90,19 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.all_locations = response.data.report_data.all_locations;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
+                ];
             }
         });
     };
@@ -148,6 +165,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 },
                 axisLabelDistance: 20,
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
@@ -158,7 +176,9 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM) or Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with Normal Acute Malnutrition: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -201,8 +221,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         }
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

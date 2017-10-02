@@ -8,10 +8,12 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 import copy
 from collections import Counter, defaultdict
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 

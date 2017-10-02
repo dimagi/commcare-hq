@@ -9,6 +9,7 @@ from urlparse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -1311,8 +1312,17 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 domain = current_site.domain
             else:
                 site_name = domain = domain_override
+
+            couch_user = CouchUser.from_django_user(user)
+            if couch_user.is_web_user():
+                user_email = user.username
+            elif user.email:
+                user_email = user.email
+            else:
+                continue
+
             c = {
-                'email': user.email,
+                'email': user_email,
                 'domain': domain,
                 'site_name': site_name,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
@@ -1324,7 +1334,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             email = render_to_string(email_template_name, c)
-            send_mail_async.delay(subject, email, from_email, [user.email])
+            send_mail_async.delay(subject, email, from_email, [user_email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):

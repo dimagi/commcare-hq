@@ -13,10 +13,10 @@ disease_classification = {
 patient_type_choice = {
     'new': '1',
     'recurrent': '2',
-    'other_previously_treated': '3',
-    'treatment_after_failure': '4',
-    'other_previously_treated': '5',
-    'treatment_after_lfu': '6',
+    'treatment_after_failure': '3',
+    'treatment_after_lfu': '4',
+    'treatment_after_ltfu': '4',  # duplicate of treatment_after_lfu added in app at places
+    'other_previously_treated': '6',
     'transfer_in': '7',
 }
 
@@ -105,7 +105,9 @@ purpose_of_testing = {
 }
 
 smear_result_grade = {
-    '0': 99,  # Negative
+    '0': 99,  # Old version value
+    'negative_not_seen': 99,  # New version value
+    'n/a': 99,  # Assigned during a certain time period and removed later, similar to negative
     'SC-0': 98,  # Positive
     'SC-1': 1,
     'SC-2': 2,
@@ -116,9 +118,12 @@ smear_result_grade = {
     'SC-7': 7,
     'SC-8': 8,
     'SC-9': 9,
-    '1+': 11,
-    '2+': 12,
-    '3+': 13,
+    '1+': 11,  # Old version value
+    '1plus': 11,  # New version value
+    '2+': 12,  # Old version value
+    '2plus': 12,  # New version value
+    '3+': 13,  # Old version value
+    '3plus': 13,  # New version value
 }
 
 drug_susceptibility_test_status = {

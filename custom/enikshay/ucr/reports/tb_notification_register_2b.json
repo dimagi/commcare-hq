@@ -306,10 +306,24 @@
                     "custom_type": "owner_display"
                 },
                 "aggregation": "simple",
+                "field": "health_facility_for_treatment",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Health Facility for Treatment"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
                 "field": "treating_phi",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treating PHI"
+                "display": "Currently Treating PHI"
             },
             {
                 "sortable": false,
@@ -320,7 +334,7 @@
                 "field": "tu_name",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treating TU Name"
+                "display": "Currently Treating TU Name"
             },
             {
                 "sortable": false,
@@ -484,20 +498,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Status of Treatment"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "owner_display"
-                },
-                "aggregation": "simple",
-                "field": "health_facility_for_treatment",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Health Facility for Treatment"
             },
             {
                 "sortable": false,

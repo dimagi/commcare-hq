@@ -205,6 +205,36 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    # keep track to avoid refetching to check whether value is updated
+    __original_form_id = None
+
+    def __init__(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        self.__original_form_id = self.form_id
+
+    def form_id_updated(self):
+        return self.__original_form_id != self.form_id
+
+    @property
+    @memoized
+    def original_attachments(self):
+        """
+        Returns attachments based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.__original_form_id)
+
+    @property
+    @memoized
+    def original_operations(self):
+        """
+        Returns operations based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form_operations(self.__original_form_id)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
@@ -1062,8 +1092,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "case"],
             ["domain", "referenced_id"],
         ]
-        # add this once all duplicate have been removed
-        # unique_together = ('case', 'identifier')
+        unique_together = ('case', 'identifier')
         db_table = CommCareCaseIndexSQL_DB_TABLE
         app_label = "form_processor"
 
@@ -1516,6 +1545,8 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     class Meta:
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
+        # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)
+        # since a single form can make multiple updates to a ledger
         index_together = [
             ["case", "section_id", "entry_id"],
         ]

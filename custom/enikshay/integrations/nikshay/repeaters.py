@@ -28,6 +28,8 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD,
     DSTB_EPISODE_TYPE,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    TREATMENT_INITIATED_IN_PHI,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -81,9 +83,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
-                episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+                valid_nikshay_patient_registration(episode_case_properties) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
-                episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
             )
         else:
@@ -110,15 +111,11 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         # CPTDeliverDate changes OR
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
+        person_case_properties = person_case.dynamic_case_properties()
         if allowed_case_types_and_users:
-            try:
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
-            episode_case_properties = episode_case.dynamic_case_properties()
-
             return (
-                episode_case_properties.get('nikshay_id') and
+                # Do not attempt notification for patients registered in private app
+                not (person_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
@@ -149,7 +146,11 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            episode_case_properties.get('nikshay_id', False) and
+            not (episode_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
+            (  # has a nikshay id already or is a valid submission probably waiting notification
+                episode_case_properties.get('nikshay_id') or
+                valid_nikshay_patient_registration(episode_case_properties)
+            ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
             is_valid_archived_submission(episode_case)
@@ -178,17 +179,11 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
-            try:
-                occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
             test_case_properties = test_case.dynamic_case_properties()
-            episode_case_properties = episode_case.dynamic_case_properties()
             return (
+                not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
-                episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
@@ -231,9 +226,8 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('private_nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
-            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+            valid_nikshay_patient_registration(episode_case_properties, private_registration=True) and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
-            episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
 
@@ -311,6 +305,24 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
+
+
+def valid_nikshay_patient_registration(episode_case_properties, private_registration=False):
+    if private_registration:
+        registration_prop = PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION
+    else:
+        registration_prop = EPISODE_PENDING_REGISTRATION
+
+    # check for registration done and confirmed episode type
+    should_notify = (
+        episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+        episode_case_properties.get(registration_prop, 'yes') == 'no'
+    )
+
+    if not private_registration:
+        # check for treatment initiated within the phi itself to have all required information on payload
+        return should_notify and episode_case_properties.get('treatment_initiated') == TREATMENT_INITIATED_IN_PHI
+    return should_notify
 
 
 def person_hiv_status_changed(case):

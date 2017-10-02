@@ -415,6 +415,10 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
             try:
                 previous_payload_json = json.loads(previous_payload)
                 current_payload = get_bets_user_json(user.domain, user)
+                del previous_payload_json['user_data']['id_device_number']
+                del previous_payload_json['user_data']['id_device_body']
+                del current_payload['user_data']['id_device_number']
+                del current_payload['user_data']['id_device_body']
                 if current_payload == previous_payload_json:
                     return False
             except (TypeError, ValueError):

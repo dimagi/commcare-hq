@@ -1186,6 +1186,10 @@ BEGIN
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
 		'is_launched = ut.is_launched, ' ||
+		'num_launched_states = ut.num_launched_awcs, ' ||
+		'num_launched_districts = ut.num_launched_awcs, ' ||
+		'num_launched_blocks = ut.num_launched_awcs, ' ||
+		'num_launched_supervisors = ut.num_launched_awcs, ' ||
 		'num_launched_awcs = ut.num_launched_awcs, ' ||
 		'training_phase = ut.training_phase, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
@@ -1370,7 +1374,7 @@ BEGIN
 		'baby_scale_usable AS infra_baby_weighing_scale, ' ||
 		'flat_scale_usable AS infra_flat_weighing_scale, ' ||
 		'GREATEST(adult_scale_available, adult_scale_usable) AS infra_adult_weighing_scale, ' ||
-		'GREATEST(baby_scale_usable, flat_scale_usable) AS infra_infant_weighing_scale, ' ||
+		'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
@@ -1504,10 +1508,10 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'4, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_awcs), ' ||
 		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
@@ -1526,9 +1530,9 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'3, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs), ' ||
 		_rollup_text2 ||
@@ -1547,8 +1551,8 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'2, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs), ' ||
@@ -1567,7 +1571,7 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'1, ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
@@ -1824,10 +1828,10 @@ BEGIN
 		'4, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 5 ' ||
@@ -1844,9 +1848,9 @@ BEGIN
 		'3, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
@@ -1864,8 +1868,8 @@ BEGIN
 		'2, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs) ' ||
@@ -1884,7 +1888,7 @@ BEGIN
 		'1, ' ||
 		'date, ' ||
 		_rollup_text ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||

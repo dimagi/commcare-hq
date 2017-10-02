@@ -25,7 +25,7 @@ from custom.enikshay.case_utils import (
     get_person_locations,
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_associated_episode_case_for_test,
     get_person_case_from_occurrence,
     get_lab_referral_from_test,
     get_occurrence_case_from_episode,
@@ -259,7 +259,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-        episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+        episode_case = get_associated_episode_case_for_test(test_case, occurence_case.get_id)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
         test_case_properties = test_case.dynamic_case_properties()
@@ -299,13 +299,21 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         lab_serial_number = test_case_properties.get('lab_serial_number')
         test_result_grade = test_case_properties.get('result_grade')
         bacilli_count = test_case_properties.get('max_bacilli_count')
+        try:
+            # Since 9 is the max value supported by Nikshay, notify 9 in case 9+
+            if bacilli_count and int(bacilli_count) > 9:
+                bacilli_count = '9'
+        except ValueError:
+            pass
         result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
         if not (lab_serial_number and result_grade):
             raise NikshayRequiredValueMissing("Mandatory value missing in one of the following "
-                                       "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
-                                       .format(lab_serial_number=lab_serial_number,
-                                               result_grade=test_result_grade))
+                                              "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}, "
+                                              "Max Bacilli Count: {max_bacilli_count}"
+                                              .format(lab_serial_number=lab_serial_number,
+                                                      result_grade=test_result_grade,
+                                                      max_bacilli_count=bacilli_count))
 
         return interval_id, lab_serial_number, result_grade, dmc_code
 
@@ -618,8 +626,8 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
             episode_disease_classification,
             ''
         ),
-        "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
-        "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
+        "dcpulmunory": dcpulmonory.get(episode_disease_classification, "N"),
+        "dcexpulmunory": dcexpulmonory.get(episode_disease_classification, "N"),
         "dotname": (' '.join(
             [episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
              episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, '')])

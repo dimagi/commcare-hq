@@ -11,6 +11,7 @@ from corehq.motech.repeaters.models import RepeatRecord
 
 
 DOMAIN = 'zapier-case-forwarding-tests'
+ZAPIER_CASE_TYPE = 'animal'
 
 
 class TestZapierCaseForwarding(TestCase):
@@ -44,13 +45,26 @@ class TestZapierCaseForwarding(TestCase):
     def test_change_case_forwarding(self):
         self._run_test(EventTypes.CHANGED_CASE, 1, 2)
 
-    def _run_test(self, event_type, expected_records_after_create, expected_records_after_update):
+    @run_with_all_backends
+    def test_case_forwarding_wrong_type(self):
+        self._run_test(EventTypes.NEW_CASE, 0, 0, 'plant')
+
+    @run_with_all_backends
+    def test_update_case_forwarding_wrong_type(self):
+        self._run_test(EventTypes.UPDATE_CASE, 0, 0, 'plant')
+
+    @run_with_all_backends
+    def test_change_case_forwarding_wrong_type(self):
+        self._run_test(EventTypes.CHANGED_CASE, 0, 0, 'plant')
+
+    def _run_test(self, event_type, expected_records_after_create, expected_records_after_update,
+                  case_type=ZAPIER_CASE_TYPE):
         ZapierSubscription.objects.create(
             domain=self.domain,
             user_id=str(self.web_user._id),
             event_name=event_type,
             url='http://example.com/lets-make-some-cases/',
-            case_type='animal',
+            case_type=ZAPIER_CASE_TYPE,
         )
 
         # create case and run checks
@@ -60,7 +74,7 @@ class TestZapierCaseForwarding(TestCase):
                 CaseBlock(
                     create=True,
                     case_id=case_id,
-                    case_type='animal',
+                    case_type=case_type,
                 ).as_xml()
             ], domain=self.domain
         )

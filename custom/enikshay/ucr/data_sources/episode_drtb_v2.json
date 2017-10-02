@@ -65,6 +65,22 @@
             {
                 "comment": null,
                 "create_index": false,
+                "display_name": "migration_type",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_nullable": true,
+                "is_primary_key": false,
+                "column_id": "migration_type",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "migration_type"
+                }
+            },
+            {
+                "comment": null,
+                "create_index": false,
                 "display_name": "name",
                 "datatype": "string",
                 "type": "expression",
@@ -8648,9 +8664,17 @@
                 "is_primary_key": false,
                 "is_nullable": true,
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "rft_drtb_diagnosis"
+                    "type": "coalesce",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "rft_drtb_diagnosis"
+                    },
+                    "default_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "rft_dstb_diagnosis"
+                    }
                 },
                 "column_id": "rft_drtb_diagnosis"
             },

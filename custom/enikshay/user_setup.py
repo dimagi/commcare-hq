@@ -16,7 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
-from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
+from corehq.apps.users.forms import clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
 from .const import (
@@ -266,12 +266,6 @@ def connect_signals():
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 
-class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
-    """Mobile worker list view create modal"""
-    def __init__(self, *args, **kwargs):
-        super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
-
-
 # pcp -> MBBS
 # pac -> AYUSH/other
 # plc -> Private Lab
@@ -382,7 +376,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('1', "PATH"),
                     ('2', "MJK"),
                     ('3', "Alert-India"),
-                    ('4', "WHP"),
+                    ('4', "WHP-Patna"),
                     ('5', "DTO-Mehsana"),
                     ('6', "Vertex"),
                     ('7', "Accenture"),
@@ -396,6 +390,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('15', "SMC"),
                     ('16', "Surat_Rural"),
                     ('17', "Rajkot"),
+                    ('18', "WHP-AMC"),
                 ],
             )
         return super(ENikshayUserLocationDataEditor, self)._make_field(field)
@@ -435,7 +430,6 @@ class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = ENikshayLocationForm
     _location_data_editor = ENikshayUserLocationDataEditor
-    _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayLocationUserDataEditor
 
     @property
@@ -486,7 +480,8 @@ class ENikshayLocationFormSet(LocationFormSet):
         return all(form.is_valid() for form in self.forms)
 
     def save(self):
-        if self.location_form.cleaned_data['location_type_object'].code in AGENCY_LOCATION_TYPES:
+        if (self.location_form.cleaned_data['location_type_object'].code in AGENCY_LOCATION_TYPES
+                and self.include_user_forms):
             self._set_user_role(self.user, PRIVATE_SECTOR_WORKER_ROLE)
         super(ENikshayLocationFormSet, self).save()
 

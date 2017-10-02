@@ -873,15 +873,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('Gender', SimpleColumn('gender'), slug='gender'),
-                DatabaseColumn('Age', SimpleColumn('age_tranche'), slug='age_tranche'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -894,6 +886,15 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('nutrition_status_weighed'),
                     SumColumn('wer_eligible')
+                ],
+                slug='percent_weight_efficiency'
+            ),
+            AggregateColumn(
+                'Height Measurement Efficiency',
+                percent,
+                [
+                    SumColumn('height_measured_in_month'),
+                    SumColumn('height_eligible')
                 ],
                 slug='percent_weight_efficiency'
             ),
@@ -934,7 +935,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('wasting_severe'),
-                    SumColumn('height_eligible')
+                    AliasColumn('height_eligible')
                 ],
                 slug='percent_severe_wasting'
             ),
@@ -1077,15 +1078,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('CCS Status', SimpleColumn('ccs_status'), slug='ccs_status'),
-                DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -1323,9 +1316,13 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 SumColumn('cases_person_beneficiary'),
                 slug='num_people_enrolled_for_services'
             ),
-            DatabaseColumn(
+            AggregateColumn(
                 'num_people_with_aadhar',
-                SumColumn('cases_person_has_aadhaar'),
+                percent,
+                [
+                    SumColumn('cases_person_has_aadhaar'),
+                    SumColumn('cases_person')
+                ],
                 slug='num_people_with_aadhar'
             ),
             DatabaseColumn(
@@ -1461,7 +1458,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_people_enrolled_for_services'
             },
             {
-                'header': 'Number of people with aadhar',
+                'header': 'Percent adhaar seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -1549,6 +1546,12 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_awc_open'
             ),
             DatabaseColumn(
+                'Number of launched AWCs (ever submitted at least one HH reg form)',
+                SumColumn('num_launched_awcs'),
+                format_fn=lambda x: (x or 0),
+                slug='num_launched_awcs'
+            ),
+            DatabaseColumn(
                 'Number of household registration forms',
                 SumColumn('usage_num_hh_reg'),
                 slug='num_hh_reg_forms'
@@ -1575,7 +1578,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
             DatabaseColumn(
-                'Number of early initiation of breastfeeding forms',
+                'Number of exclusive breastfeeding forms',
                 SumColumn('usage_num_ebf'),
                 slug='num_ebf_forms'
             ),
@@ -1687,6 +1690,11 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
+    def __init__(self, config=None, loc_level=1, show_test=False):
+        self.config = config
+        self.loc_level = loc_level
+        self.show_test = show_test
+
     @property
     def group_by(self):
         group_by_columns = self.get_columns_by_loc_level
@@ -1695,6 +1703,15 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             if column.slug != 'current_age':
                 group_by.append(column.slug)
         return group_by
+
+    @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if key == 'domain':
+                continue
+            filters.append(EQ(key, key))
+        return filters
 
     @property
     def order_by(self):
@@ -1730,8 +1747,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
-                format_fn=lambda x: 'Yes' if x != '' else 'No'
+                SimpleColumn('fully_immunized'),
+                format_fn=lambda x: 'Yes' if x else 'No'
             ),
             DatabaseColumn(
                 'Month for data shown',
@@ -1755,13 +1772,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Weight-for-Height Status',
-                SimpleColumn('current_month_stunting'),
-                slug="current_month_stunting"
+                SimpleColumn('current_month_wasting'),
+                slug="current_month_wasting"
             ),
             DatabaseColumn(
                 'Height-for-Age status',
-                SimpleColumn('current_month_wasting'),
-                slug="current_month_wasting"
+                SimpleColumn('current_month_stunting'),
+                slug="current_month_stunting"
             ),
             DatabaseColumn(
                 'PSE Attendance',
@@ -1793,6 +1810,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1893,6 +1911,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1907,6 +1926,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         'rows_config': [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -1961,6 +1981,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Child Feeding Indicators',
                         'slug': 'child_feeding_indicators',
+                        'order': 2,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -2021,6 +2042,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         "rows_config": [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -2058,6 +2080,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'AWC Infrastructure',
                         'slug': 'awc_infrastructure',
+                        'order': 5,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2084,6 +2107,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Demographics',
                         'slug': 'demographics',
+                        'order': 4,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2257,11 +2281,12 @@ class ProgressReport(object):
                     sections_by_slug[slug] = {
                         'slug': slug,
                         'section_title': section['section_title'],
+                        'order': section['order'],
                         'rows_config': section['rows_config']
                     }
                 else:
                     sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
-        return sections_by_slug.values()
+        return sorted(sections_by_slug.values(), key=lambda x: x['order'])
 
     def _get_needed_data_sources(self, config):
         needed_data_sources = set()

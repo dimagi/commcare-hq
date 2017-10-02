@@ -1,6 +1,6 @@
 from django.conf import settings
 
-APP_ID = '361a135293a84427afc947beee1acdfe'
+ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
 
 TABLEAU_TICKET_URL = settings.TABLEAU_URL_ROOT + "trusted/"

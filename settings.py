@@ -2,9 +2,9 @@
 from __future__ import absolute_import
 import importlib
 from collections import defaultdict
-
 import os
-from six.moves.urllib.parse import urlencode
+
+from celery.schedules import crontab
 from django.contrib import messages
 import settingshelper as helper
 
@@ -325,6 +325,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech.dhis2',
+    'corehq.motech.openmrs',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -590,9 +591,6 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
-
-# tuple of (time_start, time_end) of off peak times for async processing queues to use
-OFF_PEAK_TIME = None
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -916,6 +914,7 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
+ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
@@ -1345,6 +1344,7 @@ COUCHDB_APPS = [
     'indicators',
     'locations',
     'mobile_auth',
+    'openmrs',
     'pillowtop',
     'pillow_retry',
     'products',
@@ -1887,6 +1887,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'follow_up_notification_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'hiv_status_notification_2b.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
@@ -1958,13 +1960,18 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),

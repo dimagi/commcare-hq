@@ -1,16 +1,20 @@
 from collections import defaultdict
-from casexml.apps.stock.consumption import compute_default_monthly_consumption, \
-    ConsumptionConfiguration
+from datetime import datetime
+
+from corehq import toggles
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
-from datetime import datetime
+
+from casexml.apps.stock.consumption import compute_default_monthly_consumption, \
+    ConsumptionConfiguration
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
 
 def get_stock_payload(project, stock_settings, case_stub_list):
-    if project and not project.commtrack_enabled:
+    uses_ledgers = project.commtrack_enabled or toggles.NON_COMMTRACK_LEDGERS.enabled(project.name)
+    if project and not uses_ledgers:
         return
 
     generator = StockPayloadGenerator(project.name, stock_settings, case_stub_list)

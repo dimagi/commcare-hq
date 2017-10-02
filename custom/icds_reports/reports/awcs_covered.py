@@ -3,7 +3,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-from django.db.models.aggregates import Sum
+from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from custom.icds_reports.const import LocationTypes
@@ -22,15 +22,13 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
+        level = filters['aggregation_level']
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
             '%s_name' % loc_level
         ).annotate(
-            districts=Sum('num_launched_districts'),
-            blocks=Sum('num_launched_blocks'),
-            supervisors=Sum('num_launched_supervisors'),
-            awcs=Sum('num_launched_awcs'),
+            awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
         )
 
         if not show_test:
@@ -40,14 +38,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     map_data = {}
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
-        districts = row['districts']
-        blocks = row['blocks']
-        supervisors = row['supervisors']
         awcs = row['awcs']
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
             'awcs': awcs,
             'fillKey': 'Launched',
         }
@@ -79,21 +71,16 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
 def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
 
+    level = config['aggregation_level']
     data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         *group_by
     ).annotate(
-        districts=Sum('num_launched_districts'),
-        blocks=Sum('num_launched_blocks'),
-        supervisors=Sum('num_launched_supervisors'),
-        awcs=Sum('num_launched_awcs'),
+        awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -101,9 +88,6 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     chart_data = {
         'blue': [],
-        'green': [],
-        'orange': [],
-        'red': []
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -115,56 +99,30 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     for row in data:
         name = row['%s_name' % loc_level]
-        districts = row['districts']
-        blocks = row['blocks']
-        supervisors = row['supervisors']
         awcs = row['awcs']
 
         row_values = {
-            'districts': districts,
-            'blocks': blocks,
-            'supervisors': supervisors,
             'awcs': awcs
         }
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += (value or 0)
 
     for name, value_dict in tooltips_data.iteritems():
-        chart_data['blue'].append([name, value_dict['districts']])
-        chart_data['green'].append([name, value_dict['blocks']])
-        chart_data['orange'].append([name, value_dict['supervisors']])
-        chart_data['red'].append([name, value_dict['awcs']])
+        chart_data['blue'].append([name, value_dict['awcs']])
 
     return {
         "tooltips_data": tooltips_data,
+        "format": "number",
+        "info": _((
+            "Number of AWCs launched"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Districts",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
-            },
-            {
-                "values": chart_data['green'],
-                "key": "Blocks",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": chart_data['orange'],
-                "key": "Supervisors",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "AWCs",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
             }
         ]
     }
@@ -236,7 +194,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }

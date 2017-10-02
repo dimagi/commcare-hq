@@ -75,6 +75,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
                 DataTablesColumn(_('Record ID')),
                 DataTablesColumn(_('Status')),
                 DataTablesColumn(_('Person Case')),
+                DataTablesColumn(_('Payload Case')),
                 DataTablesColumn(_('URL')),
                 DataTablesColumn(_('Last sent date')),
                 DataTablesColumn(_('Attempts')),
@@ -92,6 +93,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
+            self._get_case_id_link(record.payload_id),
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             ",<br />".join(attempt_messages),
@@ -101,9 +103,12 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     def _get_person_id_link(self, record):
         try:
             person_id = get_person_case(self.domain, record.payload_id)
-            return '<a href="{url}" target="_blank">{case_id}</a>'.format(
-                url=reverse('case_details', args=[self.domain, person_id]),
-                case_id=person_id
-            )
+            return self._get_case_id_link(person_id)
         except ENikshayException as error:
             return u"Error: {}".format(error)
+
+    def _get_case_id_link(self, case_id):
+        return '<a href="{url}" target="_blank">{case_id}</a>'.format(
+            url=reverse('case_details', args=[self.domain, case_id]),
+            case_id=case_id
+        )

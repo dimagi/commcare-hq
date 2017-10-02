@@ -1,7 +1,7 @@
 import json
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -269,7 +269,8 @@ def _get_vellum_plugins(domain, form, module):
     privileges.
     """
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
-    if toggles.COMMTRACK.enabled(domain):
+    if (toggles.COMMTRACK.enabled(domain)
+            or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
