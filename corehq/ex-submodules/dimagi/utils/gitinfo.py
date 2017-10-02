@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os
+import re
 from subprocess import Popen, PIPE
 
 
@@ -157,7 +158,7 @@ def split_repo_url(repo_url):
     even if it's git://, or git@
 
     """
-    if repo_url.startswith('git://') or repo_url.startswith("https://"):
+    if re.search(r'^\w+://', repo_url):
         chunks = repo_url.split("/")[-2:]
     elif repo_url.startswith("git@"):
         chunks = repo_url.split(':')[-1].split('/')

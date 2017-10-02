@@ -25,13 +25,6 @@ class FormProcessingResult(object):
     def __init__(self, submitted_form, existing_duplicate=None):
         self.submitted_form = submitted_form
         self.existing_duplicate = existing_duplicate
-
-        if submitted_form.is_duplicate:
-            assert existing_duplicate is None
-
-        if existing_duplicate:
-            assert existing_duplicate.is_deprecated
-
         self.interface = FormProcessorInterface(self.submitted_form.domain)
 
     def _get_form_lock(self, form_id):
@@ -40,8 +33,9 @@ class FormProcessingResult(object):
     def get_locked_forms(self):
         if self.existing_duplicate:
             # Lock docs with their original ID's (before they got switched during deprecation)
-            new_id = self.existing_duplicate.form_id
-            old_id = self.existing_duplicate.orig_id
+            old_id = self.existing_duplicate.form_id
+            new_id = self.submitted_form.form_id
+            assert old_id != new_id, 'Expecting form IDs to be different'
             return MultiLockManager([
                 LockManager(self.submitted_form, self._get_form_lock(new_id)),
                 LockManager(self.existing_duplicate, self._get_form_lock(old_id)),
@@ -204,7 +198,7 @@ def _handle_duplicate(new_doc):
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate
         duplicate = interface.deduplicate_xform(new_doc)
-        return FormProcessingResult(duplicate)
+        return FormProcessingResult(duplicate, existing_doc)
 
 
 def apply_deprecation(existing_xform, new_xform, interface=None):
