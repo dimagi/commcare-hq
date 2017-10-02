@@ -67,7 +67,7 @@ hqDefine("userreports/js/configurable_report", function() {
             getReportRenderUrl: function(renderType, additionalParams) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
-            }
+            },
         };
         if (initial_page_data('startdate')) {
             reportOptions.datespan = {

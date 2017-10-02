@@ -7,7 +7,6 @@ from unidecode import unidecode
 import uuid
 import zipfile
 
-from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from celery.schedules import crontab
@@ -27,10 +26,9 @@ from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
-from soil.util import expose_file_download, expose_cached_download, expose_download
+from soil.util import expose_download
 
 from corehq.apps.domain.calculations import (
     all_domain_stats,

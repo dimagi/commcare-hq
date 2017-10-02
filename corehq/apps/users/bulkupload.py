@@ -1,6 +1,5 @@
 import uuid
 import logging
-from wsgiref.util import FileWrapper
 
 from django import forms
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
-from couchexport.models import Format
 from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
@@ -34,7 +32,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_user_docs_by_username,
 )
 from corehq.apps.users.models import UserRole
-from soil.util import expose_file_download, expose_cached_download, get_download_file_path, expose_download
+from soil.util import get_download_file_path, expose_download
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser

@@ -5,8 +5,6 @@ from StringIO import StringIO
 from contextlib import contextmanager
 from datetime import datetime
 
-from django.shortcuts import redirect
-
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER

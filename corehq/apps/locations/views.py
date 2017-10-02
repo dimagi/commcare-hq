@@ -836,7 +836,9 @@ def location_export(request, domain):
 
 
 @require_can_edit_locations
-def location_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
+def location_download_job_poll(request, domain,
+                               download_id,
+                               template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
         context.update({'link_text': _('Download Organization Structure')})

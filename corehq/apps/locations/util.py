@@ -13,7 +13,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
-from soil.util import expose_file_download, expose_cached_download, get_download_file_path, expose_download
+from soil.util import get_download_file_path, expose_download
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):

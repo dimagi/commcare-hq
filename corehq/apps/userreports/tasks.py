@@ -426,6 +426,7 @@ def _indicator_metrics(date_created=None):
 
     return ret
 
+
 @task
 def export_ucr_async(export_table, download_id, title, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
