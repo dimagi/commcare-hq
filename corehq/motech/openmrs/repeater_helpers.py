@@ -108,7 +108,7 @@ def server_datetime_to_openmrs_timestamp(dt):
     return openmrs_timestamp
 
 
-def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
+def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
                  openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
     patient_uuid = patient_uuid or person_uuid
     start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
@@ -133,12 +133,21 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
         'form': openmrs_form,
         'encounterType': encounter_type,
         'visit': visit_uuid,
-        # 'encounterProviders': []
     }
     if location_uuid:
         encounter['location'] = location_uuid
     response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
     encounter_uuid = response.json()['uuid']
+    if provider_uuid:
+        encounter_provider = {'provider': provider_uuid}
+        uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
+        response = requests.post(uri, json=encounter_provider)
+        try:
+            response.raise_for_status()
+        except HTTPError:
+            logger.debug('Request: ', requests.get_url(uri), encounter_provider)
+            logger.debug('Response: ', response.json())
+            raise
 
     observation_uuids = []
     for concept_uuid, values in values_for_concept.items():
