@@ -558,7 +558,8 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     episode_case_properties = get_episode_case_properties(domain, column_mapping, city_constants, row)
     test_case_properties = get_test_case_properties(
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
-    drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row, test_case_properties)
+    drug_resistance_case_properties = get_drug_resistance_case_properties(
+        column_mapping, row, test_case_properties)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
         domain, city_constants, column_mapping, row, person_case_properties['dto_id'])
 
