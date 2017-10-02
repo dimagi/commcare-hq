@@ -430,9 +430,7 @@
             <script src="{% static 'requirejs/require.js' %}"></script>
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-            {% if not DEBUG %}
-            <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-            {% endif %}
+            <script src="{% static 'hqwebapp/js/resource_versions.js' True %}"></script>
             <script type="text/javascript">
                 requirejs.config({
                     deps: ['knockout', 'ko.mapping'],
