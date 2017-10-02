@@ -213,6 +213,7 @@
         {% endblock %}
 
         {% if not requirejs_main %}
+        {# TODO: externalize the js in here #}
         {% include 'hqwebapp/includes/analytics_all.html' %}
         {% endif %}
 
@@ -311,6 +312,7 @@
                         {% endif %}
                         </div>
                         {% block tabs %}
+                            {# TODO: this involves inline js, fix that #}
                             {% format_main_menu %}
                         {% endblock %}
                     </nav>
