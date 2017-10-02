@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
@@ -9,9 +11,9 @@ from corehq.util.workbook_json.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
-from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
+from soil.util import expose_file_download, expose_cached_download, get_download_file_path, expose_download
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):
@@ -266,13 +268,16 @@ class LocationExporter(object):
         return sheets
 
 
-def dump_locations(response, domain, include_consumption=False):
+def dump_locations(domain, download_id, include_consumption=False):
     exporter = LocationExporter(domain, include_consumption=include_consumption)
-    result = write_to_file(exporter.get_export_dict())
-    response.write(result)
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    filename = '{}_locations.xlsx'.format(domain)
+    file_path = write_to_file(exporter.get_export_dict(), filename, use_transfer)
+
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
 
 
-def write_to_file(locations):
+def write_to_file(locations, filename, use_transfer):
     """
     locations = [
         ('loc_type1', {
@@ -287,7 +292,7 @@ def write_to_file(locations):
         })
     ]
     """
-    outfile = StringIO()
+    outfile = get_download_file_path(filename, use_transfer)
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
     writer.open(header_table=header_table, file=outfile)
@@ -297,7 +302,7 @@ def write_to_file(locations):
                     for row in tab['rows']]
         writer.write([(tab_name, tab_rows)])
     writer.close()
-    return outfile.getvalue()
+    return outfile
 
 
 def get_locations_from_ids(location_ids, domain, base_queryset=None):
