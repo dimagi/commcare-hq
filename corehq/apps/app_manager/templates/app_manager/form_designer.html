@@ -25,7 +25,6 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {% compress js %}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script>
         /*
@@ -37,6 +36,7 @@
         */
         define = undefined;
     </script>
+    {% compress js %}
     <script src="{% static 'requirejs/require.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
