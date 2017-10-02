@@ -510,7 +510,7 @@ class RestoreConfig(object):
             case_sync=case_sync,
         )
 
-        self.force_cache = self.cache_settings.force_cache or self.async
+        self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
