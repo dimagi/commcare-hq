@@ -26,6 +26,8 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=False),
         ),
         HqRunPython(_product_type_to_is_product),
+        migrations.RunSQL('SET CONSTRAINTS ALL IMMEDIATE',
+                          reverse_sql=migrations.RunSQL.noop),
         migrations.RemoveField(
             model_name='creditline',
             name='product_type',
