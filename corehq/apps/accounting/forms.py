@@ -840,8 +840,7 @@ class CreditForm(forms.Form):
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-        product_type = (SoftwareProductType.ANY
-                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        is_product = self.cleaned_data['rate_type'] == 'Product'
         feature_type = (self.cleaned_data['feature_type']
                         if self.cleaned_data['rate_type'] == 'Feature' else None)
         CreditLine.add_credit(
@@ -849,7 +848,7 @@ class CreditForm(forms.Form):
             account=self.account,
             subscription=self.subscription,
             feature_type=feature_type,
-            product_type=product_type,
+            is_product=is_product,
             note=note,
             web_user=web_user,
             permit_inactive=True,
