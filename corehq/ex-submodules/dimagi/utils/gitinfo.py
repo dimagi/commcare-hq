@@ -160,7 +160,7 @@ def split_repo_url(repo_url):
     """
     if re.search(r'^\w+://', repo_url):
         chunks = repo_url.split("/")[-2:]
-    elif repo_url.startswith("git@") or repo_url.startswith("ssh://"):
+    elif repo_url.startswith("git@"):
         chunks = repo_url.split(':')[-1].split('/')
     return chunks
 
