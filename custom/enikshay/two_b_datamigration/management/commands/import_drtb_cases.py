@@ -275,7 +275,7 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
-    "occupation": 14,
+    "occupation": 13,
     "marital_status": 14,
     "social_scheme": 15,
     "key_populations": 16,
