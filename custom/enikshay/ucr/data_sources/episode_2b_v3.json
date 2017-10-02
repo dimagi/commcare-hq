@@ -2508,7 +2508,7 @@
                     },
                     "property_value": [
                         "microscopy-zn",
-                        "microscopy-flourescent"
+                        "microscopy-fluorescent"
                     ]
                 },
                 "expression_if_true": {
