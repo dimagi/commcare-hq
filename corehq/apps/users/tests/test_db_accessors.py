@@ -1,7 +1,4 @@
-import mock
-
 from django.test import TestCase
-from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.models import WebUser, CommCareUser, Permissions, UserRole
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_commcare_users_by_domain,

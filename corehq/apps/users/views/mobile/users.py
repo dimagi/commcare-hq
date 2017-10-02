@@ -80,14 +80,12 @@ from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, r
     bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
-from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages, \
-    _get_editable_role_choices
+from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE, FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
-from corehq.util.view_utils import reverse as reverse_util
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 

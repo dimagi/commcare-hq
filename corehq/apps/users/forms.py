@@ -1262,7 +1262,8 @@ class CommCareUserFilterForm(forms.Form):
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
 
         roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices =  [('', _('All Roles'))] + [(role._id, role.name or _('(No Name)')) for role in roles]
+        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
