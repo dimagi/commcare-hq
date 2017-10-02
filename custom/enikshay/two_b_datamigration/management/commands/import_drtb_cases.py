@@ -275,6 +275,7 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
+    "marital_status": 14,
     "social_scheme": 15,
     "key_populations": 16,
     "initial_home_visit_date": 18,
@@ -705,6 +706,9 @@ def get_person_case_properties(domain, column_mapping, row):
     social_scheme = column_mapping.get_value("social_scheme", row)
     properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
 
+    marital_status = column_mapping.get_value("marital_status", row)
+    properties["marital_status"] = clean_marital_status(marital_status)
+
     return properties
 
 
@@ -747,8 +751,6 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "is_active": "yes",
         "diagnosing_facility_id": phi_id,
         "diagnosing_facility_name": phi_name,
-        "date_of_diagnosis": report_sending_date,
-        "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
         "regimen_change_history": get_episode_regimen_change_history(
@@ -852,6 +854,7 @@ def get_diagnosis_properties(column_mapping, domain, row):
         properties["diagnosis_test_result_date"] = diagnosing_test['date_reported']
         properties["diagnosis_test_specimen_date"] = diagnosing_test['date_tested']
         properties["diagnosis_test_summary"] = diagnosing_test['result_summary_display']
+        properties["date_of_diagnosis"] = diagnosing_test['date_reported']
 
     return properties
     # TODO: (WAITING) figure out how to set these properties based on other info
@@ -1661,6 +1664,20 @@ def clean_socioeconomic_status(value):
         "apl": "apl",
         "unknown": "unknown",
     }[value.lower()]
+
+def clean_marital_status(value):
+    if not value:
+        return None
+    clean_value = value.lower().strip()
+    try:
+        return {
+            "unmarried": "unmarried",
+            "married": "married",
+            "widowed": "widowed",
+            "separated": "separated",
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Marital Status")
 
 
 def clean_result(value):
