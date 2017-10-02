@@ -35,11 +35,19 @@ class Command(BaseCommand):
             dest='sleep_time',
             help="Time in seconds to sleep between each request.",
         )
+        parser.add_argument(
+            '--verbose',
+            dest='verbose',
+            action='store_true',
+            default=False,
+            help="Print out all matching failure reasons",
+        )
 
     def handle(self, domain, repeater_id, *args, **options):
         sleep_time = options.get('sleep_time')
         include_regex = options.get('include_regex')
         exclude_regex = options.get('exclude_regex')
+        verbose = options.get('verbose')
         if include_regex and exclude_regex:
             print "You may not specify both include and exclude"
 
@@ -58,6 +66,10 @@ class Command(BaseCommand):
             meets_filter,
             iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
         )
+
+        if verbose:
+            for record in records:
+                print record.payload_id, record.failure_reason
 
         total_records = len(records)
         print "Found {} matching records.  Send them?".format(total_records)
