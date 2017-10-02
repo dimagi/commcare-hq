@@ -275,6 +275,7 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
+    "occupation": 14,
     "marital_status": 14,
     "social_scheme": 15,
     "key_populations": 16,
@@ -705,6 +706,9 @@ def get_person_case_properties(domain, column_mapping, row):
 
     social_scheme = column_mapping.get_value("social_scheme", row)
     properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
+
+    occupation = column_mapping.get_value("occupation", row)
+    properties["occupation"] = clean_occupation(occupation)
 
     marital_status = column_mapping.get_value("marital_status", row)
     properties["marital_status"] = clean_marital_status(marital_status)
@@ -1672,6 +1676,53 @@ def clean_socioeconomic_status(value):
         "apl": "apl",
         "unknown": "unknown",
     }[value.lower()]
+
+
+def clean_occupation(value):
+    if not value:
+        return None
+    clean_value = value.lower().strip()
+    try:
+        return {
+            "office clerk": "office_clerk",
+            "other craft or related trader or worker": "other_craft_and_related",
+            "corporate manager": "corporate_manager",
+            "legislators or senior official": "legislators_or_senior_official",
+            "legistrator or senior official": "legislators_or_senior_official",
+            "general manager": "general_manager",
+            "other professional": "other_professional",
+            "physical, mathematical and engineering science professional": "physical_mathematical_and_engineering",
+            "subsistence agriculture or fishery worker": "subsistence_agriculture_fishery",
+            "sales and services elementary occupation": "sales_and_services_elementary",
+            "sales and service elementary occupation": "sales_and_services_elementary",
+            "extraction and building trade worker": "extraction_and_building_trade",
+            "model, sales person or demonstrator": "model_sales_persons_demonstrator",
+            "laborer in mining, construction, manufacturing and transport": "mining_construction_manufacturing_transport",
+            "labourer in mining, constuction, manufacturing and transport": "mining_construction_manufacturing_transport",
+            "agriculture, fishery and related labor": "agriculture_fishery_and_related",
+            "unidentifiable occupation or inadequate reporting": "occupation_unidentifiable",
+            "workers reporting occupation unidentifiable or inadequately": "occupation_unidentifiable",
+            "stationary plant and related operators": "stationary_plant_and_related",
+            "teaching associate professional": "teaching_associate",
+            "life sciences and health associate professional": "life_sciences_and_health_associate",
+            "other associate professional": "other_associate",
+            "customer services clerk": "customer_services_clerk",
+            "life sciences and health professional": "life_sciences_and_health",
+            "personal protective service provider": "person_protective_service_provider",
+            "metal, machinery or related trade worker": "metal_machinery_and_related",
+            "driver or mobile plant operator": "driver_and_mobile_plant_operator",
+            "driver or mobile plan operator": "driver_and_mobile_plant_operator",
+            "teaching professional": "teaching_professional",
+            "no occupation reported": "no_occupation_reported",
+            "machine operator or assembler": "machine_operator_or_assembler",
+            "new worker seeking employment": "new_worker_seeking_employment",
+            "precision, handicraft, printing or related trade worker": "precision_handicraft_printing_and_related",
+            "market-oriented, skilled agriculture or fishery worker": "market_oriented_agriculture_fishery",
+            "physical and engineering science associate professional": "physical_and_engineering_science_associate",
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Occupation")
+
 
 def clean_marital_status(value):
     if not value:
