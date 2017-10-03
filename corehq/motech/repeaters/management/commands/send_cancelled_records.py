@@ -96,7 +96,7 @@ class Command(BaseCommand):
                     print "{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e))
                     writer.writerow((record._id, record.payload_id, record.state, repr(e)))
                 else:
-                    print "{}/{}: {}".format(i + 1, total_records, record.state, record.attempts[-1].message)
+                    print "{}/{}: {}, {}".format(i + 1, total_records, record.state, record.attempts[-1].message)
                     writer.writerow((record._id, record.payload_id, record.state, record.attempts[-1].message))
                 if sleep_time:
                     time.sleep(float(sleep_time))
