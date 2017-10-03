@@ -33,7 +33,8 @@ class Command(BaseCommand):
                                    'static', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
                 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
-                    file[:-3]: static(file) for file, version in resources.iteritems() if file.endswith(".js")
+                    file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3], ".js?version=%s" % version if version else "")
+                    for file, version in resources.iteritems() if file.endswith(".js")
                 }, indent=2))
 
     def handle(self, **options):
