@@ -331,8 +331,8 @@ MUMBAI_MAP = {
     "Mfx (2.0)": 71,  # High dose Moxi
     "Cfz": 72,  # Clofa
     "Lzd": 73,  # Line
-    "H (0.4)": 74,
-    "H (0.1)": 75,  # High dose INH
+    "H (0.1)": 74,  # High dose INH
+    "H (0.4)": 75,
     "PAS": 76,  # Na-Pas
     "Oflox": 77,  # Oflox
     "S": 78,
