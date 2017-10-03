@@ -102,16 +102,15 @@ except (ImportError, SyntaxError):
 
 @register.filter
 @register.simple_tag
-def static(url, skip_cdn=False, version=None):
+def static(url, skip_cdn=False):
     resource_url = url
     if skip_cdn:
         return settings.STATIC_URL + url
+    version = resource_versions.get(resource_url)
     url = settings.STATIC_CDN + settings.STATIC_URL + url
-    if not url.endswith('.less'):
-        if not version:
-            version = resource_versions.get(resource_url)
-        if version:
-            url += "?version=%s" % version
+    is_less = url.endswith('.less')
+    if version and not is_less:
+        url += "?version=%s" % version
     return url
 
 
