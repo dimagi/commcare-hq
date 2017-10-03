@@ -1271,6 +1271,14 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
+    'filtered_bulk_user_download',
+    "Ability to filter mobile workers based on Role and username "
+    "when doing bulk download",
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'Enable livequery case sync for a random subset of ICDS users',
