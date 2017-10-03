@@ -1481,6 +1481,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 "rft_general": "follow_up_drtb",
                 "drug_resistance_list": '',
                 "drug_sensitive_list": '',
+                "result_recorded": "yes",
             }
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
                 follow_up, properties['date_tested'], treatment_initiation_date
@@ -1511,6 +1512,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                         "result": clean_result(result),
                         "drug_resistance_list": '',
                         "drug_sensitive_list": '',
+                        "result_recorded": "yes",
                     }
                     properties["result_summary_label"] = result_label(properties['result'])
                     properties_list.append(properties)
