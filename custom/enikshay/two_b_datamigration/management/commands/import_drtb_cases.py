@@ -611,6 +611,14 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         and episode_case_properties["treatment_outcome"]
     ):
         close_occurrence = True
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_OCCURRENCE_PROPERTIES, occurrence_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_EPISODE_PROPERTIES, episode_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_PERSON_PROPERTIES, person_case_properties))
+        person_case_properties['prev_drtb_center_name'] = \
+            secondary_owner_case_properties[0]['secondary_owner_name']
         person_case_properties['owner_id'] = '_archive_'
         person_case_properties['phi_name'] = ''
         person_case_properties['tu_name'] = ''
@@ -621,14 +629,6 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         person_case_properties['current_disease_classification'] = ''
         person_case_properties['current_site_choice'] = ''
         person_case_properties['current_site_detail'] = ''
-        person_case_properties.update(
-            get_prev_person_case_properties(PREV_OCCURRENCE_PROPERTIES, occurrence_case_properties))
-        person_case_properties.update(
-            get_prev_person_case_properties(PREV_EPISODE_PROPERTIES, episode_case_properties))
-        person_case_properties.update(
-            get_prev_person_case_properties(PREV_PERSON_PROPERTIES, person_case_properties))
-        person_case_properties['prev_drtb_center_name'] = \
-            secondary_owner_case_properties[0]['secondary_owner_name']
 
     # calculate episode_case_id so we can also set it on all tests
     episode_case_id = uuid.uuid4().hex
