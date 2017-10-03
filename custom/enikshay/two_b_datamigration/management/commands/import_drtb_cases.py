@@ -641,17 +641,20 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         close=close_occurrence)
     episode_case_structure = get_case_structure(
         CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure,
-        case_id=episode_case_id)
+        case_id=episode_case_id, close=close_occurrence)
     drug_resistance_case_structures = [
-        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in drug_resistance_case_properties
     ]
     test_case_structures = [
-        get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in test_case_properties
     ]
     secondary_owner_case_structures = [
-        get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in secondary_owner_case_properties
     ]
 
