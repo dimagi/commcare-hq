@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.models import Repeater
 
 
 class Command(BaseCommand):
@@ -51,6 +52,8 @@ class Command(BaseCommand):
         include_regexps = options.get('include_regexps')
         exclude_regexps = options.get('exclude_regexps')
         verbose = options.get('verbose')
+        repeater = Repeater.get(repeater_id)
+        print "Looking up repeat records for '{}'".format(repeater.friendly_name)
 
         def meets_filter(record):
             if exclude_regexps:  # Match none of the exclude expressions
@@ -81,7 +84,8 @@ class Command(BaseCommand):
             print "Aborting"
             return
 
-        filename = "sent_repeat_records-{}.csv".format(
+        filename = "sent_{}_records-{}.csv".format(
+            repeater.__class__.__name__,
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
