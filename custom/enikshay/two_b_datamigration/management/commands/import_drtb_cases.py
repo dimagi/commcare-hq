@@ -279,6 +279,7 @@ MUMBAI_MAP = {
     "marital_status": 14,
     "social_scheme": 15,
     "key_populations": 16,
+    "initial_home_visit_by": 17,
     "initial_home_visit_date": 18,
     "aadhaar_number": 19,
     "drtb_center_code": 21,
@@ -778,7 +779,8 @@ def get_occurrence_case_properties(column_mapping, row):
         "owner_id": "-",
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status": "completed" if initial_visit_date else None,
-        "initial_home_visit_date": clean_date(initial_visit_date),
+        "ihv_date": clean_date(initial_visit_date),
+        "ihv_by": column_mapping.get_value("initial_home_visit_by", row) if initial_visit_date else None,
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
     }
