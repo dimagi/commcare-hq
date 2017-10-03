@@ -13,6 +13,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 DOMAIN = "enikshay"
 
@@ -36,7 +37,8 @@ class Command(BaseCommand):
         return [
             "occurrence_case_id",
             "retain_case_id",
-            "closed_case_ids"
+            "closed_case_ids",
+            "notes"
         ]
 
     def setup_result_file(self):
@@ -58,9 +60,15 @@ class Command(BaseCommand):
         retain_case_id = sorted(referral_cases, key=lambda x: x.opened_on)[0].get_id
         self.close_cases(all_case_ids, occurrence_case_id, retain_case_id)
 
-    @staticmethod
-    def public_app_case(occurrence_case_id):
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+    def public_app_case(self, occurrence_case_id):
+        try:
+            person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+        except ENikshayCaseNotFound as e:
+            self.writerow({
+                "occurrence_case_id": occurrence_case_id,
+                "notes": "person case not found",
+            })
+            return False
         person_case_properties = person_case.dynamic_case_properties()
         if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False

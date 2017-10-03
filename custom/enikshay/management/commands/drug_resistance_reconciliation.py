@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 DOMAIN = "enikshay"
 
@@ -44,7 +45,8 @@ class Command(BaseCommand):
             "drug_id",
             "retain_case_id",
             "retain_reason",
-            "closed_case_ids"
+            "closed_case_ids",
+            "notes"
         ]
 
     def setup_result_file(self):
@@ -61,9 +63,15 @@ class Command(BaseCommand):
             writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
             writer.writerow(row)
 
-    @staticmethod
-    def public_app_case(occurrence_case_id):
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+    def public_app_case(self, occurrence_case_id):
+        try:
+            person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+        except ENikshayCaseNotFound as e:
+            self.writerow({
+                "occurrence_case_id": occurrence_case_id,
+                "notes": "person case not found"
+            })
+            return False
         if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
@@ -145,7 +153,7 @@ class Command(BaseCommand):
         # No case has sensitivity resistant and sensitive. Probably multiple cases with unknown status
         # keep the one opened first, close rest.
         else:
-            retain_case_id = sorted(drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case_id = sorted(drug_resistance_cases, key=lambda x: x.opened_on)[0].get_id
             self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "Picked first opened.")
 
