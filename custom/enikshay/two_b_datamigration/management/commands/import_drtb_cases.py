@@ -571,8 +571,16 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     )
 
     # Close the occurrence if we have a treatment outcome recorded
-    close_occurrence = ("treatment_outcome" in episode_case_properties and
-                        episode_case_properties["treatment_outcome"])
+    if (
+        "treatment_outcome" in episode_case_properties
+        and episode_case_properties["treatment_outcome"]
+    ):
+        close_occurrence = True
+        person_case_properties['owner_id'] = '_archive_'
+        person_case_properties['current_episode_type'] = ''
+        person_case_properties['current_disease_classification'] = ''
+        person_case_properties['current_site_choice'] = ''
+        person_case_properties['current_site_detail'] = ''
 
     # calculate episode_case_id so we can also set it on all tests
     episode_case_id = uuid.uuid4().hex
