@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from django.core import serializers
 from django.utils.decorators import method_decorator
-from django.conf import settings
 
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.views import CaseDetailsView
@@ -33,6 +32,8 @@ from custom.rch.const import (
     ICDS_CAS_DOMAIN,
     RECORDS_PER_PAGE,
     AADHAR_NUM_FIELDS,
+    RCH_PERMITTED_FIELD_MAPPINGS,
+
 )
 
 
@@ -281,7 +282,7 @@ class BeneficiaryView(BaseDomainView):
         person_case = CaseAccessors('icds-cas').get_case(person_case_id)
         if person_case:
             person_case_properties = person_case.dynamic_case_properties()
-            field_mappings = settings.RCH_PERMITTED_FIELD_MAPPINGS[beneficiary_type]
+            field_mappings = RCH_PERMITTED_FIELD_MAPPINGS[beneficiary_type]
             for case_type in field_mappings:
                 if case_type == 'person':
                     for rch_field, cas_field in field_mappings[case_type].items():

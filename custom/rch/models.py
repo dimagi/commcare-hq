@@ -1,6 +1,5 @@
 import datetime
 from django.db import models
-from django.conf import settings
 from custom.rch.utils import (
     fetch_beneficiaries_records,
     find_matching_cas_record_id,
@@ -9,6 +8,7 @@ from jsonfield.fields import JSONField
 from custom.rch.const import (
     STATE_DISTRICT_MAPPING,
     RCH_RECORD_TYPE_MAPPING,
+    RCH_PERMITTED_FIELDS,
 )
 
 
@@ -44,7 +44,7 @@ class RCHRecord(models.Model):
         """
         beneficiary_type = cls._beneficiary_type  # mother, child etc
         if beneficiary_type in RCH_RECORD_TYPE_MAPPING.values():
-            return settings.RCH_PERMITTED_FIELDS[beneficiary_type]
+            return RCH_PERMITTED_FIELDS[beneficiary_type]
         else:
             return set()
 

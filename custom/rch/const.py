@@ -1,3 +1,5 @@
+import json
+import os
 from django.conf import settings
 
 PROJECTID = settings.RCH_CREDENTIALS.get('project_id')
@@ -24,4 +26,23 @@ STATE_DISTRICT_MAPPING = {
 RCH_RECORD_TYPE_MAPPING = {
     'mother': MOTHER_RECORD_TYPE,
     'child': CHILD_RECORD_TYPE
+}
+
+RCH_PERMITTED_FIELD_MAPPINGS = {
+    'mother': json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields'],
+    'child': json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']
+}
+
+
+def extract_rch_fields_from_mapping(beneficiary_type):
+    field_mappings = RCH_PERMITTED_FIELD_MAPPINGS[beneficiary_type]
+    rch_fields = []
+    for case_type in field_mappings:
+        rch_fields = rch_fields + field_mappings[case_type].keys()
+    return rch_fields
+
+
+RCH_PERMITTED_FIELDS = {
+    'mother': extract_rch_fields_from_mapping('mother'),
+    'child': extract_rch_fields_from_mapping('child'),
 }
