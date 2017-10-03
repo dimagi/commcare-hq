@@ -1782,9 +1782,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
-        .withFixedColumns({
-            leftColumns: 1,
-        });
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
@@ -1926,6 +1923,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                         return d3.format('d')(d);
                     },
                 },
+                forceY: [0, 6],
                 reduceXTicks: false,
                 staggerLabels: false,
             },
@@ -1964,10 +1962,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 yAxis: {
                     axisLabel: 'Number of Children',
                     tickFormat: function(d) {
-                        return d3.format(',')(d);
+                        return d3.format('d')(d);
                     },
-                    forceY: [0],
                 },
+                forceY: [0],
+                yDomain: [0],
                 callback: function(chart) {
                     var tooltip = chart.interactiveLayer.tooltip;
                     tooltip.contentGenerator(function (d) {
@@ -1992,7 +1991,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         $scope.$apply();
     }, 1000);
 
-    vm.beneficiaryChartOptions = {
+    vm.beneficiaryChartOptionsHFA = {
         chart: {
             type: 'multiChart',
             height: 450,
@@ -2010,9 +2009,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
-                axisLabel: '',
+                axisLabel: 'Age (Months)',
                 showMaxMin: true,
-                tickValues: [0, 12, 24, 36, 48, 60],
+                tickValues: [0, 12, 24, 36, 48, 60, 72],
             },
             yAxis: {
                 axisLabel: '',
@@ -2021,10 +2020,52 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
+                axisLabel: 'Height (Cms)',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+                rotateLabels: -90,
+            },
+            stack1: {
+                interactive: false,
+            },
+        },
+    };
+
+    vm.beneficiaryChartOptionsWFA = {
+        chart: {
+            type: 'multiChart',
+            height: 450,
+            margin: {
+                top: 20,
+                right: 20,
+                bottom: 50,
+                left: 80,
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            useVoronoi: false,
+            clipEdge: true,
+            showControls: false,
+            duration: 100,
+            useInteractiveGuideline: true,
+            xAxis: {
+                axisLabel: 'Age (Months)',
+                showMaxMin: true,
+                tickValues: [0, 12, 24, 36, 48, 60, 72],
+            },
+            yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
+            },
+            yAxis1: {
+                axisLabel: 'Weight (Kgs)',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+                rotateLabels: -90,
             },
             stack1: {
                 interactive: false,
@@ -2050,7 +2091,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
-                axisLabel: '',
+                axisLabel: 'Height (Cms)',
                 showMaxMin: true,
             },
             yAxis: {
@@ -2060,10 +2101,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
-                axisLabel: '',
+                axisLabel: 'Weight (Kgs)',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
+                rotateLabels: -90,
             },
             stack1: {
                 interactive: false,

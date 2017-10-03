@@ -111,39 +111,39 @@
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="name">Name: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.person_name $}</span>
+                            <span class="icds-control">{$ $ctrl.beneficiary.person_name $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="mother_name">Mother Name: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.mother_name $}</span>
+                            <span class="icds-control">{$ $ctrl.beneficiary.mother_name $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="date_of_birth">Date of Birth: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.dob $}</span>
+                            <span class="icds-control">{$ $ctrl.beneficiary.dob $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="age">Age: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.age $}</span>
+                            <span class="icds-control">{$ $ctrl.beneficiary.age $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="sex">Sex: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.sex $}</span>
+                            <span class="icds-control">{$ $ctrl.beneficiary.sex $}</span>
                         </div>
                     </div>
                 </div>
                 <h4>Growth Monitoring:</h4>
                 <h4 class="center">Weight For Age:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptionsWFA" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
                 <h4 class="center">Height For Age:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptionsHFA" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
                 <h4 class="center">Weight For Height:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptionsWFH" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
