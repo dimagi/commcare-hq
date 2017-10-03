@@ -229,7 +229,7 @@ class CachedResponse(object):
         :returns: A new `CachedResponse` pointing to the saved content.
         """
         name = 'restore-response-{}.xml'.format(uuid4().hex)
-        get_blob_db().put(fileobj, name, timeout=max(timeout // 60, 60))
+        get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
         return cls(name)
 
     def __nonzero__(self):
@@ -754,3 +754,19 @@ RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
+
+
+class NoClose:
+    """HACK file object with no-op `close()` to avoid close by S3Transfer
+
+    https://github.com/boto/s3transfer/issues/80
+    """
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def __getattr__(self, name):
+        return getattr(self.fileobj, name)
+
+    def close(self):
+        pass
