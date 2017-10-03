@@ -42,7 +42,7 @@ class Command(BaseCommand):
         ]
 
     def setup_result_file(self):
-        file_name = "drug_resistance_reconciliation_report_{timestamp}.xlsx".format(
+        file_name = "drug_resistance_reconciliation_report_{timestamp}.csv".format(
             timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
         )
         with open(file_name, 'w') as csvfile:

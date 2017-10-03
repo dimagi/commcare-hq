@@ -50,7 +50,7 @@ class Command(BaseCommand):
         ]
 
     def setup_result_file(self):
-        file_name = "drug_resistance_reconciliation_report_{timestamp}.xlsx".format(
+        file_name = "drug_resistance_reconciliation_report_{timestamp}.csv".format(
             timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
         )
         with open(file_name, 'w') as csvfile:
@@ -131,7 +131,7 @@ class Command(BaseCommand):
         # if there is more than one case with sensitivity resistant, keep the one
         # opened first.
         if resistant_drug_resistance_cases_count > 1:
-            retain_case_id = sorted(resistant_drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case_id = sorted(resistant_drug_resistance_cases, key=lambda x: x.opened_on)[0].get_id
             self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "More than one resistance drug cases, picked first opened.")
         # if there is only one case with sensitivity resistant, keep that, close rest.
@@ -142,7 +142,7 @@ class Command(BaseCommand):
         # if there are more than one cases with sensitivity sensitive, keep the one
         # opened first.
         elif sensitive_drug_resistance_cases_count > 1:
-            retain_case_id = sorted(sensitive_drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case_id = sorted(sensitive_drug_resistance_cases, key=lambda x: x.opened_on)[0].get_id
             self.close_cases(drug_resistance_case_ids, occurrence_case_id, drug_id, retain_case_id,
                              "More than one sensitive drug cases, picked first opened.")
         # if there is only one case with sensitivity sensitive, keep that, close rest.
