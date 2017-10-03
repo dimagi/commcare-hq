@@ -34,9 +34,19 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def utils(self):
         return EmwfUtils(self.domain)
 
+    def _include_ds(self, ds):
+        """
+        Should data source `ds` be included in data sources?
+
+        `ds` can be one of "g" (reporting groups), "sg" (case-sharing groups), "l" (locations), "t" (static 
+        options), or "u" (users).
+        """
+        return not getattr(self, 'ds_filter', False) or ds in self.ds_filter
+
     def get(self, request, domain):
         self.domain = domain
         self.q = self.request.GET.get('q', None)
+        self.ds_filter = self.request.GET['ds'].split('|') if 'ds' in self.request.GET else []
         try:
             count, options = self.get_options()
             return self.render_json_response({
@@ -77,12 +87,16 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
-        ]
+        sources = []
+        if self._include_ds('t'):
+            sources.append((self.get_static_options_size, self.get_static_options))
+        if self._include_ds('g'):
+            sources.append((self.get_groups_size, self.get_groups))
+        if self._include_ds('l'):
+            sources.append((self.get_locations_size, self.get_locations))
+        if self._include_ds('u'):
+            sources.append((self.get_users_size, self.get_users))
+        return sources
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
@@ -179,14 +193,18 @@ class LocationRestrictedEmwfOptionsMixin(object):
         # data sources for options for selection in filter
         sources = []
         if self.request.can_access_all_locations:
-            sources.append((self.get_static_options_size, self.get_static_options))
-            sources.append((self.get_groups_size, self.get_groups))
+            if self._include_ds('t'):
+                sources.append((self.get_static_options_size, self.get_static_options))
+            if self._include_ds('g'):
+                sources.append((self.get_groups_size, self.get_groups))
             sources.extend(self.extra_data_sources())
 
-        sources.append((self.get_locations_size, self.get_locations))
+        if self._include_ds('l'):
+            sources.append((self.get_locations_size, self.get_locations))
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination
-        sources.append((self.get_users_size, self.get_users))
+        if self._include_ds('u'):
+            sources.append((self.get_users_size, self.get_users))
         return sources
 
 
@@ -264,7 +282,10 @@ class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView)
         return CaseListFilterUtils(self.domain)
 
     def extra_data_sources(self):
-        return [(self.get_sharing_groups_size, self.get_sharing_groups)]
+        sources = []
+        if self._include_ds('sg'):
+            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
+        return sources
 
     def get_sharing_groups_size(self, query):
         return self.group_es_query(query, group_type="case_sharing").count()
