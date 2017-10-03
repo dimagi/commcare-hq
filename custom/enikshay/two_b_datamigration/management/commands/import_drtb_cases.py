@@ -606,6 +606,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     )
 
     # Close the occurrence if we have a treatment outcome recorded
+    close_occurrence = False
     if (
         "treatment_outcome" in episode_case_properties
         and episode_case_properties["treatment_outcome"]
