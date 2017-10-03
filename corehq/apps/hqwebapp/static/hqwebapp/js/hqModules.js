@@ -81,9 +81,8 @@ function hqDefine(path, dependencies, moduleAccessor) {
         }
     }(moduleAccessor));
 }
-
 if (typeof define === 'undefined') {
-    define = function() {};
+    define = hqDefine;
 }
 
 function hqImport(path) {
