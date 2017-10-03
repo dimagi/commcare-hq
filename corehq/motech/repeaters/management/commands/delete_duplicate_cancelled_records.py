@@ -48,7 +48,9 @@ class Command(BaseCommand):
         total_records = 0
         for record in records:
             total_records += 1
-            if record.last_checked < self.most_recent_success:
+            most_recent_success = self.most_recent_success.get(record.payload_id)
+            if most_recent_success and record.last_checked < most_recent_success:
+                # another record with this payload has succeeded after this record failed
                 redundant_records.append(record)
             else:
                 records_by_payload_id[record.payload_id].append(record)
