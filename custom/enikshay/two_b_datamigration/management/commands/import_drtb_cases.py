@@ -429,6 +429,40 @@ DRUG_NAME_TO_ID_MAPPING = {
 
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
+PREV_OCCURRENCE_PROPERTIES = [
+    "disease_classification",
+    "site_choice",
+    "site_detail",
+]
+
+PREV_EPISODE_PROPERTIES = [
+    "adherence_total_doses_taken",
+    "adherence_type_choice",
+    "adherence_type_ict_choice",
+    "adherence_type_ict_other_detail",
+    "adherence_type_other_detail",
+    "adr_history",
+    "date_of_diagnosis",
+    "dosage_display",
+    "dosage_history",
+    "drtb_meetings_history",
+    "drug_resistance_display",
+    "episode_type",
+    "treatment_initiation_date",
+    "treatment_outcome",
+    "treatment_outcome_date",
+    "treatment_outcome_loss_to_follow_up_reason",
+    "treatment_regimen",
+    "treatment_status",
+    "treatment_status_other",
+    "weight_band",
+    "weight_history",
+]
+
+PREV_PERSON_PROPERTIES = [
+    "phi_name",
+]
+
 
 class ColumnMapping(object):
     mapping_dict = None
@@ -577,10 +611,23 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     ):
         close_occurrence = True
         person_case_properties['owner_id'] = '_archive_'
+        person_case_properties['phi_name'] = ''
+        person_case_properties['tu_name'] = ''
+        person_case_properties['tu_id'] = ''
+        person_case_properties['dto_name'] = ''
+        person_case_properties['dto_id'] = ''
         person_case_properties['current_episode_type'] = ''
         person_case_properties['current_disease_classification'] = ''
         person_case_properties['current_site_choice'] = ''
         person_case_properties['current_site_detail'] = ''
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_OCCURRENCE_PROPERTIES, occurrence_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_EPISODE_PROPERTIES, episode_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_PERSON_PROPERTIES, person_case_properties))
+        person_case_properties['prev_drtb_center_name'] = \
+            secondary_owner_case_properties[0]['secondary_owner_name']
 
     # calculate episode_case_id so we can also set it on all tests
     episode_case_id = uuid.uuid4().hex
@@ -937,6 +984,12 @@ def get_key_populations(column_mapping, row):
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
     return {"current_{}".format(k): v for k, v in props.iteritems()}
+
+
+def get_prev_person_case_properties(property_list, case_properties):
+    return {
+        "prev_{}".format(p): case_properties[p] for p in property_list if p in case_properties
+    }
 
 
 def get_treatment_outcome(column_mapping, row):
