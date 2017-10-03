@@ -3,6 +3,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from couchdbkit import ResourceConflict
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
@@ -212,4 +213,4 @@ def update_device_id(user, device_id):
         if not user.is_demo_user:
             updated = user.update_device_id_last_used(device_id)
             if updated:
-                user.save(fire_signals=False)
+                user.save(fire_signals=toggles.ENIKSHAY.enabled(user.domain))
