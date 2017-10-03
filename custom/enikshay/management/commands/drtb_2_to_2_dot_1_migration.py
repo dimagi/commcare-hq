@@ -106,22 +106,21 @@ class Command(BaseCommand):
                                 case_status = self.update_case(test_case.get_id, case_status)
                                 writer.writerow(case_status)
 
-    def update_case(self, case_id, update_props):
-        case_updates = update_props
+    def update_case(self, case_id, case_status):
+        """
+        :param case_id: id of case to be updated
+        :param case_status: case update status which has updates dict and other information about case update
+        :return: update case status
+        """
+        case_updates = case_status.get('updates')
         if case_updates:
             case_updates['datamigration_20_to_21'] = 'yes'
-            update_props['datamigration_20_to_21'] = 'yes'
             if not self.dry_run:
-                real_case_updates = case_updates.copy()
-                # remove any debug information stored for confirming changes and retain them for
-                # logging in the csv file
-                if 'debug' in real_case_updates:
-                    del real_case_updates['debug']
-                update_case(DOMAIN, case_id, real_case_updates)
-            update_props['updated'] = 'yes'
+                update_case(DOMAIN, case_id, case_updates)
+            case_status['updated'] = 'yes'
         else:
-            update_props['updated'] = 'no'
-        return update_props
+            case_status['updated'] = 'no'
+        return case_status
 
     def _get_headers(self, case_types):
         headers = ['case_type', 'case_id']
@@ -131,7 +130,7 @@ class Command(BaseCommand):
             headers += self.episode_case_relevant_props
         if 'test' in case_types:
             headers += self.test_case_relevant_props
-        headers += ['updates', 'updated', 'datamigration_20_to_21']
+        headers += ['updates', 'updated']
         return headers
 
     def get_case_status(self, case, episode_cases=None, recently_opened_episode_case=None, occurrence_case=None):
