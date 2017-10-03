@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--clear',
             action='store_true',
-            default=False,
+            default=True,
         )
 
     def output_resources(self, resources):
