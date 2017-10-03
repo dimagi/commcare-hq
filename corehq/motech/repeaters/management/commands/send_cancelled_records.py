@@ -85,7 +85,7 @@ class Command(BaseCommand):
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
-            writer.writerow(('record_id', 'payload_id', 'state', 'failure_reason'))
+            writer.writerow(('record_id', 'payload_id', 'state', 'message'))
 
             for i, record in enumerate(records):
                 try:
@@ -93,11 +93,11 @@ class Command(BaseCommand):
                         record.next_check = datetime.datetime.utcnow()
                     record.fire(force_send=True)
                 except Exception as e:
-                    print "{}/{}: {} {}".format(i, total_records, 'EXCEPTION', repr(e))
+                    print "{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e))
                     writer.writerow((record._id, record.payload_id, record.state, repr(e)))
                 else:
-                    print "{}/{}: {}".format(i, total_records, record.state)
-                    writer.writerow((record._id, record.payload_id, record.state, record.failure_reason))
+                    print "{}/{}: {}".format(i + 1, total_records, record.state, record.attempts[-1].message)
+                    writer.writerow((record._id, record.payload_id, record.state, record.attempts[-1].message))
                 if sleep_time:
                     time.sleep(float(sleep_time))
 
