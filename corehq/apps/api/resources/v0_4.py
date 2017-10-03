@@ -366,7 +366,23 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return get_apps_in_domain(domain, include_remote=False)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+
+    class Meta(CustomResourceMeta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'
+
+
+class ApplicationResource(BaseApplicationResource):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
@@ -447,19 +463,6 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
             app_data.update(bundle.obj._doc)
             app_data.update(bundle.data)
             return app_data
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
-
-    class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
-        object_class = Application
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'application'
 
 
 class HOPECaseResource(CommCareCaseResource):
