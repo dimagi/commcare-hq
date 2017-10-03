@@ -241,7 +241,6 @@ class DashboardView(TemplateView):
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
-                form_id=0
             )
         return super(DashboardView, self).get_context_data(**kwargs)
 
