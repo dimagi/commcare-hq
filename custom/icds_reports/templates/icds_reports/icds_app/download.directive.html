@@ -31,25 +31,6 @@
                 </ui-select>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="control-label col-sm-2" for="view_by">View by: </label>
-                <div class="col-sm-6">
-                    <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
-                        <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                        <ui-select-choices repeat="level.id as level in $ctrl.groupByLevels | propsFilter: {name: $select.search}">
-                            <div ng-bind-html="level.name | highlight: $select.search"></div>
-                        </ui-select-choices>
-                    </ui-select>
-                </div>
-            </div>
-            <div ng-show="$ctrl.getInfoMessage() !== null" class="form-group" style="margin-bottom: 0px !important;">
-                <label class="control-label col-sm-2" for="location"></label>
-                <div class="col-sm-6">
-                    <div class="alert alert-info">
-                        <strong>Info!</strong> <span>{$ $ctrl.getInfoMessage() $}</span>
-                    </div>
-                </div>
-            </div>
             <div class="form-group" style="margin-bottom: 0px !important;">
                 <label class="control-label col-sm-2" for="location">Location: </label>
                 <div class="col-sm-6">
@@ -61,6 +42,17 @@
                               </ui-select-choices>
                         </ui-select>
                     </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="view_by">View by: </label>
+                <div class="col-sm-6">
+                    <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
+                        <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-choices repeat="level.id as level in $ctrl.groupByLevels | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="level.name | highlight: $select.search"></div>
+                        </ui-select-choices>
+                    </ui-select>
                 </div>
             </div>
             <div class="form-group">

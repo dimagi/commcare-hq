@@ -1,8 +1,9 @@
 {% extends "app_manager/app_view.html" %}
-{% load xforms_extras %}
+{% load compress %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load crispy_forms_tags %}
+{% load xforms_extras %}
 
 {% block title %}
   {% trans "Settings" %} -
@@ -14,12 +15,18 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
-  <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
+  {% compress js %}
+    <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
+    <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
+  {% endcompress %}
     {% if linked_apps_enabled %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
+        {% endcompress %}
     {% endif %}
+  {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+  {% endcompress %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}

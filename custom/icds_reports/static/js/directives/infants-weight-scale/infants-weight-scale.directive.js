@@ -50,11 +50,11 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a weighing scale for infants: <strong>' + total + '</strong></div>' +
+            '<div>Total number of AWCs with a weighing scale for infants: <strong>' + in_month + '</strong></div>' +
             '<div>% of AWCs with a weighing scale for infants: <strong>' + percent + '</strong></div>';
     };
 
@@ -86,6 +86,14 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
+                ];
             }
         });
     };
@@ -164,7 +172,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -173,12 +181,11 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    var all = _.find(vm.chartData[1].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs with a weighing scale for infants: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a weighing scale for infants: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Number of AWCs with a weighing scale for infants: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
+                    tooltip_content += "<p>% of AWCs with a weighing scale for infants: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
 
                     return tooltip_content;
                 });

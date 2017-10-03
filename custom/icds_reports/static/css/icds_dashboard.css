@@ -588,3 +588,14 @@ circle {
 table.no-footer {
     margin: 0 !important;
 }
+
+.nv-area {
+    fill-opacity: .5;
+}
+
+.map-kpi {
+    padding: 20px;
+    background-color: rgb(0, 98, 115) !important;
+    border-radius: 35px;
+    color: #ffffff;
+}

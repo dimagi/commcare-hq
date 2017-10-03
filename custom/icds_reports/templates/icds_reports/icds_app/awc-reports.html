@@ -76,7 +76,7 @@
                             <th>Weight for Age Status</th>
                             <th>Weight for Height Status</th>
                             <th>Height for Age status</th>
-                            <th>PSE Attendance</th>
+                            <th>PSE Attendance (Days)</th>
                     </thead>
                     <tbody>
                         <tr ng-repeat="row in $ctrl.data.rows">
@@ -145,7 +145,7 @@
                 <h4 class="center">Height For Age:</h4>
                 <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
                 <h4 class="center">Weight For Height:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptionsWFH" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
         </div>
         </div>

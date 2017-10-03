@@ -157,7 +157,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
