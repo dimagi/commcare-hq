@@ -101,22 +101,20 @@ class Command(BaseCommand):
         all_case_ids = set(all_case_ids)
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)
-        if self.dry_run:
-            self.writerow({
-                "case_type": associated_case_type,
-                "associated_case_id": associated_case_id,
-                "retain_case_id": retain_case_id,
-                "closed_case_ids": case_ids_to_close
-            })
-        else:
+        self.writerow({
+            "case_type": associated_case_type,
+            "associated_case_id": associated_case_id,
+            "retain_case_id": retain_case_id,
+            "closed_case_ids": case_ids_to_close
+        })
+        if not self.dry_run:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
     @staticmethod
     def public_app_case(person_case):
-        person_case_properties = person_case.dynamic_case_properties()
-        if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
+        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
 
@@ -172,10 +170,10 @@ class Command(BaseCommand):
         confirmed_drtb_episode_cases = []
         confirmed_tb_episode_cases = []
         for episode_case in episode_cases:
-            episode_case_properties = episode_case.dynamic_case_properties()
-            if episode_case_properties.get('episode_type') == 'confirmed_drtb':
+            episode_type = episode_case.get_case_property('episode_type')
+            if episode_type == 'confirmed_drtb':
                 confirmed_drtb_episode_cases.append(episode_case)
-            elif episode_case_properties.get('episode_type') == 'confirmed_tb':
+            elif episode_type == 'confirmed_tb':
                 confirmed_tb_episode_cases.append(episode_case)
 
         confirmed_drtb_episode_cases_count = len(confirmed_drtb_episode_cases)
@@ -202,7 +200,7 @@ class Command(BaseCommand):
         def _get_open_active_episode_cases(episode_cases):
             return [open_episode_case
                     for open_episode_case in episode_cases
-                    if open_episode_case.dynamic_case_properties().get('is_active') == 'yes']
+                    if open_episode_case.get_case_property('is_active') == 'yes']
 
         all_open_episode_cases = _get_open_episode_cases_for_occurrence(occurrence_case_id)
         open_active_episode_cases = _get_open_active_episode_cases(all_open_episode_cases)
@@ -218,7 +216,7 @@ class Command(BaseCommand):
             raise CommandError("Resolved open active episode cases were not resolved for occurrence, %s" %
                                occurrence_case_id)
 
-        return _get_open_episode_cases_for_occurrence(occurrence_case_id)
+        return all_open_episode_cases
 
 
 def get_open_occurrence_cases_from_person(person_case_id):

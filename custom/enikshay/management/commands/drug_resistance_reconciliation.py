@@ -64,8 +64,7 @@ class Command(BaseCommand):
     @staticmethod
     def public_app_case(occurrence_case_id):
         person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
-        person_case_properties = person_case.dynamic_case_properties()
-        if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
+        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
 
@@ -76,13 +75,12 @@ class Command(BaseCommand):
         drug_resistance_cases = get_open_drug_resistance_cases_from_occurrence(occurrence_case_id)
         drug_resistance_cases_by_drug_id = defaultdict(list)
         for drug_resistance_case in drug_resistance_cases:
-            drug_id = drug_resistance_case.dynamic_case_properties().get('drug_id')
+            drug_id = drug_resistance_case.get_case_property('drug_id')
             if drug_id not in self.drug_id_values:
                 print("New drug_id value found, %s" % drug_id)
                 self.drug_id_values.append(drug_id)
             drug_resistance_cases_by_drug_id[drug_id].append(drug_resistance_case)
-        for drug_id in drug_resistance_cases_by_drug_id:
-            drug_resistance_cases_for_drug = drug_resistance_cases_by_drug_id[drug_id]
+        for drug_id, drug_resistance_cases_for_drug in drug_resistance_cases_by_drug_id.items():
             if len(drug_resistance_cases_for_drug) > 1:
                 self.reconcile_drug_resistance_cases(drug_resistance_cases_for_drug, drug_id, occurrence_case_id)
 
@@ -98,8 +96,8 @@ class Command(BaseCommand):
         # sanity check that we got more than one case so we should be considering closing cases
         # and confirm that all have the same drug id
         if (len(drug_resistance_cases) < 2 or
-            any(drug_resistance_case.dynamic_case_properties().get('drug_id') != drug_id for
-                drug_resistance_case in drug_resistance_cases)):
+            any(drug_resistance_case.get_case_property('drug_id') != drug_id
+                for drug_resistance_case in drug_resistance_cases)):
             raise CommandError("Asked to reconcile cases when not needed for occurrence case %s"
                                % occurrence_case_id)
 
@@ -110,8 +108,7 @@ class Command(BaseCommand):
         # group cases by their sensitivity
         # possible values are resistant/ sensitive/ unknown
         for drug_resistance_case in drug_resistance_cases:
-            case_props = drug_resistance_case.dynamic_case_properties()
-            sensitivity = case_props.get('sensitivity')
+            sensitivity = drug_resistance_case.get_case_property('sensitivity')
             if sensitivity == 'resistant':
                 resistant_drug_resistance_cases.append(drug_resistance_case)
             elif sensitivity == 'sensitive':
@@ -176,15 +173,14 @@ class Command(BaseCommand):
         all_case_ids = set(all_case_ids)
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)
-        if self.dry_run:
-            self.writerow({
-                "occurrence_case_id": occurrence_case_id,
-                "drug_id": drug_id,
-                "retain_case_id": retain_case_id,
-                "retain_reason": retain_reason,
-                "closed_case_ids": case_ids_to_close
-            })
-        else:
+        self.writerow({
+            "occurrence_case_id": occurrence_case_id,
+            "drug_id": drug_id,
+            "retain_case_id": retain_case_id,
+            "retain_reason": retain_reason,
+            "closed_case_ids": case_ids_to_close
+        })
+        if not self.dry_run:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)

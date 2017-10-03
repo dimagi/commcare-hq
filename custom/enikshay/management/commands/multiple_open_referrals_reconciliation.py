@@ -62,7 +62,7 @@ class Command(BaseCommand):
     def public_app_case(occurrence_case_id):
         person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         person_case_properties = person_case.dynamic_case_properties()
-        if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true':
+        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
 
@@ -90,13 +90,12 @@ class Command(BaseCommand):
         all_case_ids = set(all_case_ids)
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)
-        if self.dry_run:
-            self.writerow({
-                "occurrence_case_id": occurrence_case_id,
-                "retain_case_id": retain_case_id,
-                "closed_case_ids": case_ids_to_close
-            })
-        else:
+        self.writerow({
+            "occurrence_case_id": occurrence_case_id,
+            "retain_case_id": retain_case_id,
+            "closed_case_ids": case_ids_to_close
+        })
+        if not self.dry_run:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
