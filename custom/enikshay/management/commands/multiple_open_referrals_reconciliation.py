@@ -63,13 +63,12 @@ class Command(BaseCommand):
     def public_app_case(self, occurrence_case_id):
         try:
             person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
-        except ENikshayCaseNotFound as e:
+        except ENikshayCaseNotFound:
             self.writerow({
                 "occurrence_case_id": occurrence_case_id,
                 "notes": "person case not found",
             })
             return False
-        person_case_properties = person_case.dynamic_case_properties()
         if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
         return True
