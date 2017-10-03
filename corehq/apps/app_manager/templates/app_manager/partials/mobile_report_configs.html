@@ -39,6 +39,7 @@
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
                         <th>{% trans "Description" %}</th>
+                        <th data-bind="visible: $root.supportSyncDelay">{% trans "Sync Delay" %}</th>
                         <th>
                             {% trans "Data Table" %}
                             <span class="hq-help-template"
@@ -85,6 +86,9 @@
                                     {% trans "Not localizable." %}
                                 </p>
                             </div>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control" data-bind="value: syncDelay, visible: $root.supportSyncDelay">
                         </td>
                         <td>
                             <label>

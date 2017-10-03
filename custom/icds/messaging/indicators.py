@@ -63,7 +63,7 @@ def _get_report_fixture_for_user(domain, report_id, ota_user):
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    xml = ReportFixturesProvider.report_config_to_fixture(
+    xml = ReportFixturesProvider.report_config_to_v1_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
     return etree.tostring(xml)
