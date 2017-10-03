@@ -185,6 +185,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             html += '<div class="row no-margin">';
                             html += this.options.rightLegend['info'];
                             html +='</div>';
+                        } else {
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
                         }
                         html += '</div>';
                         d3.select(this.options.element).append('div')

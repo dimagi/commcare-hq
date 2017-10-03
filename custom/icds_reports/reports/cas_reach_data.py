@@ -25,7 +25,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
-
+            all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -67,8 +67,8 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                         awc_this_month_data,
                         awc_prev_month_data) > 0 else 'red',
                     'value': get_value(awc_this_month_data, 'awcs'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(awc_this_month_data, 'all_awcs'),
+                    'format': 'div',
                     'frequency': 'month',
                     'redirect': 'awcs_covered'
                 },
