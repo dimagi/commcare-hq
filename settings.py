@@ -524,6 +524,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
         "corehq.apps.app_manager.fixtures.report_fixture_generator",
+        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
         "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
