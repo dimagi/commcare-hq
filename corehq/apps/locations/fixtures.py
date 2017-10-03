@@ -158,7 +158,10 @@ class FlatLocationSerializer(object):
                     message = """
                         The flat location fixture didn't prefetch all parent locations:
                         {domain}: {location_id}
-                    """.format(current_location.domain, current_location.location_id)
+                    """.format(
+                        domain=current_location.domain,
+                        location_id=current_location.location_id,
+                    )
                     _soft_assert(False, msg=message)
 
                 attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id
