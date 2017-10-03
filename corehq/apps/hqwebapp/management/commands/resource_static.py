@@ -42,9 +42,9 @@ class Command(BaseCommand):
         current_sha = current_snapshot['commits'][0]['sha']
         print("Current commit SHA: %s" % current_sha)
 
-        if options['clear']:
-            print("clearing resource cache")
-            rcache.delete_pattern(RESOURCE_PREFIX % '*')
+        #if options['clear']:
+        #print("clearing resource cache")
+        rcache.delete_pattern(RESOURCE_PREFIX % '*')
 
         existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
         if existing_resources and not isinstance(existing_resources, basestring):
