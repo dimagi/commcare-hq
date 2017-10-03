@@ -1169,7 +1169,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
         form = CommCareUserFilterForm(request.GET, domain=domain)
-        context = super(FilteredUserDownload, self).main_context
+        context = self.main_context
         context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
         return render(
             request,
