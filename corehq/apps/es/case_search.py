@@ -36,7 +36,7 @@ class CaseSearchES(CaseES):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value, clause=None, fuzzy=False):
+    def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
         """
         Search for a case property.
         Usage: (CaseSearchES()
@@ -49,19 +49,11 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        # Filter by case_properties.key and do a text search in case_properties.value, first for exact value, and
-        # then for fuzzy value.
-        if clause is None:
-            clause = queries.SHOULD if fuzzy else queries.MUST
-        exact_query = queries.nested(
-            PATH,
-            queries.filtered(
-                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
-                filters.term('{}.key'.format(PATH), key),
-            )
-        )
-        result = self._add_query(exact_query, clause)
+        # Filter by case_properties.key and do a text search in case_properties.value
+        result = self
         if fuzzy:
+            # Results must at least match the fuzzy value, and exact matches are weighted higher. `clause` param
+            # is overridden to do this.
             fuzzy_query = queries.nested(
                 PATH,
                 queries.filtered(
@@ -69,8 +61,17 @@ class CaseSearchES(CaseES):
                     filters.term('{}.key'.format(PATH), key),
                 )
             )
-            result = result._add_query(fuzzy_query, clause)
-        return result
+            result = result._add_query(fuzzy_query, queries.MUST)
+            clause = queries.SHOULD
+
+        exact_query = queries.nested(
+            PATH,
+            queries.filtered(
+                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
+                filters.term('{}.key'.format(PATH), key),
+            )
+        )
+        return result._add_query(exact_query, clause)
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
