@@ -12,7 +12,8 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 class Command(BaseCommand):
     help = """
     Send cancelled repeat records. You may optionally specify a regex to
-    filter records using --include or --exclude, an a sleep time with --sleep
+    filter records using --include or --exclude, an a sleep time with --sleep.
+    Specify multiple include or exclude params by space separating them.
     """
 
     def add_arguments(self, parser):
@@ -20,14 +21,16 @@ class Command(BaseCommand):
         parser.add_argument('repeater_id')
         parser.add_argument(
             '--include',
-            dest='include_regex',
-            help=("Regex that will be applied to a record's 'failure_reason' to "
+            dest='include_regexps',
+            nargs='*',
+            help=("Regexps that will be applied to a record's 'failure_reason' to "
                   "determine whether to include it."),
         )
         parser.add_argument(
             '--exclude',
-            dest='exclude_regex',
-            help=("Regex that will be applied to a record's 'failure_reason' to "
+            dest='exclude_regexps',
+            nargs='*',
+            help=("Regexps that will be applied to a record's 'failure_reason' to "
                   "determine whether to exclude it."),
         )
         parser.add_argument(
@@ -35,29 +38,42 @@ class Command(BaseCommand):
             dest='sleep_time',
             help="Time in seconds to sleep between each request.",
         )
+        parser.add_argument(
+            '--verbose',
+            dest='verbose',
+            action='store_true',
+            default=False,
+            help="Print out all matching failure reasons",
+        )
 
     def handle(self, domain, repeater_id, *args, **options):
         sleep_time = options.get('sleep_time')
-        include_regex = options.get('include_regex')
-        exclude_regex = options.get('exclude_regex')
-        if include_regex and exclude_regex:
-            print "You may not specify both include and exclude"
+        include_regexps = options.get('include_regexps')
+        exclude_regexps = options.get('exclude_regexps')
+        verbose = options.get('verbose')
 
         def meets_filter(record):
-            if include_regex:
+            if exclude_regexps:  # Match none of the exclude expressions
+                if record.failure_reason:
+                    if any(re.search(exclude_regex, record.failure_reason)
+                           for exclude_regex in exclude_regexps):
+                        return False
+
+            if include_regexps:  # Match any of the include expressions
                 if not record.failure_reason:
                     return False
-                return bool(re.search(include_regex, record.failure_reason))
-            elif exclude_regex:
-                if not record.failure_reason:
-                    return True
-                return not bool(re.search(exclude_regex, record.failure_reason))
+                return any(re.search(include_regex, record.failure_reason)
+                           for include_regex in include_regexps)
             return True  # No filter applied
 
         records = filter(
             meets_filter,
             iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
         )
+
+        if verbose:
+            for record in records:
+                print record.payload_id, record.failure_reason
 
         total_records = len(records)
         print "Found {} matching records.  Send them?".format(total_records)
