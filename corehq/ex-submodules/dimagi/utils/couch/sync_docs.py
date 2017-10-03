@@ -35,7 +35,7 @@ def index_design_docs(db, docid, design_name):
             try:
                 list(db.view(view, limit=0))
             except RequestFailed as e:
-                if 'timeout' not in e.message:
+                if 'timeout' not in e.message and e.status_int != 504:
                     raise
             else:
                 break
