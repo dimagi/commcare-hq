@@ -10,6 +10,9 @@ AADHAR_NUM_FIELDS = ['Child_Aadhaar_No', 'PW_Aadhar_No', 'aadhar_num']
 RCH_WSDL_URL = 'http://rchrpt.nhm.gov.in/RCH_WS/rchwebservices.svc?wsdl'
 ICDS_CAS_DOMAIN = "icds-cas"
 RECORDS_PER_PAGE = 200
+# RCH returns same error message in case of no records or authentication failure
+RCH_AUTHENTICATION_OR_NO_RESULT_ERROR_MESSAGE = "Please check your URL or Security Code"
+
 
 STATE_DISTRICT_MAPPING = {
     '28': [  # Andhra Pradesh

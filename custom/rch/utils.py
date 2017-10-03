@@ -14,6 +14,7 @@ from custom.rch.const import (
     RCH_WSDL_URL,
     VALID_AADHAR_NUM_LENGTH,
     ICDS_CAS_DOMAIN,
+    RCH_AUTHENTICATION_OR_NO_RESULT_ERROR_MESSAGE,
 )
 from custom.rch.exceptions import MultipleMatchException
 
@@ -50,7 +51,7 @@ def _fetch_beneficiaries(for_date, state_id, beneficiary_type, district_id):
         data = response['_value_1'].find('NewDataSet')
         response_content = etree_to_dict(data)['NewDataSet']
         if (response_content[0].get('Table1', None) and
-                response_content[0]['Table1'][0]['Message'] == 'Please check your URL or Security Code'):
+                response_content[0]['Table1'][0]['Message'] == RCH_AUTHENTICATION_OR_NO_RESULT_ERROR_MESSAGE):
             notify_insecure_access_response(for_date, state_id, beneficiary_type, district_id)
             return []
         return etree_to_dict(data)['NewDataSet']

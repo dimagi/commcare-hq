@@ -58,7 +58,8 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
         response.set_cookie('hq.pagination.limit.rch_cas_beneficiaries.%s' % request.domain, RECORDS_PER_PAGE)
         return response
 
-    def _set_rch_beneficiaries(self, include_matched_beneficiaries, only_matched=False, in_data=None):
+    @staticmethod
+    def _get_rch_beneficiaries(include_matched_beneficiaries, in_data, only_matched=False):
         """
         Location Hierarchy: State -> District -> Village -> AWC
         Filters down-up Village -> District -> State
@@ -74,20 +75,20 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
         """
         beneficiary_type = in_data.get('beneficiary_type')
         if beneficiary_type == 'child':
-            self.beneficiaries = RCHChildRecord.objects
+            beneficiaries = RCHChildRecord.objects
         else:
-            self.beneficiaries = RCHMotherRecord.objects
+            beneficiaries = RCHMotherRecord.objects
         if only_matched:
             # exclude beneficiaries where cas_case_id is null
-            self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=True)
+            beneficiaries = beneficiaries.exclude(cas_case_id__isnull=True)
         elif not include_matched_beneficiaries:
             # fetch beneficiaries where case_case_id is NOT null
-            self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=False)
+            beneficiaries = beneficiaries.exclude(cas_case_id__isnull=False)
         village_ids = []
 
         village_code = in_data.get('village_code')
         if village_code:
-            village_ids = village_ids + [village_code]
+            village_ids = [village_code]
 
         # find corresponding village(s) for the selected awc id to search
         # rch records by their village
@@ -108,14 +109,10 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
                 village_ids = AreaMapping.fetch_village_ids_for_state(stcode)
 
         if village_ids:
-            self.beneficiaries = self.beneficiaries.filter(village_id__in=village_ids)
-            return True
+            return beneficiaries.filter(village_id__in=village_ids)
 
-        # set beneficiaries empty if unable to filter by any field
-        self.beneficiaries = []
-        return False
-
-    def _set_cas_beneficiaries(self, include_matched_beneficiaries, in_data=None):
+    @staticmethod
+    def _get_cas_beneficiaries(include_matched_beneficiaries, in_data=None):
         """
         Location Hierarchy: State -> District -> Village -> AWC
         Filters down-up AWC -> Village -> District -> State
@@ -129,16 +126,16 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
          just render rch records excluding the ones that have been matched
         :return: True if it could find records else False
         """
-        self.beneficiaries = case_es.CaseES().domain(ICDS_CAS_DOMAIN).size(RECORDS_PER_PAGE)
+        beneficiaries = case_es.CaseES().domain(ICDS_CAS_DOMAIN).size(RECORDS_PER_PAGE)
         if not include_matched_beneficiaries:
-            self.beneficiaries = self.beneficiaries.filter(case_es.missing('rch_record_id'))
+            beneficiaries = beneficiaries.filter(case_es.missing('rch_record_id'))
         awc_ids = []
 
         # find corresponding awc_id(s) for the selected village id to search
         # cas records by their awc_ids set as owner_id
         village_code = in_data.get('village_code')
         if village_code:
-            awc_ids = awc_ids + AreaMapping.fetch_awc_ids_for_village_id(village_code)
+            awc_ids = AreaMapping.fetch_awc_ids_for_village_id(village_code)
 
         awc_id = in_data.get('awcid')
         if awc_id:
@@ -165,45 +162,37 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
             # ToDo: remove awc_ids added for demo purpose
             user_ids = user_ids + awc_loc_ids + awc_ids
             if user_ids:
-                self.beneficiaries = self.beneficiaries.filter(case_es.user(user_ids))
-                return True
-
-        # set beneficiaries empty if unable to filter by any awc_id
-        self.beneficiaries = []
-        return False
+                return beneficiaries.user(user_ids)
 
     def _set_context_for_cas_records(self, context, in_data=None):
         include_matched_beneficiaries = (in_data.get('matched') == 'on')
         size = in_data.get('limit')
         offset = (in_data.get('page') - 1) * in_data.get('limit')
-        if self._set_cas_beneficiaries(include_matched_beneficiaries, in_data=in_data):
-            cas_records = self.beneficiaries.start(offset).size(size).run()
-            if cas_records:
+        beneficiaries = self._get_cas_beneficiaries(include_matched_beneficiaries, in_data=in_data)
+        if beneficiaries:
+            cas_records = beneficiaries.start(offset).size(size).run()
+            total_cas_records = cas_records.total
+            if total_cas_records:
                 context['beneficiaries'] = cas_records.hits
-                context['beneficiaries_total'] = cas_records.total
+                context['beneficiaries_total'] = total_cas_records
                 context['beneficiaries_count'] = len(cas_records.hits)
 
     def _set_context_for_rch_records(self, context, in_data=None):
         include_matched_beneficiaries = (in_data.get('matched') == 'on')
         size = in_data.get('limit')
         offset = (in_data.get('page') - 1) * in_data.get('limit')
-        if self._set_rch_beneficiaries(include_matched_beneficiaries, in_data=in_data):
-            context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries.order_by('-last_modified')[offset:offset + size]
+        beneficiaries = self._get_rch_beneficiaries(include_matched_beneficiaries, in_data)
+        if beneficiaries:
+            context['beneficiaries_total'] = beneficiaries.count()
+            context['beneficiaries'] = beneficiaries.order_by('-last_modified')[offset:offset + size]
 
     def _set_context_for_matched_records(self, context, in_data=None):
-        beneficiary_type = in_data.get('beneficiary_type')
-        if beneficiary_type == 'child':
-            self.beneficiaries = RCHChildRecord.objects
-        else:
-            self.beneficiaries = RCHMotherRecord.objects
-
-        self.beneficiaries = self.beneficiaries.exclude(cas_case_id__isnull=True)
-        size = in_data.get('limit')
-        offset = (in_data.get('page') - 1) * in_data.get('limit')
-        if self._set_rch_beneficiaries(True, only_matched=True, in_data=in_data):
-            context['beneficiaries_total'] = self.beneficiaries.count()
-            context['beneficiaries'] = self.beneficiaries[offset:offset + size]
+        beneficiaries = self._get_rch_beneficiaries(True, in_data, only_matched=True)
+        if beneficiaries:
+            size = in_data.get('limit')
+            offset = (in_data.get('page') - 1) * in_data.get('limit')
+            context['beneficiaries_total'] = beneficiaries.count()
+            context['beneficiaries'] = beneficiaries[offset:offset + size]
 
     def _set_beneficiaries(self, context, in_data):
         context['beneficiaries'] = []
@@ -269,7 +258,7 @@ class BeneficariesList(JSONResponseMixin, BaseDomainView):
 
 
 @method_decorator([toggles.VIEW_CAS_RCH_REPORTS.required_decorator(),
-                   login_and_domain_required], name='dispatch')
+                   login_and_domain_required, require_superuser], name='dispatch')
 class BeneficiaryView(BaseDomainView):
     http_method_names = ['get']
     urlname = 'beneficiary_view'
@@ -283,7 +272,6 @@ class BeneficiaryView(BaseDomainView):
     def page_url(self):
         return reverse(self.urlname, args=[ICDS_CAS_DOMAIN, self.beneficiary_type, self.beneficiary_id])
 
-    @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         self.beneficiary_id = kwargs.get('beneficiary_id')
         self.beneficiary_type = kwargs.get('beneficiary_type')
