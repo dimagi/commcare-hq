@@ -35,7 +35,10 @@ class Command(BaseCommand):
     @staticmethod
     def get_logger(log_file):
         logger = csv.writer(log_file)
-        logger.writerow(['case_id', 'deletion_id', 'case_type'])
+        logger.writerow([
+            'case_id', 'deletion_id', 'case_type',
+            'date_form_created', 'date_form_modified', 'date_form_modified_non_system', 'last_user_to_modify',
+        ])
         return logger
 
     @staticmethod
@@ -51,6 +54,25 @@ class Command(BaseCommand):
 
     @staticmethod
     def delete_case(case_id, commit, deletion_id, domain, logger, case_type):
-        logger.writerow([case_id, deletion_id, case_type])
+        date_form_modified_non_system = ''
+        last_user_to_modify = ''
+
+        case = CaseAccessors(domain).get_case(case_id)
+
+        date_form_created = case.actions[0].form.received_on
+        date_form_modified = case.actions[-1].form.received_on
+
+        for action in reversed(case.actions):
+            form = action.form
+            if form.user_id:
+                last_user_to_modify = form.user_id
+                date_form_modified_non_system = form.received_on
+                break
+
+
+        logger.writerow([
+            case_id, deletion_id, case_type,
+            date_form_created, date_form_modified, date_form_modified_non_system, last_user_to_modify,
+        ])
         if commit:
             CaseAccessors(domain).soft_delete_cases([case_id], deletion_id=deletion_id)
