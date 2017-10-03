@@ -8,16 +8,17 @@ from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
-    """
-        Generates data dictionary for all domains
-    """
-    help = 'Generates data dictionary for all domains'
+    help = 'Generates data dictionary for any or all domains'
+
+    def add_arguments(self, parser):
+        parser.add_argument('domains', nargs='*',
+            help="Domain name(s). If blank, will generate for all domains")
 
     def handle(self, **options):
-        print('Generating data dictionary for domains')
         failed_domains = []
-        for domain_dict in with_progress_bar(Domain.get_all(include_docs=False)):
-            domain = domain_dict['key']
+        domains = options['domains'] or [d['key'] for d in Domain.get_all(include_docs=False)]
+        print('Generating data dictionary for {} domains'.format(len(domains)))
+        for domain in with_progress_bar(domains):
             try:
                 generate_data_dictionary(domain)
             except OldExportsEnabledException:
