@@ -25,7 +25,7 @@ class Command(BaseEnikshayCaseMigration):
     def get_case_property_updates(test, domain):
         if (
             test.get_case_property(DATAMIGRATION_CASE_PROPERTY) == 'yes'
-            or not test.get_case_property(REFERRING_FACILITY_ID)
+            or test.get_case_property(REFERRING_FACILITY_ID)
         ):
             return {}
 
