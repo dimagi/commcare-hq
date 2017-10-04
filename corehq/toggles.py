@@ -1,6 +1,7 @@
 from collections import namedtuple
 from functools import wraps
 import hashlib
+import logging
 import math
 
 from django.contrib import messages
@@ -223,14 +224,18 @@ class PredictablyRandomToggle(StaticToggle):
     def _get_identifier(self, item):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item, namespace=Ellipsis):
+        if namespace is Ellipsis:
+            logging.warning('PredictablyRandomToggle.enabled() may be invalid if namespace is not set')
         if settings.UNIT_TESTING:
             return False
         elif item in self.always_disabled:
             return False
+        elif namespace is not Ellipsis and namespace not in self.namespaces:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
+            or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
 # if no namespaces are specified the user namespace is assumed
