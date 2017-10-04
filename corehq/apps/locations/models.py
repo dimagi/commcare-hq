@@ -303,7 +303,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
-    def filter_path_by_user_input(self, domain, user_input, from_location_ids=None):
+    def filter_path_by_user_input(self, domain, user_input):
         """
         Returns a queryset including all locations matching the user input
         and their children. This means "Middlesex" will match:
@@ -313,8 +313,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         It matches by name or site-code
         """
         direct_matches = self.filter_by_user_input(domain, user_input)
-        if from_location_ids is not None:
-            direct_matches = direct_matches.filter(location_id__in=from_location_ids)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
     def get_locations(self, location_ids):
@@ -325,20 +323,10 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
         """
-        return self.get_descendants(location_ids, include_self=True)
-
-    def get_descendants(self, location_ids, include_self=False):
-        """
-        Takes a set of location ids and returns a django queryset of their descendants.
-        :param include_self: include the locations with location_ids in the final queryset as well
-        """
         return self.get_queryset_descendants(
             self.filter(location_id__in=location_ids),
-            include_self=include_self
+            include_self=True
         )
-
-    def get_descendants_ids(self, location_ids):
-        return list(self.get_descendants(location_ids).location_ids())
 
     def get_locations_and_children_ids(self, location_ids):
         return list(self.get_locations_and_children(location_ids).location_ids())
