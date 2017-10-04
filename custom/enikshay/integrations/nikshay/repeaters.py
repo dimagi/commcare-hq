@@ -275,7 +275,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
     def allowed_to_forward(self, location):
         return (
             not location.metadata.get('is_test', "yes") == "yes" and
-            location.location_type.name in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            location.location_type.code in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
             not location.metadata.get('nikshay_code')
         )
 
