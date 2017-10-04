@@ -2428,7 +2428,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2458,7 +2458,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 

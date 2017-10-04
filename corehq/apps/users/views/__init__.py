@@ -538,6 +538,10 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
             'landing_page_choices': self.landing_page_choices,
+            'show_integration': (
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
+                toggles.DHIS2_INTEGRATION.enabled(self.domain)
+            ),
         }
 
 
