@@ -1,6 +1,13 @@
-/* globals django, hqDefine, hqImport */
-hqDefine('data_dictionary/js/data_dictionary', function () {
-
+define([
+    "jquery",
+    "knockout",
+    "hqwebapp/js/bundle",
+    "hqwebapp/js/jquery-ui",
+], function(
+    $,
+    ko,
+    hq
+) {
     var CaseType = function (name) {
         var self = this;
         self.name = name;
@@ -54,7 +61,7 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hq.main.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
                 var postProperties = [];
@@ -180,9 +187,9 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
     };
 
     $(function() {
-        var dataUrl = hqImport('hqwebapp/js/initial_page_data').reverse('data_dictionary_json'),
-            casePropertyUrl = hqImport('hqwebapp/js/initial_page_data').reverse('update_case_property'),
-            typeChoices = hqImport('hqwebapp/js/initial_page_data').get('typeChoices'),
+        var dataUrl = hq.initialPageData.reverse('data_dictionary_json'),
+            casePropertyUrl = hq.initialPageData.reverse('update_case_property'),
+            typeChoices = hq.initialPageData.get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
