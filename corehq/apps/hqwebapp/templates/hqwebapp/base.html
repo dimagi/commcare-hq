@@ -212,10 +212,7 @@
         {% block head %}
         {% endblock %}
 
-        {% if not requirejs_main %}
-        {# TODO: externalize the js in here #}
         {% include 'hqwebapp/includes/analytics_all.html' %}
-        {% endif %}
 
         {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and not requirejs_main %}
         {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
@@ -312,7 +309,6 @@
                         {% endif %}
                         </div>
                         {% block tabs %}
-                            {# TODO: this involves inline js, fix that #}
                             {% format_main_menu %}
                         {% endblock %}
                     </nav>
