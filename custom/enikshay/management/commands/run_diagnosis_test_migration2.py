@@ -68,7 +68,7 @@ class Command(BaseCommand):
                 case_properties = episode.dynamic_case_properties()
 
                 if self.should_migrate_case(episode_case_id, case_properties, domain):
-                    test_confirming_diagnosis = case_properties.get('test_confirmed_diagnosis')
+                    test_confirming_diagnosis = case_properties.get('test_confirming_diagnosis')
                     date_of_diagnosis = case_properties.get('date_of_diagnosis')
                     treatment_initiation_date = case_properties.get('treatment_initiation_date')
                     current_diagnosis_test_result_date = case_properties.get('diagnosis_test_result_date')
