@@ -166,29 +166,22 @@ class LocationRestrictedEmwfOptionsMixin(object):
     def _get_location_specific_custom_filters(query):
         query_sections = query.split("/")
         parent_name = query_sections[1]
-        from_location_ids = None
         try:
             search_query = query_sections[2]
         except IndexError:
             search_query = ""
-        if parent_name:
-            parent_ids = SQLLocation.active_objects.filter(name=parent_name).location_ids()
-            if search_query:
-                from_location_ids = SQLLocation.active_objects.get_descendants_ids(parent_ids)
-            else:
-                from_location_ids = SQLLocation.active_objects.get_locations_and_children_ids(parent_ids)
-        return from_location_ids, parent_name, search_query
+        return parent_name, search_query
 
     def get_locations_query(self, query):
-        from_location_ids = None
         if self.custom_locations_search():
-            from_location_ids, parent_name, search_query = self._get_location_specific_custom_filters(query)
-            if not from_location_ids:
-                return SQLLocation.active_objects.none()
+            parent_name, search_query = self._get_location_specific_custom_filters(query)
             query = search_query
-        return (SQLLocation.active_objects
-                .filter_path_by_user_input(self.domain, query, from_location_ids)
-                .accessible_to_user(self.request.domain, self.request.couch_user))
+            parents = SQLLocation.active_objects.filter(name=parent_name)
+            descendants = SQLLocation.active_objects.get_queryset_descendants(parents)
+            locations = descendants.filter_by_user_input(self.domain, query)
+        else:
+            locations = SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
+        return locations.accessible_to_user(self.request.domain, self.request.couch_user)
 
     def get_users(self, query, start, size):
         """
