@@ -294,8 +294,8 @@ def toggles_dict(username=None, domain=None):
 
     (only enabled toggles are included)
     """
-    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
-                                                    t.enabled(domain))}
+    return {t.slug: True for t in all_toggles() if (t.enabled(username, NAMESPACE_USER) or
+                                                    t.enabled(domain, NAMESPACE_DOMAIN))}
 
 
 def toggle_values_by_name(username=None, domain=None):
