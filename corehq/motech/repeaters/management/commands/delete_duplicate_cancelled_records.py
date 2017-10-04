@@ -7,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.util.couch import IterDB
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS_STATE
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, Repeater
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 
 
@@ -41,6 +41,8 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
+        repeater = Repeater.get(repeater_id)
+        print "Looking up repeat records for '{}'".format(repeater.friendly_name)
 
         redundant_records = []
         records_by_payload_id = defaultdict(list)
@@ -68,7 +70,9 @@ class Command(BaseCommand):
         redundant_log = self.delete_already_successful_records(redundant_records)
         duplicates_log = self.resolve_duplicates(records_by_payload_id)
 
-        filename = "cancelled_repeat_records-{}.csv".format(datetime.datetime.utcnow().isoformat())
+        filename = "cancelled_{}_records-{}.csv".format(
+            repeater.__class__.__name__,
+            datetime.datetime.utcnow().isoformat())
         print "Writing log of changes to {}".format(filename)
         with open(filename, 'w') as f:
             writer = csv.writer(f)
