@@ -1,0 +1,25 @@
+mainConfigFile: corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
+baseUrl: staticfiles
+dir: staticfiles
+allowSourceOverwrites: true
+keepBuildDir: true
+skipDirOptimize: true   # could turn this off to minify everything, but that's prohibitively slow because bower_components is so large
+generateSourceMaps: true
+fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)/,
+modules:
+  # Third-party modules
+  - name: hqwebapp/js/common
+  - name: hqwebapp/js/jquery-ui
+    exclude:
+      - hqwebapp/js/common
+
+  # Modules common to HQ
+  - name: hqwebapp/js/bundle
+    exclude:
+      - hqwebapp/js/common
+
+  # App-specific-modules
+  - name: fixtures/js/bundle
+    exclude:
+      - hqwebapp/js/common
+      - hqwebapp/js/bundle

@@ -25,28 +25,24 @@ class Command(BaseCommand):
             default=False,
         )
 
+    def current_sha(self):
+        current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
+        sha = current_snapshot['commits'][0]['sha']
+        print("Current commit SHA: %s" % sha)
+        return sha
+
     def output_resources(self, resources):
         with open(os.path.join(self.root_dir, 'resource_versions.py'), 'w') as fout:
             fout.write("resource_versions = %s" % json.dumps(resources, indent=2))
-        if settings.STATIC_CDN:
-            with open(os.path.join(self.root_dir, 'corehq', 'apps', 'hqwebapp',
-                                   'static', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
-                from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
-                fout.write("requirejs.config({ paths: %s });" % json.dumps({
-                    file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3], ".js?version=%s" % version if version else "")
-                    for file, version in resources.iteritems() if file.endswith(".js")
-                }, indent=2))
 
     def handle(self, **options):
         prefix = os.getcwd()
-        current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
-        current_sha = current_snapshot['commits'][0]['sha']
-        print("Current commit SHA: %s" % current_sha)
 
         if options['clear']:
             print("clearing resource cache")
             rcache.delete_pattern(RESOURCE_PREFIX % '*')
 
+        current_sha = self.current_sha()
         existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
         if existing_resources and not isinstance(existing_resources, basestring):
             print("getting resource dict from cache")
