@@ -5,6 +5,8 @@ from StringIO import StringIO
 from contextlib import contextmanager, closing
 from datetime import datetime
 
+import pytz
+
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
@@ -18,8 +20,8 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
-from corehq.apps.userreports.tasks import export_ucr_async
 from corehq.util.timezones.utils import get_timezone_for_domain
+from couchexport.shortcuts import export_response
 
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
 from dimagi.utils.dates import DateSpan
@@ -70,9 +72,10 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
 
-from soil import DownloadBase
-
 from corehq.apps.reports.datatables import DataTablesHeader
+
+UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 5000
+ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 50000
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -128,7 +131,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     prefix = slug
     emailable = True
     is_exportable = True
-    exportable_all = True
     show_filters = True
 
     _domain = None
@@ -272,6 +274,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return self.excel_response
             elif request.GET.get('format', None) == "export":
                 return self.export_response
+            elif request.GET.get('format', None) == 'export_size_check':
+                return self.export_size_check_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
                 return self.get_ajax(self.request.GET)
             self.content_type = None
@@ -582,11 +586,58 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def excel_export_limit(self):
+        if settings.ENTERPRISE_MODE or self.domain == 'enikshay':
+            return ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+        return UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+    @property
+    @memoized
+    def export_too_large(self):
+        data = self.data_source
+        data.set_filter_values(self.filter_values)
+        total_rows = data.get_total_records()
+        return total_rows > self.excel_export_limit
+
+    @property
+    @memoized
+    def export_size_check_response(self):
+        try:
+            too_large = self.export_too_large
+        except UserReportsError as e:
+            if settings.DEBUG:
+                raise
+            return self.render_json_response({
+                'export_allowed': False,
+                'message': e.message,
+            })
+
+        if too_large:
+            return self.render_json_response({
+                'export_allowed': False,
+                'message': _(
+                    "Report export is limited to {number} rows. "
+                    "Please filter the data in your report to "
+                    "{number} or fewer rows before exporting"
+                ).format(number=self.excel_export_limit),
+            })
+        return self.render_json_response({
+            "export_allowed": True,
+        })
+
+    @property
+    @memoized
     def export_response(self):
-        download = DownloadBase()
-        res = export_ucr_async.delay(self.export_table, download.download_id, self.title, self.request.couch_user)
-        download.set_task(res)
-        return HttpResponse()
+        if self.export_too_large:
+            # Frontend should check size with export_size_check_response()
+            # Before hitting this endpoint, but we check the size again here
+            # in case the user modifies the url manually.
+            return HttpResponseBadRequest()
+
+        temp = StringIO()
+        export_from_tables(self.export_table, temp, Format.XLS_2007)
+        return export_response(temp, Format.XLS_2007, self.title)
 
     @classmethod
     def report_preview_data(cls, domain, temp_report):

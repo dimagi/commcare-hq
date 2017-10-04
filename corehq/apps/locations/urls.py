@@ -9,10 +9,9 @@ from .views import (
     LocationTypesView,
     LocationFieldsView,
     DowngradeLocationsView,
-    DownloadLocationStatusView,
     default, child_locations_for_select2, location_importer_job_poll,
     location_export, unassign_users, archive_location, unarchive_location,
-    delete_location, location_descendants_count, location_download_job_poll
+    delete_location, location_descendants_count,
 )
 
 settings_urls = [
@@ -26,10 +25,6 @@ settings_urls = [
     url(r'^location_importer_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         location_importer_job_poll, name='location_importer_job_poll'),
     url(r'^export_locations/$', location_export, name='location_export'),
-    url(r'^export_status/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
-        DownloadLocationStatusView.as_view(), name=DownloadLocationStatusView.urlname),
-    url(r'^export_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
-        location_download_job_poll, name='org_download_job_poll'),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
     url(r'^fields/$', LocationFieldsView.as_view(), name=LocationFieldsView.urlname),
     url(r'^downgrade/$', DowngradeLocationsView.as_view(),

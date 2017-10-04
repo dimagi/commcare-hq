@@ -15,12 +15,7 @@ from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
 
-from couchexport.export import export_from_tables
-from couchexport.models import Format
-from soil.util import get_download_file_path, expose_download
-
 from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.userreports.const import (
     UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
@@ -44,7 +39,6 @@ from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
-from corehq.util.view_utils import reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -425,15 +419,3 @@ def _indicator_metrics(date_created=None):
                 }
 
     return ret
-
-
-@task
-def export_ucr_async(export_table, download_id, title, user):
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}.xlsx'.format(title)
-    file_path = get_download_file_path(use_transfer, filename)
-    export_from_tables(export_table, file_path, Format.XLS_2007)
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
-    link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
-
-    send_report_download_email(title, user, link)
