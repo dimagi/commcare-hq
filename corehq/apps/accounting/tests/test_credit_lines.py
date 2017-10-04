@@ -9,7 +9,7 @@ from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
 from corehq.apps.accounting.models import (
-    CreditLine, CreditAdjustment, FeatureType, SoftwareProductType,
+    CreditLine, CreditAdjustment, FeatureType,
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, Subscription,
     CreditAdjustmentReason,
 )
@@ -49,7 +49,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         rate_credit_by_account = CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=SoftwareProductType.ANY
+            is_product=True
         )
         self.assertEqual(CreditAdjustment.objects.filter(
             credit_line=rate_credit_by_account).count(), 1
@@ -57,7 +57,7 @@ class TestCreditLines(BaseInvoiceTestCase):
 
         rate_credit_by_subscription = CreditLine.add_credit(
             self.product_rate.monthly_fee,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
             subscription=self.subscription
         )
         self.assertEqual(CreditAdjustment.objects.filter(
@@ -242,12 +242,12 @@ class TestCreditLines(BaseInvoiceTestCase):
         """
         product_credit = CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 1)
         CreditLine.add_credit(
             self.product_rate.monthly_fee, account=self.account,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
         )
         self.assertEqual(CreditAdjustment.objects.filter(credit_line=product_credit).count(), 2)
         current_product_credit = CreditLine.objects.get(id=product_credit.id)
@@ -302,7 +302,7 @@ class TestCreditTransfers(BaseAccountingTest):
             refreshed_credit = CreditLine.objects.get(pk=credit_line.pk)
             self.assertFalse(refreshed_credit.is_active)
             self.assertEqual(credit_line.feature_type, refreshed_credit.feature_type)
-            self.assertEqual(credit_line.product_type, refreshed_credit.product_type)
+            self.assertEqual(credit_line.is_product, refreshed_credit.is_product)
             self.assertEqual(credit_line.account, refreshed_credit.account)
             self.assertEqual(refreshed_credit.balance, Decimal('0.0000'))
             adjustments = refreshed_credit.creditadjustment_set.filter(
@@ -331,7 +331,7 @@ class TestCreditTransfers(BaseAccountingTest):
 
         product_credit = CreditLine.add_credit(
             self.product_credit_amt, subscription=first_sub,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
         )
         feature_credit = CreditLine.add_credit(
             self.feature_credit_amt, subscription=first_sub,
