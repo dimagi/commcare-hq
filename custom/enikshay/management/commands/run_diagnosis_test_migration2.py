@@ -102,7 +102,7 @@ class Command(BaseCommand):
                             diagnosis_test_summary = test_case_properties.get('result_summary_display', '')
                             diagnosis_test_type = test_case_properties.get('test_type_value', '')
                             diagnosis_test_type_label = test_case_properties.get('test_type_label', '')
-                            datamigration_diagnosis_test_information2 = 'yes',
+                            datamigration_diagnosis_test_information2 = 'yes'
                         else:
                             # Reset any properties we may have set accidentally in a previous migration
                             diagnosis_test_result_date = ''
