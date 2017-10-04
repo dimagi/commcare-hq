@@ -11,6 +11,7 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
 from casexml.apps.phone.tests.utils import (
     create_restore_user,
+    delete_cached_response,
     get_restore_config,
     MockDevice,
 )
@@ -19,7 +20,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -1274,31 +1274,24 @@ class SyncTokenCachingTest(BaseSyncTest):
 
     def testCacheInvalidationAfterFileDelete(self):
         # first request should populate the cache
-        config = RestoreConfig(
+        original_payload = RestoreConfig(
             project=self.project,
             restore_user=self.user,
             cache_settings=RestoreCacheSettings(force_cache=True),
             **self.restore_options
-        )
-        original_payload = config.get_payload()
+        ).get_payload()
         self.assertNotIsInstance(original_payload, CachedResponse)
 
-        original_name = config.restore_payload_path_cache.get_value()
-        self.assertTrue(original_name)
-        get_blob_db().delete(original_name)
+        delete_cached_response(original_payload)
 
         # resyncing should recreate the cache
-        next_config = RestoreConfig(
+        next_file = RestoreConfig(
             project=self.project,
             restore_user=self.user,
-            cache_settings=RestoreCacheSettings(force_cache=True),
             **self.restore_options
-        )
-        next_file = next_config.get_payload()
-        next_name = next_config.restore_payload_path_cache.get_value()
+        ).get_payload()
         self.assertNotIsInstance(next_file, CachedResponse)
-        self.assertTrue(next_name)
-        self.assertNotEqual(original_name, next_name)
+        self.assertNotEqual(original_payload.name, next_file.name)
 
 
 @use_sql_backend

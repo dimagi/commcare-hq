@@ -8,7 +8,7 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.restore import RestoreContent
+from casexml.apps.phone.restore import FileRestoreResponse
 from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
 
 
@@ -42,7 +42,7 @@ class OtaV3RestoreTest(TestCase):
         self.assertIn(case_id, device.sync().cases)
 
 
-class TestRestoreContent(SimpleTestCase):
+class TestRestoreResponse(SimpleTestCase):
 
     def _expected(self, username, body, items=None):
         items_text = (b' items="%s"' % items) if items is not None else b''
@@ -61,16 +61,14 @@ class TestRestoreContent(SimpleTestCase):
         user = u'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
-        with RestoreContent(user, False) as response:
+        with FileRestoreResponse(user, False) as response:
             response.append(body)
-            with response.get_fileobj() as fileobj:
-                self.assertEqual(expected, fileobj.read())
+        self.assertEqual(expected, str(response))
 
     def test_items(self):
         user = u'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
-        with RestoreContent(user, True) as response:
+        with FileRestoreResponse(user, True) as response:
             response.append(body)
-            with response.get_fileobj() as fileobj:
-                self.assertEqual(expected, fileobj.read())
+        self.assertEqual(expected, str(response))
