@@ -24,7 +24,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['age', 'gender'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };

@@ -24,7 +24,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['age', 'gender'];
     vm.rightLegend = {
         info: 'Percentage of individuals registered using CAS whose Adhaar identification has been captured',
     };
