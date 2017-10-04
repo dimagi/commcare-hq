@@ -11,6 +11,27 @@ from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_per
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
+TEST_TO_LABEL = {
+    'microscopy-zn': "Microscopy-ZN",
+    'microscopy-fluorescent': "Microscopy-Fluorescent",
+    'other_dst_tests': "Other DST Tests",
+    'other_clinical_tests': "Other Clinical Tests",
+    'tst': "TST",
+    'igra': "IGRA",
+    'chest_x-ray': "Chest X-ray",
+    'cytopathology': "Cytopathology",
+    'histopathology': "Histopathology",
+    'cbnaat': "CBNAAT",
+    'culture': "Culture",
+    'dst': "DST",
+    'line_probe_assay': "Line Probe Assay",
+    'fl_line_probe_assay': "FL LPA",
+    'sl_line_probe_assay': "SL LPA",
+    'gene_sequencing': "Gene Sequencing",
+    'other_clinical': "Other Clinical",
+    'other_dst': "Other DST",
+}
+
 
 class Command(BaseCommand):
 
@@ -114,7 +135,8 @@ class Command(BaseCommand):
                             diagnosis_test_lab_serial_number = ''
                             diagnosis_test_summary = ''
                             diagnosis_test_type = test_confirming_diagnosis
-                            diagnosis_test_type_label = ''
+                            diagnosis_test_type_label = TEST_TO_LABEL.get(test_confirming_diagnosis,
+                                                                          test_confirming_diagnosis)
                             datamigration_diagnosis_test_information2 = "yes"
 
                         update = {
@@ -174,7 +196,6 @@ class Command(BaseCommand):
             occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
         except ENikshayCaseNotFound:
             return None
-
 
         indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([occurrence_case.case_id])
         test_cases = [
