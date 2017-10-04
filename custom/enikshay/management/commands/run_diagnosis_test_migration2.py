@@ -91,7 +91,10 @@ class Command(BaseCommand):
 
                     test = self.get_relevant_test_case(domain, episode)
                     if test is not None and test.get_case_property('test_type_value'):
-                        if test.get_case_property('test_type_value') == test_confirming_diagnosis:
+                        if (
+                            not test_confirming_diagnosis
+                            or test.get_case_property('test_type_value') == test_confirming_diagnosis
+                        ):
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
 
