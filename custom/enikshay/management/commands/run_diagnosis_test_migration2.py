@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_person_case_from_episode
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -84,7 +85,7 @@ class Command(BaseCommand):
             writer = csv.writer(log_file)
             writer.writerow(headers)
 
-            for episode_case_id in accessor.get_case_ids_in_domain(type='episode'):
+            for episode_case_id in with_progress_bar(accessor.get_case_ids_in_domain(type='episode')):
                 episode = accessor.get_case(episode_case_id)
                 case_properties = episode.dynamic_case_properties()
 
