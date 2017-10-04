@@ -175,7 +175,7 @@ class LocationRestrictedEmwfOptionsMixin(object):
     def get_locations_query(self, query):
         if self.custom_locations_search():
             parent_name, search_query = self._get_location_specific_custom_filters(query)
-            parents = SQLLocation.active_objects.filter(name=parent_name)
+            parents = SQLLocation.active_objects.filter(name=parent_name, domain=self.domain)
             if parent_name and parents.count():
                 descendants = SQLLocation.active_objects.get_queryset_descendants(parents, include_self=True)
                 locations = descendants.filter_by_user_input(self.domain, search_query)
