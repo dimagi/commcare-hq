@@ -24,7 +24,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['gender', 'age', 'month'];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of AWCs with weighing scale for infants',
     };
