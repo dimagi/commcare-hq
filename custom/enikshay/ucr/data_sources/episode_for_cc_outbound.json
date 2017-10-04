@@ -16,19 +16,14 @@
         "table_id": "episode_for_cc_outbound",
         "display_name": "Episode for CC Outbound",
         "configured_filter": {
-            "type": "and",
-            "filters": [
-                {
-                    "operator": "eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "type"
-                    },
-                    "type": "boolean_expression",
-                    "property_value": "episode"
-                }
-            ]
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "episode"
         },
         "configured_indicators": [
             {
@@ -279,7 +274,7 @@
                     "argument_expression": {
                         "type": "array_index",
                         "array_expression": {
-                            "datatype": null,
+                            "datatype": "array",
                             "type": "property_name",
                             "property_name": "indices"
                         },
@@ -301,7 +296,7 @@
                     "argument_expression": {
                         "type": "array_index",
                         "array_expression": {
-                            "datatype": null,
+                            "datatype": "array",
                             "type": "property_name",
                             "property_name": "indices"
                         },
@@ -331,7 +326,7 @@
                         "argument_expression": {
                             "type": "array_index",
                             "array_expression": {
-                                "datatype": null,
+                                "datatype": "array",
                                 "type": "property_name",
                                 "property_name": "indices"
                             },
@@ -353,7 +348,7 @@
                         "argument_expression": {
                             "type": "array_index",
                             "array_expression": {
-                                "datatype": null,
+                                "datatype": "array",
                                 "type": "property_name",
                                 "property_name": "indices"
                             },
