@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from corehq.apps.ota.views import (
-    restore, search, claim, heartbeat
+    restore, search, claim, heartbeat, get_next_id,
 )
 from corehq.apps.hqadmin.views import DomainAdminRestoreView
 
@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^search/$', search, name='remote_search'),
     url(r'^claim-case/$', claim, name='claim_case'),
     url(r'^heartbeat/(?P<hq_app_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
+    url(r'^get_next_id/$', get_next_id, name='get_next_id'),
 ]
