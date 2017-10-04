@@ -185,11 +185,11 @@ class Command(BaseCommand):
         # Try get a test that matches the episode's test_confirming_diagnosis if set
         test_cases_matching_diagnosis_test_type = [
             case for case in test_cases
-            if case.get_case_property('test_type_value') ==
-               episode_case.get_case_property('test_confirming_diagnosis')
+            if (case.get_case_property('test_type_value') ==
+                episode_case.get_case_property('test_confirming_diagnosis'))
         ]
         test_cases = test_cases_matching_diagnosis_test_type or test_cases
-        
+
         if test_cases:
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
         else:
