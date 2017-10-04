@@ -1344,6 +1344,8 @@ def get_dst_test_case_properties(column_mapping, row):
                 "date_reported": date_reported,
                 "dst_test_type": column_mapping.get_value("dst_type", row),
                 "result": "tb_detected",
+                "drug_resistance_list": '',
+                "drug_sensitive_list": '',
                 "result_recorded": "yes",
             }
             properties.update(resistance_props)
@@ -1734,9 +1736,15 @@ def clean_marital_status(value):
     if not value:
         return None
     clean_value = value.lower().strip()
-    if clean_value in ["unmarried", "married", "widowed", "separated"]:
-        return clean_value
-    else:
+    try:
+        return {
+            "unmarried": "unmarried",
+            "single": "unmarried",
+            "married": "married",
+            "widowed": "widowed",
+            "separated": "separated",
+        }[clean_value]
+    except KeyError:
         raise FieldValidationFailure(value, "Marital Status")
 
 
