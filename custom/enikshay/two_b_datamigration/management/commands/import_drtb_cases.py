@@ -1743,6 +1743,7 @@ def clean_marital_status(value):
             "married": "married",
             "widowed": "widowed",
             "separated": "separated",
+            "": None,
         }[clean_value]
     except KeyError:
         raise FieldValidationFailure(value, "Marital Status")
