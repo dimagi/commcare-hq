@@ -139,7 +139,7 @@ class Command(BaseCommand):
         elif case.type == "episode":
             return self.get_episode_case_status(case, episode_cases)
         elif case.type == "test":
-            return recently_opened_episode_case, self.get_test_case_status(
+            return self.get_test_case_status(
                 case, recently_opened_episode_case, occurrence_case)
 
     def get_person_case_status(self, person_case):
@@ -166,7 +166,7 @@ class Command(BaseCommand):
             props_status[prop] = test_case_props.get(prop)
         recently_opened_episode_case, props_status['updates'] = self.test_case_updates(
             test_case, recently_opened_episode_case, occurrence_case)
-        return props_status
+        return recently_opened_episode_case, props_status
 
     @staticmethod
     def person_case_updates(person_case):
