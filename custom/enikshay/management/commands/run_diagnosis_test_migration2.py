@@ -11,6 +11,27 @@ from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_per
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
+TEST_TO_LABEL = {
+    'microscopy-zn': "Microscopy-ZN",
+    'microscopy-fluorescent': "Microscopy-Fluorescent",
+    'other_dst_tests': "Other DST Tests",
+    'other_clinical_tests': "Other Clinical Tests",
+    'tst': "TST",
+    'igra': "IGRA",
+    'chest_x-ray': "Chest X-ray",
+    'cytopathology': "Cytopathology",
+    'histopathology': "Histopathology",
+    'cbnaat': "CBNAAT",
+    'culture': "Culture",
+    'dst': "DST",
+    'line_probe_assay': "Line Probe Assay",
+    'fl_line_probe_assay': "FL LPA",
+    'sl_line_probe_assay': "SL LPA",
+    'gene_sequencing': "Gene Sequencing",
+    'other_clinical': "Other Clinical",
+    'other_dst': "Other DST",
+}
+
 
 class Command(BaseCommand):
 
@@ -68,7 +89,7 @@ class Command(BaseCommand):
                 case_properties = episode.dynamic_case_properties()
 
                 if self.should_migrate_case(episode_case_id, case_properties, domain):
-                    test_confirming_diagnosis = case_properties.get('test_confirmed_diagnosis')
+                    test_confirming_diagnosis = case_properties.get('test_confirming_diagnosis')
                     date_of_diagnosis = case_properties.get('date_of_diagnosis')
                     treatment_initiation_date = case_properties.get('treatment_initiation_date')
                     current_diagnosis_test_result_date = case_properties.get('diagnosis_test_result_date')
@@ -91,7 +112,10 @@ class Command(BaseCommand):
 
                     test = self.get_relevant_test_case(domain, episode)
                     if test is not None and test.get_case_property('test_type_value'):
-                        if test.get_case_property('test_type_value') != test_confirming_diagnosis:
+                        if (
+                            not test_confirming_diagnosis
+                            or test.get_case_property('test_type_value') == test_confirming_diagnosis
+                        ):
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
 
@@ -102,7 +126,7 @@ class Command(BaseCommand):
                             diagnosis_test_summary = test_case_properties.get('result_summary_display', '')
                             diagnosis_test_type = test_case_properties.get('test_type_value', '')
                             diagnosis_test_type_label = test_case_properties.get('test_type_label', '')
-                            datamigration_diagnosis_test_information2 = 'yes',
+                            datamigration_diagnosis_test_information2 = 'yes'
                         else:
                             # Reset any properties we may have set accidentally in a previous migration
                             diagnosis_test_result_date = ''
@@ -111,7 +135,8 @@ class Command(BaseCommand):
                             diagnosis_test_lab_serial_number = ''
                             diagnosis_test_summary = ''
                             diagnosis_test_type = test_confirming_diagnosis
-                            diagnosis_test_type_label = ''
+                            diagnosis_test_type_label = TEST_TO_LABEL.get(test_confirming_diagnosis,
+                                                                          test_confirming_diagnosis)
                             datamigration_diagnosis_test_information2 = "yes"
 
                         update = {
@@ -180,6 +205,15 @@ class Command(BaseCommand):
                  or case.get_case_property('rft_general') == 'diagnosis_drtb')
             and case.get_case_property('result') == 'tb_detected'
         ]
+
+        # Try get a test that matches the episode's test_confirming_diagnosis if set
+        test_cases_matching_diagnosis_test_type = [
+            case for case in test_cases
+            if (case.get_case_property('test_type_value') ==
+                episode_case.get_case_property('test_confirming_diagnosis'))
+        ]
+        test_cases = test_cases_matching_diagnosis_test_type or test_cases
+
         if test_cases:
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
         else:
