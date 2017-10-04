@@ -56,6 +56,7 @@ branches:
   - np/billing/is_product # NP
   - ce/async-download # Cal 10/3
   - jls/scroll-app-menu # Jenny 10/3
+  - mk-search-under-location # Manish 4-Oct
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
