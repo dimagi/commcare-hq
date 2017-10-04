@@ -3,6 +3,7 @@ from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_form_path,
+    get_test_created_form,
 )
 
 DATAMIGRATION_CASE_PROPERTY = 'datamigration_referring_facility'
@@ -28,10 +29,10 @@ class Command(BaseEnikshayCaseMigration):
         ):
             return {}
 
-        form_requesting_test = test.actions[0].form
+        form_data_requesting_test = get_test_created_form(test)
         referring_facility_id = get_form_path(
             ['ql_referring_facility_details', 'referring_facility_id'],
-            form_requesting_test.form_data
+            form_data_requesting_test
         )
         if not referring_facility_id:
             return {}
