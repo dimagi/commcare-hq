@@ -42,8 +42,7 @@ class Command(BaseCommand):
         # Write out resource_versions.js for all js files in resource_versions
         # This is a LOT of js files, would be good to reduce the set
         if settings.STATIC_CDN:
-            with open(os.path.join(self.root_dir, 'corehq', 'apps', 'hqwebapp',
-                                   'static', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
+            with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
                     file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3], ".js?version=%s" % version if version else "")
                     for file, version in resource_versions.iteritems() if file.endswith(".js")
