@@ -48,7 +48,6 @@ class ImportDRTBTestMixin(object):
         get_users_path = \
             "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.get_users_by_location_id"
         mock_user = MagicMock(
-            domain=self.domain,
             devices=[DeviceIdLastUsed(device_id="drtb-case-import-script")],
             is_demo_user=False,
             user_data={"id_issuer_body": "FOO"},
