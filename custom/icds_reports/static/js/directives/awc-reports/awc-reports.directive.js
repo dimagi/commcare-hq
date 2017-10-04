@@ -1764,12 +1764,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
 
     vm.getPopoverContent = function (data, type) {
         var html = '';
+
+        var recordedWeight = 'Data not Entered';
+        var recordedHeight = 'Data not Entered';
+        var age = 'Data not Entered';
+
+        if (data) {
+            recordedWeight = d3.format(".2f")(data.recorded_weight) + ' kg';
+            recordedHeight = d3.format(".2f")(data.recorded_height) + ' cm';
+            age = data.age_in_months + ' months';
+        }
+
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_weight) : "Data not Entered") + '</div>';
+            html += '<div>Weight: ' + recordedWeight + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_height) : "Data not Entered") + '</div>';
+            html += '<div>Height: ' + recordedHeight + '</div>';
         }
+        html += '<div>Age: ' + age + '</div>';
         return html;
     };
 
@@ -1948,7 +1960,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
-                axisLabel: 'Height (Cms)',
+                axisLabel: 'Height (Cm)',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
@@ -1989,7 +2001,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
-                axisLabel: 'Weight (Kgs)',
+                axisLabel: 'Weight (Kg)',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
@@ -2019,7 +2031,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
-                axisLabel: 'Height (Cms)',
+                axisLabel: 'Height (Cm)',
                 showMaxMin: true,
             },
             yAxis: {
@@ -2029,7 +2041,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
-                axisLabel: 'Weight (Kgs)',
+                axisLabel: 'Weight (Kg)',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
