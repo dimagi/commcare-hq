@@ -1572,13 +1572,13 @@ def clean_weight_band(value):
         return None
     try:
         return {
-            "Less than 16": "drtb_conventional_lt_16",
+            "Less than 16": "drtb_conventional_old_lt_16",
             "16-29": "drtb_conventional_16_29",
             "30-45": "drtb_conventional_30_45",
             "16-25": "drtb_conventional_old_16_25",
             "26-45": "drtb_conventional_old_26_45",
-            "46-70": "drtb_conventional_46_70",
-            "Above 70": "drtb_conventional_gt70"
+            "46-70": "drtb_conventional_old_46_70",
+            "Above 70": "drtb_conventional_old_gt70"
         }[value]
     except KeyError:
         raise FieldValidationFailure(value, "Weight Band")
