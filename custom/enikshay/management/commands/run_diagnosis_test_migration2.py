@@ -91,7 +91,7 @@ class Command(BaseCommand):
 
                     test = self.get_relevant_test_case(domain, episode)
                     if test is not None and test.get_case_property('test_type_value'):
-                        if test.get_case_property('test_type_value') != test_confirming_diagnosis:
+                        if test.get_case_property('test_type_value') == test_confirming_diagnosis:
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
 
@@ -172,6 +172,7 @@ class Command(BaseCommand):
         except ENikshayCaseNotFound:
             return None
 
+
         indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([occurrence_case.case_id])
         test_cases = [
             case for case in indexed_cases
@@ -180,6 +181,16 @@ class Command(BaseCommand):
                  or case.get_case_property('rft_general') == 'diagnosis_drtb')
             and case.get_case_property('result') == 'tb_detected'
         ]
+
+        # Try get a test that matches the episode's test_confirming_diagnosis if set
+        test_cases_matching_diagnosis_test_type = []
+        test_confirming_diagnosis = episode_case.get_case_property('test_confirming_diagnosis')
+        if test_confirming_diagnosis:
+            test_cases_matching_diagnosis_test_type = [
+                case for case in test_cases
+                if case.get_case_property('test_type_value') == test_confirming_diagnosis
+            ]
+        test_cases = test_cases_matching_diagnosis_test_type or test_cases
         if test_cases:
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
         else:
