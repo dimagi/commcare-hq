@@ -102,7 +102,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
 
     def _get_person_id_link(self, record):
         try:
-            person_id = get_person_case(self.domain, record.payload_id)
+            person_id = get_person_case(self.domain, record.payload_id).case_id
             return self._get_case_id_link(person_id)
         except ENikshayException as error:
             return u"Error: {}".format(error)

@@ -449,19 +449,19 @@ def get_person_case(domain, case_id):
     case_type = case.type
 
     if case_type == CASE_TYPE_PERSON:
-        return case_id
+        return case
     elif case_type == CASE_TYPE_EPISODE:
-        return get_person_case_from_episode(domain, case.case_id).case_id
+        return get_person_case_from_episode(domain, case.case_id)
     elif case_type == CASE_TYPE_ADHERENCE:
         episode_case = get_episode_case_from_adherence(domain, case.case_id)
-        return get_person_case_from_episode(domain, episode_case.case_id).case_id
+        return get_person_case_from_episode(domain, episode_case.case_id)
     elif case_type == CASE_TYPE_TEST:
         occurrence_case = get_occurrence_case_from_test(domain, case.case_id)
-        return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
+        return get_person_case_from_occurrence(domain, occurrence_case.case_id)
     elif case_type == CASE_TYPE_OCCURRENCE:
-        return get_person_case_from_occurrence(domain, case.case_id).case_id
+        return get_person_case_from_occurrence(domain, case.case_id)
     elif case_type == CASE_TYPE_VOUCHER:
-        return get_person_case_from_voucher(domain, case.case_id).case_id
+        return get_person_case_from_voucher(domain, case.case_id)
     else:
         raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
 
