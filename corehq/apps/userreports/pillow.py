@@ -162,7 +162,7 @@ class ConfigurableReportTableManagerMixin(object):
                 tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
             except BadSpecError:
                 _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "Broken data source {}".format(adapter.config.get_id)
+                _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
 
         _assert = soft_assert(notify_admins=True)
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
