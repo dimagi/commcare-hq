@@ -42,7 +42,6 @@ class Command(BaseCommand):
             "log_path",
             help="Path to write the log to"
         )
-        parser.add_argument('log_errors')
         parser.add_argument(
             '--commit',
             action='store_true',
