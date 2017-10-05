@@ -1,18 +1,16 @@
 from __future__ import print_function
-import hashlib
 import json
 import os
+import re
 import yaml
 from django.contrib.staticfiles import finders
 from django.conf import settings
-from dimagi.utils import gitinfo
-from django.core import cache
 from subprocess import call
 
-from corehq.apps.hqwebapp.management.commands.resource_static import Command as BaseCommand
+from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
 
 
-class Command(BaseCommand):
+class Command(ResourceStaticCommand):
     help = '''
         Runs RequireJS optimizer to concatenate, minify, and bundle JavaScript files
         and set them up with the CDN.
@@ -29,6 +27,41 @@ class Command(BaseCommand):
         # Write build.js file to feed to r.js
         with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'yaml', 'requirejs.yaml'), 'r') as f:
             config = yaml.load(f)
+
+            bundles = {}
+            prefix = os.path.join(os.getcwd(), 'corehq')
+            for finder in finders.get_finders():
+                if isinstance(finder, finders.AppDirectoriesFinder):
+                    for path, storage in finder.list(['.*', '*~', '* *', '*.*ss', '*.png']):
+                        if not storage.location.startswith(prefix):
+                            continue
+                        if path.endswith(".js"):
+                            directory = re.sub(r'/[^/]*$', '', path)
+                            if directory not in bundles:
+                                bundles[directory] = []
+                            bundles[directory].append(path[:-3])
+                            '''
+                            bundles = {
+                                'case/js' => [
+                                    'case/js/case_details'
+                                ]
+                            }
+                            '''
+            customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
+            for directory, inclusions in bundles.iteritems():
+                if directory not in customized and not directory.startswith("app_manager/js/vellum"):
+                    # Add this module's config to build config
+                    config['modules'].append({
+                        'name': os.path.join(directory, 'bundle'),
+                        'include': inclusions,
+                        'exclude': ['hqwebapp/js/bundle'],
+                    })
+
+            # Write .js files to staticfiles
+            for module in config['modules']:
+                with open(os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js"), 'w') as fout:
+                    fout.write("define([], function() {});")
+
             with open(os.path.join(self.root_dir, 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
@@ -40,7 +73,7 @@ class Command(BaseCommand):
             resource_versions[module['name'] + ".js"] = self.get_hash(filename)
 
         # Write out resource_versions.js for all js files in resource_versions
-        # This is a LOT of js files, would be good to reduce the set
+        # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
         if settings.STATIC_CDN:
             with open(os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
