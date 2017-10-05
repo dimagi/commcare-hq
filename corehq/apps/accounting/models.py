@@ -2176,7 +2176,8 @@ class BillingRecord(BillingRecordBase):
         date_start, date_end = get_first_last_days(year, month)
         return self.__class__.objects.filter(
             invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
-            invoice__subscription__subscriber=self.invoice.subscription.subscriber
+            invoice__subscription__subscriber=self.invoice.subscription.subscriber,
+            invoice__is_hidden_to_ops=False,
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
     def email_context(self):
