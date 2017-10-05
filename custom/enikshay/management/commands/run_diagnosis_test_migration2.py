@@ -124,9 +124,9 @@ class Command(BaseCommand):
                         if (
                             test and test.get_case_property("date_tested")
                             and abs((
-                                     datetime.strptime(comparison_date, date_format) -
-                                     datetime.strptime(test.get_case_property("date_tested"), date_format)
-                                    ).days) <= 30
+                                datetime.strptime(comparison_date, date_format) -
+                                datetime.strptime(test.get_case_property("date_tested"), date_format)
+                            ).days) <= 30
                         ):
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
