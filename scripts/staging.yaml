@@ -50,10 +50,13 @@ branches:
   - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
   - np/11.1 # NP 8/24
-  - jls/fixtures-require-js-2017 # Jenny 9/18
+#  - jls/fixtures-require-js-2017 # Jenny 9/18
+  - jls/f3171cc490f044b030277b012d99a87505633d52 # Jenny 10/5
   - sk/form-error2  # sk 9/26
   - je/mobile-ucr-v2 # j$ 9/29
-  - np/billing/is_product # NP
+  - ce/async-download # Cal 10/3
+  - jls/scroll-app-menu # Jenny 10/3
+  - mk-search-under-location # Manish 4-Oct
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

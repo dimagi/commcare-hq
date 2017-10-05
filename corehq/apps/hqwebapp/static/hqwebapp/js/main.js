@@ -268,7 +268,14 @@ hqDefine('hqwebapp/js/main', [
         'use strict';
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
+
         $('#modalTrial30Day').modal('show');
+
+        $(document).on('click', '.track-usage-link', function(e) {
+            var $link = $(e.currentTarget),
+                data = $link.data();
+            window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
+        });
     });
 
     return {

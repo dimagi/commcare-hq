@@ -103,6 +103,28 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                             }
                                         }
                                     }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "term": {
+                                                        "case_properties.key": "parrot_name"
+                                                    }
+                                                },
+                                                "query": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "AUTO"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             ],
                             "should": [
@@ -120,7 +142,7 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                                     "match": {
                                                         "case_properties.value": {
                                                             "query": "polly",
-                                                            "fuzziness": "AUTO"
+                                                            "fuzziness": "0"
                                                         }
                                                     }
                                                 }

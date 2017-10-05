@@ -155,7 +155,7 @@ def save_user_callback(sender, couch_user, **kwargs):
         changed = set_issuer_id(commcare_user.domain, commcare_user) or changed
         changed = add_drtb_hiv_to_dto(commcare_user.domain, commcare_user) or changed
         if changed:
-            commcare_user.save()
+            commcare_user.save(fire_signals=False)
 
 
 def set_default_role(domain, commcare_user):

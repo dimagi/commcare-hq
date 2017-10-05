@@ -16,15 +16,15 @@ class Requests(object):
         self.username = username
         self.password = password
 
-    def _url(self, uri):
+    def get_url(self, uri):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def get(self, uri, *args, **kwargs):
-        return self.requests.get(self._url(uri), *args,
+        return self.requests.get(self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.requests.post(self._url(uri), *args,
+        return self.requests.post(self.get_url(uri), *args,
                                   auth=(self.username, self.password), **kwargs)
 
 
@@ -57,13 +57,19 @@ def set_person_properties(requests, person_uuid, properties):
     for p in properties:
         assert p in allowed_properties
 
-    response = requests.post('/ws/rest/v1/person/{person_uuid}'.format(
-        person_uuid=person_uuid), json=properties
+    response = requests.post(
+        '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
+        json=properties
     )
     try:
         response.raise_for_status()
     except HTTPError:
-        logger.debug(response.json())
+        logger.debug(
+            'Request: ',
+            requests.get_url('/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid)),
+            properties
+        )
+        logger.debug('Response: ', response.json())
         raise
     return response.json()
 
@@ -95,7 +101,8 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
     try:
         response.raise_for_status()
     except HTTPError:
-        logger.debug(response.json())
+        logger.debug('Request: ', requests.get_url('/ws/rest/v1/visit'), visit)
+        logger.debug('Response: ', response.json())
         raise
     visit_uuid = response.json()['uuid']
 
@@ -113,7 +120,8 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
     try:
         response.raise_for_status()
     except HTTPError:
-        logger.debug(response.json())
+        logger.debug('Request: ', requests.get_url('/ws/rest/v1/encounter'), encounter)
+        logger.debug('Response: ', response.json())
         raise
     encounter_uuid = response.json()['uuid']
 
@@ -133,11 +141,12 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
             try:
                 response.raise_for_status()
             except HTTPError:
-                logger.debug(response.json())
+                logger.debug('Request: ', requests.get_url('/ws/rest/v1/obs'), observation)
+                logger.debug('Response: ', response.json())
                 raise
             observation_uuids.append(response.json()['uuid'])
 
-    logger.debug('observations', observation_uuids)
+    logger.debug('Observations created: ', observation_uuids)
 
 
 def search_patients(requests, search_string):

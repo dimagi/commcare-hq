@@ -995,7 +995,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_completed_1year_immunizations'
             ),
             AggregateColumn(
-                'Percentage of children breastfed at birth',
+                'Percentage of children with early initiation of breastfeeding',
                 percent,
                 [
                     SumColumn('bf_at_birth'),
@@ -1004,7 +1004,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_breastfed_at_birth'
             ),
             AggregateColumn(
-                'Percentage of children with early initiation of breastfeeding',
+                'Percentage of children exclusively breastfeeding',
                 percent,
                 [
                     SumColumn('ebf_in_month'),

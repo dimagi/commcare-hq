@@ -241,7 +241,6 @@ class DashboardView(TemplateView):
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
-                form_id=0
             )
         return super(DashboardView, self).get_context_data(**kwargs)
 
@@ -1009,7 +1008,9 @@ class AWCsCoveredView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1039,7 +1040,9 @@ class RegisteredHouseholdView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1069,7 +1072,9 @@ class EnrolledChildrenView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1108,7 +1113,9 @@ class EnrolledWomenView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1139,7 +1146,9 @@ class LactatingEnrolledWomenView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1169,7 +1178,9 @@ class AdolescentGirlsView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1199,7 +1210,9 @@ class AdhaarBeneficiariesView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1230,7 +1243,9 @@ class CleanWaterView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
         domain = self.kwargs['domain']
 
         config = {
@@ -1260,7 +1275,9 @@ class FunctionalToiletView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1291,7 +1308,9 @@ class MedicineKitView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1322,7 +1341,9 @@ class InfantsWeightScaleView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
@@ -1353,7 +1374,9 @@ class AdultWeightScaleView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        test_date = datetime(now.year, now.month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 

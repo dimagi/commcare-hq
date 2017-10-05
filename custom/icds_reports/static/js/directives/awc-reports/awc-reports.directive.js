@@ -64,18 +64,6 @@ var weight_for_age = {
             {x: 58, y: 11.9},
             {x: 59, y: 12},
             {x: 60, y: 12.1},
-            {x: 61, y: 12.352},
-            {x: 62, y: 12.456},
-            {x: 63, y: 12.559},
-            {x: 64, y: 12.662},
-            {x: 65, y: 12.764},
-            {x: 66, y: 12.866},
-            {x: 67, y: 12.968},
-            {x: 68, y: 13.069},
-            {x: 69, y: 13.169},
-            {x: 70, y: 13.27},
-            {x: 71, y: 13.371},
-            {x: 72, y: 13.471},
         ],
         'orange': [
             {x: 0, y: 0.4},
@@ -139,18 +127,6 @@ var weight_for_age = {
             {x: 58, y: 1.6},
             {x: 59, y: 1.6},
             {x: 60, y: 1.6},
-            {x: 61, y: 1.609},
-            {x: 62, y: 1.627},
-            {x: 63, y: 1.645},
-            {x: 64, y: 1.662},
-            {x: 65, y: 1.68},
-            {x: 66, y: 1.698},
-            {x: 67, y: 1.715},
-            {x: 68, y: 1.732},
-            {x: 69, y: 1.75},
-            {x: 70, y: 1.768},
-            {x: 71, y: 1.785},
-            {x: 72, y: 1.803},
         ],
         'green': [
             {x: 0, y: 1.8},
@@ -214,18 +190,6 @@ var weight_for_age = {
             {x: 58, y: 10.9},
             {x: 59, y: 11},
             {x: 60, y: 11.2},
-            {x: 61, y: 10.939},
-            {x: 62, y: 11.007},
-            {x: 63, y: 11.159},
-            {x: 64, y: 11.313},
-            {x: 65, y: 11.467},
-            {x: 66, y: 11.621},
-            {x: 67, y: 11.777},
-            {x: 68, y: 11.934},
-            {x: 69, y: 12.092},
-            {x: 70, y: 12.25},
-            {x: 71, y: 12.41},
-            {x: 72, y: 12.571},
         ],
     },
     M: {
@@ -291,18 +255,6 @@ var weight_for_age = {
             {x: 58, y: 12.2},
             {x: 59, y: 12.3},
             {x: 60, y: 12.4},
-            {x: 61, y: 12.718},
-            {x: 62, y: 12.833},
-            {x: 63, y: 12.95},
-            {x: 64, y: 13.067},
-            {x: 65, y: 13.186},
-            {x: 66, y: 13.307},
-            {x: 67, y: 13.429},
-            {x: 68, y: 13.553},
-            {x: 69, y: 13.679},
-            {x: 70, y: 13.805},
-            {x: 71, y: 13.934},
-            {x: 72, y: 14.063},
         ],
         'orange': [
             {x: 0, y: 0.4},
@@ -366,18 +318,6 @@ var weight_for_age = {
             {x: 58, y: 1.6},
             {x: 59, y: 1.7},
             {x: 60, y: 1.7},
-            {x: 61, y: 1.649},
-            {x: 62, y: 1.663},
-            {x: 63, y: 1.677},
-            {x: 64, y: 1.692},
-            {x: 65, y: 1.706},
-            {x: 66, y: 1.72},
-            {x: 67, y: 1.735},
-            {x: 68, y: 1.749},
-            {x: 69, y: 1.763},
-            {x: 70, y: 1.778},
-            {x: 71, y: 1.792},
-            {x: 72, y: 1.807},
         ],
         'green': [
             {x: 0, y:  1.9},
@@ -441,18 +381,6 @@ var weight_for_age = {
             {x: 58, y: 9.9},
             {x: 59, y: 9.9},
             {x: 60, y: 10.1},
-            {x: 61, y: 9.833},
-            {x: 62, y: 9.927},
-            {x: 63, y: 10.056},
-            {x: 64, y: 10.187},
-            {x: 65, y: 10.318},
-            {x: 66, y: 10.45},
-            {x: 67, y: 10.583},
-            {x: 68, y: 10.716},
-            {x: 69, y: 10.851},
-            {x: 70, y: 10.986},
-            {x: 71, y: 11.122},
-            {x: 72, y: 11.259},
         ],
     },
 };
@@ -1782,9 +1710,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
-        .withFixedColumns({
-            leftColumns: 1,
-        });
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
@@ -1839,12 +1764,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
 
     vm.getPopoverContent = function (data, type) {
         var html = '';
+
+        var recordedWeight = 'Data not Entered';
+        var recordedHeight = 'Data not Entered';
+        var age = 'Data not Entered';
+
+        if (data) {
+            recordedWeight = d3.format(".2f")(data.recorded_weight) + ' kg';
+            recordedHeight = d3.format(".2f")(data.recorded_height) + ' cm';
+            age = data.age_in_months + ' months';
+        }
+
         if (type === 'weight' || type === 'both') {
-            html += '<div>Weight: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_weight) : "Data not Entered") + '</div>';
+            html += '<div>Weight: ' + recordedWeight + '</div>';
         }
         if (type === 'height' || type === 'both') {
-            html += '<div>Height: ' + (data !== void(0) ? d3.format(".2f")(data.recorded_height) : "Data not Entered") + '</div>';
+            html += '<div>Height: ' + recordedHeight + '</div>';
         }
+        html += '<div>Age: ' + age + '</div>';
         return html;
     };
 
@@ -1926,6 +1863,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                         return d3.format('d')(d);
                     },
                 },
+                forceY: [0, 6],
                 reduceXTicks: false,
                 staggerLabels: false,
             },
@@ -1950,7 +1888,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
                 showValues: true,
                 showControls: false,
-                useInteractiveGuideline: false,
+                useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 1000,
                 xAxis: {
@@ -1964,10 +1902,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 yAxis: {
                     axisLabel: 'Number of Children',
                     tickFormat: function(d) {
-                        return d3.format(',')(d);
+                        return d3.format('d')(d);
                     },
-                    forceY: [0],
                 },
+                forceY: [0],
                 callback: function(chart) {
                     var tooltip = chart.interactiveLayer.tooltip;
                     tooltip.contentGenerator(function (d) {
@@ -1992,7 +1930,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         $scope.$apply();
     }, 1000);
 
-    vm.beneficiaryChartOptions = {
+    vm.beneficiaryChartOptionsHFA = {
         chart: {
             type: 'multiChart',
             height: 450,
@@ -2010,7 +1948,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
-                axisLabel: '',
+                axisLabel: 'Age (Months)',
                 showMaxMin: true,
                 tickValues: [0, 12, 24, 36, 48, 60],
             },
@@ -2021,10 +1959,52 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
+                axisLabel: 'Height (Cm)',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+                rotateLabels: -90,
+            },
+            stack1: {
+                interactive: false,
+            },
+        },
+    };
+
+    vm.beneficiaryChartOptionsWFA = {
+        chart: {
+            type: 'multiChart',
+            height: 450,
+            margin: {
+                top: 20,
+                right: 20,
+                bottom: 50,
+                left: 80,
+            },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
+            useVoronoi: false,
+            clipEdge: true,
+            showControls: false,
+            duration: 100,
+            useInteractiveGuideline: true,
+            xAxis: {
+                axisLabel: 'Age (Months)',
+                showMaxMin: true,
+                tickValues: [0, 12, 24, 36, 48, 60],
+            },
+            yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
+            },
+            yAxis1: {
+                axisLabel: 'Weight (Kg)',
+                tickFormat: function(d){
+                    return d3.format("d")(d);
+                },
+                rotateLabels: -90,
             },
             stack1: {
                 interactive: false,
@@ -2050,7 +2030,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xAxis: {
-                axisLabel: '',
+                axisLabel: 'Height (Cm)',
                 showMaxMin: true,
             },
             yAxis: {
@@ -2060,10 +2040,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
             },
             yAxis1: {
-                axisLabel: '',
+                axisLabel: 'Weight (Kg)',
                 tickFormat: function(d){
                     return d3.format("d")(d);
                 },
+                rotateLabels: -90,
             },
             stack1: {
                 interactive: false,

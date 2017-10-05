@@ -44,7 +44,7 @@ def bulk_upload_async(domain, user_specs, group_specs):
 
 
 @task()
-def bulk_download_users_async(domain, download_id):
+def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulkupload import dump_users_and_groups, GroupNameError
     DownloadBase.set_progress(bulk_download_users_async, 0, 100)
     errors = []
@@ -52,6 +52,7 @@ def bulk_download_users_async(domain, download_id):
         dump_users_and_groups(
             domain,
             download_id,
+            user_filters
         )
     except GroupNameError as e:
         group_urls = [

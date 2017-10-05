@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "voucher_v2",
+    "data_source_table": "voucher_v3",
     "report_id": "payment_register",
     "config": {
         "description": "",
@@ -30,7 +30,7 @@
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "display": "Location",
-                "field": "voucher_district_id",
+                "field": "voucher_fulfilled_by_location_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",

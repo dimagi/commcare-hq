@@ -163,7 +163,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     html.push('</div>');
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend')
-                        .attr('style', 'width: 300px; left: 5%; bottom: 20%;')
+                        .attr('style', 'width: 300px; left: 1%; bottom: 20%;')
                         .html(html.join(''));
                 },
             });
@@ -182,6 +182,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             }
                             html +='</div>';
                             html +='</br>';
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
+                        } else {
                             html += '<div class="row no-margin">';
                             html += this.options.rightLegend['info'];
                             html +='</div>';
