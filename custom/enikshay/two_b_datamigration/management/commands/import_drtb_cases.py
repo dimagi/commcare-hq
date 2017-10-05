@@ -275,8 +275,11 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
+    "occupation": 13,
+    "marital_status": 14,
     "social_scheme": 15,
     "key_populations": 16,
+    "initial_home_visit_by": 17,
     "initial_home_visit_date": 18,
     "aadhaar_number": 19,
     "drtb_center_code": 21,
@@ -329,8 +332,8 @@ MUMBAI_MAP = {
     "Mfx (2.0)": 71,  # High dose Moxi
     "Cfz": 72,  # Clofa
     "Lzd": 73,  # Line
-    "H (0.4)": 74,
-    "H (0.1)": 75,  # High dose INH
+    "H (0.1)": 74,  # High dose INH
+    "H (0.4)": 75,
     "PAS": 76,  # Na-Pas
     "Oflox": 77,  # Oflox
     "S": 78,
@@ -426,6 +429,40 @@ DRUG_NAME_TO_ID_MAPPING = {
 }
 
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
+
+PREV_OCCURRENCE_PROPERTIES = [
+    "disease_classification",
+    "site_choice",
+    "site_detail",
+]
+
+PREV_EPISODE_PROPERTIES = [
+    "adherence_total_doses_taken",
+    "adherence_type_choice",
+    "adherence_type_ict_choice",
+    "adherence_type_ict_other_detail",
+    "adherence_type_other_detail",
+    "adr_history",
+    "date_of_diagnosis",
+    "dosage_display",
+    "dosage_history",
+    "drtb_meetings_history",
+    "drug_resistance_display",
+    "episode_type",
+    "treatment_initiation_date",
+    "treatment_outcome",
+    "treatment_outcome_date",
+    "treatment_outcome_loss_to_follow_up_reason",
+    "treatment_regimen",
+    "treatment_status",
+    "treatment_status_other",
+    "weight_band",
+    "weight_history",
+]
+
+PREV_PERSON_PROPERTIES = [
+    "phi_name",
+]
 
 
 class ColumnMapping(object):
@@ -556,7 +593,8 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     episode_case_properties = get_episode_case_properties(domain, column_mapping, city_constants, row)
     test_case_properties = get_test_case_properties(
         domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
-    drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
+    drug_resistance_case_properties = get_drug_resistance_case_properties(
+        column_mapping, row, test_case_properties)
     secondary_owner_case_properties = get_secondary_owner_case_properties(
         domain, city_constants, column_mapping, row, person_case_properties['dto_id'])
 
@@ -568,8 +606,30 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
     )
 
     # Close the occurrence if we have a treatment outcome recorded
-    close_occurrence = ("treatment_outcome" in episode_case_properties and
-                        episode_case_properties["treatment_outcome"])
+    close_occurrence = False
+    if (
+        "treatment_outcome" in episode_case_properties
+        and episode_case_properties["treatment_outcome"]
+    ):
+        close_occurrence = True
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_OCCURRENCE_PROPERTIES, occurrence_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_EPISODE_PROPERTIES, episode_case_properties))
+        person_case_properties.update(
+            get_prev_person_case_properties(PREV_PERSON_PROPERTIES, person_case_properties))
+        person_case_properties['prev_drtb_center_name'] = \
+            secondary_owner_case_properties[0]['secondary_owner_name']
+        person_case_properties['owner_id'] = '_archive_'
+        person_case_properties['phi_name'] = ''
+        person_case_properties['tu_name'] = ''
+        person_case_properties['tu_id'] = ''
+        person_case_properties['dto_name'] = ''
+        person_case_properties['dto_id'] = ''
+        person_case_properties['current_episode_type'] = ''
+        person_case_properties['current_disease_classification'] = ''
+        person_case_properties['current_site_choice'] = ''
+        person_case_properties['current_site_detail'] = ''
 
     # calculate episode_case_id so we can also set it on all tests
     episode_case_id = uuid.uuid4().hex
@@ -582,17 +642,20 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
         close=close_occurrence)
     episode_case_structure = get_case_structure(
         CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure,
-        case_id=episode_case_id)
+        case_id=episode_case_id, close=close_occurrence)
     drug_resistance_case_structures = [
-        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in drug_resistance_case_properties
     ]
     test_case_structures = [
-        get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in test_case_properties
     ]
     secondary_owner_case_structures = [
-        get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_SECONDARY_OWNER, props, migration_id, host=occurrence_case_structure,
+                           close=close_occurrence)
         for props in secondary_owner_case_properties
     ]
 
@@ -705,6 +768,12 @@ def get_person_case_properties(domain, column_mapping, row):
     social_scheme = column_mapping.get_value("social_scheme", row)
     properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
 
+    occupation = column_mapping.get_value("occupation", row)
+    properties["occupation"] = clean_occupation(occupation)
+
+    marital_status = column_mapping.get_value("marital_status", row)
+    properties["marital_status"] = clean_marital_status(marital_status)
+
     return properties
 
 
@@ -714,7 +783,8 @@ def get_occurrence_case_properties(column_mapping, row):
         "owner_id": "-",
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status": "completed" if initial_visit_date else None,
-        "initial_home_visit_date": clean_date(initial_visit_date),
+        "ihv_date": clean_date(initial_visit_date),
+        "ihv_by": column_mapping.get_value("initial_home_visit_by", row) if initial_visit_date else None,
         'name': 'Occurrence #1',
         'occurrence_episode_count': 1,
     }
@@ -747,12 +817,8 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "is_active": "yes",
         "diagnosing_facility_id": phi_id,
         "diagnosing_facility_name": phi_name,
-        "date_of_diagnosis": report_sending_date,
-        "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "regimen_change_history": get_episode_regimen_change_history(
-            column_mapping, row, treatment_initiation_date),
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
         "treatment_outcome": get_treatment_outcome(column_mapping, row),
@@ -760,8 +826,9 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
         "height": clean_height(column_mapping.get_value("height", row)),
-        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
+        "regimen_change_history": get_episode_regimen_change_history(
+            column_mapping, row, treatment_initiation_date),
         "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row))
     }
 
@@ -841,6 +908,8 @@ def get_diagnosis_properties(column_mapping, domain, row):
         diagnosing_test = get_lpa_test_case_properties(domain, column_mapping, row)
     elif column_mapping.get_value("sl_lpa_result", row):
         diagnosing_test = get_sl_lpa_test_case_properties(domain, column_mapping, row)
+    elif column_mapping.get_value("culture_result", row):
+        diagnosing_test = get_culture_test_case_properties(domain, column_mapping, row)
 
     if diagnosing_test:
         properties["diagnosis_test_type_label"] = diagnosing_test['test_type_label']
@@ -852,6 +921,9 @@ def get_diagnosis_properties(column_mapping, domain, row):
         properties["diagnosis_test_result_date"] = diagnosing_test['date_reported']
         properties["diagnosis_test_specimen_date"] = diagnosing_test['date_tested']
         properties["diagnosis_test_summary"] = diagnosing_test['result_summary_display']
+        properties["date_of_diagnosis"] = diagnosing_test['date_reported']
+
+    # There are some cases that no diagnosis test (~109). They don't have a date of diagnosis
 
     return properties
     # TODO: (WAITING) figure out how to set these properties based on other info
@@ -864,7 +936,7 @@ def get_disease_site_properties(column_mapping, row):
     value = xlsx_value.replace('EP ', 'extra pulmonary ').lower().strip()
 
     try:
-        classification, site, site_choice = {
+        classification, site_choice, site_detail = {
             "pulmonary": ["pulmonary", None, None],
             "extra pulmonary": ["extra_pulmonary", None, None],
             "extra pulmonary (lymph node)": ["extra_pulmonary", "lymph_node", None],
@@ -879,13 +951,13 @@ def get_disease_site_properties(column_mapping, row):
             raise FieldValidationFailure(value, "Site of Disease")
 
         classification = "extra_pulmonary"
-        site = "other"
-        site_choice = match.groups()[0]
+        site_choice = "other"
+        site_detail = match.groups()[0]
 
     return {
         "disease_classification": classification,
-        "site_detail": site,
-        "site_choice": site_choice
+        "site_choice": site_choice,
+        "site_detail": site_detail,
     }
 
 
@@ -918,6 +990,12 @@ def get_key_populations(column_mapping, row):
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
     return {"current_{}".format(k): v for k, v in props.iteritems()}
+
+
+def get_prev_person_case_properties(property_list, case_properties):
+    return {
+        "prev_{}".format(p): case_properties[p] for p in property_list if p in case_properties
+    }
 
 
 def get_treatment_outcome(column_mapping, row):
@@ -1072,15 +1150,19 @@ def get_mehsana_resistance_properties(column_mapping, row):
 
 
 def get_episode_regimen_change_history(column_mapping, row, episode_treatment_initiation_date):
-    put_on_treatment = column_mapping.get_value("date_put_on_mdr_treatment", row)
-    put_on_treatment = clean_date(put_on_treatment)
-    value = "{}: MDR/RR".format(episode_treatment_initiation_date)
-    if put_on_treatment:
-        value += "\n{}: {}".format(
-            put_on_treatment,
-            column_mapping.get_value("type_of_treatment_initiated", row)
-        )
-    return value
+    # TODO: This is odd Mehsana code
+    # put_on_treatment = column_mapping.get_value("date_put_on_mdr_treatment", row)
+    # put_on_treatment = clean_date(put_on_treatment)
+    # value = "{}: MDR/RR".format(episode_treatment_initiation_date)
+    # if put_on_treatment:
+    #    value += "\n{}: {}".format(
+    #        put_on_treatment,
+    #        column_mapping.get_value("type_of_treatment_initiated", row)
+    #    )
+    # return value
+    current_treatment_regimen = column_mapping.get_value("treatment_regimen", row)
+    if current_treatment_regimen:
+        return "{}: {}".format(episode_treatment_initiation_date, current_treatment_regimen)
 
 
 def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
@@ -1136,6 +1218,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
@@ -1163,6 +1246,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
@@ -1189,6 +1273,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "result": "tb_not_detected",
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
@@ -1218,6 +1303,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "result": clean_result(column_mapping.get_value("culture_result", row)),
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
+        "result_recorded": "yes",
     }
     properties['result_summary_display'] = get_test_summary(properties)
     return properties
@@ -1246,16 +1332,25 @@ def get_culture_type_label(culture_type):
 
 
 def get_dst_test_case_properties(column_mapping, row):
-    resistance_props = get_dst_test_resistance_properties(column_mapping, row)
-    if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
-        properties = {
-            "owner_id": "-",
-            "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
-            "date_reported": column_mapping.get_value("dst_result_date", row),
-            "dst_test_type": column_mapping.get_value("dst_type", row),
-        }
-        properties.update(resistance_props)
-        return properties
+    date_reported = clean_date(column_mapping.get_value("dst_result_date", row))
+    if date_reported:
+        resistance_props = get_dst_test_resistance_properties(column_mapping, row)
+        if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
+            properties = {
+                "owner_id": "-",
+                "test_type_value": "dst",
+                "test_type_label": "DST",
+                "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
+                "date_reported": date_reported,
+                "dst_test_type": column_mapping.get_value("dst_type", row),
+                "result": "tb_detected",
+                "drug_resistance_list": '',
+                "drug_sensitive_list": '',
+                "result_recorded": "yes",
+            }
+            properties.update(resistance_props)
+            properties['result_summary_display'] = get_test_summary(properties)
+            return properties
     return None
 
 
@@ -1277,50 +1372,50 @@ def get_dst_test_resistance_properties(column_mapping, row):
     }
 
 
-def get_drug_resistance_case_properties(column_mapping, row):
-    resistant_drugs = {
-        d['drug_id']: d
-        for d in
-        get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row) +
-        get_drug_resistances_from_mumbai_cbnaat(column_mapping, row) +
-        get_drug_resistances_from_lpa(column_mapping, row) +
-        get_drug_resistances_from_sl_lpa(column_mapping, row)
-    }
-    additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
-    for drug in additional_drug_case_properties:
-        resistant_drugs[drug['drug_id']] = drug
-    unknown_cases = generate_unknown_cases(resistant_drugs.keys())
-    return resistant_drugs.values() + unknown_cases
-
-
-def generate_unknown_cases(known_drugs):
-    unknown_drugs = set(ALL_DRUGS.keys()) - set(known_drugs)
-    return [
-        {
+def get_drug_resistance_case_properties(column_mapping, row, test_cases):
+    # generate empty / unknown drug_resistance cases
+    dr_cases = {}
+    for drug_id in ALL_DRUGS.keys():
+        dr_cases[drug_id] = {
             "name": drug_id,
             "owner_id": "-",
             "drug_id": drug_id,
             "sort_order": ALL_DRUGS[drug_id],
             "sensitivity": "unknown",
         }
-        for drug_id in unknown_drugs
-    ]
 
+    # Update data based on Mehsana drug resistance list
+    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
+    if drugs:
+        drugs = drugs.split(" ")
+    for drug_id in drugs:
+        dr_cases[drug_id]['sensitivity'] = 'resistant'
 
-def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
-    case_properties = []
+    test_cases = sorted([t for t in test_cases if 'date_reported' in t], key=lambda t: t['date_reported'])
+    for t in test_cases:
+        drug_resistance_list = t['drug_resistance_list'] or []
+        if drug_resistance_list:
+            drug_resistance_list = drug_resistance_list.split(' ')
+        drug_sensitive_list = t['drug_sensitive_list'] or []
+        if drug_sensitive_list:
+            drug_sensitive_list = drug_sensitive_list.split(' ')
+
+        test_drugs = [(drug_id, "resistant") for drug_id in drug_resistance_list] + \
+                     [(drug_id, "sensitive") for drug_id in drug_sensitive_list]
+        for drug_id, sensitivity in test_drugs:
+            dr_cases[drug_id]['test_type'] = t['test_type_value']
+            dr_cases[drug_id]['test_type_label'] = t['test_type_label']
+            dr_cases[drug_id]['result_date'] = t['date_reported']
+            dr_cases[drug_id]['specimen_date'] = t['date_tested']
+            dr_cases[drug_id]['sensitivity'] = sensitivity
+
+    # add any resistance info not tied to a test
     for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
-        value = column_mapping.get_value(drug_column_key, row)
-        if value:
-            properties = {
-                "name": drug_id,
-                "owner_id": "-",
-                "sensitivity": convert_sensitivity(value),
-                "drug_id": drug_id,
-                "sort_order": ALL_DRUGS[drug_id],
-            }
-            case_properties.append(properties)
-    return case_properties
+        if dr_cases[drug_id]['sensitivity'] == 'unknown':
+            sensitivity = convert_sensitivity(column_mapping.get_value(drug_column_key, row))
+            dr_cases[drug_id]['sensitivity'] = sensitivity
+
+    return dr_cases.values()
 
 
 def convert_sensitivity(sensitivity_value):
@@ -1373,87 +1468,6 @@ def clean_patient_type(value):
     return clean_value
 
 
-def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
-
-    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
-    if drugs:
-        drugs = drugs.split(" ")
-    case_properties = []
-    for drug in drugs:
-        properties = {
-            "name": drug,
-            "owner_id": "-",
-            "sensitivity": "resistant",
-            "drug_id": drug,
-            "sort_order": ALL_DRUGS[drug],
-        }
-        case_properties.append(properties)
-    return case_properties
-
-
-def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
-    # Get the case properties for the drug_resistance cases that should be created as a result of the cbnaat
-    # columns in the mumbai mapping
-    resistant = get_cbnaat_resistance(column_mapping, row)
-    if resistant is not None:
-        return [
-            {
-                "name": "r",
-                "owner_id": "-",
-                "drug_id": "r",
-                "sort_order": ALL_DRUGS["r"],
-                "specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
-                "result_date": column_mapping.get_value("cbnaat_result_date", row),
-                "test_type": "cbnaat",
-                "test_type_label": "CBNAAT",
-                "sensitivity": "resistant" if resistant else "sensitive",
-            }
-        ]
-    else:
-        return []
-
-
-def get_drug_resistances_from_lpa(column_mapping, row):
-    drugs = [
-        ("r", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
-        ("h_inha", clean_mumbai_lpa_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
-    ]
-    case_props = []
-    for drug, resistant in drugs:
-        if resistant is not None:
-            case_props.append({
-                "name": drug,
-                "owner_id": "-",
-                "drug_id": drug,
-                "sort_order": ALL_DRUGS[drug],
-                "specimen_date": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-                "result_date": column_mapping.get_value("lpa_result_date", row),
-                "test_type": "fl_line_probe_assay",
-                "test_type_label": "FL LPA",
-                "sensitivity": "resistant" if resistant else "sensitive",
-            })
-    return case_props
-
-
-def get_drug_resistances_from_sl_lpa(column_mapping, row):
-    case_props = []
-    drug_list_string = get_sl_lpa_test_resistance_properties(column_mapping, row).get("drug_resistant_list", "")
-    drugs = drug_list_string.split(" ")
-    for drug in [x for x in drugs if x != ""]:
-        case_props.append({
-            "name": drug,
-            "owner_id": "-",
-            "drug_id": drug,
-            "sort_order": ALL_DRUGS[drug],
-            "specimen_date": clean_date(column_mapping.get_value("sl_lpa_sample_date", row)),
-            "result_date": column_mapping.get_value("sl_lpa_result_date", row),
-            "test_type": "sl_line_probe_assay",
-            "test_type_label": "SL LPA",
-            "sensitivity": "resistant",
-        })
-    return case_props
-
-
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
 
@@ -1471,6 +1485,9 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 "test_type_value": "culture",
                 "test_type_label": "Culture",
                 "rft_general": "follow_up_drtb",
+                "drug_resistance_list": '',
+                "drug_sensitive_list": '',
+                "result_recorded": "yes",
             }
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
                 follow_up, properties['date_tested'], treatment_initiation_date
@@ -1499,6 +1516,9 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                         "rft_drtb_follow_up_treatment_month": month,
                         "date_tested": date_tested,
                         "result": clean_result(result),
+                        "drug_resistance_list": '',
+                        "drug_sensitive_list": '',
+                        "result_recorded": "yes",
                     }
                     properties["result_summary_label"] = result_label(properties['result'])
                     properties_list.append(properties)
@@ -1552,13 +1572,13 @@ def clean_weight_band(value):
         return None
     try:
         return {
-            "Less than 16": "drtb_conventional_lt_16",
+            "Less than 16": "drtb_conventional_old_lt_16",
             "16-29": "drtb_conventional_16_29",
             "30-45": "drtb_conventional_30_45",
             "16-25": "drtb_conventional_old_16_25",
             "26-45": "drtb_conventional_old_26_45",
-            "46-70": "drtb_conventional_46_70",
-            "Above 70": "drtb_conventional_gt70"
+            "46-70": "drtb_conventional_old_46_70",
+            "Above 70": "drtb_conventional_old_gt70"
         }[value]
     except KeyError:
         raise FieldValidationFailure(value, "Weight Band")
@@ -1661,6 +1681,72 @@ def clean_socioeconomic_status(value):
         "apl": "apl",
         "unknown": "unknown",
     }[value.lower()]
+
+
+def clean_occupation(value):
+    if not value:
+        return None
+    clean_value = value.lower().strip()
+    try:
+        return {
+            "office clerk": "office_clerk",
+            "other craft or related trader or worker": "other_craft_and_related",
+            "corporate manager": "corporate_manager",
+            "legislators or senior official": "legislators_or_senior_official",
+            "legistrator or senior official": "legislators_or_senior_official",
+            "general manager": "general_manager",
+            "other professional": "other_professional",
+            "physical, mathematical and engineering science professional": "physical_mathematical_and_engineering",
+            "subsistence agriculture or fishery worker": "subsistence_agriculture_fishery",
+            "sales and services elementary occupation": "sales_and_services_elementary",
+            "sales and service elementary occupation": "sales_and_services_elementary",
+            "extraction and building trade worker": "extraction_and_building_trade",
+            "model, sales person or demonstrator": "model_sales_persons_demonstrator",
+            "laborer in mining, construction, manufacturing and transport":
+                "mining_construction_manufacturing_transport",
+            "labourer in mining, constuction, manufacturing and transport":
+                "mining_construction_manufacturing_transport",
+            "agriculture, fishery and related labor": "agriculture_fishery_and_related",
+            "unidentifiable occupation or inadequate reporting": "occupation_unidentifiable",
+            "workers reporting occupation unidentifiable or inadequately": "occupation_unidentifiable",
+            "stationary plant and related operators": "stationary_plant_and_related",
+            "teaching associate professional": "teaching_associate",
+            "life sciences and health associate professional": "life_sciences_and_health_associate",
+            "other associate professional": "other_associate",
+            "customer services clerk": "customer_services_clerk",
+            "life sciences and health professional": "life_sciences_and_health",
+            "personal protective service provider": "person_protective_service_provider",
+            "metal, machinery or related trade worker": "metal_machinery_and_related",
+            "driver or mobile plant operator": "driver_and_mobile_plant_operator",
+            "driver or mobile plan operator": "driver_and_mobile_plant_operator",
+            "teaching professional": "teaching_professional",
+            "no occupation reported": "no_occupation_reported",
+            "machine operator or assembler": "machine_operator_or_assembler",
+            "new worker seeking employment": "new_worker_seeking_employment",
+            "precision, handicraft, printing or related trade worker": "precision_handicraft_printing_and_related",
+            "market-oriented, skilled agriculture or fishery worker": "market_oriented_agriculture_fishery",
+            "physical and engineering science associate professional":
+                "physical_and_engineering_science_associate",
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Occupation")
+
+
+def clean_marital_status(value):
+    if not value:
+        return None
+    clean_value = value.lower().strip()
+    try:
+        return {
+            "unmarried": "unmarried",
+            "single": "unmarried",
+            "married": "married",
+            "widowed": "widowed",
+            "separated": "separated",
+            "": None,
+        }[clean_value]
+    except KeyError:
+        raise FieldValidationFailure(value, "Marital Status")
 
 
 def clean_result(value):
