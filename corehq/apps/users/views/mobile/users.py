@@ -239,15 +239,6 @@ class EditCommCareUserView(BaseEditUserView):
         return [('none', _('(none)'))] + self.editable_role_choices
 
     @property
-    def existing_role(self):
-        role = self.editable_user.get_role(self.domain)
-        if role is None:
-            role = "none"
-        else:
-            role = role.get_qualified_id()
-        return role
-
-    @property
     @memoized
     def form_user_update(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
