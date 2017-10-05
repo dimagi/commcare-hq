@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None):
+                 enabled_for_new_users_after=None, relevant_environments=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -67,12 +67,20 @@ class StaticToggle(object):
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
+        # pass in a set of environments where this toggle applies
+        self.relevant_environments = relevant_environments
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.relevant_environments and not (
+            settings.SERVER_ENVIRONMENT in self.relevant_environments
+            or settings.DEBUG
+        ):
+            # Don't even bother looking it up in the cache
+            return False
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
@@ -1119,6 +1127,7 @@ ENIKSHAY = StaticToggle(
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'enikshay'},
+    relevant_environments={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
