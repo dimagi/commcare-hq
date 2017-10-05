@@ -53,7 +53,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     defer.reject();
                 },
             };
-
             options.data = JSON.stringify({
                 "username": user.username,
                 "restoreAs": user.restoreAs,
@@ -71,6 +70,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
                 "sortIndex": params.sortIndex,
+                "preview": params.preview,
             });
             options.url = formplayerUrl + '/' + route;
 
