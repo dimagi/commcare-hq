@@ -27,6 +27,16 @@ class Requests(object):
         return self.requests.post(self.get_url(uri), *args,
                                   auth=(self.username, self.password), **kwargs)
 
+    def post_with_raise(self, uri, *args, **kwargs):
+        response = self.post(uri, *args, **kwargs)
+        try:
+            response.raise_for_status()
+        except HTTPError:
+            logger.debug('Request: ', self.get_url(uri), kwargs)
+            logger.debug('Response: ', response.json())
+            raise
+        return response
+
 
 def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
@@ -57,21 +67,10 @@ def set_person_properties(requests, person_uuid, properties):
     for p in properties:
         assert p in allowed_properties
 
-    response = requests.post(
+    return requests.post_with_raise(
         '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
         json=properties
-    )
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug(
-            'Request: ',
-            requests.get_url('/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid)),
-            properties
-        )
-        logger.debug('Response: ', response.json())
-        raise
-    return response.json()
+    ).json()
 
 
 def server_datetime_to_openmrs_timestamp(dt):
@@ -97,13 +96,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
     }
     if location_uuid:
         visit['location'] = location_uuid
-    response = requests.post('/ws/rest/v1/visit', json=visit)
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug('Request: ', requests.get_url('/ws/rest/v1/visit'), visit)
-        logger.debug('Response: ', response.json())
-        raise
+    response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
     visit_uuid = response.json()['uuid']
 
     encounter = {
@@ -115,13 +108,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
     }
     if location_uuid:
         encounter['location'] = location_uuid
-    response = requests.post('/ws/rest/v1/encounter', json=encounter)
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug('Request: ', requests.get_url('/ws/rest/v1/encounter'), encounter)
-        logger.debug('Response: ', response.json())
-        raise
+    response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
     encounter_uuid = response.json()['uuid']
     if provider_uuid:
         encounter_provider = {'provider': provider_uuid}
@@ -146,13 +133,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
             }
             if location_uuid:
                 observation['location'] = location_uuid
-            response = requests.post('/ws/rest/v1/obs', json=observation)
-            try:
-                response.raise_for_status()
-            except HTTPError:
-                logger.debug('Request: ', requests.get_url('/ws/rest/v1/obs'), observation)
-                logger.debug('Response: ', response.json())
-                raise
+            response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
             observation_uuids.append(response.json()['uuid'])
 
     logger.debug('Observations created: ', observation_uuids)
