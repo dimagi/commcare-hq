@@ -1,12 +1,15 @@
 define([
     "jquery",
     "knockout",
-    "hqwebapp/js/bundle",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/main",
     "hqwebapp/js/jquery-ui",
+    "hqwebapp/js/knockout_bindings.ko",
 ], function(
     $,
     ko,
-    hq
+    initialPageData,
+    hqMain
 ) {
     var CaseType = function (name) {
         var self = this;
@@ -61,7 +64,7 @@ define([
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
-        self.saveButton = hq.main.initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
                 var postProperties = [];
@@ -187,9 +190,9 @@ define([
     };
 
     $(function() {
-        var dataUrl = hq.initialPageData.reverse('data_dictionary_json'),
-            casePropertyUrl = hq.initialPageData.reverse('update_case_property'),
-            typeChoices = hq.initialPageData.get('typeChoices'),
+        var dataUrl = initialPageData.reverse('data_dictionary_json'),
+            casePropertyUrl = initialPageData.reverse('update_case_property'),
+            typeChoices = initialPageData.get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
