@@ -1,7 +1,6 @@
 from collections import namedtuple
 from functools import wraps
 import hashlib
-import logging
 import math
 
 from django.contrib import messages
@@ -225,8 +224,20 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, namespace=Ellipsis):
-        if namespace is Ellipsis:
-            logging.warning('PredictablyRandomToggle.enabled() may be invalid if namespace is not set')
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
+            raise ValueError(
+                'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
+                'available for all namespaces and the namespace of "{item}" is not given.'.format(
+                    slug=self.slug,
+                    item=item,
+                )
+            )
+
         if settings.UNIT_TESTING:
             return False
         elif item in self.always_disabled:
