@@ -44,7 +44,8 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
+                            <span ng-if="top.value !== undefined" style="font-size: 30px;">{$ top.value $}</span>
+                            <span ng-if="top.percent !== undefined" style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
@@ -60,7 +61,8 @@
                             <span class="circle-blue" ng-bind="$ctrl.bottom_five.length - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
+                            <span ng-if="bottom.value !== undefined" style="font-size: 30px;">{$ bottom.value $}</span>
+                            <span ng-if="bottom.percent !== undefined" style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
@@ -78,7 +80,8 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="loc.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
+                            <span ng-if="loc.value !== undefined" style="font-size: 30px;">{$ loc.value $}</span>
+                            <span ng-if="loc.percent !== undefined" style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>

@@ -130,8 +130,9 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         location = row['%s_name' % loc_level]
         valid = row['all'] or 0
 
-        best_worst[location]['in_day'] = in_day
-        best_worst[location]['all'] = valid
+        if date.month == (month - relativedelta(months=1)).month:
+            best_worst[location]['in_day'] = in_day
+            best_worst[location]['all'] = valid
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -142,10 +143,10 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         [
             dict(
                 loc_name=key,
-                percent=(value['in_day'] * 100) / float(value['all'] or 1)
+                value=value['in_day']
             ) for key, value in best_worst.iteritems()
         ],
-        key=lambda x: x['percent'],
+        key=lambda x: x['value'],
         reverse=True
     )
 
@@ -155,7 +156,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
                     } for key, value in data['launched'].iteritems()
                 ],
@@ -168,7 +169,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
                     } for key, value in data['open_in_day'].iteritems()
                 ],

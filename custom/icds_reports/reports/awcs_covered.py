@@ -162,18 +162,19 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         awcs = (row['awcs'] or 0)
         location = row['%s_name' % loc_level]
 
-        if location in best_worst:
-            best_worst[location].append(awcs)
-        else:
-            best_worst[location] = [awcs]
+        if date.month == (month - relativedelta(months=1)).month:
+            if location in best_worst:
+                best_worst[location].append(awcs)
+            else:
+                best_worst[location] = [awcs]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['pink'][date_in_miliseconds]['y'] += awcs
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['value'],
         reverse=True
     )
 

@@ -157,18 +157,19 @@ def get_lactating_enrolled_data_chart(domain, config, loc_level, show_test=False
         valid = (row['valid'] or 0)
         location = row['%s_name' % loc_level]
 
-        if location in best_worst:
-            best_worst[location].append(valid)
-        else:
-            best_worst[location] = [valid]
+        if date.month == (month - relativedelta(months=1)).month:
+            if location in best_worst:
+                best_worst[location].append(valid)
+            else:
+                best_worst[location] = [valid]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['blue'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['value'],
         reverse=True
     )
 
