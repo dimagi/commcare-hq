@@ -1,13 +1,13 @@
 hqDefine("reports/js/filters", [
     'jquery',
     'knockout',
-    'hqwebapp/js/bundle',
+    'hqwebapp/js/main',
     'reports/js/standard_hq_report',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
     ko,
-    hq,
+    hqMain,
     standardHQReportModule
 ) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
@@ -149,7 +149,7 @@ hqDefine("reports/js/filters", [
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            hq.main.transformHelpTemplate($(this), true);
+            hqMain.main.transformHelpTemplate($(this), true);
         });
     };
 
