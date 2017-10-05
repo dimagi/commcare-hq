@@ -348,3 +348,25 @@ def get_account_name_from_default_name(default_name):
             default_name,
             matching_regex_count + 1
         )
+
+
+def cancel_future_subscriptions(domain_name, from_date, web_user):
+    today = datetime.datetime.today()
+    from corehq.apps.accounting.models import (
+        Subscription,
+        SubscriptionAdjustment,
+        SubscriptionAdjustmentReason,
+    )
+    for later_subscription in Subscription.objects.filter(
+        subscriber__domain=domain_name,
+        date_start__gt=from_date,
+    ).order_by('date_start').all():
+        later_subscription.date_start = today
+        later_subscription.date_end = today
+        later_subscription.save()
+        SubscriptionAdjustment.record_adjustment(
+            later_subscription,
+            reason=SubscriptionAdjustmentReason.CANCEL,
+            web_user=web_user,
+            note="Cancelled due to changing subscription",
+        )
