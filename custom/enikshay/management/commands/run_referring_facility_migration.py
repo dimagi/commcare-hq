@@ -41,7 +41,7 @@ class Command(BaseEnikshayCaseMigration):
             REFERRING_FACILITY_ID: referring_facility_id,
         }
         try:
-            referring_facility_name = SQLLocation.active_objects.get(
+            referring_facility_name = SQLLocation.objects.get(
                 domain=domain,
                 location_id=referring_facility_id,
             ).name
