@@ -439,16 +439,8 @@
                     callback: function (ko, mapping) {
                         ko.mapping = mapping;
                     },
-                    {% if not DEBUG %}
-                    bundles: {
-                        // Bundle this because it'd be annoying to have to say common.$
-                        'hqwebapp/js/common': ['jquery', 'knockout', 'bootstrap.min', 'hqwebapp/js/django', 'underscore', 'ko.mapping', 'ko.knockout_bindings'],
-                    },
-                    {% endif %}
                 });
-                requirejs(['hqwebapp/js/common'], function (common) {
-                    requirejs(['{{ requirejs_main }}']);
-                });
+                requirejs(['{{ requirejs_main }}']);
             </script>
         {% endif %}
 
@@ -470,7 +462,6 @@
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
         <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/bundle.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
