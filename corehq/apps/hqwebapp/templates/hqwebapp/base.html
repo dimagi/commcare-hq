@@ -426,12 +426,13 @@
 
         {% if requirejs_main %}
             <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-            {% compress js %}
+            {# TODO: compress #}
+            {#% compress js %#}
                 <script src="{% static 'requirejs/require.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-            {% endcompress %}
+            {#% endcompress %#}
             <script type="text/javascript">
                 requirejs.config({
                     deps: ['knockout', 'ko.mapping'],
