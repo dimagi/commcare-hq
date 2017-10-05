@@ -6,6 +6,7 @@ from datetime import datetime
 from django.core.management import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory
+from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_person_case_from_episode
@@ -146,8 +147,27 @@ class Command(BaseCommand):
                                                                               test_confirming_diagnosis)
                                 datamigration_diagnosis_test_information2 = "yes"
                             elif datamigration_diagnosis_test_information == "yes":
-                                # The previous migration messed up this case.  Want to flag as a future fix up
-                                flag_for_review = 'yes'
+                                # The previous migration messed up this case.
+                                # Find the form that first set diagnosis_test_type and
+                                # reset all diagnosis properties from there
+                                flag_for_review = "yes"
+                                diagnosis_update = self._get_diagnosis_update(episode).\
+                                    get_update_action().dynamic_properties
+                                diagnosis_test_result_date = diagnosis_update.\
+                                    get('diagnosis_test_result_date', '')
+                                diagnosis_lab_facility_name = diagnosis_update.\
+                                    get('diagnosis_lab_facility_name', '')
+                                diagnosis_lab_facility_id = diagnosis_update.\
+                                    get('diagnosis_lab_facility_id', '')
+                                diagnosis_test_lab_serial_number = diagnosis_update.\
+                                    get('diagnosis_test_lab_serial_number', '')
+                                diagnosis_test_summary = diagnosis_update.\
+                                    get('diagnosis_test_summary', '')
+                                diagnosis_test_type = diagnosis_update.\
+                                    get('diagnosis_test_type', '')
+                                diagnosis_test_type_label = diagnosis_update.\
+                                    get('diagnosis_test_type_label', '')
+                                datamigration_diagnosis_test_information2 = 'yes'
 
                     if datamigration_diagnosis_test_information2 == "yes":
                         update = {
@@ -225,3 +245,16 @@ class Command(BaseCommand):
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
         else:
             return None
+
+    @staticmethod
+    def _get_diagnosis_update(episode):
+        """get first form that set diagnosis_test_type to a value """
+        for action in episode.actions:
+            if action.form is not None:
+                for update in get_case_updates(action.form):
+                    if (
+                        update.id == episode.case_id
+                        and update.get_update_action()
+                        and update.get_update_action().dynamic_properties.get('diagnosis_test_type', '')
+                    ):
+                        return update
