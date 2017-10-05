@@ -6,7 +6,7 @@ allowSourceOverwrites: true
 keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
-fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)/,
+fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)|(datatables)/,
 modules:
   - name: hqwebapp/js/bundle
     include:
