@@ -187,10 +187,9 @@ class BaseEditUserView(BaseUserSettingsView):
             raise Http404()
 
         if role is None:
-            role = "none"
+            return None
         else:
-            role = role.get_qualified_id()
-        return role
+            return role.get_qualified_id()
 
     @property
     @memoized
