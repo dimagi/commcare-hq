@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 
 import csv
-import datetime
+from datetime import datetime
 
 from django.core.management import BaseCommand
 
@@ -56,6 +56,7 @@ class Command(BaseCommand):
 
         headers = [
             'case_id',
+            'datamigration_diagnosis_test_information',
             'current_test_confirming_diagnosis',
             'current_date_of_diagnosis',
             'current_treatment_initiation_date',
@@ -74,11 +75,12 @@ class Command(BaseCommand):
             'diagnosis_test_summary',
             'diagnosis_test_type',
             'diagnosis_test_type_label',
+            'flag_for_review',
             'datamigration_diagnosis_test_information2',
         ]
 
         print("Starting {} migration on {} at {}".format(
-            "real" if commit else "fake", domain, datetime.datetime.utcnow()
+            "real" if commit else "fake", domain, datetime.utcnow()
         ))
 
         with open(log_path, "w") as log_file:
@@ -101,25 +103,34 @@ class Command(BaseCommand):
                     current_diagnosis_test_summary = case_properties.get('diagnosis_test_summary')
                     current_diagnosis_test_type = case_properties.get('diagnosis_test_type')
                     current_diagnosis_test_type_label = case_properties.get('diagnosis_test_type_label')
+                    datamigration_diagnosis_test_information = \
+                        case_properties.get('datamigration_diagnosis_test_information')
                     test_case_id = None
-                    diagnosis_test_result_date = None
-                    diagnosis_lab_facility_name = None
-                    diagnosis_lab_facility_id = None
-                    diagnosis_test_lab_serial_number = None
-                    diagnosis_test_summary = None
-                    diagnosis_test_type = None
-                    diagnosis_test_type_label = None
+                    diagnosis_test_result_date = ''
+                    diagnosis_lab_facility_name = ''
+                    diagnosis_lab_facility_id = ''
+                    diagnosis_test_lab_serial_number = ''
+                    diagnosis_test_summary = ''
+                    diagnosis_test_type = ''
+                    diagnosis_test_type_label = ''
+                    flag_for_review = ''
                     datamigration_diagnosis_test_information2 = "no"
 
-                    test = self.get_relevant_test_case(domain, episode)
-                    if test is not None and test.get_case_property('test_type_value'):
+                    date_format = "%Y-%m-%d"
+                    comparison_date = date_of_diagnosis or treatment_initiation_date
+                    test_type = test_confirming_diagnosis or current_diagnosis_test_type
+                    if comparison_date and test_type:
+                        test = self.get_relevant_test_case(domain, episode, test_type)
+                        # logic to make sure test we found is close to date of diagnosis
                         if (
-                            not test_confirming_diagnosis
-                            or test.get_case_property('test_type_value') == test_confirming_diagnosis
+                            test and test.get_case_property("date_tested")
+                            and abs((
+                                datetime.strptime(comparison_date, date_format) -
+                                datetime.strptime(test.get_case_property("date_tested"), date_format)
+                            ).days) <= 30
                         ):
                             test_case_id = test.case_id
                             test_case_properties = test.dynamic_case_properties()
-
                             diagnosis_test_result_date = test_case_properties.get('date_tested', '')
                             diagnosis_lab_facility_name = test_case_properties.get('testing_facility_name', '')
                             diagnosis_lab_facility_id = test_case_properties.get('testing_facility_id', '')
@@ -129,17 +140,17 @@ class Command(BaseCommand):
                             diagnosis_test_type_label = test_case_properties.get('test_type_label', '')
                             datamigration_diagnosis_test_information2 = 'yes'
                         else:
-                            # Reset any properties we may have set accidentally in a previous migration
-                            diagnosis_test_result_date = ''
-                            diagnosis_lab_facility_name = ''
-                            diagnosis_lab_facility_id = ''
-                            diagnosis_test_lab_serial_number = ''
-                            diagnosis_test_summary = ''
-                            diagnosis_test_type = test_confirming_diagnosis
-                            diagnosis_test_type_label = TEST_TO_LABEL.get(test_confirming_diagnosis,
-                                                                          test_confirming_diagnosis)
-                            datamigration_diagnosis_test_information2 = "yes"
+                            if test_confirming_diagnosis:
+                                # Reset any properties we may have set accidentally in a previous migration
+                                diagnosis_test_type = test_confirming_diagnosis
+                                diagnosis_test_type_label = TEST_TO_LABEL.get(test_confirming_diagnosis,
+                                                                              test_confirming_diagnosis)
+                                datamigration_diagnosis_test_information2 = "yes"
+                            elif datamigration_diagnosis_test_information == "yes":
+                                # The previous migration messed up this case.  Want to flag as a future fix up
+                                flag_for_review = 'yes'
 
+                    if datamigration_diagnosis_test_information2 == "yes":
                         update = {
                             'diagnosis_test_result_date': diagnosis_test_result_date,
                             'diagnosis_lab_facility_name': diagnosis_lab_facility_name,
@@ -154,6 +165,7 @@ class Command(BaseCommand):
 
                     writer.writerow([
                         episode_case_id,
+                        datamigration_diagnosis_test_information,
                         test_confirming_diagnosis,
                         date_of_diagnosis,
                         treatment_initiation_date,
@@ -172,9 +184,11 @@ class Command(BaseCommand):
                         diagnosis_test_summary,
                         diagnosis_test_type,
                         diagnosis_test_type_label,
+                        flag_for_review,
                         datamigration_diagnosis_test_information2,
                     ])
-        print('Migration complete at {}'.format(datetime.datetime.utcnow()))
+
+        print('Migration complete at {}'.format(datetime.utcnow()))
 
     @staticmethod
     def should_migrate_case(case_id, case_properties, domain):
@@ -192,7 +206,7 @@ class Command(BaseCommand):
         return False
 
     @staticmethod
-    def get_relevant_test_case(domain, episode_case):
+    def get_relevant_test_case(domain, episode_case, test_confirming_diagnosis):
         try:
             occurrence_case = get_occurrence_case_from_episode(domain, episode_case.case_id)
         except ENikshayCaseNotFound:
@@ -205,15 +219,8 @@ class Command(BaseCommand):
             and (case.get_case_property('rft_general') == 'diagnosis_dstb'
                  or case.get_case_property('rft_general') == 'diagnosis_drtb')
             and case.get_case_property('result') == 'tb_detected'
+            and case.get_case_property('test_type_value') == test_confirming_diagnosis
         ]
-
-        # Try get a test that matches the episode's test_confirming_diagnosis if set
-        test_cases_matching_diagnosis_test_type = [
-            case for case in test_cases
-            if (case.get_case_property('test_type_value') ==
-                episode_case.get_case_property('test_confirming_diagnosis'))
-        ]
-        test_cases = test_cases_matching_diagnosis_test_type or test_cases
 
         if test_cases:
             return sorted(test_cases, key=lambda c: c.get_case_property('date_reported'))[-1]
