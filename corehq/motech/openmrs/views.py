@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView
+from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
@@ -134,7 +134,7 @@ def openmrs_import_now(request, domain):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
-class OpenmrsImporterView(BaseAdminProjectSettingsView):
+class OpenmrsImporterView(BaseProjectSettingsView):
     urlname = 'openmrs_importer_view'
     page_title = ugettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
