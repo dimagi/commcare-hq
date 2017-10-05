@@ -28,6 +28,7 @@ from ..user_setup import (
     ENikshayLocationFormSet,
     compress_nikshay_id,
     get_new_username_and_id,
+    set_enikshay_device_id,
 )
 from ..models import IssuerId
 
@@ -252,6 +253,7 @@ class TestUserSetupUtils(TestCase):
         user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
         user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
         user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
+        set_enikshay_device_id(user)
         user.save()
         self.assertEqual(user.user_data['id_device_number'], 3)
 
