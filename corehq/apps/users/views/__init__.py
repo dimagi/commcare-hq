@@ -182,9 +182,16 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def existing_role(self):
         try:
-            return self.editable_user.get_role(self.domain).get_qualified_id() or ''
+            role = self.editable_user.get_role(self.domain)
         except DomainMembershipError:
             raise Http404()
+
+        if role is None:
+            if isinstance(self.editable_user, WebUser):
+                raise ValueError("WebUser is always expected to have a role")
+            return None
+        else:
+            return role.get_qualified_id()
 
     @property
     @memoized
