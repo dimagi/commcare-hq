@@ -936,7 +936,7 @@ def get_disease_site_properties(column_mapping, row):
     value = xlsx_value.replace('EP ', 'extra pulmonary ').lower().strip()
 
     try:
-        classification, site, site_choice = {
+        classification, site_choice, site_detail = {
             "pulmonary": ["pulmonary", None, None],
             "extra pulmonary": ["extra_pulmonary", None, None],
             "extra pulmonary (lymph node)": ["extra_pulmonary", "lymph_node", None],
@@ -951,13 +951,13 @@ def get_disease_site_properties(column_mapping, row):
             raise FieldValidationFailure(value, "Site of Disease")
 
         classification = "extra_pulmonary"
-        site = "other"
-        site_choice = match.groups()[0]
+        site_choice = "other"
+        site_detail = match.groups()[0]
 
     return {
         "disease_classification": classification,
-        "site_detail": site,
-        "site_choice": site_choice
+        "site_choice": site_choice,
+        "site_detail": site_detail,
     }
 
 
