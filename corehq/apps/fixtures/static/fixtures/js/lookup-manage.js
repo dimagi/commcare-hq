@@ -4,11 +4,12 @@
 define([
     "jquery",
     "knockout",
-    "hqwebapp/js/bundle",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/hq.helpers"
 ], function(
     $,
     ko,
-    hq
+    initialPageData
 ) {
     "use strict";
     var somethingWentWrong = $("#FailText").text();
@@ -52,7 +53,7 @@ define([
             self._id = ko.observable();
         }
         self.view_link = ko.computed(function(){
-            return hq.initialPageData.reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
+            return initialPageData.reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
         }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
@@ -111,7 +112,7 @@ define([
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: hq.initialPageData.reverse('update_lookup_tables') + (self._id() || ''),
+                url: initialPageData.reverse('update_lookup_tables') + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 error: function(data) {
@@ -276,7 +277,7 @@ define([
             if (tables.length > 0){
                 // POST, because a long querystring can overflow the request
                 $.ajax({
-                    url: hq.initialPageData.reverse('download_fixtures'),
+                    url: initialPageData.reverse('download_fixtures'),
                     type: 'POST',
                     data: {'table_ids': tables},
                     dataType: 'json',
@@ -352,7 +353,7 @@ define([
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                url: hq.initialPageData.reverse('fixture_data_types'),
+                url: initialPageData.reverse('fixture_data_types'),
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {

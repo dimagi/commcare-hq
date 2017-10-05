@@ -1,25 +1,43 @@
 mainConfigFile: corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
+bundlesConfigOutFile: hqwebapp/js/requirejs_config.js
 baseUrl: staticfiles
 dir: staticfiles
 allowSourceOverwrites: true
 keepBuildDir: true
-skipDirOptimize: true   # could turn this off to minify everything, but that's prohibitively slow because bower_components is so large
+skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
-fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)/,
+fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)/,
 modules:
-  # Third-party modules
-  - name: hqwebapp/js/common
+  - name: hqwebapp/js/bundle
+    include:
+      - jquery
+      - knockout
+      - ko.mapping
+      - hqwebapp/js/knockout_bindings.ko
+      - underscore
+      - hqwebapp/js/django
+      - hqwebapp/js/alert_user
+      - hqwebapp/js/initial_page_data
+      - hqwebapp/js/main
+      - hqwebapp/js/hq.helpers
+
   - name: hqwebapp/js/jquery-ui
     exclude:
-      - hqwebapp/js/common
+      - hqwebapp/js/bundle
+    include:
+      - jquery
+      - jquery-ui/ui/core
+      - jquery-ui/ui/widget
+      - jquery-ui/ui/mouse
+      - jquery-ui/ui/position
+      - jquery-ui/ui/button
+      - jquery-ui/ui/datepicker
+      - jquery-ui/ui/draggable
+      - jquery-ui/ui/resizable
+      - jquery-ui/ui/droppable
+      - jquery-ui/ui/sortable
 
-  # Modules common to HQ
-  - name: hqwebapp/js/bundle
+  # App-specific modules
+  - name: app_manager/js/forms/bundle
     exclude:
-      - hqwebapp/js/common
-
-  # App-specific-modules
-  - name: fixtures/js/bundle
-    exclude:
-      - hqwebapp/js/common
       - hqwebapp/js/bundle

@@ -1,24 +1,28 @@
 define([
     "jquery",
     "hqwebapp/js/django",
-    "hqwebapp/js/bundle",
-    "fixtures/js/bundle",
+    "hqwebapp/js/initial_page_data",
+    "reports/js/standard_hq_report",
+    "reports/js/config.dataTables.bootstrap",
+    "reports/js/filters",
 ], function(
     $,
     django,
-    hq,
-    fixtures
+    initialPageData,
+    standardHQReportModule,
+    datatablesConfig,
+    filters
 ) {
-    if (hq.initialPageData.get('renderReportTables')) {
-        var reportTables = fixtures.datatablesConfig.HQReportDataTables(hq.initialPageData.get('dataTablesOptions')),
-            standardHQReport = fixtures.standardHQReportModule.getStandardHQReport();
+    if (initialPageData.get('renderReportTables')) {
+        var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
+            standardHQReport = standardHQReportModule.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
         reportTables.render();
     }
 
-    fixtures.filters.init();
+    filters.init();
 
     $(function() {
         $('.header-popover').popover({
