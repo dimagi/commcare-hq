@@ -29,6 +29,7 @@ class Command(ResourceStaticCommand):
             config = yaml.load(f)
 
             bundles = {}
+            all_modules = []
             prefix = os.path.join(os.getcwd(), 'corehq')
             for finder in finders.get_finders():
                 if isinstance(finder, finders.AppDirectoriesFinder):
@@ -40,13 +41,8 @@ class Command(ResourceStaticCommand):
                             if directory not in bundles:
                                 bundles[directory] = []
                             bundles[directory].append(path[:-3])
-                            '''
-                            bundles = {
-                                'case/js' => [
-                                    'case/js/case_details'
-                                ]
-                            }
-                            '''
+                            all_modules.append(path[:-3])
+
             customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
             for directory, inclusions in bundles.iteritems():
                 if directory not in customized and not directory.startswith("app_manager/js/vellum"):
@@ -54,6 +50,7 @@ class Command(ResourceStaticCommand):
                     config['modules'].append({
                         'name': os.path.join(directory, 'bundle'),
                         'include': inclusions,
+                        'excludeShallow': [name for name in all_modules if name not in inclusions],
                         'exclude': ['hqwebapp/js/bundle'],
                     })
 
