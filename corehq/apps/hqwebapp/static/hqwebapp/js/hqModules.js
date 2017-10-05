@@ -39,14 +39,50 @@
 
 var COMMCAREHQ_MODULES = {};
 
-function hqDefine(path, moduleAccessor) {
-    if (typeof COMMCAREHQ_MODULES[path] !== 'undefined') {
-        throw new Error("The module '" + path + "' has already been defined elsewhere.");
+/*
+ * Transitional version of "define" to handle both RequireJS and non-RequireJS pages.
+ * Signature deliberately matches that of "define". On non-RequireJS pages, the dependencies
+ * argument is optional, and moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+ */
+function hqDefine(path, dependencies, moduleAccessor) {
+    if (arguments.length === 2) {
+        return hqDefine(path, [], dependencies);
     }
-    if (path.match(/\.js$/)) {
-        throw new Error("Error in '" + path + "': module names should not end in .js.");
-    }
-    COMMCAREHQ_MODULES[path] = moduleAccessor();
+
+    var thirdParty = {
+        'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
+        'knockout': typeof ko === 'undefined' ? undefined : ko,
+        'ko': typeof ko === 'undefined' ? undefined : ko,
+        'underscore': typeof _ === 'undefined' ? undefined : _,
+    };
+    (function(factory) {
+        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+            define(path, dependencies, factory);
+        } else {
+            var args = [];
+            for (var i = 0; i < dependencies.length; i++) {
+                var dependency = dependencies[i];
+                if (thirdParty.hasOwnProperty(dependency)) {
+                    args[i] = thirdParty[dependency];
+                } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
+                    args[i] = hqImport(dependency);
+                }
+            }
+            if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
+                if (path.match(/\.js$/)) {
+                    throw new Error("Error in '" + path + "': module names should not end in .js.");
+                }
+                COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
+            }
+            else {
+                throw new Error("The module '" + path + "' has already been defined elsewhere.");
+            }
+        }
+    }(moduleAccessor));
+}
+if (typeof define === 'undefined') {
+    define = hqDefine;
 }
 
 function hqImport(path) {
