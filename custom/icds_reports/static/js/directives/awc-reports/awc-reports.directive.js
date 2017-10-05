@@ -1888,7 +1888,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 },
                 showValues: true,
                 showControls: false,
-                useInteractiveGuideline: false,
+                useInteractiveGuideline: true,
                 clipVoronoi: false,
                 duration: 1000,
                 xAxis: {
@@ -1906,7 +1906,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     },
                 },
                 forceY: [0],
-                yDomain: [0],
                 callback: function(chart) {
                     var tooltip = chart.interactiveLayer.tooltip;
                     tooltip.contentGenerator(function (d) {
