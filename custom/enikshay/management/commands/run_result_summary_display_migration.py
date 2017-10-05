@@ -18,7 +18,7 @@ class Command(BaseEnikshayCaseMigration):
         if (
             test.get_case_property(DATAMIGRATION_CASE_PROPERTY) == 'yes'
             or not (
-                test.get_case_property('result_recorded')
+                test.get_case_property('result_recorded') == 'yes'
                 and not test.get_case_property(RESULT_SUMMARY_DISPLAY)
                 and not test.get_case_property('test_type_value')
             )
