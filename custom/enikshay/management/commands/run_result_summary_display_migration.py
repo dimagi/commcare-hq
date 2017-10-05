@@ -27,7 +27,10 @@ class Command(BaseEnikshayCaseMigration):
 
         return {
             RESULT_SUMMARY_DISPLAY: '\n'.join(filter(None, [
-                'TB Detected' if test.get_case_property('result') == 'tb_detected' else 'TB Not Detected',
+                {
+                    'tb_detected': 'TB Detected',
+                    'tb_not_detected': 'TB Not Detected',
+                }.get(test.get_case_property('result')),
                 'R:Res' if test.get_case_property('drug_resistance_list') == 'r' else None,
                 'R:Sens' if test.get_case_property('drug_sensitive_list') == 'r' else None,
                 'Count of bacilli: %s' % test.get_case_property('max_bacilli_count')
