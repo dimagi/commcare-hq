@@ -3,7 +3,6 @@ define([
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
-    "hqwebapp/js/jquery-ui",
     "hqwebapp/js/knockout_bindings.ko",
 ], function(
     $,
