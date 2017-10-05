@@ -45,3 +45,10 @@ modules:
   - name: app_manager/js/forms/bundle
     exclude:
       - hqwebapp/js/common
+
+  - name: reports/js/bundle
+    include:
+      - reports/js/config.dataTables.bootstrap
+      - reports/js/filters
+    exclude:
+      - hqwebapp/js/common
