@@ -1391,7 +1391,7 @@ def get_drug_resistance_case_properties(column_mapping, row, test_cases):
     for drug_id in drugs:
         dr_cases[drug_id]['sensitivity'] = 'resistant'
 
-    test_cases = sorted(test_cases, key=lambda test: test['date_reported'])
+    test_cases = sorted([t for t in test_cases if 'date_reported' in t], key=lambda t: t['date_reported'])
     for t in test_cases:
         drug_resistance_list = t['drug_resistance_list'] or []
         if drug_resistance_list:
