@@ -12,14 +12,14 @@ from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_ma
 from corehq.motech.dhis2.forms import Dhis2ConnectionForm
 from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
 from corehq.motech.dhis2.tasks import send_datasets
-from corehq.apps.domain.views import BaseAdminProjectSettingsView
+from corehq.apps.domain.views import BaseProjectSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2ConnectionView(BaseAdminProjectSettingsView):
+class Dhis2ConnectionView(BaseProjectSettingsView):
     urlname = 'dhis2_connection_view'
     page_title = ugettext_lazy("DHIS2 Connection Settings")
     template_name = 'dhis2/connection_settings.html'
@@ -49,7 +49,7 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class DataSetMapView(BaseAdminProjectSettingsView):
+class DataSetMapView(BaseProjectSettingsView):
     urlname = 'dataset_map_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
     template_name = 'dhis2/dataset_map.html'
@@ -96,7 +96,7 @@ class DataSetMapView(BaseAdminProjectSettingsView):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
+class Dhis2LogListView(BaseProjectSettingsView, ListView):
     urlname = 'dhis2_log_list_view'
     page_title = ugettext_lazy("DHIS2 Logs")
     template_name = 'dhis2/logs.html'
@@ -118,7 +118,7 @@ class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2LogDetailView(BaseAdminProjectSettingsView, DetailView):
+class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'dhis2_log_detail_view'
     page_title = ugettext_lazy("DHIS2 Logs")
     template_name = 'dhis2/log_detail.html'
