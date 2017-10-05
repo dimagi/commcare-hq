@@ -330,3 +330,10 @@ class Day(object):
         self.adherence_image_key = adherence_image_key
         self.show_unexpected_image = show_unexpected_image
         self.show_conflicting_data = show_conflicting_data
+
+
+class HistoricalAdherenceReportTest(HistoricalAdherenceReport):
+    slug = 'historical_adherence'
+    report_template_path = 'enikshay/historical_adherence.html'
+    name = ugettext_lazy('Historical Adherence TEST')
+    report_title = ugettext_lazy('Historical Adherence TEST')
