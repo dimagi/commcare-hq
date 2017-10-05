@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
@@ -6,7 +5,6 @@ from couchdbkit import ResourceConflict
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.logging import notify_exception
 
