@@ -16,6 +16,8 @@ from corehq.apps.domain.auth import get_username_and_password_from_request, dete
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.locations.permissions import user_can_access_other_user
 
+from custom.enikshay.user_setup import set_enikshay_device_id
+
 from .models import DemoUserRestore
 from .exceptions import RestorePermissionDenied
 
@@ -213,4 +215,6 @@ def update_device_id(user, device_id):
         if not user.is_demo_user:
             updated = user.update_device_id_last_used(device_id)
             if updated:
-                user.save(fire_signals=toggles.ENIKSHAY.enabled(user.domain))
+                if toggles.ENIKSHAY.enabled(user.domain):
+                    set_enikshay_device_id(user)
+                user.save(fire_signals=False)

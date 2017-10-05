@@ -233,6 +233,13 @@ def get_last_used_device_number(user):
     return index + 1
 
 
+def set_enikshay_device_id(user):
+    device_number = get_last_used_device_number(user)
+    if device_number and user.user_data.get('id_device_number', None) != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+
+
 def set_issuer_id(domain, user):
     """Add a serially increasing custom user data "Issuer ID" to the user, as
     well as a human-readable compressed form."""
@@ -241,12 +248,6 @@ def set_issuer_id(domain, user):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
         user.user_data['id_issuer_number'] = issuer_id.pk
         user.user_data['id_issuer_body'] = compress_nikshay_id(issuer_id.pk, 3)
-        changed = True
-
-    device_number = get_last_used_device_number(user)
-    if device_number and user.user_data.get('id_device_number', None) != device_number:
-        user.user_data['id_device_number'] = device_number
-        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
         changed = True
 
     return changed
