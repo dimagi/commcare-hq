@@ -440,7 +440,9 @@
                         ko.mapping = mapping;
                     },
                 });
-                requirejs(['{{ requirejs_main }}']);
+                requirejs(['hqwebapp/js/common'], function (common) {
+                    requirejs(['{{ requirejs_main }}']);
+                });
             </script>
         {% endif %}
 

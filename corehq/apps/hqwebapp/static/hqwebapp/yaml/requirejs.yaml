@@ -8,14 +8,18 @@ skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)/,
 modules:
-  - name: hqwebapp/js/bundle
+  - name: hqwebapp/js/common
     include:
       - jquery
       - knockout
       - ko.mapping
       - hqwebapp/js/knockout_bindings.ko
       - underscore
+      - bootstrap
       - hqwebapp/js/django
+
+  - name: hqwebapp/js/bundle
+    include:
       - hqwebapp/js/alert_user
       - hqwebapp/js/initial_page_data
       - hqwebapp/js/main
@@ -23,7 +27,7 @@ modules:
 
   - name: hqwebapp/js/jquery-ui
     exclude:
-      - hqwebapp/js/bundle
+      - hqwebapp/js/common
     include:
       - jquery
       - jquery-ui/ui/core
@@ -40,4 +44,4 @@ modules:
   # App-specific modules
   - name: app_manager/js/forms/bundle
     exclude:
-      - hqwebapp/js/bundle
+      - hqwebapp/js/common
