@@ -187,6 +187,8 @@ class BaseEditUserView(BaseUserSettingsView):
             raise Http404()
 
         if role is None:
+            if isinstance(self.editable_user, WebUser):
+                raise ValueError("WebUser is always expected to have a role")
             return None
         else:
             return role.get_qualified_id()
