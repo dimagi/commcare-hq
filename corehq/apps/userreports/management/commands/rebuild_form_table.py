@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.es import forms as form_es
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 
+
 class Command(BaseCommand):
     help = "Rebuild a table in place for forms in a specific time period"
 
