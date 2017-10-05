@@ -151,7 +151,7 @@ class Command(BaseCommand):
                                 # Find the form that first set diagnosis_test_type and
                                 # reset all diagnosis properties from there
                                 flag_for_review = "yes"
-                                diagnosis_update =  self._get_diagnosis_update(episode).\
+                                diagnosis_update = self._get_diagnosis_update(episode).\
                                     get_update_action().dynamic_properties
                                 diagnosis_test_result_date = diagnosis_update.\
                                     get('diagnosis_test_result_date', '')
