@@ -51,7 +51,7 @@ class Command(ResourceStaticCommand):
                         'name': os.path.join(directory, 'bundle'),
                         'include': inclusions,
                         'excludeShallow': [name for name in all_modules if name not in inclusions],
-                        'exclude': ['hqwebapp/js/bundle'],
+                        'exclude': ['hqwebapp/js/common'],
                     })
 
             # Write .js files to staticfiles
