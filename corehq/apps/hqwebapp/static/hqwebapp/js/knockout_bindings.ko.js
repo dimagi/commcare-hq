@@ -1,4 +1,5 @@
 /* global DOMPurify */
+hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/ui/sortable'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
@@ -733,3 +734,5 @@ ko.bindingHandlers.bind_element = {
         }
     }
 };
+
+});
