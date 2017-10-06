@@ -8528,6 +8528,32 @@
                     "type": "property_name",
                     "property_name": "adherence_total_doses_taken"
                 }
+            },
+            {
+                "display_name": "current_address_block_taluka_mandal_choice",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "current_address_block_taluka_mandal_choice",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "current_address_block_taluka_mandal_choice"
+                }
+            },
+            {
+                "display_name": "treatment_options",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "treatment_options",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_options"
+                }
             }
         ],
         "named_filters": {
