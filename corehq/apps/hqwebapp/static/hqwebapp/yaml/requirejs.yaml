@@ -54,3 +54,4 @@ modules:
       - datatables.bootstrap
     exclude:
       - hqwebapp/js/common
+      - datatables
