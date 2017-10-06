@@ -37,18 +37,30 @@ class Command(BaseCommand):
             assert is_static
             adapter = get_indicator_adapter(data_source)
             table = adapter.get_table()
-            for case_id in self._get_case_ids_to_process(adapter, table):
+            for case_id in self._get_case_ids_to_process(adapter, table, data_source_id):
                 change = FakeChange(case_id, fake_change_doc)
-                AsyncIndicator.update_indicators(change, [data_source])
+                AsyncIndicator.update_indicators(change, [data_source_id])
 
-    def _get_case_ids_to_process(self, adapter, table):
+    def _add_filters(self, query, table, data_source_id):
+        if data_source_id == 'static-icds-cas-static-child_cases_monthly_tableau_v2':
+            return query.filter(
+                table.columns.valid_in_month_all = 1,
+                table.columns.valid_in_month = 0,
+            )
+        elif data_source_id == 'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2':
+            return query.filter(
+                table.columns.pregnant_all = 1,
+                table.columns.pregnant = 0,
+            )
+
+    def _get_case_ids_to_process(self, adapter, table, data_source_id):
         for state_id in STATE_IDS:
             print("processing state %s" % state_id)
             query = adapter.session_helper.Session.query(table.columns.doc_id).distinct(table.columns.doc_id)
             case_ids = query.filter(
                 table.columns.state_id == state_id,
-                table.columns.resident == 'no'
-            ).all()
+            )
+            case_ids = self._add_filters(query, table, data_source_id).all()
 
             num_case_ids = len(case_ids)
             print("processing %d cases" % (num_case_ids))
