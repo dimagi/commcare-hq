@@ -78,6 +78,9 @@ class StaticToggle(object):
         elif item in self.always_disabled:
             return False
 
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         if namespace is not Ellipsis and namespace not in self.namespaces:
             # short circuit if we're checking an item that isn't supported by this toggle
             return False
