@@ -52,7 +52,7 @@
     "xpath": "dimagi/js-xpath#f4f0c78",
     "blazy": "1.6.2",
     "datatables": "1.10.9",
-    "datatables-bootstrap3": "0.1",
+    "datatables-bootstrap3": "*",
     "datatables-fixedcolumns": "3.2.0",
     "nprogress": "0.2.0",
     "d3": "3.1",
