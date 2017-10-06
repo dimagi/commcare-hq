@@ -19,6 +19,8 @@ modules:
       - hqwebapp/js/django
 
   - name: hqwebapp/js/bundle
+    exclude:
+      - hqwebapp/js/common
     include:
       - hqwebapp/js/alert_user
       - hqwebapp/js/initial_page_data
