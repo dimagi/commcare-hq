@@ -10,9 +10,16 @@ from corehq.toggles import (
     NAMESPACE_DOMAIN,
     TAG_EXPERIMENTAL,
     PredictablyRandomToggle,
+    StaticToggle,
     deterministic_random,
 )
-from toggle.shortcuts import update_toggle_cache, namespaced_item, clear_toggle_cache
+from toggle.shortcuts import (
+    update_toggle_cache,
+    namespaced_item,
+    clear_toggle_cache,
+    find_users_with_toggle_enabled,
+    find_domains_with_toggle_enabled,
+)
 from .models import generate_toggle_id, Toggle
 from .shortcuts import toggle_enabled, set_toggle
 
@@ -245,3 +252,43 @@ class PredictablyRandomToggleTests(TestCase):
         )
         self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
         self.assertFalse(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
+
+
+class ShortcutTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.users = ['arthur', 'diane']
+        cls.user_toggle = Toggle(
+            slug='user_toggle',
+            enabled_users=cls.users)
+        cls.user_toggle.save()
+        cls.domain = 'dc'
+        cls.domain_toggle = Toggle(
+            slug='domain_toggle',
+            enabled_users=[namespaced_item(cls.domain, NAMESPACE_DOMAIN)])
+        cls.domain_toggle.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user_toggle.delete()
+        cls.domain_toggle.delete()
+
+    def test_find_users_with_toggle_enabled(self):
+        user_toggle = StaticToggle(
+            'user_toggle',
+            'A test toggle',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER]
+        )
+        users = find_users_with_toggle_enabled(user_toggle)
+        self.assertEqual(set(users), set(self.users))
+
+    def test_find_domains_with_toggle_enabled(self):
+        domain_toggle = StaticToggle(
+            'domain_toggle',
+            'A test toggle',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER]
+        )
+        domain, = find_domains_with_toggle_enabled(domain_toggle)
+        self.assertEqual(domain, self.domain)
