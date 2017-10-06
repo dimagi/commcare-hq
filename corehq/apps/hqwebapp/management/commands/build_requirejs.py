@@ -63,6 +63,8 @@ class Command(ResourceStaticCommand):
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
         call(["node", "bower_components/r.js/dist/r.js", "-o", "build.js"])
+        filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
+        resource_versions[filename] = self.get_hash(filename)
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
@@ -72,11 +74,14 @@ class Command(ResourceStaticCommand):
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
         if settings.STATIC_CDN:
-            with open(os.path.join(self.root_dir, 'staticfiles',
-                                   'hqwebapp', 'js', 'resource_versions.js'), 'w') as fout:
+            filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
+            with open(os.path.join(filename, 'w')) as fout:
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
                     file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                                  ".js?version=%s" % version if version else "")
                     for file, version in resource_versions.iteritems()
                     if file.endswith(".js") and not file.startswith("formdesigner")
                 }, indent=2))
+            resource_versions[filename] = self.get_hash(filename)
+
+        self.overwrite_resources(resource_versions)
