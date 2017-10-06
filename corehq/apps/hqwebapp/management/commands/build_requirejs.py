@@ -75,7 +75,7 @@ class Command(ResourceStaticCommand):
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
         if settings.STATIC_CDN:
             filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
-            with open(os.path.join(filename, 'w')) as fout:
+            with open(filename, 'w') as fout:
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
                     file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                                  ".js?version=%s" % version if version else "")
