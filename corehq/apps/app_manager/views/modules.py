@@ -24,6 +24,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, h
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
+    MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
@@ -245,6 +246,7 @@ def _get_report_module_context(app, module):
             'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
+            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
         },
         'static_data_options': {
             'filterChoices': filter_choices,
