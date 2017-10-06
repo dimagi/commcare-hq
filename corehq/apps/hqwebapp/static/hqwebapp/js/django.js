@@ -1,3 +1,4 @@
+/* global django */
 /*
     Allow usage of gettext, RequireJS-style, rather than accessing the global django.
 */
