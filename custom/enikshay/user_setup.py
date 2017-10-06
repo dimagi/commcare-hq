@@ -226,18 +226,11 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     return ''.join(output)
 
 
-def get_last_used_device_number(user):
-    if not user.devices:
-        return None
-    _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
-    return index + 1
-
-
-def set_enikshay_device_id(user):
-    device_number = get_last_used_device_number(user)
-    if device_number and user.user_data.get('id_device_number', None) != device_number:
-        user.user_data['id_device_number'] = device_number
-        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+def set_enikshay_device_id(user, device_id):
+    # device_id was JUST set, so it must be in there
+    device_number = [device.device_id for device in user.devices].index(device_id) + 1
+    user.user_data['id_device_number'] = device_number
+    user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
 
 
 def set_issuer_id(domain, user):

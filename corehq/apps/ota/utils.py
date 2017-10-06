@@ -204,5 +204,5 @@ def update_device_id(user, device_id):
             updated = user.update_device_id_last_used(device_id)
             if updated:
                 if toggles.ENIKSHAY.enabled(user.domain):
-                    set_enikshay_device_id(user)
+                    set_enikshay_device_id(user, device_id)
                 user.save(fire_signals=False)

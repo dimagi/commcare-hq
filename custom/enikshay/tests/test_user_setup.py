@@ -253,7 +253,7 @@ class TestUserSetupUtils(TestCase):
         user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
         user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
         user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
-        set_enikshay_device_id(user)
+        set_enikshay_device_id(user, 'blackberry')
         user.save()
         self.assertEqual(user.user_data['id_device_number'], 3)
 
