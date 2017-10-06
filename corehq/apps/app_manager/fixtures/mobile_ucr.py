@@ -307,7 +307,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         domain = restore_user.domain
         db = get_blob_db()
 
-        if not restore_state.overwrite_cache:
+        # make sure the sync delay is at least one hour
+        if not restore_state.overwrite_cache and report_config.sync_delay >= 1:
             try:
                 return db.get(
                     "{}-{}".format(restore_user.user_id, report_config.report_id)
@@ -367,14 +368,15 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         )
         report_elem.append(rows_elem)
         ret = [report_filter_elem, report_elem]
-        io = StringIO()
-        for element in ret:
-            io.write(ElementTree.tostring(element, encoding='utf-8'))
-        io.seek(0)
-        db.put(
-            io, "{}-{}".format(restore_user.user_id, report_config.report_id),
-            timeout=float(report_config.sync_delay) * 60 * 60
-        )
+        if report_config.sync_delay >= 1:
+            io = StringIO()
+            for element in ret:
+                io.write(ElementTree.tostring(element, encoding='utf-8'))
+            io.seek(0)
+            db.put(
+                io, "{}-{}".format(restore_user.user_id, report_config.report_id),
+                timeout=float(report_config.sync_delay) * 60 * 60
+            )
         return ret
 
     @staticmethod
