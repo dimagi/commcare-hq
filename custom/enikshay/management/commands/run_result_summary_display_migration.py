@@ -19,22 +19,25 @@ class Command(BaseEnikshayCaseMigration):
             test.get_case_property(DATAMIGRATION_CASE_PROPERTY) == 'yes'
             or not (
                 test.get_case_property('result_recorded') == 'yes'
-                and not test.get_case_property(RESULT_SUMMARY_DISPLAY)
                 and not test.get_case_property('test_type_value')
             )
         ):
             return {}
 
-        return {
-            RESULT_SUMMARY_DISPLAY: '\n'.join(filter(None, [
-                {
-                    'tb_detected': 'TB Detected',
-                    'tb_not_detected': 'TB Not Detected',
-                }.get(test.get_case_property('result')),
-                'R:Res' if test.get_case_property('drug_resistance_list') == 'r' else None,
-                'R:Sens' if test.get_case_property('drug_sensitive_list') == 'r' else None,
-                'Count of bacilli: %s' % test.get_case_property('max_bacilli_count')
-                if test.get_case_property('max_bacilli_count') else None,
-                test.get_case_property('clinical_remarks'),
-            ])),
-        }
+        new_result_display_summary = '\n'.join(filter(None, [
+            {
+                'tb_detected': 'TB Detected',
+                'tb_not_detected': 'TB Not Detected',
+            }.get(test.get_case_property('result')),
+            'R:Res' if test.get_case_property('drug_resistance_list') == 'r' else None,
+            'R:Sens' if test.get_case_property('drug_sensitive_list') == 'r' else None,
+            'Count of bacilli: %s' % test.get_case_property('max_bacilli_count')
+            if test.get_case_property('max_bacilli_count') else None,
+            test.get_case_property('clinical_remarks'),
+        ]))
+        if new_result_display_summary != test.get_case_property(RESULT_SUMMARY_DISPLAY):
+            return {
+                RESULT_SUMMARY_DISPLAY: new_result_display_summary,
+            }
+        else:
+            return {}
