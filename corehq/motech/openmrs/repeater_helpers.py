@@ -6,6 +6,44 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
+PERSON_PROPERTIES = (
+    'gender',
+    'age',
+    'birthdate',
+    'birthdateEstimated',
+    'dead',
+    'deathDate',
+    'deathdateEstimated',
+    'causeOfDeath',
+)
+PERSON_SUBRESOURCES = ('attribute', 'address', 'name')
+NAME_PROPERTIES = (
+    'givenName',
+    'familyName',
+    'middleName',
+    'familyName2',
+    'prefix',
+    'familyNamePrefix',
+    'familyNameSuffix',
+    'degree',
+)
+ADDRESS_PROPERTIES = (
+    'address1',
+    'address2',
+    'cityVillage',
+    'stateProvince',
+    'country',
+    'postalCode',
+    'latitude',
+    'longitude',
+    'countyDistrict',
+    'address3',
+    'address4',
+    'address5',
+    'address6',
+    'startDate',
+    'endDate',
+)
 
 
 class Requests(object):
