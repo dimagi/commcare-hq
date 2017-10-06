@@ -1,12 +1,13 @@
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
-    get_patient_by_id,
-    update_person_attribute,
-    create_person_attribute,
     create_visit,
-    set_person_properties,
+    get_patient,
+    update_person_properties,
+    update_person_name,
+    update_person_address,
+    create_person_address,
+    sync_person_attributes,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -50,46 +51,19 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime)
 
 
 def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
-    patient = None
-    for id_matcher in openmrs_config.case_config.id_matchers:
-        assert isinstance(id_matcher, IdMatcher)
-        if id_matcher.case_property in info.extra_fields:
-            patient = get_patient_by_id(
-                requests, id_matcher.identifier_type_id,
-                info.extra_fields[id_matcher.case_property])
-            if patient:
-                break
-
-    if not patient:
-        problem_log.append("Could not find patient matching case")
-        return
-
+    patient = get_patient(requests, info, openmrs_config, problem_log)
     person_uuid = patient['person']['uuid']
+    update_person_properties(requests, info, openmrs_config, person_uuid)
 
-    # update properties
+    name_uuid = patient['person']['preferredName']['uuid']
+    update_person_name(requests, info, openmrs_config, person_uuid, name_uuid)
 
-    properties = {
-        person_property: value_source.get_value(info)
-        for person_property, value_source in openmrs_config.case_config.person_properties.items()
-        if value_source.get_value(info)
-    }
-    if properties:
-        set_person_properties(requests, person_uuid, properties)
+    address_uuid = patient['person']['preferredAddress']['uuid'] if patient['person']['preferredAddress'] else None
+    if address_uuid:
+        update_person_address(requests, info, openmrs_config, person_uuid, address_uuid)
+    else:
+        create_person_address(requests, info, openmrs_config, person_uuid)
 
-    # update attributes
-
-    existing_person_attributes = {
-        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
-        for attribute in patient['person']['attributes']
-    }
-
-    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
-        value = value_source.get_value(info)
-        if person_attribute_type in existing_person_attributes:
-            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
-            if value != existing_value:
-                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
-        else:
-            create_person_attribute(requests, person_uuid, person_attribute_type, value)
+    sync_person_attributes(requests, info, openmrs_config, person_uuid, patient['person']['attributes'])
 
     return person_uuid
