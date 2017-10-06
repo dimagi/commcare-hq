@@ -564,6 +564,7 @@ class BETSLocationPayloadGenerator(LocationPayloadGenerator):
         return json.dumps(get_bets_location_json(location))
 
     def handle_success(self, response, location, repeat_record):
+        location.refresh_from_db()
         existing_ids = location.metadata.get('BETS_location_repeat_record_ids')
         if existing_ids:
             location.metadata['BETS_location_repeat_record_ids'] = "{} {}".format(
