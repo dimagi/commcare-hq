@@ -545,6 +545,8 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
         return json.dumps(user_json, cls=DjangoJSONEncoder)
 
     def handle_success(self, response, user, repeat_record):
+        # re-fetch the user so we don't get a document update conflict
+        user = CommCareUser.get(user._id)
         existing_ids = user.user_data.get('BETS_user_repeat_record_ids')
         if existing_ids:
             user.user_data['BETS_user_repeat_record_ids'] = "{} {}".format(
