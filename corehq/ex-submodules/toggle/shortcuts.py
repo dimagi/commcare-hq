@@ -73,11 +73,14 @@ def parse_toggle(entry):
 
 
 def find_users_with_toggle_enabled(toggle):
+    from corehq.toggles import ALL_NAMESPACES, NAMESPACE_USER
     try:
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:
         return []
-    return filter(lambda user: ':' not in user, doc.enabled_users)
+    prefixes = tuple(ns + ':' for ns in ALL_NAMESPACES if ns != NAMESPACE_USER)
+    # Users are not prefixed with NAMESPACE_USER, but exclude NAMESPACE_USER to keep `prefixes` short
+    return [u for u in doc.enabled_users if not u.startswith(prefixes)]
 
 
 def find_domains_with_toggle_enabled(toggle):
@@ -86,4 +89,5 @@ def find_domains_with_toggle_enabled(toggle):
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:
         return []
-    return [user[len(NAMESPACE_DOMAIN) + 1:] for user in doc.enabled_users if user.startswith(NAMESPACE_DOMAIN)]
+    prefix = NAMESPACE_DOMAIN + ':'
+    return [user[len(prefix):] for user in doc.enabled_users if user.startswith(prefix)]
