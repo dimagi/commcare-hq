@@ -52,6 +52,7 @@ modules:
       - reports/js/filters
       - reports/js/standard_hq_report
       - datatables.bootstrap
+      - select2-3.5.2-legacy/select2
     exclude:
       - hqwebapp/js/common
       - datatables
