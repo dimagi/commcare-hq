@@ -6,6 +6,7 @@ allowSourceOverwrites: true
 keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
 fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)/,
+optimize: none
 modules:
   - name: hqwebapp/js/common
     include:
@@ -50,8 +51,6 @@ modules:
       - reports/js/config.dataTables.bootstrap
       - reports/js/filters
       - reports/js/standard_hq_report
-      - datatables
-      - datatables.fixedColumns
       - datatables.bootstrap
     exclude:
       - hqwebapp/js/common
