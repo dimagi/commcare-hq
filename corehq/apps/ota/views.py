@@ -172,7 +172,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
     if is_demo_restore:
         # if user is in demo-mode, return demo restore
-        update_device_id(couch_user, device_id)
         return demo_user_restore_response(couch_user), None
 
     uses_login_as = bool(as_user)
