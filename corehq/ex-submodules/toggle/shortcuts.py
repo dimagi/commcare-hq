@@ -72,23 +72,18 @@ def parse_toggle(entry):
     return namespace, entry
 
 
-def find_with_toggle_enabled(toggle, namespace):
-    from corehq.toggles import ALL_NAMESPACES
-
-    if namespace not in ALL_NAMESPACES:
-        raise ValueError('Unknown toggle namespace "{}"'.format(namespace))
+def find_users_with_toggle_enabled(toggle):
     try:
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:
         return []
-    return [user[len(namespace) + 1:] for user in doc.enabled_users if user.startswith(namespace)]
-
-
-def find_users_with_toggle_enabled(toggle):
-    from corehq.toggles import NAMESPACE_USER
-    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_USER)
+    return filter(lambda user: ':' not in user, doc.enabled_users)
 
 
 def find_domains_with_toggle_enabled(toggle):
     from corehq.toggles import NAMESPACE_DOMAIN
-    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_DOMAIN)
+    try:
+        doc = Toggle.get(toggle.slug)
+    except ResourceNotFound:
+        return []
+    return [user[len(NAMESPACE_DOMAIN) + 1:] for user in doc.enabled_users if user.startswith(NAMESPACE_DOMAIN)]
