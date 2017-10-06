@@ -2,22 +2,22 @@
 <tr>
     <td>{{ repeater.url }}</td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&record_state=PENDING">
+        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&amp;record_state=PENDING">
             {{ repeater.get_pending_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&record_state=FAIL">
+        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&amp;record_state=FAIL">
             {{ repeater.get_failure_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&record_state=CANCELLED">
+        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&amp;record_state=CANCELLED">
             {{ repeater.get_cancelled_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&record_state=SUCCESS">
+        <a href="{% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}&amp;record_state=SUCCESS">
             {{ repeater.get_success_record_count }}
         </a>
     </td>
