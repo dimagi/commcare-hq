@@ -13,6 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.const import USER_DATE_FORMAT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.soft_assert import soft_assert
@@ -209,6 +210,7 @@ class HistoricalAdherenceReport(EnikshayReport):
                         self.get_adherence_image_key(cases_for_date, date),
                         self.show_unexpected_image(cases_for_date, date),
                         len(cases_for_date) > 1,
+                        self.is_treatment_start_date(date),
                         force_month_label=date == first_date,
                     ))
                 else:
@@ -304,6 +306,9 @@ class HistoricalAdherenceReport(EnikshayReport):
             and date.weekday() not in self.expected_days
         )
 
+    def is_treatment_start_date(self, date):
+        return self.episode_properties.get('treatment_initiation_date') == date.strftime(USER_DATE_FORMAT)
+
 
 class Week(object):
     def __init__(self, days):
@@ -318,10 +323,18 @@ class Week(object):
 class Day(object):
 
     def __init__(self, date, adherence_image_key, show_unexpected_image, show_conflicting_data,
-                 force_month_label=False):
+                 show_treatment_start_date, force_month_label=False):
         self.date = date
         self.month_string = self.date.strftime("%b") if self.date.day == 1 or force_month_label else ""
         self.day_string = self.date.day
         self.adherence_image_key = adherence_image_key
         self.show_unexpected_image = show_unexpected_image
         self.show_conflicting_data = show_conflicting_data
+        self.show_treatment_start_date = show_treatment_start_date
+
+
+class HistoricalAdherenceReportTest(HistoricalAdherenceReport):
+    slug = 'historical_adherence'
+    report_template_path = 'enikshay/historical_adherence.html'
+    name = ugettext_lazy('Historical Adherence TEST')
+    report_title = ugettext_lazy('Historical Adherence TEST')
