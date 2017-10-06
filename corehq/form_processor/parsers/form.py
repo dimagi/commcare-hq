@@ -1,5 +1,7 @@
 import datetime
 
+from couchdbkit import ResourceNotFound
+
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
@@ -165,7 +167,16 @@ def _handle_duplicate(new_doc):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    try:
+        existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    except ResourceNotFound:
+        # Original form processing failed but left behind a form doc with no
+        # attachments. It's safe to delete this now since we're going to re-process
+        # the form anyway.
+        # https://sentry.io/dimagi/commcarehq/issues/261297321
+        from couchforms.models import XFormInstance
+        XFormInstance.get_db().delete_doc(conflict_id)
+        return FormProcessingResult(new_doc)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = new_doc.xml_md5()
