@@ -4,6 +4,8 @@ import argparse
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.userreports.tasks import rebuild_form_table
+
 
 class Command(BaseCommand):
     help = "Rebuild a table in place for forms in a specific time period"
