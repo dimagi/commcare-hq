@@ -205,7 +205,7 @@ class PredictablyRandomToggleTests(TestCase):
     def setUpClass(cls):
         cls.user_toggle = Toggle(
             slug='user_toggle',
-            enabled_users=['arthur', 'diane'])
+            enabled_users=['arthur', 'diana'])
         cls.user_toggle.save()
         cls.domain_toggle = Toggle(
             slug='domain_toggle',
@@ -226,20 +226,22 @@ class PredictablyRandomToggleTests(TestCase):
 
     def test_user_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
-            'test_toggle',
+            'user_toggle',
             'A toggle for testing',
             TAG_EXPERIMENTAL,
             [NAMESPACE_USER],
             randomness=0.01
         )
+        self.assertTrue(toggle.enabled('diana', namespace=NAMESPACE_USER))
         self.assertFalse(toggle.enabled('jessica', namespace=NAMESPACE_USER))
 
     def test_domain_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
-            'test_toggle',
+            'domain_toggle',
             'A toggle for testing',
             TAG_EXPERIMENTAL,
             [NAMESPACE_DOMAIN],
             randomness=0.01
         )
+        self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
         self.assertFalse(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
