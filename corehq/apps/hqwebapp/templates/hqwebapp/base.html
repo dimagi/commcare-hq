@@ -443,9 +443,9 @@
             {% compress js %}
                 <script src="{% static 'requirejs/require.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
             {% endcompress %}
+            <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script> {# DO NOT COMPRESS #}
+            <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script> {# DO NOT COMPRESS #}
             <script type="text/javascript">
                 requirejs.config({
                     deps: ['knockout', 'ko.mapping'],
