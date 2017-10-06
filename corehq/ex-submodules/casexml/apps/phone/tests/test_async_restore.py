@@ -19,7 +19,7 @@ from casexml.apps.phone.restore import (
     RestoreParams,
     RestoreCacheSettings,
     AsyncRestoreResponse,
-    FileRestoreResponse,
+    RestoreResponse,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.tests.utils import create_restore_user
@@ -120,8 +120,8 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
         # Second sync, don't timeout (can't use AsyncResult in tests, so mock
         # the return value).
-        file_restore_response = mock.MagicMock(return_value=FileRestoreResponse())
-        with mock.patch.object(AsyncResult, 'get', file_restore_response) as get_result:
+        restore_response = mock.MagicMock(return_value=RestoreResponse(None))
+        with mock.patch.object(AsyncResult, 'get', restore_response) as get_result:
             with mock.patch.object(AsyncResult, 'status', ASYNC_RESTORE_SENT):
                 subsequent_restore = self._restore_config(async=True)
                 self.assertIsNotNone(async_restore_task_id_cache.get_value())
@@ -156,10 +156,6 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNotNone(restore_config.restore_state.current_sync_log)
 
-    def test_force_cache_on_async(self):
-        restore_config = self._restore_config(async=True)
-        self.assertTrue(restore_config.force_cache)
-
     @flag_enabled('ASYNC_RESTORE')
     def test_submit_form_no_userid(self):
         form = """
@@ -173,7 +169,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
     @mock.patch.object(RestorePayloadPathCache, 'get_value')
-    @mock.patch.object(FileRestoreResponse, 'get_payload')
+    @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
     def test_clears_cache(self, task, response, get_value, invalidate):
         delay = mock.MagicMock()
@@ -257,7 +253,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
     @mock.patch.object(RestorePayloadPathCache, 'get_value')
-    @mock.patch.object(FileRestoreResponse, 'get_payload')
+    @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
     def test_clears_cache(self, task, response, get_value, invalidate):
         delay = mock.MagicMock()
