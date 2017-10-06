@@ -241,7 +241,7 @@ class ENikshayVoucherReport(GenericTabularReport):
         for repeat_record in repeat_records:
             attempt_messages = [
                 escape("{date}: {message}".format(
-                    date=self._format_date(attempt.datetime),
+                    date=attempt.datetime,
                     message=attempt.message))
                 for attempt in repeat_record.attempts
             ]
