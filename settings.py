@@ -126,9 +126,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
-# Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
-CSRF_SOFT_MODE = True
-
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
