@@ -1,11 +1,13 @@
 from __future__ import print_function
 from datetime import datetime
+from celery.task import task
 import argparse
 
 from django.core.management.base import BaseCommand
 
 from corehq.apps.es import forms as form_es
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
+from corehq.apps.userreports.const import UCR_CELERY_QUEUE
 
 
 class Command(BaseCommand):
@@ -21,30 +23,16 @@ class Command(BaseCommand):
     def handle(self, domain, indicator_config_id, start_date, end_date, xmlns_list, **options):
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
-
-        time_filter = form_es.submitted
-        query = (form_es.FormES()
-                 .domain(domain)
-                 .filter(time_filter(gte=start_date, lte=end_date)))
-        if xmlns_list:
-            query = query.OR(*[form_es.xmlns(x) for x in xmlns_list])
-
-        form_ids = IterableESID(query)
-        rebuild_indicators_in_place.delay(indicator_config_id, None, form_ids)
+        rebuild_form_table.delay(domain, indicator_config_id, start_date, end_date, xmlns_list)
 
 
-class IterableESID():
-    def __init__(self, query):
-        self.query = query
-        self.query_result = None
-        self.index = 0
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        if not self.query_result:
-            self.query_result = self.query.get_ids()
-        id = self.query_result[self.index]
-        self.index += 1
-        return id
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def rebuild_form_table(domain, indicator_config_id, start_date, end_date, xmlns_list):
+    time_filter = form_es.submitted
+    query = (form_es.FormES()
+             .domain(domain)
+             .filter(time_filter(gte=start_date, lte=end_date)))
+    if xmlns_list:
+        query = query.OR(*[form_es.xmlns(x) for x in xmlns_list])
+    form_ids = query.get_ids()
+    rebuild_indicators_in_place(indicator_config_id, None, form_ids)
