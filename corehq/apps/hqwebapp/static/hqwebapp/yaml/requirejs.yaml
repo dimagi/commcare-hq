@@ -50,5 +50,8 @@ modules:
       - reports/js/config.dataTables.bootstrap
       - reports/js/filters
       - reports/js/standard_hq_report
+      - datatables
+      - datatables.fixedColumns
+      - datatables.bootstrap
     exclude:
       - hqwebapp/js/common
