@@ -1,5 +1,5 @@
 from __future__ import print_function
-from datetime import datetime
+from datetime import datetime, timedelta
 from celery.task import task
 import argparse
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, indicator_config_id, start_date, end_date, xmlns_list, **options):
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
         rebuild_form_table.delay(domain, indicator_config_id, start_date, end_date, xmlns_list)
 
 
