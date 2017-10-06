@@ -187,6 +187,59 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
         patient_identifier_type, patient_identifier)
 
 
+def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_name.items()
+        if property_ in NAME_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
+                person_uuid=person_uuid,
+                name_uuid=name_uuid,
+            ),
+            json=properties,
+        )
+
+
+def create_person_address(requests, info, openmrs_config, person_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_address.items()
+        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=person_uuid),
+            json=properties,
+        )
+
+
+def update_person_address(requests, info, openmrs_config, person_uuid, address_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_address.items()
+        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/name/{address_uuid}'.format(
+                person_uuid=person_uuid,
+                address_uuid=address_uuid,
+            ),
+            json=properties,
+        )
+
+
+def get_subresource_instances(requests, person_uuid, subresource):
+    assert subresource in PERSON_SUBRESOURCES
+    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
+        person_uuid=person_uuid,
+        subresource=subresource,
+    )).json()['results']
+
+
 class PatientSearchParser(object):
     def __init__(self, response_json):
         self.response_json = response_json
