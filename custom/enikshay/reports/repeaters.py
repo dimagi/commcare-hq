@@ -7,6 +7,7 @@ from django.urls import reverse
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.case_search import flatten_result
+from corehq.apps.locations.models import SQLLocation
 from casexml.apps.case.models import CommCareCase
 from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
@@ -148,17 +149,40 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
 
     @property
     def rows(self):
-        district_id = self.request.GET.get('district_id', None)
+        district_id = self.request.GET.get('district_id')
         voucher_state = self.request.GET.get('voucher_state', None)
-        vouchers = self._get_voucher_cases(district_id, voucher_state)
+
+        vouchers = self._get_voucher_cases(
+            self._voucher_location_ids(district_id),
+            voucher_state,
+        )
         rows = []
         for voucher in vouchers:
             for row in self._make_rows(voucher):
                 rows.append(row)
         return rows
 
+    def _get_voucher_cases(self, location_ids, voucher_state):
+        cs = CaseSearchES()
+        cs = cs.domain('enikshay')
+        cs = cs.case_type('voucher')
+        cs = cs.case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
+        if voucher_state:
+            cs = cs.case_property_query('state', voucher_state)
+        hits = cs.run().raw_hits
+        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+        return cases
+
+    def _voucher_location_ids(self, district_id):
+        district_loc = SQLLocation.active_objects.filter(location_id=district_id)
+        voucher_location_types = ['plc', 'pcc', 'pdr', 'dto']
+        possible_location_ids = (SQLLocation.active_objects
+                                 .get_queryset_descendants(district_loc, include_self=True)
+                                 .filter(location_type__code__in=voucher_location_types)
+                                 .values_list('location_id', flat=True))
+        return possible_location_ids
+
     def _make_rows(self, voucher):
-        repeat_records = self._get_voucher_repeat_records(voucher.case_id)
         default_row = [
             voucher.case_id,
             voucher.get_case_property('voucher_id'),
@@ -168,6 +192,8 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
             voucher.get_case_property('amount_approved'),
             voucher.get_case_property('voucher_fulfilled_by_id'),
         ]
+
+        repeat_records = self._get_voucher_repeat_records(voucher.case_id)
         if not repeat_records:
             return [default_row + ["-", "-", "-"]]
 
@@ -187,18 +213,6 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
                 ]
             )
         return rows
-
-    def _get_voucher_cases(self, district_id, voucher_state):
-        cs = CaseSearchES()
-        cs = cs.domain('enikshay')
-        cs = cs.case_type('voucher')
-        if district_id:
-            cs = cs.case_property_query('voucher_district_id', district_id)
-        if voucher_state:
-            cs = cs.case_property_query('state', voucher_state)
-        hits = cs.run().raw_hits
-        cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
-        return cases
 
     def _get_voucher_repeat_records(self, voucher_id):
         repeat_records = get_repeat_records_by_payload_id(self.domain, voucher_id)
