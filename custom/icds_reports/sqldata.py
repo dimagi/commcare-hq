@@ -1663,19 +1663,19 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 'Percentage AWCs with weighing scale: infants',
                 percent,
                 [
-                    SumColumn('infra_adult_weighing_scale'),
+                    SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_adult_scale'
+                slug='percent_baby_scale'
             ),
             AggregateColumn(
                 'Percentage AWCs with weighing scale: mother and child',
                 percent,
                 [
-                    SumColumn('infra_baby_weighing_scale'),
+                    SumColumn('infra_adult_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_baby_scale'
+                slug='percent_adult_scale'
             )
         ]
         return columns + agg_columns
