@@ -16,6 +16,7 @@ requirejs.config({
         "bootstrap": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
+        "datatables": { deps: [ 'jquery'] },
         "datatables.bootstrap": { deps: ['datatables'] },
     },
     map: {
