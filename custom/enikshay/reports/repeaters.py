@@ -141,6 +141,17 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
             DataTablesColumn('Voucher Type'),
             DataTablesColumn('Voucher Approved Amount'),
             DataTablesColumn('Voucher Beneficiary ID'),
+            DataTablesColumn('Voucher Beneficiary Name'),
+            DataTablesColumn('Voucher Issued by Name'),
+
+            DataTablesColumn('Amount Paid'),
+            DataTablesColumn('Date Paid'),
+            DataTablesColumn('Comments'),
+            DataTablesColumn('Payment Mode'),
+            DataTablesColumn('Check Number'),
+            DataTablesColumn('Bank Name'),
+            DataTablesColumn('Reason Rejected'),
+            DataTablesColumn('Date Rejected'),
 
             DataTablesColumn('BETS Sent Date'),
             DataTablesColumn('Forwading Status'),
@@ -191,6 +202,16 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
             voucher.get_case_property('voucher_type'),
             voucher.get_case_property('amount_approved'),
             voucher.get_case_property('voucher_fulfilled_by_id'),
+            voucher.get_case_property('voucher_fulfilled_by_name'),
+            voucher.get_case_property('voucher_issued_by_name'),
+            voucher.get_case_property('amount_paid'),
+            voucher.get_case_property('date_paid'),
+            voucher.get_case_property('comments'),
+            voucher.get_case_property('payment_mode'),
+            voucher.get_case_property('check_number'),
+            voucher.get_case_property('bank_name'),
+            voucher.get_case_property('reason_rejected'),
+            voucher.get_case_property('date_rejected'),
         ]
 
         repeat_records = self._get_voucher_repeat_records(voucher.case_id)
@@ -207,7 +228,7 @@ class ENikshayVoucherReport(ENikshayForwarderReport):
             ]
             rows.append(
                 default_row + [
-                    self._format_date(repeat_record.last_checked) if repeat_record.last_checked else '---',
+                    self._format_date(repeat_record.last_checked) if repeat_record.last_checked else '-',
                     self._get_state(repeat_record)[1],
                     ",<br />".join(attempt_messages),
                 ]
