@@ -1,4 +1,4 @@
-{% if GOOGLE_ANALYTICS_API_ID %}
+{% if GOOGLE_ANALYTICS_API_ID and not requirejs_main %}{# TODO: fix #}
 <script>
     (function() {
     {% for tab in tabs %}
