@@ -330,6 +330,7 @@ class Day(object):
         self.adherence_image_key = adherence_image_key
         self.show_unexpected_image = show_unexpected_image
         self.show_conflicting_data = show_conflicting_data
+        self.show_treatment_start_date = show_treatment_start_date
 
 
 class HistoricalAdherenceReportTest(HistoricalAdherenceReport):
