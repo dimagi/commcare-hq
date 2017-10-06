@@ -362,7 +362,7 @@ class MobileSelectFilterHelpers(object):
     @staticmethod
     def get_options_nodeset(config, filter_slug, new_mobile_ucr_restore=False):
         if new_mobile_ucr_restore:
-            nodeset = "instance('filters:{report_id}')/filter[@field='{filter_slug}']/option"
+            nodeset = "instance('commcare-reports-filters:{report_id}')/filter[@field='{filter_slug}']/option"
         else:
             nodeset = "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
         return nodeset.format(report_id=config.uuid, filter_slug=filter_slug)

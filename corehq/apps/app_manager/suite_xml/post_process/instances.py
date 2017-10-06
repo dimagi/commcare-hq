@@ -152,10 +152,10 @@ def commcare_reports_fixture_instances(domain, instance_name):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
-@register_factory('filters')
+@register_factory('commcare-reports-filters')
 def commcare_reports_filters_instances(domain, instance_name):
-    if instance_name.startswith('filters:') and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://filters/{}'.format(instance_name))
+    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 @register_factory('locations')

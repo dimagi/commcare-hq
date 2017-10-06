@@ -318,6 +318,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
         report_fixture_id = 'commcare-reports:' + report_config.report_id
+        report_filter_id = 'commcare-reports-filters:' + report_config.report_id
 
         # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
@@ -350,7 +351,10 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
-        filters_elem.attrib['id'] = report_fixture_id
+        report_filter_elem = E.fixture(
+            id=report_filter_id
+        )
+        report_filter_elem.append(filters_elem)
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
                 random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
@@ -362,7 +366,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             indexed='true'
         )
         report_elem.append(rows_elem)
-        ret = [filters_elem, report_elem]
+        ret = [report_filter_elem, report_elem]
         io = StringIO()
         for element in ret:
             io.write(ElementTree.tostring(element, encoding='utf-8'))

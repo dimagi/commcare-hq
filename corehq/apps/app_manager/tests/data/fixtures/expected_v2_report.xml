@@ -1,5 +1,7 @@
 <restore>
-  <filters id="commcare-reports:deadbeef" />
+  <fixture id="commcare-reports-filters:deadbeef">
+	  <filters />
+  </fixture>
   <fixture id="commcare-reports:deadbeef" user_id="mock-user-id" report_id="deadbeef" last_sync="2017-09-11T06:35:20" indexed="true">
     <rows>
       <row index="0" is_total_row="False">
