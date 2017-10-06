@@ -2,8 +2,16 @@ import uuid
 
 from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
-from django.test import TestCase
+from django.conf import settings
+from django.test import TestCase, SimpleTestCase
 
+from corehq.toggles import (
+    NAMESPACE_USER,
+    NAMESPACE_DOMAIN,
+    TAG_EXPERIMENTAL,
+    PredictablyRandomToggle,
+    deterministic_random,
+)
 from toggle.shortcuts import update_toggle_cache, namespaced_item, clear_toggle_cache
 from .models import generate_toggle_id, Toggle
 from .shortcuts import toggle_enabled, set_toggle
@@ -120,3 +128,118 @@ class ToggleTestCase(TestCase):
 
         self.assertTrue(toggle_enabled(self.slug, 'mojer'))
         self.assertTrue(toggle_enabled(self.slug, 'fizbod', namespace=ns))
+
+
+class PredictablyRandomToggleSimpleTests(SimpleTestCase):
+
+    def setUp(self):
+        # Lie to get past settings.UNIT_TESTING check in PredictablyRandomToggle.enabled()
+        self.unit_testing = settings.UNIT_TESTING
+        settings.UNIT_TESTING = False
+
+    def tearDown(self):
+        settings.UNIT_TESTING = self.unit_testing
+
+    def test_deterministic(self):
+        self.assertEqual(
+            deterministic_random("[None, 'domain']:test_toggle:diana"),
+            0.5358778226236243
+        )
+
+    def test_all_namespaces_none_given(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER, NAMESPACE_DOMAIN],
+            randomness=0.99
+        )
+        self.assertTrue(toggle.enabled('diana'))
+
+    def test_user_namespace_invalid(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER],
+            randomness=0.99
+        )
+        with self.assertRaises(ValueError):
+            toggle.enabled('jessica')
+
+    def test_domain_namespace_invalid(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_DOMAIN],
+            randomness=0.99
+        )
+        with self.assertRaises(ValueError):
+            toggle.enabled('marvel')
+
+    def test_user_namespace_enabled(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER],
+            randomness=0.99
+        )
+        self.assertTrue(toggle.enabled('arthur', namespace=NAMESPACE_USER))
+
+    def test_domain_namespace_enabled(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_DOMAIN],
+            randomness=0.99
+        )
+        self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
+
+
+class PredictablyRandomToggleTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.user_toggle = Toggle(
+            slug='user_toggle',
+            enabled_users=['arthur', 'diane'])
+        cls.user_toggle.save()
+        cls.domain_toggle = Toggle(
+            slug='domain_toggle',
+            enabled_users=[namespaced_item('dc', NAMESPACE_DOMAIN)])
+        cls.domain_toggle.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user_toggle.delete()
+        cls.domain_toggle.delete()
+
+    def setUp(self):
+        self.unit_testing = settings.UNIT_TESTING
+        settings.UNIT_TESTING = False
+
+    def tearDown(self):
+        settings.UNIT_TESTING = self.unit_testing
+
+    def test_user_namespace_disabled(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_USER],
+            randomness=0.01
+        )
+        self.assertFalse(toggle.enabled('jessica', namespace=NAMESPACE_USER))
+
+    def test_domain_namespace_disabled(self):
+        toggle = PredictablyRandomToggle(
+            'test_toggle',
+            'A toggle for testing',
+            TAG_EXPERIMENTAL,
+            [NAMESPACE_DOMAIN],
+            randomness=0.01
+        )
+        self.assertFalse(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
