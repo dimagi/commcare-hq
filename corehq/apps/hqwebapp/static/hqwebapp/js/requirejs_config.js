@@ -14,6 +14,7 @@ requirejs.config({
     },
     shim: {
         "bootstrap": { deps: ['jquery'] },
+        "select2-3.5.2-legacy/select2": { deps: ['jquery'] },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "datatables": { deps: [ 'jquery'] },
