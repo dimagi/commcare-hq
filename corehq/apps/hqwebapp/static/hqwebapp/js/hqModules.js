@@ -1,3 +1,4 @@
+/* globals jQuery */
 /*
  * hqModules provides a poor man's module system for js. It is not a module *loader*,
  * only a module *referencer*: "importing" a module doesn't automatically load it as

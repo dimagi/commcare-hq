@@ -13,6 +13,7 @@ module.exports = {
         "define": false,
         "hqDefine": false,
         "hqImport": false,
+        "requirejs": false,
         "gettext": false,
         "assert": false,
         "sinon": false,
