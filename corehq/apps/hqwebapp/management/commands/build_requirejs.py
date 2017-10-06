@@ -64,7 +64,7 @@ class Command(ResourceStaticCommand):
 
         call(["node", "bower_components/r.js/dist/r.js", "-o", "build.js"])
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
-        resource_versions[filename] = self.get_hash(filename)
+        resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
 
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
@@ -82,6 +82,6 @@ class Command(ResourceStaticCommand):
                     for file, version in resource_versions.iteritems()
                     if file.endswith(".js") and not file.startswith("formdesigner")
                 }, indent=2))
-            resource_versions[filename] = self.get_hash(filename)
+            resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
 
         self.overwrite_resources(resource_versions)
