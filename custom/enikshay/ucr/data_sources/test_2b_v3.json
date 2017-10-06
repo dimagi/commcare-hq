@@ -619,15 +619,10 @@
                 "display_name": null,
                 "datatype": "string",
                 "expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
+                    "type": "location_type_name",
+                    "location_id_expression": {
                         "type": "property_name",
                         "property_name": "referring_facility_id"
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "location_type"
                     }
                 },
                 "transform": {},
