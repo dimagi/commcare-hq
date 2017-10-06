@@ -44,7 +44,7 @@ class Command(BaseCommand):
     def _add_filters(self, query, table, data_source_id):
         if data_source_id == 'static-icds-cas-static-child_cases_monthly_tableau_v2':
             return query.filter(
-                table.columns.valid_in_month_all = 1,
+                table.columns.valid_all_registered_in_month = 1,
                 table.columns.valid_in_month = 0,
             )
         elif data_source_id == 'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2':
