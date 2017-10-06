@@ -78,7 +78,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
 
 class DistrictLocationFilter(EnikshayLocationFilter):
     label = 'District'
-    slug = 'district_id'
+    slug = 'district_ids'
     choice_provider = DistrictChoiceProvider
 
     @property

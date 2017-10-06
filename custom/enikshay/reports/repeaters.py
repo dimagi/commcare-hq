@@ -143,8 +143,8 @@ class ENikshayVoucherReport(GenericTabularReport):
     fields = (VoucherStateFilter, DistrictLocationFilter)
 
     @property
-    def district_id(self):
-        return self.request.GET.get('district_id')
+    def district_ids(self):
+        return self.request.GET.getlist('district_ids')
 
     @property
     def voucher_state(self):
@@ -202,11 +202,11 @@ class ENikshayVoucherReport(GenericTabularReport):
     def _get_voucher_location_ids(self):
         """Return all locations beneath the district that could own the voucher
         """
-        district_loc = SQLLocation.active_objects.filter(location_id=self.district_id)
+        district_locs = SQLLocation.active_objects.filter(location_id__in=self.district_ids)
         voucher_location_types = ['plc', 'pcc', 'pdr', 'dto']
         possible_location_ids = (
             SQLLocation.active_objects
-            .get_queryset_descendants(district_loc, include_self=True)
+            .get_queryset_descendants(district_locs, include_self=True)
             .filter(location_type__code__in=voucher_location_types)
             .values_list('location_id', flat=True)
         )
@@ -271,6 +271,6 @@ class ENikshayVoucherReport(GenericTabularReport):
     @property
     def shared_pagination_GET_params(self):
         return [
-            dict(name='district_id', value=self.district_id),
+            dict(name='district_ids', value=self.district_ids),
             dict(name='voucher_state', value=self.voucher_state),
         ]
