@@ -53,6 +53,7 @@ branches:
   - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - je/mobile-ucr-v2 # j$ 9/29
   - jls/scroll-app-menu # Jenny 10/3
+  - jls/temp # Jenny 10/6
   - mk-search-under-location # Manish 4-Oct
   - np/billing/subscription-dates-check # NP
 submodules:
