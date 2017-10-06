@@ -53,6 +53,7 @@ branches:
   - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - je/mobile-ucr-v2 # j$ 9/29
   - jls/scroll-app-menu # Jenny 10/3
+  - jls/select2-debug # Jenny 10/6
   - mk-search-under-location # Manish 4-Oct
   - revert-18077-revert-18042-dm/keep-restore-temp-file # Daniel 10/5
   - np/billing/subscription-dates-check # NP
