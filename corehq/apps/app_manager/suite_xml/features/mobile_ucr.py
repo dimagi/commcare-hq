@@ -64,7 +64,7 @@ class ReportModuleSuiteHelper(object):
 
 def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        datum_string = "instance('commcare-reports:{}')"
+        datum_string = "instance('commcare-reports:{}')/"
     else:
         datum_string = "instance('reports')/reports/report[@id='{}']"
 
