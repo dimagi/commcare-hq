@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -198,3 +199,8 @@ class VoucherStateFilter(BaseSingleOptionFilter):
             ("expired", "expired"),
             ("cancelled", "cancelled"),
         ]
+
+
+class VoucherIDFilter(SearchFilter):
+    slug = "voucher_id"
+    label = "Voucher Readable ID"

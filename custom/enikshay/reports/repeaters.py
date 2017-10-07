@@ -23,7 +23,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 from custom.enikshay.case_utils import get_person_case, CASE_TYPE_VOUCHER
 from custom.enikshay.exceptions import ENikshayException
-from custom.enikshay.reports.filters import VoucherStateFilter, DistrictLocationFilter
+from custom.enikshay.reports.filters import VoucherStateFilter, DistrictLocationFilter, VoucherIDFilter
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, LabBETSVoucherRepeater
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
@@ -140,7 +140,7 @@ class ENikshayVoucherReport(GenericTabularReport):
 
     sortable = False
 
-    fields = (VoucherStateFilter, DistrictLocationFilter)
+    fields = (VoucherStateFilter, DistrictLocationFilter, VoucherIDFilter)
 
     @property
     def district_ids(self):
@@ -149,6 +149,10 @@ class ENikshayVoucherReport(GenericTabularReport):
     @property
     def voucher_state(self):
         return self.request.GET.get('voucher_state')
+
+    @property
+    def voucher_id(self):
+        return self.request.GET.get('voucher_id')
 
     @property
     def headers(self):
@@ -196,6 +200,9 @@ class ENikshayVoucherReport(GenericTabularReport):
         )
         if self.voucher_state:
             cs = cs.case_property_query('state', self.voucher_state)
+
+        if self.voucher_id:
+            cs = cs.case_property_query('voucher_id', self.voucher_id)
 
         return cs.run()
 
@@ -273,4 +280,5 @@ class ENikshayVoucherReport(GenericTabularReport):
         return [
             dict(name='district_ids', value=self.district_ids),
             dict(name='voucher_state', value=self.voucher_state),
+            dict(name='voucher_id', value=self.voucher_id),
         ]
