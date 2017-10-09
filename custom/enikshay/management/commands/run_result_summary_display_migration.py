@@ -8,6 +8,7 @@ class Command(BaseEnikshayCaseMigration):
     case_type = 'test'
     case_properties_to_update = [
         RESULT_SUMMARY_DISPLAY,
+        'result_grade',
     ]
     datamigration_case_property = DATAMIGRATION_CASE_PROPERTY
     include_public_cases = True
@@ -41,7 +42,7 @@ class Command(BaseEnikshayCaseMigration):
                 '2+': 'Result Grade 2+',
                 '3+': 'Result Grade 3+',
                 'scanty': 'Result Grade: scanty',
-            }[test.get_case_property('result_grade')],
+            }.get(test.get_case_property('result_grade')),
             'R:Res' if test.get_case_property('drug_resistance_list') == 'r' else None,
             'R:Sens' if test.get_case_property('drug_sensitive_list') == 'r' else None,
             'Count of bacilli: %s' % test.get_case_property('max_bacilli_count')
