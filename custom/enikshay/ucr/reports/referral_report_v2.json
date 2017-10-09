@@ -123,9 +123,29 @@
                 "calculate_total": false
             },
             {
-                "display": "Referred By",
+                "display": "Referred by District",
                 "type": "field",
-                "field": "referred_by_name",
+                "field": "dto",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Referred by TU",
+                "type": "field",
+                "field": "tu",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Referred by PHI",
+                "type": "field",
+                "field": "phi",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -153,9 +173,85 @@
                 "calculate_total": false
             },
             {
-                "display": "Type of patient",
+                "display": "Date of Diagnosis",
                 "type": "field",
-                "field": "current_patient_type_choice",
+                "field": "date_of_diagnosis",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "confirmed_drtb": "Confirmed DRTB (Patient)",
+                        "confirmed_tb": "Confirmed DSTB (Patient)",
+                        "presumptive_tb": "Presumptive TB"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "episode_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Episode Type"
+            },
+            {
+                "display": "Case Definition",
+                "type": "field",
+                "field": "case_definition",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Regimen",
+                "type": "field",
+                "field": "regimen",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Dosage Frequency",
+                "type": "field",
+                "field": "adherence_schedule_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Dosage Frequency",
+                "type": "field",
+                "field": "adherence_schedule_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false,
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "schedule_mwf": "Intermittent (MWF)",
+                        "schedule_trs": "Intermittent (TTS)",
+                        "schedule_daily": "Daily"
+                    }
+                }
+            },
+            {
+                "display": "eNikshay enabled",
+                "type": "field",
+                "field": "enikshay_enabled",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
