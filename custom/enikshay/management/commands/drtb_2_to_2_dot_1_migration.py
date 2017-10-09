@@ -116,7 +116,12 @@ class Command(BaseCommand):
         if case_updates:
             case_updates['datamigration_20_to_21'] = 'yes'
             if not self.dry_run:
-                update_case(DOMAIN, case_id, case_updates)
+                if case_updates.get('debug'):
+                    to_update = case_updates.copy()
+                    del to_update['debug']
+                    update_case(DOMAIN, case_id, to_update)
+                else:
+                    update_case(DOMAIN, case_id, case_updates)
             case_status['updated'] = 'yes'
         else:
             case_status['updated'] = 'no'
