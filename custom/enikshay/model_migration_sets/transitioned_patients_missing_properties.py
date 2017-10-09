@@ -34,6 +34,14 @@ class TransitionedPatientsMissingProperties(object):
         if self.episode.get_case_property('episode_type') == 'presumptive_tb':
             return False
 
+        if (self.episode.get_case_property('episode_treating_hospital') is not None
+           and self.episode.get_case_property('episode_treating_hospital') != ''):
+            return False
+
+        if (self.episode.get_case_property('episode_fo') is not None
+           and self.episode.get_case_property('episode_fo') != ''):
+            return False
+
         if self.suspect_case:
             return True
 
