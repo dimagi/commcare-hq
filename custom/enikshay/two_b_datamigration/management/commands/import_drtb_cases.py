@@ -1220,6 +1220,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
         "result_recorded": "yes",
+        "rft_general": "diagnosis_drtb",
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
@@ -1248,6 +1249,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
         "result_recorded": "yes",
+        "rft_general": "diagnosis_drtb",
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
@@ -1275,6 +1277,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
         "result_recorded": "yes",
+        "rft_general": "diagnosis_drtb",
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
@@ -1305,6 +1308,7 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "drug_resistance_list": '',
         "drug_sensitive_list": '',
         "result_recorded": "yes",
+        "rft_general": "diagnosis_drtb",
     }
     properties['result_summary_display'] = get_test_summary(properties)
     return properties
@@ -1348,6 +1352,7 @@ def get_dst_test_case_properties(column_mapping, row):
                 "drug_resistance_list": '',
                 "drug_sensitive_list": '',
                 "result_recorded": "yes",
+                "rft_general": "diagnosis_drtb",
             }
             properties.update(resistance_props)
             properties['result_summary_display'] = get_test_summary(properties)
