@@ -42,7 +42,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -2410,6 +2410,17 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         rows = [self._make_row(record) for record in records]
         return rows
 
+    def _payload_id_and_search_link(self, payload_id):
+        return (
+            '<a href="{url}?q={payload_id}">'
+            '<img src="{flower}" title="Search in HQ" width="14px" height="14px" />'
+            '</a> {payload_id}'
+        ).format(
+            url=reverse('global_quick_find'),
+            flower=static('prelogin/images/commcare-flower.png'),
+            payload_id=payload_id,
+        )
+
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
@@ -2426,7 +2437,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         ]
 
         if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(1, record.payload_id)
+            row.insert(1, self._payload_id_and_search_link(record.payload_id))
         return row
 
     @property
