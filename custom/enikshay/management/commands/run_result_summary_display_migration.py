@@ -43,7 +43,10 @@ class Command(BaseEnikshayCaseMigration):
                 'scanty': 'Result Grade: scanty',
                 None: None,
                 '': None,
-            }.get(test.get_case_property('result_grade'), 'Result Grade: %s' % test.get_case_property('result_grade')),
+            }.get(
+                test.get_case_property('result_grade'),
+                'Result Grade: %s' % test.get_case_property('result_grade')
+            ),
             'R:Res' if test.get_case_property('drug_resistance_list') == 'r' else None,
             'R:Sens' if test.get_case_property('drug_sensitive_list') == 'r' else None,
             'Count of bacilli: %s' % test.get_case_property('max_bacilli_count')
