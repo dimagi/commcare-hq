@@ -1415,7 +1415,10 @@ def get_dst_test_resistance_properties(column_mapping, row):
     resistant_drugs = []
     sensitive_drugs = []
     for drug_id in DRUG_MAP:
-        value = column_mapping.get_value(drug_id, row)
+        try:
+            value = column_mapping.get_value(drug_id, row)
+        except KeyError:
+            continue
         if value:
             sensitivity = convert_sensitivity(value)
             if sensitivity == "sensitive":
@@ -1469,8 +1472,11 @@ def get_drug_resistance_case_properties(column_mapping, row, test_cases):
     # add any resistance info not tied to a test
     for drug_id in DRUG_MAP:
         if dr_cases[drug_id]['sensitivity'] == 'unknown':
-            sensitivity = convert_sensitivity(column_mapping.get_value(drug_id, row))
-            dr_cases[drug_id]['sensitivity'] = sensitivity
+            try:
+                value = column_mapping.get_value(drug_id, row)
+            except KeyError:
+                continue
+            dr_cases[drug_id]['sensitivity'] = convert_sensitivity(value)
 
     return dr_cases.values()
 
