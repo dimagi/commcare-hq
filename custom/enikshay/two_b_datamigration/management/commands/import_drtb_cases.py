@@ -1108,10 +1108,18 @@ def get_test_summary(properties):
     elif properties['result'] == 'tb_not_detected':
         detected = 'TB Not Detected'
 
+    drug_resistance_output = ''
+    if properties['drug_resistance_list']:
+        drug_resistance_output = " ".join([DRUG_MAP[id]["drug_name"]
+                                           for id in properties['drug_resistance_list'].split(' ')])
+    drug_sensitive_output = ''
+    if properties['drug_sensitive_list']:
+        drug_sensitive_output = " ".join([DRUG_MAP[id]["drug_name"]
+                                           for id in properties['drug_sensitive_list'].split(' ')])
     return '\n'.join(filter(None, [
         detected,
-        'Resistant: {}'.format(properties['drug_resistance_list']) if properties['drug_resistance_list'] else None,
-        'Sensitive: {}'.format(properties['drug_sensitive_list']) if properties['drug_sensitive_list'] else None,
+        'Resistant: {}'.format(drug_resistance_output) if drug_resistance_output else None,
+        'Sensitive: {}'.format(drug_sensitive_output) if drug_sensitive_output else None,
     ]))
 
 
