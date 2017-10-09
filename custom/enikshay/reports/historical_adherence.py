@@ -334,7 +334,7 @@ class Day(object):
 
 
 class HistoricalAdherenceReportTest(HistoricalAdherenceReport):
-    slug = 'historical_adherence'
-    report_template_path = 'enikshay/historical_adherence.html'
+    slug = 'historical_adherence_test'
+    report_template_path = 'enikshay/historical_adherence_test.html'
     name = ugettext_lazy('Historical Adherence TEST')
     report_title = ugettext_lazy('Historical Adherence TEST')
