@@ -2895,7 +2895,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     None)
 
     def disable_schedule(self):
-        self.schedule.enabled = False
+        if self.schedule:
+            self.schedule.enabled = False
         phase = self.get_phase()
         if phase:
             phase.remove_form(self)
