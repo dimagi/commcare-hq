@@ -1269,7 +1269,7 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
 
 
 def get_lpa_test_case_properties(domain, column_mapping, row):
-    lpa_lab_name, lpa_lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
+    lpa_lab_name, lpa_lab_id = match_facility(domain, column_mapping.get_value("lpa_lab", row))
     result_date = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not result_date:
         raise ValidationFailure("LPA result date required if result included")
@@ -1298,7 +1298,7 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_sl_lpa_test_case_properties(domain, column_mapping, row):
-    sl_lpa_lab_name, sl_lpa_lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
+    sl_lpa_lab_name, sl_lpa_lab_id = match_facility(domain, column_mapping.get_value("sl_lpa_lab", row))
     date_reported = clean_date(column_mapping.get_value("lpa_result_date", row))
     if not date_reported:
         raise ValidationFailure("LPA result date required if result included")
@@ -1326,7 +1326,7 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
 
 
 def get_culture_test_case_properties(domain, column_mapping, row):
-    lab_name, lab_id = match_facility(domain, column_mapping.get_value("cbnaat_lab", row))
+    lab_name, lab_id = match_facility(domain, column_mapping.get_value("culture_lab", row))
     culture_type = clean_culture_type(column_mapping.get_value("culture_type", row))
     date_reported = clean_date(column_mapping.get_value("culture_result_date", row))
     if not date_reported:
