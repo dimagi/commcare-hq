@@ -245,14 +245,12 @@ class LocationExporter(object):
                 headers['do_delete']: '',
                 headers['shares_cases']: coax_boolean(lt.shares_cases),
                 headers['view_descendants']: coax_boolean(lt.view_descendants),
-                headers['expand_from']: foreign_code(lt, 'expand_from'),
-                headers['expand_to']: foreign_code(lt, 'expand_to'),
             }
             rows.append(dict(type_row))
 
         return ('types', {
             'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
-                        'shares_cases', 'view_descendants', 'expand_from', 'expand_to']],
+                        'shares_cases', 'view_descendants']],
             'rows': rows
         })
 
