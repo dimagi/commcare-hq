@@ -104,4 +104,4 @@ class TestTestCase2B(SimpleTestCase):
             context=FactoryContext(self.named_expressions, {})
         )
 
-        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '6')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '3')

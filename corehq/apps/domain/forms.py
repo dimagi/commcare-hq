@@ -61,6 +61,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
+    cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
     get_privileges,
@@ -1552,14 +1553,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                # changing a plan overrides future subscriptions
-                future_subscriptions = Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=datetime.date.today()
-                )
-                if future_subscriptions.count() > 0:
-                    future_subscriptions.update(date_end=F('date_start'))
-
+                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
                     self.current_subscription.change_plan(
                         self.plan_version,
@@ -1658,20 +1652,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                for later_subscription in Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=self.current_subscription.date_start
-                ).order_by('date_start').all():
-                    later_subscription.date_start = datetime.date.today()
-                    later_subscription.date_end = datetime.date.today()
-                    later_subscription.save()
-                    SubscriptionAdjustment.record_adjustment(
-                        later_subscription,
-                        reason=SubscriptionAdjustmentReason.CANCEL,
-                        web_user=self.creating_user,
-                        note="Cancelled due to changing subscription",
-                    )
-
+                cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,

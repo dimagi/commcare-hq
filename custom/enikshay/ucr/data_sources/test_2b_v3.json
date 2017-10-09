@@ -619,15 +619,10 @@
                 "display_name": null,
                 "datatype": "string",
                 "expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
+                    "type": "location_type_name",
+                    "location_id_expression": {
                         "type": "property_name",
                         "property_name": "referring_facility_id"
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "location_type"
                     }
                 },
                 "transform": {},
@@ -873,51 +868,48 @@
                 "is_primary_key": false,
                 "column_id": "follow_up_treatment_initiation_date_month",
                 "expression": {
-                    "default": {
-                        "type": "constant",
-                        "constant": ""
-                    },
-                    "cases": {
-                        "follow_up_drtb": {
+                    "type": "conditional",
+                    "test": {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
                             "datatype": null,
                             "type": "property_name",
-                            "property_name": "rft_drtb_follow_up_treatment_month"
+                            "property_name": "rft_general"
                         },
-                        "follow_up_dstb": {
-                            "type": "evaluator",
-                            "statement": "str(int(round(a / 30.4)))",
-                            "context_variables": {
-                                "a": {
-                                    "datatype": "integer",
-                                    "type": "diff_days",
-                                    "to_date_expression": {
+                        "property_value": ["follow_up_drtb", "follow_up_dstb"]
+
+                    },
+                    "expression_if_true": {
+                        "type": "evaluator",
+                        "statement": "str(int(round(a / 30.4)))",
+                        "context_variables": {
+                            "a": {
+                                "datatype": "integer",
+                                "type": "diff_days",
+                                "to_date_expression": {
+                                    "type": "property_name",
+                                    "property_name": "date_reported"
+                                },
+                                "from_date_expression": {
+                                    "value_expression": {
+                                        "datatype": null,
                                         "type": "property_name",
-                                        "property_name": "date_reported"
+                                        "property_name": "treatment_initiation_date"
                                     },
-                                    "from_date_expression": {
-                                        "value_expression": {
-                                            "datatype": null,
-                                            "type": "property_name",
-                                            "property_name": "treatment_initiation_date"
-                                        },
-                                        "type": "nested",
-                                        "related_doc_type": "CommCareCase",
-                                        "argument_expression": {
-                                            "type": "named",
-                                            "name": "episode_case"
-                                        }
+                                    "type": "nested",
+                                    "related_doc_type": "CommCareCase",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "episode_case"
                                     }
                                 }
                             }
                         }
-
-
                     },
-                    "type": "switch",
-                    "switch_on": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "rft_general"
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
                     }
                 }
             },

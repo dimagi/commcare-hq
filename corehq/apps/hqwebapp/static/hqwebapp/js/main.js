@@ -276,6 +276,13 @@ hqDefine('hqwebapp/js/main', [
                 data = $link.data();
             window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
         });
+
+        $(document).on('click', '.mainmenu-tab a', function(e) {
+            if (typeof(ga) !== 'undefined') {
+                var data = $(e.currentTarget).closest(".mainmenu-tab").data();
+                ga('send', 'event', data.category, data.action, data.label);
+            }
+        });
     });
 
     return {

@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None):
+                 enabled_for_new_users_after=None, relevant_environments=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -67,17 +67,28 @@ class StaticToggle(object):
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
+        # pass in a set of environments where this toggle applies
+        self.relevant_environments = relevant_environments
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.relevant_environments and not (
+            settings.SERVER_ENVIRONMENT in self.relevant_environments
+            or settings.DEBUG
+        ):
+            # Don't even bother looking it up in the cache
+            return False
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
 
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         if namespace is not Ellipsis and namespace not in self.namespaces:
             # short circuit if we're checking an item that isn't supported by this toggle
             return False
@@ -220,14 +231,30 @@ class PredictablyRandomToggle(StaticToggle):
     def _get_identifier(self, item):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item, namespace=Ellipsis):
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
+            raise ValueError(
+                'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
+                'available for all namespaces and the namespace of "{item}" is not given.'.format(
+                    slug=self.slug,
+                    item=item,
+                )
+            )
+
         if settings.UNIT_TESTING:
             return False
         elif item in self.always_disabled:
             return False
+        elif namespace is not Ellipsis and namespace not in self.namespaces:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
+            or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
 # if no namespaces are specified the user namespace is assumed
@@ -286,8 +313,8 @@ def toggles_dict(username=None, domain=None):
 
     (only enabled toggles are included)
     """
-    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
-                                                    t.enabled(domain))}
+    return {t.slug: True for t in all_toggles() if (t.enabled(username, NAMESPACE_USER) or
+                                                    t.enabled(domain, NAMESPACE_DOMAIN))}
 
 
 def toggle_values_by_name(username=None, domain=None):
@@ -1119,6 +1146,7 @@ ENIKSHAY = StaticToggle(
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'enikshay'},
+    relevant_environments={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
