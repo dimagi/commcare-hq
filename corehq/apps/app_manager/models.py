@@ -2695,7 +2695,9 @@ class Module(ModuleBase, ModuleDetailsMixin):
             if with_source:
                 new_form.source = form.source
         else:
-            raise IncompatibleFormTypeException()
+            raise IncompatibleFormTypeException(_('''
+                Cannot move an advanced form with actions into a basic module.
+            '''))
 
         if index is not None:
             self.forms.insert(index, new_form)

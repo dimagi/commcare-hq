@@ -779,8 +779,8 @@ def rearrange(request, domain, app_id, key):
             app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
-    except IncompatibleFormTypeException:
-        error = _('The form is incompatible with the destination menu and was not moved.')
+    except IncompatibleFormTypeException as e:
+        error = "{}{}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
             return json_response({'error': error}, status_code=400)
         messages.error(request, error)
