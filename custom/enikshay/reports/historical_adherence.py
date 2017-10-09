@@ -13,7 +13,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.const import USER_DATE_FORMAT
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.soft_assert import soft_assert
@@ -307,7 +307,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         )
 
     def is_treatment_start_date(self, date):
-        return self.episode_properties.get('treatment_initiation_date') == date.strftime(USER_DATE_FORMAT)
+        return self.episode_properties.get('treatment_initiation_date') == date.strftime(SERVER_DATE_FORMAT)
 
 
 class Week(object):
