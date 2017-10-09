@@ -38,6 +38,9 @@ hqDefine("hqwebapp/js/alert_user", function() {
                 alert.alert_class(alert.alert_class() + ' ' + tags);
             }
         }
+
+        // Jump to top of page so user sees alert
+        $("html").scrollTop(0);
     };
 
     $(function() {
