@@ -4,11 +4,12 @@ from django.urls import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
+from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 from custom.enikshay.reports.utils import StubReport
-
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -19,6 +20,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
 
     label = _('Location')
     slug = 'locations_id'
+    choice_provider = LocationChoiceProvider
 
     @property
     def options(self):
@@ -37,8 +39,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
                 and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
             # Display the user's location in the filter if none is selected
             location_ids = self.request.couch_user.get_location_ids(self.request.domain)
-
-        choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
+        choice_provider = self.choice_provider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
         choices = choice_provider.get_choices_for_known_values(location_ids, self.request.couch_user)
@@ -57,14 +58,13 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
             # Force the user to select their assigned locations, otherwise selecting no locations will result in
             # all results being returned.
             selected = request.couch_user.get_location_ids(domain)
-        choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
+        choice_provider = cls.choice_provider(StubReport(domain=domain), None)
         choice_provider.configure({'include_descendants': True})
         selected_locations = [
             choice.value
             for choice in choice_provider.get_choices_for_known_values(selected, request.couch_user)
         ]
         return selected_locations
-
 
     @property
     def pagination_source(self):
@@ -75,6 +75,16 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         context = super(EnikshayLocationFilter, self).filter_context
         context['endpoint'] = self.pagination_source
         return context
+
+
+class DistrictLocationFilter(EnikshayLocationFilter):
+    label = 'District'
+    slug = 'district_ids'
+    choice_provider = DistrictChoiceProvider
+
+    @property
+    def pagination_source(self):
+        return reverse('enikshay_district_locations', kwargs={'domain': self.domain})
 
 
 class EnikshayMigrationFilter(BaseSingleOptionFilter):
@@ -171,3 +181,26 @@ class PeriodFilter(BaseSingleOptionFilter):
     @memoized
     def selected(self):
         return self.get_value(self.request, self.domain) or self.options[0][0]
+
+
+class VoucherStateFilter(BaseSingleOptionFilter):
+    slug = "voucher_state"
+    label = "Voucher State"
+    default_text = "Show All"
+
+    @property
+    def options(self):
+        return [
+            ("available", "available"),
+            ("fulfilled", "fulfilled"),
+            ("approved", "approved"),
+            ("paid", "paid"),
+            ("rejected", "rejected"),
+            ("expired", "expired"),
+            ("cancelled", "cancelled"),
+        ]
+
+
+class VoucherIDFilter(SearchFilter):
+    slug = "voucher_id"
+    label = "Voucher Readable ID"
