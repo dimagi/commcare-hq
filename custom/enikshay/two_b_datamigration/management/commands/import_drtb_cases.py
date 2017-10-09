@@ -322,9 +322,9 @@ MUMBAI_MAP = {
     "dst_sample_date": 61,
     "dst_type": 62,
     "lfx": 63,  # Levo
-    "eto": 64,  # Ethio
+    "eto": 64,  # Ethionamide
     "cs": 65,  # Cycloserine
-    "e": 66,  # Etham
+    "e": 66,  # Ethambutol
     "z": 67,  # PZA
     "km": 68,  # Kana
     "cm": 69,  # Capr
