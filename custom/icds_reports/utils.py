@@ -223,7 +223,7 @@ def percent_diff(property, current_data, prev_data, all):
 
     current_percent = current / float(curr_all) * 100
     prev_percent = prev / float(prev_all) * 100
-    return current_percent - prev_percent
+    return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
 
 
 def get_value(data, prop):

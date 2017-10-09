@@ -896,7 +896,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('height_measured_in_month'),
                     SumColumn('height_eligible')
                 ],
-                slug='percent_weight_efficiency'
+                slug='height_measurement'
             ),
             DatabaseColumn(
                 'Total number of unweighed children',
