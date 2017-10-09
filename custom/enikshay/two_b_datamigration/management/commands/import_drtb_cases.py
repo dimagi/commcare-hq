@@ -631,6 +631,7 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
 
     # Close the occurrence if we have a treatment outcome recorded
     close_occurrence = False
+    close_person = False
     if (
         "treatment_outcome" in episode_case_properties
         and episode_case_properties["treatment_outcome"]
@@ -644,12 +645,17 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
             get_prev_person_case_properties(PREV_PERSON_PROPERTIES, person_case_properties))
         person_case_properties['prev_drtb_center_name'] = \
             secondary_owner_case_properties[0]['secondary_owner_name']
-        person_case_properties['owner_id'] = '_archive_'
-        person_case_properties['phi_name'] = ''
-        person_case_properties['tu_name'] = ''
-        person_case_properties['tu_id'] = ''
-        person_case_properties['dto_name'] = ''
-        person_case_properties['dto_id'] = ''
+
+        if episode_case_properties["treatment_outcome"] == "died":
+            close_person = True
+        else:
+            person_case_properties['owner_id'] = '_archive_'
+            person_case_properties['phi_name'] = ''
+            person_case_properties['tu_name'] = ''
+            person_case_properties['tu_id'] = ''
+            person_case_properties['dto_name'] = ''
+            person_case_properties['dto_id'] = ''
+
         person_case_properties['current_episode_type'] = ''
         person_case_properties['current_disease_classification'] = ''
         person_case_properties['current_site_choice'] = ''
@@ -660,7 +666,8 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
 
     for test in test_case_properties:
         test['episode_case_id'] = episode_case_id
-    person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
+    person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id,
+        close=close_person)
     occurrence_case_structure = get_case_structure(
         CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure,
         close=close_occurrence)
@@ -1118,7 +1125,7 @@ def get_test_summary(properties):
     drug_sensitive_output = ''
     if properties['drug_sensitive_list']:
         drug_sensitive_output = " ".join([DRUG_MAP[id]["drug_name"]
-                                           for id in properties['drug_sensitive_list'].split(' ')])
+                                          for id in properties['drug_sensitive_list'].split(' ')])
     return '\n'.join(filter(None, [
         detected,
         'Resistant: {}'.format(drug_resistance_output) if drug_resistance_output else None,
