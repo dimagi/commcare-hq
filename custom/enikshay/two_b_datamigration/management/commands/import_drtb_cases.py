@@ -778,6 +778,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row)),
         "language_code": "hin",
         "case_version": "20",
+        "enrolled_in_private": "false",
+        "dataset": "real",
     }
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
@@ -1230,6 +1232,10 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
         test_cases.append(dst_test_case_properties)
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
+
+    for t in test_cases:
+        t["dataset"] = "real"
+
     return test_cases
 
 
