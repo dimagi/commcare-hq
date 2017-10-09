@@ -80,7 +80,7 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -2751,7 +2751,7 @@ def toggle_diff(request, domain):
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
                 for t in feature_previews.all_previews() + all_toggles()
-                if t.enabled(request.domain) and not t.enabled(other_domain)]
+                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
         diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
     return json_response(diff)
 
@@ -2967,11 +2967,12 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
             return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
-        return sorted(
-            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
-                for toggle in all_toggles()],
-            key=_sort_key,
-        )
+        unsorted_toggles = [(
+            toggle,
+            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
+            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
+        ) for toggle in all_toggles()]
+        return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
         return sorted([

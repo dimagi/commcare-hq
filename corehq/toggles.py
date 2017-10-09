@@ -231,14 +231,30 @@ class PredictablyRandomToggle(StaticToggle):
     def _get_identifier(self, item):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
-    def enabled(self, item, **kwargs):
+    def enabled(self, item, namespace=Ellipsis):
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
+
+        all_namespaces = {None if n == NAMESPACE_USER else n for n in ALL_NAMESPACES}
+        if namespace is Ellipsis and set(self.namespaces) != all_namespaces:
+            raise ValueError(
+                'PredictablyRandomToggle.enabled() cannot be determined for toggle "{slug}" because it is not '
+                'available for all namespaces and the namespace of "{item}" is not given.'.format(
+                    slug=self.slug,
+                    item=item,
+                )
+            )
+
         if settings.UNIT_TESTING:
             return False
         elif item in self.always_disabled:
             return False
+        elif namespace is not Ellipsis and namespace not in self.namespaces:
+            return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
-            or super(PredictablyRandomToggle, self).enabled(item, **kwargs)
+            or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
 # if no namespaces are specified the user namespace is assumed
@@ -297,8 +313,8 @@ def toggles_dict(username=None, domain=None):
 
     (only enabled toggles are included)
     """
-    return {t.slug: True for t in all_toggles() if (t.enabled(username) or
-                                                    t.enabled(domain))}
+    return {t.slug: True for t in all_toggles() if (t.enabled(username, NAMESPACE_USER) or
+                                                    t.enabled(domain, NAMESPACE_DOMAIN))}
 
 
 def toggle_values_by_name(username=None, domain=None):

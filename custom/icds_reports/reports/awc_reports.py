@@ -931,7 +931,6 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
                 return DATA_NOT_ENTERED
             return value
 
-
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
@@ -980,14 +979,15 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'][row.age_in_months] = {
-            'x': int(row.age_in_months),
-            'y': float(row.recorded_weight or 0)
-        }
-        beneficiary['height'][row.age_in_months] = {
-            'x': int(row.age_in_months),
-            'y': float(row.recorded_height or 0)
-        }
+        if row.age_in_months <= 60:
+            beneficiary['weight'][row.age_in_months] = {
+                'x': int(row.age_in_months),
+                'y': float(row.recorded_weight or 0)
+            }
+            beneficiary['height'][row.age_in_months] = {
+                'x': int(row.age_in_months),
+                'y': float(row.recorded_height or 0)
+            }
         beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
             'x': float(row.recorded_height or 0),
             'y': float(row.recorded_weight or 0)
