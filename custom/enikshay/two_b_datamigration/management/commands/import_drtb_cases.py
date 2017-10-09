@@ -1107,6 +1107,8 @@ def get_test_summary(properties):
         detected = 'TB Detected'
     elif properties['result'] == 'tb_not_detected':
         detected = 'TB Not Detected'
+    else:
+        detected = None
 
     drug_resistance_output = ''
     if properties['drug_resistance_list']:
