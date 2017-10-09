@@ -1498,18 +1498,19 @@ def convert_treatment_status(status_in_xlsx):
 def clean_patient_type(value):
     if not value:
         return None
-
     clean_value = value.lower().replace(' ', '_')
-    if clean_value not in [
-        "new",
-        "recurrent",
-        "treatment_after_failure",
-        "treatment_after_ltfu",
-        "other_previously_treated",
-        None
-    ]:
+    try:
+        return {
+            "new": "new",
+            "recurrent": "recurrent",
+            "treatment_after_failure": "treatment_after_failure",
+            "treatment_after_ltfu": "treatment_after_lfu",
+            "treatment_after_lfu": "treatment_after_lfu",
+            "other_previously_treated": "other_previously_treated",
+            "unknown": "unknown",
+        }[clean_value]
+    except KeyError:
         raise FieldValidationFailure(value, "type of patient")
-    return clean_value
 
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
