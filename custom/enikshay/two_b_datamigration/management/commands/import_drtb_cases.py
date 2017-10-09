@@ -1070,7 +1070,7 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
         if drug not in DRUG_NAME_TO_ID_MAPPING.keys():
             raise FieldValidationFailure(result, "SLPA result")
     properties = {
-        "drug_resistant_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
+        "drug_resistance_list": " ".join(filter(None, [DRUG_NAME_TO_ID_MAPPING[drug_name] for drug_name in drugs])),
     }
     return properties
 
@@ -1336,7 +1336,7 @@ def get_dst_test_case_properties(column_mapping, row):
     date_reported = clean_date(column_mapping.get_value("dst_result_date", row))
     if date_reported:
         resistance_props = get_dst_test_resistance_properties(column_mapping, row)
-        if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
+        if resistance_props['drug_resistance_list'] or resistance_props['drug_sensitive_list']:
             properties = {
                 "owner_id": "-",
                 "test_type_value": "dst",
@@ -1368,7 +1368,7 @@ def get_dst_test_resistance_properties(column_mapping, row):
                 resistant_drugs.append(drug_id)
 
     return {
-        "drug_resistant_list": " ".join(resistant_drugs),
+        "drug_resistance_list": " ".join(resistant_drugs),
         "drug_sensitive_list": " ".join(sensitive_drugs),
     }
 
