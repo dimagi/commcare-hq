@@ -818,6 +818,7 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "diagnosing_facility_id": phi_id,
         "diagnosing_facility_name": phi_name,
         "treatment_initiation_date": treatment_initiation_date,
+        "date_referral_to_drtb_center": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
