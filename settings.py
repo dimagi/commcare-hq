@@ -1950,6 +1950,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
