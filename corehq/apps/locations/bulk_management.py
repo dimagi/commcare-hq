@@ -106,11 +106,10 @@ class LocationTypeStub(object):
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
 
-        # check if any of foreign-key refs are being updated
+        # check if the parent is being updated
         old_parent_code = old_version.parent_type.code if old_version.parent_type else ROOT_LOCATION_TYPE
         if old_parent_code != self.parent_code:
             return True
-
         return False
 
 
