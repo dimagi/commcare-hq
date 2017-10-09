@@ -139,11 +139,13 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         if not self.allowed_to_forward(payload):
             return
 
+        now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
-            next_check=next_check or datetime.utcnow(),
+            registered_on=now,
+            next_check=next_check or now,
             payload_id=payload.get_id
         )
         repeat_record.save()
@@ -490,6 +492,7 @@ class RepeatRecord(Document):
     attempts = ListProperty(RepeatRecordAttempt)
 
     cancelled = BooleanProperty(default=False)
+    registered_on = DateTimeProperty()
     last_checked = DateTimeProperty()
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
