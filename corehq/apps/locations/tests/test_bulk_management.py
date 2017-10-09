@@ -5,7 +5,7 @@ from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
+from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import (
     NewLocationImporter,
     LocationTypeStub,
@@ -204,33 +204,6 @@ class TestTreeUtils(SimpleTestCase):
             e.exception.affected_nodes,
             ["Region", "District", "Village"]
         )
-
-    def test_expansion_validators(self):
-        # a, b are TOP. a has c,d as children, b has e as child
-        from_validator, to_validator = expansion_validators(
-            [('a', 'TOP'), ('b', 'TOP'), ('c', 'a'), ('d', 'a'), ('e', 'b')]
-        )
-        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
-        self.assertEqual(set(from_validator('b')), set(['b', 'TOP']))
-        self.assertEqual(set(from_validator('c')), set(['c', 'a', 'TOP']))
-        self.assertEqual(set(from_validator('d')), set(['d', 'a', 'TOP']))
-        self.assertEqual(set(from_validator('e')), set(['e', 'b', 'TOP']))
-        self.assertEqual(set(to_validator('a')), set(['a', 'c', 'd']))
-        self.assertEqual(set(to_validator('b')), set(['b', 'e']))
-        self.assertEqual(set(to_validator('c')), set(['c']))
-        self.assertEqual(set(to_validator('d')), set(['d']))
-        self.assertEqual(set(to_validator('e')), set(['e']))
-
-        # a is TOP. a has b as child, b has c as child
-        from_validator, to_validator = expansion_validators(
-            [('a', 'TOP'), ('b', 'a'), ('c', 'b')]
-        )
-        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
-        self.assertEqual(set(from_validator('b')), set(['a', 'b', 'TOP']))
-        self.assertEqual(set(from_validator('c')), set(['a', 'b', 'c', 'TOP']))
-        self.assertEqual(set(to_validator('a')), set(['a', 'b', 'c']))
-        self.assertEqual(set(to_validator('b')), set(['b', 'c']))
-        self.assertEqual(set(to_validator('c')), set(['c']))
 
 
 class MockLocationStub(LocationStub):
