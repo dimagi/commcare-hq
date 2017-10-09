@@ -19,7 +19,7 @@ from custom.enikshay.const import (
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
     ENROLLED_IN_PRIVATE,
     PERSON_CASE_2B_VERSION,
-)
+    REAL_DATASET_PROPERTY_VALUE)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.field_mappings import health_establishment_sector
 from custom.enikshay.integrations.nikshay.repeaters import (
@@ -28,7 +28,8 @@ from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayTreatmentOutcomeRepeater,
     NikshayFollowupRepeater,
     NikshayRegisterPrivatePatientRepeater,
-    NikshayHealthEstablishmentRepeater)
+    NikshayHealthEstablishmentRepeater,
+)
 from custom.enikshay.tests.utils import (
     ENikshayCaseStructureMixin,
     ENikshayLocationStructureMixin,
@@ -165,6 +166,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def set_up_to_use_2b_version(self):
         update_case(self.domain, self.person_id, {
             'case_version': PERSON_CASE_2B_VERSION,
+            'dataset': REAL_DATASET_PROPERTY_VALUE,
         })
 
         update_case(self.domain, self.occurrence_id, {
@@ -479,6 +481,10 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
     def test_trigger(self):
         # nikshay not enabled
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
@@ -503,6 +509,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.phi.metadata['is_test'] = 'yes'
         self.phi.save()
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         update_case(self.domain, self.person_id, {
             "hiv_status": "unknown",
@@ -526,6 +533,10 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.phi.metadata['is_test'] = 'no'
         self.phi.save()
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         self._create_nikshay_registered_case()
         update_case(self.domain, self.person_id, {
             "hiv_status": "unknown",
@@ -803,7 +814,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
-
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 
@@ -866,6 +880,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.dmc.metadata['is_test'] = 'yes'
         self.dmc.save()
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
         update_case(self.domain, self.test_id, {
@@ -877,6 +895,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.dmc.metadata['is_test'] = 'no'
         self.dmc.save()
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
         update_case(self.domain, self.test_id, {
