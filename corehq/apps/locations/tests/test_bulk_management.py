@@ -29,7 +29,7 @@ DUPLICATE_TYPE_CODES = [
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
     ('State', 'state', '', False, False, False, 0),
     ('County', 'county', 'state', False, False, True, 0),
-    ('City', 'city', 'county', False, True, False,  0),
+    ('City', 'city', 'county', False, True, False, 0),
     ('Other County', 'county', 'state', False, False, True, 0),
 ]
 
