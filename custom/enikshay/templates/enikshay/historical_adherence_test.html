@@ -99,6 +99,8 @@
                                             <div class="icon">
                                                 <img class="icon" src="{% static "enikshay/images/treatment_start_date.png" %}">
                                             </div>
+                                        {% else %}
+                                            not show_treatment_start_date
                                         {% endif %}
                                         {% if day.show_conflicting_data %}
                                             <div class="middle-icon">
