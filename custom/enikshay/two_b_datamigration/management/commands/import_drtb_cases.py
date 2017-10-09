@@ -854,7 +854,8 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
         "regimen_change_history": get_episode_regimen_change_history(
             column_mapping, row, treatment_initiation_date),
-        "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row))
+        "patient_type_choice": clean_patient_type(column_mapping.get_value("type_of_patient", row)),
+        "adherence_schedule_id": "schedule_daily",
     }
 
     # this code is specifically for Mehsana since we dont' have a treatment status in Mumbai
