@@ -5,11 +5,13 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
     DetailColumn,
     Application,
+    FormActionCondition,
+)
+from corehq.apps.app_manager.models.schedules import (
     FormSchedule,
     ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
-    FormActionCondition,
 )
 from corehq.apps.app_manager.exceptions import ScheduleError
 from corehq.apps.app_manager.tests.util import TestXmlMixin

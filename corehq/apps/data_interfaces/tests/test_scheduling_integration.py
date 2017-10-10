@@ -1,10 +1,12 @@
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedForm,
+)
+from corehq.apps.app_manager.models.schedules import (
     FormSchedule,
-    ScheduleVisit,
     SchedulePhase,
     SchedulePhaseForm,
+    ScheduleVisit,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,

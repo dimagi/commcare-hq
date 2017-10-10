@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 from mock import patch, MagicMock
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.app_manager.models import Module, AdvancedModule, FormSchedule, \
-    ScheduleVisit
+from corehq.apps.app_manager.models import Module, AdvancedModule
+from corehq.apps.app_manager.models.schedules import FormSchedule, ScheduleVisit
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
