@@ -1312,5 +1312,5 @@ ICDS_LIVEQUERY = PredictablyRandomToggle(
     'Enable livequery case sync for a random subset of ICDS users',
     TAG_ONE_OFF,
     [NAMESPACE_USER],
-    randomness=0.2,
+    randomness=0.0,
 )
