@@ -229,8 +229,11 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
 def set_enikshay_device_id(user, device_id):
     # device_id was JUST set, so it must be in there
     device_number = [device.device_id for device in user.devices].index(device_id) + 1
-    user.user_data['id_device_number'] = device_number
-    user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+    if user.user_data.get('id_device_number') != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+        return True
+    return False
 
 
 def set_issuer_id(domain, user):

@@ -201,8 +201,9 @@ def handle_401_response(f):
 def update_device_id(user, device_id):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
+            # this only updates once per day for each device
             updated = user.update_device_id_last_used(device_id)
+            if toggles.ENIKSHAY.enabled(user.domain):
+                updated = set_enikshay_device_id(user, device_id) or updated
             if updated:
-                if toggles.ENIKSHAY.enabled(user.domain):
-                    set_enikshay_device_id(user, device_id)
                 user.save(fire_signals=False)
