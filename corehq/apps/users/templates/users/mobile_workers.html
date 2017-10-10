@@ -82,7 +82,6 @@
     });
     mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
     mobileWorkerApp.constant('location_url', '{{ location_url }}');
-    {% angularjs %}
     mobileWorkerApp.directive('workertableHeader', function () {
         return {
             restrict: 'A',
@@ -100,7 +99,6 @@
         [50, gettext('Show 50 Mobile Workers')],
         [100, gettext('Show 100 Mobile Workers')]
     ]);
-    {% endangularjs %}
 }(window.angular));
 </script>
 {% endblock %}
