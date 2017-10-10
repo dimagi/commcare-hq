@@ -24,7 +24,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['gender', 'age', 'month'];
+    vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of AWCs with a source of clean drinking water',
     };

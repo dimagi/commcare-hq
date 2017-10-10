@@ -3,8 +3,8 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from couchdbkit import ResourceConflict
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.logging import notify_exception
 
@@ -14,6 +14,8 @@ from dimagi.utils.web import json_response
 from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.locations.permissions import user_can_access_other_user
+
+from custom.enikshay.user_setup import set_enikshay_device_id
 
 from .models import DemoUserRestore
 from .exceptions import RestorePermissionDenied
@@ -212,4 +214,6 @@ def update_device_id(user, device_id):
         if not user.is_demo_user:
             updated = user.update_device_id_last_used(device_id)
             if updated:
+                if toggles.ENIKSHAY.enabled(user.domain):
+                    set_enikshay_device_id(user)
                 user.save(fire_signals=False)

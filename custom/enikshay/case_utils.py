@@ -29,7 +29,6 @@ CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
-CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
@@ -104,6 +103,14 @@ def get_person_case_from_episode(domain, episode_case_id):
     )
 
 
+def get_all_occurrence_cases_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    occurrence_cases = [case for case in all_cases
+                        if case.type == CASE_TYPE_OCCURRENCE]
+    return occurrence_cases
+
+
 def get_open_occurrence_case_from_person(domain, person_case_id):
     """
     Gets the first open 'occurrence' case for the person
@@ -148,6 +155,18 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
                                        (test_case_episode_id, test_case.get_id))
 
     return get_open_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
+
+
+def get_all_episode_cases_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    episode_cases = []
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    for occurrence_case in occurrence_cases:
+        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
+        episode_cases += [case for case in all_cases
+                          if case.type == CASE_TYPE_EPISODE and
+                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+    return episode_cases
 
 
 def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
@@ -449,19 +468,19 @@ def get_person_case(domain, case_id):
     case_type = case.type
 
     if case_type == CASE_TYPE_PERSON:
-        return case_id
+        return case
     elif case_type == CASE_TYPE_EPISODE:
-        return get_person_case_from_episode(domain, case.case_id).case_id
+        return get_person_case_from_episode(domain, case.case_id)
     elif case_type == CASE_TYPE_ADHERENCE:
         episode_case = get_episode_case_from_adherence(domain, case.case_id)
-        return get_person_case_from_episode(domain, episode_case.case_id).case_id
+        return get_person_case_from_episode(domain, episode_case.case_id)
     elif case_type == CASE_TYPE_TEST:
         occurrence_case = get_occurrence_case_from_test(domain, case.case_id)
-        return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
+        return get_person_case_from_occurrence(domain, occurrence_case.case_id)
     elif case_type == CASE_TYPE_OCCURRENCE:
-        return get_person_case_from_occurrence(domain, case.case_id).case_id
+        return get_person_case_from_occurrence(domain, case.case_id)
     elif case_type == CASE_TYPE_VOUCHER:
-        return get_person_case_from_voucher(domain, case.case_id).case_id
+        return get_person_case_from_voucher(domain, case.case_id)
     else:
         raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
 
@@ -561,3 +580,16 @@ def iter_all_active_person_episode_cases(domain, case_ids):
             continue
 
         yield person_case, episode_case
+
+
+def person_has_any_nikshay_notifiable_episode(person_case):
+    domain = person_case.domain
+    from custom.enikshay.integrations.utils import is_valid_person_submission
+    from custom.enikshay.integrations.nikshay.repeaters import valid_nikshay_patient_registration
+
+    if not is_valid_person_submission(person_case):
+        return False
+
+    episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
+    return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
+               for episode_case in episode_cases)

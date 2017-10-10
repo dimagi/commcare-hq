@@ -19,7 +19,8 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
-)
+    person_has_any_nikshay_notifiable_episode,
+    get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
@@ -115,12 +116,13 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         if allowed_case_types_and_users:
             return (
                 # Do not attempt notification for patients registered in private app
-                not (person_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
+                not (person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
                 ) and
-                is_valid_person_submission(person_case)
+                is_valid_person_submission(person_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -146,7 +148,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            not (episode_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
+            not (episode_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
             (  # has a nikshay id already or is a valid submission probably waiting notification
                 episode_case_properties.get('nikshay_id') or
                 valid_nikshay_patient_registration(episode_case_properties)
@@ -179,9 +181,11 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
+            occurrence_case = get_occurrence_case_from_test(test_case.domain, test_case.case_id)
+            person_case = get_person_case_from_occurrence(test_case.domain, occurrence_case.case_id)
             test_case_properties = test_case.dynamic_case_properties()
             return (
-                not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'yes') and
+                not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
                 (
@@ -191,7 +195,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
-                not is_valid_test_submission(test_case)
+                not is_valid_test_submission(test_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False

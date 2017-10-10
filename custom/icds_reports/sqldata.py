@@ -896,7 +896,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('height_measured_in_month'),
                     SumColumn('height_eligible')
                 ],
-                slug='percent_weight_efficiency'
+                slug='height_measurement'
             ),
             DatabaseColumn(
                 'Total number of unweighed children',
@@ -995,7 +995,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_completed_1year_immunizations'
             ),
             AggregateColumn(
-                'Percentage of children breastfed at birth',
+                'Percentage of children with early initiation of breastfeeding',
                 percent,
                 [
                     SumColumn('bf_at_birth'),
@@ -1004,7 +1004,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_breastfed_at_birth'
             ),
             AggregateColumn(
-                'Percentage of children with early initiation of breastfeeding',
+                'Percentage of children exclusively breastfeeding',
                 percent,
                 [
                     SumColumn('ebf_in_month'),
@@ -1663,19 +1663,19 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 'Percentage AWCs with weighing scale: infants',
                 percent,
                 [
-                    SumColumn('infra_adult_weighing_scale'),
+                    SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_adult_scale'
+                slug='percent_baby_scale'
             ),
             AggregateColumn(
                 'Percentage AWCs with weighing scale: mother and child',
                 percent,
                 [
-                    SumColumn('infra_baby_weighing_scale'),
+                    SumColumn('infra_adult_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_baby_scale'
+                slug='percent_adult_scale'
             )
         ]
         return columns + agg_columns

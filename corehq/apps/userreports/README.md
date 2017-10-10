@@ -2059,6 +2059,9 @@ A diagram of this workflow can be found [here](examples/async_indicator.png)
 ## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
+
 This can be done by runnning `./manage.py dbshell` or using `psql`.
-The naming convention for tables is: `configurable_indicators_[domain name]_[table id]_[hash]`.
+
+The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
+
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.

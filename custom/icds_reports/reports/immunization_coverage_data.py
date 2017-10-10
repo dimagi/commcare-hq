@@ -135,8 +135,10 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, show_test=F
     return {
         "tooltips_data": tooltips_data,
         "info": _((
-            "Percentage of children at age 3 who have recieved complete immunization as per "
-            "National Immunization Schedule of India."
+            """
+                Percentage of children 1 year+ who have recieved
+                complete immunization as per National Immunization Schedule of India required by age 1
+            """
         )),
         "chart_data": [
             {

@@ -24,7 +24,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
         info: 'Total number of lactating women who are enrolled for ICDS services',

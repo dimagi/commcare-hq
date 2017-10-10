@@ -378,16 +378,18 @@ class SQLLocation(MPTTModel):
         return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
-    @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
-        set_site_code_if_needed(self)
-        sync_supply_point(self)
-        super(SQLLocation, self).save(*args, **kwargs)
+
+        with transaction.atomic():
+            set_site_code_if_needed(self)
+            sync_supply_point(self)
+            super(SQLLocation, self).save(*args, **kwargs)
+
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
@@ -395,6 +397,9 @@ class SQLLocation(MPTTModel):
         from .document_store import publish_location_saved
         to_delete = self.get_descendants(include_self=True)
 
+        # This deletion should ideally happen in a transaction. It's not
+        # currently possible as supply point cases are stored either in a
+        # separate database or in couch. Happy Debugging!
         for loc in to_delete:
             loc._remove_users()
             sync_supply_point(loc, is_deletion=True)

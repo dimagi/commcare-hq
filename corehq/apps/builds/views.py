@@ -137,6 +137,10 @@ def import_build(request):
         }, status_code=400)
 
     if build_number:
+        # Strip and remove
+        # U+200B ZERO WIDTH SPACE
+        # https://manage.dimagi.com/default.asp?262198
+        build_number = build_number.strip().replace(u'\u200b', '')
         try:
             build_number = int(build_number)
         except ValueError:

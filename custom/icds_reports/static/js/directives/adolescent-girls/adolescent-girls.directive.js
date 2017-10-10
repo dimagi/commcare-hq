@@ -24,7 +24,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
         info: 'Total number of adolescent girls who are enrolled for ICDS services',

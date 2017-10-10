@@ -33,7 +33,7 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_all_commcare_users_by_domain,
+    get_commcare_users_by_filters,
     get_user_docs_by_username,
 )
 from corehq.apps.users.models import UserRole
@@ -597,7 +597,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
 
     def _get_group_names(user):
         return sorted(map(
@@ -651,7 +651,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_all_commcare_users_by_domain(domain):
+    for user in get_commcare_users_by_filters(domain, user_filters):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
@@ -715,7 +715,7 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id):
+def dump_users_and_groups(domain, download_id, user_filters):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -746,7 +746,8 @@ def dump_users_and_groups(domain, download_id):
         group_memoizer,
         domain,
         user_data_model,
-        location_cache
+        location_cache,
+        user_filters
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)

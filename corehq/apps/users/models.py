@@ -85,6 +85,7 @@ class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     edit_commcare_users = BooleanProperty(default=False)
     edit_locations = BooleanProperty(default=False)
+    edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -175,6 +176,7 @@ class Permissions(DocumentSchema):
             edit_web_users=True,
             edit_commcare_users=True,
             edit_locations=True,
+            edit_motech=True,
             edit_data=True,
             edit_apps=True,
             view_reports=True,

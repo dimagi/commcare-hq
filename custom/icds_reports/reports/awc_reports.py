@@ -10,7 +10,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
-    AggChildHealthMonthly, AggAwcDailyView
+    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, match_age
 
 RED = '#de2d26'
@@ -358,11 +358,27 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             queryset = apply_exclude(domain, queryset)
         return queryset
 
+    def get_institutional_delivery_data(date):
+        queryset = AggCcsRecordMonthly.objects.filter(
+            month=date, **config
+        ).values(
+            'month', 'aggregation_level', 'awc_name'
+        ).annotate(
+            institutional_delivery_in_month_sum=Sum('institutional_delivery_in_month'),
+            delivered_in_month_sum=Sum('delivered_in_month')
+        )
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
+
     this_month_data = get_data_for(datetime(*month))
     prev_month_data = get_data_for(datetime(*prev_month))
 
     this_month_data_we = get_weight_efficiency(datetime(*month))
     prev_month_data_we = get_weight_efficiency(datetime(*prev_month))
+
+    this_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*month))
+    prev_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*prev_month))
 
     return {
         'kpi': [
@@ -614,6 +630,35 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'immunized'),
                     'all': get_value(this_month_data, 'eligible'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('Institutional Deliveries'),
+                    'help_text': _((
+                        """
+                            Percentage of pregant women who delivered in a public or private medical
+                            facility in the last month.
+                            Delivery in medical instituitions is associated with a decrease maternal mortality rate
+                        """
+                    )),
+                    'percent': percent_diff(
+                        'institutional_delivery_in_month_sum',
+                        this_month_institutional_delivery_data,
+                        prev_month_institutional_delivery_data,
+                        'delivered_in_month_sum'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'institutional_delivery_in_month_sum',
+                        this_month_institutional_delivery_data,
+                        prev_month_institutional_delivery_data,
+                        'delivered_in_month_sum'
+                    ) > 0 else 'red',
+                    'value': get_value(
+                        this_month_institutional_delivery_data,
+                        'institutional_delivery_in_month_sum'
+                    ),
+                    'all': get_value(prev_month_institutional_delivery_data, 'delivered_in_month_sum'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -886,7 +931,6 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
                 return DATA_NOT_ENTERED
             return value
 
-
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
@@ -935,14 +979,15 @@ def get_beneficiary_details(case_id, month):
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
-        beneficiary['weight'][row.age_in_months] = {
-            'x': int(row.age_in_months),
-            'y': float(row.recorded_weight or 0)
-        }
-        beneficiary['height'][row.age_in_months] = {
-            'x': int(row.age_in_months),
-            'y': float(row.recorded_height or 0)
-        }
+        if row.age_in_months <= 60:
+            beneficiary['weight'][row.age_in_months] = {
+                'x': int(row.age_in_months),
+                'y': float(row.recorded_weight or 0)
+            }
+            beneficiary['height'][row.age_in_months] = {
+                'x': int(row.age_in_months),
+                'y': float(row.recorded_height or 0)
+            }
         beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
             'x': float(row.recorded_height or 0),
             'y': float(row.recorded_weight or 0)

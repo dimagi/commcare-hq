@@ -25,7 +25,7 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
-
+            all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -55,20 +55,24 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
     daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
     daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
 
+    daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+
     return {
         'records': [
             [
                 {
                     'label': _('AWCs covered'),
-                    'help_text': _('Total AWCs that have launched ICDS CAS'),
+                    'help_text': _('Total AWCs that have launched ICDS-CAS. '
+                                   'AWCs are considered launched if they have submitted at least '
+                                   'one Household Registration form. '),
                     'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
                     'color': 'green' if percent_increase(
                         'awcs',
                         awc_this_month_data,
                         awc_prev_month_data) > 0 else 'red',
                     'value': get_value(awc_this_month_data, 'awcs'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(awc_this_month_data, 'all_awcs'),
+                    'format': 'div',
                     'frequency': 'month',
                     'redirect': 'awcs_covered'
                 },
@@ -76,7 +80,8 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
                     'label': _('Number of AWCs Open yesterday'),
                     'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                                     "by the AWW or the AWW helper")),
-                    'percent': percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago),
+                    'color': 'green' if daily_attendance_percent > 0 else 'red',
+                    'percent': daily_attendance_percent,
                     'value': get_value(daily_yesterday, 'daily_attendance'),
                     'all': get_value(daily_yesterday, 'awcs'),
                     'format': 'div',

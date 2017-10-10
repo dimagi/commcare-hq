@@ -311,6 +311,14 @@
                                 data-title="{% trans "Edit Locations"%}"
                                 data-content="{% trans "Create, update, and delete Locations in the Organization Hierarchy." %}"></span>
                         </th>
+                        {% if show_integration %}
+                        <th>
+                          {% trans "Edit Integration" %}
+                          <span class="hq-help-template"
+                                data-title="{% trans 'Edit Integration' %}"
+                                data-content="{% trans 'Manage integration with other systems.' %}"></span>
+                        </th>
+                        {% endif %}
                         <th>
                           {% trans "Edit Data" %}
                           <span class="hq-help-template"
@@ -347,6 +355,9 @@
                         <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_locations"></i></td>
+                        {% if show_integration %}
+                        <td><i data-bind="staticChecked: permissions.edit_motech"></i></td>
+                        {% endif %}
                         <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
                         <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
                         <td>
@@ -475,6 +486,22 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% if show_integration %}
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Edit Integration" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.edit_motech" />
+                                                    {% trans "Allow role to manage integration with other systems." %}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label">
                                             {% trans "Edit Data" %}

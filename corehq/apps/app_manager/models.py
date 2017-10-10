@@ -2695,7 +2695,9 @@ class Module(ModuleBase, ModuleDetailsMixin):
             if with_source:
                 new_form.source = form.source
         else:
-            raise IncompatibleFormTypeException()
+            raise IncompatibleFormTypeException(_('''
+                Cannot move an advanced form with actions into a basic menu.
+            '''))
 
         if index is not None:
             self.forms.insert(index, new_form)
@@ -2895,7 +2897,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     None)
 
     def disable_schedule(self):
-        self.schedule.enabled = False
+        if self.schedule:
+            self.schedule.enabled = False
         phase = self.get_phase()
         if phase:
             phase.remove_form(self)

@@ -1,6 +1,6 @@
 from distutils.version import LooseVersion
 
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
@@ -28,6 +28,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
 
+from .models import SerialIdBucket
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response, update_device_id)
@@ -245,3 +246,14 @@ def heartbeat(request, domain, hq_app_id):
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
     return JsonResponse(info)
+
+
+@location_safe
+@login_or_digest_or_basic_or_apikey()
+@require_GET
+def get_next_id(request, domain):
+    bucket_id = request.GET.get('pool_id')
+    session_id = request.GET.get('session_id')
+    if bucket_id is None:
+        return HttpResponseBadRequest("You must provide a pool_id parameter")
+    return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))

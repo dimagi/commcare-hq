@@ -19,7 +19,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
+from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 
 
@@ -46,7 +46,7 @@ class LocationTypeStub(object):
     meta_data_attrs = ['name', 'code', 'shares_cases', 'view_descendants']
 
     def __init__(self, name, code, parent_code, do_delete, shares_cases,
-                 view_descendants, expand_from, expand_to, index):
+                 view_descendants, index):
         self.name = name
         self.code = code
         # if parent_code is '', it must be top location type
@@ -54,8 +54,6 @@ class LocationTypeStub(object):
         self.do_delete = do_delete
         self.shares_cases = shares_cases
         self.view_descendants = view_descendants
-        self.expand_from = expand_from
-        self.expand_to = expand_to
         self.index = index
         # These can be set by passing information of existing location data latter.
         # Whether the type already exists in domain or is new
@@ -75,11 +73,9 @@ class LocationTypeStub(object):
         do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
         shares_cases = row.get(cls.titles['shares_cases'], 'N').lower() in ['y', 'yes']
         view_descendants = row.get(cls.titles['view_descendants'], 'N').lower() in ['y', 'yes']
-        expand_from = row.get(cls.titles['expand_from'])
-        expand_to = row.get(cls.titles['expand_to'])
         index = index
         return cls(name, code, parent_code, do_delete, shares_cases,
-                   view_descendants, expand_from, expand_to, index)
+                   view_descendants, index)
 
     def _is_new(self, old_collection):
         return self.code not in old_collection.types_by_code
@@ -110,18 +106,10 @@ class LocationTypeStub(object):
             if getattr(old_version, attr, None) != getattr(self, attr, None):
                 return True
 
-        # check if any of foreign-key refs are being updated
+        # check if the parent is being updated
         old_parent_code = old_version.parent_type.code if old_version.parent_type else ROOT_LOCATION_TYPE
         if old_parent_code != self.parent_code:
             return True
-        foreign_attrs = ['expand_from', 'expand_to']
-        for attr in foreign_attrs:
-            old_ref = getattr(old_version, attr, '')
-            old_value = old_ref.code if old_ref else None
-            new_value = getattr(self, attr, '')
-            if (old_value or new_value) and old_value != new_value:
-                return True
-
         return False
 
 
@@ -679,24 +667,6 @@ class LocationTreeValidator(object):
                 for code in e.affected_nodes
             ]
 
-        from_validator, to_validator = expansion_validators(type_pairs)
-        errors = []
-        for lt in self.location_types:
-            allowed_from_codes = from_validator(lt.code)
-            if lt.expand_from and lt.expand_from not in allowed_from_codes:
-                errors.append(
-                    _(u"'{}' can't have '{}' as 'Expand From', valid options are '{}'")
-                    .format(lt.code, lt.expand_from, allowed_from_codes)
-                )
-            allowed_to_codes = to_validator(lt.code)
-            if lt.expand_to and lt.expand_to not in allowed_to_codes:
-                errors.append(
-                    _(u"'{}' can't have '{}' as 'Expand To', valid options are '{}'")
-                    .format(lt.code, lt.expand_to, allowed_to_codes)
-                )
-
-        return errors
-
     @memoized
     def _validate_location_tree(self):
         errors = []
@@ -807,7 +777,7 @@ def save_types(type_stubs, excel_importer=None):
     # This proceeds in 3 steps
     # 1. Lookup all to be deleted types and 'bulk_delete' them
     # 2. Lookup all new types and 'bulk_create' the SQL objects, but don't set ForeignKey attrs like
-    #    'parent', 'expand_from', 'expand_to' yet
+    #    'parent' yet
     # 3. Lookup all to be updated types. Set foreign key attrs on these and new objects, and
     #    'bulk_update' the objects
 
@@ -834,10 +804,6 @@ def save_types(type_stubs, excel_importer=None):
             # lookup foreign key attributes from stub and set them on objects
             type_object = type_objects_by_code[lt.code]
             type_object.parent_type = type_objects_by_code[lt.parent_code]
-            if lt.expand_from:
-                type_object.expand_from = type_objects_by_code[lt.expand_from]
-            if lt.expand_to:
-                type_object.expand_to = type_objects_by_code[lt.expand_to]
             to_bulk_update.append(type_object)
 
     LocationType.bulk_update(to_bulk_update)
