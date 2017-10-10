@@ -1233,7 +1233,8 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
 
     for t in test_cases:
-        t["dataset"] = "real"
+        t['dataset'] = 'real'
+        t['case_name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
 
     return test_cases
 
