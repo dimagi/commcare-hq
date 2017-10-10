@@ -180,9 +180,9 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # test.test_type_value = microscopy-zn or test.test_type_value = microscopy-fluorescent
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
-        occurrence_case = get_occurrence_case_from_test(test_case.domain, test_case.case_id)
-        person_case = get_person_case_from_occurrence(test_case.domain, occurrence_case.case_id)
         if allowed_case_types_and_users:
+            occurrence_case = get_occurrence_case_from_test(test_case.domain, test_case.case_id)
+            person_case = get_person_case_from_occurrence(test_case.domain, occurrence_case.case_id)
             test_case_properties = test_case.dynamic_case_properties()
             return (
                 not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
