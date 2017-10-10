@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-03 19:11+0000\n"
+"POT-Creation-Date: 2017-10-10 14:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,11 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:391
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:372
+msgid "Moved successfully."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:400
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -2524,7 +2528,7 @@ msgid "There are no reminders to display."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/base.js:29
-#: corehq/apps/userreports/static/userreports/js/configurable_report.js:112
+#: corehq/apps/userreports/static/userreports/js/configurable_report.js:116
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 
@@ -2643,8 +2647,7 @@ msgstr ""
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/reports.config.js:59
-#: corehq/apps/reports/static/reports/js/reports.config.js:67
+#: corehq/apps/reports/static/reports/js/reports.config.js:60
 msgid ""
 "Your requested excel report will be sent to the email address defined in "
 "your account settings."
