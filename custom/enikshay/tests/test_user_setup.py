@@ -261,6 +261,24 @@ class TestUserSetupUtils(TestCase):
         update_device_id(user, 'palm-pilot')
         self.assertEqual(user.user_data['id_device_number'], 2)
 
+    def test_device_id_same_day(self):
+        user = self.make_user('redviper@martell.biz', 'DTO')
+        update_device_id(user, 'rotary')
+        update_device_id(user, 'palm-pilot')
+        update_device_id(user, 'blackberry')
+        palm_pilot_last_used_1 = [device.last_used for device in user.devices
+                                  if device.device_id == 'palm-pilot'][0]
+        self.assertEqual(user.user_data['id_device_number'], 3)
+
+        # Updating the device ID a second time in the same day doesn't change
+        # the entry in user.devices, but it SHOULD update the enikshay user data
+        update_device_id(user, 'palm-pilot')
+        palm_pilot_last_used_2 = [device.last_used for device in user.devices
+                                  if device.device_id == 'palm-pilot'][0]
+        self.assertEqual(palm_pilot_last_used_1, palm_pilot_last_used_2)
+        user = CommCareUser.get(user._id)  # make sure it's set in the DB
+        self.assertEqual(user.user_data['id_device_number'], 2)
+
     def test_add_drtb_hiv_to_dto(self):
         ellaria = self.make_user('esand@martell.biz', 'DRTB-HIV')
         self.assertEqual(ellaria.location_id, self.locations['DRTB-HIV'].location_id)
