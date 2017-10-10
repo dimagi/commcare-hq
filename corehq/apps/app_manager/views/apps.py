@@ -10,8 +10,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
 from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
@@ -780,15 +779,21 @@ def rearrange(request, domain, app_id, key):
             app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
-    except IncompatibleFormTypeException:
-        messages.error(request, _('The form can not be moved into the desired menu.'))
+    except IncompatibleFormTypeException as e:
+        error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
+        if ajax:
+            return json_response({'error': error}, status_code=400)
+        messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
-        messages.error(request, _(
+        error = _(
             'Oops. '
             'Looks like you got out of sync with us. '
             'The sidebar has been updated, so please try again.'
-        ))
+        )
+        if ajax:
+            return json_response(error, status_code=400)
+        messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
