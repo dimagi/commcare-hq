@@ -323,7 +323,10 @@ def toggle_values_by_name(username=None, domain=None):
 
     all toggles (including those not enabled) are included
     """
-    return {toggle_name: (toggle.enabled(username) or toggle.enabled(domain))
+    return {toggle_name: (
+                toggle.enabled(username, namespace=NAMESPACE_USER) or
+                toggle.enabled(domain, namespace=NAMESPACE_DOMAIN)
+            )
             for toggle_name, toggle in all_toggles_by_name().items()}
 
 
