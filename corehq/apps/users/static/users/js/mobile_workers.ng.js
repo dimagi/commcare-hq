@@ -344,7 +344,7 @@
                     }
                     return deferred.promise;
                 };
-            }
+            },
         };
     };
 
@@ -441,7 +441,7 @@
             $('#activate_' + user.user_id).modal('hide');
             djangoRMI.modify_user_status({
                 user_id: user.user_id,
-                is_active: true
+                is_active: true,
             })
                 .success(function (data) {
                     if (data.success) {
@@ -459,7 +459,7 @@
             $('#deactivate_' + user.user_id).modal('hide');
             djangoRMI.modify_user_status({
                 user_id: user.user_id,
-                is_active: false
+                is_active: false,
             })
                 .success(function (data) {
                     if (data.success) {
@@ -484,13 +484,13 @@
                         + '<th class="col-xs-3">' + gettext("First Name") + '</th>'
                         + '<th class="col-xs-3">' + gettext("Last Name") + '</th>'
                         + '<th class="col-xs-3">' + gettext("Status") + '</th>'
-                    + '</tr>'
-        }
+                    + '</tr>',
+        };
     });
     mobileWorkerApp.constant('paginationLimits', [
         [10, gettext('Show 10 Mobile Workers')],
         [25, gettext('Show 25 Mobile Workers')],
         [50, gettext('Show 50 Mobile Workers')],
-        [100, gettext('Show 100 Mobile Workers')]
+        [100, gettext('Show 100 Mobile Workers')],
     ]);
 }(window.angular));

@@ -135,7 +135,7 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
 
     if ($('#js-unrecognized-data').length > 0) {
-      $(":submit").prop("disabled", false);
+        $(":submit").prop("disabled", false);
     }
 
     // Analytics
@@ -143,7 +143,7 @@ hqDefine('users/js/edit_commcare_user', function () {
         ga_track_event("Edit Mobile Worker", "Updated user info", couch_user_id, {
             'hitCallback': function() {
                 $userInformationForm.submit();
-            }
+            },
         });
         return false;
     });
