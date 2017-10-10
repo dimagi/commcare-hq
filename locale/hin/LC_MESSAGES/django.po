@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-10 14:04+0000\n"
-"PO-Revision-Date: 2017-10-03 19:13+0000\n"
+"POT-Creation-Date: 2017-10-10 19:04+0000\n"
+"PO-Revision-Date: 2017-10-10 14:06+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
@@ -2988,7 +2988,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/create_snapshot.html:43
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:24
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:62
-#: corehq/apps/hqwebapp/doc_info.py:88 corehq/apps/reports/filters/forms.py:109
+#: corehq/apps/hqwebapp/doc_info.py:88
+#: corehq/apps/reports/filters/forms.py:109
 #: corehq/apps/reports/filters/forms.py:548
 #: corehq/apps/reports/filters/select.py:98
 #: corehq/apps/reports/standard/deployments.py:69
@@ -3604,7 +3605,8 @@ msgstr ""
 msgid "Automatically trigger a two-way sync on a regular schedule"
 msgstr ""
 
-#: corehq/apps/app_manager/static_strings.py:46 corehq/apps/domain/views.py:368
+#: corehq/apps/app_manager/static_strings.py:46
+#: corehq/apps/domain/views.py:368
 #: corehq/apps/locations/templates/locations/manage/location.html:139
 #: corehq/apps/users/forms.py:294
 #: corehq/apps/users/templates/users/edit_commcare_user.html:32
@@ -6967,8 +6969,8 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:95
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:163
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:182
-#: corehq/apps/data_interfaces/forms.py:492 corehq/apps/reminders/forms.py:1410
-#: corehq/apps/reminders/forms.py:1420
+#: corehq/apps/data_interfaces/forms.py:492
+#: corehq/apps/reminders/forms.py:1410 corehq/apps/reminders/forms.py:1420
 msgid "This field is required"
 msgstr ""
 
@@ -9201,7 +9203,8 @@ msgstr ""
 msgid "Field name \"{}\" is reserved"
 msgstr ""
 
-#: corehq/apps/case_importer/util.py:430 corehq/apps/case_importer/views.py:222
+#: corehq/apps/case_importer/util.py:430
+#: corehq/apps/case_importer/views.py:222
 msgid "Sorry, your session has expired. Please start over and try again."
 msgstr ""
 
@@ -9396,7 +9399,7 @@ msgid "Sorry, this response is required!"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html:44
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html:193
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html:195
 msgid "List is empty."
 msgstr ""
 
@@ -12037,16 +12040,16 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:57
 #: corehq/apps/reports/standard/ivr.py:77
-#: corehq/apps/reports/standard/sms.py:147 corehq/apps/smsbillables/forms.py:45
-#: custom/fri/reports/reports.py:231
+#: corehq/apps/reports/standard/sms.py:147
+#: corehq/apps/smsbillables/forms.py:45 custom/fri/reports/reports.py:231
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:135
 msgid "Incoming"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:60
 #: corehq/apps/reports/standard/ivr.py:78
-#: corehq/apps/reports/standard/sms.py:148 corehq/apps/smsbillables/forms.py:44
-#: custom/fri/reports/reports.py:232
+#: corehq/apps/reports/standard/sms.py:148
+#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:232
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:136
 msgid "Outgoing"
 msgstr ""
@@ -26345,7 +26348,8 @@ msgstr ""
 
 #: corehq/apps/sms/filters.py:33 corehq/apps/sms/filters.py:51
 #: corehq/apps/sms/models.py:828 corehq/apps/sms/models.py:1323
-#: custom/apps/crs_reports/reports.py:72 custom/icds_reports/mpr_sqldata.py:560
+#: custom/apps/crs_reports/reports.py:72
+#: custom/icds_reports/mpr_sqldata.py:560
 #: custom/icds_reports/mpr_sqldata.py:956
 #: custom/succeed/reports/patient_Info.py:178
 msgid "Other"
@@ -28568,7 +28572,8 @@ msgid "Import Report"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html:15
-#: corehq/apps/userreports/v1/views.py:172 corehq/apps/userreports/views.py:248
+#: corehq/apps/userreports/v1/views.py:172
+#: corehq/apps/userreports/views.py:248
 msgid "Edit Report"
 msgstr ""
 
@@ -28630,8 +28635,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html:6
 #: corehq/apps/userreports/templates/userreports/paywall/pricing.html:6
-#: corehq/apps/userreports/v1/views.py:190 corehq/apps/userreports/views.py:280
-#: corehq/apps/userreports/views.py:363
+#: corehq/apps/userreports/v1/views.py:190
+#: corehq/apps/userreports/views.py:280 corehq/apps/userreports/views.py:363
 msgid "Report Builder"
 msgstr ""
 
@@ -29087,11 +29092,13 @@ msgid ""
 "above."
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:116 corehq/apps/userreports/views.py:192
+#: corehq/apps/userreports/v1/views.py:116
+#: corehq/apps/userreports/views.py:192
 msgid "Reports Home"
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:163 corehq/apps/userreports/views.py:239
+#: corehq/apps/userreports/v1/views.py:163
+#: corehq/apps/userreports/views.py:239
 msgid "Report \"{}\" saved!"
 msgstr ""
 
@@ -29100,7 +29107,8 @@ msgid "Select Report Type"
 msgstr ""
 
 #: corehq/apps/userreports/v1/views.py:221
-#: corehq/apps/userreports/v1/views.py:334 corehq/apps/userreports/views.py:435
+#: corehq/apps/userreports/v1/views.py:334
+#: corehq/apps/userreports/views.py:435
 msgid "Create New Report"
 msgstr ""
 
@@ -29145,12 +29153,13 @@ msgid ""
 "A map to show data from your cases or forms. You choose the property to map."
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:323 corehq/apps/userreports/views.py:253
-#: corehq/apps/userreports/views.py:427
+#: corehq/apps/userreports/v1/views.py:323
+#: corehq/apps/userreports/views.py:253 corehq/apps/userreports/views.py:427
 msgid "Create Report"
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:385 corehq/apps/userreports/views.py:512
+#: corehq/apps/userreports/v1/views.py:385
+#: corehq/apps/userreports/views.py:512
 msgid "Configure Report"
 msgstr ""
 
@@ -29158,18 +29167,21 @@ msgstr ""
 msgid "Chart Report: {}"
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:447 corehq/apps/userreports/views.py:662
+#: corehq/apps/userreports/v1/views.py:447
+#: corehq/apps/userreports/views.py:662
 msgid ""
 "It looks like this report was edited by hand and is no longer editable in "
 "report builder."
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:451 corehq/apps/userreports/views.py:666
+#: corehq/apps/userreports/v1/views.py:451
+#: corehq/apps/userreports/views.py:666
 msgid ""
 "You can edit the report manually using the <a href=\"{}\">advanced UI</a>."
 msgstr ""
 
-#: corehq/apps/userreports/v1/views.py:456 corehq/apps/userreports/views.py:671
+#: corehq/apps/userreports/v1/views.py:456
+#: corehq/apps/userreports/views.py:671
 msgid ""
 "You can delete and recreate this report using the button below, or report an "
 "issue if you believe you are seeing this page in error."
@@ -30676,10 +30688,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/web_users.html:316
 #: corehq/apps/users/templates/users/web_users.html:318
 #: corehq/apps/users/templates/users/web_users.html:492
-#, fuzzy
-#| msgid "Indicator navigation"
 msgid "Edit Integration"
-msgstr "संकेतक नेवीगेशन"
+msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:319
 msgid "Manage integration with other systems."
@@ -32980,7 +32990,8 @@ msgstr ""
 
 #: custom/apps/crs_reports/reports.py:234
 #: custom/care_pathways/reports/__init__.py:85
-#: custom/succeed/reports/__init__.py:295 custom/up_nrhm/reports/__init__.py:14
+#: custom/succeed/reports/__init__.py:295
+#: custom/up_nrhm/reports/__init__.py:14
 msgid "Custom Reports"
 msgstr ""
 
@@ -39228,6 +39239,15 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
+
+#~ msgid "Download Organization Structure Status"
+#~ msgstr "Diagnóstico de Casos"
+
+#~ msgid "Preparing organization structure download."
+#~ msgstr "Diagnóstico de Casos"
+
+#~ msgid "Go back to organization structure"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Manage Case"
 #~ msgstr "Diagnóstico de Casos"

@@ -34,8 +34,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-10 14:04+0000\n"
-"PO-Revision-Date: 2017-10-03 20:16+0000\n"
+"POT-Creation-Date: 2017-10-10 19:04+0000\n"
+"PO-Revision-Date: 2017-10-10 19:00+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
@@ -2381,18 +2381,7 @@ msgstr ""
 "%(month_name)s."
 
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:74
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "        You have selected to automatically pay this invoice using a "
-#| "credit card\n"
-#| "        with the last four digits %(last_4)s. Your credit card will "
-#| "automatically\n"
-#| "        be charged on the 15th day of this month. You can alter this\n"
-#| "        setting by logging into your project space on CommCareHQ and "
-#| "navigating to\n"
-#| "        <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
-#| "    "
+#, python-format
 msgid ""
 "\n"
 "        You have selected to automatically pay this invoice using a credit "
@@ -2405,12 +2394,6 @@ msgid ""
 "        <a href=\"%(statements_url)s\">Billing Statements</a>.\n"
 "    "
 msgstr ""
-"\n"
-"Vous avez choisi de payer automatiquement cette facture par carte de crédit\n"
-"avec les quatre derniers numéros %(last_4)s. Votre carte de crédit sera "
-"automatiquement débité le 15 de ce mois. Vous pouviez modifier cette \n"
-"sélection en vous connectant à votre espace de projet sur CommCareHQ et en "
-"naviguant vers <a href=\"%(statements_url)s\"> le relevé de facturation</a>."
 
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:83
 #, python-format
@@ -2463,17 +2446,7 @@ msgstr ""
 "%(month_name)s.\n"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:15
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "    You have selected to automatically pay this invoice using a credit "
-#| "card\n"
-#| "    with the last four digits %(last_4)s. Your credit card will "
-#| "automatically\n"
-#| "    be charged on the 15th day of this month. You can alter this\n"
-#| "    setting by logging into your project space on CommCareHQ and "
-#| "navigating to\n"
-#| "    Billing Statements.\n"
+#, python-format
 msgid ""
 "\n"
 "    You have selected to automatically pay this invoice using a credit card\n"
@@ -2484,13 +2457,6 @@ msgid ""
 "to\n"
 "    Billing Statements.\n"
 msgstr ""
-"\n"
-"Vous avez choisi de payer automatiquement cette facture par carte de crédit\n"
-"avec les quatre derniers chiffres %(last_4)s. Votre carte de crédit sera "
-"automatiquement\n"
-"débité le 15 de ce mois. Vous pouvez modifier cette sélection en vous "
-"connectant à votre espace de projet sur CommCareHQ et en naviguant vers le "
-"relevé de facturation.\n"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:22
 #, python-format
@@ -3795,7 +3761,8 @@ msgstr "Formulaire"
 #: corehq/apps/domain/templates/domain/create_snapshot.html:43
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:24
 #: corehq/apps/hqmedia/templates/hqmedia/references.html:62
-#: corehq/apps/hqwebapp/doc_info.py:88 corehq/apps/reports/filters/forms.py:109
+#: corehq/apps/hqwebapp/doc_info.py:88
+#: corehq/apps/reports/filters/forms.py:109
 #: corehq/apps/reports/filters/forms.py:548
 #: corehq/apps/reports/filters/select.py:98
 #: corehq/apps/reports/standard/deployments.py:69
@@ -4036,19 +4003,12 @@ msgid "Untitled Form"
 msgstr "Formulaire sans Titre"
 
 #: corehq/apps/app_manager/models.py:2698
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                Choose a name for this gateway below and click Finish.\n"
-#| "                "
 msgid ""
 "\n"
 "                Cannot move an advanced form with actions into a basic "
 "menu.\n"
 "            "
 msgstr ""
-"\n"
-"Choisissez un nom pour la passerelle ci-dessous et cliquez sur Terminer."
 
 #: corehq/apps/app_manager/models.py:2943
 #: corehq/apps/data_interfaces/models.py:1163
@@ -4466,7 +4426,8 @@ msgstr ""
 "Activer automatiquement une synchronisation bilatérale selon un horaire "
 "régulier"
 
-#: corehq/apps/app_manager/static_strings.py:46 corehq/apps/domain/views.py:368
+#: corehq/apps/app_manager/static_strings.py:46
+#: corehq/apps/domain/views.py:368
 #: corehq/apps/locations/templates/locations/manage/location.html:139
 #: corehq/apps/users/forms.py:294
 #: corehq/apps/users/templates/users/edit_commcare_user.html:32
@@ -8168,8 +8129,8 @@ msgstr "Abréviation de formulaires"
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:95
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:163
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_visit_scheduler.html:182
-#: corehq/apps/data_interfaces/forms.py:492 corehq/apps/reminders/forms.py:1410
-#: corehq/apps/reminders/forms.py:1420
+#: corehq/apps/data_interfaces/forms.py:492
+#: corehq/apps/reminders/forms.py:1410 corehq/apps/reminders/forms.py:1420
 msgid "This field is required"
 msgstr "Ce champ est obligatoire"
 
@@ -10664,7 +10625,8 @@ msgstr ""
 msgid "Field name \"{}\" is reserved"
 msgstr "Le nom de champ \"{}\" est réservé"
 
-#: corehq/apps/case_importer/util.py:430 corehq/apps/case_importer/views.py:222
+#: corehq/apps/case_importer/util.py:430
+#: corehq/apps/case_importer/views.py:222
 msgid "Sorry, your session has expired. Please start over and try again."
 msgstr ""
 "Désolé, votre session est expirée. Veuillez redémarrer et essayer à nouveau."
@@ -10876,7 +10838,7 @@ msgid "Sorry, this response is required!"
 msgstr "Désolé, cette réponse est exigée!"
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html:44
-#: corehq/apps/cloudcare/templates/formplayer/case_list.html:193
+#: corehq/apps/cloudcare/templates/formplayer/case_list.html:195
 msgid "List is empty."
 msgstr "La liste est vide."
 
@@ -13836,16 +13798,16 @@ msgstr "Connexion"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:57
 #: corehq/apps/reports/standard/ivr.py:77
-#: corehq/apps/reports/standard/sms.py:147 corehq/apps/smsbillables/forms.py:45
-#: custom/fri/reports/reports.py:231
+#: corehq/apps/reports/standard/sms.py:147
+#: corehq/apps/smsbillables/forms.py:45 custom/fri/reports/reports.py:231
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:135
 msgid "Incoming"
 msgstr "Entrant"
 
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:60
 #: corehq/apps/reports/standard/ivr.py:78
-#: corehq/apps/reports/standard/sms.py:148 corehq/apps/smsbillables/forms.py:44
-#: custom/fri/reports/reports.py:232
+#: corehq/apps/reports/standard/sms.py:148
+#: corehq/apps/smsbillables/forms.py:44 custom/fri/reports/reports.py:232
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:136
 msgid "Outgoing"
 msgstr "Sortant"
@@ -30423,7 +30385,8 @@ msgstr "Recontacter"
 
 #: corehq/apps/sms/filters.py:33 corehq/apps/sms/filters.py:51
 #: corehq/apps/sms/models.py:828 corehq/apps/sms/models.py:1323
-#: custom/apps/crs_reports/reports.py:72 custom/icds_reports/mpr_sqldata.py:560
+#: custom/apps/crs_reports/reports.py:72
+#: custom/icds_reports/mpr_sqldata.py:560
 #: custom/icds_reports/mpr_sqldata.py:956
 #: custom/succeed/reports/patient_Info.py:178
 msgid "Other"
@@ -32067,36 +32030,20 @@ msgid "Show usage"
 msgstr "Afficher l'usage"
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html:56
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            <strong>Note:</strong> This subscription will "
-#| "not be invoiced.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    <strong>Please Note:</strong> This feature flag is "
 "available on this server environment, but not on others.\n"
 "                    "
 msgstr ""
-"\n"
-"<strong>Notice:<strong> Cette suscription ne sera pas facturée."
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html:62
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            <strong>Note:</strong> This subscription will "
-#| "not be invoiced.\n"
-#| "                        "
 msgid ""
 "\n"
 "                    <strong>CAUTION:</strong> This feature flag is not "
 "available on the current server environment.\n"
 "                    "
 msgstr ""
-"\n"
-"<strong>Notice:<strong> Cette suscription ne sera pas facturée."
 
 #: corehq/apps/toggle_ui/templates/toggle/edit_flag.html:72
 msgid "Enabled toggle items"
@@ -32692,6 +32639,8 @@ msgid ""
 "Report export is limited to {number} rows. Please filter the data in your "
 "report to {number} or fewer rows before exporting"
 msgstr ""
+"L'exportation de rapport est limitée à {number} de lignes. Veuillez filtrer "
+"les données dans votre rapport à {number} ou moins de lignes avant d'exporter"
 
 #: corehq/apps/userreports/sql/adapter.py:87
 msgid ""
@@ -32882,7 +32831,8 @@ msgid "Import Report"
 msgstr "Importer rapport"
 
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html:15
-#: corehq/apps/userreports/v1/views.py:172 corehq/apps/userreports/views.py:248
+#: corehq/apps/userreports/v1/views.py:172
+#: corehq/apps/userreports/views.py:248
 msgid "Edit Report"
 msgstr "Editer rapport"
 
@@ -32947,8 +32897,8 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/paywall/activating_subscription.html:6
 #: corehq/apps/userreports/templates/userreports/paywall/pricing.html:6
-#: corehq/apps/userreports/v1/views.py:190 corehq/apps/userreports/views.py:280
-#: corehq/apps/userreports/views.py:363
+#: corehq/apps/userreports/v1/views.py:190
+#: corehq/apps/userreports/views.py:280 corehq/apps/userreports/views.py:363
 msgid "Report Builder"
 msgstr "Éditeur de Rapports"
 
@@ -33462,11 +33412,13 @@ msgstr ""
 "dessus), sauf que les valeurs doivent être un filtre valide, et elles "
 "peuvent être utilisées partout où les filtres sont utilisés ci-dessus."
 
-#: corehq/apps/userreports/v1/views.py:116 corehq/apps/userreports/views.py:192
+#: corehq/apps/userreports/v1/views.py:116
+#: corehq/apps/userreports/views.py:192
 msgid "Reports Home"
 msgstr "Page d'acceuil des rapports"
 
-#: corehq/apps/userreports/v1/views.py:163 corehq/apps/userreports/views.py:239
+#: corehq/apps/userreports/v1/views.py:163
+#: corehq/apps/userreports/views.py:239
 msgid "Report \"{}\" saved!"
 msgstr "Rapport \"{}\" enregistré!"
 
@@ -33475,7 +33427,8 @@ msgid "Select Report Type"
 msgstr "Sélectionnez le type de rapport"
 
 #: corehq/apps/userreports/v1/views.py:221
-#: corehq/apps/userreports/v1/views.py:334 corehq/apps/userreports/views.py:435
+#: corehq/apps/userreports/v1/views.py:334
+#: corehq/apps/userreports/views.py:435
 msgid "Create New Report"
 msgstr "Créez un Nouveau Rapport"
 
@@ -33531,12 +33484,13 @@ msgstr ""
 "Une carte affichant les données de vos dossiers ou de vos formulaires. Vous "
 "choisissez la propriété à cartographier."
 
-#: corehq/apps/userreports/v1/views.py:323 corehq/apps/userreports/views.py:253
-#: corehq/apps/userreports/views.py:427
+#: corehq/apps/userreports/v1/views.py:323
+#: corehq/apps/userreports/views.py:253 corehq/apps/userreports/views.py:427
 msgid "Create Report"
 msgstr "Créer un rapport"
 
-#: corehq/apps/userreports/v1/views.py:385 corehq/apps/userreports/views.py:512
+#: corehq/apps/userreports/v1/views.py:385
+#: corehq/apps/userreports/views.py:512
 msgid "Configure Report"
 msgstr "Configurer rapport"
 
@@ -33544,7 +33498,8 @@ msgstr "Configurer rapport"
 msgid "Chart Report: {}"
 msgstr "Rapport graphique: {}"
 
-#: corehq/apps/userreports/v1/views.py:447 corehq/apps/userreports/views.py:662
+#: corehq/apps/userreports/v1/views.py:447
+#: corehq/apps/userreports/views.py:662
 msgid ""
 "It looks like this report was edited by hand and is no longer editable in "
 "report builder."
@@ -33552,14 +33507,16 @@ msgstr ""
 "Il semble que ce rapport à été modifié manuellement et n'est plus modifiable "
 "dans l'éditeur de rapports. "
 
-#: corehq/apps/userreports/v1/views.py:451 corehq/apps/userreports/views.py:666
+#: corehq/apps/userreports/v1/views.py:451
+#: corehq/apps/userreports/views.py:666
 msgid ""
 "You can edit the report manually using the <a href=\"{}\">advanced UI</a>."
 msgstr ""
 "Vous pouvez éditer un rapport manuellement en utilisant le <a href=\"{}\">UI "
 "avancé."
 
-#: corehq/apps/userreports/v1/views.py:456 corehq/apps/userreports/views.py:671
+#: corehq/apps/userreports/v1/views.py:456
+#: corehq/apps/userreports/views.py:671
 msgid ""
 "You can delete and recreate this report using the button below, or report an "
 "issue if you believe you are seeing this page in error."
@@ -35348,10 +35305,8 @@ msgstr ""
 #: corehq/apps/users/templates/users/web_users.html:316
 #: corehq/apps/users/templates/users/web_users.html:318
 #: corehq/apps/users/templates/users/web_users.html:492
-#, fuzzy
-#| msgid "Integration"
 msgid "Edit Integration"
-msgstr "Intégration "
+msgstr ""
 
 #: corehq/apps/users/templates/users/web_users.html:319
 msgid "Manage integration with other systems."
@@ -37884,7 +37839,8 @@ msgstr "Formulaire mère HBNC"
 
 #: custom/apps/crs_reports/reports.py:234
 #: custom/care_pathways/reports/__init__.py:85
-#: custom/succeed/reports/__init__.py:295 custom/up_nrhm/reports/__init__.py:14
+#: custom/succeed/reports/__init__.py:295
+#: custom/up_nrhm/reports/__init__.py:14
 msgid "Custom Reports"
 msgstr "Rapports Personnalisés"
 
@@ -39470,10 +39426,8 @@ msgstr "Adhésion historique"
 
 #: custom/enikshay/reports/historical_adherence.py:339
 #: custom/enikshay/reports/historical_adherence.py:340
-#, fuzzy
-#| msgid "Historical Adherence"
 msgid "Historical Adherence TEST"
-msgstr "Adhésion historique"
+msgstr ""
 
 #: custom/enikshay/reports/repeaters.py:80
 msgid "Successful Records"
@@ -44453,15 +44407,14 @@ msgstr ""
 "Si vous avez des problèmes pour remplir le formulaire, veuillez signaler ce "
 "problème."
 
-#~ msgid "'{}' can't have '{}' as 'Expand From', valid options are '{}'"
-#~ msgstr ""
-#~ "'{}' ne peut pas avoir '{}' comme 'Expand From', les options valides sont "
-#~ "'{}'"
+#~ msgid "Download Organization Structure Status"
+#~ msgstr "Diagnóstico de Casos"
 
-#~ msgid "'{}' can't have '{}' as 'Expand To', valid options are '{}'"
-#~ msgstr ""
-#~ "'{}' ne peut pas avoir '{}' comme 'Expand To', les options valides sont "
-#~ "'{}'"
+#~ msgid "Preparing organization structure download."
+#~ msgstr "Diagnóstico de Casos"
+
+#~ msgid "Go back to organization structure"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Manage Case"
 #~ msgstr "Diagnóstico de Casos"

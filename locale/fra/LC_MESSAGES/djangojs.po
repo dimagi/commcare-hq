@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-10 14:05+0000\n"
+"POT-Creation-Date: 2017-10-10 19:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -40,10 +40,8 @@ msgid "Add"
 msgstr "Ajouter"
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:372
-#, fuzzy
-#| msgid "Password changed successfully"
 msgid "Moved successfully."
-msgstr "Le mot de passe a été modifié avec succès"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:400
 msgid "You have unsaved changes"
