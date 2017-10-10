@@ -1,8 +1,5 @@
 from casexml.apps.case.util import get_datetime_case_property_changed
-from custom.enikshay.const import (
-    ENROLLED_IN_PRIVATE,
-    REAL_DATASET_PROPERTY_VALUE,
-)
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
 
 class PrivateNikshayNotifiedDateSetter(object):
@@ -37,9 +34,6 @@ class PrivateNikshayNotifiedDateSetter(object):
             return False
 
         if self.episode.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
-            return False
-
-        if self.person.get_case_property('dataset') != REAL_DATASET_PROPERTY_VALUE:
             return False
 
         return True
