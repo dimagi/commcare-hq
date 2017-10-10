@@ -86,3 +86,7 @@ class InvalidOwnerIdError(OwnershipCleanlinessError):
 
 class SyncLogCachingError(Exception):
     pass
+
+
+class CouldNotRetrieveSyncLogIds(Exception):
+    pass
