@@ -58,7 +58,7 @@
                     }
                 })
                 .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
+                    user.action_error = gettext("Issue communicating with server. Try again.");
                 });
         },
         deactivateUser: function (user, djangoRMI) {
@@ -76,7 +76,7 @@
                     }
                 })
                 .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
+                    user.action_error = gettext("Issue communicating with server. Try again.");
                 });
         }
     });
@@ -87,18 +87,18 @@
         return {
             restrict: 'A',
             template: '<tr>'
-                        + '<th class="col-xs-3">{% trans "Username"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "First Name"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "Last Name"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "Status"|escapejs %}</th>'
+                        + '<th class="col-xs-3">' + gettext("Username") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("First Name") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("Last Name") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("Status") + '</th>'
                     + '</tr>'
         }
     });
     mobileWorkerApp.constant('paginationLimits', [
-        [10, '{% trans "Show 10 Mobile Workers"|escapejs %}'],
-        [25, '{% trans "Show 25 Mobile Workers"|escapejs %}'],
-        [50, '{% trans "Show 50 Mobile Workers"|escapejs %}'],
-        [100, '{% trans "Show 100 Mobile Workers"|escapejs %}']
+        [10, gettext('Show 10 Mobile Workers')],
+        [25, gettext('Show 25 Mobile Workers')],
+        [50, gettext('Show 50 Mobile Workers')],
+        [100, gettext('Show 100 Mobile Workers')]
     ]);
     {% endangularjs %}
 }(window.angular));
