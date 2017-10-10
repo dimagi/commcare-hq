@@ -1,6 +1,7 @@
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequest
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
@@ -26,7 +27,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
-from django.http import HttpResponse
 
 from .models import SerialIdBucket
 from .utils import (
@@ -104,7 +104,8 @@ def claim(request, domain):
     Allows a user to claim a case that they don't own.
     """
     as_user = request.POST.get('commcare_login_as', None)
-    restore_user = get_restore_user(domain, request.couch_user, as_user)
+    as_user_obj = CouchUser.get_by_username(as_user) if as_user else None
+    restore_user = get_restore_user(domain, request.couch_user, as_user_obj)
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
@@ -168,26 +169,28 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         )
         return HttpResponse(response, content_type="text/xml; charset=utf-8", status=412), None
 
-    # not a view just a view util
-    is_permitted, message = is_permitted_to_restore(
-        domain,
-        couch_user,
-        as_user,
-    )
-    if not is_permitted:
-        return HttpResponse(message, status=401), None
-
     is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
-    couch_restore_user = couch_user
-    if not is_demo_restore and as_user is not None:
-        couch_restore_user = CouchUser.get_by_username(as_user)
-    update_device_id(couch_restore_user, device_id)
-
     if is_demo_restore:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 
-    restore_user = get_restore_user(domain, couch_user, as_user)
+    uses_login_as = bool(as_user)
+    as_user_obj = CouchUser.get_by_username(as_user) if uses_login_as else None
+    if uses_login_as and not as_user_obj:
+        msg = _(u'Invalid restore as user {}').format(as_user)
+        return HttpResponse(msg, status=401), None
+    is_permitted, message = is_permitted_to_restore(
+        domain,
+        couch_user,
+        as_user_obj,
+    )
+    if not is_permitted:
+        return HttpResponse(message, status=401), None
+
+    couch_restore_user = as_user_obj if uses_login_as else couch_user
+    update_device_id(couch_restore_user, device_id)
+
+    restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
         return HttpResponse('Could not find user', status=404), None
 
