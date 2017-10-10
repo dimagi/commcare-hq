@@ -26,32 +26,41 @@ module.exports = function(grunt) {
         'case_importer',
     ];
 
+    var customApps = [
+        'icds_reports',
+    ];
+
     var mochaConfig = {},
         watchConfig = {};
 
-    apps.forEach(function(app) {
-        var parts = app.split('#');
-        var appName = parts[0];
-        var config = parts[1];
+    var addToConfig = function(path) {
+        return function (app) {
+            var parts = app.split('#');
+            var appName = parts[0];
+            var config = parts[1];
 
-        mochaConfig[app] = {
-            options: {
-                urls: [BASE_URL + appName + '/' + (config ? config : '')],
-                run: true,
-                log: true,
-                logErrors: true,
-                reporter: 'Spec'
-            }
+            mochaConfig[app] = {
+                options: {
+                    urls: [BASE_URL + appName + '/' + (config ? config : '')],
+                    run: true,
+                    log: true,
+                    logErrors: true,
+                    reporter: 'Spec',
+                },
+            };
+            watchConfig[app] = {
+                files: [
+                    path + appName + '/static/' + appName + '/js/**/*.js',
+                    path + appName + '/static/' + appName + '/ko/**/*.js',
+                    path + appName + '/static/' + appName + '/spec/**/*.js',
+                ],
+                tasks: ['mocha:' + app],
+            };
         };
-        watchConfig[app] = {
-            files: [
-                'corehq/apps/' + appName + '/static/' + appName + '/js/**/*.js',
-                'corehq/apps/' + appName + '/static/' + appName + '/ko/**/*.js',
-                'corehq/apps/' + appName + '/static/' + appName + '/spec/**/*.js',
-            ],
-            tasks: ['mocha:' + app]
-        };
-    });
+    };
+
+    apps.forEach(addToConfig('corehq/apps'));
+    customApps.forEach(addToConfig('custom/apps'));
 
     grunt.initConfig({
         mocha: mochaConfig,

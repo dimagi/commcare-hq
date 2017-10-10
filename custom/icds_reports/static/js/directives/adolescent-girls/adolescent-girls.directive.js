@@ -9,6 +9,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     } else {
         storageService.setKey('search', $location.search());
     }
+
+    vm.selectedLocations = [];
+
     vm.filtersData = $location.search();
     vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;
@@ -38,11 +41,13 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         if (newValue === oldValue || !newValue || newValue.length === 0) {
             return;
         }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
+
+        var isAWCSelected = (newValue.length === 6);
+        if (isAWCSelected) {
+            var supervisor = newValue[3];
+            $location.search('location_id', supervisor.location_id);
             $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
+            $location.search('location_name', supervisor.name);
             storageService.setKey('message', true);
             setTimeout(function() {
                 storageService.setKey('message', false);
@@ -103,7 +108,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         });
     };
 
-    var init = function() {
+    vm.init = function() {
         var locationId = vm.filtersData.location_id || userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
@@ -117,7 +122,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
