@@ -31,6 +31,7 @@ CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
+CASE_TYPE_INVESTIGATION = "investigation"
 
 
 def get_all_parents_of_case(domain, case_id):
