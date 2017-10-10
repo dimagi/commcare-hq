@@ -90,3 +90,7 @@ class SyncLogCachingError(Exception):
 
 class CouldNotRetrieveSyncLogIds(Exception):
     pass
+
+
+class CouldNotPruneSyncLogs(Exception):
+    pass
