@@ -1113,26 +1113,25 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
 
 
 def get_test_summary(properties):
-    if properties['result'] == 'tb_detected':
+    detected = None
+    if properties.get('result') == 'tb_detected':
         detected = 'TB Detected'
-    elif properties['result'] == 'tb_not_detected':
+    elif properties.get('result') == 'tb_not_detected':
         detected = 'TB Not Detected'
-    else:
-        detected = None
 
-    drug_resistance_output = ''
-    if properties['drug_resistance_list']:
-        drug_resistance_output = " ".join([DRUG_MAP[id]["drug_name"]
-                                           for id in properties['drug_resistance_list'].split(' ')])
-    drug_sensitive_output = ''
-    if properties['drug_sensitive_list']:
-        drug_sensitive_output = " ".join([DRUG_MAP[id]["drug_name"]
-                                          for id in properties['drug_sensitive_list'].split(' ')])
-    return '\n'.join(filter(None, [
-        detected,
-        'Resistant: {}'.format(drug_resistance_output) if drug_resistance_output else None,
-        'Sensitive: {}'.format(drug_sensitive_output) if drug_sensitive_output else None,
-    ]))
+    drug_resistance_list = properties['drug_resistance_list'].split(' ') \
+        if properties.get('drug_resistance_list') else []
+    drug_sensitive_list = properties['drug_sensitive_list'].split(' ') \
+        if properties.get('drug_sensitive_list') else []
+
+    drug_output = []
+    for drug_id in sorted(DRUG_MAP, key=lambda d: DRUG_MAP[d]["sort_order"]):
+        if drug_id in drug_resistance_list:
+            drug_output.append("{}: Res".format(DRUG_MAP[drug_id]['drug_name']))
+        elif drug_id in drug_sensitive_list:
+            drug_output.append("{}: Sens".format(DRUG_MAP[drug_id]['drug_name']))
+
+    return '\n'.join(filter(None, [detected] + drug_output))
 
 
 def get_cbnaat_resistance(column_mapping, row):
