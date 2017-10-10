@@ -28,6 +28,7 @@
 <script>
 (function (angular, undefined) {
     'use strict';
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
     var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
     mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -38,10 +39,10 @@
     mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
-    mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
-    mobileWorkerApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
+    mobileWorkerApp.constant('customFields', initial_page_data('custom_fields'));
+    mobileWorkerApp.constant('paginationLimitCookieName', initial_page_data('pagination_limit_cookie_name'));
     mobileWorkerApp.constant('paginationCustomData', {
-        customFormFieldNames: {{ custom_field_names|JSON }},
+        customFormFieldNames: initial_page_data('custom_field_names'),
         showDeactivatedUsers: false,
         activateUser: function (user, djangoRMI) {
             $('#activate_' + user.user_id).modal('hide');
@@ -80,8 +81,8 @@
                 });
         }
     });
-    mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
-    mobileWorkerApp.constant('location_url', '{{ location_url }}');
+    mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
+    mobileWorkerApp.constant('location_url', initial_page_data('location_url'));
     mobileWorkerApp.directive('workertableHeader', function () {
         return {
             restrict: 'A',
@@ -104,6 +105,12 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'custom_fields' custom_fields %}
+    {% initial_page_data 'custom_field_names' custom_field_names %}
+    {% initial_page_data 'location_url' location_url %}
+    {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
+    {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+
     <div ng-app="mobileWorkerApp">
         <div ng-controller="MobileWorkerCreationController">
             <div class="row">
