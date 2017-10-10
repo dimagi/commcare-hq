@@ -1555,9 +1555,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
                 follow_up, properties['date_tested'], treatment_initiation_date
             )
-
-            properties["result_summary_label"] = get_test_summary(properties)
-
+            properties["result_summary_display"] = get_test_summary(properties)
             properties_list.append(properties)
 
     # Mumbai
@@ -1584,7 +1582,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                         "drug_sensitive_list": '',
                         "result_recorded": "yes",
                     }
-                    properties["result_summary_label"] = result_label(properties['result'])
+                    properties["result_summary_display"] = get_test_summary(properties)
                     properties_list.append(properties)
             month += 1
 
