@@ -141,13 +141,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
     if provider_uuid:
         encounter_provider = {'provider': provider_uuid}
         uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
-        response = requests.post(uri, json=encounter_provider)
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug('Request: ', requests.get_url(uri), encounter_provider)
-            logger.debug('Response: ', response.json())
-            raise
+        requests.post_with_raise(uri, json=encounter_provider)
 
     observation_uuids = []
     for concept_uuid, values in values_for_concept.items():
