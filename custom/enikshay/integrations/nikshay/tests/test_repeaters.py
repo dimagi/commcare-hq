@@ -5,7 +5,7 @@ import os
 
 from mock import patch
 from collections import namedtuple
-from datetime import datetime
+from datetime import date, datetime
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -1307,15 +1307,18 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
                 url=WSDL_URL,
                 operation='InsertHFIDPatient_UATBC')
         )
-
-        payload_generator.handle_success(
-            MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
-            self.cases[self.episode_id],
-            repeat_record,
-        )
+        mock_date = date(2016, 9, 8)
+        with patch('custom.enikshay.integrations.nikshay.repeater_generator.datetime') as mock_datetime:
+            mock_datetime.date.today.return_value = mock_date
+            payload_generator.handle_success(
+                MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
+                self.cases[self.episode_id],
+                repeat_record,
+            )
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_registered', 'true')
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', '')
+        self._assert_case_property_equal(updated_episode_case, 'date_private_nikshay_notification', str(mock_date))
         nikshay_id = '-'.join([self.pcp.metadata['nikshay_code'], nikshay_response_id])
         self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
         self.assertEqual(updated_episode_case.external_id, nikshay_id)
