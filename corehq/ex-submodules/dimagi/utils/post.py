@@ -37,7 +37,11 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
 
 
 def get_SOAP_client(url):
-    transport = Transport(cache=InMemoryCache())
+    # http://docs.python-zeep.org/en/master/transport.html#ssl-verification
+    # Disable SSL cert verification meanwhile a better way is found
+    session = requests.Session()
+    session.verify = False
+    transport = Transport(cache=InMemoryCache(), session=session)
     return Client(url, transport=transport)
 
 
