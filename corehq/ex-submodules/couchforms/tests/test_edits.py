@@ -368,6 +368,20 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform.is_normal)
         self.assertNotEqual(form_id, xform.form_id)  # form should have a different ID
 
+    def test_copy_operations(self):
+        original_xml = self.get_xml('original')
+        edit_xml = self.get_xml('edit')
+
+        xform = submit_form_locally(original_xml, self.domain).xform
+        xform.archive(user_id='user1')
+        xform.unarchive(user_id='user2')
+
+        xform = submit_form_locally(edit_xml, self.domain).xform
+        self.assertEqual(3, len(xform.history))
+        self.assertEqual('archive', xform.history[0].operation)
+        self.assertEqual('unarchive', xform.history[1].operation)
+        self.assertEqual('edit', xform.history[2].operation)
+
 
 @use_sql_backend
 class EditFormTestSQL(EditFormTest):
