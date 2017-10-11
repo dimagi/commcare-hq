@@ -1108,7 +1108,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_tetanus_complete'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 1 by delivery',
+                'Percent women had at least 1 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc1_received_at_delivery'),
@@ -1117,7 +1117,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc1_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 2 by delivery',
+                'Percent women had at least 2 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc2_received_at_delivery'),
@@ -1126,7 +1126,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc2_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 3 by delivery',
+                'Percent women had at least 3 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc3_received_at_delivery'),
@@ -1135,7 +1135,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc3_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 4 by delivery',
+                'Percent women had at least 4 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc4_received_at_delivery'),
@@ -1944,28 +1944,28 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 1 by delivery',
+                                'header': 'Percent women had at least 1 ANC visit by delivery',
                                 'slug': 'anc_1',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 2 by delivery',
+                                'header': 'Percent women had at least 2 ANC visit by delivery',
                                 'slug': 'anc_2',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 3 by delivery',
+                                'header': 'Percent women had at least 3 ANC visit by delivery',
                                 'slug': 'anc_3',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 4 by delivery',
+                                'header': 'Percent women had at least 4 ANC visit by delivery',
                                 'slug': 'anc_4',
                                 'average': [],
                                 'format': 'percent'

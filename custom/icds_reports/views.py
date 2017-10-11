@@ -270,16 +270,11 @@ class ProgramSummaryView(View):
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
-        if step == 'system_usage' or step == 'demographics':
-            config = {
-                'aggregation_level': 1
-            }
-        else:
-            config = {
-                'month': tuple(current_month.timetuple())[:3],
-                'prev_month': tuple(prev_month.timetuple())[:3],
-                'aggregation_level': 1
-            }
+        config = {
+            'month': tuple(current_month.timetuple())[:3],
+            'prev_month': tuple(prev_month.timetuple())[:3],
+            'aggregation_level': 1
+        }
 
         location = request.GET.get('location_id', '')
         get_location_filter(location, domain, config)
