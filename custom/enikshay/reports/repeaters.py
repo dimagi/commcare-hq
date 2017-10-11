@@ -199,14 +199,16 @@ class ENikshayVoucherReport(GenericTabularReport):
 
     @memoized
     def _search_results(self, paged=True):
-        location_ids = self._get_voucher_location_ids()
-
         cs = (
             CaseSearchES()
             .domain(self.domain)
             .case_type(CASE_TYPE_VOUCHER)
-            .case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
         )
+
+        location_ids = self._get_voucher_location_ids()
+        if location_ids:
+            cs = cs.case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
+
         if self.voucher_state:
             cs = cs.case_property_query('state', self.voucher_state)
 
