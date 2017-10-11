@@ -17,10 +17,8 @@ class Command(BaseEnikshayCaseMigration):
     def get_case_property_updates(test, domain):
         if (
             test.get_case_property(DATAMIGRATION_CASE_PROPERTY) == 'yes'
-            or not (
-                test.get_case_property('result_recorded') == 'yes'
-                and not test.get_case_property('test_type_value')
-            )
+            or test.get_case_property('result_recorded') != 'yes'
+            or test.get_case_property('test_type_value')
         ):
             return {}
 
