@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
@@ -21,8 +21,7 @@ class SubmissionTest(TestCase):
     def setUp(self):
         super(SubmissionTest, self).setUp()
         self.domain = create_domain("submit")
-        self.couch_user = WebUser.create(None, "test", "foobar")
-        self.couch_user.add_domain_membership(self.domain.name, is_admin=True)
+        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar")
         self.couch_user.save()
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
