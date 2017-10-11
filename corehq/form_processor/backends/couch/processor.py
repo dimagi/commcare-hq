@@ -99,7 +99,8 @@ class FormProcessorCouch(object):
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
 
-        operation = XFormOperation(user='unknown', date=new_xform.edited_on, operation='edit')
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        operation = XFormOperation(user=user_id, date=new_xform.edited_on, operation='edit')
         new_xform.history.append(operation)
         return deprecated, new_xform
 

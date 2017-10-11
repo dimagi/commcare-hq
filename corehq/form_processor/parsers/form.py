@@ -59,7 +59,7 @@ class LockedFormProcessingResult(FormProcessingResult):
         return MultiLockManager([LockManager(self.submitted_form, self.lock)])
 
 
-def process_xform_xml(domain, instance, attachments=None):
+def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
     Returns a LockManager containing the new XFormInstance(SQL) and its lock,
@@ -71,14 +71,14 @@ def process_xform_xml(domain, instance, attachments=None):
     attachments = attachments or {}
 
     try:
-        return _create_new_xform(domain, instance, attachments=attachments)
+        return _create_new_xform(domain, instance, attachments=attachments, auth_context=auth_context)
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
         return _handle_id_conflict(e.xform, domain)
 
 
-def _create_new_xform(domain, instance_xml, attachments=None):
+def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -104,6 +104,7 @@ def _create_new_xform(domain, instance_xml, attachments=None):
 
     xform = interface.new_xform(form_data)
     xform.domain = domain
+    xform.auth_context = auth_context
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
     attachments = map(

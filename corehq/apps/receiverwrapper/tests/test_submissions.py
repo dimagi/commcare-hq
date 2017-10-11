@@ -39,8 +39,9 @@ class SubmissionTest(TestCase):
 
     def _submit(self, formname, **extra):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
+        url = extra.pop('url', self.url)
         with open(file_path, "rb") as f:
-            return self.client.post(self.url, {
+            return self.client.post(url, {
                 "xml_submission_file": f
             }, **extra)
 
@@ -105,6 +106,14 @@ class SubmissionTest(TestCase):
             form='namespace_in_meta.xml',
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
+
+    def test_submit_deprecated_form(self):
+        self._submit('simple_form.xml')
+        response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
+        xform_id = response['X-CommCareHQ-FormID']
+        form = FormAccessors(self.domain.name).get_form(xform_id)
+        self.assertEqual(1, len(form.history))
+        self.assertEqual(self.couch_user.get_id, form.history[0].user)
 
 
 @use_sql_backend
