@@ -89,6 +89,8 @@ class FormQuestionConcept(FormQuestion):
 class OpenmrsCaseConfig(DocumentSchema):
     id_matchers = SchemaListProperty(IdMatcher)
     person_properties = SchemaDictProperty(ValueSource)
+    person_preferred_name = SchemaDictProperty(ValueSource)
+    person_preferred_address = SchemaDictProperty(ValueSource)
     person_attributes = SchemaDictProperty(ValueSource)
 
 
