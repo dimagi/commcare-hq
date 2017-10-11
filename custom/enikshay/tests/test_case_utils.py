@@ -202,7 +202,7 @@ class TestGetPersonLocations(ENikshayCaseStructureMixin, ENikshayLocationStructu
         self.assertEqual(expected_locations, get_person_locations(person_case)._asdict())
 
         update_case(self.domain, self.episode_id, {
-            "diagnosing_facility_id": person_case.owner_id
+            "treatment_initiating_facility_id": person_case.owner_id
         })
         person_case.owner_id = ARCHIVED_CASE_OWNER_ID
         person_case.save()
