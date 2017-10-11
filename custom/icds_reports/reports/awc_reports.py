@@ -904,6 +904,152 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
     }
 
 
+def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=False):
+    selected_month = datetime(*month)
+    previous_month = datetime(*prev_month)
+
+    def get_data_for_kpi(filters, date):
+        queryset = AggAwcMonthly.objects.filter(
+            month=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            awcs=Sum('num_awcs'),
+            clean_water=Sum('infra_clean_water'),
+            functional_toilet=Sum('infra_functional_toilet'),
+            medicine_kits=Sum('infra_medicine_kits'),
+            infant_weighing_scale=Sum('infra_infant_weighing_scale'),
+            adult_weighing_scale=Sum('infra_adult_weighing_scale')
+        )
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
+
+    def get_infa_value(data, prop):
+        value = (data[0][prop] or None) if data else None
+        if value is not None:
+            if value == 1:
+                return _("Available")
+            else:
+                return _("Not Available")
+        else:
+            return _("Data not Entered")
+
+    kpi_data = get_data_for_kpi(config, selected_month.date())
+    kpi_data_prev_month = get_data_for_kpi(config, previous_month.date())
+
+    return {
+        'kpi': [
+            [
+                {
+                    'label': _('Clean Drinking Water'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'clean_water',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'clean_water',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'clean_water'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('Functional Toilet'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'functional_toilet',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'functional_toilet',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'functional_toilet'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                }
+            ],
+            [
+                {
+                    'label': _('Medicine Kit'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'medicine_kits',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'medicine_kits',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'medicine_kits'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('Weighing Scale: Infants'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'infant_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'infant_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'infant_weighing_scale'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                }
+            ],
+            [
+                {
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'adult_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'adult_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                },
+            ],
+        ]
+    }
+
+
 def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),

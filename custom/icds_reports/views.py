@@ -35,7 +35,8 @@ from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_da
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
 from custom.icds_reports.reports.awc_opened import get_awc_opened_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
-    get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details
+    get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
+    get_awc_report_infrastructure
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_sector_data, \
     get_awcs_covered_data_chart
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
@@ -269,16 +270,11 @@ class ProgramSummaryView(View):
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
-        if step == 'system_usage' or step == 'demographics':
-            config = {
-                'aggregation_level': 1
-            }
-        else:
-            config = {
-                'month': tuple(current_month.timetuple())[:3],
-                'prev_month': tuple(prev_month.timetuple())[:3],
-                'aggregation_level': 1
-            }
+        config = {
+            'month': tuple(current_month.timetuple())[:3],
+            'prev_month': tuple(prev_month.timetuple())[:3],
+            'aggregation_level': 1
+        }
 
         location = request.GET.get('location_id', '')
         get_location_filter(location, domain, config)
@@ -531,6 +527,14 @@ class AwcReportsView(View):
                 domain,
                 config,
                 tuple(month.timetuple())[:3],
+                include_test
+            )
+        elif step == 'awc_infrastructure':
+            data = get_awc_report_infrastructure(
+                domain,
+                config,
+                tuple(month.timetuple())[:3],
+                tuple(prev_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
