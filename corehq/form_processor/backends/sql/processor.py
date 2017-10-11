@@ -63,6 +63,13 @@ class FormProcessorSQL(object):
             ))
 
     @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            op.id = None
+            op.form = to_form
+            to_form.track_create(op)
+
+    @classmethod
     def new_xform(cls, form_data):
         form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
 

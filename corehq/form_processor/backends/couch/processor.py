@@ -45,6 +45,11 @@ class FormProcessorCouch(object):
                     )
 
     @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            to_form.history.append(op)
+
+    @classmethod
     def new_xform(cls, form_data):
         _id = extract_meta_instance_id(form_data) or uuid.uuid4().hex
         assert _id

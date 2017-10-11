@@ -220,6 +220,7 @@ def apply_deprecation(existing_xform, new_xform, interface=None):
 
     interface = interface or FormProcessorInterface(existing_xform.domain)
     interface.copy_attachments(existing_xform, new_xform)
+    interface.copy_form_operations(existing_xform, new_xform)
     new_xform.form_id = existing_xform.form_id
     existing_xform = interface.assign_new_id(existing_xform)
     existing_xform.orig_id = new_xform.form_id
