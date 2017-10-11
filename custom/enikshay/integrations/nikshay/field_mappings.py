@@ -23,6 +23,7 @@ patient_type_choice = {
 treatment_support_designation = {
     'health_worker': '1',
     'tbhv': '2',
+    'asha': '3',
     'asha_or_other_phi_hw': '3',
     'aww': '4',
     'ngo_volunteer': '5',
@@ -67,6 +68,9 @@ episode_site = {
     'lymph_node': 1,
     'pleural_effusion': 2,
     'abdominal': 3,
+    'spine': 6,
+    'brain': 10,  # missing in Nikshay so use other
+    'other': 10,
     'others': 10,
 }
 dcpulmonory = {
