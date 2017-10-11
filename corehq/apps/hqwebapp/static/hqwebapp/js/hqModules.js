@@ -43,7 +43,7 @@ var COMMCAREHQ_MODULES = {};
 /*
  * Transitional version of "define" to handle both RequireJS and non-RequireJS pages.
  * Signature deliberately matches that of "define". On non-RequireJS pages, the dependencies
- * argument is optional, and moduleAccessor gets passed jQuery, knockout, and underscore, in that order.
+ * argument is optional, and the major globals ($, ko, _) are available.
  */
 function hqDefine(path, dependencies, moduleAccessor) {
     if (arguments.length === 2) {
