@@ -229,6 +229,29 @@
                 }
             },
             {
+                "display_name": "case_definition",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "case_definition",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_episode_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "case_definition"
+                    }
+                }
+            },
+            {
                 "display_name": "address",
                 "transform": {},
                 "datatype": "string",
