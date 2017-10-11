@@ -18,7 +18,6 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
-        'DEBUG': settings.DEBUG,
         'env': get_environment_friendly_name(),
     }
 
