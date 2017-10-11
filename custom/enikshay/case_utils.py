@@ -15,7 +15,9 @@ from custom.enikshay.exceptions import (
     ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-    ENikshayException)
+    ENikshayException,
+    EnikshayBadAppState,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
@@ -108,6 +110,9 @@ def get_all_occurrence_cases_from_person(domain, person_case_id):
     all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     occurrence_cases = [case for case in all_cases
                         if case.type == CASE_TYPE_OCCURRENCE]
+    open_occurrence_cases = [case for case in occurrence_cases if not case.closed]
+    if len(open_occurrence_cases) > 1:
+        raise EnikshayBadAppState("Multiple open occurrences found for a person")
     return occurrence_cases
 
 
