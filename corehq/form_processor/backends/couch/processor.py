@@ -15,8 +15,8 @@ from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
-    doc_types, XFormError, SubmissionErrorLog
-)
+    doc_types, XFormError, SubmissionErrorLog,
+    XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
 
@@ -93,6 +93,9 @@ class FormProcessorCouch(object):
         assert not existing_xform.persistent_blobs, "some blobs would be lost"
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+
+        operation = XFormOperation(user='unknown', date=new_xform.edited_on, operation='edit')
+        new_xform.history.append(operation)
         return deprecated, new_xform
 
     @classmethod

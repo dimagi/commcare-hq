@@ -54,6 +54,9 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertEqual("100", xform.form_data['vitals']['height'])
         self.assertEqual("Edited Baby!", xform.form_data['assessment']['categories'])
 
+        self.assertEqual(1, len(xform.history))
+        self.assertEqual('edit', xform.history[0].operation)
+
         deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
 
         self.assertEqual(self.ID, deprecated_xform.orig_id)

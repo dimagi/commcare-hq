@@ -19,7 +19,7 @@ from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
@@ -146,6 +146,12 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
+        operation = XFormOperationSQL(
+            user_id='unknown',
+            date=new_xform.edited_on,
+            operation=XFormOperationSQL.EDIT
+        )
+        new_xform.track_create(operation)
         return existing_xform, new_xform
 
     @classmethod
