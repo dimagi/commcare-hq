@@ -24,7 +24,9 @@
     </fieldset>
 </form>
 
-{% include 'users/partial/manage_phone_numbers.html' %}
+{% if not request|toggle_enabled:"ENIKSHAY" %}
+    {% include 'users/partial/manage_phone_numbers.html' %}
+{% endif %}
 
 {% if update_form %}
 <form id="commtrack_form" class="form form-horizontal" name="" method="post">
