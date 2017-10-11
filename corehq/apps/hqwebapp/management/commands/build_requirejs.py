@@ -59,10 +59,10 @@ class Command(ResourceStaticCommand):
                 with open(os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js"), 'w') as fout:
                     fout.write("define([], function() {});")
 
-            with open(os.path.join(self.root_dir, 'build.js'), 'w') as fout:
+            with open(os.path.join(self.root_dir, 'staticfiles', 'build.js'), 'w') as fout:
                 fout.write("({});".format(json.dumps(config, indent=4)))
 
-        call(["node", "bower_components/r.js/dist/r.js", "-o", "build.js"])
+        call(["node", "bower_components/r.js/dist/r.js", "-o", "staticfiles/build.js"])
         filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'requirejs_config.js')
         resource_versions["hqwebapp/js/requirejs_config.js"] = self.get_hash(filename)
 
