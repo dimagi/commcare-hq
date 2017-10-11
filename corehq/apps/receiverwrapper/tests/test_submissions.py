@@ -63,10 +63,6 @@ class SubmissionTest(TestCase):
         foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
         self.assertTrue(foo['received_on'])
 
-        if not self.use_sql:
-            n_times_saved = int(foo['_rev'].split('-')[0])
-            self.assertEqual(n_times_saved, 1)
-
         for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id']:
             if key in foo:
                 del foo[key]
