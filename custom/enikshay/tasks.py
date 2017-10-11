@@ -61,7 +61,7 @@ cache = get_redis_client()
 
 @periodic_task(
     bind=True,
-    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task(self):
