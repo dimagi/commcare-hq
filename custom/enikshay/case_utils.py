@@ -422,7 +422,8 @@ def _get_private_locations(person_case):
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
             dto=district_location.metadata['nikshay_code'],
-            pcp=pcp_location.metadata['nikshay_code'],
+            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+            pcp=pcp_location.metadata.get('nikshay_code') or None,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
