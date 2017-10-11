@@ -157,17 +157,17 @@ class LocationRestrictedEmwfOptionsMixin(object):
     def custom_locations_search(self):
         """
         When the query is specifically searching for just locations and not any other entity like user, group.
-        For ex: enter "/Bihar/patn" would match child locations under locations named Bihar, having name like
+        For ex: enter "Bihar/patn" would match child locations under locations named Bihar, having name like
         patn.
         """
-        return self.q.startswith('/')
+        return '/' in self.q
 
     @staticmethod
     def _get_location_specific_custom_filters(query):
         query_sections = query.split("/")
-        parent_name = query_sections[1]
+        parent_name = query_sections[0]
         try:
-            search_query = query_sections[2]
+            search_query = query_sections[1]
         except IndexError:
             search_query = ""
         return parent_name, search_query
