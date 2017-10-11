@@ -665,9 +665,9 @@ class StaticReportConfiguration(JsonObject):
         return mapping
 
     @classmethod
-    def all(cls):
+    def all(cls, ignore_server_environment=False):
         for wrapped, path in StaticReportConfiguration._all():
-            if (wrapped.server_environment and
+            if (not ignore_server_environment and wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 

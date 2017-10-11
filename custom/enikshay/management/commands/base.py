@@ -17,6 +17,11 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
 
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+        )
+
     def handle(self, domain, **options):
         batch_size = 100
         updates = []
@@ -35,11 +40,13 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
             if update_json:
                 updates.append((episode.case_id, update_json, False))
             if len(updates) >= batch_size:
-                bulk_update_cases(domain, updates, self.__module__)
+                if options['commit']:
+                    bulk_update_cases(domain, updates, self.__module__)
                 updates = []
 
         if len(updates) > 0:
-            bulk_update_cases(domain, updates, self.__module__)
+            if options['commit']:
+                bulk_update_cases(domain, updates, self.__module__)
 
         self.write_errors(errors)
 

@@ -134,6 +134,7 @@ class ENikshayVoucherReport(GenericTabularReport):
     base_template = 'reports/base_template.html'
     dispatcher = CustomProjectReportDispatcher
     exportable = True
+    exportable_all = True
 
     asynchronous = True
     ajax_pagination = True
@@ -183,26 +184,39 @@ class ENikshayVoucherReport(GenericTabularReport):
 
     @property
     def rows(self):
-        vouchers = [CommCareCase.wrap(flatten_result(result)) for result in self._search_results().raw_hits]
+        return self.get_rows(paged=True)
+
+    @property
+    def get_all_rows(self):
+        return self.get_rows(paged=False)
+
+    def get_rows(self, paged=True):
+        vouchers = [
+            CommCareCase.wrap(flatten_result(result))
+            for result in self._search_results(paged).raw_hits
+        ]
         return [row for voucher in vouchers for row in self._make_rows(voucher)]
 
     @memoized
-    def _search_results(self):
-        location_ids = self._get_voucher_location_ids()
-
+    def _search_results(self, paged=True):
         cs = (
             CaseSearchES()
             .domain(self.domain)
             .case_type(CASE_TYPE_VOUCHER)
-            .start(self.pagination.start)
-            .size(self.pagination.count)
-            .case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
         )
+
+        location_ids = self._get_voucher_location_ids()
+        if location_ids:
+            cs = cs.case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
+
         if self.voucher_state:
             cs = cs.case_property_query('state', self.voucher_state)
 
         if self.voucher_id:
             cs = cs.case_property_query('voucher_id', self.voucher_id)
+
+        if paged:
+            cs = cs.start(self.pagination.start).size(self.pagination.count)
 
         return cs.run()
 

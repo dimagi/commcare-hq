@@ -3,14 +3,12 @@ from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from couchdbkit import ResourceConflict
 
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
+
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
-from dimagi.utils.logging import notify_exception
-
-from corehq.apps.users.models import CouchUser
-
-from dimagi.utils.web import json_response
 from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.locations.permissions import user_can_access_other_user
@@ -104,25 +102,20 @@ def demo_restore_date_created(commcare_user):
             return restore.timestamp_created
 
 
-def is_permitted_to_restore(domain, couch_user, as_user):
+def is_permitted_to_restore(domain, couch_user, as_user_obj):
     """
     This function determines if the couch_user is permitted to restore
-    for the domain and/or as_user
+    for the domain and/or as_user_obj
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string username that the couch_user is attempting to get
+    :param as_user_obj: The user that the couch_user is attempting to get
         a restore for. If None will get restore of the couch_user.
-    :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
     :returns: a tuple - first a boolean if the user is permitted,
         secondly a message explaining why a user was rejected if not permitted
     """
     try:
         _ensure_valid_domain(domain, couch_user)
-        if as_user is not None and not _restoring_as_yourself(couch_user, as_user):
-            as_user_obj = CouchUser.get_by_username(as_user)
-            if not as_user_obj:
-                raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
-
+        if as_user_obj is not None and not _restoring_as_yourself(couch_user, as_user_obj):
             _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
@@ -132,8 +125,7 @@ def is_permitted_to_restore(domain, couch_user, as_user):
         return True, None
 
 
-def _restoring_as_yourself(couch_user, as_user):
-    as_user_obj = CouchUser.get_by_username(as_user)
+def _restoring_as_yourself(couch_user, as_user_obj):
     return as_user_obj and couch_user._id == as_user_obj._id
 
 
@@ -161,27 +153,24 @@ def _ensure_edit_data_permission(domain, couch_user):
         )
 
 
-def get_restore_user(domain, couch_user, as_user):
+def get_restore_user(domain, couch_user, as_user_obj):
     """
-    This will retrieve the restore_user from the couch_user or the as_user
+    This will retrieve the restore_user from the couch_user or the as_user_obj
     if specified
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string username that the couch_user is attempting to get
+    :param as_user_obj: The user that the couch_user is attempting to get
         a restore user for. If None will get restore of the couch_user.
     :returns: An instance of OTARestoreUser
     """
-    couch_restore_user = couch_user
-    restore_user = None
-    if as_user is not None:
-        couch_restore_user = CouchUser.get_by_username(as_user)
+    couch_restore_user = as_user_obj or couch_user
 
     if couch_restore_user.is_commcare_user():
-        restore_user = couch_restore_user.to_ota_restore_user()
+        return couch_restore_user.to_ota_restore_user()
     elif couch_restore_user.is_web_user():
-        restore_user = couch_restore_user.to_ota_restore_user(domain)
-
-    return restore_user
+        return couch_restore_user.to_ota_restore_user(domain)
+    else:
+        return None
 
 
 def handle_401_response(f):
@@ -212,8 +201,9 @@ def handle_401_response(f):
 def update_device_id(user, device_id):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
+            # this only updates once per day for each device
             updated = user.update_device_id_last_used(device_id)
+            if toggles.ENIKSHAY.enabled(user.domain):
+                updated = set_enikshay_device_id(user, device_id) or updated
             if updated:
-                if toggles.ENIKSHAY.enabled(user.domain):
-                    set_enikshay_device_id(user)
                 user.save(fire_signals=False)

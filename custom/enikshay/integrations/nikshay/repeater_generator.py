@@ -450,6 +450,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                     "private_nikshay_registered": "true",
                     "nikshay_id": nikshay_id,
                     "private_nikshay_error": "",
+                    "date_private_nikshay_notification": datetime.date.today(),
                 },
                 external_id=nikshay_id,
             )

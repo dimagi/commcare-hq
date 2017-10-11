@@ -347,7 +347,7 @@ def update_case(domain, case_id, updated_properties, external_id=None,
 
 def get_person_locations(person_case, episode_case=None):
     """
-    picks episode case's diagnosing_facility_id if passed else falls back to person's owner id for
+    picks episode case's treatment_initiating_facility_id if passed else falls back to person's owner id for
     fetching the base location to get the hierarchy
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
@@ -366,8 +366,8 @@ def _get_public_locations(person_case, episode_case):
     try:
         phi_location_id = None
         if episode_case:
-            phi_location_id = episode_case.dynamic_case_properties().get('diagnosing_facility_id')
-        # fallback to person_case.owner_id in case diagnosing_facility_id not set on episode
+            phi_location_id = episode_case.dynamic_case_properties().get('treatment_initiating_facility_id')
+        # fallback to person_case.owner_id in case treatment_initiating_facility_id not set on episode
         # or if no episode case was passed
         if not phi_location_id:
             phi_location_id = person_case.owner_id
@@ -422,7 +422,8 @@ def _get_private_locations(person_case):
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
             dto=district_location.metadata['nikshay_code'],
-            pcp=pcp_location.metadata['nikshay_code'],
+            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+            pcp=pcp_location.metadata.get('nikshay_code') or None,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:

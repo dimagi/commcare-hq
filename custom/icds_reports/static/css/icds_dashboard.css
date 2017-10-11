@@ -389,6 +389,11 @@ h4 {
     font-size: 45px;
 }
 
+.string {
+    font-weight: bold;
+    font-size: 40px;
+}
+
 .second_number {
     font-size: 28px;
 }

@@ -4,6 +4,8 @@ from django.http import Http404
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -17,6 +19,7 @@ def base_template(request):
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
         'DEBUG': settings.DEBUG,
+        'env': get_environment_friendly_name(),
     }
 
 

@@ -50,7 +50,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "cured"
+                    "field": "cured",
+                    "column_id": "cured_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -67,7 +68,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "treatment_complete"
+                    "field": "treatment_complete",
+                    "column_id": "treatment_complete_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -84,7 +86,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "successfully_treated"
+                    "field": "successfully_treated",
+                    "column_id": "successfully_treated_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -101,7 +104,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "died"
+                    "field": "died",
+                    "column_id": "died_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -118,7 +122,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "failure"
+                    "field": "failure",
+                    "column_id": "failure_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -135,7 +140,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "loss_to_follow_up"
+                    "field": "loss_to_follow_up",
+                    "column_id": "loss_to_follow_up_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -152,7 +158,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "regimen_changed"
+                    "field": "regimen_changed",
+                    "column_id": "regimen_changed_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -169,7 +176,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "not_evaluated"
+                    "field": "not_evaluated",
+                    "column_id": "not_evaluated_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -186,7 +194,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_cured"
+                    "field": "hiv_cured",
+                    "column_id": "hiv_cured_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -203,7 +212,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_treatment_complete"
+                    "field": "hiv_treatment_complete",
+                    "column_id": "hiv_treatment_complete_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -220,7 +230,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_successfully_treated"
+                    "field": "hiv_successfully_treated",
+                    "column_id": "hiv_successfully_treated_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -237,7 +248,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_died"
+                    "field": "hiv_died",
+                    "column_id": "hiv_died_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -254,7 +266,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_failure"
+                    "field": "hiv_failure",
+                    "column_id": "hiv_failure_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -271,7 +284,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_loss_to_follow_up"
+                    "field": "hiv_loss_to_follow_up",
+                    "column_id": "hiv_loss_to_follow_up_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -288,7 +302,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_regimen_changed"
+                    "field": "hiv_regimen_changed",
+                    "column_id": "hiv_regimen_changed_numerator"
                 },
                 "denominator": {
                     "type": "field",
@@ -305,7 +320,8 @@
                 "numerator": {
                     "type": "field",
                     "aggregation": "sum",
-                    "field": "hiv_not_evaluated"
+                    "field": "hiv_not_evaluated",
+                    "column_id": "hiv_not_evaluated_numerator"
                 },
                 "denominator": {
                     "type": "field",

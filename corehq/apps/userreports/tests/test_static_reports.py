@@ -26,5 +26,5 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for data_source in StaticReportConfiguration.all():
+        for data_source in StaticReportConfiguration.all(ignore_server_environment=True):
             data_source.validate()

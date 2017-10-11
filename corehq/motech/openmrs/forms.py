@@ -1,11 +1,13 @@
 import logging
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
+from corehq.motech.openmrs.repeater_helpers import PERSON_PROPERTIES, NAME_PROPERTIES, ADDRESS_PROPERTIES
 from corehq.motech.utils import b64_aes_encrypt
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -14,6 +16,7 @@ from crispy_forms.layout import Submit
 
 
 class OpenmrsConfigForm(forms.Form):
+    openmrs_provider = forms.CharField(label=_('Provider UUID'), required=False)
     case_config = JsonField(expected_type=dict)
     form_configs = JsonField(expected_type=list)
 
@@ -21,6 +24,34 @@ class OpenmrsConfigForm(forms.Form):
         super(OpenmrsConfigForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', _('Save Changes')))
+
+    def clean_case_config(self):
+
+        for key in self.cleaned_data['case_config']['person_properties']:
+            if key not in PERSON_PROPERTIES:
+                raise ValidationError(
+                    _('person property key "%(key)s" is not valid.'),
+                    code='invalid',
+                    params={'key': key}
+                )
+
+        for key in self.cleaned_data['case_config']['person_preferred_name']:
+            if key not in NAME_PROPERTIES:
+                raise ValidationError(
+                    _('person preferred name key "%(key)s" is not valid.'),
+                    code='invalid',
+                    params={'key': key}
+                )
+
+        for key in self.cleaned_data['case_config']['person_preferred_address']:
+            if key not in ADDRESS_PROPERTIES:
+                raise ValidationError(
+                    _('person preferred address key "%(key)s" is not valid.'),
+                    code='invalid',
+                    params={'key': key}
+                )
+
+        return self.cleaned_data['case_config']
 
 
 class OpenmrsImporterForm(forms.Form):

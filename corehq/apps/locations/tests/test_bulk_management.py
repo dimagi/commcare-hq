@@ -284,7 +284,6 @@ class TestTreeValidator(SimpleTestCase):
         self.assertEqual(len(type_errors), 1)
         self.assertIn("county", errors[0])
 
-
     def test_duplicate_location(self):
         validator = get_validator(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
         errors = validator.errors
