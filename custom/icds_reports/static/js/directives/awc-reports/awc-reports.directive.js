@@ -2205,6 +2205,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         pse: { route: "/awc_reports/pse", label: "Pre School Education"},
         maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
+        awc_infrastructure: { route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
     };
 
