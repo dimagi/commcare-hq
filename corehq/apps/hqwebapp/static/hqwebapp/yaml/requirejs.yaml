@@ -1,7 +1,7 @@
-mainConfigFile: corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
+mainConfigFile: ../corehq/apps/hqwebapp/static/hqwebapp/js/requirejs_config.js
 bundlesConfigOutFile: hqwebapp/js/requirejs_config.js
-baseUrl: staticfiles
-dir: staticfiles
+baseUrl: ./
+dir: ./
 allowSourceOverwrites: true
 keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
