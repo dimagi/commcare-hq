@@ -62,7 +62,9 @@ class ConfigurableReportDataSourceMixin(object):
         """
         return [
             inner_col for col in self.top_level_columns
-            for inner_col in col.get_column_config(self.config, self.lang).columns
+            for inner_col in col.get_column_config(
+                self.config, self.lang, self.user_location_type, self.by_location_type
+            ).columns
         ]
 
     @property
@@ -90,7 +92,10 @@ class ConfigurableReportDataSourceMixin(object):
 
     @property
     def column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
+        return [
+            col.get_column_config(self.config, self.lang, self.user_location_type, self.by_location_type)
+            for col in self.top_level_db_columns
+        ]
 
     @property
     def column_warnings(self):
