@@ -79,7 +79,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     # Adding this feature flag allows rendering of hierarchical fixture where requested
     # and wont interfere with flat fixture generation
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+    def _assert_fixture_matches_file(self, xml_name, desired_locations, flat=False):
         generator = flat_location_fixture_generator if flat else location_fixture_generator
         fixture = ElementTree.tostring(call_fixture_generator(generator, self.user)[-1])
         desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
@@ -141,7 +141,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'simple_fixture',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
@@ -150,7 +150,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self.user._couch_user.add_to_assigned_locations(self.locations['Suffolk'])
         self.user._couch_user.add_to_assigned_locations(self.locations['New York City'])
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'multiple_locations',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
              'New York City', 'Manhattan', 'Queens', 'Brooklyn']
@@ -158,7 +158,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_all_locations_flag_returns_all_locations(self):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
-            self._assert_fixture_has_locations(
+            self._assert_fixture_matches_file(
                 'expand_from_root',
                 ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
                  'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
@@ -176,7 +176,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_to = location_type
         location_type.save()
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_to_county',
             ['Massachusetts', 'Suffolk']
         )
@@ -187,7 +187,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_to_county_from_state',
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
@@ -198,7 +198,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_from = self.locations['Suffolk'].location_type
         location_type.save()
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_from_county_at_city',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere']
         )
@@ -209,7 +209,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_from_root = True
         location_type.save()
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_from_root',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
@@ -221,14 +221,14 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_from_root = True
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_from_root_to_county',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
 
     def test_flat_sync_format(self):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
-            self._assert_fixture_has_locations(
+            self._assert_fixture_matches_file(
                 'expand_from_root_flat',
                 ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
                     'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn'],
@@ -242,7 +242,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.include_without_expanding = self.locations['Massachusetts'].location_type
         location_type.save()
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'include_without_expanding',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
         )
@@ -257,7 +257,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         # Expand downwards from my county
         location_type.expand_from = self.locations['Middlesex'].location_type
         location_type.save()
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'include_without_expanding_same_level',
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
@@ -270,7 +270,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         # Get all the cities
         location_type.include_without_expanding = self.locations['Revere'].location_type
         location_type.save()
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'expand_from_root',  # This is the same as expanding from root / getting all locations
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere', 'Cambridge',
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
@@ -519,7 +519,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.domain, self.locations['Suffolk'])
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'simple_fixture',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
@@ -531,7 +531,7 @@ class WebUserLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
             self.locations['New York City']
         )
 
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'multiple_locations',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
              'New York City', 'Manhattan', 'Queens', 'Brooklyn']
@@ -592,7 +592,7 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_to = self.locations['Middlesex'].location_type
         location_type.save()
-        self._assert_fixture_has_locations(
+        self._assert_fixture_matches_file(
             'forked_expand_to_county',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Berkshires', 'Pioneer Valley']
         )
