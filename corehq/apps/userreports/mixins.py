@@ -10,6 +10,7 @@ import six
 class ConfigurableReportDataSourceMixin(object):
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
+        self.user = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
