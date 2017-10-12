@@ -101,6 +101,11 @@ class Command(BaseCommand):
 
         data = {}
 
+        filename = 'icds-sms-usage--%s--%s.xlsx' % (
+            start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d'),
+        )
+
         for sms in SMS.objects.filter(
             domain=domain,
             date__gt=start_timestamp,
@@ -120,7 +125,7 @@ class Command(BaseCommand):
 
             data[state_code][indicator_slug] += 1
 
-        with open('icds-sms-usage.xlsx', 'wb') as f:
+        with open(filename, 'wb') as f:
             headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
             excel_data = []
 
