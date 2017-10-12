@@ -66,6 +66,7 @@ hqDefine('locations/js/location_types', function(){
                 setTimeout(function() { $inp.select(); }, 0);
             };
             self.loc_types.push(new_loctype);
+            $(".include-only").last().select2();
             ga_track_event('Organization Levels', 'New Organization Level');
         };
 
@@ -192,6 +193,7 @@ hqDefine('locations/js/location_types', function(){
         self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
         self.expand_to = ko.observable(loc_type.expand_to);
         self.include_without_expanding = ko.observable(loc_type.include_without_expanding);
+        self.include_only = ko.observableArray(loc_type.include_only || []);
 
         self.view = view_model;
 
@@ -320,6 +322,10 @@ hqDefine('locations/js/location_types', function(){
             }
         };
 
+        self.include_only_options = function(){
+            return self.view.loc_types();
+        };
+
         self.to_json = function() {
             return {
                 pk: self.pk,
@@ -334,6 +340,7 @@ hqDefine('locations/js/location_types', function(){
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
                 include_without_expanding: self.include_without_expanding() || null,
+                include_only: self.include_only() || [],
             };
         };
     }
@@ -370,6 +377,8 @@ hqDefine('locations/js/location_types', function(){
             $("form#settings").find(":submit").addClass("btn-success").enable();
             window.onbeforeunload = warnBeforeUnload;
         });
+
+        $(".include-only").select2();
     });
 
     return {
