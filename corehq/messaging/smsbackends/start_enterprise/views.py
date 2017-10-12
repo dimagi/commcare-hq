@@ -29,7 +29,7 @@ class StartEnterpriseDeliveryReceiptView(IncomingBackendView):
     
         if dlr:
             dlr.received_on = datetime.utcnow()
-            dlr.info = dict(request.GET)
+            dlr.info = request.GET.dict()
             dlr.save()
 
         # Based on the documentation, a response of "1" acknowledges receipt of the DLR
