@@ -497,7 +497,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
             )
             if len(duplicate_items) > 0:
                 raise BadSpecError(
-                    _(error_msg).format(', '.join(sorted(duplicate_items)))
+                    _(error_msg).format(self.title, ', '.join(sorted(duplicate_items)))
                 )
 
         super(ReportConfiguration, self).validate(required)
@@ -505,11 +505,11 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         # check duplicates before passing to factory since it chokes on them
         _check_for_duplicates(
             [FilterSpec.wrap(f).slug for f in self.filters],
-            'Filters cannot contain duplicate slugs: {}',
+            '{}: Filters cannot contain duplicate slugs: {}',
         )
         _check_for_duplicates(
             [column_id for c in self.report_columns for column_id in c.get_column_ids()],
-            'Columns cannot contain duplicate column_ids: {}',
+            '{}: Columns cannot contain duplicate column_ids: {}',
         )
 
         # these calls all implicitly do validation
@@ -610,7 +610,7 @@ class StaticDataSourceConfiguration(JsonObject):
         metadata = mapping.get(config_id, None)
         if not metadata:
             raise StaticDataSourceConfigurationNotFoundError(_(
-                'The data source referenced by this report could not be found.'
+                '{} The data source referenced by this report could not be found.'.format(config_id)
             ))
 
         return cls._get_from_metadata(metadata)
@@ -814,7 +814,7 @@ class AsyncIndicator(models.Model):
 def get_datasource_config(config_id, domain):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
-            'The data source referenced by this report could not be found.'
+            'The data source referenced by this report could not be found. {}'.format(config_id)
         ))
 
     is_static = id_is_static(config_id)

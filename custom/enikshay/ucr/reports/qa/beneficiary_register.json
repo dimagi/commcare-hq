@@ -10,7 +10,7 @@
     "report_id": "beneficiary_register_qa",
     "config": {
         "description": "",
-        "title": "Beneficiary Register",
+        "title": "Beneficiary Register (QA)",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -49,17 +49,6 @@
             }
         ],
         "columns": [
-            {
-                "field": "beneficiary_id",
-                "transform": {},
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Beneficiary ID",
-                "aggregation": "simple"
-            },
             {
                 "field": "person_name",
                 "transform": {},
