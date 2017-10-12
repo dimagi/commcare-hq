@@ -221,6 +221,8 @@ def get_location_fixture_queryset(user):
         locs_at_or_above_expand_from = (SQLLocation.active_objects
                                         .get_queryset_ancestors(expand_from_locations, include_self=True))
         locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
+        if location_type.include_only.exists():
+            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
         all_locations |= locations_to_sync
 
     return all_locations
