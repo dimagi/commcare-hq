@@ -42,12 +42,8 @@ class StartEnterpriseBackend(SQLSMSBackend):
 
     def get_params(self, msg_obj):
         config = self.config
-        try:
-            message = str(msg_obj.text)
-            message_type = LONG_TEXT_MSG_TYPE
-        except UnicodeEncodeError:
-            message = msg_obj.text.encode('utf_16_be').encode('hex').upper()
-            message_type = LONG_UNICODE_MSG_TYPE
+        message = msg_obj.text.encode('utf_16_be').encode('hex').upper()
+        message_type = LONG_UNICODE_MSG_TYPE
 
         return {
             'usr': config.username,
