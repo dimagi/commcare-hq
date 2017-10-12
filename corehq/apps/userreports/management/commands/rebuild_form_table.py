@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
         form_ids = get_form_ids_by_type(
             domain=domain,
-            _type='XFormInstance',
+            type_='XFormInstance',
             start=start_date,
             end=end_date,
         )
