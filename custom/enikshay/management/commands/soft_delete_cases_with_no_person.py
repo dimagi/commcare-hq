@@ -57,7 +57,7 @@ class Command(BaseCommand):
         for case_id in case_ids:
             _log_case_to_delete(case_id, deletion_id, domain, logger, case_type)
         if commit:
-            CaseAccessors(domain).soft_delete_cases([case_ids], deletion_id=deletion_id)
+            CaseAccessors(domain).soft_delete_cases(case_ids, deletion_id=deletion_id)
 
 
 def _is_case_missing_person(domain, case_id):
