@@ -314,7 +314,7 @@ def save_document(doc_ids):
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
-                    failed_indicators.append((indicator.pk, to_remove))
+                    failed_indicators.append((indicator, to_remove))
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
