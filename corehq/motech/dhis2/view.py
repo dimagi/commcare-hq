@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.generic import ListView, DetailView
 from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
@@ -19,6 +20,13 @@ from memoized import memoized
 from dimagi.utils.couch import get_redis_client
 from dimagi.utils.web import json_response
 from six.moves import range
+
+
+@login_and_domain_required
+@require_http_methods(['POST'])
+def dhis2_fetch_names(request, domain):
+    refresh_dhis2_name_cache.delay(request.domain)
+    return JsonResponse({'status': 'Accepted'}, status=202)
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')

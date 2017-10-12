@@ -54,7 +54,13 @@ class Dhis2ConnectionForm(forms.Form):
                     _("Update DHIS2 connection"),
                     type="submit",
                     css_class='btn-primary',
-                )
+                ),
+                StrictButton(
+                    _('Fetch Names'),
+                    type='button',
+                    id='btn-fetch-names',
+                    css_class='btn-default',
+                ),
             ),
         )
 
