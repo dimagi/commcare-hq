@@ -23,6 +23,12 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         )
 
     def handle(self, domain, **options):
+        print "Running {}".format(self.updater.__name__)
+        if options['commit']:
+            print "Committing changes"
+        else:
+            print "Dry Run"
+
         batch_size = 100
         updates = []
         errors = []
