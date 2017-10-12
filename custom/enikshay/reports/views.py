@@ -75,7 +75,6 @@ def duplicate_ids_report(request, domain, case_type):
     counts = Counter(case['readable_id'] for case in all_cases)
     bad_cases = [case for case in all_cases if counts[case['readable_id']] > 1]
 
-
     for case in bad_cases:
         form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
         if form:
