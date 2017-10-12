@@ -26,7 +26,7 @@ class StartEnterpriseDeliveryReceiptView(IncomingBackendView):
             dlr = StartEnterpriseDeliveryReceipt.objects.get(message_id=message_id)
         except StartEnterpriseDeliveryReceipt.DoesNotExist:
             dlr = None
-    
+
         if dlr:
             dlr.received_on = datetime.utcnow()
             dlr.info = request.GET.dict()
