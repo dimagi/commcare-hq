@@ -122,3 +122,15 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]
+
+    @property
+    def user_location_type(self):
+        if self.user:
+            raise NotImplementedError
+            # TODO - memoize
+
+    @property
+    def by_location_type(self):
+        return None # TODO - implement
+        raise NotImplementedError
+        # TODO - memoize
