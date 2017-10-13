@@ -259,7 +259,7 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
-        context['master_version'] = get_app(None, app.master, latest=True).version
+        context['master_version'] = app.get_master_version()
     return context
 
 

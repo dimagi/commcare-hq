@@ -6229,6 +6229,9 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
+    def get_master_version(self):
+        return get_app(None, self.master, latest=True).version
+
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
