@@ -2229,6 +2229,25 @@
         }
       },
       {
+        "column_id": "not_migrated",
+        "type": "boolean",
+        "filter": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "root_doc",
+              "expression": {
+                "property_name": "migration_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "migrated"
+          }
+        }
+      },
+      {
         "column_id": "count",
         "type": "count"
       },
