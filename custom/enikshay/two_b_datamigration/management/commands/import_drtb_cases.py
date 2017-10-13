@@ -895,7 +895,7 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
         })
 
     if not properties.get("date_of_diagnosis"):
-        properties["date_of_diagnosis"] = properties["treatment_initiation_date"]
+        properties["date_of_diagnosis"] = properties.get("treatment_initiation_date")
 
     return properties
 
