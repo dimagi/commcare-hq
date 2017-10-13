@@ -54,7 +54,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcom
 class BaseNikshayRepeater(CaseRepeater):
     @property
     def verify(self):
-        return True
+        return False
 
     @classmethod
     def available_for_domain(cls, domain):
