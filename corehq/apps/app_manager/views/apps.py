@@ -359,6 +359,8 @@ def copy_app(request, domain):
                         break
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
+        # having login_and_domain_required validates that the user
+        # has access to the domain we're copying the app to
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
