@@ -7,6 +7,15 @@
     <script src="{% static 'domain/js/info_basic.js' %}"></script>
 {% endblock %}
 
+{% block js-inline %} {{ block.super }}
+  <script>
+  $(function () {
+     var $moduleField =  $('#id_custom_report_issue_module');
+     if ($moduleField.length > 0) $moduleField.select2();
+  });
+  </script>
+{% endblock %}
+
 {% block page_content %}
     {% crispy basic_info_form %}
 {% endblock %}

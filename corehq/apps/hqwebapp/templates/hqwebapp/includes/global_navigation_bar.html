@@ -101,10 +101,17 @@
             {% if not enterprise_mode or not 500traceback %}
                 {% if allow_report_an_issue %}
                     <li>
-                        <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
-                           data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
-                            <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                        </a>
+                        {% get_custom_report_issue_url request as report_issue_url %}
+                        {% if report_issue_url %}
+                            <a href="{{ report_issue_url }}">
+                                <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                            </a>
+                        {% else %}
+                            <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
+                               data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
+                                <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                            </a>
+                        {% endif %}
                     </li>
                 {% endif %}
             {% endif %}

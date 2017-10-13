@@ -9,11 +9,16 @@ from django.template import loader_tags, NodeList
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
-from django.http import QueryDict
+from django.http import QueryDict, Http404
 from django import template
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.exceptions import ModuleNotFoundException
+from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.cloudcare.utils import webapps_url
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -147,6 +152,39 @@ def domains_for_user(context, request, selected_domain=None):
         ),
     }
     return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt))
+
+
+@register.simple_tag
+def get_custom_report_issue_url(request):
+    if (not (request.couch_user.is_commcare_user() and toggles.CUSTOM_REPORT_ISSUE_MODULE.enabled(request.domain))
+        and request.project.custom_report_issue_module is None
+    ):
+        return None
+
+    app_id, module_unique_id = request.project.custom_report_issue_module.split('_')
+
+    try:
+        app = get_app(request.domain, app_id)
+    except Http404:
+        return None
+
+    app_access = ApplicationAccess.get_by_domain(request.domain)
+    if not app_access.user_can_access_app(request.couch_user, app):
+        return None
+
+    if not app.cloudcare_enabled:
+        return None
+
+    role = request.couch_user.get_role(request.project.name)
+    if not role.permissions.view_web_app(app):
+        return None
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        return None
+
+    return webapps_url(request.domain, app_id, module.id)
 
 
 @register.simple_tag

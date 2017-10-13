@@ -377,6 +377,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     uses_new_reminders = BooleanProperty(default=False)
 
+    custom_report_issue_module = StringProperty()
+
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc
