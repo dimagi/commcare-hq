@@ -157,8 +157,7 @@ def domains_for_user(context, request, selected_domain=None):
 @register.simple_tag
 def get_custom_report_issue_url(request):
     if (not (request.couch_user.is_commcare_user() and toggles.CUSTOM_REPORT_ISSUE_MODULE.enabled(request.domain))
-        and request.project.custom_report_issue_module is None
-    ):
+            and request.project.custom_report_issue_module is None):
         return None
 
     app_id, module_unique_id = request.project.custom_report_issue_module.split('_')

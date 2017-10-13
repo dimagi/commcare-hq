@@ -84,7 +84,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import(
+from corehq.toggles import (
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
     CUSTOM_REPORT_ISSUE_MODULE,
