@@ -8,7 +8,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "test_drtb",
+    "data_source_table": "test_drtb_v2",
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
@@ -67,6 +67,15 @@
                 },
                 "type": "multi_field_dynamic_choice_list",
                 "slug": "village"
+            },
+            {
+                "pre_value": "pmdt_excel",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "migration_type",
+                "type": "pre",
+                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -176,12 +185,12 @@
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
+                        "tribal_population": "Tribal Population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "health_care_worker": "Health Care Worker",
-                        "tribal_population": "Tribal Population",
                         "slum_dweller": "Slum Dweller",
+                        "health_care_worker": "Health Care Worker",
                         "prison_inmate": "Prison Inmate"
                     },
                     "type": "translation"
