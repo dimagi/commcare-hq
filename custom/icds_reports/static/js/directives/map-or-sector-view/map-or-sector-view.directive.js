@@ -33,7 +33,7 @@ function MapOrSectorController() {
             yAxis: {
                 tickFormat: function (d) {
                     if (vm.data.mapData.format === "number") {
-                        return d;
+                        return d3.format("d")(d);
                     }
                     return d3.format("%")(d);
                 },

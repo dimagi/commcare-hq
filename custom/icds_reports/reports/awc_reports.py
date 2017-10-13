@@ -1053,7 +1053,7 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
 def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
-        awc_id="ccf69884c4fc483d92d854bfbe0edb9d",
+        awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1078,9 +1078,9 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             elif value in ['severely_underweight', 'severe']:
                 return {'value': 'Severely ' + second_part, 'color': 'red'}
             elif value in ['moderately_underweight', 'moderate']:
-                return {'value': 'Moderately ' + second_part, 'color': 'yellow'}
+                return {'value': 'Moderately ' + second_part, 'color': 'black'}
             elif value in ['normal']:
-                return {'value': normal_value, 'color': 'green'}
+                return {'value': normal_value, 'color': 'black'}
             return value
 
         return dict(
