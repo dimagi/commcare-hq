@@ -1053,7 +1053,7 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
 def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
-        awc_id=awc_id,
+        awc_id="ccf69884c4fc483d92d854bfbe0edb9d",
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1072,9 +1072,15 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     }
 
     def base_data(row_data):
-        def get_status(value):
-            if not value or value in ['unweighed', 'unmeasured']:
-                return DATA_NOT_ENTERED
+        def get_status(value, second_part='', normal_value=''):
+            if not value or value in ['unweighed', 'unmeasured', 'unknown']:
+                return {'value': DATA_NOT_ENTERED, 'color': 'black'}
+            elif value in ['severely_underweight', 'severe']:
+                return {'value': 'Severely ' + second_part, 'color': 'red'}
+            elif value in ['moderately_underweight', 'moderate']:
+                return {'value': 'Moderately ' + second_part, 'color': 'yellow'}
+            elif value in ['normal']:
+                return {'value': normal_value, 'color': 'green'}
             return value
 
         return dict(
@@ -1086,11 +1092,23 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
-            nutrition_status=get_status(row_data.current_month_nutrition_status),
+            nutrition_status=get_status(
+                row_data.current_month_nutrition_status,
+                'underweight',
+                'Normal weight for age'
+            ),
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
-            stunning=get_status(row_data.current_month_stunting),
-            wasting=get_status(row_data.current_month_wasting),
+            stunning=get_status(
+                row_data.current_month_stunting,
+                'stunned',
+                'Normal weight for height'
+            ),
+            wasting=get_status(
+                row_data.current_month_stunting,
+                'wasted',
+                'Normal height for age'
+            ),
             pse_days_attended=row_data.pse_days_attended
         )
 
