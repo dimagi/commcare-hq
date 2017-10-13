@@ -13,7 +13,7 @@ def tmpfile(*args, **kwargs):
     return (os.fdopen(fd, 'w'), path)
 
 
-def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, auth=None):
+def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, auth=None, verify=None):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
@@ -32,6 +32,9 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
     }
     if auth:
         kwargs["auth"] = auth
+
+    if verify:
+        kwargs["verify"] = verify
 
     return requests.post(url, data, **kwargs)
 

@@ -248,11 +248,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to https urls
         return None
 
-    def send_request(self, repeat_record, payload):
+    def send_request(self, repeat_record, payload, verify=None):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
