@@ -64,7 +64,7 @@ class ConfigurableReportDataSourceMixin(object):
         return [
             inner_col for col in self.top_level_columns
             for inner_col in col.get_column_config(
-                self.config, self.lang, self.user_location_type, self.by_location_type
+                self.config, self.lang, self.user_location_type_code, self.by_location_type(col.column_id)
             ).columns
         ]
 
@@ -94,7 +94,9 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def column_configs(self):
         return [
-            col.get_column_config(self.config, self.lang, self.user_location_type, self.by_location_type)
+            col.get_column_config(
+                self.config, self.lang, self.user_location_type_code, self.by_location_type(col.column_id)
+            )
             for col in self.top_level_db_columns
         ]
 
@@ -124,10 +126,23 @@ class ConfigurableReportDataSourceMixin(object):
             return [column_id]
 
     @property
-    def user_location_type(self):
+    def user_location_type_code(self):
         if self.user:
-            raise NotImplementedError
-            # TODO - memoize
+            location = self.user.get_location_id(self.domain)
+            if location:
+                return location.location_type.code
+        return None
+
+    def by_location_type(self, column_id):
+        for filter in self._filters.values():
+            if (
+                filter.type == 'enikshay_by_location_type'
+                and filter.field == column_id
+                and self._filter_values.get(filter.slug)
+            ):
+                return self._filter_values[filter.slug].value
+        return None
+
 
     @property
     def by_location_type(self):
