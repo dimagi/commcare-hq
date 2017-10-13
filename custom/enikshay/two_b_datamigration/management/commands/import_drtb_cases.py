@@ -894,6 +894,9 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
             "cp_initiation_date": ip_to_cp_date,
         })
 
+    if not properties.get("date_of_diagnosis"):
+        properties["date_of_diagnosis"] = properties["treatment_initiation_date"]
+
     return properties
 
 
@@ -1234,7 +1237,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
 
     for t in test_cases:
         t['dataset'] = 'real'
-        t['case_name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
+        t['name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
 
     return test_cases
 
