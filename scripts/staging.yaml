@@ -54,6 +54,7 @@ branches:
   - je/mobile-ucr-v2 # j$ 9/29
   - jls/scroll-app-menu # Jenny 10/3
   - mk-search-under-location # Manish 4-Oct
+  - np/build_attrs # NP 10/13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
