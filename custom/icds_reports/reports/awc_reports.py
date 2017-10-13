@@ -1101,7 +1101,7 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             recorded_height=row_data.recorded_height or 0,
             stunning=get_status(
                 row_data.current_month_stunting,
-                'stunned',
+                'stunted',
                 'Normal weight for height'
             ),
             wasting=get_status(
