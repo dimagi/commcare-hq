@@ -436,6 +436,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response,
+            verify=repeat_record.repeater.verify,
         )
         try:
             health_facility_id = self._get_person_locations(payload_doc).pcp
@@ -460,6 +461,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response,
+            verify=repeat_record.repeater.verify,
         )
         _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
                             "private_nikshay_registered", "private_nikshay_error"
@@ -509,6 +511,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response,
+            verify=repeat_record.repeater.verify,
         )
         message_text = message.find("NewDataSet/HE_DETAILS/Message").text
         health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]

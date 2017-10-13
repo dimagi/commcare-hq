@@ -242,6 +242,12 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPDigestAuth(self.username, self.password)
         return None
 
+    @property
+    def verify(self):
+        # overwrite to allow/skip certificate verification when sending request
+        # to https urls
+        return None
+
     def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
@@ -394,7 +400,7 @@ class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
     def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation)
+        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
 
 
 class ShortFormRepeater(Repeater):
