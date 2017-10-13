@@ -1275,7 +1275,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
-    case_id = models.CharField(max_length=126, null=True)
+    case_id = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
