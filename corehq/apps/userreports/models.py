@@ -814,7 +814,7 @@ class AsyncIndicator(models.Model):
     def update_failure(self, to_remove):
         self.refresh_from_db(fields=['indicator_config_ids'])
         new_indicators = set(self.indicator_config_ids) - set(to_remove)
-        self.indicator_config_ids = new_indicators
+        self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
 
 
