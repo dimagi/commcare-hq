@@ -33,7 +33,7 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
     if auth:
         kwargs["auth"] = auth
 
-    if verify:
+    if verify is not None:
         kwargs["verify"] = verify
 
     return requests.post(url, data, **kwargs)
