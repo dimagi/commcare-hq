@@ -90,18 +90,18 @@
                             <td style="min-width: 80px;">{$ row.age || 'Data not Entered' $}</td>
                             <td>{$ row.fully_immunized_date || 'Data not Entered' $}</td>
                             <td>
-                                <span ng-class="{'red': row.nutrition_status === 'severely underweight', 'green': row.nutrition_status === 'normal', 'yellow': row.nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
-                                    {$ row.nutrition_status || 'Data not Entered' $}
+                                <span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
+                                    {$ row.nutrition_status.value $}
                                 </span>
                             </td>
                             <td>
-                                 <span ng-class="{'red': row.wasting === 'severe', 'green': row.wasting === 'normal', 'yellow': row.wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row.wasting || 'Data not Entered' $}
+                                 <span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row.wasting.value $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row.stunning === 'severe', 'green': row.stunning === 'normal', 'yellow': row.stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row.stunning || 'Data not Entered' $}
+                                <span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                    {$ row.stunning.value $}
                                 </span>
                             </td>
                             <td>{$ row.pse_days_attended || 'Data not Entered' $}</td>

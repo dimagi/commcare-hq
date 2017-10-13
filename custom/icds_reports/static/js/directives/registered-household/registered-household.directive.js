@@ -170,7 +170,6 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 },
                 axisLabelDistance: -100,
             },
-
             yAxis: {
                 axisLabel: '',
                 tickFormat: function (d) {
