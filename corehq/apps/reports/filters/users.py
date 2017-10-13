@@ -220,7 +220,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = mark_safe("Quick search a location by using location1/location2 for case insensitive search "
+    search_help_inline = mark_safe("Quick search a location by using /location1/location2 for case insensitive search "
                                    "on parent and fuzzy search on descendants")
 
     @property
