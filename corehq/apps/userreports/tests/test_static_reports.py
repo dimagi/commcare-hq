@@ -48,18 +48,23 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
 
             data_source_config = report_config.config
 
-            data_source_columns_id = [
-                column['column_id']
-                for column in data_source_config.configured_indicators
-            ] + ['doc_id', 'inserted_at']
+            data_source_columns_id = ['doc_id', 'inserted_at']
+
+            for column in data_source_config.configured_indicators:
+                if column['type'] == 'choice_list':
+                    data_source_columns_id.extend([
+                        '{}_{}'.format(column['column_id'], choice) for choice in column['choices']
+                    ])
+                else:
+                    data_source_columns_id.append(column['column_id'])
 
             missing_columns = set(columns_id) - set(data_source_columns_id)
             if missing_columns:
                 messages.append(
-                    'Columns from {} not found in the data source: {}'.format(
-                        report_config.title, ', '.join(missing_columns)
+                    'Columns from {} ({}) not found in the data source: {}'.format(
+                        report_config.title, report_config.domain, ', '.join(missing_columns)
                     )
                 )
         if messages:
-            self.fail('\n' + '\n'.join(set(messages)))
+            self.fail('\n' + '\n'.join(messages))
         _call_center_domain_mock.stop()
