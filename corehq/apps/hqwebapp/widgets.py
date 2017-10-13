@@ -23,7 +23,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         self.inline_label = inline_label
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs, type='checkbox', name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'type': 'checkbox', 'name': name})
         try:
             result = self.check_test(value)
         except: # Silently catch exceptions
@@ -76,7 +76,7 @@ class BootstrapDisabledInput(Input):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(attrs, type=self.input_type, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'type': self.input_type, 'name': name})
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_unicode(self._format_value(value))
