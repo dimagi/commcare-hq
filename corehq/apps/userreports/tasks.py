@@ -35,7 +35,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
-from corehq.apps.es import forms as form_es
 from corehq.util.context_managers import notify_someone
 from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
 from corehq.util.decorators import serial_task
@@ -423,15 +422,3 @@ def _indicator_metrics(date_created=None):
                 }
 
     return ret
-
-
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_form_table(domain, indicator_config_id, start_date, end_date, xmlns_list):
-    time_filter = form_es.submitted
-    query = (form_es.FormES()
-             .domain(domain)
-             .filter(time_filter(gte=start_date, lte=end_date)))
-    if xmlns_list:
-        query = query.OR(*[form_es.xmlns(x) for x in xmlns_list])
-    form_ids = query.get_ids()
-    rebuild_indicators_in_place(indicator_config_id, None, form_ids)

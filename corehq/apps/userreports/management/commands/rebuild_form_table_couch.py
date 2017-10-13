@@ -4,7 +4,8 @@ import argparse
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.tasks import rebuild_form_table
+from corehq.apps.userreports.tasks import rebuild_indicators_in_place
+from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):
@@ -15,9 +16,15 @@ class Command(BaseCommand):
         parser.add_argument('indicator_config_id')
         parser.add_argument('start_date', help="YYYY-MM-DD")
         parser.add_argument('end_date', help="YYYY-MM-DD")
-        parser.add_argument('xmlns_list', nargs=argparse.REMAINDER)
 
     def handle(self, domain, indicator_config_id, start_date, end_date, xmlns_list, **options):
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
-        rebuild_form_table.delay(domain, indicator_config_id, start_date, end_date, xmlns_list)
+
+        form_ids = get_form_ids_by_type(
+            domain=domain,
+            type_='XFormInstance',
+            start=start_date,
+            end=end_date,
+        )
+        rebuild_indicators_in_place(indicator_config_id, None, form_ids)
