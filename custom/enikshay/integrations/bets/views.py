@@ -20,7 +20,6 @@ from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
 from .tasks import process_payment_confirmations
