@@ -1,7 +1,6 @@
 """
 https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
-import datetime
 import json
 
 from dateutil import parser as date_parser
@@ -20,7 +19,7 @@ from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
+from corehq.util.datadog.gauges import datadog_counter
 
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
@@ -188,17 +187,21 @@ def _validate_updates_exist(domain, updates):
 @toggles.ENIKSHAY_API.required_decorator()
 def payment_confirmation(request, domain):
     try:
-        updates = _get_case_updates(request, domain)
-        updates = _validate_updates_exist(domain, updates)
-    except ApiError as e:
-        if not settings.UNIT_TESTING:
-            notify_exception(request, "BETS sent the eNikshay API a bad request.")
-        return json_response({"error": e.message}, status_code=e.status_code)
+        try:
+            updates = _get_case_updates(request, domain)
+            updates = _validate_updates_exist(domain, updates)
+        except ApiError as e:
+            if not settings.UNIT_TESTING:
+                notify_exception(request, "BETS sent the eNikshay API a bad request.")
+            return json_response({"error": e.message}, status_code=e.status_code)
 
-    bulk_update_cases(domain, [
-        (update.case_id, update.properties, False) for update in updates
-    ], __name__ + ".payment_confirmation")
-    return json_response({'status': SUCCESS})
+        bulk_update_cases(domain, [
+            (update.case_id, update.properties, False) for update in updates
+        ], __name__ + ".payment_confirmation")
+        return json_response({'status': SUCCESS})
+    except Exception:
+        datadog_counter('commcare.enikshay.integration_500', tags=['BETS_payment_confirmation'])
+        raise
 
 
 class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):

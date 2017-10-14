@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, check_domain_migration
 from dimagi.utils.web import json_response
 
@@ -49,22 +50,26 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
 @check_domain_migration
 def update_patient_adherence(request, domain):
     try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
+        try:
+            request_json = json.loads(request.body)
+        except ValueError:
+            return json_response({"error": "Malformed JSON"}, status_code=400)
 
-    beneficiary_id = request_json.get('beneficiary_id')
-    adherence_values = request_json.get('adherences')
+        beneficiary_id = request_json.get('beneficiary_id')
+        adherence_values = request_json.get('adherences')
 
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_adherence_values(adherence_values)
-        create_adherence_cases(domain, beneficiary_id, adherence_values)
-        update_episode_adherence_properties(domain, beneficiary_id)
-    except AdherenceException as e:
-        return json_response({"error": e.message}, status_code=400)
+        try:
+            validate_beneficiary_id(beneficiary_id)
+            validate_adherence_values(adherence_values)
+            create_adherence_cases(domain, beneficiary_id, adherence_values)
+            update_episode_adherence_properties(domain, beneficiary_id)
+        except AdherenceException as e:
+            return json_response({"error": e.message}, status_code=400)
 
-    return json_response({"success": "Patient adherences updated."})
+        return json_response({"success": "Patient adherences updated."})
+    except Exception:
+        datadog_counter('commcare.enikshay.integration_500', tags=['99D_update_patient_adherence'])
+        raise
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
@@ -74,29 +79,33 @@ def update_patient_adherence(request, domain):
 @check_domain_migration
 def update_adherence_confidence(request, domain):
     try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
-    beneficiary_id = request_json.get('beneficiary_id')
-    start_date = request_json.get('start_date')
-    end_date = request_json.get('end_date')
-    confidence_level = request_json.get('confidence_level')
+        try:
+            request_json = json.loads(request.body)
+        except ValueError:
+            return json_response({"error": "Malformed JSON"}, status_code=400)
+        beneficiary_id = request_json.get('beneficiary_id')
+        start_date = request_json.get('start_date')
+        end_date = request_json.get('end_date')
+        confidence_level = request_json.get('confidence_level')
 
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_dates(start_date, end_date)
-        validate_confidence_level(confidence_level)
-        update_adherence_confidence_level(
-            domain=domain,
-            person_id=beneficiary_id,
-            start_date=parse_datetime(start_date),
-            end_date=parse_datetime(end_date),
-            new_confidence=confidence_level
-        )
-    except AdherenceException as e:
-        return json_response({"error": e.message}, status_code=400)
+        try:
+            validate_beneficiary_id(beneficiary_id)
+            validate_dates(start_date, end_date)
+            validate_confidence_level(confidence_level)
+            update_adherence_confidence_level(
+                domain=domain,
+                person_id=beneficiary_id,
+                start_date=parse_datetime(start_date),
+                end_date=parse_datetime(end_date),
+                new_confidence=confidence_level
+            )
+        except AdherenceException as e:
+            return json_response({"error": e.message}, status_code=400)
 
-    return json_response({"success": "Patient adherences updated."})
+        return json_response({"success": "Patient adherences updated."})
+    except Exception:
+        datadog_counter('commcare.enikshay.integration_500', tags=['99D_update_adherence_confidence'])
+        raise
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
@@ -106,21 +115,25 @@ def update_adherence_confidence(request, domain):
 @check_domain_migration
 def update_default_confidence(request, domain):
     try:
-        request_json = json.loads(request.body)
-    except ValueError:
-        return json_response({"error": "Malformed JSON"}, status_code=400)
+        try:
+            request_json = json.loads(request.body)
+        except ValueError:
+            return json_response({"error": "Malformed JSON"}, status_code=400)
 
-    beneficiary_id = request_json.get('beneficiary_id')
-    confidence_level = request_json.get('confidence_level')
+        beneficiary_id = request_json.get('beneficiary_id')
+        confidence_level = request_json.get('confidence_level')
 
-    try:
-        validate_beneficiary_id(beneficiary_id)
-        validate_confidence_level(confidence_level)
-        update_default_confidence_level(domain, beneficiary_id, confidence_level)
-    except AdherenceException as e:
-        return json_response({"error": e.message}, status_code=400)
+        try:
+            validate_beneficiary_id(beneficiary_id)
+            validate_confidence_level(confidence_level)
+            update_default_confidence_level(domain, beneficiary_id, confidence_level)
+        except AdherenceException as e:
+            return json_response({"error": e.message}, status_code=400)
 
-    return json_response({"success": "Default Confidence Updated"})
+        return json_response({"success": "Default Confidence Updated"})
+    except Exception:
+        datadog_counter('commcare.enikshay.integration_500', tags=['99D_update_default_confidence'])
+        raise
 
 
 def validate_beneficiary_id(beneficiary_id):
