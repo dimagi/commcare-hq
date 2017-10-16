@@ -24,7 +24,11 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    if (vm.step === 'chart') {
+        vm.filters = ['age'];
+    } else {
+        vm.filters = [];
+    }
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',

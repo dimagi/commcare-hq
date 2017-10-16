@@ -44,7 +44,14 @@ function AdditionalFilterController($scope, $location, $uibModal) {
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
-    var filtersObjects = [{ label: 'Gender', value: vm.selectedGender }, { label: 'Age', value: vm.selectedAge }];
+    var filtersObjects = [];
+    if (vm.filters.indexOf('gender') === -1) {
+        filtersObjects.push({ label: 'Gender', value: vm.selectedGender })
+    }
+    if (vm.filters.indexOf('age') === -1) {
+        filtersObjects.push({ label: 'Age', value: vm.selectedAge })
+    }
+
 
     vm.getPlaceholder = function() {
         var placeholder = '';
