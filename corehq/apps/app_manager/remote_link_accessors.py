@@ -21,7 +21,7 @@ class ApiKeyAuth(AuthBase):
         return not self == other
 
     def __call__(self, r):
-        r.headers['Authorization'] = '%s:%s' % (self.username, self.apikey)
+        r.headers['Authorization'] = 'apikey %s:%s' % (self.username, self.apikey)
         return r
 
 
