@@ -1022,7 +1022,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_initiated_on_cf'
             ),
             AggregateColumn(
-                'Percentage of children initiated appropriate complementary feeding (cumulative)',
+                'Percentage of children initiated appropriate complementary feeding',
                 percent,
                 [
                     SumColumn('cf_in_month'),
