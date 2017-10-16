@@ -953,6 +953,10 @@ class ImmunizationCoverageView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+        gender = self.request.GET.get('gender', None)
+        if gender:
+            config.update({'gender': gender})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
