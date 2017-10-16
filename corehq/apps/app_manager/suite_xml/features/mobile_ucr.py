@@ -64,7 +64,7 @@ class ReportModuleSuiteHelper(object):
 
 def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        datum_string = "instance('commcare-reports:{}')/"
+        datum_string = "instance('commcare-reports:{}')"
     else:
         datum_string = "instance('reports')/reports/report[@id='{}']"
 
@@ -129,7 +129,7 @@ def _get_select_details(config):
 
 def get_data_path(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+        data_path_string = "instance('commcare-reports:{}')/rows/row[@is_total_row='False']{}"
     else:
         data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
 
