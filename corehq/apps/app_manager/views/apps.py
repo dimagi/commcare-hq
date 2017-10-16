@@ -17,9 +17,10 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError, \
+    ActionNotPermitted
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
+    validate_langs, overwrite_app
 from corehq import toggles, privileges
 from corehq.elastic import ESError
 from dimagi.utils.logging import notify_exception
@@ -30,7 +31,6 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
-from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
@@ -56,7 +56,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
 )
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app_doc, wrap_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -71,7 +71,7 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.util.view_utils import reverse as reverse_util
 
