@@ -2839,7 +2839,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_month': card.exp_month,
             'exp_year': card.exp_year,
             'token': card.id,
-            'is_autopay': card.metadata.get('auto_pay_{}'.format(billing_account.id), False),
+            'is_autopay': self._is_autopay(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -2848,7 +2848,7 @@ class StripePaymentMethod(PaymentMethod):
     def get_autopay_card(self, billing_account):
         return next((
             card for card in self.all_cards
-            if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
+            if self._is_autopay(card, billing_account)
         ), None)
 
     def remove_card(self, card_token):
@@ -2891,7 +2891,7 @@ class StripePaymentMethod(PaymentMethod):
         """
         Unsets the auto_pay status for this card, and removes it from the billing account
         """
-        if card.metadata[self._auto_pay_card_metadata_key(billing_account)] == "True":
+        if self._is_autopay(card, billing_account):
             self._update_autopay_status(card, billing_account, autopay=False)
             billing_account.remove_autopay_user()
 
@@ -2914,6 +2914,10 @@ class StripePaymentMethod(PaymentMethod):
             other_payment_method._remove_autopay_card(billing_account)
         except StripePaymentMethod.DoesNotExist:
             pass
+
+    @staticmethod
+    def _is_autopay(card, billing_account):
+        return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
 
     @staticmethod
     def _auto_pay_card_metadata_key(billing_account):
