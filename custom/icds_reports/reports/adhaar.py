@@ -169,7 +169,6 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -177,7 +176,6 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = defaultdict(lambda: {
         'in_month': 0,
@@ -194,8 +192,8 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['y'] += in_month
+        data['blue'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [
@@ -214,24 +212,11 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Number of beneficiaries with Adhaar numbers",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'] / float(value['all']),
                         'all': value['all']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total number of beneficiaries with Adhaar numbers",
+                "key": "Percentage of beneficiaries with Adhaar numbers",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

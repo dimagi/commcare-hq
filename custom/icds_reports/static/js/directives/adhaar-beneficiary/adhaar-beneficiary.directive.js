@@ -92,7 +92,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                         return d3.max(line.values, function(d) {
                             return d.y;
                         });
-                    })) + 10,
+                    }) * 100) / 100 + 0.01,
                 ];
             }
         });
@@ -152,8 +152,6 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             },
             x: function(d){ return d.x; },
             y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
             clipVoronoi: false,
             tooltips: true,
@@ -172,7 +170,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -181,12 +179,11 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    var all = _.find(vm.chartData[1].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
-                    tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
+                    tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });
