@@ -311,15 +311,15 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         if not restore_state.overwrite_cache and report_config.sync_delay >= 1:
             try:
                 return db.get(
-                    "{}-{}".format(restore_user.user_id, report_config.report_id)
+                    "{}-{}".format(restore_user.user_id, report_config.uuid)
                 ).read()
             except NotFound:
                 pass
 
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
-        report_fixture_id = 'commcare-reports:' + report_config.report_id
-        report_filter_id = 'commcare-reports-filters:' + report_config.report_id
+        report_fixture_id = 'commcare-reports:' + report_config.uuid
+        report_filter_id = 'commcare-reports-filters:' + report_config.uuid
 
         # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
