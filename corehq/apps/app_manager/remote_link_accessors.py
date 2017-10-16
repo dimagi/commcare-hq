@@ -32,10 +32,10 @@ def get_remote_version(base_url, domain, app_id, auth):
     return response.json().get('latestReleasedBuild')
 
 
-def get_remote_master_release(base_url, domain, app_id, auth):
+def get_remote_master_release(base_url, domain, app_id, auth, linked_domain):
     # TODO also pull multimedia
     url = u'%s%s' % (base_url, reverse('latest_released_app_source', args=[domain, app_id]))
-    requesting_authority = absolute_reverse('domain_homepage', args=[domain])
+    requesting_authority = absolute_reverse('domain_homepage', args=[linked_domain])
     response = requests.get(
         url,
         params={'requester': requesting_authority},

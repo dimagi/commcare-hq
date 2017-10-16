@@ -6252,7 +6252,7 @@ class LinkedApplication(Application):
     def get_latest_master_release(self):
         if self.is_remote:
             return get_remote_master_release(self.remote_url_base, self.remote_domain,
-                                             self.master, self.remote_auth)
+                                             self.master, self.remote_auth, self.domain)
         else:
             master_app = get_app(None, self.master)
             if self.domain in master_app.linked_whitelist:
