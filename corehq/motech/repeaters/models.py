@@ -244,9 +244,9 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     @property
     def verify(self):
-        # overwrite to allow/skip certificate verification when sending request
+        # overwrite to skip certificate verification when sending request
         # to https urls
-        return None
+        return True
 
     def send_request(self, repeat_record, payload, verify=None):
         headers = self.get_headers(repeat_record)
