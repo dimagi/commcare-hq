@@ -28,7 +28,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_api_key
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
@@ -154,7 +154,7 @@ def get_releases_context(request, domain, app_id):
     return context
 
 
-@login_and_domain_required
+@login_or_api_key
 @location_safe
 def current_app_version(request, domain, app_id):
     """
