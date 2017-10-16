@@ -761,7 +761,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     ),
                     'value': get_value(kpi_yesterday, 'person_aadhaar'),
                     'all': get_value(kpi_yesterday, 'all_persons'),
-                    'format': 'div',
+                    'format': 'percent_and_div',
                     'frequency': 'day'
                 }
             ],
