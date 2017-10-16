@@ -101,6 +101,20 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
             ],
             [
                 {
+                    'label': _('Children (0-6 years)'),
+                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
+                    'percent': percent_increase('child_health_all', data, prev_data),
+                    'color': 'green' if percent_increase(
+                        'child_health_all',
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'child_health_all'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': frequency,
+                    'redirect': 'enrolled_children'
+                },
+                {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
                     'help_text': _((
                         "Total number of children registered between the age of 0 - 6 years "
@@ -115,20 +129,6 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': frequency
-                },
-                {
-                    'label': _('Children (0-6 years)'),
-                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', data, prev_data),
-                    'color': 'green' if percent_increase(
-                        'child_health_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'child_health_all'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'enrolled_children'
                 }
             ], [
                 {
