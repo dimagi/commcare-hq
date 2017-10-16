@@ -208,7 +208,7 @@ def update_person_address(requests, info, openmrs_config, person_uuid, address_u
     }
     if properties:
         requests.post_with_raise(
-            '/ws/rest/v1/person/{person_uuid}/name/{address_uuid}'.format(
+            '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                 person_uuid=person_uuid,
                 address_uuid=address_uuid,
             ),
