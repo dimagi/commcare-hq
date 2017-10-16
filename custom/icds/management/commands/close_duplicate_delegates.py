@@ -59,13 +59,13 @@ class Command(BaseCommand):
                     tech_issue_case = [c for c in case.cached_indices if c.referenced_type == 'tech_issue'][0]
                     last_case = latest_cases.get(tech_issue_case.referenced_id)
                     if last_case:
-                        if tech_issue_case.modified_on < last_case.modified_on:
-                            yield tech_issue_case.case_id
+                        if case.modified_on < last_case.modified_on:
+                            yield case.case_id
                         else:
-                            latest_cases[tech_issue_case.referenced_id] = tech_issue_case
+                            latest_cases[tech_issue_case.referenced_id] = case
                             yield last_case.case_id
                     else:
-                        latest_cases[tech_issue_case.referenced_id] = tech_issue_case
+                        latest_cases[tech_issue_case.referenced_id] = case
 
 
     def _get_issue_case_ids(self):
