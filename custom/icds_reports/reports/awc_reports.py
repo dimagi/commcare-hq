@@ -749,6 +749,24 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': 'month'
                 },
                 {
+                    'label': _('Percent Adhaar Seeded Beneficiaries'),
+                    'help_text': _(
+                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                    ),
+                    'percent': percent_diff(
+                        'person_aadhaar',
+                        kpi_yesterday,
+                        kpi_two_days_ago,
+                        'all_persons'
+                    ),
+                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
+                    'all': get_value(kpi_yesterday, 'all_persons'),
+                    'format': 'div',
+                    'frequency': 'day'
+                }
+            ],
+            [
+                {
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
                     'percent': percent_increase('child_health_all', kpi_yesterday, kpi_two_days_ago),
@@ -761,9 +779,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day',
                     'redirect': 'enrolled_children'
-                }
-            ],
-            [
+                },
                 {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
                     'help_text': _((
@@ -779,7 +795,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
-                },
+                }
+            ],
+            [
                 {
                     'label': _('Pregnant Women'),
                     'help_text': _("Total number of pregnant women registered"),
@@ -797,8 +815,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
                     'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
@@ -812,6 +828,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
@@ -829,8 +847,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
                     'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
@@ -844,6 +860,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
@@ -861,8 +879,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
                     'help_text': _((
@@ -881,22 +897,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(kpi_yesterday, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Percent Adhaar Seeded Beneficiaries'),
-                    'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
-                    ),
-                    'percent': percent_diff(
-                        'person_aadhaar',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
-                        'all_persons'
-                    ),
-                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
-                    'all': get_value(kpi_yesterday, 'all_persons'),
-                    'format': 'div',
                     'frequency': 'day'
                 }
             ]
