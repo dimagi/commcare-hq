@@ -37,7 +37,8 @@ from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
+    get_latest_released_app, get_latest_released_app_version
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
@@ -161,10 +162,12 @@ def current_app_version(request, domain, app_id):
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = get_latest_build_doc(domain, app_id)
+    latest_build = get_latest_build_doc(domain, app_id)
+    latest_released_version = get_latest_released_app_version(domain, app_id)
     return json_response({
         'currentVersion': app.version,
-        'latestBuild': latest['version'] if latest else None,
+        'latestBuild': latest_build['version'] if latest_build else None,
+        'latestReleasedBuild': latest_released_version if latest_released_version else None,
     })
 
 
