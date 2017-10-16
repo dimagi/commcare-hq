@@ -984,21 +984,21 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             ],
             [
                 {
-                    'label': _('Medicine Kit'),
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
                     'help_text': None,
                     'percent': percent_diff(
-                        'medicine_kits',
+                        'adult_weighing_scale',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ),
                     'color': 'green' if percent_diff(
-                        'medicine_kits',
+                        'adult_weighing_scale',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ) > 0 else 'red',
-                    'value': get_infa_value(kpi_data, 'medicine_kits'),
+                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
                     'format': 'string',
                     'frequency': 'month'
@@ -1026,25 +1026,25 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             ],
             [
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('Medicine Kit'),
                     'help_text': None,
                     'percent': percent_diff(
-                        'adult_weighing_scale',
+                        'medicine_kits',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ),
                     'color': 'green' if percent_diff(
-                        'adult_weighing_scale',
+                        'medicine_kits',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ) > 0 else 'red',
-                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
+                    'value': get_infa_value(kpi_data, 'medicine_kits'),
                     'all': '',
                     'format': 'string',
                     'frequency': 'month'
-                },
+                }
             ],
         ]
     }
