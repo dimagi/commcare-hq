@@ -46,10 +46,10 @@ function AdditionalFilterController($scope, $location, $uibModal) {
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
     if (vm.filters.indexOf('gender') === -1) {
-        filtersObjects.push({ label: 'Gender', value: vm.selectedGender })
+        filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
     if (vm.filters.indexOf('age') === -1) {
-        filtersObjects.push({ label: 'Age', value: vm.selectedAge })
+        filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
 
 
