@@ -53,7 +53,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
-MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation')
+MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation verify')
 MockNikshayRegisterPrivatePatientRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
 
 
@@ -1305,7 +1305,9 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
                 url=WSDL_URL,
-                operation='InsertHFIDPatient_UATBC')
+                operation='InsertHFIDPatient_UATBC',
+                verify=False,
+            )
         )
         mock_date = date(2016, 9, 8)
         with patch('custom.enikshay.integrations.nikshay.repeater_generator.datetime') as mock_datetime:
@@ -1330,7 +1332,9 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
                 url=WSDL_URL,
-                operation='InsertHFIDPatient_UATBC')
+                operation='InsertHFIDPatient_UATBC',
+                verify=False,
+            )
         )
 
         payload_generator.handle_failure(
