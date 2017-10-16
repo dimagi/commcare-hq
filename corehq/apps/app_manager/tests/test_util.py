@@ -42,15 +42,14 @@ class TestOverwriteApp(TestCase):
             ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
         ]
         cls.linked_app.save()
-        cls.target_json = cls.linked_app.to_json()
 
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
-            overwrite_app(self.target_json, self.master_app, {})
+            overwrite_app(self.linked_app, self.master_app, {})
 
     def test_report_mapping(self):
         report_map = {'id': 'mapped_id'}
-        overwrite_app(self.target_json, self.master_app, report_map)
+        overwrite_app(self.linked_app, self.master_app, report_map)
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
 
