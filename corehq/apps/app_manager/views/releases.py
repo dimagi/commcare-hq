@@ -164,7 +164,7 @@ def current_app_version(request, domain, app_id):
     latest = get_latest_build_doc(domain, app_id)
     return json_response({
         'currentVersion': app.version,
-        'latestRelease': latest['version'] if latest else None,
+        'latestBuild': latest['version'] if latest else None,
     })
 
 
