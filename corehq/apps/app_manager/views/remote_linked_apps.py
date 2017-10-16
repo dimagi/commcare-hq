@@ -18,9 +18,15 @@ def get_latest_released_app_source(request, domain, app_id):
     if not latest_master_build:
         raise Http404
 
-    _attachments = latest_master_build.get_attachments()
+    return JsonResponse(_convert_app_for_remote_linking(latest_master_build))
 
+
+def _convert_app_for_remote_linking(latest_master_build):
+    _attachments = latest_master_build.get_attachments()
     source = latest_master_build.to_json()
-    source['_LAZY_ATTACHMENTS'] = _attachments
+    source['_LAZY_ATTACHMENTS'] = {
+        name: {'content': content}
+        for name, content in _attachments.items()
+    }
     source.pop("external_blobs", None)
-    return JsonResponse(source)
+    return source

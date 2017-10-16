@@ -43,4 +43,11 @@ def get_remote_master_release(base_url, domain, app_id, auth, linked_domain):
     )
     response.raise_for_status()
     app_json = response.json()
-    return wrap_app(app_json)
+    return _convert_app_from_remote_linking_source(app_json)
+
+
+def _convert_app_from_remote_linking_source(app_json):
+    attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
+    app = wrap_app(app_json)
+    app._LAZY_ATTACHMENTS = attachments
+    return app
