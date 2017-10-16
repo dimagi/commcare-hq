@@ -108,7 +108,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
-    get_latest_released_app)
+    get_latest_released_app, get_latest_released_app_version)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -6243,7 +6243,7 @@ class LinkedApplication(Application):
             return get_remote_version(self.remote_url_base, self.remote_domain,
                                       self.master, self.remote_auth)
         else:
-            return get_app(None, self.master, latest=True).version
+            return get_latest_released_app_version(self.domain, self.master)
 
     @property
     def is_remote(self):

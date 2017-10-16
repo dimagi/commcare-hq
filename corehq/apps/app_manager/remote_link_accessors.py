@@ -29,7 +29,7 @@ def get_remote_version(base_url, domain, app_id, auth):
     url = u'%s%s' % (base_url, reverse('current_app_version', args=[domain, app_id]))
     response = requests.get(url, auth=ApiKeyAuth(auth.username, auth.api_key))
     response.raise_for_status()
-    return response.json().get('currentVersion')
+    return response.json().get('latestReleasedBuild')
 
 
 def get_remote_master_release(base_url, domain, app_id, auth):
