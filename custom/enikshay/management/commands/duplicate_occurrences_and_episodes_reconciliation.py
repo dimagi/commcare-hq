@@ -41,7 +41,7 @@ class Command(BaseCommand):
                     # reconcile occurrence cases
                     # also reconcile episode cases under these if needed
                     self.reconcile_cases(open_occurrence_cases, person_case_id)
-                else:
+                elif open_occurrence_cases:
                     # if needed reconcile episode cases under the open occurrence case
                     self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_cases[0].get_id)
 
@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 if multiple, pick first opened from relevant occurrence case
             @date_opened (first opened occurrence case)
         """
-        open_occurrence_case_ids = [case.id for case in open_occurrence_cases]
+        open_occurrence_case_ids = [case.case_id for case in open_occurrence_cases]
         # get all episode cases for all open occurrences
         all_episode_cases = []
         for open_occurrence_case_id in open_occurrence_case_ids:
@@ -79,8 +79,8 @@ class Command(BaseCommand):
         elif active_episode_confirmed_drtb_cases_count > 1:
             relevant_occurrence_cases = []
             for active_episode_confirmed_drtb_case in active_episode_confirmed_drtb_cases:
-                relevant_occurrence_cases += get_occurrence_case_from_episode(
-                    DOMAIN, active_episode_confirmed_drtb_case.get_id)
+                relevant_occurrence_cases += [get_occurrence_case_from_episode(
+                    DOMAIN, active_episode_confirmed_drtb_case.get_id)]
             retain_case_id = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
         elif active_episode_confirmed_tb_cases_count == 1:
             episode_case_id = active_episode_confirmed_tb_cases[0].get_id
@@ -88,8 +88,8 @@ class Command(BaseCommand):
         elif active_episode_confirmed_tb_cases_count > 1:
             relevant_occurrence_cases = []
             for active_episode_confirmed_tb_case in active_episode_confirmed_tb_cases:
-                relevant_occurrence_cases += get_occurrence_case_from_episode(
-                    DOMAIN, active_episode_confirmed_tb_case.get_id)
+                relevant_occurrence_cases += [get_occurrence_case_from_episode(
+                    DOMAIN, active_episode_confirmed_tb_case.get_id)]
             retain_case_id = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
         else:
             retain_case_id = sorted(open_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
@@ -209,12 +209,13 @@ class Command(BaseCommand):
         if len(open_active_episode_cases) > 1:
             self.reconcile_episode_cases(open_active_episode_cases, occurrence_case_id)
 
-        # just confirm again that the episodes were reconciled well
-        all_open_episode_cases = _get_open_episode_cases_for_occurrence(occurrence_case_id)
-        open_active_episode_cases = _get_open_active_episode_cases(all_open_episode_cases)
-        if len(open_active_episode_cases) > 1:
-            raise CommandError("Resolved open active episode cases were not resolved for occurrence, %s" %
-                               occurrence_case_id)
+        if not self.dry_run:
+            # just confirm again that the episodes were reconciled well
+            all_open_episode_cases = _get_open_episode_cases_for_occurrence(occurrence_case_id)
+            open_active_episode_cases = _get_open_active_episode_cases(all_open_episode_cases)
+            if len(open_active_episode_cases) > 1:
+                raise CommandError("Resolved open active episode cases were not resolved for occurrence, %s" %
+                                   occurrence_case_id)
 
         return all_open_episode_cases
 
