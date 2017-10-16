@@ -840,10 +840,7 @@ class ExclusiveBreastfeedingView(View):
             'aggregation_level': 1,
         }
 
-        gender = self.request.GET.get('gender', None)
         age = self.request.GET.get('age', None)
-        if gender:
-            config.update({'gender': gender})
         if age:
             config.update(get_age_filter(age))
 
@@ -882,11 +879,8 @@ class ChildrenInitiatedView(View):
         }
 
         gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
         if gender:
             config.update({'gender': gender})
-        if age:
-            config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -959,6 +953,10 @@ class ImmunizationCoverageView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1,
         }
+        gender = self.request.GET.get('gender', None)
+        if gender:
+            config.update({'gender': gender})
+
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
@@ -1104,6 +1102,8 @@ class EnrolledChildrenView(View):
             else:
                 data = get_enrolled_children_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
+            if 'age' in config:
+                del config['age']
             data = get_enrolled_children_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={

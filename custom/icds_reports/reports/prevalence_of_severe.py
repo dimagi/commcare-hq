@@ -89,11 +89,13 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                 "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
+                    "Wasting in children is a symptom of acute undernutrition usually as a consequence "
+                    "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
+                    "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
+                    "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
+                    "status for a child that has moderate wasting (weight-for-height) below -2Z."
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },

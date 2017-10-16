@@ -24,7 +24,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['gender'];
     vm.rightLegend = {
         info: '"Percentage of infants 0-6 months of age who are fed exclusively with breast milk. An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"',
     };
