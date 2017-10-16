@@ -830,26 +830,27 @@ def drop_user_case(request, domain, app_id):
 @require_GET
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
-    app = get_current_app_doc(domain, app_id)
-    master_app = get_app(None, app['master'])
-    latest_master_build = get_app(None, app['master'], latest=True)
-    if app['domain'] in master_app.linked_whitelist:
-        report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
-        try:
-            overwrite_app(app, latest_master_build, report_map)
-        except AppEditingError:
-            messages.error(request, _('This linked application uses dynamic mobile UCRs '
-                                      'which are currently not supported. For this application '
-                                      'to function correctly, you will need to remove those modules '
-                                      'or revert to a previous version that did not include them.'))
-        else:
-            messages.success(request,
-                             _('Your linked application was successfully updated to the latest version.'))
-    else:
+    app = get_current_app(domain, app_id)
+    try:
+        latest_master_build = app.get_latest_master_release()
+    except ActionNotPermitted:
         messages.error(request, _(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
+        return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
+
+    report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
+    try:
+        overwrite_app(app, latest_master_build, report_map)
+    except AppEditingError:
+        messages.error(request, _('This linked application uses dynamic mobile UCRs '
+                                  'which are currently not supported. For this application '
+                                  'to function correctly, you will need to remove those modules '
+                                  'or revert to a previous version that did not include them.'))
+    else:
+        messages.success(request,
+                         _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
 
 
