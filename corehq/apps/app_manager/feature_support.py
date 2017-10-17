@@ -149,3 +149,10 @@ class CommCareFeatureSupportMixin(object):
         Ability to configure apk/app update checks
         """
         return self._require_minimum_version('2.38')
+
+    @property
+    def enable_remote_requests(self):
+        """
+        Enable Remote Request question type in the form builder.
+        """
+        return self._require_minimum_version('2.41')
