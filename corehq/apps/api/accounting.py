@@ -92,7 +92,7 @@ class DefaultProductPlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'edition', 'is_trial', 'last_modified']
+        fields = ['id', 'edition', 'is_trial', 'last_modified']
         resource_name = 'default_product_plan'
 
 
