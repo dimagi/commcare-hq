@@ -1048,6 +1048,9 @@ LOGGING = {
         'hqcontext': {
             '()': 'corehq.util.log.HQRequestFilter',
         },
+        'exclude_static': {
+            '()': 'corehq.util.log.SuppressStaticLogs',
+        },
     },
     'handlers': {
         'pillowtop': {
@@ -1176,6 +1179,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
+            'filters': ['exclude_static'],
         },
         'django.security.DisallowedHost': {
             'handlers': ['null'],
