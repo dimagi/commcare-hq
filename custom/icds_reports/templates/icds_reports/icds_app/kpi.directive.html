@@ -13,7 +13,7 @@
                         <span class="title white" ng-bind="cell.label"></span>
                     </div>
                     <div class="row kpi-numbers">
-                        <span class="number white" ng-if="cell.format == 'div'"><span class="white" ng-bind="cell.value | indiaNumbers"></span> / <span class="white" ng-bind="cell.all | indiaNumbers"></span></span>
+                        <span class="number white" ng-if="cell.format == 'div'"><span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span class="white" ng-bind="cell.all | indiaNumbers"></span></span>
                         <span class="number white" ng-if="cell.format == 'number'" ng-bind="cell.value | indiaNumbers"></span>
                         <span class="string white" ng-if="cell.format == 'string'" ng-bind="cell.value"></span>
                         <div ng-if="cell.format == 'percent_and_div'">
