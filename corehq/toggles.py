@@ -1315,3 +1315,11 @@ ICDS_LIVEQUERY = PredictablyRandomToggle(
     [NAMESPACE_USER],
     randomness=0.0,
 )
+
+CUSTOM_REPORT_ISSUE_MODULE = StaticToggle(
+    'custom_report_issue_module',
+    'Allow custom configuration of the report issue button to point to an '
+    'a webapp module for mobile worker login.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)

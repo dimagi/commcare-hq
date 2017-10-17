@@ -84,7 +84,11 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
+from corehq.toggles import (
+    HIPAA_COMPLIANCE_CHECKBOX,
+    MOBILE_UCR,
+    CUSTOM_REPORT_ISSUE_MODULE,
+)
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -569,6 +573,17 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    custom_report_issue_module = forms.ChoiceField(
+        label=ugettext_lazy("Select Custom Report Issue Module (for Mobile Workers)"),
+        choices=(),
+        initial=None,
+        required=False,
+        help_text=ugettext_lazy(
+            "When a Mobile Worker is logged in, clicking on "
+            "the report an issue button will take them to this module in Web Apps."
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -596,6 +611,12 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['logo']
             del self.fields['delete_logo']
 
+        if CUSTOM_REPORT_ISSUE_MODULE.enabled(self.domain):
+            self.fields['custom_report_issue_module'].choices = [('', '')] + self.module_choices
+            self.fields['custom_report_issue_module'].initial = self.project.custom_report_issue_module
+        else:
+            del self.fields['custom_report_issue_module']
+
         if self.project:
             if not self.project.call_center_config.enabled:
                 del self.fields['call_center_enabled']
@@ -611,6 +632,18 @@ class DomainGlobalSettingsForm(forms.Form):
 
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
+
+    @property
+    @memoized
+    def cloudcare_apps(self):
+        return filter(lambda app: app.cloudcare_enabled, get_apps_in_domain(self.domain))
+
+    @property
+    def module_choices(self):
+        return [(
+            "{}_{}".format(app.get_id, module.unique_id),
+            "{} > {}".format(app.name, module.default_name(app))
+        ) for app in self.cloudcare_apps for module in app.modules]
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -685,6 +718,10 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.custom_report_issue_module = (
+            self.cleaned_data.get('custom_report_issue_module', None)
+            if CUSTOM_REPORT_ISSUE_MODULE.enabled(self.domain) else None
+        )
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
