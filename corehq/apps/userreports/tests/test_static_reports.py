@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 import os
+
+import mock
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.userreports.models import StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration, id_is_static
 
 
 class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
@@ -26,5 +28,43 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for data_source in StaticReportConfiguration.all(ignore_server_environment=True):
-            data_source.validate()
+        _call_center_domain_mock = mock.patch(
+            'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
+        )
+        _call_center_domain_mock.start()
+        messages = []
+        for report_config in StaticReportConfiguration.all(ignore_server_environment=True):
+            report_config.validate()
+            if not id_is_static(report_config.config_id):
+                continue
+
+            columns_id = []
+
+            for column in report_config.columns:
+                if column['type'] == 'field':
+                    columns_id.append(column['field'])
+                elif column['type'] == 'percent':
+                    columns_id.extend([column['numerator']['field'], column['denominator']['field']])
+
+            data_source_config = report_config.config
+
+            data_source_columns_id = ['doc_id', 'inserted_at']
+
+            for column in data_source_config.configured_indicators:
+                if column['type'] == 'choice_list':
+                    data_source_columns_id.extend([
+                        '{}_{}'.format(column['column_id'], choice) for choice in column['choices']
+                    ])
+                else:
+                    data_source_columns_id.append(column['column_id'])
+
+            missing_columns = set(columns_id) - set(data_source_columns_id)
+            if missing_columns:
+                messages.append(
+                    'Columns from {} ({}) not found in the data source: {}'.format(
+                        report_config.title, report_config.domain, ', '.join(missing_columns)
+                    )
+                )
+        if messages:
+            self.fail('\n' + '\n'.join(messages))
+        _call_center_domain_mock.stop()
