@@ -31,7 +31,7 @@ class _CacheAccessor(object):
 @quickcache(['domain', 'user_id'])
 def get_loadtest_factor_for_user(domain, user_id):
     from corehq.apps.users.models import CouchUser, CommCareUser
-    if ENABLE_LOADTEST_USERS.enabled(domain):
+    if ENABLE_LOADTEST_USERS.enabled(domain) and user_id:
         user = CouchUser.get_by_user_id(user_id, domain=domain)
         if isinstance(user, CommCareUser):
             return user.loadtest_factor or 1
