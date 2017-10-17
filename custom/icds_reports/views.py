@@ -840,9 +840,9 @@ class ExclusiveBreastfeedingView(View):
             'aggregation_level': 1,
         }
 
-        age = self.request.GET.get('age', None)
-        if age:
-            config.update(get_age_filter(age))
+        gender = self.request.GET.get('gender', None)
+        if gender:
+            config.update({'gender': gender})
 
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
