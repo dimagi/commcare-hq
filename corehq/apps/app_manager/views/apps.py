@@ -849,6 +849,8 @@ def pull_master_app(request, domain, app_id):
                                   'to function correctly, you will need to remove those modules '
                                   'or revert to a previous version that did not include them.'))
     else:
+        # if app.master_is_remote:
+        #     fetch_missing_multimedia(app)
         messages.success(request,
                          _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))

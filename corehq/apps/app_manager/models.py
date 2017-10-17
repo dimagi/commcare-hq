@@ -6239,18 +6239,18 @@ class LinkedApplication(Application):
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
     def get_master_version(self):
-        if self.is_remote:
+        if self.master_is_remote:
             return get_remote_version(self.remote_url_base, self.remote_domain,
                                       self.master, self.remote_auth)
         else:
             return get_latest_released_app_version(self.domain, self.master)
 
     @property
-    def is_remote(self):
+    def master_is_remote(self):
         return bool(self.remote_url_base)
 
     def get_latest_master_release(self):
-        if self.is_remote:
+        if self.master_is_remote:
             return get_remote_master_release(self.remote_url_base, self.remote_domain,
                                              self.master, self.remote_auth, self.domain)
         else:
