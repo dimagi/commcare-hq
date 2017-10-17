@@ -155,4 +155,4 @@ class CommCareFeatureSupportMixin(object):
         """
         Enable Remote Request question type in the form builder.
         """
-        return self._require_minimum_version('2.40')
+        return self._require_minimum_version('2.41')
