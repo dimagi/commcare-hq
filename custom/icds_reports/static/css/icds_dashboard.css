@@ -643,3 +643,15 @@ table.no-footer {
     line-height: 1.42857143;
     color: #555;
 }
+
+#detailsChart .nv-series-0, .nv-series-1, .nv-series-2{
+    stroke-opacity: 0 !important;
+}
+
+#detailsChart .nv-area {
+    fill-opacity: 0.75;
+}
+
+#detailsChart line.nv-guideline {
+    stroke: #ccc;
+}

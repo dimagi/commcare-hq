@@ -1022,7 +1022,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_initiated_on_cf'
             ),
             AggregateColumn(
-                'Percentage of children initiated appropriate complementary feeding (cumulative)',
+                'Percentage of children initiated appropriate complementary feeding',
                 percent,
                 [
                     SumColumn('cf_in_month'),
@@ -1944,28 +1944,28 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 1 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 1 ANC visit by delivery',
                                 'slug': 'anc_1',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 2 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 2 ANC visits by delivery',
                                 'slug': 'anc_2',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 3 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 3 ANC visits by delivery',
                                 'slug': 'anc_3',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 4 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 4 ANC visits by delivery',
                                 'slug': 'anc_4',
                                 'average': [],
                                 'format': 'percent'
@@ -1979,21 +1979,21 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Medicine Kit',
+                                'header': 'AWCs with Medicine Kit',
                                 'slug': 'medicine_kits',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Weighing Scale: infants',
+                                'header': 'AWCs with weighing scale for infants',
                                 'slug': 'baby_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Weighing Scale: Mother and Child',
+                                'header': 'AWCs with weighing scale for mother and child',
                                 'slug': 'adult_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
@@ -2013,7 +2013,9 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children who were put to the breast within one hour of birth.',
+                                'header': (
+                                    'Percentage of children who were put to the breast within one hour of birth.'
+                                ),
                                 'slug': 'breastfed_at_birth',
                                 'average': [],
                                 'format': 'percent'
@@ -2160,7 +2162,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adhaar seeded beneficiaries',
+                                'header': 'Percent Adhaar-seeded beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],

@@ -79,7 +79,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
-                    "Percentage of children 1 year+ who have recieved complete immunization as per "
+                    "Percentage of children 1 year+ who have received complete immunization as per "
                     "National Immunization Schedule of India required by age 1."
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
