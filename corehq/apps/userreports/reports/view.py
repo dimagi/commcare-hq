@@ -1,9 +1,10 @@
 import json
-import os
-import tempfile
 from StringIO import StringIO
 from contextlib import contextmanager, closing
 from datetime import datetime
+
+from django.http.response import HttpResponseServerError
+from django.shortcuts import redirect, render
 
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
@@ -71,6 +72,8 @@ from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403
 
 from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import get_download_context
 
 from corehq.apps.reports.datatables import DataTablesHeader
 
@@ -586,7 +589,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         download = DownloadBase()
         res = export_ucr_async.delay(self.export_table, download.download_id, self.title, self.request.couch_user)
         download.set_task(res)
-        return HttpResponse()
+        return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 
     @classmethod
     def report_preview_data(cls, domain, temp_report):
@@ -613,6 +616,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                     "chart_configs": view.spec.charts,
                     "aaData": datatables_data['aaData'],
                 }
+
+    @classmethod
+    def get_subpages(cls):
+        return [
+            {
+                'title': DownloadUCRStatusView.page_title,
+                'urlname': DownloadUCRStatusView.urlname
+            }
+        ]
 
 
 # Base class for classes that provide custom rendering for UCRs
@@ -652,3 +664,63 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         from django.conf.urls import url
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
+
+class DownloadUCRStatusView(BaseDomainView):
+    urlname = 'download_ucr_status'
+    page_title = ugettext_noop('Download UCR Status')
+    section_name = ugettext_noop("Reports")
+
+    @property
+    def section_url(self):
+        # todo what should the parent section url be?
+        return "#"
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadUCRStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('ucr_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Report Status"),
+            'progress_text': _("Preparing report download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+            'next_url_text': _("Go back to report"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': self.spec.title,
+            'url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+        }]
+
+    @property
+    @memoized
+    def spec(self):
+        if self.is_static:
+            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
+        else:
+            return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
+
+    @property
+    def is_static(self):
+        return report_config_id_is_static(self.report_config_id)
+
+    @property
+    def report_config_id(self):
+        return self.kwargs['config_id']
+
+def ucr_download_job_poll(request, domain,
+                               download_id,
+                               template="hqwebapp/partials/shared_download_status.html"):
+    try:
+        context = get_download_context(download_id, 'Preparing download')
+        context.update({'link_text': _('Download Report')})
+    except TaskFailedError as e:
+        return HttpResponseServerError(e.errors)
+    return render(request, template, context)

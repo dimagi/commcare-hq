@@ -26,7 +26,6 @@ var HQReport = function (options) {
     self.getReportRenderUrl = options.getReportRenderUrl || getReportRenderUrl;
     self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
     self.getReportParams = options.getReportParams || getReportParams;
-    self.asyncExport = options.asyncExport || false;
 
     self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
 
@@ -60,14 +59,6 @@ var HQReport = function (options) {
                                                "address defined in your account settings."), "success");
                                 },
                             });
-                        } else if (self.asyncExport) {
-                                $.ajax({
-                                    url: self.getReportRenderUrl("export"),
-                                    success: function() {
-                                        alert_user(gettext("Your requested excel report will be sent to the email " +
-                                           "address defined in your account settings."), "success");
-                                    },
-                                });
                         } else {
                             window.location.href = self.getReportRenderUrl("export");
                         }

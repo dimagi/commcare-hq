@@ -48,7 +48,7 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "reports_home"
 
-    url_prefix_formats = ('/a/{domain}/reports/',)
+    url_prefix_formats = ('/a/{domain}/reports/', '/a/{domain}/configurable_reports/')
 
     @property
     def _is_viewable(self):

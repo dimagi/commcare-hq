@@ -63,7 +63,6 @@ hqDefine("userreports/js/configurable_report", function() {
             emailDefaultSubject: initial_page_data('title'),
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-            asyncExport: true,
             getReportRenderUrl: function(renderType, additionalParams) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
