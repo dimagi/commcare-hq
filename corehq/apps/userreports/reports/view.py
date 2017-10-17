@@ -617,15 +617,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                     "aaData": datatables_data['aaData'],
                 }
 
-    @classmethod
-    def get_subpages(cls):
-        return [
-            {
-                'title': DownloadUCRStatusView.page_title,
-                'urlname': DownloadUCRStatusView.urlname
-            }
-        ]
-
 
 # Base class for classes that provide custom rendering for UCRs
 class CustomConfigurableReport(ConfigurableReport):
