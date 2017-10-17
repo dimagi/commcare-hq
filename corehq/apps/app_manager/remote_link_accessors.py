@@ -57,6 +57,11 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
+def pull_missing_multimedia_from_remote(app):
+    missing_media = _get_missing_multimedia(app)
+    _fetch_remote_media(app.domain, missing_media, app.remote_app_details)
+
+
 def _get_missing_multimedia(app):
     missing = []
     for media_info in app.multimedia_map.values():
@@ -72,3 +77,21 @@ def _get_missing_multimedia(app):
 def _check_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
+
+
+def _fetch_remote_media(local_domain, missing_media, remote_app_details):
+    for item in missing_media:
+        media_class = CommCareMultimedia.get_doc_class(item['media_type'])
+        content = _fetch_remote_media_content(item['multimedia_id'], remote_app_details)
+        media_item = media_class.get_by_data(content)
+        media_item._id = item['multimedia_id']
+        media_item.attach_data(content)
+        media_item.add_domain(local_domain, owner=True)
+
+
+def _fetch_remote_media_content(media_item_id, remote_app_details):
+    url_base, domain, username, api_key, app_id = remote_app_details
+    url = u'%s%s' % (url_base, reverse('??', args=[domain, media_item_id]))
+    response = requests.get(url, auth=ApiKeyAuth(username, api_key))
+    response.raise_for_status()
+    return response.content

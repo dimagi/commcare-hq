@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.test.testcases import TestCase
@@ -8,9 +9,9 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    ReportModule, ReportAppConfig, Module)
+    ReportModule, ReportAppConfig, Module, RemoteAppDetails)
 from corehq.apps.app_manager.remote_link_accessors import _convert_app_from_remote_linking_source, \
-    _get_missing_multimedia
+    _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.remote_linked_apps import _convert_app_for_remote_linking
 from corehq.apps.app_manager.views.utils import overwrite_app
@@ -35,19 +36,22 @@ class TestLinkedApps(TestCase, TestXmlMixin):
         ]
         cls.linked_app.save()
 
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
-        with open(image_path, 'r') as f:
-            image_data = f.read()
+        image_data = cls._get_image_data('commcare-hq-logo.png')
         cls.image = CommCareImage.get_by_data(image_data)
         cls.image.attach_data(image_data, original_filename='logo.png')
         cls.image.add_domain(cls.master_app.domain)
 
     @classmethod
     def tearDownClass(cls):
-        cls.master_app.delete()
         cls.linked_app.delete()
         cls.image.delete()
         super(TestLinkedApps, cls).tearDownClass()
+
+    @staticmethod
+    def _get_image_data(filename):
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
+        with open(image_path, 'r') as f:
+            return f.read()
 
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
@@ -86,7 +90,6 @@ class TestLinkedApps(TestCase, TestXmlMixin):
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         self.master_app.get_module(0).set_icon('en', image_path)
-
         self.master_app.create_mapping(self.image, image_path, save=False)
 
         missing_media = _get_missing_multimedia(self.master_app)
@@ -94,6 +97,27 @@ class TestLinkedApps(TestCase, TestXmlMixin):
 
         image = CommCareImage.get(self.image._id)
         self.assertIn(self.master_app.domain, image.valid_domains)
+
+    def test_fetch_missing_media(self):
+        image_path = 'jr://file/commcare/case_list_image.jpg'
+        self.master_app.get_module(0).set_icon('en', image_path)
+        self.master_app.create_mapping(self.image, image_path, save=False)
+
+        remote_app_details = RemoteAppDetails(
+            'http://localhost:8000', 'test_domain', 'user', 'key', self.master_app._id
+        )
+        data = 'this is a test'
+        media_details = self.master_app.multimedia_map.values()[0]
+        media_details['multimedia_id'] = uuid.uuid4().hex
+        media_details['media_type'] = 'CommCareMultimedia'
+        with patch('corehq.apps.app_manager.remote_link_accessors._fetch_remote_media_content') as mock:
+            mock.return_value = data
+            _fetch_remote_media('domain', [media_details], remote_app_details)
+
+        media = CommCareMultimedia.get(media_details['multimedia_id'])
+        self.addCleanup(media.delete)
+        content = media.fetch_attachment(media.blobs.keys()[0])
+        self.assertEqual(data, content)
 
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
