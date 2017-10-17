@@ -6223,6 +6223,9 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
+RemoteAppDetails = namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')
+
+
 class RemoteLinkedAppAuth(DocumentSchema):
     username = StringProperty()
     api_key = StringProperty()
@@ -6238,10 +6241,19 @@ class LinkedApplication(Application):
     remote_domain = StringProperty()
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
+    @property
+    def remote_app_details(self):
+        return RemoteAppDetails(
+            self.remote_url_base,
+            self.remote_domain,
+            self.remote_auth.username,
+            self.remote_auth.api_key,
+            self.master
+        )
+
     def get_master_version(self):
         if self.master_is_remote:
-            return get_remote_version(self.remote_url_base, self.remote_domain,
-                                      self.master, self.remote_auth)
+            return get_remote_version(self.remote_app_details)
         else:
             return get_latest_released_app_version(self.domain, self.master)
 
@@ -6251,8 +6263,7 @@ class LinkedApplication(Application):
 
     def get_latest_master_release(self):
         if self.master_is_remote:
-            return get_remote_master_release(self.remote_url_base, self.remote_domain,
-                                             self.master, self.remote_auth, self.domain)
+            return get_remote_master_release(self.remote_app_details, self.domain)
         else:
             master_app = get_app(None, self.master)
             if self.domain in master_app.linked_whitelist:

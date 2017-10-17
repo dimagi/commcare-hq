@@ -25,21 +25,23 @@ class ApiKeyAuth(AuthBase):
         return r
 
 
-def get_remote_version(base_url, domain, app_id, auth):
-    url = u'%s%s' % (base_url, reverse('current_app_version', args=[domain, app_id]))
-    response = requests.get(url, auth=ApiKeyAuth(auth.username, auth.api_key))
+def get_remote_version(remote_app_details):
+    url_base, domain, username, api_key, app_id = remote_app_details
+    url = u'%s%s' % (url_base, reverse('current_app_version', args=[domain, app_id]))
+    response = requests.get(url, auth=ApiKeyAuth(username, api_key))
     response.raise_for_status()
     return response.json().get('latestReleasedBuild')
 
 
-def get_remote_master_release(base_url, domain, app_id, auth, linked_domain):
+def get_remote_master_release(remote_app_details, linked_domain):
     # TODO also pull multimedia
-    url = u'%s%s' % (base_url, reverse('latest_released_app_source', args=[domain, app_id]))
+    url_base, domain, username, api_key, app_id = remote_app_details
+    url = u'%s%s' % (url_base, reverse('latest_released_app_source', args=[domain, app_id]))
     requesting_authority = absolute_reverse('domain_homepage', args=[linked_domain])
     response = requests.get(
         url,
         params={'requester': requesting_authority},
-        auth=ApiKeyAuth(auth.username, auth.api_key)
+        auth=ApiKeyAuth(username, api_key)
     )
     response.raise_for_status()
     app_json = response.json()
