@@ -78,7 +78,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'redirect': 'registered_household'
                 },
                 {
-                    'label': _('Percent Adhaar Seeded Beneficiaries'),
+                    'label': _('Percent Adhaar-seeded Beneficiaries'),
                     'help_text': _((
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
