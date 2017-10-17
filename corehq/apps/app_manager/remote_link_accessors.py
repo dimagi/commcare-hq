@@ -1,8 +1,10 @@
 import requests
+from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests.auth import AuthBase
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -53,3 +55,20 @@ def _convert_app_from_remote_linking_source(app_json):
     app = wrap_app(app_json)
     app._LAZY_ATTACHMENTS = attachments
     return app
+
+
+def _get_missing_multimedia(app):
+    missing = []
+    for media_info in app.multimedia_map.values():
+        try:
+            local_media = CommCareMultimedia.get(media_info['multimedia_id'])
+        except ResourceNotFound:
+            missing.append(media_info)
+        else:
+            _check_domain_access(app.domain, local_media)
+    return missing
+
+
+def _check_domain_access(domain, media):
+    if domain not in media.valid_domains:
+        media.add_domain(domain)
