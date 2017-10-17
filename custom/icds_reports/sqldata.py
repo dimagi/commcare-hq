@@ -2013,7 +2013,9 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Percentage of children who were put to the breast within one hour of birth.',
+                                'header': (
+                                    'Percentage of children who were put to the breast within one hour of birth.'
+                                ),
                                 'slug': 'breastfed_at_birth',
                                 'average': [],
                                 'format': 'percent'

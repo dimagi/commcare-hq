@@ -511,7 +511,7 @@ var height_for_age = {
              { x: 57, y: 99.3 },
              { x: 58, y: 99.7 },
              { x: 59, y: 100.2 },
-             { x: 60, y: 100.7 }
+             { x: 60, y: 100.7 },
         ],
         'green': [
             { x: 0, y: 53.7 },
@@ -574,7 +574,7 @@ var height_for_age = {
             { x: 57, y: 117.4 },
             { x: 58, y: 118 },
             { x: 59, y: 118.6 },
-            { x: 60, y: 119.2 }
+            { x: 60, y: 119.2 },
         ],
     },
     F: {
@@ -1964,7 +1964,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
-                    var month = d.value == 1 ? "month": "months";
+                    var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html
                 });
@@ -2007,9 +2007,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
-                    var month = d.value == 1 ? "month": "months";
+                    var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
-                    return html
+                    return html;
                 });
                 return chart;
             },
@@ -2051,7 +2051,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                 tooltip.contentGenerator(function (d) {
                     var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
-                    return html
+                    return html;
                 });
                 return chart;
             },
