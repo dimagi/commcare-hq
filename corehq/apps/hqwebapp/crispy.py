@@ -94,10 +94,7 @@ class TextField(OldField):
         context.update({
             'field_text': self.text,
         })
-        return super(TextField, self).render(
-            form, form_style, _get_dict_from_context(context),
-            template_pack=template_pack,
-        )
+        return super(TextField, self).render(form, form_style, context, template_pack=template_pack)
 
 
 class InlineColumnField(InlineField):
@@ -111,10 +108,7 @@ class InlineColumnField(InlineField):
         context.update({
             'block_css_class': self.block_css_class,
         })
-        return super(InlineColumnField, self).render(
-            form, form_style, _get_dict_from_context(context),
-            template_pack=template_pack,
-        )
+        return super(InlineColumnField, self).render(form, form_style, context, template_pack=template_pack)
 
 
 class ErrorsOnlyField(OldField):
@@ -170,7 +164,7 @@ class Field(OldField):
         context.update({
             'offsets': offsets,
         })
-        return super(Field, self).render(form, form_style, _get_dict_from_context(context), template_pack)
+        return super(Field, self).render(form, form_style, context, template_pack)
 
 
 class StaticField(LayoutObject):
@@ -323,10 +317,7 @@ class FieldWithHelpBubble(Field):
         context.update({
             'help_bubble_text': self.help_bubble_text,
         })
-        return super(FieldWithHelpBubble, self).render(
-            form, form_style, _get_dict_from_context(context),
-            template_pack=template_pack,
-        )
+        return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
 
 
 class LinkButton(LayoutObject):
