@@ -3,6 +3,7 @@ import logging
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, get_object_or_404
@@ -339,7 +340,14 @@ class LocationTypesView(BaseDomainView):
 
         for loc_type in hierarchy:
             # make all locations in order
-            mk_loctype(**loc_type)
+            try:
+                mk_loctype(**loc_type)
+            except IntegrityError:
+                msg = _('You are not able to save two location types with the same code. '
+                        'You can edit codes to make sure none conflict by checking the advanced mode '
+                        'checkbox beneath the save button. Types without codes will use their name as code.')
+                messages.error(request, msg)
+                return self.get(request, *args, **kwargs)
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
