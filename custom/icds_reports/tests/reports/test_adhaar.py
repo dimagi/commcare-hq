@@ -1,0 +1,202 @@
+from django.test.utils import override_settings
+
+from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
+from django.test import TestCase
+
+
+@override_settings(SERVER_ENVIRONMENT='icds')
+class TestAdhaar(TestCase):
+
+    def test_map_data(self):
+        self.assertDictEqual(
+            get_adhaar_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1)
+                },
+                loc_level='state'
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of individuals registered using CAS "
+                            "whose Adhaar identification has been captured",
+                    "average": 26.2
+                },
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-50%": "#fc9272",
+                    "50%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    "st1": {
+                        "in_month": 320,
+                        "all": 1105,
+                        "fillKey": "25%-50%"
+                    },
+                    "st2": {
+                        "in_month": 335,
+                        "all": 1395,
+                        "fillKey": "0%-25%"
+                    }
+                },
+                "slug": "adhaar",
+                "label": "Percent Adhaar Seeded Beneficiaries"
+            }
+        )
+
+    def test_chart_data(self):
+        self.assertDictEqual(
+            get_adhaar_data_chart(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1)
+                },
+                loc_level='state'
+            ),
+            {
+                "location_type": "State",
+                "bottom_five": [
+                    {
+                        "loc_name": "st1",
+                        "percent": 28.959276018099548
+                    },
+                    {
+                        "loc_name": "st2",
+                        "percent": 24.014336917562723
+                    }
+                ],
+                "top_five": [
+                    {
+                        "loc_name": "st1",
+                        "percent": 28.959276018099548
+                    },
+                    {
+                        "loc_name": "st2",
+                        "percent": 24.014336917562723
+                    }
+                ],
+                "chart_data": [
+                    {
+                        "color": "#fee0d2",
+                        "classed": "dashed",
+                        "strokeWidth": 2,
+                        "values": [
+                            {
+                                "y": 0.0,
+                                "x": 1485907200000,
+                                "all": 0
+                            },
+                            {
+                                "y": 0.0,
+                                "x": 1488326400000,
+                                "all": 0
+                            },
+                            {
+                                "y": 605.0,
+                                "x": 1491004800000,
+                                "all": 0
+                            },
+                            {
+                                "y": 655.0,
+                                "x": 1493596800000,
+                                "all": 0
+                            }
+                        ],
+                        "key": "Number of beneficiaries with Adhaar numbers"
+                    },
+                    {
+                        "color": "#006fdf",
+                        "classed": "dashed",
+                        "strokeWidth": 2,
+                        "values": [
+                            {
+                                "y": 0.0,
+                                "x": 1485907200000,
+                                "all": 0
+                            },
+                            {
+                                "y": 0.0,
+                                "x": 1488326400000,
+                                "all": 0
+                            },
+                            {
+                                "y": 2420.0,
+                                "x": 1491004800000,
+                                "all": 0
+                            },
+                            {
+                                "y": 2500.0,
+                                "x": 1493596800000,
+                                "all": 0
+                            }
+                        ],
+                        "key": "Total number of beneficiaries with Adhaar numbers"
+                    }
+                ],
+                "all_locations": [
+                    {
+                        "loc_name": "st1",
+                        "percent": 28.959276018099548
+                    },
+                    {
+                        "loc_name": "st2",
+                        "percent": 24.014336917562723
+                    }
+                ]
+            }
+        )
+
+    def test_sector_data(self):
+        self.assertDictEqual(
+            get_adhaar_sector_data(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b1',
+                },
+                loc_level='supervisor'
+            ),
+            {
+                "info": "Percentage of individuals registered using "
+                        "CAS whose Adhaar identification has been captured",
+                "tooltips_data": {
+                    "s2": {
+                        "in_month": 42,
+                        "all": 132
+                    },
+                    "s1": {
+                        "in_month": 46,
+                        "all": 68
+                    },
+                    None: {
+                        "in_month": 44,
+                        "all": 100
+                    }
+                },
+                "chart_data": [
+                    {
+                        "color": "#006fdf",
+                        "classed": "dashed",
+                        "strokeWidth": 2,
+                        "values": [
+                            [
+                                "s1",
+                                0.6764705882352942
+                            ],
+                            [
+                                "s2",
+                                0.3181818181818182
+                            ],
+                            [
+                                None,
+                                0.44
+                            ]
+                        ],
+                        "key": ""
+                    }
+                ]
+            }
+        )
