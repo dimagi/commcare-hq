@@ -79,8 +79,8 @@ def _fetch_remote_media(local_domain, missing_media, remote_app_details):
         media_item.add_domain(local_domain, owner=True)
 
 
-def _fetch_remote_media_content(media_item_id, remote_app_details):
-    url = reverse('??', args=[remote_app_details.domain, media_item_id])
+def _fetch_remote_media_content(media_item, remote_app_details):
+    url = reverse('hqmedia_download', args=[media_item['media_type'], media_item['multimedia_id']])
     response = _do_request_to_remote_hq(url, remote_app_details)
     return response.content
 
