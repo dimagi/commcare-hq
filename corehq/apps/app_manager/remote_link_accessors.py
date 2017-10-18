@@ -28,25 +28,16 @@ class ApiKeyAuth(AuthBase):
 
 
 def get_remote_version(remote_app_details):
-    url_base, domain, username, api_key, app_id = remote_app_details
-    url = u'%s%s' % (url_base, reverse('current_app_version', args=[domain, app_id]))
-    response = requests.get(url, auth=ApiKeyAuth(username, api_key))
-    response.raise_for_status()
+    url = reverse('current_app_version', args=[remote_app_details.domain, remote_app_details.app_id])
+    response = _do_request_to_remote_hq(url, remote_app_details)
     return response.json().get('latestReleasedBuild')
 
 
 def get_remote_master_release(remote_app_details, linked_domain):
-    url_base, domain, username, api_key, app_id = remote_app_details
-    url = u'%s%s' % (url_base, reverse('latest_released_app_source', args=[domain, app_id]))
-    requesting_authority = absolute_reverse('domain_homepage', args=[linked_domain])
-    response = requests.get(
-        url,
-        params={'requester': requesting_authority},
-        auth=ApiKeyAuth(username, api_key)
-    )
-    response.raise_for_status()
-    app_json = response.json()
-    return _convert_app_from_remote_linking_source(app_json)
+    url = reverse('latest_released_app_source', args=[remote_app_details.domain, remote_app_details.app_id])
+    params = {'requester': absolute_reverse('domain_homepage', args=[linked_domain])}
+    response = _do_request_to_remote_hq(url, remote_app_details, params)
+    return _convert_app_from_remote_linking_source(response.json())
 
 
 def _convert_app_from_remote_linking_source(app_json):
@@ -89,8 +80,14 @@ def _fetch_remote_media(local_domain, missing_media, remote_app_details):
 
 
 def _fetch_remote_media_content(media_item_id, remote_app_details):
-    url_base, domain, username, api_key, app_id = remote_app_details
-    url = u'%s%s' % (url_base, reverse('??', args=[domain, media_item_id]))
-    response = requests.get(url, auth=ApiKeyAuth(username, api_key))
-    response.raise_for_status()
+    url = reverse('??', args=[remote_app_details.domain, media_item_id])
+    response = _do_request_to_remote_hq(url, remote_app_details)
     return response.content
+
+
+def _do_request_to_remote_hq(relative_url, remote_app_details, params=None):
+    url_base, domain, username, api_key, app_id = remote_app_details
+    full_url = u'%s%s' % (url_base, relative_url)
+    response = requests.get(full_url, params=params, auth=ApiKeyAuth(username, api_key))
+    response.raise_for_status()
+    return response
