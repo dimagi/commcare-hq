@@ -21,14 +21,15 @@ patient_type_choice = {
 }
 
 treatment_support_designation = {
-    'health_worker': '1',
-    'tbhv': '2',
-    'asha': '3',
-    'asha_or_other_phi_hw': '3',
-    'aww': '4',
-    'ngo_volunteer': '5',
-    'private_medical_pracitioner': '6',
-    'other_community_volunteer': '7',
+    'health_worker': '1',  # Health Worker
+    'tbhv': '2',  # TBHV
+    'asha': '3',  # ASHA
+    'asha_or_other_phi_hw': '3',  # ASHA
+    'aww': '4',  # AWW
+    'ngo_volunteer': '5',  # NGO VOLUNTEER
+    'private_medical_pracitioner': '6',  # PRIVATE PRACTICENER
+    'other_community_volunteer': '7',  # OTHER COMMUNITY VOLUNTEERS
+    'patient_family_member': '7',  # OTHER COMMUNITY VOLUNTEERS
 }
 
 occupation = {
