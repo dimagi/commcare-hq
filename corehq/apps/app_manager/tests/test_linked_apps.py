@@ -1,4 +1,3 @@
-import json
 import os
 import uuid
 
@@ -16,10 +15,6 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.remote_linked_apps import _convert_app_for_remote_linking
 from corehq.apps.app_manager.views.utils import overwrite_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
-
-
-def fetch_missing_multimedia(linked_app):
-    pass
 
 
 class TestLinkedApps(TestCase, TestXmlMixin):
