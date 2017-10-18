@@ -84,6 +84,7 @@ treatment_outcome = {
     'treatment_complete': '2',  # Treatment Completed
     'died': '3',  # Died
     'failure': '4',  # Failure
+    'pediatric_failure_to_respond': '4',  # Failure
     'loss_to_follow_up': '5',  # Defaulted
     'not_evaluated': '6',  # Transferred Out
     'regimen_changed': '7',  # Switched to Cat-IV
