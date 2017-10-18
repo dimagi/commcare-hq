@@ -656,6 +656,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         pattern = r'^{slug}/(?P<subreport_slug>[\w\-:]+)/$'.format(slug=cls.slug)
         return url(pattern, cls.as_view(), name=cls.slug)
 
+
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
     page_title = ugettext_noop('Download UCR Status')
@@ -706,9 +707,10 @@ class DownloadUCRStatusView(BaseDomainView):
     def report_config_id(self):
         return self.kwargs['config_id']
 
+
 def ucr_download_job_poll(request, domain,
-                               download_id,
-                               template="hqwebapp/partials/shared_download_status.html"):
+                          download_id,
+                          template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
         context.update({'link_text': _('Download Report')})
