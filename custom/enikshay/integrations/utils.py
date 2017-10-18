@@ -42,8 +42,7 @@ def is_invalid_person_submission(person_case):
 
 def is_valid_person_submission(person_case):
     if (person_case.owner_id == ARCHIVED_CASE_OWNER_ID or
-        is_invalid_person_submission(person_case)
-    ):
+            is_invalid_person_submission(person_case)):
         return False
     if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
