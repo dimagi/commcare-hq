@@ -124,10 +124,8 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence
 
     """
-    case_accessor = CaseAccessors(domain)
-    occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_occurrence_cases = [case for case in occurrence_cases
-                             if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    open_occurrence_cases = [case for case in occurrence_cases if not case.closed]
     if not open_occurrence_cases:
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
