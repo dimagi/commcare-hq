@@ -60,8 +60,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
                 "average_format": 'number',
                 "info": _((
                     "Lactating Mothers enrolled for ICDS services."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

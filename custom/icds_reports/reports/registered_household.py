@@ -59,8 +59,7 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
-                "info": _("Total number of households registered"),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                "info": _("Total number of households registered")
             },
             "data": map_data,
         }

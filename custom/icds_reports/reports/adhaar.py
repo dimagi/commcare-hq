@@ -78,8 +78,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

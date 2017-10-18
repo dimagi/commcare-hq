@@ -94,8 +94,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
                     "undernutrition usually as a consequence of insufficient food intake or a high "
                     "incidence of infectious diseases."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

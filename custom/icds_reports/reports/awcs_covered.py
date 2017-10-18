@@ -61,8 +61,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
                 "info": _((
                     "Total AWCs that have launched ICDS CAS <br />" +
                     "Number of AWCs launched: %d" % total_awcs
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

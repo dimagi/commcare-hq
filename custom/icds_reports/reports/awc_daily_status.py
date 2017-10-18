@@ -81,8 +81,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
                 "info": _((
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
-                'period': 'Daily',
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                'period': 'Daily'
             },
             "data": map_data,
         }

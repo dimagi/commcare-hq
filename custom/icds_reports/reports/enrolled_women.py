@@ -60,8 +60,7 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
                 "average_format": 'number',
                 "info": _((
                     "Total number of pregnant women who are enrolled for ICDS services."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

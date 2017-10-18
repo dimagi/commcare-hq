@@ -91,8 +91,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
                     "Children who are moderately or severely underweight have a higher risk of mortality"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
