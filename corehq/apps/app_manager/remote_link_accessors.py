@@ -54,11 +54,12 @@ def pull_missing_multimedia_from_remote(app):
 
 def _get_missing_multimedia(app):
     missing = []
-    for media_info in app.multimedia_map.values():
+    for path, media_info in app.multimedia_map.items():
         try:
             local_media = CommCareMultimedia.get(media_info['multimedia_id'])
         except ResourceNotFound:
-            missing.append(media_info)
+            filename = path.split('/')[-1]
+            missing.append((filename, media_info))
         else:
             _check_domain_access(app.domain, local_media)
     return missing
@@ -70,12 +71,12 @@ def _check_domain_access(domain, media):
 
 
 def _fetch_remote_media(local_domain, missing_media, remote_app_details):
-    for item in missing_media:
+    for filename, item in missing_media:
         media_class = CommCareMultimedia.get_doc_class(item['media_type'])
         content = _fetch_remote_media_content(item, remote_app_details)
         media_item = media_class.get_by_data(content)
         media_item._id = item['multimedia_id']
-        media_item.attach_data(content)
+        media_item.attach_data(content, original_filename=filename)
         media_item.add_domain(local_domain, owner=True)
 
 
