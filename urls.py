@@ -175,3 +175,7 @@ if settings.DEBUG:
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
     ]
+
+urlpatterns += [
+    url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
+]

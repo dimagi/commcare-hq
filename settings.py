@@ -413,8 +413,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
-
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS + ('package_monitor',)
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -2222,3 +2221,5 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
             'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }
     ]
+
+PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
