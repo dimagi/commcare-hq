@@ -120,8 +120,8 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
-                        "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
-                        "undernutrition and has long lasting harmful consequences on the growth of a child")
+                        "of the WHO Child Growth Standards median. Stunting is a sign of chronic undernutrition "
+                        "and has long lasting harmful consequences on the growth of a child")
                     ),
                     'percent': percent_diff(
                         'stunting',

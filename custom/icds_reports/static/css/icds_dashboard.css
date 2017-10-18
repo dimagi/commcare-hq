@@ -644,7 +644,7 @@ table.no-footer {
     color: #555;
 }
 
-#detailsChart .nv-series-0, .nv-series-1, .nv-series-2{
+#detailsChart .nv-series-0, #detailsChart .nv-series-1, #detailsChart .nv-series-2{
     stroke-opacity: 0 !important;
 }
 

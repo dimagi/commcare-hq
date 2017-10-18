@@ -749,7 +749,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('Percent Adhaar Seeded Beneficiaries'),
+                    'label': _('Percent Adhaar-seeded Beneficiaries'),
                     'help_text': _(
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     ),
@@ -984,26 +984,6 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             ],
             [
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
-                    'help_text': None,
-                    'percent': percent_diff(
-                        'adult_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'adult_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
-                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
-                    'all': '',
-                    'format': 'string',
-                    'frequency': 'month'
-                },
-                {
                     'label': _('Weighing Scale: Infants'),
                     'help_text': None,
                     'percent': percent_diff(
@@ -1019,6 +999,26 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
                         'awcs'
                     ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'infant_weighing_scale'),
+                    'all': '',
+                    'format': 'string',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'adult_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'adult_weighing_scale',
+                        kpi_data,
+                        kpi_data_prev_month,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
                     'format': 'string',
                     'frequency': 'month'
