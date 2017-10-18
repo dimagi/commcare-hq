@@ -15,7 +15,7 @@ class ResponseNature(object):
     SUBMIT_SUCCESS = 'submit_success'
     SUBMIT_ERROR = 'submit_error'
     PROCESSING_FAILURE = 'processing_failure'
-    POST_PROCESSING_FAILIRE = 'post_processing_failire'
+    POST_PROCESSING_FAILURE = 'post_processing_failure'
 
     # users app
     SUBMIT_USER_REGISTERED = 'submit_user_registered'

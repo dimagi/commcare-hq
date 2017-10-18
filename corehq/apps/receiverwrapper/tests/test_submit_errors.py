@@ -88,7 +88,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             file, res = self._submit("simple_form.xml", openrosa_version)
             if openrosa_version == OPENROSA_VERSION_3:
                 self.assertEqual(422, res.status_code)
-                self.assertIn(ResponseNature.POST_PROCESSING_FAILIRE, res.content)
+                self.assertIn(ResponseNature.POST_PROCESSING_FAILURE, res.content)
             else:
                 self.assertEqual(201, res.status_code)
                 self.assertIn(ResponseNature.SUBMIT_SUCCESS, res.content)
