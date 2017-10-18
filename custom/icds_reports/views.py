@@ -81,7 +81,7 @@ from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, Pregnant
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id
+    get_latest_issue_tracker_build_id, get_location_level
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -277,7 +277,7 @@ class ProgramSummaryView(View):
         }
 
         location = request.GET.get('location_id', '')
-        get_location_filter(location, domain, config)
+        config.update(get_location_filter(location, domain))
 
         data = {}
         if step == 'maternal_child':
@@ -364,7 +364,8 @@ class PrevalenceOfUndernutritionView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, domain, config)
+        config.update(get_location_filter(location, domain))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -655,7 +656,8 @@ class ProgressReportView(View):
             'domain': domain
         }
 
-        loc_level = get_location_filter(location, domain, config)
+        config.update(get_location_filter(location, domain))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = ProgressReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
         return JsonResponse(data=data)
@@ -687,7 +689,9 @@ class PrevalenceOfSevereView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -729,7 +733,9 @@ class PrevalenceOfStunningView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -768,7 +774,9 @@ class NewbornsWithLowBirthWeightView(View):
             config.update({'gender': gender})
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -807,7 +815,8 @@ class EarlyInitiationBreastfeeding(View):
             config.update({'gender': gender})
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -848,7 +857,8 @@ class ExclusiveBreastfeedingView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -889,7 +899,8 @@ class ChildrenInitiatedView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -927,7 +938,8 @@ class InstitutionalDeliveriesView(View):
             config.update({'gender': gender})
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -960,7 +972,8 @@ class ImmunizationCoverageView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -990,7 +1003,8 @@ class AWCDailyStatusView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1023,7 +1037,8 @@ class AWCsCoveredView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1055,7 +1070,8 @@ class RegisteredHouseholdView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1095,7 +1111,8 @@ class EnrolledChildrenView(View):
             config.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1129,7 +1146,8 @@ class EnrolledWomenView(View):
         }
 
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1161,7 +1179,8 @@ class LactatingEnrolledWomenView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1193,7 +1212,8 @@ class AdolescentGirlsView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1225,7 +1245,8 @@ class AdhaarBeneficiariesView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1257,7 +1278,8 @@ class CleanWaterView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1290,7 +1312,8 @@ class FunctionalToiletView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1323,7 +1346,8 @@ class MedicineKitView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1356,7 +1380,8 @@ class InfantsWeightScaleView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":
@@ -1389,7 +1414,8 @@ class AdultWeightScaleView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
         if step == "map":

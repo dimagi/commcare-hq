@@ -14,7 +14,7 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ISSUE_TRACKER_APP_ID
+from custom.icds_reports.const import LocationTypes, ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 
@@ -260,31 +260,38 @@ def match_age(age):
         return '3-6 years'
 
 
-def get_location_filter(location, domain, config):
-    loc_level = 'state'
-    if location:
-        try:
-            sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-            locations = sql_location.get_ancestors(include_self=True)
-            aggregation_level = locations.count() + 1
-            if sql_location.location_type.code != LocationTypes.AWC:
-                loc_level = LocationType.objects.filter(
-                    parent_type=sql_location.location_type,
-                    domain=domain
-                )[0].code
-            else:
-                loc_level = LocationTypes.AWC
-            for loc in locations:
-                location_key = '%s_id' % loc.location_type.code
-                config.update({
-                    location_key: loc.location_id,
-                })
-            config.update({
-                'aggregation_level': aggregation_level
-            })
-        except SQLLocation.DoesNotExist:
-            pass
-    return loc_level
+def get_location_filter(location_id, domain):
+    """
+    Args:
+        location_id (str)
+        domain (str)
+    Returns:
+        dict
+    """
+    if not location_id:
+        return {}
+
+    config = {}
+    try:
+        sql_location = SQLLocation.objects.get(location_id=location_id, domain=domain)
+    except SQLLocation.DoesNotExist:
+        return {'aggregation_level': 1}
+    config.update(
+        {
+            ('%s_id' % ancestor.location_type.code): ancestor.location_id
+            for ancestor in sql_location.get_ancestors(include_self=True)
+        }
+    )
+    config['aggregation_level'] = len(config) + 1
+    return config
+
+
+def get_location_level(aggregation_level):
+    if not aggregation_level:
+        return LOCATION_TYPES[0]
+    elif aggregation_level >= len(LOCATION_TYPES):
+        return LOCATION_TYPES[-1]
+    return LOCATION_TYPES[aggregation_level - 1]
 
 
 @quickcache([])
