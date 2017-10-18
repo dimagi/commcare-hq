@@ -55,6 +55,8 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid, 
 
 def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
     patient = get_patient(requests, info, openmrs_config, problem_log)
+    if patient is None:
+        raise ValueError('CommCare patient was not found in OpenMRS')
     person_uuid = patient['person']['uuid']
     update_person_properties(requests, info, openmrs_config, person_uuid)
 
