@@ -259,7 +259,7 @@ class InvoiceTemplate(object):
         self.canvas.setFillColorRGB(*BLACK)
         self.canvas.setFontSize(SMALL_FONT_SIZE)
         self.canvas.drawCentredString(
-            midpoint(left-inches(.1), middle_vertical),
+            midpoint(left - inches(.1), middle_vertical),
             bottom + inches(0.1),
             "PROJECT"
         )
@@ -518,7 +518,7 @@ via bank transfer or credit card by following this link:
         credit_card_text.wrapOn(self.canvas, width, inches(.5))
         credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
 
-        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH 
+        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH
 or Wire, please make sure to email
 <font color='blue'>{invoicing_contact_email}</font>
 so that we can match your payment to the correct invoice.  Please include:
