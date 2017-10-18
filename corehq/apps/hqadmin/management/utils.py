@@ -5,6 +5,11 @@ from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
 
+LABELS_TO_EXPAND = [
+    "Any User",
+    "Feature Flag"
+]
+
 
 def get_deploy_email_message_body(environment, user, compare_url):
     try:
@@ -19,8 +24,11 @@ def get_deploy_email_message_body(environment, user, compare_url):
         pool = Pool(5)
         pr_infos = filter(None, pool.map(_get_pr_info, pr_numbers))
 
+    prs_by_label = _get_prs_by_label(pr_infos)
+
     return render_to_string('hqadmin/partials/project_snapshot.html', {
         'pr_merges': pr_infos,
+        'prs_by_label': prs_by_label,
         'last_deploy': last_deploy,
         'current_deploy': current_deploy,
         'user': user,
@@ -54,9 +62,12 @@ def _get_pr_info(pr_number):
 
     line_changes = additions + deletions
 
+    labels = _get_pr_labels(pr_number)
+
     return {
         'number': json_response['number'],
         'title': json_response['title'],
+        'body': json_response['body'],
         'opened_by': json_response['user']['login'],
         'url': json_response['html_url'],
         'merge_base': json_response['base']['label'],
@@ -64,7 +75,31 @@ def _get_pr_info(pr_number):
         'additions': additions,
         'deletions': deletions,
         'line_changes': line_changes,
+        'labels': labels,
     }
+
+
+def _get_pr_labels(pr_number):
+    url = 'https://api.github.com/repos/dimagi/commcare-hq/issues/{}'.format(pr_number)
+    json_response = requests.get(url).json()
+    if not json_response.get('number'):
+        # We've probably exceed our rate limit for unauthenticated requests
+        return None
+    assert pr_number == json_response['number'], (pr_number, json_response['number'])
+
+    return [{'name': label['name'], 'color': label['color']}
+        for label in json_response['labels']
+    ]
+
+
+def _get_prs_by_label(pr_infos):
+    prs_by_label = {}
+    for label in LABELS_TO_EXPAND:
+        prs_by_label[label] = [pr for pr in pr_infos
+           if label in [lbl['name'] for lbl in pr['labels']]
+        ]
+    return prs_by_label
+
 
 if __name__ == '__main__':
     def setup_fake_django():
