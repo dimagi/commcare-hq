@@ -573,9 +573,9 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def email_response(self):
         with closing(StringIO()) as temp:
             export_from_tables(self.export_table, temp, Format.HTML)
-            return self.render_json_response({
+            return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
-            })
+            }), content_type='application/json')
 
     @property
     @memoized
