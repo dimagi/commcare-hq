@@ -86,6 +86,7 @@ treatment_outcome = {
     'failure': '4',
     'regimen_changed': '7',
     'loss_to_follow_up': '5',
+    'not_evaluated': '6',
 }
 
 hiv_status = {
