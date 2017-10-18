@@ -512,15 +512,16 @@ via bank transfer or credit card by following this link:
         credit_card = """<strong>Credit card payments (USD)</strong> can be made online here:<br />
 <link href='{payment_page}' color='blue'>{payment_page}</link><br />""".format(
             payment_page=absolute_reverse(
-               DomainBillingStatementsView.urlname, args=[self.project_name])
+                DomainBillingStatementsView.urlname, args=[self.project_name])
         )
         credit_card_text = Paragraph(credit_card, ParagraphStyle(''))
         credit_card_text.wrapOn(self.canvas, width, inches(.5))
         credit_card_text.drawOn(self.canvas, left_x, inches(2.4))
 
-        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH or Wire, please make sure to email 
-<font color='blue'>{invoicing_contact_email}</font> 
-so that we can match your payment to the correct invoice.  Please include: 
+        ach_or_wire = """<strong>ACH or Wire:</strong> If you make payment via ACH 
+or Wire, please make sure to email
+<font color='blue'>{invoicing_contact_email}</font>
+so that we can match your payment to the correct invoice.  Please include:
 Invoice No., Project Space, and payment date in the email. <br />""".format(
             invoicing_contact_email=settings.INVOICING_CONTACT_EMAIL,
         )
@@ -528,10 +529,9 @@ Invoice No., Project Space, and payment date in the email. <br />""".format(
         ach_or_wire_text.wrapOn(self.canvas, width, inches(.5))
         ach_or_wire_text.drawOn(self.canvas, left_x, inches(1.7))
 
-
-        ach_payment_text = """<strong>ACH payment</strong> 
+        ach_payment_text = """<strong>ACH payment</strong>
 (preferred over wire payment for transfer in the US):<br />
-Bank: {bank_name} 
+Bank: {bank_name}
 Bank Address: {bank_address}
 Account Number: {account_number}
 Routing Number or ABA: {routing_number_ach}<br />""".format(
