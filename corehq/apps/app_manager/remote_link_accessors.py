@@ -36,7 +36,6 @@ def get_remote_version(remote_app_details):
 
 
 def get_remote_master_release(remote_app_details, linked_domain):
-    # TODO also pull multimedia
     url_base, domain, username, api_key, app_id = remote_app_details
     url = u'%s%s' % (url_base, reverse('latest_released_app_source', args=[domain, app_id]))
     requesting_authority = absolute_reverse('domain_homepage', args=[linked_domain])

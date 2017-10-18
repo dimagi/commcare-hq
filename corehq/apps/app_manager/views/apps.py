@@ -19,6 +19,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError, \
     ActionNotPermitted
+from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, overwrite_app
 from corehq import toggles, privileges
@@ -831,6 +832,7 @@ def drop_user_case(request, domain, app_id):
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
+    # TODO: make pulling from remote more robust to errors
     try:
         latest_master_build = app.get_latest_master_release()
     except ActionNotPermitted:
@@ -849,8 +851,8 @@ def pull_master_app(request, domain, app_id):
                                   'to function correctly, you will need to remove those modules '
                                   'or revert to a previous version that did not include them.'))
     else:
-        # if app.master_is_remote:
-        #     fetch_missing_multimedia(app)
+        if app.master_is_remote:
+            pull_missing_multimedia_from_remote(app)
         messages.success(request,
                          _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
