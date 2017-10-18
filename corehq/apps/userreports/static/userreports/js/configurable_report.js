@@ -63,14 +63,9 @@ hqDefine("userreports/js/configurable_report", function() {
             emailDefaultSubject: initial_page_data('title'),
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-            checkExportSize: true,
             getReportRenderUrl: function(renderType, additionalParams) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
-            },
-            getExportSizeCheckUrl: function() {
-                var params = urlSerialize($('#paramSelectorForm'), ['format']);
-                return window.location.pathname + "?format=export_size_check" + "&" + params;
             },
         };
         if (initial_page_data('startdate')) {
