@@ -10,6 +10,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
+from django.db import transaction
 from django.db.models import Count, F, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
@@ -34,7 +35,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
-from corehq.apps.es import forms as form_es
 from corehq.util.context_managers import notify_someone
 from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
 from corehq.util.decorators import serial_task
@@ -309,16 +309,17 @@ def save_document(doc_ids):
         with timer:
             for doc in doc_store.iter_documents(doc_ids):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed = _save_document_helper(indicator, doc)
+                successfully_processed, to_remove = _save_document_helper(indicator, doc)
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
-                    failed_indicators.append(indicator.pk)
+                    failed_indicators.append((indicator, to_remove))
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
-            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
-        )
+        with transaction.atomic():
+            for indicator, to_remove in failed_indicators:
+                indicator.update_failure(to_remove)
+                indicator.save()
 
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
@@ -331,6 +332,7 @@ def save_document(doc_ids):
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
+    configs_to_remove = []
     for config_id in indicator.indicator_config_ids:
         adapter = None
         try:
@@ -341,7 +343,7 @@ def _save_document_helper(indicator, doc):
         except ESError:
             celery_task_logger.info("ES errored when trying to retrieve config")
             something_failed = True
-            return
+            continue
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
@@ -351,15 +353,15 @@ def _save_document_helper(indicator, doc):
             # a database had an issue so log it and go on to the next document
             celery_task_logger.info("DB error when saving config: {}".format(config_id))
             something_failed = True
-            return
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
             something_failed = True
-            return
+        else:
+            configs_to_remove.append(config_id)
 
-    return not something_failed
+    return (not something_failed, configs_to_remove)
 
 
 @periodic_task(
@@ -420,15 +422,3 @@ def _indicator_metrics(date_created=None):
                 }
 
     return ret
-
-
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_form_table(domain, indicator_config_id, start_date, end_date, xmlns_list):
-    time_filter = form_es.submitted
-    query = (form_es.FormES()
-             .domain(domain)
-             .filter(time_filter(gte=start_date, lte=end_date)))
-    if xmlns_list:
-        query = query.OR(*[form_es.xmlns(x) for x in xmlns_list])
-    form_ids = query.get_ids()
-    rebuild_indicators_in_place(indicator_config_id, None, form_ids)

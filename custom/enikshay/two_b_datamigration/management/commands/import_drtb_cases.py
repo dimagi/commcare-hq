@@ -894,6 +894,9 @@ def get_episode_case_properties(domain, column_mapping, city_constants, row):
             "cp_initiation_date": ip_to_cp_date,
         })
 
+    if not properties.get("date_of_diagnosis"):
+        properties["date_of_diagnosis"] = properties.get("treatment_initiation_date")
+
     return properties
 
 
@@ -1234,7 +1237,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
 
     for t in test_cases:
         t['dataset'] = 'real'
-        t['case_name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
+        t['name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
 
     return test_cases
 
@@ -1568,7 +1571,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
             else:
                 result = column_mapping.get_follow_up_culture_result(month, row)
                 if result:
-                    date_tested = clean_date(column_mapping.get_follow_up_culture_date(month, row))
+                    date_reported = clean_date(column_mapping.get_follow_up_culture_date(month, row))
                     lab_name = column_mapping.get_follow_up_culture_lab(month, row)
                     properties = {
                         "owner_id": "-",
@@ -1577,7 +1580,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                         "testing_facility_name": lab_name,
                         "rft_general": "follow_up_drtb",
                         "rft_drtb_follow_up_treatment_month": month,
-                        "date_tested": date_tested,
+                        "date_reported": date_reported,
                         "result": clean_result(result),
                         "drug_resistance_list": '',
                         "drug_sensitive_list": '',

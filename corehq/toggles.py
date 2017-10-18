@@ -1315,3 +1315,10 @@ ICDS_LIVEQUERY = PredictablyRandomToggle(
     [NAMESPACE_USER],
     randomness=0.0,
 )
+
+REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
+    'remote_request_quetion_type',
+    'Enable remote request question type in the form builder',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)

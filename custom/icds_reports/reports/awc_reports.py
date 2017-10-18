@@ -749,6 +749,24 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': 'month'
                 },
                 {
+                    'label': _('Percent Adhaar Seeded Beneficiaries'),
+                    'help_text': _(
+                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                    ),
+                    'percent': percent_diff(
+                        'person_aadhaar',
+                        kpi_yesterday,
+                        kpi_two_days_ago,
+                        'all_persons'
+                    ),
+                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
+                    'all': get_value(kpi_yesterday, 'all_persons'),
+                    'format': 'percent_and_div',
+                    'frequency': 'day'
+                }
+            ],
+            [
+                {
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
                     'percent': percent_increase('child_health_all', kpi_yesterday, kpi_two_days_ago),
@@ -761,9 +779,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day',
                     'redirect': 'enrolled_children'
-                }
-            ],
-            [
+                },
                 {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
                     'help_text': _((
@@ -779,7 +795,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
-                },
+                }
+            ],
+            [
                 {
                     'label': _('Pregnant Women'),
                     'help_text': _("Total number of pregnant women registered"),
@@ -797,8 +815,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
                     'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
@@ -812,6 +828,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
@@ -829,8 +847,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
                     'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
@@ -844,6 +860,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
+            ],
+            [
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
@@ -861,8 +879,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'format': 'number',
                     'frequency': 'day'
                 },
-            ],
-            [
                 {
                     'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
                     'help_text': _((
@@ -881,22 +897,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(kpi_yesterday, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Percent Adhaar Seeded Beneficiaries'),
-                    'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
-                    ),
-                    'percent': percent_diff(
-                        'person_aadhaar',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
-                        'all_persons'
-                    ),
-                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
-                    'all': get_value(kpi_yesterday, 'all_persons'),
-                    'format': 'div',
                     'frequency': 'day'
                 }
             ]
@@ -984,21 +984,21 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             ],
             [
                 {
-                    'label': _('Medicine Kit'),
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
                     'help_text': None,
                     'percent': percent_diff(
-                        'medicine_kits',
+                        'adult_weighing_scale',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ),
                     'color': 'green' if percent_diff(
-                        'medicine_kits',
+                        'adult_weighing_scale',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ) > 0 else 'red',
-                    'value': get_infa_value(kpi_data, 'medicine_kits'),
+                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
                     'format': 'string',
                     'frequency': 'month'
@@ -1026,25 +1026,25 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             ],
             [
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('Medicine Kit'),
                     'help_text': None,
                     'percent': percent_diff(
-                        'adult_weighing_scale',
+                        'medicine_kits',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ),
                     'color': 'green' if percent_diff(
-                        'adult_weighing_scale',
+                        'medicine_kits',
                         kpi_data,
                         kpi_data_prev_month,
                         'awcs'
                     ) > 0 else 'red',
-                    'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
+                    'value': get_infa_value(kpi_data, 'medicine_kits'),
                     'all': '',
                     'format': 'string',
                     'frequency': 'month'
-                },
+                }
             ],
         ]
     }
@@ -1072,9 +1072,15 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
     }
 
     def base_data(row_data):
-        def get_status(value):
-            if not value or value in ['unweighed', 'unmeasured']:
-                return DATA_NOT_ENTERED
+        def get_status(value, second_part='', normal_value=''):
+            if not value or value in ['unweighed', 'unmeasured', 'unknown']:
+                return {'value': DATA_NOT_ENTERED, 'color': 'black'}
+            elif value in ['severely_underweight', 'severe']:
+                return {'value': 'Severely ' + second_part, 'color': 'red'}
+            elif value in ['moderately_underweight', 'moderate']:
+                return {'value': 'Moderately ' + second_part, 'color': 'black'}
+            elif value in ['normal']:
+                return {'value': normal_value, 'color': 'black'}
             return value
 
         return dict(
@@ -1086,11 +1092,23 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
-            nutrition_status=get_status(row_data.current_month_nutrition_status),
+            nutrition_status=get_status(
+                row_data.current_month_nutrition_status,
+                'underweight',
+                'Normal weight for age'
+            ),
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
-            stunning=get_status(row_data.current_month_stunting),
-            wasting=get_status(row_data.current_month_wasting),
+            stunning=get_status(
+                row_data.current_month_stunting,
+                'stunted',
+                'Normal weight for height'
+            ),
+            wasting=get_status(
+                row_data.current_month_stunting,
+                'wasted',
+                'Normal height for age'
+            ),
             pse_days_attended=row_data.pse_days_attended
         )
 
@@ -1135,7 +1153,6 @@ def get_beneficiary_details(case_id, month):
                 'y': float(row.recorded_height or 0)
             }
         beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
-            'x': float(row.recorded_height or 0),
             'y': float(row.recorded_weight or 0)
         }
     return beneficiary

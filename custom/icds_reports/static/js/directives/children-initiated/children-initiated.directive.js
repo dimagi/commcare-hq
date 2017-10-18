@@ -24,7 +24,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
     };

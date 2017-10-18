@@ -7,7 +7,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "test_2b",
+    "data_source_table": "test_2b_v3",
     "report_id": "dmc_lab_register_2b",
     "config": {
         "description": "",
@@ -74,6 +74,15 @@
                 "field": "is_microscopy",
                 "type": "pre",
                 "slug": "is_microscopy"
+            },
+            {
+                "pre_value": "pmdt_excel",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "migration_type",
+                "type": "pre",
+                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -99,6 +108,39 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Testing Facility Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_tu_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "TU Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_district_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "District Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_state_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "State Name"
             },
             {
                 "sortable": false,
@@ -176,12 +218,12 @@
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
-                        "tribal_population": "Tribal population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "slum_dweller": "Slum dweller",
                         "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "slum_dweller": "Slum dweller",
                         "prison_inmate": "Prison inmate"
                     }
                 },
@@ -201,39 +243,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of Referring health facility"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "tu_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "TU Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "district_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "District Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "state_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "State Name"
             },
             {
                 "sortable": false,
@@ -341,10 +350,7 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "month_display"
-                },
+                "transform": {},
                 "aggregation": "simple",
                 "field": "follow_up_treatment_initiation_date_month",
                 "calculate_total": false,
@@ -477,7 +483,12 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "R Sensitive": "Sensitive"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "rif_resistance_result",
                 "calculate_total": false,

@@ -172,7 +172,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     if (this.options.rightLegend !== null) {
                         var loc_name = $location.search()['location_name'] || "National";
                         var period = this.options.rightLegend['period'] || 'Monthly';
-                        var html = '<div class="map-kpi" style="width: 250px;">';
+                        var html = '<div class="map-kpi" style="width: 300px;">';
                         if (this.options.rightLegend['average'] !== void(0)) {
                             html += '<div class="row no-margin">';
                             if (this.options.rightLegend['average_format'] === 'number') {

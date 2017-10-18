@@ -157,10 +157,11 @@ class FlatLocationSerializer(object):
                     _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
                     message = (
                         "The flat location fixture didn't prefetch all parent "
-                        "locations: {domain}: {location_id}"
+                        "locations: {domain}: {location_id}. User id: {user_id}"
                     ).format(
                         domain=current_location.domain,
                         location_id=current_location.location_id,
+                        user_id=restore_user.user_id,
                     )
                     _soft_assert(False, msg=message)
 

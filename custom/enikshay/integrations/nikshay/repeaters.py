@@ -52,6 +52,10 @@ from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcom
 
 
 class BaseNikshayRepeater(CaseRepeater):
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -249,6 +253,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             result,
+            verify=self.verify
         )
         if isinstance(message, basestring) and message.isdigit():
             attempt = repeat_record.handle_success(result)
@@ -297,6 +302,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             result,
+            verify=self.verify
         )
         # message does not give the final node message here so need to find the real message
         # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example

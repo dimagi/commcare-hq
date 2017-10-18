@@ -6,11 +6,10 @@ function MapOrSectorController() {
     vm.chartOptions = {
         chart: {
             type: 'multiBarHorizontalChart',
-            height: 450,
             width: 1000,
             margin: {
                 bottom: 40,
-                left: 120,
+                left: 220,
             },
             x: function (d) {
                 return d[0];
@@ -33,7 +32,7 @@ function MapOrSectorController() {
             yAxis: {
                 tickFormat: function (d) {
                     if (vm.data.mapData.format === "number") {
-                        return d;
+                        return d3.format("d")(d);
                     }
                     return d3.format("%")(d);
                 },
@@ -52,6 +51,10 @@ function MapOrSectorController() {
                     },
                     row: vm.data.mapData.tooltips_data[y],
                 });
+            },
+            callback: function(chart) {
+                vm.chartOptions.chart.height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 50 : 150;
+                return chart;
             },
         },
         caption: {

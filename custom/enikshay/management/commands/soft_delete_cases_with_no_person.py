@@ -2,6 +2,8 @@ import csv
 
 from django.core.management import BaseCommand
 
+from dimagi.utils.chunked import chunked
+
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 
@@ -28,9 +30,8 @@ class Command(BaseCommand):
 
         with open(log_file_name, 'w') as log_file:
             logger = self.get_logger(log_file)
-            for case_id in with_progress_bar(case_ids):
-                if self.should_delete(domain, case_id):
-                    self.delete_case(case_id, commit, deletion_id, domain, logger, case_type)
+            for case_ids_to_delete in chunked(self.get_case_ids_to_delete(domain, case_ids), 100):
+                self.delete_cases(case_ids_to_delete, commit, deletion_id, domain, logger, case_type)
 
     @staticmethod
     def get_logger(log_file):
@@ -46,17 +47,24 @@ class Command(BaseCommand):
         return CaseAccessors(domain).get_case_ids_in_domain(type=case_type)
 
     @staticmethod
-    def should_delete(domain, case_id):
-        try:
-            return not get_person_case(domain, case_id)
-        except ENikshayCaseNotFound:
-            return True
+    def get_case_ids_to_delete(domain, case_ids):
+        for case_id in with_progress_bar(case_ids):
+            if _is_case_missing_person(domain, case_id):
+                yield case_id
 
     @staticmethod
-    def delete_case(case_id, commit, deletion_id, domain, logger, case_type):
-        _log_case_to_delete(case_id, deletion_id, domain, logger, case_type)
+    def delete_cases(case_ids, commit, deletion_id, domain, logger, case_type):
+        for case_id in case_ids:
+            _log_case_to_delete(case_id, deletion_id, domain, logger, case_type)
         if commit:
-            CaseAccessors(domain).soft_delete_cases([case_id], deletion_id=deletion_id)
+            CaseAccessors(domain).soft_delete_cases(case_ids, deletion_id=deletion_id)
+
+
+def _is_case_missing_person(domain, case_id):
+    try:
+        return not get_person_case(domain, case_id)
+    except ENikshayCaseNotFound:
+        return True
 
 
 def _log_case_to_delete(case_id, deletion_id, domain, logger, case_type):
