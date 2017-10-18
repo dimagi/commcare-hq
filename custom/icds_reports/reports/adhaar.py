@@ -72,7 +72,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     return [
         {
             "slug": "adhaar",
-            "label": "Percent Adhaar Seeded Beneficiaries",
+            "label": "Percent Adhaar-seeded Beneficiaries",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),

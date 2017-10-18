@@ -1458,7 +1458,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_people_enrolled_for_services'
             },
             {
-                'header': 'Percent adhaar seeded beneficaries',
+                'header': 'Percent Adhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
