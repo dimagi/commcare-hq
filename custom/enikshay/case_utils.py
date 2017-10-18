@@ -596,3 +596,12 @@ def person_has_any_nikshay_notifiable_episode(person_case):
     episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)
+
+
+def get_person_case_from_test(domain, test_case_id):
+    return (
+        get_person_case_from_occurrence(
+            domain,
+            get_occurrence_case_from_test(domain, test_case_id)
+        )
+    )
