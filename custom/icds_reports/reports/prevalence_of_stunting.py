@@ -89,7 +89,7 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
                     "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
                     "-2Z standard deviations of the WHO Child Growth Standards median."
                     "<br/><br/>"
-                    "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+                    "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                     "consequences on the growth of a child"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
@@ -272,7 +272,7 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
             "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
             "-2Z standard deviations of the WHO Child Growth Standards median."
             "<br/><br/>"
-            "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
             "consequences on the growth of a child"
         )),
         "chart_data": [
