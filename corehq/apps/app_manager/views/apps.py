@@ -263,7 +263,7 @@ def get_app_view_context(request, app):
         try:
             context['master_version'] = app.get_master_version()
         except RemoteRequestError:
-            messages.error(request, _('Unable to get version of remote master app.'))
+            pass
     return context
 
 
@@ -835,47 +835,58 @@ def drop_user_case(request, domain, app_id):
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
-    exception_message = None
     try:
-        latest_master_build = app.get_latest_master_release()
-    except ActionNotPermitted:
-        exception_message = _(
-            'This project is not authorized to update from the master application. '
-            'Please contact the maintainer of the master app if you believe this is a mistake. '
-        )
-    except RemoteAuthError:
-        exception_message = _(
-            'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-            'Please verify your authentication details for the remote link are correct.'
-        )
+        master_version = app.get_master_version()
     except RemoteRequestError:
-        exception_message = _(
+        messages.error(request, _(
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-        )
-
-    if exception_message:
-        messages.error(request, exception_message)
+        ))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
-    report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
-    try:
-        overwrite_app(app, latest_master_build, report_map)
-    except AppEditingError:
-        messages.error(request, _('This linked application uses dynamic mobile UCRs '
-                                  'which are currently not supported. For this application '
-                                  'to function correctly, you will need to remove those modules '
-                                  'or revert to a previous version that did not include them.'))
-    else:
-        if app.master_is_remote:
-            try:
-                pull_missing_multimedia_from_remote(app)
-            except RemoteRequestError:
-                messages.error(request, _(
-                    'Error fetching multimedia from remote server. Please try again later.'
-                ))
-        messages.success(request,
-                         _('Your linked application was successfully updated to the latest version.'))
-    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
+    if master_version > app.version:
+        exception_message = None
+        try:
+            latest_master_build = app.get_latest_master_release()
+        except ActionNotPermitted:
+            exception_message = _(
+                'This project is not authorized to update from the master application. '
+                'Please contact the maintainer of the master app if you believe this is a mistake. '
+            )
+        except RemoteAuthError:
+            exception_message = _(
+                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                'Please verify your authentication details for the remote link are correct.'
+            )
+        except RemoteRequestError:
+            exception_message = _(
+                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+            )
+
+        if exception_message:
+            messages.error(request, exception_message)
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
+        try:
+            overwrite_app(app, latest_master_build, report_map)
+        except AppEditingError:
+            messages.error(request, _('This linked application uses dynamic mobile UCRs '
+                                      'which are currently not supported. For this application '
+                                      'to function correctly, you will need to remove those modules '
+                                      'or revert to a previous version that did not include them.'))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+    if app.master_is_remote:
+        try:
+            pull_missing_multimedia_from_remote(app)
+        except RemoteRequestError:
+            messages.error(request, _(
+                'Error fetching multimedia from remote server. Please try again later.'
+            ))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+    messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST
