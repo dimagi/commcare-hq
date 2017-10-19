@@ -44,7 +44,7 @@ TAG_INTERNAL = Tag(
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
-ALL_TAGS = [TAG_CUSTOM, TAG_DEPRECATED, TAG_PRODUCT, TAG_SOLUTIONS, TAG_PREVIEW]
+ALL_TAGS = [TAG_CUSTOM, TAG_DEPRECATED, TAG_PRODUCT, TAG_SOLUTIONS, TAG_INTERNAL]
 
 
 class StaticToggle(object):
