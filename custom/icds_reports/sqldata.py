@@ -1458,7 +1458,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_people_enrolled_for_services'
             },
             {
-                'header': 'Percent adhaar seeded beneficaries',
+                'header': 'Percent Adhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -2177,7 +2177,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Total pregnant women enrolled for servics at AWC',
+                                'header': 'Total pregnant women enrolled for services at AWC',
                                 'slug': 'cases_ccs_pregnant',
                                 'average': [],
 

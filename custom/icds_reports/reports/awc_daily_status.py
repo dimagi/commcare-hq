@@ -7,6 +7,7 @@ from dateutil.rrule import rrule, DAILY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude
@@ -185,7 +186,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     }
 
 
-def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False):
+def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['date'] = datetime(*config['month'])
@@ -211,9 +212,13 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_day = row['in_day']
         row_values = {
@@ -228,6 +233,12 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
         chart_data['blue'].append([
             name, value
         ])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": tooltips_data,

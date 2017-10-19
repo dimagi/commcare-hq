@@ -6,6 +6,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -68,7 +69,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     ]
 
 
-def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
+def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -96,9 +97,13 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
         'awcs': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         name = row['%s_name' % loc_level]
         awcs = row['awcs']
+        result_set.add(name)
 
         row_values = {
             'awcs': awcs
@@ -108,6 +113,12 @@ def get_awcs_covered_sector_data(domain, config, loc_level, show_test=False):
 
     for name, value_dict in tooltips_data.iteritems():
         chart_data['blue'].append([name, value_dict['awcs']])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": tooltips_data,

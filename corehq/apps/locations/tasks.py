@@ -1,5 +1,12 @@
 import uuid
+
+from celery.task import task
+
 from dimagi.utils.couch.database import iter_docs
+
+from soil import DownloadBase
+
+from corehq.apps.locations.util import dump_locations
 from corehq.util.couch import IterDB, iter_update, DocUpdate
 from corehq.util.decorators import serial_task
 from corehq.apps.commtrack.models import StockState, sync_supply_point
@@ -127,3 +134,10 @@ def _archive_users(location_type):
     for loc in SQLLocation.objects.filter(location_type=location_type):
         loc.user_id = ''
         loc.save()
+
+
+@task
+def download_locations_async(domain, download_id, include_consumption=False):
+    DownloadBase.set_progress(download_locations_async, 0, 100)
+    dump_locations(domain, download_id, include_consumption=include_consumption)
+    DownloadBase.set_progress(download_locations_async, 100, 100)

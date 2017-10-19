@@ -370,7 +370,7 @@ class PrevalenceOfUndernutritionView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, include_test)
+                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_undernutrition_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -696,7 +696,7 @@ class PrevalenceOfSevereView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, include_test)
+                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_severe_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -740,7 +740,7 @@ class PrevalenceOfStunningView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level, include_test)
+                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_stunning_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -860,7 +860,7 @@ class ExclusiveBreastfeedingView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, include_test)
+                data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_exclusive_breastfeeding_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -899,7 +899,7 @@ class ChildrenInitiatedView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_children_initiated_sector_data(domain, config, loc_level, include_test)
+                data = get_children_initiated_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_children_initiated_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -938,7 +938,7 @@ class InstitutionalDeliveriesView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_institutional_deliveries_sector_data(domain, config, loc_level, include_test)
+                data = get_institutional_deliveries_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_institutional_deliveries_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -976,7 +976,7 @@ class ImmunizationCoverageView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_immunization_coverage_sector_data(domain, config, loc_level, include_test)
+                data = get_immunization_coverage_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_immunization_coverage_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1007,7 +1007,7 @@ class AWCDailyStatusView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awc_daily_status_sector_data(domain, config, loc_level, include_test)
+                data = get_awc_daily_status_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awc_daily_status_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1040,7 +1040,7 @@ class AWCsCoveredView(View):
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_awcs_covered_sector_data(domain, config, loc_level, include_test)
+                data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1073,7 +1073,7 @@ class RegisteredHouseholdView(View):
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_registered_household_sector_data(domain, config, loc_level, include_test)
+                data = get_registered_household_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_registered_household_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1115,7 +1115,7 @@ class EnrolledChildrenView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_enrolled_children_sector_data(domain, config, loc_level, include_test)
+                data = get_enrolled_children_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_children_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1151,7 +1151,7 @@ class EnrolledWomenView(View):
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_enrolled_women_sector_data(domain, config, loc_level, include_test)
+                data = get_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1184,7 +1184,7 @@ class LactatingEnrolledWomenView(View):
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, include_test)
+                data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1217,7 +1217,7 @@ class AdolescentGirlsView(View):
 
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adolescent_girls_sector_data(domain, config, loc_level, include_test)
+                data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1251,7 +1251,7 @@ class AdhaarBeneficiariesView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level, include_test)
+                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adhaar_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1284,7 +1284,7 @@ class CleanWaterView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_clean_water_sector_data(domain, config, loc_level, include_test)
+                data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_clean_water_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1318,7 +1318,7 @@ class FunctionalToiletView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_functional_toilet_sector_data(domain, config, loc_level, include_test)
+                data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_functional_toilet_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1352,7 +1352,7 @@ class MedicineKitView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_medicine_kit_sector_data(domain, config, loc_level, include_test)
+                data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_medicine_kit_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1386,7 +1386,7 @@ class InfantsWeightScaleView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_infants_weight_scale_sector_data(domain, config, loc_level, include_test)
+                data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_infants_weight_scale_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -1420,7 +1420,7 @@ class AdultWeightScaleView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adult_weight_scale_sector_data(domain, config, loc_level, include_test)
+                data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adult_weight_scale_data_map(domain, config, loc_level, include_test)
         elif step == "chart":

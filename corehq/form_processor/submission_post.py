@@ -197,7 +197,7 @@ class SubmissionPost(object):
                         if existing_form.is_error:
                             response_nature = ResponseNature.PROCESSING_FAILURE
                         else:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                     else:
                         self.interface.save_processed_models([instance])
                 elif not instance.is_error:
@@ -220,7 +220,7 @@ class SubmissionPost(object):
                         instance.initial_processing_complete = True
                         error_message = self.save_processed_models(case_db, xforms, case_stock_result)
                         if error_message:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:
