@@ -769,7 +769,7 @@ COMMTRACK = StaticToggle(
     "CommCare Supply",
     TAG_SOLUTIONS,
     description=(
-        '<a href="http://www.commtrack.org/home/">CommCare Supply</a> '
+        '<a href="https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home">CommCare Supply</a> '
         "is a logistics and supply chain management module. It is designed "
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
