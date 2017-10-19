@@ -1,5 +1,6 @@
 from django.conf import settings
 import django.core.exceptions
+from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
@@ -54,3 +55,23 @@ class UsersMiddleware(MiddlewareMixin):
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
+
+
+class Enforce2FAMiddleware(MiddlewareMixin):
+    """Require all Dimagi users to have Two-Factor Auth enabled"""
+    def __init__(self, get_response=None):
+        super(Enforce2FAMiddleware, self).__init__(get_response)
+
+        if settings.DEBUG:
+            raise django.core.exceptions.MiddlewareNotUsed
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if request.user and request.couch_user and request.couch_user.is_dimagi and not request.user.is_verified():
+            if request.path.startswith('/account/'):
+                return None
+            else:
+                return TemplateResponse(
+                    request=request,
+                    template='two_factor/core/otp_required.html',
+                    status=403,
+                )
