@@ -8,6 +8,9 @@ import sqlalchemy
 from django.conf import settings
 from django.test.utils import override_settings
 
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
@@ -38,6 +41,19 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+
+    domain = create_domain('icds-cas')
+    location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='block',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='b1',
+        location_id='b1',
+        location_type=location_type
+    )
+
     with override_settings(SERVER_ENVIRONMENT='icds'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
@@ -91,5 +107,8 @@ def tearDownModule():
             table = metadata.tables['ucr_table_name_mapping']
             delete = table.delete()
             connection.execute(delete)
+    LocationType.objects.filter(domain='icds-cas').delete()
+    SQLLocation.objects.filter(domain='icds-cas').delete()
 
+    Domain.get_by_name('icds-cas').delete()
     _call_center_domain_mock.stop()

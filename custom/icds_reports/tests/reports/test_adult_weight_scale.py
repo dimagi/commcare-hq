@@ -129,7 +129,8 @@ class TestAdultWeightScale(TestCase):
                     'district_id': 'd1',
                     'block_id': 'b1',
                 },
-                loc_level='supervisor'
+                loc_level='supervisor',
+                location_id='b1',
             ),
             {
                 "info": "Percentage of AWCs with weighing scale for mother and child",
@@ -154,15 +155,15 @@ class TestAdultWeightScale(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
+                                None,
+                                0.14285714285714285
+                            ],
+                            [
                                 "s1",
                                 0.14285714285714285
                             ],
                             [
                                 "s2",
-                                0.14285714285714285
-                            ],
-                            [
-                                None,
                                 0.14285714285714285
                             ]
                         ],

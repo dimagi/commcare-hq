@@ -62,6 +62,7 @@ class TestLocationFilter(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        super(TestLocationFilter, cls).tearDownClass()
 
     def test_get_location_filter_state(self):
         config = get_location_filter(self.state.location_id, self.domain_name)

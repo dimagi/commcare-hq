@@ -22,10 +22,10 @@ class TestPrevalenceOfStunting(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of children (6-60 months) enrolled for ICDS services with "
-                            "height-for-age below -2Z standard deviations"
-                            " of the WHO Child Growth Standards median.<br/><br/>"
-                            "Stunting in children is a sign of chronic undernutrition "
-                            "and has long lasting harmful consequences on the growth of a child",
+                            "height-for-age below -2Z standard deviations of "
+                            "the WHO Child Growth Standards median.<br/><br/>Stunting "
+                            "is a sign of chronic undernutrition and has long "
+                            "lasting harmful consequences on the growth of a child",
                     "average": "2.73"
                 },
                 "fills": {
@@ -55,7 +55,6 @@ class TestPrevalenceOfStunting(TestCase):
                 "slug": "severe",
                 "label": "Percent of Children Stunted (6 - 60 months)"
             }
-
         )
 
     def test_chart_data(self):
@@ -200,6 +199,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'block_id': 'b1',
                     'aggregation_level': 4
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {

@@ -137,6 +137,7 @@ class TestImmunizationCoverage(TestCase):
                     'block_id': 'b1',
                     'aggregation_level': 4
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {

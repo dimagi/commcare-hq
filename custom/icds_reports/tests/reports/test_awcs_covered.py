@@ -128,6 +128,7 @@ class TestAWCSCovered(TestCase):
                     'block_id': 'b1',
                     'aggregation_level': 4
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {
@@ -153,12 +154,12 @@ class TestAWCSCovered(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
-                                "s2",
-                                1
-                            ],
-                            [
                                 "s1",
                                 2
+                            ],
+                            [
+                                "s2",
+                                1
                             ]
                         ],
                         "key": ""

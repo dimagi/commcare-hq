@@ -41,7 +41,7 @@ class TestAdhaar(TestCase):
                     }
                 },
                 "slug": "adhaar",
-                "label": "Percent Adhaar Seeded Beneficiaries"
+                "label": "Percent Adhaar-seeded Beneficiaries"
             }
         )
 
@@ -129,7 +129,8 @@ class TestAdhaar(TestCase):
                     'district_id': 'd1',
                     'block_id': 'b1',
                 },
-                loc_level='supervisor'
+                loc_level='supervisor',
+                location_id='b1'
             ),
             {
                 "info": "Percentage of individuals registered using "
@@ -155,16 +156,16 @@ class TestAdhaar(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
+                                None,
+                                0.44
+                            ],
+                            [
                                 "s1",
                                 0.6764705882352942
                             ],
                             [
                                 "s2",
                                 0.3181818181818182
-                            ],
-                            [
-                                None,
-                                0.44
                             ]
                         ],
                         "key": ""

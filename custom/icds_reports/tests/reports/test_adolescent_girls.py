@@ -126,6 +126,7 @@ class TestAdolescentGirls(TestCase):
                     'district_id': 'd1',
                     'block_id': 'b1',
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {
@@ -148,16 +149,16 @@ class TestAdolescentGirls(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
+                                None,
+                                11
+                            ],
+                            [
                                 "s1",
                                 10
                             ],
                             [
                                 "s2",
                                 12
-                            ],
-                            [
-                                None,
-                                11
                             ]
                         ],
                         "key": "Number Of Girls"

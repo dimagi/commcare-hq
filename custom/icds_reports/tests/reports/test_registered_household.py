@@ -129,6 +129,7 @@ class TestRegisteredHousehold(TestCase):
                     'block_id': 'b1',
                     'aggregation_level': 4
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {
@@ -148,12 +149,12 @@ class TestRegisteredHousehold(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
-                                "s2",
-                                1195
-                            ],
-                            [
                                 "s1",
                                 774
+                            ],
+                            [
+                                "s2",
+                                1195
                             ]
                         ],
                         "key": ""

@@ -401,6 +401,7 @@ class TestAWCDailyStatus(TestCase):
                     'district_id': 'd1',
                     'block_id': 'b1',
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {
@@ -426,15 +427,15 @@ class TestAWCDailyStatus(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
+                                None,
+                                0.0
+                            ],
+                            [
                                 "s1",
                                 0.0
                             ],
                             [
                                 "s2",
-                                0.0
-                            ],
-                            [
-                                None,
                                 0.0
                             ]
                         ],

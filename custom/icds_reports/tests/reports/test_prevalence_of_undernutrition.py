@@ -196,6 +196,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'district_id': 'd1',
                     'block_id': 'b1',
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {
@@ -230,16 +231,16 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
+                                None,
+                                0.2723404255319149
+                            ],
+                            [
                                 "s1",
                                 0.3472222222222222
                             ],
                             [
                                 "s2",
                                 0.2392638036809816
-                            ],
-                            [
-                                None,
-                                0.2723404255319149
                             ]
                         ],
                         "key": ""
