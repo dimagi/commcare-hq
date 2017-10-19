@@ -694,9 +694,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             valid = chart_row['valid']
             chart_data[match_age(age)] += valid
 
-    def get_data_for_kpi(filters, date):
-        queryset = AggAwcDailyView.objects.filter(
-            date=date, **filters
+    def get_data_for(query_class, filters):
+        queryset = query_class.objects.filter(
+            **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -707,19 +707,38 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
-            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
+            person_adolescent=(
+                Sum('cases_person_adolescent_girls_11_14') +
+                Sum('cases_person_adolescent_girls_15_18')
+            ),
+            person_adolescent_all=(
+                Sum('cases_person_adolescent_girls_11_14_all') +
+                Sum('cases_person_adolescent_girls_15_18_all')
+            ),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
             all_persons=Sum('cases_person_beneficiary')
         )
+
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
     yesterday = datetime.now() - relativedelta(days=1)
     two_days_ago = yesterday - relativedelta(days=1)
-    kpi_yesterday = get_data_for_kpi(config, yesterday.date())
-    kpi_two_days_ago = get_data_for_kpi(config, two_days_ago.date())
+    now = datetime.utcnow()
+    previous_month = selected_month - relativedelta(months=1)
+    if selected_month.month == now.month and selected_month.year == now.year:
+        config['date'] = yesterday
+        data = get_data_for(AggAwcDailyView, config)
+        config['date'] = two_days_ago
+        prev_data = get_data_for(AggAwcDailyView, config)
+        frequency = 'day'
+    else:
+        config['month'] = selected_month
+        data = get_data_for(AggAwcMonthly, config)
+        config['month'] = previous_month
+        prev_data = get_data_for(AggAwcMonthly, config)
+        frequency = 'month'
 
     return {
         'chart': [
@@ -736,17 +755,17 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'help_text': _("Total number of households registered"),
                     'percent': percent_increase(
                         'household',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
+                        data,
+                        prev_data,
                     ),
                     'color': 'green' if percent_increase(
                         'household',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'household'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'household'),
                     'all': '',
                     'format': 'number',
-                    'frequency': 'month'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Percent Adhaar-seeded Beneficiaries'),
@@ -755,30 +774,29 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
+                        data,
+                        prev_data,
                         'all_persons'
                     ),
-                    'value': get_value(kpi_yesterday, 'person_aadhaar'),
-                    'all': get_value(kpi_yesterday, 'all_persons'),
+                    'value': get_value(data, 'person_aadhaar'),
+                    'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
-                    'frequency': 'day'
+                    'frequency': frequency
                 }
             ],
             [
                 {
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', kpi_yesterday, kpi_two_days_ago),
+                    'percent': percent_increase('child_health_all', data, prev_data),
                     'color': 'green' if percent_increase(
                         'child_health_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'child_health_all'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'child_health_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day',
-                    'redirect': 'enrolled_children'
+                    'frequency': frequency,
                 },
                 {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
@@ -786,15 +804,15 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                         "Total number of children registered between the age of 0 - 6 years "
                         "and enrolled for ICDS services"
                     )),
-                    'percent': percent_increase('child_health', kpi_yesterday, kpi_two_days_ago),
+                    'percent': percent_increase('child_health', data, prev_data),
                     'color': 'green' if percent_increase(
                         'child_health',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'child_health'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'child_health'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 }
             ],
             [
@@ -803,30 +821,30 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'help_text': _("Total number of pregnant women registered"),
                     'percent': percent_increase(
                         'ccs_pregnant_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
+                        data,
+                        prev_data,
                     ),
                     'color': 'green' if percent_increase(
                         'ccs_pregnant_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'ccs_pregnant_all'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'ccs_pregnant_all'),
                     'all': '',
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
                     'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('ccs_pregnant', kpi_yesterday, kpi_two_days_ago),
+                    'percent': percent_increase('ccs_pregnant', data, prev_data),
                     'color': 'green' if percent_increase(
                         'ccs_pregnant',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'ccs_pregnant'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 },
             ],
             [
@@ -835,30 +853,30 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'help_text': _('Total number of lactating women registered'),
                     'percent': percent_increase(
                         'css_lactating_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago
+                        data,
+                        prev_data
                     ),
                     'color': 'green' if percent_increase(
                         'css_lactating_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'css_lactating_all'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'css_lactating_all'),
                     'all': '',
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
                     'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('css_lactating', kpi_yesterday, kpi_two_days_ago),
+                    'percent': percent_increase('css_lactating', data, prev_data),
                     'color': 'green' if percent_increase(
                         'css_lactating',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'css_lactating'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'css_lactating'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 },
             ],
             [
@@ -867,17 +885,17 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
                     'percent': percent_increase(
                         'person_adolescent_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago,
+                        data,
+                        prev_data,
                     ),
                     'color': 'green' if percent_increase(
                         'person_adolescent_all',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'person_adolescent_all'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'person_adolescent_all'),
                     'all': '',
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
@@ -887,17 +905,17 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     )),
                     'percent': percent_increase(
                         'person_adolescent',
-                        kpi_yesterday,
-                        kpi_two_days_ago
+                        data,
+                        prev_data
                     ),
                     'color': 'green' if percent_increase(
                         'person_adolescent',
-                        kpi_yesterday,
-                        kpi_two_days_ago) > 0 else 'red',
-                    'value': get_value(kpi_yesterday, 'person_adolescent'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day'
+                    'frequency': frequency
                 }
             ]
         ]
@@ -1152,7 +1170,5 @@ def get_beneficiary_details(case_id, month):
                 'x': int(row.age_in_months),
                 'y': float(row.recorded_height or 0)
             }
-        beneficiary['wfl'][int(math.ceil((row.recorded_height or 45) - 45))] = {
-            'y': float(row.recorded_weight or 0)
-        }
+        beneficiary['wfl'][int((row.recorded_height - 45) * 2)]['y'] = float(row.recorded_weight or 0)
     return beneficiary

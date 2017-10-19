@@ -7,6 +7,7 @@ function MapOrSectorController() {
         chart: {
             type: 'multiBarHorizontalChart',
             width: 1000,
+            height: 550,
             margin: {
                 bottom: 40,
                 left: 220,
@@ -53,7 +54,9 @@ function MapOrSectorController() {
                 });
             },
             callback: function(chart) {
-                vm.chartOptions.chart.height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 50 : 150;
+                var height = 550;
+                var calc_height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 50 : 0;
+                vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
                 return chart;
             },
         },
