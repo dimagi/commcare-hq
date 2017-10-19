@@ -146,6 +146,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "nikshay_id",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "TB Notification number/ Nikshay ID"
@@ -157,6 +158,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_id",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "eNikshay ID"
@@ -198,9 +200,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "current_address",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address"
@@ -275,6 +279,7 @@
                 },
                 "aggregation": "simple",
                 "field": "episode_type",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Episode Type"
@@ -324,6 +329,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_of_diagnosis",
+                "width": "60px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Diagnosis"
@@ -338,6 +344,7 @@
                 },
                 "aggregation": "simple",
                 "field": "diagnosing_facility_id",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Diagnosing Facility"
@@ -352,6 +359,7 @@
                 },
                 "aggregation": "simple",
                 "field": "health_facility_for_treatment",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Health Facility for Treatment"
@@ -366,6 +374,7 @@
                 },
                 "aggregation": "simple",
                 "field": "treating_phi",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Currently Treating PHI"
@@ -377,6 +386,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "tu_name",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Currently Treating TU Name"
@@ -467,6 +477,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "not_microbiological_result",
+                "width": "100px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Results of Other tests (XRay/Histopatho/FNAC/Clinical/Other,specify)"
@@ -541,6 +552,7 @@
                 },
                 "aggregation": "simple",
                 "field": "treatment_status_value",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Status of Treatment"
@@ -552,6 +564,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "treatment_initiation_date",
+                "width": "60px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Initiation"

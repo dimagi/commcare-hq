@@ -97,6 +97,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "testing_facility_name",
+                "width": "140px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Testing Facility Name"
@@ -148,9 +149,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_details",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Address and Contact Details"
@@ -334,6 +337,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_tested",
+                "width": "80px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Specimen Collection"
@@ -390,6 +394,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_reported2",
+                "width": "85px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Reporting Results"
@@ -418,6 +423,7 @@
                 },
                 "aggregation": "simple",
                 "field": "result",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "TB Detection Results"

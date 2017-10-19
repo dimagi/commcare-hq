@@ -127,6 +127,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "testing_facility_district_name",
+                "width": "85px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "District Name"
@@ -202,9 +203,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_current_address",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address"
@@ -240,6 +243,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "referring_facility_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of Referring health facility"
@@ -281,6 +285,7 @@
                 },
                 "aggregation": "simple",
                 "field": "diagnostic_test_reason",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Presumptive TB /RE/  Presumptive NTM"
@@ -439,6 +444,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_reported",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of result"
