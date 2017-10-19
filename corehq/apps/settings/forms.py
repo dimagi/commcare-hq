@@ -183,6 +183,13 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
             )
         )
 
+    def save(self):
+        super(HQTOTPDeviceForm, self).save()
+        couch_user = CouchUser.from_django_user(self.user)
+        if couch_user.two_factor_auth_disabled_until:
+            couch_user.two_factor_auth_disabled_until = None
+            couch_user.save()
+
 
 class HQPhoneNumberForm(PhoneNumberForm):
 
