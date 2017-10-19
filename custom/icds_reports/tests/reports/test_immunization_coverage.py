@@ -20,8 +20,8 @@ class TestImmunizationCoverage(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of children at age 3 who have"
-                            " recieved complete immunization as per National Immunization Schedule of India.",
+                    "info": "Percentage of children 1 year+ who have received complete immunization"
+                            " as per National Immunization Schedule of India required by age 1.",
                     "average": 10.896898575020955
                 },
                 "fills": {

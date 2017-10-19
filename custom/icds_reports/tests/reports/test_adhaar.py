@@ -78,34 +78,6 @@ class TestAdhaar(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "all": 0
-                            },
-                            {
-                                "y": 605.0,
-                                "x": 1491004800000,
-                                "all": 0
-                            },
-                            {
-                                "y": 655.0,
-                                "x": 1493596800000,
-                                "all": 0
-                            }
-                        ],
-                        "key": "Number of beneficiaries with Adhaar numbers"
-                    },
-                    {
                         "color": "#006fdf",
                         "classed": "dashed",
                         "strokeWidth": 2,
@@ -121,17 +93,17 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 2420.0,
+                                "y": 0.25,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 2420
                             },
                             {
-                                "y": 2500.0,
+                                "y": 0.262,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 2500
                             }
                         ],
-                        "key": "Total number of beneficiaries with Adhaar numbers"
+                        "key": "Percentage of beneficiaries with Adhaar numbers"
                     }
                 ],
                 "all_locations": [

@@ -1,5 +1,3 @@
-import json
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \

@@ -5,6 +5,9 @@ import mock
 import postgres_copy
 import sqlalchemy
 
+from django.conf import settings
+from django.test.utils import override_settings
+
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
@@ -28,54 +31,65 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 
 def setUpModule():
+    if settings.USE_PARTITIONED_DATABASE:
+        return
+
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    configs = StaticDataSourceConfiguration.by_domain('icds-cas')
-    adapters = [get_indicator_adapter(config) for config in configs]
+    with override_settings(SERVER_ENVIRONMENT='icds'):
+        configs = StaticDataSourceConfiguration.by_domain('icds-cas')
+        adapters = [get_indicator_adapter(config) for config in configs]
 
-    for adapter in adapters:
-        if adapter.config.table_id == 'static-child_health_cases':
-            # hack because this is in a migration
-            continue
-        adapter.build_table()
+        for adapter in adapters:
+            if adapter.config.table_id == 'static-child_health_cases':
+                # hack because this is in a migration
+                continue
+            adapter.build_table()
 
-    engine = connection_manager.get_session_helper('default').engine
-    metadata = sqlalchemy.MetaData(bind=engine)
-    metadata.reflect(bind=engine, extend_existing=True)
-    path = os.path.join(os.path.dirname(__file__), 'fixtures')
-    for file_name in os.listdir(path):
-        with open(os.path.join(path, file_name)) as f:
-            table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
-            table = metadata.tables[table_name]
-            postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
+        metadata = sqlalchemy.MetaData(bind=engine)
+        metadata.reflect(bind=engine, extend_existing=True)
+        path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        for file_name in os.listdir(path):
+            with open(os.path.join(path, file_name)) as f:
+                table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
+                table = metadata.tables[table_name]
+                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
 
-    move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+        try:
+            move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+        except AssertionError:
+            pass
     _call_center_domain_mock.stop()
 
 
 def tearDownModule():
+    if settings.USE_PARTITIONED_DATABASE:
+        return
+
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    configs = StaticDataSourceConfiguration.by_domain('icds-cas')
-    adapters = [get_indicator_adapter(config) for config in configs]
-    for adapter in adapters:
-        if adapter.config.table_id == 'static-child_health_cases':
-            # hack because this is in a migration
-            adapter.clear_table()
-            continue
-        adapter.drop_table()
+    with override_settings(SERVER_ENVIRONMENT='icds'):
+        configs = StaticDataSourceConfiguration.by_domain('icds-cas')
+        adapters = [get_indicator_adapter(config) for config in configs]
+        for adapter in adapters:
+            if adapter.config.table_id == 'static-child_health_cases':
+                # hack because this is in a migration
+                adapter.clear_table()
+                continue
+            adapter.drop_table()
 
-    engine = connection_manager.get_session_helper('default').engine
+        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
 
-    with engine.begin() as connection:
-        metadata = sqlalchemy.MetaData(bind=engine)
-        metadata.reflect(bind=engine, extend_existing=True)
-        table = metadata.tables['ucr_table_name_mapping']
-        delete = table.delete()
-        connection.execute(delete)
+        with engine.begin() as connection:
+            metadata = sqlalchemy.MetaData(bind=engine)
+            metadata.reflect(bind=engine, extend_existing=True)
+            table = metadata.tables['ucr_table_name_mapping']
+            delete = table.delete()
+            connection.execute(delete)
 
     _call_center_domain_mock.stop()
