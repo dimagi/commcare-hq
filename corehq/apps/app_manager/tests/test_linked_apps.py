@@ -42,6 +42,10 @@ class TestLinkedApps(TestCase, TestXmlMixin):
         cls.image.delete()
         super(TestLinkedApps, cls).tearDownClass()
 
+    def setUp(self):
+        # re-fetch app
+        self.linked_app = Application.get(self.linked_app._id)
+
     @staticmethod
     def _get_image_data(filename):
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
