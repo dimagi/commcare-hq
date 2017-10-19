@@ -8,7 +8,7 @@ from django.test import TestCase, SimpleTestCase
 from corehq.toggles import (
     NAMESPACE_USER,
     NAMESPACE_DOMAIN,
-    TAG_EXPERIMENTAL,
+    TAG_CUSTOM,
     PredictablyRandomToggle,
     StaticToggle,
     deterministic_random,
@@ -157,7 +157,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER, NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -167,7 +167,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER],
             randomness=0.99
         )
@@ -178,7 +178,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -189,7 +189,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER],
             randomness=0.99
         )
@@ -199,7 +199,7 @@ class PredictablyRandomToggleSimpleTests(SimpleTestCase):
         toggle = PredictablyRandomToggle(
             'test_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_DOMAIN],
             randomness=0.99
         )
@@ -235,7 +235,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'user_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER],
             randomness=0.01
         )
@@ -246,7 +246,7 @@ class PredictablyRandomToggleTests(TestCase):
         toggle = PredictablyRandomToggle(
             'domain_toggle',
             'A toggle for testing',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_DOMAIN],
             randomness=0.01
         )
@@ -277,7 +277,7 @@ class ShortcutTests(TestCase):
         user_toggle = StaticToggle(
             'user_toggle',
             'A test toggle',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER]
         )
         users = find_users_with_toggle_enabled(user_toggle)
@@ -287,7 +287,7 @@ class ShortcutTests(TestCase):
         domain_toggle = StaticToggle(
             'domain_toggle',
             'A test toggle',
-            TAG_EXPERIMENTAL,
+            TAG_CUSTOM,
             [NAMESPACE_USER]
         )
         domain, = find_domains_with_toggle_enabled(domain_toggle)
