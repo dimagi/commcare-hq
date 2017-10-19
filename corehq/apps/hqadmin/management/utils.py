@@ -87,7 +87,8 @@ def _get_pr_labels(pr_number):
         return None
     assert pr_number == json_response['number'], (pr_number, json_response['number'])
 
-    return [{'name': label['name'], 'color': label['color']}
+    return [
+        {'name': label['name'], 'color': label['color']}
         for label in json_response['labels']
     ]
 
