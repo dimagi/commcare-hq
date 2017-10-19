@@ -487,9 +487,9 @@ LOCATIONS_IN_UCR = StaticToggle(
 
 REPORT_BUILDER = StaticToggle(
     'report_builder',
-    'Report Builder',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
+    'Activate Report Builder for a project without setting up a subscription.',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
 )
 
 REPORT_BUILDER_V2 = StaticToggle(
@@ -498,7 +498,7 @@ REPORT_BUILDER_V2 = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
     description=(
-        'Enables the "new" report builder. Note that the "Report Builder" feature flag must also be enabled'
+        'Enables the "new" report builder. Note that the project must already have access to report builder'
     )
 )
 
