@@ -66,7 +66,15 @@ class Enforce2FAMiddleware(MiddlewareMixin):
             raise django.core.exceptions.MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user and request.couch_user and request.couch_user.is_dimagi and not request.user.is_verified():
+        if not (
+            hasattr(request, 'user')
+            and hasattr(request, 'couch_user')
+            and request.user
+            and request.couch_user
+        ):
+            return None
+
+        if request.couch_user.is_dimagi and not request.user.is_verified():
             if request.path.startswith('/account/'):
                 return None
             else:
