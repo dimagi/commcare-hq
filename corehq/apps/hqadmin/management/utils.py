@@ -6,8 +6,8 @@ import requests
 from gevent.pool import Pool
 
 LABELS_TO_EXPAND = [
-    "Any User",
-    "Feature Flag"
+    "product/all-users",
+    "product/feature-flag"
 ]
 
 
