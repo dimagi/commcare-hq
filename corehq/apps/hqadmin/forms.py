@@ -162,3 +162,18 @@ class SuperuserManagementForm(forms.Form):
                 )
             )
         )
+
+
+class DisableTwoFactorForm(forms.Form):
+    username = forms.EmailField(label=_("Confirm the username"))
+
+    def __init__(self, initial, **kwargs):
+        self.username = initial.pop('username')
+        super(DisableTwoFactorForm, self).__init__(initial=initial, **kwargs)
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if username != self.username:
+            raise forms.ValidationError("Username doesn't match expected.")
+
+        return username
