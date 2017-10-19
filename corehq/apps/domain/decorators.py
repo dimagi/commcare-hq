@@ -93,7 +93,7 @@ def login_and_domain_required(view_func):
                     # some views might not have this set
                     couch_user = CouchUser.from_django_user(user)
                 if couch_user.is_member_of(domain):
-                    if domain.two_factor_auth and not user.is_verified():
+                    if domain.two_factor_auth and not user.is_verified() and not couch_user.two_factor_disabled:
                         return TemplateResponse(
                             request=req,
                             template='two_factor/core/otp_required.html',

@@ -3,7 +3,7 @@ import json
 import socket
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -782,6 +782,14 @@ class DisableTwoFactorView(FormView):
         user = User.objects.get(username__iexact=username)
         for device in devices_for_user(user):
             device.delete()
+
+        disable_for_days = form.cleaned_data['disable_for_days']
+        if disable_for_days:
+            couch_user = CouchUser.from_django_user(user)
+            disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
+            couch_user.two_factor_auth_disabled_until = disable_until
+            couch_user.save()
+
         messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
         return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
 

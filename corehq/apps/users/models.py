@@ -869,6 +869,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
     analytics_enabled = BooleanProperty(default=True)
 
+    two_factor_auth_disabled_until = DateTimeProperty()
+
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
@@ -917,6 +919,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 key=key,
                 value=getattr(self, key)
             ) for key in properties),
+        )
+
+    @property
+    def two_factor_disabled(self):
+        return (
+            self.two_factor_auth_disabled_until
+            and datetime.utcnow() < self.two_factor_auth_disabled_until
         )
 
     @property

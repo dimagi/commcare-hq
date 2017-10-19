@@ -75,7 +75,7 @@ class Enforce2FAMiddleware(MiddlewareMixin):
             return None
 
         if request.couch_user.is_dimagi and not request.user.is_verified():
-            if request.path.startswith('/account/'):
+            if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
                 return None
             else:
                 return TemplateResponse(
