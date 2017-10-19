@@ -1,11 +1,14 @@
 import requests
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
+from requests import ConnectionError
 from requests.auth import AuthBase
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.logging import notify_exception
 
 
 class ApiKeyAuth(AuthBase):
@@ -89,6 +92,23 @@ def _fetch_remote_media_content(media_item, remote_app_details):
 def _do_request_to_remote_hq(relative_url, remote_app_details, params=None):
     url_base, domain, username, api_key, app_id = remote_app_details
     full_url = u'%s%s' % (url_base, relative_url)
-    response = requests.get(full_url, params=params, auth=ApiKeyAuth(username, api_key))
-    response.raise_for_status()
+    try:
+        response = requests.get(full_url, params=params, auth=ApiKeyAuth(username, api_key))
+    except ConnectionError:
+        notify_exception(None, "Error performaing remote app request", details={
+            'remote_url': full_url,
+            'params': params
+        })
+        raise RemoteRequestError
+    if response.status_code == 401:
+        raise RemoteAuthError
+    elif response.status_code == 403:
+        raise ActionNotPermitted
+    elif response.status_code != 200:
+        notify_exception(None, "Error performaing remote app request", details={
+            'remote_url': full_url,
+            'response_code': response.status_code,
+            'params': params
+        })
+        raise RemoteRequestError
     return response

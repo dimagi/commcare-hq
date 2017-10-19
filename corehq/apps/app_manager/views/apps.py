@@ -18,7 +18,7 @@ from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError, \
-    ActionNotPermitted
+    ActionNotPermitted, RemoteRequestError, RemoteAuthError
 from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, overwrite_app
@@ -260,7 +260,10 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
-        context['master_version'] = app.get_master_version()
+        try:
+            context['master_version'] = app.get_master_version()
+        except RemoteRequestError:
+            messages.error(request, _('Unable to get version of remote master app.'))
     return context
 
 
@@ -832,15 +835,27 @@ def drop_user_case(request, domain, app_id):
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
-    # TODO: make pulling from remote more robust to errors
+    exception_message = None
     try:
         latest_master_build = app.get_latest_master_release()
     except ActionNotPermitted:
-        messages.error(request, _(
+        exception_message = _(
             'This project is not authorized to update from the master application. '
-            'Please contact the maintainer of the master app if you believe this is a mistake. ')
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
         )
-        return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
+    except RemoteAuthError:
+        exception_message = _(
+            'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+            'Please verify your authentication details for the remote link are correct.'
+        )
+    except RemoteRequestError:
+        exception_message = _(
+            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+        )
+
+    if exception_message:
+        messages.error(request, exception_message)
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
     report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
     try:
@@ -852,7 +867,12 @@ def pull_master_app(request, domain, app_id):
                                   'or revert to a previous version that did not include them.'))
     else:
         if app.master_is_remote:
-            pull_missing_multimedia_from_remote(app)
+            try:
+                pull_missing_multimedia_from_remote(app)
+            except RemoteRequestError:
+                messages.error(request, _(
+                    'Error fetching multimedia from remote server. Please try again later.'
+                ))
         messages.success(request,
                          _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))

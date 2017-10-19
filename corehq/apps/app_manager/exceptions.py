@@ -160,3 +160,11 @@ class PracticeUserException(AppManagerException):
 
 class ActionNotPermitted(AppManagerException):
     pass
+
+
+class RemoteRequestError(AppManagerException):
+    pass
+
+
+class RemoteAuthError(RemoteRequestError):
+    pass
