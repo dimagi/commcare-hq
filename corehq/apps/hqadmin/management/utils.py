@@ -84,7 +84,7 @@ def _get_pr_labels(pr_number):
     json_response = requests.get(url).json()
     if not json_response.get('number'):
         # We've probably exceed our rate limit for unauthenticated requests
-        return None
+        return []
     assert pr_number == json_response['number'], (pr_number, json_response['number'])
 
     return [
