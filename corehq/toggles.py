@@ -36,8 +36,8 @@ TAG_PRODUCT = Tag(
 TAG_SOLUTIONS = Tag(
     name='Solutions',
     css_class='info',
-    description="We intend to release this feature.  It may still be in QA or "
-    "we may have a few changes to make before it's ready for general use.",
+    description="These features are only available for our services projects. This may affect support and "
+    "pricing when the project is transitioned to a subscription."
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
