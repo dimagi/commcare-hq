@@ -9,6 +9,9 @@ class SuperuserProjectEntryRecord(models.Model):
     project = models.CharField(max_length=256)
     last_login = models.DateTimeField(auto_now=True)
 
+    class Meta(object):
+        index_together = ['project', 'username']
+
     @classmethod
     def record_entry(cls, username, domain):
         record = cls(username=username, project=domain)
