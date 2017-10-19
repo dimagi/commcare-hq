@@ -74,7 +74,8 @@ class TestLinkedApps(TestCase, TestXmlMixin):
         with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
             missing_media = _get_missing_multimedia(self.master_app)
 
-        self.assertEqual(missing_media, self.master_app.multimedia_map.values())
+        media_item = self.master_app.multimedia_map.values()[0]
+        self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
 
     def test_add_domain_to_media(self):
         self.image.valid_domains.remove(self.master_app.domain)
@@ -107,7 +108,7 @@ class TestLinkedApps(TestCase, TestXmlMixin):
         media_details['media_type'] = 'CommCareMultimedia'
         with patch('corehq.apps.app_manager.remote_link_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
-            _fetch_remote_media('domain', [media_details], remote_app_details)
+            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_app_details)
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
