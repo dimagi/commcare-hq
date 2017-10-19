@@ -341,8 +341,8 @@ APP_BUILDER_ADVANCED = StaticToggle(
     'Advanced Module in App-Builder',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    description="Advanced Modules allow you to autoload and manage multiple case types, but may behave in unexpected "
-                "ways.",
+    description="Advanced Modules allow you to autoload and manage multiple case types, "
+                "but may behave in unexpected ways.",
     help_link='https://confluence.dimagi.com/display/ccinternal/Advanced+Modules',
 )
 
@@ -928,7 +928,8 @@ FORMPLAYER_USE_LIVEQUERY = StaticToggle(
 
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
-    'ICDS: Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
+    'ICDS: Allow a configurable case list that is filtered based on a fixture type and '
+    'fixture selection (Due List)',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
