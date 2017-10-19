@@ -774,7 +774,7 @@ COMMTRACK = StaticToggle(
         "to improve the management, transport, and resupply of a variety of "
         "goods and materials, from medication to food to bednets. <br/>"
     ),
-    help_link='https://help.commcarehq.org/display/commtrack/CommTrack+Home',
+    help_link='https://help.commcarehq.org/display/commtrack/CommCare+Supply+Home',
     namespaces=[NAMESPACE_DOMAIN],
     save_fn=_commtrackify,
 )
@@ -807,7 +807,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
 
 OPENCLINICA = StaticToggle(
     'openclinica',
-    'Kemry: Offer OpenClinica settings and CDISC ODM export',
+    'KEMRI: Offer OpenClinica settings and CDISC ODM export',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
