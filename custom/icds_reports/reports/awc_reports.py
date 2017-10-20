@@ -924,7 +924,6 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
 
 def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=False):
     selected_month = datetime(*month)
-    previous_month = datetime(*prev_month)
 
     def get_data_for_kpi(filters, date):
         queryset = AggAwcMonthly.objects.filter(
@@ -954,7 +953,6 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
             return _("Data not Entered")
 
     kpi_data = get_data_for_kpi(config, selected_month.date())
-    kpi_data_prev_month = get_data_for_kpi(config, previous_month.date())
 
     return {
         'kpi': [
@@ -962,41 +960,19 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
                 {
                     'label': _('Clean Drinking Water'),
                     'help_text': None,
-                    'percent': percent_diff(
-                        'clean_water',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'clean_water',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'clean_water'),
                     'all': '',
                     'format': 'string',
+                    'show_percent': False,
                     'frequency': 'month'
                 },
                 {
                     'label': _('Functional Toilet'),
                     'help_text': None,
-                    'percent': percent_diff(
-                        'functional_toilet',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'functional_toilet',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'functional_toilet'),
                     'all': '',
                     'format': 'string',
+                    'show_percent': False,
                     'frequency': 'month'
                 }
             ],
@@ -1004,41 +980,19 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
                 {
                     'label': _('Weighing Scale: Infants'),
                     'help_text': None,
-                    'percent': percent_diff(
-                        'infant_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'infant_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'infant_weighing_scale'),
                     'all': '',
                     'format': 'string',
+                    'show_percent': False,
                     'frequency': 'month'
                 },
                 {
                     'label': _('AWCs with Weighing Scale: Mother and Child'),
                     'help_text': None,
-                    'percent': percent_diff(
-                        'adult_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'adult_weighing_scale',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
                     'format': 'string',
+                    'show_percent': False,
                     'frequency': 'month'
                 }
             ],
@@ -1046,21 +1000,10 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
                 {
                     'label': _('Medicine Kit'),
                     'help_text': None,
-                    'percent': percent_diff(
-                        'medicine_kits',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'medicine_kits',
-                        kpi_data,
-                        kpi_data_prev_month,
-                        'awcs'
-                    ) > 0 else 'red',
                     'value': get_infa_value(kpi_data, 'medicine_kits'),
                     'all': '',
                     'format': 'string',
+                    'show_percent': False,
                     'frequency': 'month'
                 }
             ],
