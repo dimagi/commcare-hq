@@ -30,6 +30,7 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     TREATMENT_INITIATED_IN_PHI,
     ENROLLED_IN_PRIVATE,
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -276,6 +277,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return (
             not location.metadata.get('is_test', "yes") == "yes" and
             location.location_type.code in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            location.metadata.get('sector') == PRIVATE_HEALTH_ESTABLISHMENT_SECTOR and
             not location.metadata.get('nikshay_code')
         )
 
