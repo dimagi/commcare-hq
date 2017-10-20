@@ -4,7 +4,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         var $menu = $(".appmanager-main-menu"),
             offset = _($menu.prevAll()).reduce(function(memo, value) {
                 return memo + $(value).outerHeight();
-            }, 0) + $("#hq-navigation").outerHeight(),
+            }, 0) + $("#hq-navigation").outerHeight();
 
         var $active = $menu.find(".appnav-item.active");
         if ($active.length) {
