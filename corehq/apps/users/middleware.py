@@ -2,6 +2,8 @@ from django.conf import settings
 import django.core.exceptions
 from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
+
+from corehq import toggles
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
@@ -74,7 +76,9 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
-        if request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
+        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
+            return None
+        elif request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
             if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
                 return None
             else:

@@ -1322,3 +1322,10 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
+
+TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
+    'two_factor_superuser_rollout',
+    'Users in this list will be forced to have Two-Factor Auth enabled',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
