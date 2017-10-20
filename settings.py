@@ -413,7 +413,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS + ('package_monitor',)
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'

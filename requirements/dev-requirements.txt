@@ -18,5 +18,6 @@ ipython==5.2.2
 ipdb==0.9.4
 wheel==0.29.0
 graphviz==0.7
+git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver
 
 --requirement=test-requirements.txt
