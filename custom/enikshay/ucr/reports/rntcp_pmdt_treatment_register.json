@@ -170,9 +170,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "complete_address_and_mobile_number",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address and Mobile Number"
@@ -209,6 +211,7 @@
                 },
                 "aggregation": "simple",
                 "field": "person_owner_id",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of Health Facility"
@@ -220,6 +223,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "tu_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of TU"
@@ -231,6 +235,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "district_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of District"
@@ -245,6 +250,7 @@
                 },
                 "aggregation": "simple",
                 "field": "drtb_center",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "DRTB Centre"
@@ -288,6 +294,7 @@
                 },
                 "aggregation": "simple",
                 "field": "patient_type",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Patient Type"
@@ -534,6 +541,7 @@
                 },
                 "aggregation": "simple",
                 "field": "treatment_regimen",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "DRTB Regimen"
@@ -545,6 +553,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "treatment_initiation_date",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Initiation"
