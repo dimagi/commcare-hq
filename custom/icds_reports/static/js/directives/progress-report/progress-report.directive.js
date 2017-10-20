@@ -110,7 +110,7 @@ function ProgressReportController($scope, $location, progressReportService,
         vm.report = null;
         vm.title = null;
         $location.path('progress_report/');
-    }
+    };
 
     vm.loadData();
 }

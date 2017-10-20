@@ -4,7 +4,7 @@
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element">
+                <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
                     {$ $ctrl.label $}
                     <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
                 </span>
@@ -21,7 +21,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>
         </div>
@@ -68,7 +68,7 @@
             </div>
 
         </div>
-        <div cg-busy="$ctrl.myPromise" ng-if="$ctrl.report">
+        <div ng-if="$ctrl.report">
             <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
                 <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
             </div>
