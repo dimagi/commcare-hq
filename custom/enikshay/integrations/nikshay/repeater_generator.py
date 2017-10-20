@@ -3,6 +3,8 @@ import json
 import datetime
 import socket
 from django.conf import settings
+
+from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeater_generators import LocationPayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
@@ -30,7 +32,10 @@ from custom.enikshay.case_utils import (
     get_lab_referral_from_test,
     get_occurrence_case_from_episode,
 )
-from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
+from custom.enikshay.integrations.nikshay.exceptions import (
+    NikshayResponseException,
+    NikshayHealthEstablishmentInvalidUpdate,
+)
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
     NikshayRequiredValueMissing,
@@ -479,21 +484,43 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     format_name = 'location_xml'
     format_label = 'XML'
 
+    @staticmethod
+    def get_location_user(location):
+        all_users_assigned_to_location = get_all_users_by_location(
+            location.domain,
+            location.location_id
+        )
+        location_type_code = location.location_type.code
+        user_with_user_type_as_loc = []
+        for user in all_users_assigned_to_location:
+            if user.user_data.get('usertype') == location_type_code:
+                user_with_user_type_as_loc.append(user)
+        if len(user_with_user_type_as_loc) == 0:
+            raise NikshayHealthEstablishmentInvalidUpdate("Location user not found")
+        if len(user_with_user_type_as_loc) > 1:
+            raise NikshayHealthEstablishmentInvalidUpdate("Multiple location users found")
+        return user_with_user_type_as_loc[0]
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
+        location_user = self.get_location_user(location)
+        location_user_data = location_user.user_data
         return {
+            # ToDo: Currently not available and needs to be set or an alternate way needed
             'ESTABLISHMENT_TYPE': health_establishment_type.get(
                 location.metadata.get('establishment_type', ''), ''),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
-            'MCI_HR_NO': location.metadata.get('registration_number'),
-            'CONTACT_PNAME': location.metadata.get('contact_name'),
+            'MCI_HR_NO': location_user_data.get('registration_number'),
+            'CONTACT_PNAME': location_user.full_name,
+            # ToDo: No field in UI for this as of now. Needs to be added or alternate way needed
             'CONTACT_PDESIGNATION': location.metadata.get('contact_designation'),
-            'TELEPHONE_NO': location.metadata.get('phone_number'),
-            'MOBILE_NO': location.metadata.get('mobile_number'),
-            'COMPLETE_ADDRESS': location.metadata.get('address'),
-            'PINCODE': location.metadata.get('address_pincode'),
-            'EMAILID': location.metadata.get('email_address'),
+            'TELEPHONE_NO': location_user_data.get('landline_no'),
+            'MOBILE_NO': location_user_data.get('contact_phone_number'),
+            'COMPLETE_ADDRESS': (u"%s %s" % (
+                location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip(),
+            'PINCODE': location_user_data.get('pincode'),
+            'EMAILID': location_user_data.get('email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
             'DISTRICT_CODE': location_hierarchy_codes.dtcode,
             'TBU_CODE': location.metadata.get('tbu_code', ''),
