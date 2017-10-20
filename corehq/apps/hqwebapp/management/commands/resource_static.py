@@ -19,6 +19,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--skip-cache',
+            action='store_true',
+            default=False,
+        )
+        parser.add_argument(
             '--clear',
             action='store_true',
             default=False,
@@ -29,21 +34,30 @@ class Command(BaseCommand):
             fout.write("resource_versions = %s" % resource_str)
 
     def handle(self, **options):
+        if not options['skip_cache']:
+            current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
+            current_sha = current_snapshot['commits'][0]['sha']
+            print("Current commit SHA: %s" % current_sha)
+
+            if options['clear']:
+                print("clearing resource cache")
+                rcache.delete_pattern(RESOURCE_PREFIX % '*')
+
+            existing_resource_str = rcache.get(RESOURCE_PREFIX % current_sha, None)
+            if existing_resource_str:
+                print("getting resource dict from cache")
+                self.output_resources(existing_resource_str)
+                return
+
+        resources = self.get_versions_by_resource()
+        resource_str = json.dumps(resources, indent=2)
+        self.output_resources(resource_str)
+
+        if not options['skip_cache']:
+            rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 86400)
+
+    def get_versions_by_resource(self):
         prefix = os.getcwd()
-        current_snapshot = gitinfo.get_project_snapshot(self.root_dir, submodules=False)
-        current_sha = current_snapshot['commits'][0]['sha']
-        print("Current commit SHA: %s" % current_sha)
-
-        if options['clear']:
-            print("clearing resource cache")
-            rcache.delete_pattern(RESOURCE_PREFIX % '*')
-
-        existing_resource_str = rcache.get(RESOURCE_PREFIX % current_sha, None)
-        if existing_resource_str:
-            print("getting resource dict from cache")
-            self.output_resources(existing_resource_str)
-            return
-
         resources = {}
         for finder in finders.get_finders():
             for path, storage in finder.list(['.*', '*~', '* *']):
@@ -55,9 +69,7 @@ class Command(BaseCommand):
                     url = os.path.join(storage.prefix, path)
                 filename = os.path.join(storage.location, path)
                 resources[url] = self.get_hash(filename)
-        resource_str = json.dumps(resources, indent=2)
-        rcache.set(RESOURCE_PREFIX % current_sha, resource_str, 86400)
-        self.output_resources(resource_str)
+        return resources
 
     def get_hash(self, filename):
         with open(filename) as f:
