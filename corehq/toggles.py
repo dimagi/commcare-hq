@@ -661,7 +661,7 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
-    help_text='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
 )
 
 VELLUM_PRINTING = StaticToggle(
@@ -1176,7 +1176,7 @@ LINKED_APPS = StaticToggle(
     'Allows master and linked apps',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
-    help_text='https://confluence.dimagi.com/display/ccinternal/Linked+Applications',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications',
 )
 
 LOCATION_USERS = StaticToggle(
