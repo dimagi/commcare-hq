@@ -8,7 +8,7 @@ var transformLocationTypeName = function(locationTypeName) {
     }
 };
 
-function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -66,7 +66,9 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
-
+        if ($location.path().indexOf('awc_reports') !== -1) {
+            vm.showMessage = selectedLocationIndex() !== 4;
+        }
         locationsService.getChildren($item.location_id).then(function(data) {
             vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
         });
@@ -336,7 +338,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 }
 
 LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId'];
-LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
+LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
