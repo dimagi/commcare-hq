@@ -10,8 +10,8 @@ class ProjectAccessMiddleware(MiddlewareMixin):
                 and hasattr(request, 'domain'):
             return self.record_entry(request.domain, request.couch_user.username)
 
-    @atomic
     @quickcache(['domain', 'username'], timeout=ENTRY_RECORD_FREQUENCY.seconds)
+    @atomic
     def record_entry(self, domain, username):
         if not SuperuserProjectEntryRecord.entry_recently_recorded(username, domain):
             SuperuserProjectEntryRecord.record_entry(username, domain)
