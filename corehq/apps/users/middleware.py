@@ -58,7 +58,7 @@ class UsersMiddleware(MiddlewareMixin):
 
 
 class Enforce2FAMiddleware(MiddlewareMixin):
-    """Require all Dimagi users to have Two-Factor Auth enabled"""
+    """Require all superusers and staff accounts to have Two-Factor Auth enabled"""
     def __init__(self, get_response=None):
         super(Enforce2FAMiddleware, self).__init__(get_response)
 
@@ -74,7 +74,7 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
-        if request.couch_user.is_dimagi and not request.user.is_verified():
+        if request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
             if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
                 return None
             else:
