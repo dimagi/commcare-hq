@@ -17,12 +17,10 @@ COLUMN_XPATH_CLIENT_TEMPLATE_V2 = "<%= id %>"
 
 
 def _get_column_xpath_template(new_mobile_ucr_restore):
-    print "_get_column_xpath_template " + new_mobile_ucr_restore
     return COLUMN_XPATH_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_TEMPLATE
 
 
 def get_column_xpath_client_template(new_mobile_ucr_restore):
-    print "get_column_xpath_client_template" + new_mobile_ucr_restore
     return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
 
 
@@ -76,7 +74,6 @@ class ReportModuleSuiteHelper(object):
 
 def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
     if new_mobile_ucr_restore:
-        print "_get_config_entry"
         datum_string = "instance('commcare-reports:{}')/rows"
     else:
         datum_string = "instance('reports')/reports/report[@id='{}']"
@@ -319,10 +316,8 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
 
             if transform.get('type') == 'translation':
                 if new_mobile_ucr_restore:
-                    print "_get_data_detail"
                     default_val = "{column_id}"
                 else:
-                    print "bad _get_data_detail"
                     default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
@@ -347,12 +342,10 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                 )
             else:
                 if new_mobile_ucr_restore:
-                    print "_get_data_detail"
                     return Xpath(
                         function="{}".format(col.column_id),
                     )
                 else:
-                    print " bad _get_data_detail"
                     return Xpath(
                         function="column[@id='{}']".format(col.column_id),
                     )
@@ -429,14 +422,12 @@ class MobileSelectFilterHelpers(object):
     @staticmethod
     def get_data_filter_xpath(config, domain, new_mobile_ucr_restore):
         if new_mobile_ucr_restore:
-            print "get_data_filter_xpath"
             return ''.join([
                 "[{column_id}=instance('commcaresession')/session/data/{datum_id}]".format(
                     column_id=config.report(domain).get_ui_filter(slug).field,
                     datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
                 for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
         else:
-            print "bad get_data_filter_xpath"
             return ''.join([
                 "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
                     column_id=config.report(domain).get_ui_filter(slug).field,
