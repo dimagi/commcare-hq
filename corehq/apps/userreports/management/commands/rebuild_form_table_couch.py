@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument('start_date', help="YYYY-MM-DD")
         parser.add_argument('end_date', help="YYYY-MM-DD")
 
-    def handle(self, domain, indicator_config_id, start_date, end_date, xmlns_list, **options):
+    def handle(self, domain, indicator_config_id, start_date, end_date, **options):
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
         end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
 
