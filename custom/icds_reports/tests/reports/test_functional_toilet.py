@@ -1,16 +1,18 @@
+
 from django.test.utils import override_settings
 
-from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_map, \
-    get_exclusive_breastfeeding_data_chart, get_exclusive_breastfeeding_sector_data
 from django.test import TestCase
+
+from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_map, \
+    get_functional_toilet_data_chart, get_functional_toilet_sector_data
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
-class TestExclusiveBreastFeeding(TestCase):
+class TestFunctionalToilet(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-            get_exclusive_breastfeeding_data_map(
+            get_functional_toilet_data_map(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -20,39 +22,35 @@ class TestExclusiveBreastFeeding(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of infants 0-6 months of age who are fed exclusively "
-                            "with breast milk. <br/><br/>An infant is exclusively breastfed "
-                            "if they recieve only breastmilk with "
-                            "no additional food, liquids (even water) "
-                            "ensuring optimal nutrition and growth between 0 - 6 months",
-                    "average": 56.0
+                    "info": "Percentage of AWCs with a functional toilet",
+                    "average": 30.0
                 },
                 "fills": {
-                    "0%-20%": "#de2d26",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#fee0d2",
+                    "0%-25%": "#de2d26",
+                    "25%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
                     "defaultFill": "#9D9D9D"
                 },
                 "data": {
                     "st1": {
+                        "in_month": 8,
                         "all": 26,
-                        "children": 17,
-                        "fillKey": "60%-100%"
+                        "fillKey": "25%-75%"
                     },
                     "st2": {
+                        "in_month": 7,
                         "all": 24,
-                        "children": 11,
-                        "fillKey": "20%-60%"
+                        "fillKey": "25%-75%"
                     }
                 },
-                "slug": "severe",
-                "label": "Percent Exclusive Breastfeeding"
+                "slug": "functional_toilet",
+                "label": "Percent AWCs with Functional Toilet"
             }
         )
 
     def test_chart_data(self):
         self.assertDictEqual(
-            get_exclusive_breastfeeding_data_chart(
+            get_functional_toilet_data_chart(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -65,21 +63,21 @@ class TestExclusiveBreastFeeding(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 65.38461538461539
+                        "percent": 30.76923076923077
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 29.166666666666668
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 65.38461538461539
+                        "percent": 30.76923076923077
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 29.166666666666668
                     }
                 ],
                 "chart_data": [
@@ -89,41 +87,37 @@ class TestExclusiveBreastFeeding(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0,
+                                "y": 0.0,
                                 "x": 1485907200000,
-                                "all": 0,
                                 "in_month": 0
                             },
                             {
-                                "y": 0,
+                                "y": 0.0,
                                 "x": 1488326400000,
-                                "all": 0,
                                 "in_month": 0
                             },
                             {
-                                "y": 0.22413793103448276,
+                                "y": 8.0,
                                 "x": 1491004800000,
-                                "all": 58,
-                                "in_month": 13
+                                "in_month": 8
                             },
                             {
-                                "y": 0.56,
+                                "y": 15.0,
                                 "x": 1493596800000,
-                                "all": 50,
-                                "in_month": 28
+                                "in_month": 15
                             }
                         ],
-                        "key": "% children exclusively breastfed"
+                        "key": "% of AWCs with a functional toilet."
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 65.38461538461539
+                        "percent": 30.76923076923077
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 29.166666666666668
                     }
                 ]
             }
@@ -131,7 +125,7 @@ class TestExclusiveBreastFeeding(TestCase):
 
     def test_sector_data(self):
         self.assertDictEqual(
-            get_exclusive_breastfeeding_sector_data(
+            get_functional_toilet_sector_data(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -144,18 +138,15 @@ class TestExclusiveBreastFeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "<br/><br/>An infant is exclusively breastfed if they recieve only breastmilk with"
-                        " no additional food, liquids (even water) ensuring"
-                        " optimal nutrition and growth between 0 - 6 months",
+                "info": "Percentage of AWCs with a functional toilet",
                 "tooltips_data": {
                     "s2": {
-                        "all": 13,
-                        "children": 7
+                        "in_month": 0,
+                        "all": 7
                     },
                     "s1": {
-                        "all": 2,
-                        "children": 0
+                        "in_month": 4,
+                        "all": 7
                     }
                 },
                 "chart_data": [
@@ -166,11 +157,11 @@ class TestExclusiveBreastFeeding(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.0
+                                0.5714285714285714
                             ],
                             [
                                 "s2",
-                                0.5384615384615384
+                                0.0
                             ]
                         ],
                         "key": ""
