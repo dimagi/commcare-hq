@@ -23,7 +23,7 @@ def _get_column_xpath_template(new_mobile_ucr_restore):
 
 def get_column_xpath_client_template(new_mobile_ucr_restore):
     print "get_column_xpath_client_template" + new_mobile_ucr_restore
-    return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_CLIENT_XPATH_TEMPLATE
+    return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
 
 
 @quickcache(['report_module.unique_id'])
