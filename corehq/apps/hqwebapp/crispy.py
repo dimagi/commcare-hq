@@ -131,7 +131,7 @@ class FormActions(OriginalFormActions):
         html = u''
         for field in self.fields:
             html += render_field(
-                field, form, form_style, _get_dict_from_context(context),
+                field, form, form_style, context,
                 template_pack=template_pack,
             )
         offsets = _get_offsets(context)
