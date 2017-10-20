@@ -361,7 +361,7 @@ class B3TextField(OldField):
 
         html = ''
         for field in self.fields:
-            html += render_field(field, form, form_style, _get_dict_from_context(context),
+            html += render_field(field, form, form_style, context,
                                  template=self.template, attrs=self.attrs,
                                  template_pack=template_pack)
         return html
