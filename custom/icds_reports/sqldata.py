@@ -765,7 +765,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person')
+                    SumColumn('cases_person_beneficiary')
                 ],
                 slug='aadhar'
             ),
@@ -899,7 +899,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='height_measurement'
             ),
             DatabaseColumn(
-                'Total number of unweighed children',
+                'Total number of unweighed children (0-5 Years)',
                 SumColumn('nutrition_status_unweighed'),
                 slug='total_number_unweighed'
             ),
@@ -1321,7 +1321,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person')
+                    SumColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
             ),
@@ -1821,7 +1821,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Total number of unweighed children',
+                                'header': 'Total number of unweighed children (0-5 Years)',
                                 'slug': 'nutrition_status_unweighed',
                                 'reverseColors': True,
                             },
@@ -1933,7 +1933,8 @@ class ProgressReport(object):
                                 'header': 'Pregnant women who are anemic',
                                 'slug': 'severe_anemic',
                                 'average': [],
-                                'format': 'percent'
+                                'format': 'percent',
+                                'reverseColors': True
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
