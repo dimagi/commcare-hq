@@ -170,7 +170,9 @@ class DisableTwoFactorForm(forms.Form):
         label=_("Days to allow access"),
         min_value=0,
         max_value=30,
-        help_text=_("Number of days the user can access CommCare HQ before needing to re-enable two-factor auth.")
+        help_text=_(
+            "Number of days the user can access CommCare HQ before needing to re-enable two-factor auth."
+            "This is useful if someone has lost their phone and can't immediately re-setup two-factor auth.")
     )
 
     def __init__(self, initial, **kwargs):
