@@ -5,7 +5,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             offset = _($menu.prevAll()).reduce(function(memo, value) {
                 return memo + $(value).outerHeight();
             }, 0) + $("#hq-navigation").outerHeight(),
-            availableHeight = hqLayout.utils.getAvailableContentHeight();
 
         var $active = $menu.find(".appnav-item.active");
         if ($active.length) {
