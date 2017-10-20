@@ -750,7 +750,8 @@ class DisableTwoFactorView(FormView):
 
     def get_initial(self):
         return {
-            'username': self.request.GET.get("q")
+            'username': self.request.GET.get("q"),
+            'disable_for_days': 0,
         }
 
     def get(self, request, *args, **kwargs):
