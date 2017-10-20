@@ -9,7 +9,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlan,
     SoftwarePlanVersion,
     SoftwareProductRate,
-    SoftwareProductType,
     Subscriber,
     Subscription,
 )

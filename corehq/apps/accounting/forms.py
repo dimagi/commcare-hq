@@ -60,7 +60,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
     SoftwareProductRate,
-    SoftwareProductType,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
