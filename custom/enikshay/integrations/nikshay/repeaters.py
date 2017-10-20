@@ -16,9 +16,6 @@ from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
-    get_open_episode_case_from_person,
-    get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
