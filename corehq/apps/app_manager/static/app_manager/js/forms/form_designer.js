@@ -1,18 +1,15 @@
 /* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django, hqLayout */
 hqDefine("app_manager/js/forms/form_designer", function() {
-    var scrollMenu = function(jumpTo) {
-        var $scrollContainer = $(".appnav-menu-scroll"),
-            siblingOffset = _($scrollContainer.prevAll()).reduce(function(memo, value) {
+    var scrollMenu = function() {
+        var $menu = $(".appmanager-main-menu"),
+            offset = _($menu.prevAll()).reduce(function(memo, value) {
                 return memo + $(value).outerHeight();
-            }, 0),
+            }, 0) + $("#hq-navigation").outerHeight(),
             availableHeight = hqLayout.utils.getAvailableContentHeight();
-        $scrollContainer.css("max-height", availableHeight - siblingOffset);
 
-        if (jumpTo) {
-            var $active = $scrollContainer.find(".appnav-item.active");
-            if ($active.length) {
-                $scrollContainer.scrollTop($active.position().top - siblingOffset - 25);
-            }
+        var $active = $menu.find(".appnav-item.active");
+        if ($active.length) {
+            $("html").scrollTop($active.position().top + offset - 25);
         }
     };
 
@@ -151,9 +148,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
 
-        scrollMenu(true);
-        $(window).resize(function () {
-            scrollMenu();
-        });
+        scrollMenu();
     });
 });
