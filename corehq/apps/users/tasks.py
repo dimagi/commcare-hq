@@ -4,6 +4,7 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -266,3 +267,10 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@periodic_task(run_every=crontab(month_of_year='*/6'))
+def require_all_dimagi_password_change():
+    for user in User.objects.filter(username__iendswith='@dimagi.com'):
+        user.set_unusable_password()
+        user.save()
