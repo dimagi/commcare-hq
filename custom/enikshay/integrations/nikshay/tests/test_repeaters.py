@@ -19,7 +19,7 @@ from custom.enikshay.const import (
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
     ENROLLED_IN_PRIVATE,
     PERSON_CASE_2B_VERSION,
-)
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.field_mappings import health_establishment_sector
 from custom.enikshay.integrations.nikshay.repeaters import (
@@ -1348,8 +1348,20 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
         # on create
         _, locations = setup_enikshay_locations(self.domain)
-        # all locations have been created with nikshay code so nothing should get queued here
+        # all locations have been created with nikshay code
+        # and without sector set up as private
+        # so nothing should get queued here
         self.assertEqual(0, len(self.repeat_records().all()))
+
+        # set up pcp location under private sector to make it valid for notification
+        self.pcp = locations['PCP']
+        self.pcp.metadata.update({
+            'sector': PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+        })
+        self.pcp.save()
+        # Nikshay code still missing so should be no records
+        self.assertEqual(0, len(self.repeat_records().all()))
+
         # on update
         self.pcp = locations['PCP']
         self.pcp.name = "Nikshay PCP"
