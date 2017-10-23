@@ -109,6 +109,7 @@ class DomainInvoiceFactory(object):
                 date_start=start_date,
                 date_end=end_date,
                 do_not_invoice=do_not_invoice,
+                skip_invoicing_if_no_feature_charges=True, # and possibly more?  can happen when domain is created mid-month
             )
             community_subscription.save()
             subscriptions.append(community_subscription)
