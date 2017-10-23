@@ -13,14 +13,15 @@ class TestAdolescentGirls(TestCase):
             get_adolescent_girls_data_map(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1)
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             )[0],
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
-                    "average": 117.5,
+                    "average": 23.5,
                     "average_format": "number"
                 },
                 "fills": {
@@ -29,11 +30,11 @@ class TestAdolescentGirls(TestCase):
                 },
                 "data": {
                     "st1": {
-                        "valid": 110,
+                        "valid": 22,
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
-                        "valid": 125,
+                        "valid": 25,
                         "fillKey": "Adolescent Girls"
                     }
                 },
@@ -47,7 +48,8 @@ class TestAdolescentGirls(TestCase):
             get_adolescent_girls_data_chart(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1)
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             ),
@@ -56,21 +58,21 @@ class TestAdolescentGirls(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st2",
-                        "value": 155
+                        "value": 31
                     },
                     {
                         "loc_name": "st1",
-                        "value": 130
+                        "value": 26
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st2",
-                        "value": 155
+                        "value": 31
                     },
                     {
                         "loc_name": "st1",
-                        "value": 130
+                        "value": 26
                     }
                 ],
                 "chart_data": [
@@ -90,12 +92,12 @@ class TestAdolescentGirls(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 285.0,
+                                "y": 57.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },
                             {
-                                "y": 235.0,
+                                "y": 47.0,
                                 "x": 1493596800000,
                                 "all": 0
                             }
@@ -106,11 +108,11 @@ class TestAdolescentGirls(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st2",
-                        "value": 155
+                        "value": 31
                     },
                     {
                         "loc_name": "st1",
-                        "value": 130
+                        "value": 26
                     }
                 ]
             }
@@ -125,6 +127,7 @@ class TestAdolescentGirls(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
+                    'aggregation_level': 4
                 },
                 location_id='b1',
                 loc_level='supervisor'
@@ -133,14 +136,11 @@ class TestAdolescentGirls(TestCase):
                 "info": "Total number of adolescent girls who are enrolled for ICDS services",
                 "tooltips_data": {
                     "s2": {
-                        "valid": 12
+                        "valid": 6
                     },
                     "s1": {
-                        "valid": 10
+                        "valid": 5
                     },
-                    None: {
-                        "valid": 11
-                    }
                 },
                 "chart_data": [
                     {
@@ -149,16 +149,12 @@ class TestAdolescentGirls(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             [
-                                None,
-                                11
-                            ],
-                            [
                                 "s1",
-                                10
+                                5
                             ],
                             [
                                 "s2",
-                                12
+                                6
                             ]
                         ],
                         "key": "Number Of Girls"

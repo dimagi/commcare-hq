@@ -12,7 +12,8 @@ class TestAdhaar(TestCase):
             get_adhaar_data_map(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1)
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             )[0],
@@ -30,13 +31,13 @@ class TestAdhaar(TestCase):
                 },
                 "data": {
                     "st1": {
-                        "in_month": 320,
-                        "all": 1105,
+                        "in_month": 64,
+                        "all": 221,
                         "fillKey": "25%-50%"
                     },
                     "st2": {
-                        "in_month": 335,
-                        "all": 1395,
+                        "in_month": 67,
+                        "all": 279,
                         "fillKey": "0%-25%"
                     }
                 },
@@ -50,7 +51,8 @@ class TestAdhaar(TestCase):
             get_adhaar_data_chart(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 1)
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             ),
@@ -95,12 +97,12 @@ class TestAdhaar(TestCase):
                             {
                                 "y": 0.25,
                                 "x": 1491004800000,
-                                "all": 2420
+                                "all": 484
                             },
                             {
                                 "y": 0.262,
                                 "x": 1493596800000,
-                                "all": 2500
+                                "all": 500
                             }
                         ],
                         "key": "Percentage of beneficiaries with Adhaar numbers"
@@ -128,6 +130,7 @@ class TestAdhaar(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
+                    'aggregation_level': 4
                 },
                 loc_level='supervisor',
                 location_id='b1'
@@ -137,16 +140,12 @@ class TestAdhaar(TestCase):
                         "CAS whose Adhaar identification has been captured",
                 "tooltips_data": {
                     "s2": {
-                        "in_month": 42,
-                        "all": 132
+                        "in_month": 21,
+                        "all": 66
                     },
                     "s1": {
-                        "in_month": 46,
-                        "all": 68
-                    },
-                    None: {
-                        "in_month": 44,
-                        "all": 100
+                        "in_month": 23,
+                        "all": 34
                     }
                 },
                 "chart_data": [
@@ -155,10 +154,6 @@ class TestAdhaar(TestCase):
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
-                            [
-                                None,
-                                0.44
-                            ],
                             [
                                 "s1",
                                 0.6764705882352942

@@ -13,7 +13,8 @@ class TestAWCDailyStatus(TestCase):
             get_awc_daily_status_data_map(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 28)
+                    'month': (2017, 5, 28),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             )[0],
@@ -32,12 +33,12 @@ class TestAWCDailyStatus(TestCase):
                 "data": {
                     "st1": {
                         "in_day": 0,
-                        "all": 40,
+                        "all": 8,
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
-                        "all": 55,
+                        "all": 11,
                         "fillKey": "0%-50%"
                     }
                 },
@@ -51,7 +52,8 @@ class TestAWCDailyStatus(TestCase):
             get_awc_daily_status_data_chart(
                 'icds-cas',
                 config={
-                    'month': (2017, 5, 28)
+                    'month': (2017, 5, 28),
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             ),
@@ -216,7 +218,7 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 95,
+                                "y": 19,
                                 "x": 1495929600000,
                                 "all": 0
                             }
@@ -400,6 +402,7 @@ class TestAWCDailyStatus(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
+                    'aggregation_level': 4
                 },
                 location_id='b1',
                 loc_level='supervisor'
@@ -409,15 +412,11 @@ class TestAWCDailyStatus(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "in_day": 0,
-                        "all": 2
+                        "all": 1
                     },
                     "s1": {
                         "in_day": 0,
-                        "all": 4
-                    },
-                    None: {
-                        "in_day": 0,
-                        "all": 3
+                        "all": 2
                     }
                 },
                 "chart_data": [
@@ -426,10 +425,6 @@ class TestAWCDailyStatus(TestCase):
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
-                            [
-                                None,
-                                0.0
-                            ],
                             [
                                 "s1",
                                 0.0
