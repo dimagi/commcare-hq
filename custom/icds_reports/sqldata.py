@@ -524,6 +524,15 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     alias='four'
                 ),
                 slug='four'
+            ),
+            AggregateColumn(
+                'Percent of children born in month with low birth weight',
+                percent_num,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    AliasColumn('born_in_month')
+                ],
+                slug='low_birth_weight'
             )
         ]
 
@@ -1450,14 +1459,6 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_households'
             },
             {
-                'header': 'Number of people',
-                'slug': 'num_people'
-            },
-            {
-                'header': 'Number of people enrolled for services',
-                'slug': 'num_people_enrolled_for_services'
-            },
-            {
                 'header': 'Percent Adhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
@@ -1897,6 +1898,13 @@ class ProgressReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Children from 6 - 60 months with normal height-for-age',
                                 'slug': 'stunting_normal',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Percent of children born in month with low birth weight',
+                                'slug': 'low_birth_weight',
                                 'average': [],
                                 'format': 'percent'
                             }
