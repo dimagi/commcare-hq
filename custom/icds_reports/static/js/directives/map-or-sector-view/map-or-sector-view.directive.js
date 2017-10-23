@@ -1,6 +1,6 @@
 /* global d3 */
 
-function MapOrSectorController($scope, $location, storageService, locationsService) {
+function MapOrSectorController($location, storageService, locationsService) {
     var vm = this;
     var location_id = $location.search().location_id;
 
@@ -97,7 +97,7 @@ function MapOrSectorController($scope, $location, storageService, locationsServi
     };
 }
 
-MapOrSectorController.$inject = ['$scope', '$location', 'storageService', 'locationsService'];
+MapOrSectorController.$inject = [ '$location', 'storageService', 'locationsService'];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
