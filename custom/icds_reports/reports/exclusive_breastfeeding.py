@@ -82,8 +82,7 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                     "<br/><br/>"
                     "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
                     "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

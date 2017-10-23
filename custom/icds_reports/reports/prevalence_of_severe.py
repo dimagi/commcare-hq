@@ -97,8 +97,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
                     "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
                     "status for a child that has moderate wasting (weight-for-height) below -2Z."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

@@ -78,8 +78,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "<br/><br/>"
                     "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
                     "nutrients and encourages exclusive breastfeeding practice"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
