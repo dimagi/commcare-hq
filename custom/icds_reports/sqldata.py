@@ -765,7 +765,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person_beneficiary')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='aadhar'
             ),
