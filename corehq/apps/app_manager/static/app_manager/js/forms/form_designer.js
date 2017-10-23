@@ -1,5 +1,17 @@
-/* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django */
+/* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django, hqLayout */
 hqDefine("app_manager/js/forms/form_designer", function() {
+    var scrollMenu = function() {
+        var $menu = $(".appmanager-main-menu"),
+            offset = _($menu.prevAll()).reduce(function(memo, value) {
+                return memo + $(value).outerHeight();
+            }, 0) + $("#hq-navigation").outerHeight();
+
+        var $active = $menu.find(".appnav-item.active");
+        if ($active.length) {
+            $("html").scrollTop($active.position().top + offset - 25);
+        }
+    };
+
     $(function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
@@ -134,5 +146,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
+
+        scrollMenu();
     });
 });
