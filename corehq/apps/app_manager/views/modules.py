@@ -24,6 +24,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, h
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
+    MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
@@ -229,7 +230,7 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -242,9 +243,10 @@ def _get_report_module_context(app, module):
             'moduleFilter': module.module_filter,
             'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
             'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
-            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
+            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
         },
         'static_data_options': {
             'filterChoices': filter_choices,
@@ -865,8 +867,8 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
-    module.media_image.update(params['multimedia']['mediaImage'])
-    module.media_audio.update(params['multimedia']['mediaAudio'])
+    # module.media_image.update(params['multimedia']['mediaImage'])
+    # module.media_audio.update(params['multimedia']['mediaAudio'])
 
     try:
         app.save()
