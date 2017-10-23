@@ -3,7 +3,7 @@ import json
 import socket
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -22,7 +22,7 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.http.response import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -89,8 +89,8 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import (
     AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm
-)
+    ReprocessMessagingCaseUpdatesForm,
+    DisableTwoFactorForm)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
@@ -727,9 +727,72 @@ def web_user_lookup(request):
         messages.error(
             request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
-    return render(request, template, {
-        'web_user': web_user
-    })
+    else:
+        from django_otp import user_has_device
+        context = {
+            'web_user': web_user
+        }
+
+        django_user = web_user.get_django_user()
+        context['has_two_factor'] = user_has_device(django_user)
+    return render(request, template, context)
+
+
+@method_decorator(require_superuser, name='dispatch')
+class DisableTwoFactorView(FormView):
+    """
+    View for disabling two-factor for a user's account.
+    """
+    template_name = 'hqadmin/disable_two_factor.html'
+    success_url = None
+    form_class = DisableTwoFactorForm
+    urlname = 'disable_two_factor'
+
+    def get_initial(self):
+        return {
+            'username': self.request.GET.get("q"),
+            'disable_for_days': 0,
+        }
+
+    def get(self, request, *args, **kwargs):
+        from django_otp import user_has_device
+
+        username = request.GET.get("q")
+        redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), username)
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            messages.warning(request, _('User with username %(username)s not found.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        if not user_has_device(user):
+            messages.warning(request, _(
+                'User with username %(username)s does not have Two-Factor Auth enabled.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        return super(DisableTwoFactorView, self).get(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        from django_otp import devices_for_user
+
+        username = form.cleaned_data['username']
+        user = User.objects.get(username__iexact=username)
+        for device in devices_for_user(user):
+            device.delete()
+
+        disable_for_days = form.cleaned_data['disable_for_days']
+        if disable_for_days:
+            couch_user = CouchUser.from_django_user(user)
+            disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
+            couch_user.two_factor_auth_disabled_until = disable_until
+            couch_user.save()
+
+        messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
+        return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
 
 
 @require_superuser

@@ -17,7 +17,7 @@
                 <small><a href="{% url 'doc_in_es' %}?id={{ web_user.get_id }}">{% trans "elasticsearch lookup" %}</a></small>
             </dd>
         </dl>
-        <h2>{% trans "Domains" %}</h2>
+        <h3>{% trans "Domains" %}</h3>
         <table class="table table-striped table-bordered">
             <tr>
                 <th>{% trans "Domain" %}</th>
@@ -30,6 +30,10 @@
                 </tr>
             {% endfor %}
         </table>
+        {% if has_two_factor %}
+        <h3>{% trans "Disable Two-Factor Authentication" %}</h3>
+        <a class="btn btn-danger" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
+        {% endif %}
         </div>
     {% endif %}
 {% endblock %}

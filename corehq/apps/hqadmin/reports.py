@@ -2,6 +2,8 @@ import copy
 from datetime import datetime, timedelta
 import json
 
+from django.urls import reverse
+
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
@@ -997,9 +999,12 @@ class AdminUserReport(AdminFacetedReport):
                 return ", ".join([dm['domain'] for dm in user.get('domain_memberships', [])])
             return user.get('domain_membership', {}).get('domain', _('No Domain Data'))
 
+        user_lookup_url = reverse('web_user_lookup')
         for u in users:
             yield [
-                u.get('username'),
+                '<a href="%(url)s?q=%(username)s">%(username)s</a>' % {
+                    'url': user_lookup_url, 'username': u.get('username')
+                },
                 get_domains(u),
                 format_date(u.get('date_joined'), _('No date')),
                 format_date(u.get('last_login'), _('No date')),

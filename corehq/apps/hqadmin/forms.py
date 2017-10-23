@@ -162,3 +162,26 @@ class SuperuserManagementForm(forms.Form):
                 )
             )
         )
+
+
+class DisableTwoFactorForm(forms.Form):
+    username = forms.EmailField(label=_("Confirm the username"))
+    disable_for_days = forms.IntegerField(
+        label=_("Days to allow access"),
+        min_value=0,
+        max_value=30,
+        help_text=_(
+            "Number of days the user can access CommCare HQ before needing to re-enable two-factor auth."
+            "This is useful if someone has lost their phone and can't immediately re-setup two-factor auth.")
+    )
+
+    def __init__(self, initial, **kwargs):
+        self.username = initial.pop('username')
+        super(DisableTwoFactorForm, self).__init__(initial=initial, **kwargs)
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if username != self.username:
+            raise forms.ValidationError("Username doesn't match expected.")
+
+        return username
