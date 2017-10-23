@@ -1748,6 +1748,20 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                                 lng: vm.markers[Object.keys(vm.markers)[0]].lng,
                                 zoom: 15,
                             };
+                        } else {
+                            vm.markers = [
+                                {
+                                    lat: 22.10,
+                                    lng: 78.22,
+                                    draggable: false,
+                                    icon: {
+                                        type: 'div',
+                                        iconSize: [350, 0],
+                                        html: '<h1><strong>No GPS recorded</strong></h1>',
+                                        popupAnchor:  [0, 0]
+                                    }
+                                }
+                            ]
                         }
                     }
                 },
