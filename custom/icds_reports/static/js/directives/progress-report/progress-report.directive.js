@@ -127,7 +127,7 @@ function ProgressReportController($scope, $location, progressReportService,
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder'
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', function() {
