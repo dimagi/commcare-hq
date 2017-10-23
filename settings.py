@@ -1048,6 +1048,9 @@ LOGGING = {
         'hqcontext': {
             '()': 'corehq.util.log.HQRequestFilter',
         },
+        'exclude_static': {
+            '()': 'corehq.util.log.SuppressStaticLogs',
+        },
     },
     'handlers': {
         'pillowtop': {
@@ -1157,12 +1160,11 @@ LOGGING = {
             'backupCount': 200  # Backup 2000 MB of logs
         }
     },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console', 'file'],
+    },
     'loggers': {
-        '': {
-            'handlers': ['console', 'file'],
-            'propagate': True,
-            'level': 'INFO',
-        },
         'couchdbkit.request': {
             'handlers': ['couch-request-handler'],
             'level': 'DEBUG',
@@ -1172,6 +1174,12 @@ LOGGING = {
             'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+            'filters': ['exclude_static'],
         },
         'django.security.DisallowedHost': {
             'handlers': ['null'],
