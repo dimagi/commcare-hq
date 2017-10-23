@@ -1758,10 +1758,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                                         type: 'div',
                                         iconSize: [350, 0],
                                         html: '<h1><strong>No GPS recorded</strong></h1>',
-                                        popupAnchor:  [0, 0]
-                                    }
-                                }
-                            ]
+                                        popupAnchor:  [0, 0],
+                                    },
+                                },
+                            ];
                         }
                     }
                 },

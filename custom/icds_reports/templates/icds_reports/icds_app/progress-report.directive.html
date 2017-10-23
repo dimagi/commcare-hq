@@ -72,11 +72,11 @@
             <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
                 <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
             </div>
-            <div>
+            <div class="row">
                 <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>
             </div>
             <div class="row no-margin" ng-repeat="section in $ctrl.data">
-                <table class="table black">
+                <table datatable="ng" dt-options="$ctrl.dtOptions" class="table black">
                     <thead>
                     <tr>
                         <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>
