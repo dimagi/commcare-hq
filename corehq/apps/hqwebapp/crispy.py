@@ -17,6 +17,15 @@ _soft_assert_dict = soft_assert(
 )
 
 
+def _get_dict_from_context(context):
+    if isinstance(context, RequestContext):
+        return context.flatten()
+    else:
+        # TODO - remove by Nov 1 2017 if soft assert is never sent
+        _soft_assert_dict(False, "context is type %s" % str(type(context)))
+        return context
+
+
 class BootstrapMultiField(MultiField):
     template = "hqwebapp/crispy/layout/multifield.html"
     field_template = "hqwebapp/crispy/field/multifield.html"
@@ -47,7 +56,7 @@ class BootstrapMultiField(MultiField):
             'error_list': errors,
             'help_bubble_text': self.help_bubble_text,
         })
-        return render_to_string(self.template, context)
+        return render_to_string(self.template, _get_dict_from_context(context))
 
     def _get_errors(self, form, fields):
         errors = []
@@ -85,8 +94,7 @@ class TextField(OldField):
         context.update({
             'field_text': self.text,
         })
-        return super(TextField, self).render(form, form_style, context,
-                                             template_pack=template_pack)
+        return super(TextField, self).render(form, form_style, context, template_pack=template_pack)
 
 
 class InlineColumnField(InlineField):
@@ -100,9 +108,7 @@ class InlineColumnField(InlineField):
         context.update({
             'block_css_class': self.block_css_class,
         })
-        return super(InlineColumnField, self).render(
-            form, form_style, context, template_pack=template_pack
-        )
+        return super(InlineColumnField, self).render(form, form_style, context, template_pack=template_pack)
 
 
 class ErrorsOnlyField(OldField):
@@ -124,7 +130,10 @@ class FormActions(OriginalFormActions):
         template_pack = template_pack or get_template_pack()
         html = u''
         for field in self.fields:
-            html += render_field(field, form, form_style, context, template_pack=template_pack)
+            html += render_field(
+                field, form, form_style, context,
+                template_pack=template_pack,
+            )
         offsets = _get_offsets(context)
         return render_to_string(self.template, {
             'formactions': self,
@@ -171,7 +180,7 @@ class StaticField(LayoutObject):
             'field_label': self.field_label,
             'field_value': self.field_value,
         })
-        return render_to_string(self.template, context)
+        return render_to_string(self.template, _get_dict_from_context(context))
 
 
 class FormStepNumber(LayoutObject):
@@ -184,7 +193,8 @@ class FormStepNumber(LayoutObject):
         context.update({
             'step_label': self.step_label,
         })
-        return render_to_string(self.template, context)
+
+        return render_to_string(self.template, _get_dict_from_context(context))
 
 
 class ValidationMessage(LayoutObject):
@@ -197,7 +207,8 @@ class ValidationMessage(LayoutObject):
         context.update({
             'ko_observable': self.ko_observable,
         })
-        return render_to_string(self.template, context)
+
+        return render_to_string(self.template, _get_dict_from_context(context))
 
 
 @contextmanager
@@ -244,12 +255,7 @@ class B3MultiField(LayoutObject):
             'help_bubble_text': self.help_bubble_text,
         })
 
-        if isinstance(context, RequestContext):
-            context_dict = context.flatten()
-        else:
-            # TODO - remove by Nov 1 2017 if soft assert is never sent
-            _soft_assert_dict(False, "context is type %s" % str(type(context)))
-            context_dict = context
+        context_dict = _get_dict_from_context(context)
 
         if not (self.field_class or self.label_class):
             return render_to_string(self.template, context_dict)
@@ -296,7 +302,7 @@ class CrispyTemplate(object):
 
     def render(self, form, form_style, context, template_pack=None):
         context.update(self.context)
-        return render_to_string(self.template, context)
+        return render_to_string(self.template, _get_dict_from_context(context))
 
 
 class FieldWithHelpBubble(Field):
@@ -336,7 +342,7 @@ class LinkButton(LayoutObject):
             'button_url': self.button_url,
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
-        return render_to_string(self.template, context)
+        return render_to_string(self.template, _get_dict_from_context(context))
 
 
 class B3TextField(OldField):
