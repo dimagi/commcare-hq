@@ -83,6 +83,7 @@ domain_specific = [
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
+    url(r'^', include('custom.rch.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),

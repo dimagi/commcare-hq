@@ -1,0 +1,26 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% block page_content %}
+    <legend>{% trans 'Beneficiary Details' %}</legend>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Property</th>
+                <th>RCH Value</th>
+                <th>CAS Value</th>
+            </tr>
+        </thead>
+        {% for property_name, property_values in beneficiary_details.items %}
+        <tr>
+            <td>{{ property_name }}</td>
+            {% for rch_value, cas_value in property_values %}
+                <td>{{ rch_value }}</td>
+                <td>{{ cas_value }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

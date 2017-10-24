@@ -123,8 +123,8 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return [export_sheet_name, table]
 
 
-from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport
-
+# Need this import here to avoid import error
+from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport, RCHCASReport
 
 CUSTOM_REPORTS = (
     ('BLOCK REPORTS', (
@@ -133,6 +133,7 @@ CUSTOM_REPORTS = (
     )),
     ('CUSTOM REPORTS', (
         TableauReport,
-        DashboardReport
+        DashboardReport,
+        RCHCASReport,
     )),
 )

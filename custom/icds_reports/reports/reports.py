@@ -96,3 +96,12 @@ class DashboardReport(CustomProjectReport):
     @classmethod
     def get_url(cls, domain=None, **kwargs):
         return reverse('icds_dashboard', args=[domain])
+
+
+@location_safe
+class RCHCASReport(CustomProjectReport):
+    name = 'RCH-CAS Integration Dashboard'
+
+    @classmethod
+    def get_url(cls, domain=None, render_as=None, **kwargs):
+        return reverse('rch_cas_dashboard', args=[domain])

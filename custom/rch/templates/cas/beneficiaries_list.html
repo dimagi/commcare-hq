@@ -1,0 +1,35 @@
+{% extends "rch/base_beneficiary_list.html" %}
+{% load i18n %}
+{% load djangular_tags %}
+
+{% block table_content %}
+    {{ block.super }}
+    <table class="table table-striped table-responsive"
+           style="margin-bottom: 0;"
+           ng-show="paginatedItems.length > 0">
+        <thead>
+            <tr>
+                <th class="col-xs-3">{% trans "Name" %}</th>
+                <th class="col-xs-3">{% trans "Husband" %}</th>
+                <th class="col-xs-3">{% trans "Mother" %}</th>
+                <th class="col-xs-3">{% trans "Aadhaar Number" %}</th>
+                <th class="col-xs-3">{% trans "District" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="beneficiary in paginatedItems">
+                {% angularjs %}
+                <td>
+                    <a href="{{ beneficiary.editUrl }}">
+                        {{ beneficiary.name }}
+                    </a>
+                </td>
+                <td>{{ beneficiary.husband_name }}</td>
+                <td>{{ beneficiary.mother_name }}</td>
+                <td>{{ beneficiary.aadhar_number }}</td>
+                <td>{% trans "West Godavari" %}</td>
+                {% endangularjs %}
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
