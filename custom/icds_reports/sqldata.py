@@ -1330,7 +1330,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person_beneficiary')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
             ),
