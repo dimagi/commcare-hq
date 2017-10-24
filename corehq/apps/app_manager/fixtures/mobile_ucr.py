@@ -157,8 +157,13 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
             fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps)))
+        else:
+            fixtures.extend(self._empty_v1_fixture(restore_user))
 
         return fixtures
+
+    def _empty_v1_fixture(self, restore_user):
+        return [E.fixture(id=self.id, user_id=restore_user.user_id)]
 
     def _v1_fixture(self, restore_user, report_configs):
         root = E.fixture(id=self.id, user_id=restore_user.user_id)
