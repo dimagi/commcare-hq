@@ -743,6 +743,7 @@ class TestEpisode2B(SimpleTestCase):
                 'date_tested': '2017-08-10',
                 'date_reported': '2017-08-10',
                 'test_type_value': 'cytopathology',
+                'test_type_label': 'Cytopathology',
                 'result_grade': 'result_grade',
                 'result_recorded': 'yes',
                 'result_summary_display': 'result_cytopathology'
@@ -767,6 +768,7 @@ class TestEpisode2B(SimpleTestCase):
                 'test_requested_date': '2017-10-10',
                 'date_reported': '2017-10-10',
                 'test_type_value': 'other_clinical',
+                'test_type_label': 'Other clinical',
                 'result_summary_display': 'result_other_clinical'
             }
         ]
@@ -787,7 +789,7 @@ class TestEpisode2B(SimpleTestCase):
         with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
             self.assertEqual(
                 not_microbiological_result_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'result_cytopathology'
+                'Cytopathology, result_cytopathology'
             )
 
     def test_disease_classification_pulmonary(self):
@@ -894,7 +896,7 @@ class TestEpisode2B(SimpleTestCase):
             '_id': 'occurrence_case_id',
             'domain': 'enikshay-test',
             'disease_classification': 'extra_pulmonary',
-            'site_choice': 'Other',
+            'site_choice': 'other',
             'site_detail': 'test detail',
             'indices': [
                 {'referenced_id': 'person_case_id'}
