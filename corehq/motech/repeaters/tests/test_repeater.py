@@ -581,7 +581,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run
-        with patch('corehq.motech.repeaters.models.simple_post'):
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
+            mock_simple_post.return_value.status_code = 200
             repeat_record.fire()
 
         self.assertTrue(repeat_record.succeeded)
