@@ -28,7 +28,7 @@ class _CacheAccessor(object):
         get_redis_default_cache().delete(self.cache_key)
 
 
-@quickcache(['domain', 'user_id'])
+@quickcache(['domain', 'user_id'], timeout=24 * 60 * 60)
 def get_loadtest_factor_for_user(domain, user_id):
     from corehq.apps.users.models import CouchUser, CommCareUser
     if ENABLE_LOADTEST_USERS.enabled(domain) and user_id:
