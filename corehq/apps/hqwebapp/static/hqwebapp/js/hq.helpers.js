@@ -1,4 +1,4 @@
-$(function() {
+hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({
             url: '/announcements/clear/' + announcementID
@@ -43,7 +43,6 @@ $(function() {
         $.timeago.settings.allowFuture = true;
         $(".timeago").timeago();
     }
-});
 
 window.onerror = function(message, file, line, col, error) {
     $.post('/jserror/', {
@@ -149,3 +148,8 @@ $.fn.koApplyBindings = function (context) {
     ko.applyBindings(context, this.get(0));
     this.removeClass('ko-template');
 };
+
+
+    // Return something so that hqModules understands that the module has been defined
+    return 1;
+});
