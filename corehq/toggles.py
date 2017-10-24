@@ -781,8 +781,8 @@ COMMTRACK = StaticToggle(
 
 NON_COMMTRACK_LEDGERS = StaticToggle(
     'non_commtrack_ledgers',
-    "Enable ledgers for projects not using Supply.",
-    TAG_SOLUTIONS,
+    "Enikshay: Enable ledgers for projects not using Supply.",
+    TAG_CUSTOM,
     description=(
         'Turns on the ledger fixture and ledger transaction question types in '
         'the form builder. ONLY WORKS ON SQL DOMAINS!'
@@ -883,8 +883,8 @@ take advantage of the optimization. For example, reference a field called
 """
 INDEX_LOCATION_DATA = StaticToggle(
     'index_location_data',
-    'Add option to index custom location fields',
-    TAG_SOLUTIONS,
+    'Enikshay: Add option to index custom location fields',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     description=INDEX_LOCATION_DATA_DESCRIPTION,
 )
