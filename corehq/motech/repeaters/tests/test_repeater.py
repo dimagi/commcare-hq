@@ -200,6 +200,7 @@ class RepeaterTest(BaseRepeaterTest):
                     headers=repeat_record.repeater.get_headers(repeat_record),
                     timeout=POST_TIMEOUT,
                     auth=repeat_record.repeater.get_auth(),
+                    verify=repeat_record.repeater.verify,
                 )
 
         # The following is pretty fickle and depends on which of
@@ -704,6 +705,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 headers=headers,
                 timeout=POST_TIMEOUT,
                 auth=self.repeater.get_auth(),
+                verify=self.repeater.verify,
             )
 
     def test_get_format_by_deprecated_name(self):

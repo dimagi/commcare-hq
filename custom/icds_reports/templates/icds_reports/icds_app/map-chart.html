@@ -24,7 +24,7 @@
         </div>
         <div class="row black" ng-if="$ctrl.step === 'map'">
             <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
-                <map-or-sector-view template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location"></map-or-sector-view>
+                <map-or-sector-view label="$ctrl.label" template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location"></map-or-sector-view>
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
@@ -35,7 +35,7 @@
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Top 5 {$ $ctrl.location_type $}s</span>
+                            <span>Top 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -44,14 +44,15 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
+                            <span ng-if="top.value !== undefined" style="font-size: 30px;">{$ top.value $}</span>
+                            <span ng-if="top.percent !== undefined" style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Bottom 5 {$ $ctrl.location_type $}s</span>
+                            <span>Bottom 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -60,7 +61,8 @@
                             <span class="circle-blue" ng-bind="$ctrl.bottom_five.length - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
+                            <span ng-if="bottom.value !== undefined" style="font-size: 30px;">{$ bottom.value $}</span>
+                            <span ng-if="bottom.percent !== undefined" style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
@@ -69,7 +71,7 @@
                 <div class="col-md-12">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>{$ $ctrl.location_type $}s Ranking</span>
+                            <span>{$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -78,7 +80,8 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="loc.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
+                            <span ng-if="loc.value !== undefined" style="font-size: 30px;">{$ loc.value $}</span>
+                            <span ng-if="loc.percent !== undefined" style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>

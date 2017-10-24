@@ -665,9 +665,9 @@ class StaticReportConfiguration(JsonObject):
         return mapping
 
     @classmethod
-    def all(cls):
+    def all(cls, ignore_server_environment=False):
         for wrapped, path in StaticReportConfiguration._all():
-            if (wrapped.server_environment and
+            if (not ignore_server_environment and wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
@@ -806,9 +806,16 @@ class AsyncIndicator(models.Model):
                 if config_ids - current_config_ids:
                     new_config_ids = sorted(list(current_config_ids.union(config_ids)))
                     indicator.indicator_config_ids = new_config_ids
+                    indicator.unsuccessful_attempts = 0
                     indicator.save()
 
         return indicator
+
+    def update_failure(self, to_remove):
+        self.refresh_from_db(fields=['indicator_config_ids'])
+        new_indicators = set(self.indicator_config_ids) - set(to_remove)
+        self.indicator_config_ids = sorted(list(new_indicators))
+        self.unsuccessful_attempts += 1
 
 
 def get_datasource_config(config_id, domain):

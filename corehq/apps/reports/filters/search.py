@@ -22,3 +22,8 @@ class SearchFilter(BaseReportFilter):
             'search_help_content': self.search_help_content,
             'search_help_inline': self.search_help_inline
         }
+
+
+class RepeaterPayloadIdFilter(SearchFilter):
+    slug = "payload_id"
+    label = ugettext_lazy("Payload ID")

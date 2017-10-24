@@ -5,8 +5,10 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
 from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required, domain_admin_required
-from corehq.apps.domain.views import BaseAdminProjectSettingsView
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
@@ -38,18 +40,21 @@ def openmrs_edit_config(request, domain, repeater_id):
         form = OpenmrsConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
+            repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
             repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
             repeater.save()
 
-    form = OpenmrsConfigForm(
-        data={
-            'form_configs': json.dumps([
-                form_config.to_json()
-                for form_config in repeater.openmrs_config.form_configs]),
-            'case_config':  json.dumps(repeater.openmrs_config.case_config.to_json()),
-        }
-    )
+    else:
+        form = OpenmrsConfigForm(
+            data={
+                'openmrs_provider': repeater.openmrs_config.openmrs_provider,
+                'form_configs': json.dumps([
+                    form_config.to_json()
+                    for form_config in repeater.openmrs_config.form_configs]),
+                'case_config': json.dumps(repeater.openmrs_config.case_config.to_json()),
+            }
+        )
     return render(request, 'openmrs/edit_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
@@ -130,9 +135,9 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
-@method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
-class OpenmrsImporterView(BaseAdminProjectSettingsView):
+class OpenmrsImporterView(BaseProjectSettingsView):
     urlname = 'openmrs_importer_view'
     page_title = ugettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'

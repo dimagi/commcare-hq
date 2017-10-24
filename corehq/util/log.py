@@ -243,6 +243,15 @@ class SlowRequestFilter(Filter):
             return False
 
 
+class SuppressStaticLogs(Filter):
+    def filter(self, record):
+        try:
+            request, status_code, _ = record.args
+            return '/static/' not in request or int(status_code) != 200
+        except ValueError:
+            return True
+
+
 def display_seconds(seconds):
     return str(timedelta(seconds=int(round(seconds))))
 
@@ -295,4 +304,10 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
     kwargs['ga_track'] = kwargs.get('ga_track', False) and analytics_enabled_for_email(recipient)
-    return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)
+    unicode_html_content = html_content if isinstance(html_content, unicode) else html_content.decode('utf-8')
+    text_content = kwargs.get('text_content')
+    if text_content is not None:
+        kwargs['text_content'] = (
+            text_content if isinstance(text_content, unicode) else text_content.decode('utf-8')
+        )
+    return _send_HTML_email(subject, recipient, unicode_html_content, *args, **kwargs)

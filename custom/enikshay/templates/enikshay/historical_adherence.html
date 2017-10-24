@@ -37,6 +37,12 @@
             max-width: 50%;
             padding: 5%;
         }
+        .cal .bottom-center
+        {
+            position: absolute;
+            bottom: 4px;
+            left: 40%;
+        }
         .cal .bottom-right {
             position: absolute;
             bottom: 0px;
@@ -91,6 +97,14 @@
                                             <img class="icon" src="
                                                 {% static "enikshay/images/"|add:day.adherence_image_key|add:".png" %}
                                             ">
+                                        </div>
+                                    {% endif %}
+
+                                    {% if day.show_treatment_start_date %}
+                                        <div class="bottom-center" >
+                                            <div class="icon">
+                                                <img class="icon" src="{% static "enikshay/images/treatment_start_date.png" %}">
+                                            </div>
                                         </div>
                                     {% endif %}
 

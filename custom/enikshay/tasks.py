@@ -61,7 +61,7 @@ cache = get_redis_client()
 
 @periodic_task(
     bind=True,
-    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task(self):
@@ -283,10 +283,10 @@ class EpisodeAdherenceUpdate(object):
         self.domain = domain
         self.episode = episode_case
         self.adherence_data_store = get_datastore(self.domain)
-        # set purge_date to 30 days back
+        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = datetime.datetime.now(
             pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+
 
         self._cache_dose_taken_by_date = False
 
@@ -463,6 +463,9 @@ class EpisodeAdherenceUpdate(object):
         date, prior to which adherence cases are closed. The "purged" cases are
         not sent down to the phone.
 
+        Adherence cases are closed 30 days after the adherence_date property.
+        If today is Jan 31, then all cases on or before Jan 1 will have been "purged"
+
         """
 
         if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
@@ -491,9 +494,13 @@ class EpisodeAdherenceUpdate(object):
         )
 
         doses_per_week = self.get_doses_per_week()
-        update['expected_doses_taken'] = int(((
-            (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-        ) * doses_per_week)
+
+        # the expected number of doses taken between the time the adherence
+        # schedule started and the last valid date of the score
+        # (i.e. the earlier of (30 days ago, latest_adherence_date))
+        # this property should actually have been called "aggregated_score_count_expected"
+        num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
+        update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
 
         update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
         return update

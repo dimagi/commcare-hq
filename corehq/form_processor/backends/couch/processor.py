@@ -15,8 +15,8 @@ from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
-    doc_types, XFormError, SubmissionErrorLog
-)
+    doc_types, XFormError, SubmissionErrorLog,
+    XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
 
@@ -43,6 +43,11 @@ class FormProcessorCouch(object):
                         content_type=meta.content_type,
                         content_length=meta.content_length,
                     )
+
+    @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            to_form.history.append(op)
 
     @classmethod
     def new_xform(cls, form_data):
@@ -93,6 +98,10 @@ class FormProcessorCouch(object):
         assert not existing_xform.persistent_blobs, "some blobs would be lost"
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        operation = XFormOperation(user=user_id, date=new_xform.edited_on, operation='edit')
+        new_xform.history.append(operation)
         return deprecated, new_xform
 
     @classmethod
@@ -105,6 +114,7 @@ class FormProcessorCouch(object):
         if xform._deferred_blobs:
             dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
+        dupe.orig_id = xform._id
         return cls.assign_new_id(dupe)
 
     @classmethod

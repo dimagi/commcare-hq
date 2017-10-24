@@ -2,8 +2,8 @@
 {% addtoblock js-inline %}
 <script>
     var _kmq = _kmq || [];
-    {% if KISSMETRICS_KEY %}
-    var _kmk = _kmk || '{{KISSMETRICS_KEY}}';
+    {% if ANALYTICS_IDS.KISSMETRICS_KEY %}
+    var _kmk = _kmk || '{{ ANALYTICS_IDS.KISSMETRICS_KEY }}';
     function _kms(u){
       setTimeout(function(){
         var d = document, f = d.getElementsByTagName('script')[0],

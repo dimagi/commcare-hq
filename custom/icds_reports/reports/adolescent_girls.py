@@ -7,6 +7,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -62,15 +63,14 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
                 "average_format": 'number',
                 "info": _((
                     "Total number of adolescent girls who are enrolled for ICDS services"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
-def get_adolescent_girls_sector_data(domain, config, loc_level, show_test=False):
+def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -93,9 +93,13 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, show_test=False)
         'valid': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         row_values = {
             'valid': valid or 0,
@@ -107,6 +111,12 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, show_test=False)
             name,
             valid
         ])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": tooltips_data,
@@ -160,18 +170,19 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         valid = (row['valid'] or 0)
         location = row['%s_name' % loc_level]
 
-        if location in best_worst:
-            best_worst[location].append(valid)
-        else:
-            best_worst[location] = [valid]
+        if date.month == (month - relativedelta(months=1)).month:
+            if location in best_worst:
+                best_worst[location].append(valid)
+            else:
+                best_worst[location] = [valid]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['blue'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['value'],
         reverse=True
     )
 
@@ -194,5 +205,5 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

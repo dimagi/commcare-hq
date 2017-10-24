@@ -1,8 +1,9 @@
 {% extends "app_manager/app_view.html" %}
-{% load xforms_extras %}
+{% load compress %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load crispy_forms_tags %}
+{% load xforms_extras %}
 
 {% block title %}
   {% trans "Releases" %} -
@@ -14,7 +15,9 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+    {% compress js %}
+        <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+    {% endcompress %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}

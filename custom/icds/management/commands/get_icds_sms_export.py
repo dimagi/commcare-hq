@@ -161,7 +161,12 @@ class Command(BaseICDSSMSExportCommand):
         self.location_details = {}
         start_timestamp, end_timestamp = self.get_start_and_end_timestamps(start_date, end_date)
 
-        with open('icds-sms-export.xlsx', 'wb') as f:
+        filename = 'icds-sms-export--%s--%s.xlsx' % (
+            start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d'),
+        )
+
+        with open(filename, 'wb') as f:
             headers = (
                 'Date (IST)',
                 'Phone Number',

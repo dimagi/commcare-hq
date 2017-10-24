@@ -95,6 +95,14 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
+                ];
             }
         });
     };
@@ -156,8 +164,8 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                     return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
-                forceY: [0],
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
@@ -181,7 +189,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             enable: true,
             html: '<i class="fa fa-info-circle"></i> Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
             '\n' +
-            'Stunting in children is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
+            'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

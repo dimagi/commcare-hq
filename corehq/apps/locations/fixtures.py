@@ -155,10 +155,14 @@ class FlatLocationSerializer(object):
                     # For some reason this wasn't included in the locations we already fetched
                     from corehq.util.soft_assert import soft_assert
                     _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
-                    message = """
-                        The flat location fixture didn't prefetch all parent locations:
-                        {domain}: {location_id}
-                    """.format(current_location.domain, current_location.location_id)
+                    message = (
+                        "The flat location fixture didn't prefetch all parent "
+                        "locations: {domain}: {location_id}. User id: {user_id}"
+                    ).format(
+                        domain=current_location.domain,
+                        location_id=current_location.location_id,
+                        user_id=restore_user.user_id,
+                    )
                     _soft_assert(False, msg=message)
 
                 attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id

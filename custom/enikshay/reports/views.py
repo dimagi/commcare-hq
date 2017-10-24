@@ -8,15 +8,19 @@ from django.views.generic.base import View
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
 from custom.enikshay.const import VOUCHER_ID, ENIKSHAY_ID
 from custom.enikshay.reports.utils import StubReport
+from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 
 
 @location_safe
 class LocationsView(View):
+    choice_provider = LocationChoiceProvider
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, *args, **kwargs):
@@ -31,7 +35,7 @@ class LocationsView(View):
             page=int(request.GET.get('page', 1)) - 1,
             user=user
         )
-        location_choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
+        location_choice_provider = self.choice_provider(StubReport(domain=domain), None)
         location_choice_provider.configure({
             'include_descendants': True,
             'order_by_hierarchy': True,
@@ -46,6 +50,11 @@ class LocationsView(View):
                 'total': location_choice_provider.query_count(query_context.query, user)
             }
         )
+
+
+@location_safe
+class DistrictLocationsView(LocationsView):
+    choice_provider = DistrictChoiceProvider
 
 
 @domain_admin_required
@@ -65,6 +74,22 @@ def duplicate_ids_report(request, domain, case_type):
     ]
     counts = Counter(case['readable_id'] for case in all_cases)
     bad_cases = [case for case in all_cases if counts[case['readable_id']] > 1]
+
+    for case in bad_cases:
+        form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
+        if form:
+            case['form_name'] = form.form_data.get('@name', 'NA')
+            form_device_number = form.form_data.get('serial_id', {}).get('outputs', {}).get('device_number')
+            case['device_number_in_form'] = form_device_number
+
+            user = CommCareUser.get(form.user_id) if form.user_id else None
+            if user:
+                case['username'] = user.username
+                try:
+                    device_number = [d.device_id for d in user.devices].index(form.metadata.deviceID) + 1
+                except ValueError:
+                    device_number = -1
+                case['real_device_number'] = unicode(device_number)
 
     context = {
         'case_type': case_type,

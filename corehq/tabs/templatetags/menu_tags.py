@@ -87,9 +87,11 @@ class MainMenuNode(template.Node):
         # set the context variable in the highest scope so it can be used in
         # other blocks
         context.dicts[0]['active_tab'] = active_tab
-        return mark_safe(render_to_string('tabs/menu_main.html', {
+        flat = context.flatten()
+        flat.update({
             'tabs': visible_tabs,
-        }))
+        })
+        return mark_safe(render_to_string('tabs/menu_main.html', flat))
 
 
 @register.tag(name="format_main_menu")

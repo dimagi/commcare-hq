@@ -4,6 +4,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.Controller = {
         selectMenu: function (options) {
 
+            options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
             /*

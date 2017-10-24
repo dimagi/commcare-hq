@@ -12,7 +12,6 @@ from casexml.apps.phone.models import (
     OTARestoreCommCareUser,
 )
 from casexml.apps.phone.restore import (
-    BlobRestoreResponse,
     RestoreCacheSettings,
     RestoreConfig,
     RestoreParams,
@@ -21,7 +20,6 @@ from casexml.apps.phone.tests.dbaccessors import get_all_sync_logs_docs
 from casexml.apps.phone.xml import SYNC_XMLNS
 
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.blobs import get_blob_db
 
 
 def create_restore_user(
@@ -282,10 +280,3 @@ class SyncResult(object):
             sync_log_id=self.restore_id,
             device_id=self.device.id,
         ).get_value())
-
-
-def delete_cached_response(response):
-    if isinstance(response, BlobRestoreResponse):
-        get_blob_db().delete(response.name)
-    else:
-        raise NotImplementedError(type(response).__name__)

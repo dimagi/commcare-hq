@@ -7,6 +7,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -72,21 +73,20 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     return [
         {
             "slug": "adhaar",
-            "label": "Percent Adhaar Seeded Beneficiaries",
+            "label": "Percent Adhaar-seeded Beneficiaries",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
-def get_adhaar_sector_data(domain, config, loc_level, show_test=False):
+def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -111,9 +111,13 @@ def get_adhaar_sector_data(domain, config, loc_level, show_test=False):
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -130,6 +134,12 @@ def get_adhaar_sector_data(domain, config, loc_level, show_test=False):
             name,
             value
         ])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": tooltips_data,
@@ -169,7 +179,6 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
 
     data = {
         'blue': OrderedDict(),
-        'green': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -177,27 +186,32 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['blue'][miliseconds] = {'y': 0, 'all': 0}
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
 
-    best_worst = {}
+    best_worst = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
     for row in chart_data:
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
         valid = row['all']
 
-        if location in best_worst:
-            best_worst[location].append(in_month / (valid or 1))
-        else:
-            best_worst[location] = [in_month / (valid or 1)]
+        best_worst[location]['in_month'] = in_month
+        best_worst[location]['all'] = (valid or 0)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['green'][date_in_miliseconds]['y'] += in_month
-        data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['y'] += in_month
+        data['blue'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [
+            dict(
+                loc_name=key,
+                percent=(value['in_month'] * 100) / float(value['all'] or 1)
+            ) for key, value in best_worst.iteritems()
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -210,22 +224,9 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Number of beneficiaries with Adhaar numbers",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Total number of beneficiaries with Adhaar numbers",
+                "key": "Percentage of beneficiaries with Adhaar numbers",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
@@ -234,5 +235,5 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

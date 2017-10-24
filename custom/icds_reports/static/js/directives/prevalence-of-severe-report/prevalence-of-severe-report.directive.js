@@ -95,6 +95,14 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 vm.all_locations = response.data.report_data.all_locations;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
+                ];
             }
         });
     };
@@ -156,8 +164,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
-                forceY: [0],
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {

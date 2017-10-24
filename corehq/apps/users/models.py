@@ -85,6 +85,7 @@ class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     edit_commcare_users = BooleanProperty(default=False)
     edit_locations = BooleanProperty(default=False)
+    edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -175,6 +176,7 @@ class Permissions(DocumentSchema):
             edit_web_users=True,
             edit_commcare_users=True,
             edit_locations=True,
+            edit_motech=True,
             edit_data=True,
             edit_apps=True,
             view_reports=True,
@@ -867,6 +869,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
     analytics_enabled = BooleanProperty(default=True)
 
+    two_factor_auth_disabled_until = DateTimeProperty()
+
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
@@ -915,6 +919,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 key=key,
                 value=getattr(self, key)
             ) for key in properties),
+        )
+
+    @property
+    def two_factor_disabled(self):
+        return (
+            self.two_factor_auth_disabled_until
+            and datetime.utcnow() < self.two_factor_auth_disabled_until
         )
 
     @property

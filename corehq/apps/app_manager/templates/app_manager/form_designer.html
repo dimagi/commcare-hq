@@ -1,7 +1,8 @@
 {% extends 'app_manager/managed_app.html'%}
-{% load xforms_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 {% block head %}{{ block.super }}
     {% if include_fullstory %}
@@ -24,12 +25,14 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'moment/moment.js' %}"></script>
-    <script src="{% static 'requirejs/require.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'moment/moment.js' %}"></script>
+        <script src="{% static 'requirejs/require.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+        <script src="{% static 'js/ws4redis.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

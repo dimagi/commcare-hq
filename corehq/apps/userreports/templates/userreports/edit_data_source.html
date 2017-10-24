@@ -25,7 +25,9 @@
     </button>
     {% else %}
     <div class="col-md-3 pull-right">
-        Data source too large to rebuild. Please contact a dev to run the async_rebuild_table  command to rebuild this data source
+        {% blocktrans %}This data source is too large to rebuild. Please click the
+        <i class="fa fa-question-circle nav-main-icon"></i> above and Report an Issue if you need to rebuild
+        this data source.{% endblocktrans %}
     </div>
     {% endif %}
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>

@@ -6,6 +6,7 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -89,13 +90,14 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                 "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                    "Wasting in children is a symptom of acute undernutrition usually as a consequence "
+                    "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
+                    "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
+                    "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
+                    "status for a child that has moderate wasting (weight-for-height) below -2Z."
+                ))
             },
             "data": map_data,
         }
@@ -209,11 +211,11 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=False):
+def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -244,9 +246,13 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
         'total_measured': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         severe = row['severe']
         moderate = row['moderate']
@@ -263,6 +269,12 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
         chart_data['blue'].append([
             name, value
         ])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": tooltips_data,

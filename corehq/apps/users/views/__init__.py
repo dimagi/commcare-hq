@@ -182,9 +182,16 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def existing_role(self):
         try:
-            return self.editable_user.get_role(self.domain).get_qualified_id() or ''
+            role = self.editable_user.get_role(self.domain)
         except DomainMembershipError:
             raise Http404()
+
+        if role is None:
+            if isinstance(self.editable_user, WebUser):
+                raise ValueError("WebUser is always expected to have a role")
+            return None
+        else:
+            return role.get_qualified_id()
 
     @property
     @memoized
@@ -538,6 +545,10 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
             'landing_page_choices': self.landing_page_choices,
+            'show_integration': (
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
+                toggles.DHIS2_INTEGRATION.enabled(self.domain)
+            ),
         }
 
 

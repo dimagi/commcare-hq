@@ -48,7 +48,7 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "reports_home"
 
-    url_prefix_formats = ('/a/{domain}/reports/',)
+    url_prefix_formats = ('/a/{domain}/reports/', '/a/{domain}/configurable_reports/')
 
     @property
     def _is_viewable(self):
@@ -1393,8 +1393,11 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
+        if self.couch_user.can_edit_motech:
+            items.append((_('Integration'), _get_integration_section(self.domain)))
+
         feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items:
+        if feature_flag_items and user_is_admin:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
@@ -1496,33 +1499,6 @@ def _get_administration_section(domain):
             }
         ])
 
-    def forward_name(repeater_type=None, **context):
-        if repeater_type == 'FormRepeater':
-            return _("Forward Forms")
-        elif repeater_type == 'ShortFormRepeater':
-            return _("Forward Form Stubs")
-        elif repeater_type == 'CaseRepeater':
-            return _("Forward Cases")
-
-    administration.extend([
-        {'title': _('Data Forwarding'),
-         'url': reverse('domain_forwarding', args=[domain]),
-         'subpages': [
-             {
-                 'title': forward_name,
-                 'urlname': 'add_repeater',
-             },
-             {
-                 'title': forward_name,
-                 'urlname': 'add_form_repeater',
-             },
-        ]},
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ])
-
     administration.append({
         'title': _(FeaturePreviewsView.page_title),
         'url': reverse(FeaturePreviewsView.urlname, args=[domain])
@@ -1534,8 +1510,42 @@ def _get_administration_section(domain):
             'url': reverse(TransferDomainView.urlname, args=[domain])
         })
 
+    return administration
+
+
+def _get_integration_section(domain):
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    integration = [
+        {
+            'title': _('Data Forwarding'),
+            'url': reverse('domain_forwarding', args=[domain]),
+            'subpages': [
+                {
+                    'title': forward_name,
+                    'urlname': 'add_repeater',
+                },
+                {
+                    'title': forward_name,
+                    'urlname': 'add_form_repeater',
+                },
+            ]
+        },
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ]
+
     if toggles.DHIS2_INTEGRATION.enabled(domain):
-        administration.extend([{
+        integration.extend([{
             'title': _(Dhis2ConnectionView.page_title),
             'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
         }, {
@@ -1547,12 +1557,12 @@ def _get_administration_section(domain):
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
-        administration.append({
+        integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
-    return administration
+    return integration
 
 
 def _get_feature_flag_items(domain):

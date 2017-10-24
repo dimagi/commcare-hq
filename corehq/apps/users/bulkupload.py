@@ -1,9 +1,5 @@
-import os
-import tempfile
 import uuid
-from StringIO import StringIO
 import logging
-from wsgiref.util import FileWrapper
 
 from django import forms
 from django.conf import settings
@@ -12,7 +8,6 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
-from couchexport.models import Format
 from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
@@ -33,11 +28,11 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_all_commcare_users_by_domain,
+    get_commcare_users_by_filters,
     get_user_docs_by_username,
 )
 from corehq.apps.users.models import UserRole
-from soil.util import expose_file_download, expose_cached_download
+from soil.util import get_download_file_path, expose_download
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -597,7 +592,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
 
     def _get_group_names(user):
         return sorted(map(
@@ -651,7 +646,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_all_commcare_users_by_domain(domain):
+    for user in get_commcare_users_by_filters(domain, user_filters):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
@@ -715,7 +710,7 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id):
+def dump_users_and_groups(domain, download_id, user_filters):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -746,7 +741,8 @@ def dump_users_and_groups(domain, download_id):
         group_memoizer,
         domain,
         user_data_model,
-        location_cache
+        location_cache,
+        user_filters
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
@@ -760,7 +756,8 @@ def dump_users_and_groups(domain, download_id):
     ]
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    file_path = _get_download_file_path(domain, use_transfer)
+    filename = "user_export_{}_{}.xlsx".format(domain, uuid.uuid4().hex)
+    file_path = get_download_file_path(use_transfer, filename)
     writer.open(
         header_table=headers,
         file=file_path,
@@ -768,32 +765,4 @@ def dump_users_and_groups(domain, download_id):
     writer.write(rows)
     writer.close()
 
-    common_kwargs = dict(
-        mimetype=Format.from_format('xlsx').mimetype,
-        content_disposition='attachment; filename="{fname}"'.format(fname='{}_users.xlsx'.format(domain)),
-        download_id=download_id,
-    )
-    if use_transfer:
-        expose_file_download(
-            file_path,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        expose_cached_download(
-            FileWrapper(open(file_path, 'r')),
-            expiry=(1 * 60 * 60),
-            file_extension='xlsx',
-            **common_kwargs
-        )
-
-
-def _get_download_file_path(domain, use_transfer):
-    if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "user_export_{}_{}.xlsx".format(
-            domain, uuid.uuid4().hex
-        ))
-    else:
-        _, fpath = tempfile.mkstemp()
-
-    return fpath
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')

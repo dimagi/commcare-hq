@@ -148,6 +148,8 @@ class FieldColumn(ReportColumn):
         'percent_of_total',
     ])
     sortable = BooleanProperty(default=False)
+    width = StringProperty(default=None, required=False)
+    css_class = StringProperty(default=None, required=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -181,7 +183,9 @@ class FieldColumn(ReportColumn):
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description,
-                visible=self.visible
+                visible=self.visible,
+                width=self.width,
+                css_class=self.css_class,
             )
         ])
 

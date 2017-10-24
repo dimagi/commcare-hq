@@ -63,6 +63,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -203,7 +204,11 @@ def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
     domain = Domain.get_by_name(domain_name)
     if domain:
-        return domain.two_factor_auth and not request.user.is_verified()
+        return (
+            domain.two_factor_auth
+            and not request.couch_user.two_factor_disabled
+            and not request.user.is_verified()
+        )
 
 
 def yui_crossdomain(req):
@@ -1114,7 +1119,10 @@ def quick_find(request):
 
 
 def osdd(request, template='osdd.xml'):
-    response = render(request, template, {'url_base': get_url_base()})
+    response = render(request, template, {
+        'url_base': get_url_base(),
+        'env': get_environment_friendly_name()
+    })
     response['Content-Type'] = 'application/xml'
     return response
 

@@ -123,3 +123,14 @@ def format_angular_success(additional_data=None):
     if isinstance(additional_data, dict):
         resp.update(additional_data)
     return resp
+
+
+def get_environment_friendly_name():
+    try:
+        env = {
+            "production": "",
+            "softlayer": "India",
+        }[settings.SERVER_ENVIRONMENT]
+    except KeyError:
+        env = settings.SERVER_ENVIRONMENT
+    return env

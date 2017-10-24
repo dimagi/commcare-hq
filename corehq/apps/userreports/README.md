@@ -631,7 +631,7 @@ We have following expressions that act on a list of objects or list of lists. Th
 
 `map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `map_expression` can be any valid expression relative to the items in above list.
 
@@ -639,6 +639,7 @@ We have following expressions that act on a list of objects or list of lists. Th
 {
     "type": "map_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_path",
         "property_path": ["form", "child_repeat"]
     },
@@ -655,7 +656,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `filter_expression` can be any valid boolean expression relative to the items in above list.
 
@@ -663,6 +664,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 {
     "type": "filter_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_name",
         "property_name": "family_repeat"
     },
@@ -682,7 +684,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `sort_expression` can be any valid expression relative to the items in above list, that returns a value to be used as sort value.
 
@@ -690,6 +692,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 {
     "type": "sort_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_path",
         "property_path": ["form", "child_repeat"]
     },
@@ -704,7 +707,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `aggregation_fn` is one of following supported functions names.
 
@@ -722,6 +725,7 @@ Function Name  | Example
 {
     "type": "reduce_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_name",
         "property_name": "family_repeat"
     },
@@ -734,7 +738,7 @@ This returns number of family members
 
 `flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
-`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned.
+`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 ```json
 {
     "type": "flatten_items",
@@ -2055,6 +2059,9 @@ A diagram of this workflow can be found [here](examples/async_indicator.png)
 ## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
+
 This can be done by runnning `./manage.py dbshell` or using `psql`.
-The naming convention for tables is: `configurable_indicators_[domain name]_[table id]_[hash]`.
+
+The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
+
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.
