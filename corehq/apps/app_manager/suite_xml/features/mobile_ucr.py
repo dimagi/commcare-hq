@@ -286,6 +286,9 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
 
 
 def _get_data_detail(config, domain, new_mobile_ucr_restore):
+    """
+    Adds a data table to the report
+    """
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -371,7 +374,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report(domain).report_columns]
+        fields=[_column_to_field(c) for c in config.report(domain).report_columns if c.type != 'expanded']
     )
 
 
