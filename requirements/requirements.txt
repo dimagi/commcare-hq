@@ -76,7 +76,7 @@ django-formtools==2.0
 django-otp==0.3.13
 django-two-factor-auth==1.6.2
 datadog==0.15.0
-django-websocket-redis==0.5.0
+django-websocket-redis==0.5.1
 django-redis-sessions==0.5.6
 SQLAlchemy==1.1.9
 alembic==0.8.6
