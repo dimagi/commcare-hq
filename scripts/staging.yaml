@@ -49,21 +49,19 @@ branches:
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
-  - np/11.1 # NP 8/24
   - np/build_attrs # NP - part of np/111
   - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - je/mobile-ucr-v2 # j$ 9/29
   - jls/scroll-app-menu # Jenny 10/3
   - mk-search-under-location # Manish 4-Oct
-  - np/more-requestcontext-to-dict # NP
+  - np/111/django-websocket-redis # NP 10/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches:
-      - np/111 # NP 8/24
+    branches: []
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
