@@ -304,4 +304,4 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
     kwargs['ga_track'] = kwargs.get('ga_track', False) and analytics_enabled_for_email(recipient)
-    return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)
+    return _send_HTML_email(subject, recipient, html_content.decode('utf-8'), *args, **kwargs)
