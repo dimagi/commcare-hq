@@ -1,11 +1,9 @@
 {
     "domains": [
-        "enikshay-reports-qa",
-        "sheel-enikshay"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
@@ -28,6 +26,15 @@
                     },
                     "type": "boolean_expression",
                     "property_value": "episode"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "enrolled_in_private"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "true"
                 }
             ]
         },
