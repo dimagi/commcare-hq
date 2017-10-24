@@ -209,7 +209,7 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_or_basic_or_apikey(default=BASIC):
+def login_or_digest_or_basic_or_apikey():
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -217,7 +217,7 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True)
-            }[determine_authtype_from_request(request, default=default)]
+            }[determine_authtype_from_request(request)]
             if not function_wrapper:
                 return HttpResponseForbidden()
             return function_wrapper(fn)(request, *args, **kwargs)
@@ -225,7 +225,7 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
-def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
+def login_or_digest_or_basic_or_apikey_or_token():
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -234,7 +234,7 @@ def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
-            }[determine_authtype_from_request(request, default=default)]
+            }[determine_authtype_from_request(request)]
             if not function_wrapper:
                 return HttpResponseForbidden()
             return function_wrapper(fn)(request, *args, **kwargs)
