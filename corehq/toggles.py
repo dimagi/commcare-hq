@@ -33,6 +33,11 @@ TAG_PRODUCT = Tag(
     description="This is a core-product feature that you should feel free to "
     "use.  We've feature-flagged until release.",
 )
+TAG_PREVIEW = Tag(
+    name='Preview',
+    css_class='default',
+    description='',
+)
 TAG_SOLUTIONS = Tag(
     name='Solutions',
     css_class='info',
