@@ -1,4 +1,3 @@
-from django.utils.functional import cached_property
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
@@ -44,11 +43,11 @@ class ReportModuleSuiteHelper(object):
         self.domain = self.app.domain
         self._loaded = None
 
-    @cached_property
+    @property
     def app(self):
         return self.report_module.get_app()
 
-    @cached_property
+    @property
     def mobile_ucr_restore_version(self):
         return self.app.mobile_ucr_restore_version
 
