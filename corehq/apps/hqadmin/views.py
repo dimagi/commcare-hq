@@ -725,7 +725,7 @@ def web_user_lookup(request):
     web_user = WebUser.get_by_username(web_user_email)
     if web_user is None:
         messages.error(
-            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+            request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
     else:
         from django_otp import user_has_device

@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-
+from corehq.util.string_utils import ensure_unicode
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -85,6 +85,7 @@ def basicauth(realm=''):
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
             uname, passwd = get_username_and_password_from_request(request)
+            uname, passwd = ensure_unicode(uname), ensure_unicode(passwd)
             if uname and passwd:
                 user = authenticate(username=uname, password=passwd)
                 if user is not None and user.is_active:
