@@ -304,7 +304,7 @@ def location_restricted_exception(request):
 def is_location_safe(view_fn, request, view_args, view_kwargs):
     """
     Check if view_fn had the @location_safe decorator applied.
-    view_args and kwargs are also needed because view_fn alone doesn't always
+    request, view_args and kwargs are also needed because view_fn alone doesn't always
     contain enough information
     """
     if getattr(view_fn, 'is_location_safe', False):
@@ -316,7 +316,7 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
     if getattr(view_fn, 'is_hq_report', False):
         if view_kwargs['report_slug'] in CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS:
             return CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_kwargs['report_slug']](
-                view_fn, *view_args, **view_kwargs
+                view_fn, request, *view_args, **view_kwargs
             )
         else:
             return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
