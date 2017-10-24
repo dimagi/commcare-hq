@@ -1,5 +1,6 @@
 from __future__ import print_function
 import re
+from collections import defaultdict
 from github3 import GitHub
 from django.template.loader import render_to_string
 import requests
@@ -94,11 +95,11 @@ def _get_pr_labels(pr_number):
 
 
 def _get_prs_by_label(pr_infos):
-    prs_by_label = {}
-    for label in LABELS_TO_EXPAND:
-        prs_by_label[label] = [pr for pr in pr_infos
-           if label in [lbl['name'] for lbl in pr['labels']]
-        ]
+    prs_by_label = defaultdict(list)
+    for pr in pr_infos:
+        for label in pr['labels']:
+            if label['name'] in LABELS_TO_EXPAND:
+                prs_by_label[label['name']].append(pr)
     return prs_by_label
 
 
