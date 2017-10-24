@@ -87,7 +87,7 @@ class Select2(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
+        final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
             u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
@@ -114,7 +114,7 @@ class QuestionSelect(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
+        final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
             u"""
