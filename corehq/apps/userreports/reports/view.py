@@ -714,7 +714,7 @@ class DownloadUCRStatusView(BaseDomainView):
         return self.kwargs['subreport_slug']
 
 
-def _safe_download_poll(request, domain, download_id, *args, **kwargs):
+def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
     config_id = request.GET.get('config_id')
     return config_id and has_location_filter(None, domain=domain, subreport_slug=config_id)
 
