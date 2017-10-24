@@ -6,20 +6,24 @@ CREATE FUNCTION get_related_indices(
     exclude_indices_array TEXT[]
 ) RETURNS SETOF form_processor_commcarecaseindexsql AS $$
 BEGIN
-    RETURN QUERY
-    WITH case_ids AS (
-        SELECT UNNEST(case_ids_array) AS cid
-    ), exclude_indices AS (
+    CREATE TEMP TABLE case_ids ON COMMIT DROP AS
+        SELECT UNNEST(case_ids_array) AS cid;
+
+    CREATE TEMP TABLE exclude_indices ON COMMIT DROP AS
         -- exclude_indices is a set of '<index.case_id> <index.identifier>'
-        SELECT UNNEST(exclude_indices_array) AS xid
-    )
+        SELECT UNNEST(exclude_indices_array) AS xid;
+
+    CREATE UNIQUE INDEX ON case_ids (cid);
+    CREATE UNIQUE INDEX ON exclude_indices (xid);
+
+    RETURN QUERY
 
     -- parent and host cases
     SELECT form_processor_commcarecaseindexsql.*
     FROM form_processor_commcarecaseindexsql
     JOIN case_ids ON cid = case_id -- case_id points to child/extension
-    WHERE domain = domain_name
-        AND case_id || ' ' || identifier NOT IN (SELECT xid FROM exclude_indices)
+    LEFT JOIN exclude_indices ON xid = case_id || ' ' || identifier
+    WHERE domain = domain_name AND xid IS NULL
 
     UNION
 
@@ -28,8 +32,9 @@ BEGIN
     FROM form_processor_commcarecaseindexsql
     JOIN form_processor_commcarecasesql USING (domain, case_id)
     JOIN case_ids ON cid = referenced_id -- referenced_id points to host
+    LEFT JOIN exclude_indices ON xid = case_id || ' ' || identifier
     WHERE domain = domain_name
-        AND case_id || ' ' || identifier  NOT IN (SELECT xid FROM exclude_indices)
+        AND xid IS NULL
         AND relationship_id = 2 -- is extension case
         AND NOT closed
         AND NOT deleted;
