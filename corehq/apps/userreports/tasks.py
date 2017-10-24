@@ -345,6 +345,7 @@ def _save_document_helper(indicator, doc):
             config = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            configs_to_remove.append(config_id)
             continue
         except ESError:
             celery_task_logger.info("ES errored when trying to retrieve config")
