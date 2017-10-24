@@ -416,7 +416,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
-
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
@@ -2233,3 +2232,5 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
             'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }
     ]
+
+PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
