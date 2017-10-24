@@ -367,9 +367,13 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
             ),
         )
 
+    nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='row{}'.format(MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore)),
+        nodeset=(
+            nodeset_string.format(
+                MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore))
+        ),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
